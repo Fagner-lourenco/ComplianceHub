@@ -1,0 +1,26 @@
+.candidatos-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.candidatos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.candidatos-header h2 {
+    font-size: 1.25rem;
+}
+
+.candidatos-table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+}

@@ -1,0 +1,26 @@
+.casos-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.casos-page__kpis {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.casos-page__filters {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.casos-page__table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+}

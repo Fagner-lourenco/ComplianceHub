@@ -1,0 +1,64 @@
+.risk-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: .75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.risk-chip--sm {
+    padding: 2px 8px;
+    font-size: .7rem;
+}
+
+.risk-chip--md {
+    padding: 3px 10px;
+    font-size: .8125rem;
+}
+
+.risk-chip--lg {
+    padding: 4px 14px;
+    font-size: .875rem;
+}
+
+.risk-chip--bold {
+    font-weight: 700;
+}
+
+.risk-chip__icon {
+    font-size: .75em;
+    line-height: 1;
+}
+
+.risk-chip__label {
+    line-height: 1.4;
+}
+
+/* Colors */
+.risk-chip--green {
+    background: var(--green-50);
+    color: var(--green-700);
+    border: 1px solid var(--green-100);
+}
+
+.risk-chip--yellow {
+    background: var(--yellow-50);
+    color: var(--yellow-700);
+    border: 1px solid var(--yellow-100);
+}
+
+.risk-chip--red {
+    background: var(--red-50);
+    color: var(--red-700);
+    border: 1px solid var(--red-100);
+}
+
+.risk-chip--gray {
+    background: var(--gray-50);
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+}

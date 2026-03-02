@@ -1,0 +1,33 @@
+.auditoria-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.auditoria-page h2 {
+    font-size: 1.25rem;
+}
+
+.auditoria-filters {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.auditoria-table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+}
+
+.audit-action-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    font-size: .6875rem;
+    font-weight: 600;
+    white-space: nowrap;
+}

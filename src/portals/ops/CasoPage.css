@@ -1,0 +1,390 @@
+.caso-page {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Header */
+.caso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-5);
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.caso-header__info h2 {
+    font-size: 1.25rem;
+}
+
+.caso-header__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: 4px;
+}
+
+.caso-header__id,
+.caso-header__cpf {
+    font-size: .75rem;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.caso-header__actions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+/* Stepper */
+.stepper {
+    display: flex;
+    gap: 2px;
+    margin-bottom: var(--space-5);
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    overflow-x: auto;
+}
+
+.stepper__step {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.stepper__step:hover {
+    background: rgba(255, 255, 255, .6);
+}
+
+.stepper__step--active {
+    background: var(--bg-card);
+    color: var(--brand-600);
+    font-weight: 600;
+    box-shadow: var(--shadow-xs);
+}
+
+.stepper__step--done {
+    color: var(--green-600);
+}
+
+.stepper__number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    font-weight: 700;
+    background: var(--gray-200);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.stepper__step--active .stepper__number {
+    background: var(--brand-600);
+    color: #fff;
+}
+
+.stepper__step--done .stepper__number {
+    background: var(--green-500);
+    color: #fff;
+}
+
+.stepper__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Section */
+.caso-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-xs);
+}
+
+.caso-section h3 {
+    font-size: 1.0625rem;
+    margin-bottom: var(--space-4);
+}
+
+.caso-section h4 {
+    font-size: .9375rem;
+    margin-bottom: var(--space-3);
+}
+
+/* Grid */
+.caso-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+    .caso-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Fields */
+.caso-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--space-3);
+}
+
+.caso-field label {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.caso-req {
+    color: var(--red-500);
+}
+
+.caso-input {
+    padding: 10px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .875rem;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+
+.caso-input:focus {
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+}
+
+.caso-input--readonly {
+    background: var(--gray-50);
+    color: var(--text-secondary);
+    cursor: default;
+}
+
+.caso-textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .875rem;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.caso-textarea:focus {
+    border-color: var(--brand-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+}
+
+/* Select group (big buttons) */
+.caso-select-group {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.caso-select-btn {
+    padding: 8px 14px;
+    border: 2px solid var(--border-default);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    background: var(--bg-card);
+}
+
+.caso-select-btn:hover {
+    border-color: var(--brand-300);
+}
+
+.caso-select-btn--active {
+    border-color: var(--brand-500);
+    background: var(--brand-50);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, .15);
+}
+
+.caso-select-btn--lg {
+    padding: 12px 20px;
+}
+
+/* Checkbox group */
+.caso-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.caso-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .8125rem;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.caso-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brand-600);
+    cursor: pointer;
+}
+
+/* Alert */
+.caso-alert {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    font-weight: 500;
+    margin-top: var(--space-3);
+}
+
+.caso-alert--warning {
+    background: var(--yellow-50);
+    border: 1px solid var(--yellow-100);
+    color: var(--yellow-700);
+}
+
+.caso-divider {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: var(--space-5) 0;
+}
+
+/* Risk summary */
+.caso-risk-summary {
+    display: flex;
+    gap: var(--space-5);
+    padding: var(--space-4);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    border: 1px solid var(--gray-100);
+    flex-wrap: wrap;
+}
+
+.caso-risk-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.caso-risk-label {
+    font-size: .6875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+/* Checklist */
+.caso-checklist {
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    border: 1px solid var(--gray-100);
+    margin-bottom: var(--space-4);
+}
+
+.caso-checklist h4 {
+    margin-bottom: var(--space-3);
+}
+
+.caso-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: .8125rem;
+}
+
+.caso-checklist__item--ok {
+    color: var(--green-600);
+}
+
+.caso-checklist__item--missing {
+    color: var(--red-600);
+}
+
+/* Step navigation */
+.caso-step-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--gray-100);
+}
+
+/* Buttons */
+.caso-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: .875rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+}
+
+.caso-btn--primary {
+    background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, .25);
+}
+
+.caso-btn--primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, .35);
+}
+
+.caso-btn--primary:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.caso-btn--ghost {
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+}
+
+.caso-btn--conclude {
+    background: linear-gradient(135deg, var(--green-600), var(--green-500));
+    box-shadow: 0 2px 8px rgba(16, 185, 129, .25);
+}
+
+.caso-btn--conclude:hover {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, .35);
+}
+
+/* Success */
+.caso-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-16);
+    text-align: center;
+}
+
+.caso-success h2 {
+    color: var(--green-600);
+}
+
+.caso-success p {
+    color: var(--text-secondary);
+}
