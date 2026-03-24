@@ -4,12 +4,13 @@ import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
-import { MOCK_CASES, getCaseStats } from '../../data/mockData';
+import { useCases } from '../../hooks/useCases';
+import { getCaseStats } from '../../data/mockData';
 import './CasosPage.css';
 
 export default function CasosPage() {
     const navigate = useNavigate();
-    const [cases] = useState(MOCK_CASES);
+    const { cases } = useCases(null);   // null = all tenants (ops portal)
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [tenantFilter, setTenantFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');

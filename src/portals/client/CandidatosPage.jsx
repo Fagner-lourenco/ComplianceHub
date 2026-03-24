@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react';
-import { MOCK_CASES } from '../../data/mockData';
+import { useCases } from '../../hooks/useCases';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import './CandidatosPage.css';
 
 export default function CandidatosPage() {
+    const { cases } = useCases();
     const [searchTerm, setSearchTerm] = useState('');
 
     const candidates = useMemo(() => {
         const unique = [];
         const seen = new Set();
-        for (const c of MOCK_CASES) {
+        for (const c of cases) {
             if (!seen.has(c.candidateId)) {
                 seen.add(c.candidateId);
                 unique.push({
@@ -18,7 +19,7 @@ export default function CandidatosPage() {
                     cpf: c.cpfMasked,
                     lastPosition: c.candidatePosition,
                     lastVerdict: c.finalVerdict,
-                    totalRequests: MOCK_CASES.filter(x => x.candidateId === c.candidateId).length,
+                    totalRequests: cases.filter(x => x.candidateId === c.candidateId).length,
                 });
             }
         }
@@ -27,7 +28,7 @@ export default function CandidatosPage() {
             return unique.filter(c => c.name.toLowerCase().includes(term) || c.cpf.includes(term));
         }
         return unique;
-    }, [searchTerm]);
+    }, [cases, searchTerm]);
 
     return (
         <div className="candidatos-page">

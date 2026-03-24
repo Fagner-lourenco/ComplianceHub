@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
-import { MOCK_CASES } from '../../data/mockData';
+import { useCases } from '../../hooks/useCases';
 import './FilaPage.css';
 
 export default function FilaPage() {
     const navigate = useNavigate();
-    const [cases] = useState(MOCK_CASES);
+    const { cases } = useCases(null);   // null = all tenants (ops portal)
     const [filter, setFilter] = useState('ALL');
     const [assignment, setAssignment] = useState('ALL');
 

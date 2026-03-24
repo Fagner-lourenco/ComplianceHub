@@ -1,0 +1,109 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Basic verification
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Get the current user's profile document
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
+    }
+
+    // Check if document belongs to the same tenant as the user
+    function isSameTenant(tenantId) {
+      return getUserProfile() != null && getUserProfile().tenantId == tenantId;
+    }
+
+    // Check if user is internal staff
+    function isAnalyst() {
+      return getUserProfile() != null && getUserProfile().role in ['analyst', 'supervisor', 'admin'];
+    }
+
+    // Check if user is a client
+    function isClient() {
+      return getUserProfile() != null && getUserProfile().role in ['client_viewer', 'client_manager'];
+    }
+
+
+    /* --- COLLECTION RULES --- */
+
+    // 1. User Profiles
+    match /userProfiles/{userId} {
+      // Users can read their own profile, analysts can read all, clients can read their own tenant's users
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      // Users can create/update their own profile
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 2. Cases
+    match /cases/{caseId} {
+      // Analysts see all cases. Clients see only their tenant's cases.
+      // We allow create if the incoming document has the correct tenantId attached.
+      allow read, update: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      allow create: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(request.resource.data.tenantId))
+      );
+      
+      allow delete: if false; // Prefer soft deletes
+    }
+
+    // 3. Candidates
+    match /candidates/{candidateId} {
+      allow read, update: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      allow create: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(request.resource.data.tenantId))
+      );
+      
+      allow delete: if false;
+    }
+
+    // 4. Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      allow create: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(request.resource.data.tenantId))
+      );
+      
+      allow update, delete: if false; // Logs are immutable
+    }
+
+    // 5. Exports
+    match /exports/{exportId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      allow create: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(request.resource.data.tenantId))
+      );
+      
+      allow delete: if false;
+    }
+  }
+}

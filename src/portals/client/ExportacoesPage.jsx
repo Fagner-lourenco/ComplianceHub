@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { MOCK_CASES } from '../../data/mockData';
+import { useCases } from '../../hooks/useCases';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import './ExportacoesPage.css';
@@ -11,6 +11,7 @@ const MOCK_EXPORTS = [
 ];
 
 export default function ExportacoesPage() {
+    const { cases } = useCases();
     const [exportType, setExportType] = useState('CSV');
     const [exportScope, setExportScope] = useState('ALL');
     const [exporting, setExporting] = useState(false);
@@ -24,12 +25,12 @@ export default function ExportacoesPage() {
     ];
 
     const recordCount = useMemo(() => {
-        if (exportScope === 'ALL') return MOCK_CASES.length;
-        if (exportScope === 'DONE') return MOCK_CASES.filter(c => c.status === 'DONE').length;
-        if (exportScope === 'PENDING') return MOCK_CASES.filter(c => c.status === 'PENDING').length;
-        if (exportScope === 'RED') return MOCK_CASES.filter(c => c.riskLevel === 'RED').length;
+        if (exportScope === 'ALL') return cases.length;
+        if (exportScope === 'DONE') return cases.filter(c => c.status === 'DONE').length;
+        if (exportScope === 'PENDING') return cases.filter(c => c.status === 'PENDING').length;
+        if (exportScope === 'RED') return cases.filter(c => c.riskLevel === 'RED').length;
         return 0;
-    }, [exportScope]);
+    }, [cases, exportScope]);
 
     const handleExport = () => {
         setExporting(true);

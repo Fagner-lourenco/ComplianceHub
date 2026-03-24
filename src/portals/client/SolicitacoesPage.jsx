@@ -6,12 +6,13 @@ import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
-import { MOCK_CASES, MOCK_CASE_DETAILS, getCaseStats } from '../../data/mockData';
+import { useCases } from '../../hooks/useCases';
+import { MOCK_CASE_DETAILS, getCaseStats } from '../../data/mockData';
 import './SolicitacoesPage.css';
 
 export default function SolicitacoesPage() {
     const navigate = useNavigate();
-    const [cases] = useState(MOCK_CASES);
+    const { cases } = useCases();   // auto-detects tenantId from auth
     const [selectedCase, setSelectedCase] = useState(null);
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [verdictFilter, setVerdictFilter] = useState('ALL');

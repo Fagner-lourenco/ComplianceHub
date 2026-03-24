@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../core/auth/AuthContext';
+import { createCandidate, createCase, logAuditEvent } from '../../core/firebase/firestoreService';
 import './NovaSolicitacaoPage.css';
 
 const INITIAL_FORM = {
@@ -40,6 +42,11 @@ function validateUrl(url) {
     try { new URL(url); return true; } catch { return false; }
 }
 
+function maskCpf(cpf) {
+    const digits = cpf.replace(/\D/g, '');
+    return `***.***.***.${digits.slice(9)}`;
+}
+
 export default function NovaSolicitacaoPage() {
     const [form, setForm] = useState(INITIAL_FORM);
     const [errors, setErrors] = useState({});
@@ -47,7 +54,9 @@ export default function NovaSolicitacaoPage() {
     const [otherLabel, setOtherLabel] = useState('');
     const [otherUrl, setOtherUrl] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const { user, userProfile } = useAuth();
 
     const update = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }));
@@ -68,14 +77,75 @@ export default function NovaSolicitacaoPage() {
         return Object.keys(e).length === 0;
     };
 
-    const handleSubmit = (ev) => {
+    const handleSubmit = async (ev) => {
         ev.preventDefault();
         if (!validate()) return;
+        setSubmitting(true);
 
-        // In production: save to Firestore
-        console.log('Submitting solicitation:', form);
-        setSubmitted(true);
-        setTimeout(() => navigate('/client/solicitacoes'), 1500);
+        try {
+            if (user && userProfile) {
+                // Real mode — write to Firestore
+                const tenantId = userProfile.tenantId || 'default';
+                const tenantName = userProfile.tenantName || userProfile.displayName || 'Empresa';
+                const cpfMasked = maskCpf(form.cpf);
+
+                const candidateId = await createCandidate({
+                    tenantId,
+                    fullName: form.fullName,
+                    cpfMasked,
+                    position: form.position,
+                    department: form.department,
+                    email: form.email,
+                    phone: form.phone,
+                    instagram: form.instagram,
+                    facebook: form.facebook,
+                    linkedin: form.linkedin,
+                    tiktok: form.tiktok,
+                    twitter: form.twitter,
+                    youtube: form.youtube,
+                    otherSocialUrls: form.otherSocialUrls,
+                });
+
+                const caseId = await createCase({
+                    tenantId,
+                    tenantName,
+                    candidateId,
+                    candidateName: form.fullName,
+                    candidatePosition: form.position || '',
+                    cpfMasked,
+                    priority: form.priority,
+                    requestedBy: user.uid,
+                    socialProfiles: {
+                        instagram: form.instagram,
+                        facebook: form.facebook,
+                        linkedin: form.linkedin,
+                        tiktok: form.tiktok,
+                        twitter: form.twitter,
+                        youtube: form.youtube,
+                    },
+                });
+
+                await logAuditEvent({
+                    tenantId,
+                    userId: user.uid,
+                    userEmail: user.email,
+                    action: 'SOLICITATION_CREATED',
+                    target: caseId,
+                    detail: `Nova solicitação criada para ${form.fullName}`,
+                });
+            } else {
+                // Demo mode — just log
+                console.log('Demo mode — Submitting solicitation:', form);
+            }
+
+            setSubmitted(true);
+            setTimeout(() => navigate('/client/solicitacoes'), 1500);
+        } catch (err) {
+            console.error('Error creating solicitation:', err);
+            setErrors({ general: 'Erro ao criar solicitação. Tente novamente.' });
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const addOtherSocial = () => {

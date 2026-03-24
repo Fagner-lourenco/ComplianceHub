@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
+import { useAuth } from '../../core/auth/AuthContext';
+import { getCase as getCaseFromFirestore, updateCase as updateCaseFirestore } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
 import './CasoPage.css';
 
@@ -56,7 +58,19 @@ function calculateRisk(form) {
 export default function CasoPage() {
     const { caseId } = useParams();
     const navigate = useNavigate();
-    const caseData = MOCK_CASES.find(c => c.id === caseId) || MOCK_CASES[0];
+    const { user } = useAuth();
+
+    // Load case from Firestore or fallback to mock
+    const [caseData, setCaseData] = useState(() => MOCK_CASES.find(c => c.id === caseId) || MOCK_CASES[0]);
+
+    useEffect(() => {
+        if (!user) return; // demo mode — keep mock
+        let cancelled = false;
+        getCaseFromFirestore(caseId).then(data => {
+            if (data && !cancelled) setCaseData(data);
+        });
+        return () => { cancelled = true; };
+    }, [user, caseId]);
 
     const [activeStep, setActiveStep] = useState(0);
     const [form, setForm] = useState({
