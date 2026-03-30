@@ -121,3 +121,24 @@
 .fila-btn--open:hover {
     background: var(--brand-100);
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .fila-page__filters {
+        flex-wrap: wrap;
+    }
+    
+    .fila-filter-select {
+        width: 100%;
+    }
+    
+    .fila-actions {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .fila-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

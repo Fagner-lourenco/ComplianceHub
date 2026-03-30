@@ -104,3 +104,23 @@
     padding: var(--space-5);
     overflow-y: auto;
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .drawer {
+        width: 100vw;
+        max-width: 100vw;
+    }
+    
+    .drawer__body {
+        padding: var(--space-4);
+    }
+    
+    .drawer__header {
+        padding: var(--space-4) var(--space-4) var(--space-3);
+    }
+    
+    .drawer__tabs {
+        padding: 0 var(--space-4);
+    }
+}

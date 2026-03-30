@@ -159,6 +159,15 @@
     text-decoration: underline;
 }
 
+.login-form__success {
+    padding: var(--space-3);
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    color: var(--green-700);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+}
+
 .login-card__demo {
     margin-top: var(--space-6);
     padding-top: var(--space-5);
@@ -205,4 +214,19 @@
     background: var(--green-50);
     color: var(--green-600);
     border-color: var(--green-100);
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        margin: var(--space-4);
+        padding: var(--space-5) var(--space-5);
+    }
+    
+    .login-card__title {
+        font-size: 1.25rem;
+    }
+    
+    .login-card__demo-buttons {
+        flex-direction: column;
+    }
 }

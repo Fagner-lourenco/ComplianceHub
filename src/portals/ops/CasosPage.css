@@ -24,3 +24,11 @@
     overflow-x: auto;
     box-shadow: var(--shadow-xs);
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .casos-page__filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

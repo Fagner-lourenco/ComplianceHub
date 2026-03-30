@@ -39,8 +39,8 @@ export default function RiskChip({ value, size = 'sm', showIcon = true, bold = f
     const cfg = CONFIG[value] || { label: value || '—', icon: '❓', color: 'gray' };
 
     return (
-        <span className={`risk-chip risk-chip--${cfg.color} risk-chip--${size} ${bold ? 'risk-chip--bold' : ''}`}>
-            {showIcon && <span className="risk-chip__icon">{cfg.icon}</span>}
+        <span className={`risk-chip risk-chip--${cfg.color} risk-chip--${size} ${bold ? 'risk-chip--bold' : ''}`} aria-label={cfg.label}>
+            {showIcon && <span className="risk-chip__icon" aria-hidden="true">{cfg.icon}</span>}
             <span className="risk-chip__label">{cfg.label}</span>
         </span>
     );

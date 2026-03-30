@@ -1,14 +1,33 @@
 .topbar {
-    height: var(--topbar-height);
+    min-height: var(--topbar-height);
     background: var(--bg-topbar);
     border-bottom: 1px solid var(--border-default);
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr) auto;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 var(--space-6);
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-6);
     position: sticky;
     top: 0;
     z-index: var(--z-topbar);
+}
+
+.topbar__left,
+.topbar__right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.topbar__center {
+    min-width: 0;
+}
+
+.topbar__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 
 .topbar__title {
@@ -17,68 +36,221 @@
     color: var(--text-primary);
 }
 
-.topbar__right {
+.topbar__subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.topbar__menu-btn {
+    display: none;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    padding: 0;
+    line-height: 1;
+}
+
+.topbar__context {
     display: flex;
-    align-items: center;
-    gap: var(--space-4);
-}
-
-.topbar__search {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.topbar__search-icon {
-    position: absolute;
-    left: 12px;
-    font-size: .875rem;
-    pointer-events: none;
-}
-
-.topbar__search-input {
+    flex-direction: column;
+    gap: 4px;
     padding: var(--space-2) var(--space-3);
-    padding-left: 36px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-full);
-    font-size: .8125rem;
-    width: 280px;
-    background: var(--gray-50);
-    transition: all var(--transition-fast);
+    min-width: 0;
+}
+
+.topbar__context-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.topbar__context-value,
+.topbar__tenant-select {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 0;
+}
+
+.topbar__context-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__tenant-select {
+    border: 1px solid var(--border-default);
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
     outline: none;
 }
 
-.topbar__search-input:focus {
+.topbar__tenant-select:focus {
     border-color: var(--border-focus);
-    background: var(--bg-input);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
-    width: 320px;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
-.topbar__notification {
-    position: relative;
-    padding: var(--space-2);
-    border-radius: var(--radius-md);
-    font-size: 1.125rem;
-    transition: background var(--transition-fast);
+.topbar__context-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.topbar__notification:hover {
-    background: var(--gray-100);
-}
-
-.topbar__badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 16px;
-    height: 16px;
-    background: var(--red-500);
-    color: #fff;
-    font-size: .625rem;
-    font-weight: 700;
+.topbar__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
     border-radius: var(--radius-full);
+    border: 1px solid var(--border-default);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    min-width: 0;
+}
+
+.topbar__status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.topbar__status-text {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.topbar__status--ready {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+    color: #047857;
+}
+
+.topbar__status--cached {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.topbar__status--loading {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #c2410c;
+}
+
+.topbar__status--alert {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.topbar__user-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    min-width: 0;
+}
+
+.topbar__user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-full);
+    background: var(--brand-500);
+    color: white;
+    font-size: 0.9375rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+}
+
+.topbar__user-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.topbar__user-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__user-email,
+.topbar__user-role {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar__user-role {
+    color: var(--text-brand);
+    font-weight: 600;
+}
+
+@media (max-width: 1080px) {
+    .topbar {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar__right {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        padding: var(--space-3) var(--space-4);
+        gap: var(--space-3);
+    }
+
+    .topbar__menu-btn {
+        display: block;
+    }
+
+    .topbar__subtitle,
+    .topbar__context-meta,
+    .topbar__user-email,
+    .topbar__user-role {
+        display: none;
+    }
+
+    .topbar__status {
+        padding: 8px 10px;
+    }
+
+    .topbar__status-text {
+        font-size: 0.75rem;
+    }
+
+    .topbar__user-chip {
+        padding: var(--space-2);
+    }
+
+    .topbar__context {
+        padding: var(--space-2);
+    }
+
+    .topbar__tenant-select {
+        width: 100%;
+    }
 }

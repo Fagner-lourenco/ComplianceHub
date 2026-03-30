@@ -1,76 +1,114 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useTenant } from '../../core/contexts/useTenant';
+import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useAuditLogs } from '../../hooks/useAuditLogs';
 import './AuditoriaPage.css';
 
 const ACTION_LABELS = {
-    CASE_CONCLUDED: { label: 'Caso Concluído', color: 'var(--green-600)', bg: 'var(--green-50)' },
-    CASE_UPDATED: { label: 'Caso Atualizado', color: 'var(--blue-600)', bg: 'var(--blue-50)' },
-    CASE_ASSIGNED: { label: 'Caso Atribuído', color: 'var(--brand-600)', bg: 'var(--brand-50)' },
-    EXPORT_CREATED: { label: 'Exportação', color: 'var(--gray-600)', bg: 'var(--gray-100)' },
-    SOLICITATION_CREATED: { label: 'Nova Solicitação', color: 'var(--yellow-600)', bg: 'var(--yellow-50)' },
-    USER_CREATED: { label: 'Usuário Criado', color: 'var(--brand-600)', bg: 'var(--brand-50)' },
+    CASE_CONCLUDED: { label: 'Caso concluido', color: 'var(--green-600)', bg: 'var(--green-50)' },
+    CASE_UPDATED: { label: 'Caso atualizado', color: 'var(--blue-600)', bg: 'var(--blue-50)' },
+    CASE_ASSIGNED: { label: 'Caso atribuido', color: 'var(--brand-600)', bg: 'var(--brand-50)' },
+    CASE_RETURNED: { label: 'Caso devolvido', color: 'var(--red-600)', bg: 'var(--red-50)' },
+    CASE_CORRECTED: { label: 'Caso corrigido', color: 'var(--green-600)', bg: 'var(--green-50)' },
+    EXPORT_CREATED: { label: 'Exportacao', color: 'var(--gray-600)', bg: 'var(--gray-100)' },
+    SOLICITATION_CREATED: { label: 'Nova solicitacao', color: 'var(--yellow-600)', bg: 'var(--yellow-50)' },
+    USER_CREATED: { label: 'Usuario criado', color: 'var(--brand-600)', bg: 'var(--brand-50)' },
+    TENANT_CONFIG_UPDATED: { label: 'Config atualizada', color: 'var(--brand-600)', bg: 'var(--brand-50)' },
 };
 
 export default function AuditoriaPage() {
-    const { logs } = useAuditLogs(null);   // null = all tenants (ops)
+    const { selectedTenantId } = useTenant();
+    const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
+    const {
+        error,
+        loading,
+        logs,
+    } = useAuditLogs(tenantOverride);
     const [actionFilter, setActionFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
 
     const filtered = useMemo(() => {
         let result = [...logs];
-        if (actionFilter !== 'ALL') result = result.filter(l => l.action === actionFilter);
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            result = result.filter(l =>
-                l.user.toLowerCase().includes(term) ||
-                l.target.toLowerCase().includes(term) ||
-                l.detail.toLowerCase().includes(term)
-            );
+
+        if (actionFilter !== 'ALL') {
+            result = result.filter((log) => log.action === actionFilter);
         }
+
+        if (searchTerm) {
+            const normalizedTerm = searchTerm.toLowerCase();
+            result = result.filter((log) => (
+                (log.user || '').toLowerCase().includes(normalizedTerm)
+                || (log.target || '').toLowerCase().includes(normalizedTerm)
+                || (log.detail || '').toLowerCase().includes(normalizedTerm)
+            ));
+        }
+
         return result;
-    }, [logs, actionFilter, searchTerm]);
+    }, [actionFilter, logs, searchTerm]);
 
     return (
         <div className="auditoria-page">
-            <h2>Auditoria & Logs</h2>
+            <h2>Auditoria e logs</h2>
 
             <div className="auditoria-filters">
                 <div className="filter-bar__search" style={{ flex: 1, minWidth: 200 }}>
-                    <span className="filter-bar__search-icon">🔍</span>
+                    <span className="filter-bar__search-icon" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    </span>
                     <input
                         type="text"
                         className="filter-bar__search-input"
-                        placeholder="Buscar por usuário, alvo ou detalhe..."
+                        placeholder="Buscar por usuario, alvo ou detalhe..."
+                        aria-label="Buscar nos logs de auditoria"
                         value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
+                        onChange={(event) => setSearchTerm(event.target.value)}
                     />
                 </div>
-                <select className="filter-bar__select" value={actionFilter} onChange={e => setActionFilter(e.target.value)}>
-                    <option value="ALL">Todas as ações</option>
-                    <option value="CASE_CONCLUDED">Caso Concluído</option>
-                    <option value="CASE_UPDATED">Caso Atualizado</option>
-                    <option value="CASE_ASSIGNED">Caso Atribuído</option>
-                    <option value="EXPORT_CREATED">Exportação</option>
-                    <option value="SOLICITATION_CREATED">Nova Solicitação</option>
-                    <option value="USER_CREATED">Usuário Criado</option>
+                <select className="filter-bar__select" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)}>
+                    <option value="ALL">Todas as acoes</option>
+                    <option value="CASE_CONCLUDED">Caso concluido</option>
+                    <option value="CASE_UPDATED">Caso atualizado</option>
+                    <option value="CASE_ASSIGNED">Caso atribuido</option>
+                    <option value="EXPORT_CREATED">Exportacao</option>
+                    <option value="SOLICITATION_CREATED">Nova solicitacao</option>
+                    <option value="USER_CREATED">Usuario criado</option>
                 </select>
             </div>
 
             <div className="auditoria-table-wrapper">
-                <table className="data-table">
+                <table className="data-table" aria-label="Logs de auditoria">
                     <thead>
                         <tr>
-                            <th className="data-table__th">Data/Hora</th>
-                            <th className="data-table__th">Usuário</th>
-                            <th className="data-table__th">Ação</th>
-                            <th className="data-table__th">Alvo</th>
-                            <th className="data-table__th">Detalhe</th>
-                            <th className="data-table__th">IP</th>
+                            <th className="data-table__th" scope="col">Data/Hora</th>
+                            <th className="data-table__th" scope="col">Usuario</th>
+                            <th className="data-table__th" scope="col">Acao</th>
+                            <th className="data-table__th" scope="col">Alvo</th>
+                            <th className="data-table__th" scope="col">Detalhe</th>
+                            <th className="data-table__th" scope="col">IP</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.map(log => {
-                            const actionInfo = ACTION_LABELS[log.action] || { label: log.action, color: 'var(--text-secondary)', bg: 'var(--gray-50)' };
+                        {loading && (
+                            <tr>
+                                <td colSpan={6} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                    Carregando logs...
+                                </td>
+                            </tr>
+                        )}
+                        {!loading && error && (
+                            <tr>
+                                <td colSpan={6} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
+                                    Nao foi possivel carregar os logs agora.
+                                </td>
+                            </tr>
+                        )}
+                        {!loading && !error && filtered.map((log) => {
+                            const actionInfo = ACTION_LABELS[log.action] || {
+                                label: log.action,
+                                color: 'var(--text-secondary)',
+                                bg: 'var(--gray-50)',
+                            };
+
                             return (
                                 <tr key={log.id} className="data-table__row">
                                     <td className="data-table__td data-table__td--mono" style={{ fontSize: '.75rem' }}>{log.timestamp}</td>
@@ -86,7 +124,7 @@ export default function AuditoriaPage() {
                                 </tr>
                             );
                         })}
-                        {filtered.length === 0 && (
+                        {!loading && !error && filtered.length === 0 && (
                             <tr>
                                 <td colSpan={6} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                     Nenhum log encontrado.

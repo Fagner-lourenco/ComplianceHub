@@ -31,3 +31,11 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .auditoria-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

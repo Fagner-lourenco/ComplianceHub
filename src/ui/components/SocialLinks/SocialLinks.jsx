@@ -9,11 +9,23 @@ const SOCIAL_CONFIG = {
     youtube: { icon: '▶️', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/' },
 };
 
+function isSafeUrl(url) {
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    } catch {
+        return false;
+    }
+}
+
 function normalizeUrl(platform, value) {
     if (!value) return null;
-    if (value.startsWith('http://') || value.startsWith('https://')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+        return isSafeUrl(value) ? value : null;
+    }
     const handle = value.replace('@', '');
-    return `${SOCIAL_CONFIG[platform]?.baseUrl || ''}${handle}`;
+    const base = SOCIAL_CONFIG[platform]?.baseUrl;
+    return base ? `${base}${handle}` : null;
 }
 
 export default function SocialLinks({ profiles = {}, size = 'md', showEmpty = false }) {
@@ -44,7 +56,7 @@ export default function SocialLinks({ profiles = {}, size = 'md', showEmpty = fa
                 );
             })}
             {/* Other URLs */}
-            {profiles.otherSocialUrls?.map((item, i) => (
+            {profiles.otherSocialUrls?.filter((item) => item?.url && isSafeUrl(item.url)).map((item, i) => (
                 <a
                     key={`other-${i}`}
                     href={item.url}

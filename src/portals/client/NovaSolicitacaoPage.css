@@ -302,3 +302,28 @@
 .ns-field--social .ns-input {
     padding-left: 14px;
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .ns-section {
+        padding: var(--space-3);
+    }
+    
+    .ns-actions {
+        flex-direction: column;
+    }
+    
+    .ns-actions .ns-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .ns-priority-selector {
+        flex-wrap: wrap;
+    }
+    
+    .ns-priority-btn {
+        flex: 1;
+        text-align: center;
+    }
+}

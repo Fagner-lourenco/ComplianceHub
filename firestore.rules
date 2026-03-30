@@ -23,9 +23,14 @@ service cloud.firestore {
       return getUserProfile() != null && getUserProfile().role in ['analyst', 'supervisor', 'admin'];
     }
 
+    // Check if user is admin specifically
+    function isAdmin() {
+      return getUserProfile() != null && getUserProfile().role == 'admin';
+    }
+
     // Check if user is a client
     function isClient() {
-      return getUserProfile() != null && getUserProfile().role in ['client_viewer', 'client_manager'];
+      return getUserProfile() != null && getUserProfile().role in ['CLIENT', 'client_viewer', 'client_manager'];
     }
 
 
@@ -40,17 +45,30 @@ service cloud.firestore {
         (isClient() && isSameTenant(resource.data.tenantId))
       );
       
-      // Users can create/update their own profile
-      allow write: if isAuthenticated() && request.auth.uid == userId;
+      // Profiles are provisioned and managed only by internal staff.
+      // This blocks self-promotion of role or tenant context from the client.
+      allow create, update, delete: if isAuthenticated() && isAnalyst();
     }
 
     // 2. Cases
     match /cases/{caseId} {
       // Analysts see all cases. Clients see only their tenant's cases.
-      // We allow create if the incoming document has the correct tenantId attached.
-      allow read, update: if isAuthenticated() && (
+      allow read: if isAuthenticated() && (
         isAnalyst() || 
         (isClient() && isSameTenant(resource.data.tenantId))
+      );
+
+      // Analysts can update any case.
+      // Clients can only update cases in CORRECTION_NEEDED status, changing only allowed fields and setting status back to PENDING.
+      allow update: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId) &&
+         resource.data.status == 'CORRECTION_NEEDED' &&
+         request.resource.data.status == 'PENDING' &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+           ['candidateName', 'cpf', 'cpfMasked', 'socialProfiles', 'status', 'correctedAt', 'correctedBy', 'corrections', 'updatedAt']
+         )
+        )
       );
       
       allow create: if isAuthenticated() && (
@@ -58,7 +76,7 @@ service cloud.firestore {
         (isClient() && isSameTenant(request.resource.data.tenantId))
       );
       
-      allow delete: if false; // Prefer soft deletes
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
     // 3. Candidates
@@ -73,7 +91,7 @@ service cloud.firestore {
         (isClient() && isSameTenant(request.resource.data.tenantId))
       );
       
-      allow delete: if false;
+      allow delete: if isAuthenticated() && isAdmin();
     }
 
     // 4. Audit Logs
@@ -91,7 +109,18 @@ service cloud.firestore {
       allow update, delete: if false; // Logs are immutable
     }
 
-    // 5. Exports
+    // 5. Tenant Settings
+    match /tenantSettings/{tenantId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(tenantId))
+      );
+
+      allow create, update: if isAuthenticated() && isAnalyst();
+      allow delete: if false;
+    }
+
+    // 6. Exports
     match /exports/{exportId} {
       allow read: if isAuthenticated() && (
         isAnalyst() || 
@@ -104,6 +133,13 @@ service cloud.firestore {
       );
       
       allow delete: if false;
+    }
+
+    // 7. Public Reports (shareable links — public read, authenticated create)
+    match /publicReports/{token} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
     }
   }
 }

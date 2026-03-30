@@ -362,6 +362,16 @@
     border: 1px solid var(--border-default);
 }
 
+.caso-btn--warning {
+    background: var(--red-50);
+    color: var(--red-700);
+    border: 1px solid var(--red-200);
+}
+
+.caso-btn--warning:hover {
+    background: var(--red-100);
+}
+
 .caso-btn--conclude {
     background: linear-gradient(135deg, var(--green-600), var(--green-500));
     box-shadow: 0 2px 8px rgba(16, 185, 129, .25);
@@ -387,4 +397,51 @@
 
 .caso-success p {
     color: var(--text-secondary);
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .stepper__label {
+        display: none;
+    }
+    
+    .stepper__step {
+        padding: 8px 10px;
+        justify-content: center;
+    }
+    
+    .caso-section {
+        padding: var(--space-4);
+    }
+    
+    .caso-header__actions {
+        width: 100%;
+    }
+    
+    .caso-header__actions .caso-btn {
+        flex: 1;
+        text-align: center;
+    }
+    
+    .caso-step-nav {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .caso-step-nav .caso-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .caso-risk-summary {
+        flex-direction: column;
+    }
+    
+    .caso-risk-item {
+        min-width: 0;
+    }
+    
+    .caso-success {
+        padding: var(--space-8);
+    }
 }

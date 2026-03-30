@@ -301,9 +301,25 @@ h4 {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* Focus visible — keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Scrollbar */
@@ -323,4 +339,52 @@ h4 {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-400);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+/* Global Responsive Tables */
+[class$="-table-wrapper"],
+.data-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+/* ============================================
+   Mobile Responsive — Global Rules
+   ============================================ */
+@media (max-width: 768px) {
+  h1 { font-size: 1.25rem; }
+  h2 { font-size: 1.125rem; }
+  h3 { font-size: 1rem; }
+
+  .data-table { font-size: .75rem; }
+  .data-table__th { padding: 8px 10px; font-size: .6875rem; }
+  .data-table__td { padding: 8px 10px; white-space: nowrap; }
+
+  .kpi-card {
+    min-width: calc(50% - 8px);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .kpi-card__value { font-size: 1.25rem; }
+}
+
+/* ============================================
+   Reduced Motion — Accessibility
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

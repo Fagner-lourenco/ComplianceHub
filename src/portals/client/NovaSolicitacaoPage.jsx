@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../core/auth/AuthContext';
-import { createCandidate, createCase, logAuditEvent } from '../../core/firebase/firestoreService';
+import { useAuth } from '../../core/auth/useAuth';
+import { createCandidate, createCase, getEnabledPhases, getTenantSettings, logAuditEvent } from '../../core/firebase/firestoreService';
+import { useCases } from '../../hooks/useCases';
 import './NovaSolicitacaoPage.css';
 
 const INITIAL_FORM = {
@@ -33,18 +34,32 @@ function formatCpf(value) {
 
 function validateCpf(cpf) {
     const digits = cpf.replace(/\D/g, '');
-    return digits.length === 11;
+    if (digits.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+    for (let t = 9; t < 11; t++) {
+        let sum = 0;
+        for (let i = 0; i < t; i++) sum += Number(digits[i]) * (t + 1 - i);
+        const remainder = (sum * 10) % 11;
+        if ((remainder === 10 ? 0 : remainder) !== Number(digits[t])) return false;
+    }
+    return true;
 }
 
 function validateUrl(url) {
     if (!url) return true;
     if (url.startsWith('@')) return true;
-    try { new URL(url); return true; } catch { return false; }
+
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function maskCpf(cpf) {
     const digits = cpf.replace(/\D/g, '');
-    return `***.***.***.${digits.slice(9)}`;
+    return `***.***.***-${digits.slice(9)}`;
 }
 
 export default function NovaSolicitacaoPage() {
@@ -55,104 +70,169 @@ export default function NovaSolicitacaoPage() {
     const [otherUrl, setOtherUrl] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
     const { user, userProfile } = useAuth();
+    const { cases: existingCases } = useCases();
+    const tenantId = userProfile?.tenantId || null;
+    const tenantLabel = userProfile?.tenantName || userProfile?.tenantId || 'Franquia em sincronizacao';
+    const hasConfirmedTenant = Boolean(tenantId);
+    const isDemoProfile = userProfile?.source === 'demo';
 
     const update = (field, value) => {
-        setForm(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }));
+        setForm((previous) => ({ ...previous, [field]: value }));
+        if (errors[field]) {
+            setErrors((previous) => ({ ...previous, [field]: null }));
+        }
     };
 
     const validate = () => {
-        const e = {};
-        if (!form.fullName.trim()) e.fullName = 'Nome é obrigatório';
-        if (!form.cpf.trim()) e.cpf = 'CPF é obrigatório';
-        else if (!validateCpf(form.cpf)) e.cpf = 'CPF inválido (11 dígitos)';
+        const nextErrors = {};
 
-        ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].forEach(field => {
-            if (form[field] && !validateUrl(form[field])) e[field] = 'URL ou @handle inválido';
+        if (!form.fullName.trim()) nextErrors.fullName = 'Nome obrigatorio';
+        if (!form.cpf.trim()) nextErrors.cpf = 'CPF obrigatorio';
+        else if (!validateCpf(form.cpf)) nextErrors.cpf = 'CPF invalido';
+
+        ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].forEach((field) => {
+            if (form[field] && !validateUrl(form[field])) {
+                nextErrors[field] = 'URL ou @handle invalido';
+            }
         });
 
-        setErrors(e);
-        return Object.keys(e).length === 0;
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
     };
 
-    const handleSubmit = async (ev) => {
-        ev.preventDefault();
-        if (!validate()) return;
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!validate()) {
+            return;
+        }
+
+        if (!userProfile) {
+            setErrors({ general: 'Sua sessao ainda esta sendo sincronizada. Tente novamente em instantes.' });
+            return;
+        }
+
+        if (!tenantId) {
+            setErrors({ general: 'Nao foi possivel confirmar a franquia desta solicitacao. Aguarde a sincronizacao do perfil e tente novamente.' });
+            return;
+        }
+
         setSubmitting(true);
 
         try {
-            if (user && userProfile) {
-                // Real mode — write to Firestore
-                const tenantId = userProfile.tenantId || 'default';
-                const tenantName = userProfile.tenantName || userProfile.displayName || 'Empresa';
-                const cpfMasked = maskCpf(form.cpf);
+            if (!user && isDemoProfile) {
+                setSubmitted(true);
+                redirectTimerRef.current = window.setTimeout(() => navigate('/demo/client/solicitacoes'), 1500);
+                return;
+            }
 
-                const candidateId = await createCandidate({
-                    tenantId,
-                    fullName: form.fullName,
-                    cpfMasked,
-                    position: form.position,
-                    department: form.department,
-                    email: form.email,
-                    phone: form.phone,
+            if (!user) {
+                setErrors({ general: 'Sua sessao ainda esta sendo sincronizada. Tente novamente em instantes.' });
+                return;
+            }
+
+            const tenantName = userProfile.tenantName || userProfile.tenantId;
+            const cpfMasked = maskCpf(form.cpf);
+            const cpfClean = form.cpf.replace(/\D/g, '');
+            const requestedByName = userProfile.displayName || user.displayName || null;
+            const requestedByEmail = userProfile.email || user.email || null;
+            const requestedByLabel = requestedByEmail || requestedByName || user.uid;
+
+            const tenantSettings = await getTenantSettings(tenantId);
+            const enabledPhases = getEnabledPhases(tenantSettings.analysisConfig);
+
+            // Check query limits
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10);
+            const monthStr = now.toISOString().slice(0, 7);
+            if (tenantSettings.dailyLimit) {
+                const todayCount = existingCases.filter(c => c.createdAt?.slice?.(0, 10) === todayStr).length;
+                if (todayCount >= tenantSettings.dailyLimit) {
+                    setErrors({ general: `Limite diario de ${tenantSettings.dailyLimit} consultas atingido. Tente novamente amanha.` });
+                    setSubmitting(false);
+                    return;
+                }
+            }
+            if (tenantSettings.monthlyLimit) {
+                const monthCount = existingCases.filter(c => c.createdAt?.slice?.(0, 7) === monthStr).length;
+                if (monthCount >= tenantSettings.monthlyLimit) {
+                    setErrors({ general: `Limite mensal de ${tenantSettings.monthlyLimit} consultas atingido. Entre em contato com o administrador.` });
+                    setSubmitting(false);
+                    return;
+                }
+            }
+
+            const candidateId = await createCandidate({
+                tenantId,
+                candidateName: form.fullName,
+                cpf: cpfClean,
+                cpfMasked,
+                candidatePosition: form.position,
+                department: form.department,
+                email: form.email,
+                phone: form.phone,
+                instagram: form.instagram,
+                facebook: form.facebook,
+                linkedin: form.linkedin,
+                tiktok: form.tiktok,
+                twitter: form.twitter,
+                youtube: form.youtube,
+                otherSocialUrls: form.otherSocialUrls,
+            });
+
+            const caseId = await createCase({
+                tenantId,
+                tenantName,
+                candidateId,
+                candidateName: form.fullName,
+                candidatePosition: form.position || '',
+                cpf: cpfClean,
+                cpfMasked,
+                priority: form.priority,
+                requestedBy: requestedByLabel,
+                requestedByName,
+                requestedByEmail,
+                enabledPhases,
+                socialProfiles: {
                     instagram: form.instagram,
                     facebook: form.facebook,
                     linkedin: form.linkedin,
                     tiktok: form.tiktok,
                     twitter: form.twitter,
                     youtube: form.youtube,
-                    otherSocialUrls: form.otherSocialUrls,
-                });
+                },
+            });
 
-                const caseId = await createCase({
-                    tenantId,
-                    tenantName,
-                    candidateId,
-                    candidateName: form.fullName,
-                    candidatePosition: form.position || '',
-                    cpfMasked,
-                    priority: form.priority,
-                    requestedBy: user.uid,
-                    socialProfiles: {
-                        instagram: form.instagram,
-                        facebook: form.facebook,
-                        linkedin: form.linkedin,
-                        tiktok: form.tiktok,
-                        twitter: form.twitter,
-                        youtube: form.youtube,
-                    },
-                });
-
-                await logAuditEvent({
-                    tenantId,
-                    userId: user.uid,
-                    userEmail: user.email,
-                    action: 'SOLICITATION_CREATED',
-                    target: caseId,
-                    detail: `Nova solicitação criada para ${form.fullName}`,
-                });
-            } else {
-                // Demo mode — just log
-                console.log('Demo mode — Submitting solicitation:', form);
-            }
+            await logAuditEvent({
+                tenantId,
+                userId: user.uid,
+                userEmail: user.email,
+                action: 'SOLICITATION_CREATED',
+                target: caseId,
+                detail: `Nova solicitacao criada para ${form.fullName}`,
+            });
 
             setSubmitted(true);
-            setTimeout(() => navigate('/client/solicitacoes'), 1500);
-        } catch (err) {
-            console.error('Error creating solicitation:', err);
-            setErrors({ general: 'Erro ao criar solicitação. Tente novamente.' });
+            redirectTimerRef.current = window.setTimeout(() => navigate('/client/solicitacoes'), 1500);
+        } catch (error) {
+            console.error('Error creating solicitation:', error);
+            setErrors({ general: 'Erro ao criar solicitacao. Tente novamente.' });
         } finally {
             setSubmitting(false);
         }
     };
 
     const addOtherSocial = () => {
-        if (!otherUrl.trim()) return;
-        setForm(prev => ({
-            ...prev,
-            otherSocialUrls: [...prev.otherSocialUrls, { label: otherLabel || 'Outro', url: otherUrl }],
+        if (!otherUrl.trim()) {
+            return;
+        }
+
+        setForm((previous) => ({
+            ...previous,
+            otherSocialUrls: [...previous.otherSocialUrls, { label: otherLabel || 'Outro', url: otherUrl }],
         }));
         setOtherLabel('');
         setOtherUrl('');
@@ -160,38 +240,58 @@ export default function NovaSolicitacaoPage() {
     };
 
     const removeOtherSocial = (index) => {
-        setForm(prev => ({
-            ...prev,
-            otherSocialUrls: prev.otherSocialUrls.filter((_, i) => i !== index),
+        setForm((previous) => ({
+            ...previous,
+            otherSocialUrls: previous.otherSocialUrls.filter((_, currentIndex) => currentIndex !== index),
         }));
     };
+
+    useEffect(() => {
+        return () => {
+            if (redirectTimerRef.current) window.clearTimeout(redirectTimerRef.current);
+        };
+    }, []);
 
     if (submitted) {
         return (
             <div className="ns-page">
                 <div className="ns-success animate-scaleIn">
-                    <span className="ns-success__icon">✅</span>
-                    <h2>Solicitação enviada!</h2>
-                    <p>O caso foi criado com sucesso e está aguardando análise.</p>
+                    <span className="ns-success__icon">OK</span>
+                    <h2>Solicitacao enviada</h2>
+                    <p>O caso foi criado com sucesso e esta aguardando analise.</p>
                 </div>
             </div>
         );
     }
 
     const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf);
+    const canSubmit = Boolean(isValid && !submitting && hasConfirmedTenant);
 
     return (
         <div className="ns-page">
             <div className="ns-page__header">
-                <h2>Nova Solicitação de Due Diligence</h2>
-                <p>Preencha os dados do candidato para iniciar a análise.</p>
+                <h2>Nova Solicitacao de Due Diligence</h2>
+                <p>Preencha os dados do candidato para iniciar a analise.</p>
+                <p style={{ marginTop: 8, fontSize: '.875rem', color: 'var(--text-secondary)' }}>
+                    Esta solicitacao sera vinculada a <strong>{tenantLabel}</strong>.
+                </p>
+                {!hasConfirmedTenant && (
+                    <p style={{ marginTop: 8, fontSize: '.875rem', color: 'var(--red-700)' }}>
+                        A franquia do seu perfil ainda nao foi confirmada. O envio fica bloqueado ate a sincronizacao terminar.
+                    </p>
+                )}
             </div>
 
             <form className="ns-form" onSubmit={handleSubmit}>
-                {/* Section 1: Candidate Data */}
+                {errors.general && (
+                    <div className="login-form__error" style={{ marginBottom: 16 }}>
+                        {errors.general}
+                    </div>
+                )}
+
                 <div className="ns-section">
                     <div className="ns-section__header">
-                        <span className="ns-section__icon">👤</span>
+                        <span className="ns-section__icon">CD</span>
                         <h3>Dados do Candidato</h3>
                     </div>
 
@@ -202,8 +302,9 @@ export default function NovaSolicitacaoPage() {
                                 type="text"
                                 className={`ns-input ${errors.fullName ? 'ns-input--error' : ''}`}
                                 value={form.fullName}
-                                onChange={e => update('fullName', e.target.value)}
+                                onChange={(event) => update('fullName', event.target.value)}
                                 placeholder="Nome completo do candidato"
+                                aria-required="true"
                             />
                             {errors.fullName && <span className="ns-error">{errors.fullName}</span>}
                         </div>
@@ -214,129 +315,163 @@ export default function NovaSolicitacaoPage() {
                                 type="text"
                                 className={`ns-input ${errors.cpf ? 'ns-input--error' : ''}`}
                                 value={form.cpf}
-                                onChange={e => update('cpf', formatCpf(e.target.value))}
+                                onChange={(event) => update('cpf', formatCpf(event.target.value))}
                                 placeholder="000.000.000-00"
                                 maxLength={14}
+                                aria-required="true"
                             />
                             {errors.cpf && <span className="ns-error">{errors.cpf}</span>}
                         </div>
 
                         <div className="ns-field">
                             <label className="ns-label">Data de nascimento</label>
-                            <input type="date" className="ns-input" value={form.dateOfBirth} onChange={e => update('dateOfBirth', e.target.value)} />
+                            <input
+                                type="date"
+                                className="ns-input"
+                                value={form.dateOfBirth}
+                                onChange={(event) => update('dateOfBirth', event.target.value)}
+                            />
                         </div>
 
                         <div className="ns-field">
                             <label className="ns-label">Cargo pretendido</label>
-                            <input type="text" className="ns-input" value={form.position} onChange={e => update('position', e.target.value)} placeholder="Ex.: Analista Financeiro" />
+                            <input
+                                type="text"
+                                className="ns-input"
+                                value={form.position}
+                                onChange={(event) => update('position', event.target.value)}
+                                placeholder="Ex.: Analista Financeiro"
+                            />
                         </div>
 
                         <div className="ns-field">
                             <label className="ns-label">Departamento / Setor</label>
-                            <input type="text" className="ns-input" value={form.department} onChange={e => update('department', e.target.value)} placeholder="Ex.: Financeiro" />
+                            <input
+                                type="text"
+                                className="ns-input"
+                                value={form.department}
+                                onChange={(event) => update('department', event.target.value)}
+                                placeholder="Ex.: Financeiro"
+                            />
                         </div>
 
                         <div className="ns-field">
                             <label className="ns-label">Email</label>
-                            <input type="email" className="ns-input" value={form.email} onChange={e => update('email', e.target.value)} placeholder="candidato@email.com" />
+                            <input
+                                type="email"
+                                className="ns-input"
+                                value={form.email}
+                                onChange={(event) => update('email', event.target.value)}
+                                placeholder="candidato@email.com"
+                            />
                         </div>
 
                         <div className="ns-field">
                             <label className="ns-label">Telefone</label>
-                            <input type="text" className="ns-input" value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="(11) 99999-9999" />
+                            <input
+                                type="text"
+                                className="ns-input"
+                                value={form.phone}
+                                onChange={(event) => update('phone', event.target.value)}
+                                placeholder="(11) 99999-9999"
+                            />
                         </div>
                     </div>
                 </div>
 
-                {/* Section 2: Social Media */}
                 <div className="ns-section">
                     <div className="ns-section__header">
-                        <span className="ns-section__icon">🌐</span>
+                        <span className="ns-section__icon">RS</span>
                         <h3>Redes Sociais</h3>
-                        <span className="ns-section__hint">Informe os perfis do candidato para análise digital</span>
+                        <span className="ns-section__hint">Informe os perfis do candidato para analise digital</span>
                     </div>
 
                     <div className="ns-grid ns-grid--2">
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">📸</span> Instagram</label>
+                            <label className="ns-label"><span className="ns-social-icon">IG</span> Instagram</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.instagram ? 'ns-input--error' : ''}`}
                                 value={form.instagram}
-                                onChange={e => update('instagram', e.target.value)}
+                                onChange={(event) => update('instagram', event.target.value)}
                                 placeholder="@usuario ou https://instagram.com/..."
                             />
                             {errors.instagram && <span className="ns-error">{errors.instagram}</span>}
                         </div>
 
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">📘</span> Facebook</label>
+                            <label className="ns-label"><span className="ns-social-icon">FB</span> Facebook</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.facebook ? 'ns-input--error' : ''}`}
                                 value={form.facebook}
-                                onChange={e => update('facebook', e.target.value)}
+                                onChange={(event) => update('facebook', event.target.value)}
                                 placeholder="https://facebook.com/..."
                             />
                             {errors.facebook && <span className="ns-error">{errors.facebook}</span>}
                         </div>
 
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">💼</span> LinkedIn</label>
+                            <label className="ns-label"><span className="ns-social-icon">IN</span> LinkedIn</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.linkedin ? 'ns-input--error' : ''}`}
                                 value={form.linkedin}
-                                onChange={e => update('linkedin', e.target.value)}
+                                onChange={(event) => update('linkedin', event.target.value)}
                                 placeholder="https://linkedin.com/in/..."
                             />
                             {errors.linkedin && <span className="ns-error">{errors.linkedin}</span>}
                         </div>
 
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">🎵</span> TikTok</label>
+                            <label className="ns-label"><span className="ns-social-icon">TT</span> TikTok</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.tiktok ? 'ns-input--error' : ''}`}
                                 value={form.tiktok}
-                                onChange={e => update('tiktok', e.target.value)}
+                                onChange={(event) => update('tiktok', event.target.value)}
                                 placeholder="@usuario ou https://tiktok.com/..."
                             />
                             {errors.tiktok && <span className="ns-error">{errors.tiktok}</span>}
                         </div>
 
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">🐦</span> Twitter / X</label>
+                            <label className="ns-label"><span className="ns-social-icon">X</span> Twitter / X</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.twitter ? 'ns-input--error' : ''}`}
                                 value={form.twitter}
-                                onChange={e => update('twitter', e.target.value)}
+                                onChange={(event) => update('twitter', event.target.value)}
                                 placeholder="@usuario ou https://x.com/..."
                             />
                             {errors.twitter && <span className="ns-error">{errors.twitter}</span>}
                         </div>
 
                         <div className="ns-field ns-field--social">
-                            <label className="ns-label"><span className="ns-social-icon">▶️</span> YouTube</label>
+                            <label className="ns-label"><span className="ns-social-icon">YT</span> YouTube</label>
                             <input
                                 type="text"
                                 className={`ns-input ${errors.youtube ? 'ns-input--error' : ''}`}
                                 value={form.youtube}
-                                onChange={e => update('youtube', e.target.value)}
+                                onChange={(event) => update('youtube', event.target.value)}
                                 placeholder="https://youtube.com/..."
                             />
                             {errors.youtube && <span className="ns-error">{errors.youtube}</span>}
                         </div>
                     </div>
 
-                    {/* Other social URLs */}
                     {form.otherSocialUrls.length > 0 && (
                         <div className="ns-other-socials">
-                            {form.otherSocialUrls.map((item, i) => (
-                                <div key={i} className="ns-other-social">
-                                    <span>🔗 {item.label}: {item.url}</span>
-                                    <button type="button" className="ns-other-social__remove" onClick={() => removeOtherSocial(i)}>✕</button>
+                            {form.otherSocialUrls.map((item, index) => (
+                                <div key={`${item.label}-${index}`} className="ns-other-social">
+                                    <span>Link {item.label}: {item.url}</span>
+                                    <button
+                                        type="button"
+                                        className="ns-other-social__remove"
+                                        onClick={() => removeOtherSocial(index)}
+                                    >
+                                        X
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -344,23 +479,38 @@ export default function NovaSolicitacaoPage() {
 
                     {showOther ? (
                         <div className="ns-add-other">
-                            <input type="text" className="ns-input ns-input--sm" value={otherLabel} onChange={e => setOtherLabel(e.target.value)} placeholder="Nome da rede (ex.: Kwai)" />
-                            <input type="text" className="ns-input ns-input--sm" value={otherUrl} onChange={e => setOtherUrl(e.target.value)} placeholder="URL ou @handle" />
-                            <button type="button" className="ns-btn ns-btn--sm ns-btn--primary" onClick={addOtherSocial}>Adicionar</button>
-                            <button type="button" className="ns-btn ns-btn--sm ns-btn--ghost" onClick={() => setShowOther(false)}>Cancelar</button>
+                            <input
+                                type="text"
+                                className="ns-input ns-input--sm"
+                                value={otherLabel}
+                                onChange={(event) => setOtherLabel(event.target.value)}
+                                placeholder="Nome da rede"
+                            />
+                            <input
+                                type="text"
+                                className="ns-input ns-input--sm"
+                                value={otherUrl}
+                                onChange={(event) => setOtherUrl(event.target.value)}
+                                placeholder="URL ou @handle"
+                            />
+                            <button type="button" className="ns-btn ns-btn--sm ns-btn--primary" onClick={addOtherSocial}>
+                                Adicionar
+                            </button>
+                            <button type="button" className="ns-btn ns-btn--sm ns-btn--ghost" onClick={() => setShowOther(false)}>
+                                Cancelar
+                            </button>
                         </div>
                     ) : (
                         <button type="button" className="ns-btn ns-btn--ghost ns-btn--add" onClick={() => setShowOther(true)}>
-                            ➕ Adicionar outra rede social
+                            Adicionar outra rede social
                         </button>
                     )}
                 </div>
 
-                {/* Section 3: Notes */}
                 <div className="ns-section">
                     <div className="ns-section__header">
-                        <span className="ns-section__icon">📝</span>
-                        <h3>Observações</h3>
+                        <span className="ns-section__icon">NT</span>
+                        <h3>Observacoes</h3>
                     </div>
 
                     <div className="ns-field">
@@ -368,8 +518,8 @@ export default function NovaSolicitacaoPage() {
                         <textarea
                             className="ns-textarea"
                             value={form.digitalProfileNotes}
-                            onChange={e => update('digitalProfileNotes', e.target.value)}
-                            placeholder="Informações adicionais para o analista (opcional)..."
+                            onChange={(event) => update('digitalProfileNotes', event.target.value)}
+                            placeholder="Informacoes adicionais para o analista (opcional)..."
                             maxLength={500}
                             rows={3}
                         />
@@ -391,19 +541,18 @@ export default function NovaSolicitacaoPage() {
                                 className={`ns-priority-btn ns-priority-btn--high ${form.priority === 'HIGH' ? 'ns-priority-btn--active' : ''}`}
                                 onClick={() => update('priority', 'HIGH')}
                             >
-                                🔴 Alta
+                                Alta
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="ns-actions">
                     <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate('/client/solicitacoes')}>
                         Cancelar
                     </button>
-                    <button type="submit" className="ns-btn ns-btn--primary" disabled={!isValid}>
-                        Enviar Solicitação
+                    <button type="submit" className="ns-btn ns-btn--primary" disabled={!canSubmit}>
+                        {submitting ? 'Enviando...' : 'Enviar Solicitacao'}
                     </button>
                 </div>
             </form>

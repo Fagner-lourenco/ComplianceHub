@@ -60,3 +60,12 @@
 .status-badge--gray .status-badge__dot {
     background: var(--gray-400);
 }
+
+.status-badge--red {
+    background: var(--red-50);
+    color: var(--red-700);
+}
+
+.status-badge--red .status-badge__dot {
+    background: var(--red-500);
+}

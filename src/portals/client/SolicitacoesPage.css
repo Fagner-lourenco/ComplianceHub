@@ -401,3 +401,35 @@
     font-size: .8125rem;
     color: var(--text-secondary);
 }
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .solicitacoes-page__header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .solicitacoes-page__cta {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-bar__search {
+        min-width: 0;
+        width: 100%;
+    }
+    
+    .filter-bar__select,
+    .filter-bar__toggle {
+        width: 100%;
+    }
+    
+    .case-detail__risk-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
