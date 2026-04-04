@@ -16,17 +16,26 @@ const CRIMINAL_AREAS = /penal|criminal/i;
 function findPersonRole(envolvidos, cpf) {
     if (!Array.isArray(envolvidos) || !cpf) return null;
     const cleanCpf = cpf.replace(/\D/g, '');
+    let anyEnvHasCpf = false;
     for (const env of envolvidos) {
         const envCpf = (env.cpf || '').replace(/\D/g, '');
-        if (envCpf && envCpf === cleanCpf) {
-            return {
-                tipo: env.tipo || null,
-                tipoNormalizado: env.tipo_normalizado || null,
-                polo: env.polo || null,
-            };
+        if (envCpf) {
+            anyEnvHasCpf = true;
+            if (envCpf === cleanCpf) {
+                return {
+                    tipo: env.tipo || null,
+                    tipoNormalizado: env.tipo_normalizado || null,
+                    polo: env.polo || null,
+                    hasDivergentCpf: false,
+                };
+            }
         }
     }
-    // Fallback: name match not implemented — CPF matching is sufficient
+    // No CPF matched: distinguish "no envolvido has CPF" (legitimate ambiguity)
+    // from "envolvidos have CPFs but none match" (confirmed different person)
+    if (anyEnvHasCpf) {
+        return { tipo: null, tipoNormalizado: null, polo: null, hasDivergentCpf: true };
+    }
     return null;
 }
 
@@ -39,6 +48,7 @@ function findPersonRole(envolvidos, cpf) {
 function normalizeEscavadorProcessos(result, cpf) {
     const { envolvido, items, totalPages } = result;
     const totalFromApi = envolvido?.quantidade_processos || items.length;
+    const cpfsComEsseNome = envolvido?.cpfs_com_esse_nome || 0;
 
     let criminalCount = 0;
     const processos = [];
@@ -54,6 +64,8 @@ function normalizeEscavadorProcessos(result, cpf) {
         // Find person's role in this process
         const envolvidos = fonte?.envolvidos || [];
         const role = findPersonRole(envolvidos, cpf);
+        const hasDivergentCpf = role?.hasDivergentCpf === true;
+        const hasExactCpfMatch = !!role && !hasDivergentCpf;
 
         processos.push({
             numeroCnj: item.numero_cnj || null,
@@ -71,6 +83,12 @@ function normalizeEscavadorProcessos(result, cpf) {
             segredoJustica: fonte?.segredo_justica || false,
             grau: fonte?.grau || null,
             grauFormatado: fonte?.grau_formatado || null,
+            processUf: item.estado_origem?.sigla || item.unidade_origem?.estado?.sigla || null,
+            processCity: item.unidade_origem?.cidade || null,
+            tipoMatch: item.tipo_match || null,
+            matchDocumentoPor: item.match_documento_por || null,
+            hasExactCpfMatch,
+            hasDivergentCpf,
         });
     }
 
@@ -104,6 +122,8 @@ function normalizeEscavadorProcessos(result, cpf) {
         escavadorCriminalFlag: hasCriminal ? 'POSITIVE' : 'NEGATIVE',
         escavadorCriminalCount: criminalCount,
         escavadorActiveCount: activeCount,
+        escavadorCpfsComEsseNome: cpfsComEsseNome,
+        escavadorHomonymFlag: cpfsComEsseNome > 1,
         escavadorProcessos: processos,
         escavadorNotes: notes,
         _source: {
@@ -112,6 +132,7 @@ function normalizeEscavadorProcessos(result, cpf) {
             totalProcessos: totalFromApi,
             loadedProcessos: processos.length,
             totalPages,
+            cpfsComEsseNome,
             hasCriminal,
             consultedAt: new Date().toISOString(),
         },

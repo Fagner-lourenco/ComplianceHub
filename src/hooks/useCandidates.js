@@ -33,7 +33,7 @@ export function useCandidates(overrideTenantId) {
     );
 
     useEffect(() => {
-        if (!user || waitingForClientTenant) {
+        if (!user || waitingForClientTenant || isClientRole(userProfile?.role)) {
             return undefined;
         }
 
@@ -62,7 +62,7 @@ export function useCandidates(overrideTenantId) {
             window.clearTimeout(timeoutId);
             unsubscribe();
         };
-    }, [scopeKey, tenantId, user, waitingForClientTenant]);
+    }, [scopeKey, tenantId, user, userProfile?.role, waitingForClientTenant]);
 
     if (!user) {
         return { candidates: [], loading: false, error: null };
@@ -70,6 +70,10 @@ export function useCandidates(overrideTenantId) {
 
     if (waitingForClientTenant) {
         return { candidates: [], loading: true, error: null };
+    }
+
+    if (isClientRole(userProfile?.role)) {
+        return { candidates: [], loading: false, error: null };
     }
 
     return {

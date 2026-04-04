@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../core/firebase/config';
 import { useAuth } from '../core/auth/useAuth';
+import { extractErrorMessage } from '../core/errorUtils';
 import './LoginPage.css';
 
 function getAuthErrorMessage(error) {
@@ -13,8 +14,12 @@ function getAuthErrorMessage(error) {
         return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
     case 'auth/network-request-failed':
         return 'Nao foi possivel falar com o Firebase agora. Verifique sua conexao.';
+    case 'auth/user-disabled':
+        return 'Esta conta foi desativada. Entre em contato com o administrador.';
+    case 'auth/invalid-email':
+        return 'Formato de email invalido.';
     default:
-        return error?.message || 'Erro ao autenticar';
+        return extractErrorMessage(error, 'Erro ao autenticar. Verifique suas credenciais e tente novamente.');
     }
 }
 

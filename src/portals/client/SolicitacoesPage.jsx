@@ -7,13 +7,14 @@ import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import { useAuth } from '../../core/auth/useAuth';
-import { getCasePublicResult, getEnabledPhases, getTenantSettings, logAuditEvent, savePublicReport, updateCase } from '../../core/firebase/firestoreService';
+import { callSubmitClientCorrection, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildCaseReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
-import { getCaseStats } from '../../data/mockData';
+import { getCaseStats } from '../../core/caseUtils';
 import { formatDate } from '../../core/formatDate';
 import { buildCaseReportHtml } from '../../core/reportBuilder';
+import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import './SolicitacoesPage.css';
 
 function getMacroProgress(caseData) {
@@ -28,8 +29,10 @@ export default function SolicitacoesPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, userProfile } = useAuth();
-    const { cases, error, loading } = useCases();
     const isDemoMode = !user || userProfile?.source === 'demo';
+    // Pass tenantId explicitly to ensure query is scoped to this client's tenant only
+    const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
+    const { cases, error, loading } = useCases(clientTenantId);
     const [selectedCase, setSelectedCase] = useState(null);
     const [publicResult, setPublicResult] = useState(null);
     const [publicResultLoading, setPublicResultLoading] = useState(false);
@@ -45,6 +48,16 @@ export default function SolicitacoesPage() {
     const [correctionForm, setCorrectionForm] = useState(null);
     const [correctionError, setCorrectionError] = useState(null);
     const [correctionSaving, setCorrectionSaving] = useState(false);
+    const now = new Date();
+    const currentDayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const currentMonthKey = currentDayKey.slice(0, 7);
+
+    const openLocalHtmlReport = (html) => {
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    };
 
     useEffect(() => {
         if (!userProfile?.tenantId) return;
@@ -120,13 +133,12 @@ export default function SolicitacoesPage() {
             if (isDemoMode) {
                 window.open(buildCaseReportPath(selectedCaseView, true), '_blank', 'noopener,noreferrer');
             } else {
-                const token = await savePublicReport(buildCaseReportHtml(selectedCaseView), { type: 'single', candidateName: selectedCaseView.candidateName, tenantId: selectedCaseView.tenantId });
-                window.open(buildCaseReportPath(selectedCaseView, false, token), '_blank', 'noopener,noreferrer');
+                openLocalHtmlReport(buildCaseReportHtml(selectedCaseView));
             }
             setReportStatus({ state: 'success', message: 'Relatorio aberto com sucesso.' });
         } catch (currentError) {
             console.error('Error generating report:', currentError);
-            setReportStatus({ state: 'error', message: 'Nao foi possivel preparar o relatorio agora.' });
+            setReportStatus({ state: 'error', message: extractErrorMessage(currentError, 'Nao foi possivel preparar o relatorio agora.') });
         }
     };
 
@@ -135,13 +147,17 @@ export default function SolicitacoesPage() {
         setCorrectionSaving(true);
         setCorrectionError(null);
         try {
-            const cpfClean = correctionForm.cpf.replace(/\D/g, '');
-            await updateCase(selectedCase.id, { status: 'PENDING', candidateName: correctionForm.candidateName, cpf: cpfClean, cpfMasked: `***.***.***-${cpfClean.slice(9)}`, socialProfiles: { ...selectedCase.socialProfiles, linkedin: correctionForm.linkedin, instagram: correctionForm.instagram } });
-            await logAuditEvent({ tenantId: selectedCase.tenantId || userProfile?.tenantId || null, userId: user.uid, userEmail: user.email, action: 'CASE_CORRECTED', target: selectedCase.id, detail: `Caso corrigido e reenviado: ${correctionForm.candidateName}` });
+            await callSubmitClientCorrection({
+                caseId: selectedCase.id,
+                candidateName: correctionForm.candidateName,
+                cpf: correctionForm.cpf,
+                linkedin: correctionForm.linkedin,
+                instagram: correctionForm.instagram,
+            });
             setSelectedCase(null);
         } catch (currentError) {
             console.error(currentError);
-            setCorrectionError('Nao foi possivel reenviar o caso agora.');
+            setCorrectionError(getUserFriendlyMessage(currentError, 'reenviar o caso'));
         } finally {
             setCorrectionSaving(false);
         }
@@ -153,6 +169,16 @@ export default function SolicitacoesPage() {
             content: (
                 <div className="case-detail">
                     {publicResultLoading && <p style={{ color: 'var(--text-secondary)', fontSize: '.8125rem' }}>Carregando resultado...</p>}
+                    {!publicResultLoading && selectedCase.status === 'DONE' && !selectedCaseView && (
+                        <div className="case-detail__section" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '.875rem' }}>
+                                ⏳ Resultado em processamento — disponível em breve.
+                            </p>
+                            <p style={{ color: 'var(--text-tertiary)', fontSize: '.75rem', marginTop: 6 }}>
+                                Entre em contato com seu gestor caso demore mais do esperado.
+                            </p>
+                        </div>
+                    )}
                     {selectedCaseView && (
                         <>
                             <div className="case-detail__risk-grid">
@@ -180,7 +206,53 @@ export default function SolicitacoesPage() {
                         {selectedCaseView?.sourceSummary && <p><strong>Origem dos dados:</strong> {selectedCaseView.sourceSummary}</p>}
                     </div>
                     {(selectedCaseView?.processHighlights || []).map((group) => <div key={group.title || group.area} className="case-detail__section"><h4>{group.title || group.area}</h4>{group.summary && <p>{group.summary}</p>}{(group.items || []).map((item) => <p key={item.processNumber || item.reference || item.classification} className="case-detail__finding"><strong>{item.processNumber || item.reference || item.classification}:</strong> {[item.court, item.classification, item.stage, item.status].filter(Boolean).join(' · ')}</p>)}</div>)}
-                    {selectedCase.status === 'CORRECTION_NEEDED' && <div className="case-detail__section"><h4>Correcao Solicitada</h4><p><strong>Motivo:</strong> {selectedCase.correctionReason || 'Revisar dados cadastrais e perfis digitais.'}</p>{!correctionForm ? <button className="btn-primary" style={{ fontSize: '.8125rem', marginTop: 8 }} onClick={() => setCorrectionForm({ candidateName: selectedCase.candidateName, cpf: selectedCase.cpf || '', linkedin: selectedCase.socialProfiles?.linkedin || '', instagram: selectedCase.socialProfiles?.instagram || '' })}>Corrigir e reenviar</button> : <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>{correctionError && <p style={{ color: 'var(--red-600)' }}>{correctionError}</p>}<input className="form-input" value={correctionForm.candidateName} onChange={(event) => setCorrectionForm((current) => ({ ...current, candidateName: event.target.value }))} placeholder="Nome" /><input className="form-input" value={correctionForm.cpf} onChange={(event) => setCorrectionForm((current) => ({ ...current, cpf: event.target.value }))} placeholder="CPF" /><input className="form-input" value={correctionForm.linkedin} onChange={(event) => setCorrectionForm((current) => ({ ...current, linkedin: event.target.value }))} placeholder="LinkedIn" /><input className="form-input" value={correctionForm.instagram} onChange={(event) => setCorrectionForm((current) => ({ ...current, instagram: event.target.value }))} placeholder="Instagram" /><div style={{ display: 'flex', gap: 8 }}><button type="button" className="btn-secondary" onClick={() => setCorrectionForm(null)}>Cancelar</button><button type="button" className="btn-primary" onClick={handleResubmit} disabled={correctionSaving}>{correctionSaving ? 'Reenviando...' : 'Reenviar'}</button></div></div>}</div>}
+                    {selectedCase.status === 'CORRECTION_NEEDED' && (
+                        <div className="case-detail__section case-detail__section--alert">
+                            <h4>Correção Solicitada</h4>
+                            <p style={{ color: 'var(--red-700)', marginBottom: 12 }}>
+                                <strong>Motivo:</strong> {selectedCase.correctionReason || 'Revisar dados cadastrais e perfis digitais.'}
+                            </p>
+                            {!correctionForm ? (
+                                <button
+                                    className="btn-primary"
+                                    style={{ fontSize: '.8125rem' }}
+                                    onClick={() => setCorrectionForm({ candidateName: selectedCase.candidateName, cpf: selectedCase.cpf || '', linkedin: selectedCase.socialProfiles?.linkedin || '', instagram: selectedCase.socialProfiles?.instagram || '' })}
+                                >
+                                    Corrigir e reenviar
+                                </button>
+                            ) : (
+                                <div className="correction-form">
+                                    {correctionError && (
+                                        <div className="correction-form__error">{correctionError}</div>
+                                    )}
+                                    <div className="correction-form__grid">
+                                        <div className="correction-form__field">
+                                            <label>Nome Completo</label>
+                                            <input className="correction-form__input" value={correctionForm.candidateName} onChange={(event) => setCorrectionForm((current) => ({ ...current, candidateName: event.target.value }))} placeholder="Ex: João da Silva" />
+                                        </div>
+                                        <div className="correction-form__field">
+                                            <label>CPF</label>
+                                            <input className="correction-form__input" value={correctionForm.cpf} onChange={(event) => setCorrectionForm((current) => ({ ...current, cpf: event.target.value }))} placeholder="000.000.000-00" />
+                                        </div>
+                                        <div className="correction-form__field">
+                                            <label>LinkedIn (URL ou @)</label>
+                                            <input className="correction-form__input" value={correctionForm.linkedin} onChange={(event) => setCorrectionForm((current) => ({ ...current, linkedin: event.target.value }))} placeholder="https://linkedin.com/in/..." />
+                                        </div>
+                                        <div className="correction-form__field">
+                                            <label>Instagram (URL ou @)</label>
+                                            <input className="correction-form__input" value={correctionForm.instagram} onChange={(event) => setCorrectionForm((current) => ({ ...current, instagram: event.target.value }))} placeholder="https://instagram.com/..." />
+                                        </div>
+                                    </div>
+                                    <div className="correction-form__actions">
+                                        <button type="button" className="btn-secondary" onClick={() => setCorrectionForm(null)}>Cancelar</button>
+                                        <button type="button" className="btn-primary" onClick={handleResubmit} disabled={correctionSaving}>
+                                            {correctionSaving ? 'Reenviando...' : 'Reenviar para o Analista'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             ),
         },
@@ -211,9 +283,9 @@ export default function SolicitacoesPage() {
         <div className="solicitacoes-page">
             <div className="solicitacoes-page__header"><h2 className="solicitacoes-page__title">Minhas Solicitacoes</h2><button className="solicitacoes-page__cta" onClick={() => navigate(buildClientPortalPath(location.pathname, 'nova-solicitacao'))}>Nova Solicitacao</button></div>
             <div className="solicitacoes-page__kpis"><KpiCard label="Casos enviados" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluidos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Correcao solicitada" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Nao recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
-            {(tenantLimits.dailyLimit || tenantLimits.monthlyLimit) && <div style={{ display: 'flex', gap: 16, fontSize: '.8125rem', color: 'var(--text-secondary)', marginBottom: 12 }}>{tenantLimits.dailyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Hoje: {cases.filter((item) => (item.createdAt || '').slice(0, 10) === new Date().toISOString().slice(0, 10)).length}/{tenantLimits.dailyLimit}</span>}{tenantLimits.monthlyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Mes: {cases.filter((item) => (item.createdAt || '').slice(0, 7) === new Date().toISOString().slice(0, 7)).length}/{tenantLimits.monthlyLimit}</span>}</div>}
+            {(tenantLimits.dailyLimit || tenantLimits.monthlyLimit) && <div style={{ display: 'flex', gap: 16, fontSize: '.8125rem', color: 'var(--text-secondary)', marginBottom: 12 }}>{tenantLimits.dailyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Hoje: {cases.filter((item) => (item.createdDateKey || (item.createdAt || '').slice(0, 10)) === currentDayKey).length}/{tenantLimits.dailyLimit}</span>}{tenantLimits.monthlyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Mes: {cases.filter((item) => (item.createdMonthKey || (item.createdAt || '').slice(0, 7)) === currentMonthKey).length}/{tenantLimits.monthlyLimit}</span>}</div>}
             <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em analise</option><option value="WAITING_INFO">Aguardando info</option><option value="CORRECTION_NEEDED">Correcao necessaria</option><option value="DONE">Concluido</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)}><option value="ALL">Todos os vereditos</option><option value="FIT">Apto</option><option value="ATTENTION">Atencao</option><option value="NOT_RECOMMENDED">Nao recomendado</option><option value="PENDING">Pendente</option></select><button className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)}>Heatmap</button></div></div>
-            <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && <tr><td colSpan={14} className="data-table__empty">Carregando solicitacoes...</td></tr>}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>Nao foi possivel carregar suas solicitacoes agora.</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon">📭</span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+            <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && <tr><td colSpan={14} className="data-table__empty">Carregando solicitacoes...</td></tr>}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon">📭</span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
         </div>

@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '../../../core/errorUtils';
 import './EnrichmentPipeline.css';
 
 const PROVIDERS = [
@@ -29,9 +30,25 @@ function getProviderStatus(caseData, provider) {
         return 'WAITING';
     }
     if (provider.key === 'ai') {
-        if (caseData.aiRawResponse || caseData.aiAnalysis) return 'DONE';
-        if (caseData.aiError) return 'FAILED';
-        if (caseData.autoClassifiedAt && !caseData.aiRawResponse && !caseData.aiAnalysis && !caseData.aiError) return 'WAITING';
+        const hasGeneralResult = caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured;
+        const hasHomonymResult = Boolean(caseData.aiHomonymStructured);
+        const hasGeneralError = Boolean(caseData.aiError);
+        const hasHomonymError = Boolean(caseData.aiHomonymError);
+        // BUG-7 fix: If homonym succeeded but general AI failed (or vice versa), show PARTIAL.
+        // Also check aiHomonymError for FAILED status.
+        if ((hasGeneralResult || hasHomonymResult) && (hasGeneralError || hasHomonymError)) return 'PARTIAL';
+        if (hasGeneralResult || hasHomonymResult) return 'DONE';
+        if (hasGeneralError || hasHomonymError) return 'FAILED';
+        if (
+            caseData.aiHomonymTriggered
+            && !hasHomonymResult
+            && !hasGeneralResult
+            && !hasGeneralError
+            && !hasHomonymError
+        ) {
+            return 'RUNNING';
+        }
+        if (caseData.autoClassifiedAt && !hasGeneralResult && !hasGeneralError && !hasHomonymError) return 'WAITING';
         return 'PENDING';
     }
     const status = caseData[provider.statusField] || 'PENDING';
@@ -63,8 +80,11 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
                 {PROVIDERS.map((provider) => {
                     const status = getProviderStatus(caseData, provider);
                     const cfg = STATE_CONFIG[status] || STATE_CONFIG.PENDING;
-                    const error = provider.errorField ? caseData[provider.errorField] : null;
-                    const cost = provider.costField ? caseData[provider.costField] : null;
+                    const rawError = provider.errorField ? caseData[provider.errorField] : null;
+                    const error = rawError ? extractErrorMessage(rawError, 'Erro no provedor.') : null;
+                    const cost = provider.costField
+                        ? (caseData[provider.costField] || 0) + (provider.key === 'ai' ? (caseData.aiHomonymCostUsd || 0) : 0)
+                        : null;
                     const canRetry = canRetryProvider(provider, status, error, onRetryPhase);
                     const isRetrying = retryingPhase === provider.key;
 

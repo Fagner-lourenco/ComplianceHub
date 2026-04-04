@@ -5,21 +5,25 @@ import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import EnrichmentPipeline from '../../ui/components/EnrichmentPipeline/EnrichmentPipeline';
+import Modal from '../../ui/components/Modal/Modal';
 import { useAuth } from '../../core/auth/useAuth';
 import {
     DEFAULT_ANALYSIS_CONFIG,
+    callConcludeCaseByAnalyst,
+    callReturnCaseToClient,
     callRerunEnrichmentPhase,
+    callSaveCaseDraftByAnalyst,
+    callSetAiDecisionByAnalyst,
     getEnabledPhases,
     getTenantSettings,
-    logAuditEvent,
+    savePublicReport,
     subscribeToCaseDoc,
-    updateCase,
     callRerunAiAnalysis,
 } from '../../core/firebase/firestoreService';
-import { deleteField } from 'firebase/firestore';
 import { MOCK_CASE_DETAILS, MOCK_CASES } from '../../data/mockData';
 import { buildCaseReportHtml } from '../../core/reportBuilder';
-import { savePublicReport } from '../../core/firebase/firestoreService';
+import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
+import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -30,7 +34,15 @@ import './CasoPage.css';
 
 const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
-const CRIMINAL_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
+const CRIMINAL_OPTIONS = [
+    'NEGATIVE',
+    'NEGATIVE_PARTIAL',
+    'POSITIVE',
+    'INCONCLUSIVE',
+    'INCONCLUSIVE_HOMONYM',
+    'INCONCLUSIVE_LOW_COVERAGE',
+    'NOT_FOUND',
+];
 const LABOR_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const WARRANT_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH'];
@@ -47,6 +59,63 @@ const CORRECTION_REASONS = [
     'Dados incompletos',
     'Outro',
 ];
+
+function getAiHomonymDecisionLabel(value) {
+    return {
+        LIKELY_MATCH: 'Provavel mesmo individuo',
+        LIKELY_HOMONYM: 'Provavel homonimo',
+        UNCERTAIN: 'Inconclusivo',
+    }[value] || (value || 'N/A');
+}
+
+function getAiHomonymActionLabel(value) {
+    return {
+        KEEP: 'Manter achado',
+        DISCARD: 'Descartar achado',
+        MANUAL_REVIEW: 'Revisao manual',
+    }[value] || (value || 'N/A');
+}
+
+function getAiHomonymRiskLabel(value) {
+    return {
+        HIGH: 'Alto',
+        MEDIUM: 'Medio',
+        LOW: 'Baixo',
+        NONE: 'Nenhum',
+    }[value] || (value || 'N/A');
+}
+
+function getCoverageLabel(value) {
+    return {
+        HIGH_COVERAGE: 'Cobertura alta',
+        PARTIAL_COVERAGE: 'Cobertura parcial',
+        LOW_COVERAGE: 'Cobertura reduzida',
+    }[value] || (value || 'N/A');
+}
+
+function getEvidenceQualityLabel(value) {
+    return {
+        HARD_FACT: 'Fato duro confirmado',
+        MIXED_STRONG_AND_WEAK: 'Fato duro com ruido por nome',
+        WEAK_NAME_ONLY: 'Somente evidencia fraca',
+        LOW_COVERAGE_ONLY: 'Cobertura insuficiente',
+        NEGATIVE_WITH_PARTIAL_COVERAGE: 'Negativo com cobertura parcial',
+        CONFIRMED_NEGATIVE: 'Negativo com boa cobertura',
+        LOW_RISK_ROLE_ONLY: 'Somente papel de baixo risco',
+        NO_PROVIDER_RESPONSE: 'Sem resposta aproveitavel',
+    }[value] || (value || 'N/A');
+}
+
+function getNegativePartialSafetyNetReasonLabel(value) {
+    return {
+        LOW_COVERAGE: 'Cobertura reduzida nas fontes principais.',
+        HIGH_PROVIDER_DIVERGENCE: 'Alta divergencia entre os providers consultados.',
+        JUDIT_ZERO_PROCESS: 'A Judit nao retornou processos aproveitaveis.',
+        NAME_SEARCH_SKIPPED_HOMONYMS: 'A busca por nome foi evitada por risco alto de homonimos.',
+        NAME_SEARCH_ONLY_RESULT: 'Os achados da Judit dependeram de busca por nome.',
+        MANUAL_REVIEW_RECOMMENDED: 'A classificacao ja recomenda revisao manual.',
+    }[value] || (value || 'N/A');
+}
 
 function createInitialForm(caseData) {
     return {
@@ -77,8 +146,11 @@ function createInitialForm(caseData) {
 function calculateRisk(form, enabledPhases) {
     const scores = {
         NEGATIVE: 0,
+        NEGATIVE_PARTIAL: 18,
         NOT_FOUND: 5,
         INCONCLUSIVE: 40,
+        INCONCLUSIVE_HOMONYM: 45,
+        INCONCLUSIVE_LOW_COVERAGE: 38,
         POSITIVE: 90,
         LOW: 0,
         UNKNOWN: 20,
@@ -109,6 +181,9 @@ function calculateRisk(form, enabledPhases) {
 
     const yellowSignals = [
         ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE',
+        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_HOMONYM',
+        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE',
+        ep.includes('criminal') && form.criminalFlag === 'NEGATIVE_PARTIAL',
         ep.includes('labor') && form.laborFlag === 'INCONCLUSIVE',
         ep.includes('warrant') && form.warrantFlag === 'INCONCLUSIVE',
         ep.includes('osint') && form.osintLevel === 'MEDIUM',
@@ -183,7 +258,10 @@ export default function CasoPage() {
         }
         if (Object.keys(payload).length === 0) return;
         try {
-            await updateCase(caseData.id, { ...payload, draftSavedAt: new Date().toISOString() });
+            await callSaveCaseDraftByAnalyst({
+                caseId: caseData.id,
+                payload,
+            });
             dirtyFieldsRef.current = new Set();
         } catch (err) {
             console.warn('Auto-save draft failed:', err.message);
@@ -202,7 +280,7 @@ export default function CasoPage() {
                 await callRerunEnrichmentPhase(caseData.id, phase);
             }
         } catch (err) {
-            setSaveError(err.message || 'Erro ao reexecutar fase.');
+            setSaveError(extractErrorMessage(err, 'Erro ao reexecutar fase.'));
         } finally {
             setRetryingPhase(null);
         }
@@ -226,7 +304,7 @@ export default function CasoPage() {
         const unsubscribe = subscribeToCaseDoc(caseId, (nextCase, error) => {
             if (error) {
                 console.error('Error subscribing to case:', error);
-                setCaseError('Nao foi possivel carregar este caso agora.');
+                setCaseError(extractErrorMessage(error, 'Nao foi possivel carregar este caso agora.'));
                 setLoadingCase(false);
                 return;
             }
@@ -346,11 +424,28 @@ export default function CasoPage() {
     ].filter(Boolean);
     const allOk = checklist.every((item) => item.ok);
     const detail = isDemoMode && caseData ? MOCK_CASE_DETAILS[caseData.id] : null;
+    const aiHomonymStructured = caseData?.aiHomonymStructured || null;
+    const aiHomonymVisible = Boolean(caseData?.aiHomonymTriggered || aiHomonymStructured || caseData?.aiHomonymError);
+    const aiHomonymHardFacts = useMemo(() => {
+        if (!caseData) return [];
+        const facts = [];
+        if ((caseData.juditActiveWarrantCount || 0) > 0) facts.push('Mandado ativo encontrado na Judit');
+        if (caseData.juditExecutionFlag === 'POSITIVE') facts.push('Execução penal positiva');
+        if (caseData.juditRoleSummary?.some((role) => role?.hasExactCpfMatch)) facts.push('CPF exato encontrado em parte da Judit');
+        if (caseData.escavadorProcessos?.some((processo) => processo?.hasExactCpfMatch)) facts.push('CPF exato encontrado em processo do Escavador');
+        return facts;
+    }, [caseData]);
+    const aiHomonymDivergesFromHardFacts = Boolean(
+        aiHomonymStructured &&
+        (aiHomonymStructured.decision === 'LIKELY_HOMONYM' || aiHomonymStructured.recommendedAction === 'DISCARD') &&
+        aiHomonymHardFacts.length > 0
+    );
 
     // Enrichment helpers
-    const isEnriched = caseData?.enrichmentStatus === 'DONE' || caseData?.enrichmentStatus === 'PARTIAL';
-    const enrichmentRunning = caseData?.enrichmentStatus === 'RUNNING';
-    const enrichmentBlocked = caseData?.enrichmentStatus === 'BLOCKED';
+    const overallEnrichmentStatus = getOverallEnrichmentStatus(caseData);
+    const isEnriched = overallEnrichmentStatus === 'DONE' || overallEnrichmentStatus === 'PARTIAL';
+    const enrichmentRunning = overallEnrichmentStatus === 'RUNNING';
+    const enrichmentBlocked = overallEnrichmentStatus === 'BLOCKED';
     const enrichedPhase = (phase) => caseData?.enrichmentSources?.[phase] && !caseData.enrichmentSources[phase].error;
 
     const ApiBadge = ({ field }) => {
@@ -387,26 +482,10 @@ export default function CasoPage() {
 
         setReturning(true);
         try {
-            const correction = {
+            await callReturnCaseToClient({
+                caseId: caseData.id,
                 reason: returnReason,
                 notes: returnNotes,
-                requestedAt: new Date().toISOString(),
-                requestedBy: user.email,
-            };
-            await updateCase(caseData.id, {
-                status: 'CORRECTION_NEEDED',
-                correctionReason: returnReason,
-                correctionNotes: returnNotes,
-                correctionRequestedAt: correction.requestedAt,
-                correctionRequestedBy: user.email,
-            });
-            await logAuditEvent({
-                tenantId: caseData.tenantId || null,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'CASE_RETURNED',
-                target: caseData.id,
-                detail: `Caso devolvido: ${returnReason}`,
             });
             setCaseData((prev) => ({ ...prev, status: 'CORRECTION_NEEDED', correctionReason: returnReason, correctionNotes: returnNotes }));
             setShowReturnModal(false);
@@ -414,7 +493,7 @@ export default function CasoPage() {
             setReturnNotes('');
         } catch (err) {
             console.error('Error returning case:', err);
-            setReturnError('Nao foi possivel devolver o caso agora.');
+            setReturnError(getUserFriendlyMessage(err, 'devolver o caso'));
         } finally {
             setReturning(false);
         }
@@ -442,8 +521,9 @@ export default function CasoPage() {
         setSaving(true);
 
         try {
-            await updateCase(caseData.id, {
-                status: 'DONE',
+            await callConcludeCaseByAnalyst({
+                caseId: caseData.id,
+                payload: {
                 assigneeId: caseData.assigneeId || user.uid,
                 criminalFlag: form.criminalFlag,
                 criminalSeverity: form.criminalSeverity || null,
@@ -469,10 +549,6 @@ export default function CasoPage() {
                 riskLevel: risk.riskLevel,
                 riskScore: risk.riskScore,
                 enabledPhases: caseData.enabledPhases || enabledPhases,
-                correctionReason: deleteField(),
-                correctionNotes: deleteField(),
-                correctionRequestedAt: deleteField(),
-                correctionRequestedBy: deleteField(),
                 hasNotes: Boolean(
                     form.criminalNotes
                     || form.laborNotes
@@ -483,15 +559,7 @@ export default function CasoPage() {
                     || form.conflictNotes
                     || form.analystComment
                 ),
-            });
-
-            await logAuditEvent({
-                tenantId: caseData.tenantId || null,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'CASE_CONCLUDED',
-                target: caseData.id,
-                detail: `Caso concluido para ${caseData.candidateName}`,
+                },
             });
 
             setCaseData((currentCase) => ({
@@ -506,7 +574,7 @@ export default function CasoPage() {
             setConcluded(true);
         } catch (error) {
             console.error('Error concluding case:', error);
-            setSaveError('Nao foi possivel concluir o caso agora.');
+            setSaveError(getUserFriendlyMessage(error, 'concluir o caso'));
         } finally {
             setSaving(false);
         }
@@ -580,8 +648,8 @@ export default function CasoPage() {
                             try {
                                 const token = await savePublicReport(html, { type: 'single', candidateName: caseData.candidateName || '', tenantId: caseData.tenantId || '' });
                                 window.open(`/r/${token}`, '_blank');
-                            } catch {
-                                setSaveError('Erro ao gerar link do relatório.');
+                            } catch (err) {
+                                setSaveError(extractErrorMessage(err, 'Erro ao gerar link do relatorio.'));
                             }
                         }}>🖨️ Relatório</button>
                     )}
@@ -611,18 +679,18 @@ export default function CasoPage() {
                 ))}
             </div>
 
-            {(caseData.juditEnrichmentStatus === 'RUNNING' || caseData.enrichmentStatus === 'RUNNING') && (
+            {overallEnrichmentStatus === 'RUNNING' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--running">
                     <span className="caso-enrichment-spinner" />
                     Enriquecimento automatico em andamento... Os campos serao preenchidos automaticamente.
                 </div>
             )}
-            {(caseData.juditEnrichmentStatus === 'DONE' || caseData.enrichmentStatus === 'DONE') && (
+            {overallEnrichmentStatus === 'DONE' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--done">
                     Enriquecimento concluido. Revise os campos preenchidos automaticamente (marcados com <span className="caso-api-badge caso-api-badge--inline">via API</span>).
                 </div>
             )}
-            {(caseData.juditEnrichmentStatus === 'PARTIAL' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'PARTIAL')) && (
+            {overallEnrichmentStatus === 'PARTIAL' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--partial">
                     {Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0
                         ? `Enriquecimento parcial. A Judit ainda esta processando ${formatPendingJuditPhases(caseData.juditPendingAsyncPhases)} em modo assincrono e os resultados serao incorporados automaticamente.`
@@ -630,13 +698,13 @@ export default function CasoPage() {
                     {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({caseData.juditError || caseData.enrichmentError})</span>}
                 </div>
             )}
-            {(caseData.juditEnrichmentStatus === 'FAILED' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'FAILED')) && (
+            {overallEnrichmentStatus === 'FAILED' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--failed">
                     Falha no enriquecimento automatico. Preencha os campos manualmente.
                     {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({caseData.juditError || caseData.enrichmentError})</span>}
                 </div>
             )}
-            {(caseData.juditEnrichmentStatus === 'BLOCKED' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'BLOCKED')) && (
+            {overallEnrichmentStatus === 'BLOCKED' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--blocked">
                     Gate de identidade: enriquecimento bloqueado.
                     {(caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason) && (
@@ -873,6 +941,149 @@ export default function CasoPage() {
                             );
                         })()}
 
+                        {(caseData.coverageLevel || caseData.criminalEvidenceQuality || caseData.coverageNotes?.length > 0 || caseData.ambiguityNotes?.length > 0) && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <div className="caso-section-header">
+                                    <h4>Leitura de Cobertura e Evidencia</h4>
+                                    {caseData.reviewRecommended && <span className="caso-section-header__note">Revisao manual recomendada</span>}
+                                </div>
+                                <div className="ai-structured-card">
+                                    <div className="ai-structured-card__chips">
+                                        {caseData.coverageLevel && (
+                                            <span className="ai-structured-card__chip">
+                                                Cobertura: <RiskChip value={caseData.coverageLevel} size="sm" />
+                                            </span>
+                                        )}
+                                        {caseData.providerDivergence && caseData.providerDivergence !== 'NONE' && (
+                                            <span className="ai-structured-card__chip">Divergencia: {caseData.providerDivergence}</span>
+                                        )}
+                                        {caseData.criminalEvidenceQuality && (
+                                            <span className="ai-structured-card__chip">
+                                                Evidencia criminal: {getEvidenceQualityLabel(caseData.criminalEvidenceQuality)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {caseData.coverageNotes?.length > 0 && (
+                                        <div className="ai-structured-card__section ai-structured-card__section--muted">
+                                            <strong>Notas de cobertura</strong>
+                                            <ul>{caseData.coverageNotes.map((item, i) => <li key={`coverage-${i}`}>{item}</li>)}</ul>
+                                        </div>
+                                    )}
+                                    {caseData.ambiguityNotes?.length > 0 && (
+                                        <div className="ai-structured-card__section">
+                                            <strong>Achados ambiguos</strong>
+                                            <ul>{caseData.ambiguityNotes.map((item, i) => <li key={`ambiguity-${i}`}>{item}</li>)}</ul>
+                                        </div>
+                                    )}
+                                    {(caseData.negativePartialSafetyNetTriggered || caseData.negativePartialSafetyNetEligible) && (
+                                        <div className={`ai-structured-card__section ${caseData.negativePartialSafetyNetTriggered ? 'ai-structured-card__section--alert' : 'ai-structured-card__section--muted'}`}>
+                                            <strong>Safety net de cobertura parcial</strong>
+                                            <p>
+                                                {caseData.negativePartialSafetyNetTriggered
+                                                    ? 'Validacao adicional acionada automaticamente para revisar este negativo parcial antes da conclusao.'
+                                                    : 'Caso elegivel para validacao adicional se a operacao decidir aprofundar este negativo parcial.'}
+                                            </p>
+                                            {caseData.negativePartialSafetyNetAction && caseData.negativePartialSafetyNetAction !== 'NONE' && (
+                                                <p>Acao prevista: {caseData.negativePartialSafetyNetAction === 'RUN_ESCAVADOR' ? 'Rodar Escavador' : caseData.negativePartialSafetyNetAction}</p>
+                                            )}
+                                            {caseData.negativePartialSafetyNetReasons?.length > 0 && (
+                                                <ul>{caseData.negativePartialSafetyNetReasons.map((item, i) => <li key={`safety-${i}`}>{getNegativePartialSafetyNetReasonLabel(item)}</li>)}</ul>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {aiHomonymVisible && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <div className="caso-section-header">
+                                    <h4>
+                                        Analise de Homonimos por IA <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
+                                        <span className="caso-api-badge caso-api-badge--purple" style={{ marginLeft: 4 }}>consultiva</span>
+                                        {caseData.aiHomonymStructuredOk && <span className="caso-api-badge caso-api-badge--green" style={{ marginLeft: 4 }}>JSON ok</span>}
+                                        {caseData.aiHomonymFromCache && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--gray-100)', color: 'var(--gray-600)' }}>Cache</span>}
+                                    </h4>
+                                    <span className="caso-section-header__note">Avalia apenas evidencia ambigua; fatos duros prevalecem</span>
+                                </div>
+
+                                {aiHomonymStructured && caseData.aiHomonymStructuredOk ? (
+                                    <div className="ai-structured-card ai-structured-card--homonym">
+                                        <div className="ai-structured-card__chips">
+                                            <span className="ai-structured-card__chip">Decisao: {getAiHomonymDecisionLabel(aiHomonymStructured.decision)}</span>
+                                            {aiHomonymStructured.confidence && (
+                                                <span className="ai-structured-card__chip">
+                                                    Confianca: <RiskChip value={aiHomonymStructured.confidence} size="sm" />
+                                                </span>
+                                            )}
+                                            <span className="ai-structured-card__chip">Risco de homonimo: {getAiHomonymRiskLabel(aiHomonymStructured.homonymRisk)}</span>
+                                            <span className="ai-structured-card__chip">Acao sugerida: {getAiHomonymActionLabel(aiHomonymStructured.recommendedAction)}</span>
+                                        </div>
+
+                                        {aiHomonymStructured.justification && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Justificativa</strong>
+                                                <p>{aiHomonymStructured.justification}</p>
+                                            </div>
+                                        )}
+                                        {aiHomonymStructured.evidenceFor?.length > 0 && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Evidencias a favor do vinculo</strong>
+                                                <ul>{aiHomonymStructured.evidenceFor.map((item, i) => <li key={`for-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
+                                        {aiHomonymStructured.evidenceAgainst?.length > 0 && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Evidencias contra o vinculo</strong>
+                                                <ul>{aiHomonymStructured.evidenceAgainst.map((item, i) => <li key={`against-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
+                                        {aiHomonymStructured.unknowns?.length > 0 && (
+                                            <div className="ai-structured-card__section ai-structured-card__section--muted">
+                                                <strong>Incertezas</strong>
+                                                <ul>{aiHomonymStructured.unknowns.map((item, i) => <li key={`unknown-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
+                                        {aiHomonymStructured.processAssessments?.length > 0 && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Leitura por processo</strong>
+                                                <div className="ai-homonym-process-list">
+                                                    {aiHomonymStructured.processAssessments.map((item, i) => (
+                                                        <div key={`assessment-${i}`} className="ai-homonym-process-item">
+                                                            <div className="ai-homonym-process-item__head">
+                                                                <span className="ai-homonym-process-item__cnj">{item.cnj || 'Sem CNJ'}</span>
+                                                                <span className="ai-homonym-process-item__decision">{getAiHomonymDecisionLabel(item.decision)}</span>
+                                                            </div>
+                                                            <p>{item.reason}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {aiHomonymDivergesFromHardFacts && (
+                                            <div className="ai-structured-card__section ai-structured-card__section--alert">
+                                                <strong>Atencao</strong>
+                                                <p>A IA sugere homonimia ou descarte, mas existem fatos duros confirmados no caso.</p>
+                                                <ul>{aiHomonymHardFacts.map((fact, i) => <li key={`fact-${i}`}>{fact}</li>)}</ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.5, background: 'var(--gray-50)', padding: 12, borderRadius: 8, border: '1px solid var(--border-light)', maxHeight: 260, overflow: 'auto' }}>{caseData.aiHomonymRawResponse || 'Analise especializada nao retornou JSON estruturado.'}</pre>
+                                )}
+
+                                {caseData.aiHomonymCostUsd != null && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
+                                        Custo IA homonimos: ${caseData.aiHomonymCostUsd.toFixed(4)} USD
+                                        {caseData.aiHomonymTokens && ` (${caseData.aiHomonymTokens.input} in / ${caseData.aiHomonymTokens.output} out tokens)`}
+                                    </p>
+                                )}
+                                {caseData.aiHomonymError && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro IA homonimos: {caseData.aiHomonymError}</p>
+                                )}
+                            </div>
+                        )}
+
                         {(caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured) && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
@@ -906,6 +1117,18 @@ export default function CasoPage() {
                                                 <ul>{caseData.aiStructured.inconsistencias.map((item, i) => <li key={i}>{item}</li>)}</ul>
                                             </div>
                                         )}
+                                        {caseData.aiStructured.evidencias?.length > 0 && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Evidencias utilizadas</strong>
+                                                <ul>{caseData.aiStructured.evidencias.map((item, i) => <li key={`e-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
+                                        {caseData.aiStructured.evidenciasAmbiguas?.length > 0 && (
+                                            <div className="ai-structured-card__section ai-structured-card__section--muted">
+                                                <strong>Evidencias ambiguas</strong>
+                                                <ul>{caseData.aiStructured.evidenciasAmbiguas.map((item, i) => <li key={`ea-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
                                         <div className="ai-structured-card__chips">
                                             {caseData.aiStructured.riscoHomonimo && (
                                                 <span className="ai-structured-card__chip">
@@ -915,6 +1138,16 @@ export default function CasoPage() {
                                             {caseData.aiStructured.confianca && (
                                                 <span className="ai-structured-card__chip">
                                                     Confiança: <RiskChip value={caseData.aiStructured.confianca} size="sm" />
+                                                </span>
+                                            )}
+                                            {caseData.aiStructured.cobertura && (
+                                                <span className="ai-structured-card__chip">
+                                                    Cobertura: <RiskChip value={caseData.aiStructured.cobertura} size="sm" />
+                                                </span>
+                                            )}
+                                            {typeof caseData.aiStructured.revisaoManualSugerida === 'boolean' && (
+                                                <span className="ai-structured-card__chip">
+                                                    Revisao manual: {caseData.aiStructured.revisaoManualSugerida ? 'Sim' : 'Nao'}
                                                 </span>
                                             )}
                                         </div>
@@ -933,6 +1166,12 @@ export default function CasoPage() {
                                                 <p>{caseData.aiStructured.justificativa}</p>
                                             </div>
                                         )}
+                                        {caseData.aiStructured.incertezas?.length > 0 && (
+                                            <div className="ai-structured-card__section ai-structured-card__section--muted">
+                                                <strong>Incertezas</strong>
+                                                <ul>{caseData.aiStructured.incertezas.map((item, i) => <li key={`u-${i}`}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
                                         {caseData.aiStructured.alertas?.length > 0 && (
                                             <div className="ai-structured-card__section ai-structured-card__section--alert">
                                                 <strong>🚨 Alertas</strong>
@@ -948,17 +1187,17 @@ export default function CasoPage() {
                                                         ...f,
                                                         ...(caseData.aiStructured.sugestaoVeredito && { finalVerdict: caseData.aiStructured.sugestaoVeredito }),
                                                     }));
-                                                    updateCase(caseData.id, { aiDecision: 'ACCEPTED' }).catch(() => {});
+                                                    callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'ACCEPTED' }).catch(() => {});
                                                 }}>✓ Aceitar sugestão</button>
                                                 <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
                                                     setForm(f => ({
                                                         ...f,
                                                         ...(caseData.aiStructured.sugestaoVeredito && { finalVerdict: caseData.aiStructured.sugestaoVeredito }),
                                                     }));
-                                                    updateCase(caseData.id, { aiDecision: 'ADJUSTED' }).catch(() => {});
+                                                    callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'ADJUSTED' }).catch(() => {});
                                                 }}>✏️ Ajustar</button>
                                                 <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
-                                                    updateCase(caseData.id, { aiDecision: 'IGNORED' }).catch(() => {});
+                                                    callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'IGNORED' }).catch(() => {});
                                                 }}>Ignorar</button>
                                             </div>
                                         )}
@@ -976,7 +1215,7 @@ export default function CasoPage() {
                                     </p>
                                 )}
                                 {caseData.aiError && (
-                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro IA: {caseData.aiError}</p>
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro IA: {extractErrorMessage(caseData.aiError, 'Falha na análise de IA.')}</p>
                                 )}
                             </div>
                         )}
@@ -1193,13 +1432,20 @@ export default function CasoPage() {
                 )}
 
                 {showReturnModal && (
-                    <div className="modal-overlay">
-                        <div className="modal-content" style={{ maxWidth: 480 }}>
-                            <div className="modal-header">
-                                <h3>Devolver ao cliente</h3>
-                                <button className="modal-close" onClick={() => setShowReturnModal(false)} aria-label="Fechar">X</button>
-                            </div>
-                            <div className="modal-body">
+                    <Modal
+                        open={showReturnModal}
+                        onClose={() => setShowReturnModal(false)}
+                        title="Devolver ao cliente"
+                        maxWidth={480}
+                        footer={(
+                            <>
+                                <button type="button" className="btn-secondary" onClick={() => setShowReturnModal(false)}>Cancelar</button>
+                                <button type="button" className="btn-primary" disabled={!returnReason || returning} onClick={handleReturn}>
+                                    {returning ? 'Devolvendo...' : 'Devolver caso'}
+                                </button>
+                            </>
+                        )}
+                    >
                                 <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
                                     O caso sera devolvido ao cliente para correcao dos dados. As analises ja preenchidas serao mantidas.
                                 </p>
@@ -1225,15 +1471,7 @@ export default function CasoPage() {
                                         placeholder="Descreva o que precisa ser corrigido..."
                                     />
                                 </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-secondary" onClick={() => setShowReturnModal(false)}>Cancelar</button>
-                                <button type="button" className="btn-primary" disabled={!returnReason || returning} onClick={handleReturn}>
-                                    {returning ? 'Devolvendo...' : 'Devolver caso'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    </Modal>
                 )}
 
                 {currentStepKey === 'criminal' && (

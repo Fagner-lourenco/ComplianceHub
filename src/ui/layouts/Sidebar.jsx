@@ -41,6 +41,7 @@ export default function Sidebar({ isOpen, onClose }) {
     const displayEmail = userProfile?.email || 'Email nao informado';
     const displayRole = currentRole ? formatRoleLabel(currentRole) : 'Permissoes em sincronizacao';
     const contextLabel = isOpsPortal ? 'Contexto do painel' : 'Franquia vinculada';
+    const displayTenantLabel = isOpsPortal ? selectedTenantLabel : (userProfile?.tenantName || 'Nao vinculada');
 
     const handleLogout = async () => {
         try {
@@ -76,8 +77,8 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className="sidebar__footer">
                 <div className="sidebar__context">
                     <div className="sidebar__context-label">{contextLabel}</div>
-                    <div className="sidebar__context-value" title={selectedTenantLabel}>
-                        {selectedTenantLabel}
+                    <div className="sidebar__context-value" title={displayTenantLabel}>
+                        {displayTenantLabel}
                     </div>
                 </div>
 

@@ -4,13 +4,14 @@ import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import {
     ANALYSIS_PHASE_LABELS,
-    createClientUser,
+    callCreateOpsClientUser,
+    callUpdateTenantSettingsByAnalyst,
     DEFAULT_ANALYSIS_CONFIG,
     fetchClients,
     getTenantSettings,
-    logAuditEvent,
-    updateTenantSettings,
 } from '../../core/firebase/firestoreService';
+import { extractErrorMessage } from '../../core/errorUtils';
+import Modal from '../../ui/components/Modal/Modal';
 import './ClientesPage.css';
 
 function generatePassword() {
@@ -42,6 +43,7 @@ export default function ClientesPage() {
     const [configLimits, setConfigLimits] = useState({ dailyLimit: '', monthlyLimit: '' });
     const [configEnrichment, setConfigEnrichment] = useState({ enabled: false, phases: { identity: true, criminal: true, warrant: true, labor: true }, escalation: { enabled: true, triggers: ['criminal', 'warrant', 'highProcessCount'], processCountThreshold: 5 }, filters: { uf: '' }, gate: { minNameSimilarity: 0.7 }, ai: { enabled: false }, escavador: { enabled: false, phases: { processos: true }, filters: { incluirHomonimos: true } }, judit: { enabled: true, phases: { entity: true, lawsuits: true, warrant: true, execution: true }, filters: { useAsync: false } } });
     const [configSaving, setConfigSaving] = useState(false);
+    const [configError, setConfigError] = useState(null);
     const [tenantConfigs, setTenantConfigs] = useState({});
 
     useEffect(() => {
@@ -71,7 +73,7 @@ export default function ClientesPage() {
         } catch (loadError) {
             console.error('Error fetching clients:', loadError);
             setClients([]);
-            setLoadError('Nao foi possivel carregar a lista de clientes agora. Tente novamente em alguns instantes.');
+            setLoadError(extractErrorMessage(loadError, 'Nao foi possivel carregar a lista de clientes agora. Tente novamente em alguns instantes.'));
         } finally {
             setLoading(false);
         }
@@ -132,7 +134,7 @@ export default function ClientesPage() {
         try {
             const timeoutMs = 15000;
             const result = await Promise.race([
-                createClientUser({
+                callCreateOpsClientUser({
                     email: form.email,
                     password: tempPassword,
                     displayName: form.displayName,
@@ -142,15 +144,6 @@ export default function ClientesPage() {
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout: Firebase nao respondeu em 15 segundos.')), timeoutMs)),
             ]);
 
-            await logAuditEvent({
-                tenantId: null,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'USER_CREATED',
-                target: result.uid,
-                detail: `Cliente criado: ${form.tenantName} (${form.email})`,
-            });
-
             setModalOpen(false);
             setSuccessMessage(`Cliente criado com sucesso. Email: ${form.email} — Senha provisoria: ${tempPassword}`);
             clearTimeout(successTimerRef.current);
@@ -158,7 +151,7 @@ export default function ClientesPage() {
             await loadClients();
         } catch (submitError) {
             console.error('Error creating client:', submitError);
-            setFormError(submitError.message || 'Erro ao criar cliente.');
+            setFormError(extractErrorMessage(submitError, 'Erro ao criar cliente.'));
         } finally {
             setSubmitting(false);
         }
@@ -170,6 +163,7 @@ export default function ClientesPage() {
         setConfigTenantId(tenantId);
         setConfigTenantName(tenantName);
         setConfigSaving(false);
+        setConfigError(null);
         try {
             const settings = await getTenantSettings(tenantId);
             setConfigPhases({ ...DEFAULT_ANALYSIS_CONFIG, ...settings.analysisConfig });
@@ -199,10 +193,11 @@ export default function ClientesPage() {
                     filters: { ...DEFAULT_ENRICHMENT.judit.filters, ...(saved.judit?.filters || {}) },
                 },
             });
-        } catch {
+        } catch (configLoadErr) {
             setConfigPhases({ ...DEFAULT_ANALYSIS_CONFIG });
             setConfigLimits({ dailyLimit: '', monthlyLimit: '' });
             setConfigEnrichment({ ...DEFAULT_ENRICHMENT });
+            setConfigError(extractErrorMessage(configLoadErr, 'Nao foi possivel carregar a configuracao atual. Exibindo valores padrao.'));
         }
     };
 
@@ -216,20 +211,18 @@ export default function ClientesPage() {
                 dailyLimit: rawDaily !== null && (isNaN(rawDaily) || rawDaily < 0) ? null : rawDaily,
                 monthlyLimit: rawMonthly !== null && (isNaN(rawMonthly) || rawMonthly < 0) ? null : rawMonthly,
             };
-            await updateTenantSettings(configTenantId, configPhases, limits, configEnrichment);
-            await logAuditEvent({
+            await callUpdateTenantSettingsByAnalyst({
                 tenantId: configTenantId,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'TENANT_CONFIG_UPDATED',
-                target: configTenantId,
-                detail: `Configuracoes atualizadas para ${configTenantName}`,
+                analysisConfig: configPhases,
+                limits,
+                enrichmentConfig: configEnrichment,
             });
             setTenantConfigs((prev) => ({ ...prev, [configTenantId]: configPhases }));
             setConfigTenantId(null);
             setConfigPhases(null);
         } catch (error) {
             console.error('Error saving config:', error);
+            setConfigError(extractErrorMessage(error, 'Nao foi possivel salvar a configuracao. Tente novamente.'));
         } finally {
             setConfigSaving(false);
         }
@@ -336,14 +329,20 @@ export default function ClientesPage() {
             </div>
 
             {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3>Novo cliente</h3>
-                            <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Fechar">X</button>
-                        </div>
-                        <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
+                <Modal
+                    open={isModalOpen}
+                    onClose={() => setModalOpen(false)}
+                    title="Novo cliente"
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>Cancelar</button>
+                            <button type="submit" form="clientes-create-form" className="btn-primary" disabled={submitting}>
+                                {submitting ? 'Criando...' : 'Criar cliente'}
+                            </button>
+                        </>
+                    )}
+                >
+                    <form id="clientes-create-form" onSubmit={handleSubmit}>
                                 {formError && (
                                     <div role="alert" style={{ color: 'var(--red-600)', background: 'var(--red-50)', padding: 12, borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
                                         {formError}
@@ -406,26 +405,29 @@ export default function ClientesPage() {
                                         Entregue essa senha ao cliente para o primeiro acesso.
                                     </small>
                                 </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-secondary" onClick={() => setModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-primary" disabled={submitting}>
-                                    {submitting ? 'Criando...' : 'Criar cliente'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                    </form>
+                </Modal>
             )}
 
             {configPhases && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <h3>Configurar fases — {configTenantName}</h3>
-                            <button className="modal-close" onClick={() => { setConfigTenantId(null); setConfigPhases(null); }} aria-label="Fechar">X</button>
-                        </div>
-                        <div className="modal-body">
+                <Modal
+                    open={Boolean(configPhases)}
+                    onClose={() => { setConfigTenantId(null); setConfigPhases(null); setConfigError(null); }}
+                    title={`Configurar fases — ${configTenantName}`}
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => { setConfigTenantId(null); setConfigPhases(null); setConfigError(null); }}>Cancelar</button>
+                            <button type="button" className="btn-primary" disabled={configSaving} onClick={handleSaveConfig}>
+                                {configSaving ? 'Salvando...' : 'Salvar configuracao'}
+                            </button>
+                        </>
+                    )}
+                >
+                            {configError && (
+                                <div role="alert" style={{ background: 'var(--red-50, #fef2f2)', border: '1px solid var(--red-200, #fecaca)', color: 'var(--red-700)', padding: '10px 14px', borderRadius: 8, fontSize: '.8125rem', marginBottom: 16 }}>
+                                    {configError}
+                                </div>
+                            )}
                             <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
                                 Habilite ou desabilite as fases de analise para esta franquia. Isso afeta o formulario operacional e a tabela do cliente.
                             </p>
@@ -596,6 +598,25 @@ export default function ClientesPage() {
                                             <span className="config-toggle__knob" />
                                         </button>
                                     </div>
+                                    {configEnrichment.ai?.enabled && (
+                                        <div className="form-group" style={{ marginTop: 8, marginBottom: 0 }}>
+                                            <label style={{ fontSize: '.8125rem' }}>
+                                                Orcamento mensal IA (USD)
+                                                <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem', marginLeft: 4 }}>(0 = ilimitado)</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.5"
+                                                value={configEnrichment.ai?.monthlyBudgetUsd ?? 0}
+                                                onChange={(e) => setConfigEnrichment((prev) => ({
+                                                    ...prev,
+                                                    ai: { ...prev.ai, monthlyBudgetUsd: parseFloat(e.target.value) || 0 },
+                                                }))}
+                                                style={{ width: 120, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border-light)', fontSize: '.8125rem' }}
+                                            />
+                                        </div>
+                                    )}
 
                                     <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '16px 0' }} />
                                     <details style={{ fontSize: '.8125rem' }}>
@@ -642,15 +663,7 @@ export default function ClientesPage() {
                                     </details>
                                 </div>
                             )}
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn-secondary" onClick={() => { setConfigTenantId(null); setConfigPhases(null); }}>Cancelar</button>
-                            <button type="button" className="btn-primary" disabled={configSaving} onClick={handleSaveConfig}>
-                                {configSaving ? 'Salvando...' : 'Salvar configuracao'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                </Modal>
             )}
         </div>
     );

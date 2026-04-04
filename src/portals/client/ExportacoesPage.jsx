@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../core/auth/useAuth';
 import {
-    createExport,
-    logAuditEvent,
-    savePublicReport,
+    callRegisterClientExport,
     subscribeToExports,
 } from '../../core/firebase/firestoreService';
-import { buildCaseReportPath } from '../../core/clientPortal';
 import { getMockCaseById, getMockExports } from '../../data/mockData';
 import { useCases } from '../../hooks/useCases';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
+import { extractErrorMessage } from '../../core/errorUtils';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import './ExportacoesPage.css';
 
@@ -56,6 +54,11 @@ function buildCsvContent(rows) {
     const DIGITAL_MAP = { CLEAN: 'Limpo', ALERT: 'Alerta', CRITICAL: 'Crítico', NOT_CHECKED: 'N/V' };
     const CONFLICT_MAP = { YES: 'Sim', NO: 'Não', UNKNOWN: 'Desconhecido' };
     const SEV_MAP = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' };
+    Object.assign(FLAG_MAP, {
+        NEGATIVE_PARTIAL: 'Negativo parcial',
+        INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
+        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    });
     const PRI_MAP = { NORMAL: 'Normal', HIGH: 'Alta' };
 
     for (const c of rows) {
@@ -217,6 +220,13 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(url);
 }
 
+function openHtmlBlob(html) {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 export default function ExportacoesPage() {
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
@@ -321,19 +331,15 @@ export default function ExportacoesPage() {
                         downloadBlob(blob, `compliancehub-demo-${ts}.csv`);
                     } else if (exportType === 'REPORT') {
                         const html = buildBatchReportHtml(filteredCases, userProfile?.tenantName || 'Demo');
-                        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-                        const url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
+                        openHtmlBlob(html);
                     } else {
                         const html = buildPdfHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || 'Demo');
-                        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-                        const url = URL.createObjectURL(blob);
-                        window.open(url, '_blank');
+                        openHtmlBlob(html);
                     }
 
                     setFeedback(`Exportacao ${exportType} gerada com ${recordCount} registros.`);
-                } catch {
-                    setFeedback('Erro ao gerar exportacao demo.');
+                } catch (demoError) {
+                    setFeedback(extractErrorMessage(demoError, 'Erro ao gerar exportacao demo.'));
                 } finally {
                     setExporting(false);
                 }
@@ -361,34 +367,23 @@ export default function ExportacoesPage() {
                 downloadBlob(blob, `compliancehub-export-${ts}.csv`);
             } else if (exportType === 'REPORT') {
                 const html = buildBatchReportHtml(filteredCases, userProfile?.tenantName || '');
-                const token = await savePublicReport(html, { type: 'batch', tenantId, tenantName: userProfile?.tenantName || '' });
-                window.open(`/r/${token}`, '_blank');
+                openHtmlBlob(html);
             } else {
                 const html = buildPdfHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || '');
-                const token = await savePublicReport(html, { type: 'pdf-export', tenantId, tenantName: userProfile?.tenantName || '' });
-                window.open(`/r/${token}`, '_blank');
+                openHtmlBlob(html);
             }
 
-            await createExport({
-                tenantId,
+            await callRegisterClientExport({
                 type: exportType,
                 scope: scopeLabel + dateRange,
                 records: recordCount,
-            });
-
-            await logAuditEvent({
-                tenantId,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'EXPORT_CREATED',
-                target: `${exportType}:${scopeLabel}${dateRange}`,
-                detail: `Exportacao gerada com ${recordCount} registros`,
+                artifactMode: exportType === 'CSV' ? 'download' : 'html_blob',
             });
 
             setFeedback('Exportacao gerada com sucesso!');
         } catch (error) {
             console.error('Error creating export:', error);
-            setFeedback('Nao foi possivel gerar a exportacao agora.');
+            setFeedback(extractErrorMessage(error, 'Nao foi possivel gerar a exportacao agora.'));
         } finally {
             setExporting(false);
         }
@@ -399,7 +394,7 @@ export default function ExportacoesPage() {
     const openHistoryArtifact = (item) => {
         const caseData = item?.artifactCaseId ? getMockCaseById(item.artifactCaseId) : null;
         if (!caseData) return;
-        window.open(buildCaseReportPath(caseData, true), '_blank');
+        openHtmlBlob(buildBatchReportHtml([caseData], caseData.tenantName || 'Demo'));
     };
 
     return (
@@ -472,7 +467,7 @@ export default function ExportacoesPage() {
                             {!isDemoMode && !exportsState.loading && exportsState.error && (
                                 <tr>
                                     <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
-                                        Nao foi possivel carregar o historico de exportacoes agora.
+                                        {extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.')}
                                     </td>
                                 </tr>
                             )}

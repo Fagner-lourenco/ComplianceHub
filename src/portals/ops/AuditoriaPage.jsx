@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useAuditLogs } from '../../hooks/useAuditLogs';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './AuditoriaPage.css';
 
 const ACTION_LABELS = {
@@ -48,7 +49,16 @@ export default function AuditoriaPage() {
 
     return (
         <div className="auditoria-page">
-            <h2>Auditoria e logs</h2>
+            <div className="auditoria-header">
+                <div>
+                    <h2 className="auditoria-header__title">Auditoria e Logs</h2>
+                    <p className="auditoria-header__subtitle">Registros completos de ações e eventos do sistema</p>
+                </div>
+                <div className="auditoria-header__badge">
+                    <span className="auditoria-header__badge-label">Registros</span>
+                    <strong>{filtered.length}</strong>
+                </div>
+            </div>
 
             <div className="auditoria-filters">
                 <div className="filter-bar__search" style={{ flex: 1, minWidth: 200 }}>
@@ -101,7 +111,7 @@ export default function AuditoriaPage() {
                         {!loading && error && (
                             <tr>
                                 <td colSpan={6} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
-                                    Nao foi possivel carregar os logs agora.
+                                    {extractErrorMessage(error, 'Nao foi possivel carregar os logs agora.')}
                                 </td>
                             </tr>
                         )}
@@ -122,7 +132,7 @@ export default function AuditoriaPage() {
                                         </span>
                                     </td>
                                     <td className="data-table__td data-table__td--mono">{log.target}</td>
-                                    <td className="data-table__td" style={{ fontSize: '.8125rem', maxWidth: 300 }}>{log.detail}</td>
+                                    <td className="data-table__td data-table__td--truncate" style={{ fontSize: '.8125rem' }} title={log.detail}>{log.detail}</td>
                                     <td className="data-table__td data-table__td--mono" style={{ fontSize: '.75rem', color: 'var(--text-tertiary)' }}>{log.ip}</td>
                                 </tr>
                             );

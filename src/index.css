@@ -1,3 +1,6 @@
+/* ── Shared component styles (global availability) ── */
+@import './ui/styles/shared-tables.css';
+
 /* ============================================
    ComplianceHub — Design System
    ============================================ */
@@ -105,6 +108,7 @@ ol {
   --blue-100: #dbeafe;
   --blue-500: #3b82f6;
   --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
 
   /* Surfaces */
   --bg-app: #f0f2f5;
@@ -130,6 +134,7 @@ ol {
 
   /* Borders */
   --border-default: var(--gray-200);
+  --border-light: var(--gray-100);
   --border-strong: var(--gray-300);
   --border-focus: var(--brand-500);
   --border-error: var(--red-500);
@@ -302,6 +307,54 @@ h4 {
   animation: scaleIn var(--transition-base) forwards;
 }
 
+/* --- Buttons --- */
+.btn-primary {
+  background: var(--brand-600);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: .875rem;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: .875rem;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--gray-50);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* --- Utility Classes --- */
 .sr-only {
   position: absolute;
@@ -443,4 +496,41 @@ textarea:focus-visible {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+/* --- Forms --- */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: .875rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--gray-700);
+}
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    font-size: .875rem;
+    transition: var(--transition-fast);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--brand-100);
+}
+
+.form-input.pwd {
+    background: var(--gray-50);
+    cursor: not-allowed;
+}
+
+textarea.form-input {
+    font-family: inherit;
+    resize: vertical;
 }

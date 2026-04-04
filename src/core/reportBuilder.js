@@ -17,9 +17,23 @@ const RISK_LEVEL_LABEL = { GREEN: 'Baixo', YELLOW: 'Médio', RED: 'Alto' };
 const PRIORITY_LABEL  = { NORMAL: 'Normal', HIGH: 'Alta' };
 const SEVERITY_LABEL  = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' };
 
+Object.assign(CRIMINAL_LABEL, {
+    NEGATIVE_PARTIAL: 'Negativo parcial',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+});
+Object.assign(LABOR_LABEL, {
+    NEGATIVE_PARTIAL: 'Negativo parcial',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+});
+Object.assign(WARRANT_LABEL, {
+    INCONCLUSIVE: 'Inconclusivo',
+});
+
 function flagColor(v) {
     if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
-    if (['INCONCLUSIVE','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
+    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','NEGATIVE_PARTIAL','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
     if (['NEGATIVE','APPROVED','FIT','CLEAN','LOW','NOT_FOUND','NO','NEUTRAL'].includes(v)) return 'green';
     return 'gray';
 }

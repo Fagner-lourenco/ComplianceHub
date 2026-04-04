@@ -1,0 +1,339 @@
+/*
+ * shared-tables.css
+ * ─────────────────
+ * Estilos compartilhados de tabelas de dados, barras de filtro e botões
+ * de ação de linha, usados em múltiplos portals e páginas.
+ *
+ * Import-o diretamente no index.css para disponibilidade global.
+ *
+ * Resolve:
+ *  P-02 — .filter-bar* preso em SolicitacoesPage.css
+ *  P-03 — .data-table* preso em SolicitacoesPage.css
+ *  P-10 — .fila-btn* preso em FilaPage.css
+ */
+
+/* ═══════════════════════════════════════
+   FILTER BAR
+   ═══════════════════════════════════════ */
+
+.filter-bar {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+}
+
+.filter-bar__search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-bar__search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: .8rem;
+    pointer-events: none;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.filter-bar__search-input {
+    width: 100%;
+    padding: 8px 12px 8px 34px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    outline: none;
+    background: var(--bg-card);
+    transition: all var(--transition-fast);
+    color: var(--text-primary);
+}
+
+.filter-bar__search-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+}
+
+.filter-bar__select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    outline: none;
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+
+.filter-bar__select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+}
+
+.filter-bar__toggle {
+    padding: 8px 14px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    font-weight: 500;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.filter-bar__toggle:hover {
+    background: var(--gray-50);
+}
+
+.filter-bar__toggle--active {
+    background: var(--brand-50);
+    border-color: var(--brand-200);
+    color: var(--brand-600);
+}
+
+/* ═══════════════════════════════════════
+   DATA TABLE
+   ═══════════════════════════════════════ */
+
+.data-table-wrapper,
+.data-table-container {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+    max-width: 100%;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+}
+
+.data-table-wrapper::-webkit-scrollbar,
+.data-table-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.data-table-wrapper::-webkit-scrollbar-thumb,
+.data-table-container::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8125rem;
+}
+
+.data-table__th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: .75rem;
+    color: var(--text-secondary);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--border-default);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    scroll-snap-align: start;
+}
+
+.data-table__th--sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.data-table__th--sortable:hover {
+    color: var(--brand-600);
+}
+
+/* Sticky right column for action buttons */
+.data-table__th--actions {
+    position: sticky;
+    right: 0;
+    background: var(--gray-50);
+    box-shadow: -4px 0 8px rgba(0, 0, 0, .04);
+}
+
+.data-table__td--actions {
+    position: sticky;
+    right: 0;
+    background: var(--bg-card);
+    box-shadow: -4px 0 8px rgba(0, 0, 0, .04);
+}
+
+.data-table__row {
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.data-table__row:hover {
+    background: var(--gray-25);
+}
+
+.data-table__row:hover .data-table__td--actions {
+    background: var(--gray-25);
+}
+
+.data-table__row--selected {
+    background: var(--brand-50) !important;
+}
+
+.data-table__row--selected .data-table__td--actions {
+    background: var(--brand-50);
+}
+
+/* Heatmap row variants */
+.data-table__row--heat-RED { background: rgba(239, 68, 68, .06); }
+.data-table__row--heat-RED:hover { background: rgba(239, 68, 68, .12); }
+.data-table__row--heat-YELLOW { background: rgba(245, 158, 11, .06); }
+.data-table__row--heat-YELLOW:hover { background: rgba(245, 158, 11, .12); }
+.data-table__row--heat-GREEN { background: rgba(16, 185, 129, .04); }
+.data-table__row--heat-GREEN:hover { background: rgba(16, 185, 129, .08); }
+
+.data-table__td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+}
+
+.data-table__td--name {
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.data-table__td--mono {
+    font-family: 'Courier New', monospace;
+    font-size: .75rem;
+    color: var(--text-secondary);
+}
+
+.data-table__td--truncate {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.data-table__empty {
+    text-align: center;
+    padding: var(--space-10);
+    color: var(--text-secondary);
+}
+
+.data-table__hidden {
+    color: var(--gray-300);
+    font-size: .75rem;
+}
+
+/* Empty state inside table */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-8);
+}
+
+.empty-state__icon {
+    font-size: 2.5rem;
+}
+
+.empty-state__btn {
+    padding: 8px 16px;
+    background: var(--brand-600);
+    color: #fff;
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    font-weight: 600;
+}
+
+/* ═══════════════════════════════════════
+   FILA / CASO — ACTION BUTTONS
+   (prevents implicit dependency on FilaPage.css)
+   ═══════════════════════════════════════ */
+
+.fila-btn {
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    font-size: .75rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-default);
+    white-space: nowrap;
+}
+
+.fila-btn--open {
+    background: var(--brand-50);
+    color: var(--brand-700);
+    border-color: var(--brand-200);
+}
+
+.fila-btn--open:hover {
+    background: var(--brand-100);
+}
+
+.fila-btn--assume {
+    background: var(--yellow-50);
+    color: var(--yellow-700);
+    border-color: var(--yellow-100);
+}
+
+.fila-btn--assume:hover {
+    background: var(--yellow-100);
+}
+
+.fila-btn--assign {
+    background: var(--gray-100);
+    color: var(--text-secondary);
+}
+
+.fila-btn--assign:hover {
+    background: var(--brand-50);
+    color: var(--brand-600);
+    border-color: var(--brand-200);
+}
+
+.fila-btn--danger {
+    color: var(--red-600);
+    border-color: var(--red-200);
+    background: var(--red-50);
+}
+
+.fila-btn--danger:hover {
+    background: var(--red-100);
+}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE OVERRIDES
+   ═══════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-bar__search {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .filter-bar__select,
+    .filter-bar__toggle {
+        width: 100%;
+    }
+}

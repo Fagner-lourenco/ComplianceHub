@@ -38,11 +38,11 @@ export const CLIENT_STATUS_TONES = {
 const ATTENTION_REASON_RULES = [
     {
         label: 'Antecedentes criminais',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.criminalFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag),
     },
     {
         label: 'Processos trabalhistas',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.laborFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag),
     },
     {
         label: 'Mandados de prisao',
@@ -215,12 +215,16 @@ export function getReportAvailability(caseData, publicResult) {
 }
 
 function countCasesByMonth(cases, monthKey) {
-    return cases.filter((caseData) => String(caseData.createdAt || '').startsWith(monthKey)).length;
+    return cases.filter((caseData) => (
+        String(caseData.createdMonthKey || '').startsWith(monthKey)
+        || (!caseData.createdMonthKey && String(caseData.createdAt || '').startsWith(monthKey))
+    )).length;
 }
 
 function countCompletedCasesByMonth(cases, monthKey) {
     return cases.filter((caseData) => (
-        String(caseData.createdAt || '').startsWith(monthKey)
+        (String(caseData.createdMonthKey || '').startsWith(monthKey)
+            || (!caseData.createdMonthKey && String(caseData.createdAt || '').startsWith(monthKey)))
         && caseData.status === 'DONE'
     )).length;
 }

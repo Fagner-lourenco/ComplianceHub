@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../core/auth/useAuth';
-import { subscribeToCases } from '../core/firebase/firestoreService';
+import { subscribeToCases, subscribeToClientCases } from '../core/firebase/firestoreService';
 import { isClientRole } from '../core/rbac/permissions';
 import { MOCK_CASES } from '../data/mockData';
 
@@ -38,6 +38,10 @@ export function useCases(overrideTenantId) {
             return undefined;
         }
 
+        const subscribe = isClientRole(userProfile?.role)
+            ? subscribeToClientCases
+            : subscribeToCases;
+
         const timeoutId = window.setTimeout(() => {
             setLiveState((currentState) => (
                 currentState.scopeKey === scopeKey
@@ -50,7 +54,7 @@ export function useCases(overrideTenantId) {
             ));
         }, LIVE_QUERY_TIMEOUT_MS);
 
-        const unsubscribe = subscribeToCases(tenantId, (data, error) => {
+        const unsubscribe = subscribe(tenantId, (data, error) => {
             window.clearTimeout(timeoutId);
             setLiveState({
                 cases: data,
@@ -63,7 +67,7 @@ export function useCases(overrideTenantId) {
             window.clearTimeout(timeoutId);
             unsubscribe();
         };
-    }, [scopeKey, tenantId, user, waitingForClientTenant]);
+    }, [scopeKey, tenantId, user, userProfile?.role, waitingForClientTenant]);
 
     if (!user) {
         const demoTenantId = overrideTenantId === undefined

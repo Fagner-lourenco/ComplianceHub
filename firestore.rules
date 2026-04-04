@@ -33,16 +33,14 @@ service cloud.firestore {
       return getUserProfile() != null && getUserProfile().role in ['CLIENT', 'client_viewer', 'client_manager'];
     }
 
-
     /* --- COLLECTION RULES --- */
 
     // 1. User Profiles
     match /userProfiles/{userId} {
-      // Users can read their own profile, analysts can read all, clients can read their own tenant's users
+      // Users can read their own profile; tenant-wide user directories are operational-only.
       allow read: if isAuthenticated() && (
         request.auth.uid == userId ||
-        isAnalyst() ||
-        (isClient() && isSameTenant(resource.data.tenantId))
+        isAnalyst()
       );
       
       // Profiles are provisioned and managed only by internal staff.
@@ -52,29 +50,14 @@ service cloud.firestore {
 
     // 2. Cases
     match /cases/{caseId} {
-      // Analysts see all cases. Clients see only their tenant's cases.
-      allow read: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(resource.data.tenantId))
-      );
+      // Raw cases are operational/internal documents.
+      // Client portal must consume the sanitized mirror in /clientCases.
+      allow read: if isAuthenticated() && isAnalyst();
 
-      // Analysts can update any case.
-      // Clients can only update cases in CORRECTION_NEEDED status, changing only allowed fields and setting status back to PENDING.
-      allow update: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(resource.data.tenantId) &&
-         resource.data.status == 'CORRECTION_NEEDED' &&
-         request.resource.data.status == 'PENDING' &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(
-           ['candidateName', 'cpf', 'cpfMasked', 'socialProfiles', 'status', 'correctedAt', 'correctedBy', 'corrections', 'updatedAt']
-         )
-        )
-      );
+      // Analysts can update any case. Client corrections are handled via Cloud Functions.
+      allow update: if isAuthenticated() && isAnalyst();
       
-      allow create: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(request.resource.data.tenantId))
-      );
+      allow create: if isAuthenticated() && isAnalyst();
       
       allow delete: if isAuthenticated() && isAdmin();
 
@@ -97,32 +80,30 @@ service cloud.firestore {
       }
     }
 
-    // 3. Candidates
-    match /candidates/{candidateId} {
-      allow read, update: if isAuthenticated() && (
-        isAnalyst() || 
+    // 2c. Client-safe mirror for the customer portal
+    match /clientCases/{caseId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
         (isClient() && isSameTenant(resource.data.tenantId))
       );
+      // Only Cloud Functions write here
+      allow create, update, delete: if false;
+    }
+
+    // 3. Candidates
+    match /candidates/{candidateId} {
+      allow read, update: if isAuthenticated() && isAnalyst();
       
-      allow create: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(request.resource.data.tenantId))
-      );
+      allow create: if isAuthenticated() && isAnalyst();
       
       allow delete: if isAuthenticated() && isAdmin();
     }
 
     // 4. Audit Logs
     match /auditLogs/{logId} {
-      allow read: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(resource.data.tenantId))
-      );
+      allow read: if isAuthenticated() && isAnalyst();
       
-      allow create: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(request.resource.data.tenantId))
-      );
+      allow create: if isAuthenticated() && isAnalyst();
       
       allow update, delete: if false; // Logs are immutable
     }
@@ -145,21 +126,18 @@ service cloud.firestore {
         (isClient() && isSameTenant(resource.data.tenantId))
       );
       
-      allow create: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(request.resource.data.tenantId))
-      );
+      allow create: if isAuthenticated() && isAnalyst();
       
       allow delete: if false;
     }
 
-    // 7. Public Reports (shareable links — public read with TTL, authenticated create)
+    // 7. Public Reports (shareable links — public read with TTL, server-only create)
     match /publicReports/{token} {
       allow read: if true
         && resource.data.expiresAt is timestamp
         && request.time < resource.data.expiresAt;
-      allow create: if isAuthenticated()
-        && request.resource.data.expiresAt is timestamp;
+      // Only Cloud Functions create these documents.
+      allow create: if false;
       allow update, delete: if false;
     }
   }

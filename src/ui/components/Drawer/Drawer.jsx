@@ -1,42 +1,93 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import './Drawer.css';
+
+const FOCUSABLE_SELECTOR = [
+    'a[href]',
+    'button:not([disabled])',
+    'textarea:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+function getFocusableElements(container) {
+    if (!container) return [];
+    return [...container.querySelectorAll(FOCUSABLE_SELECTOR)]
+        .filter((element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden'));
+}
 
 export default function Drawer({ open, onClose, title, subtitle, headerExtra, tabs, children }) {
     const [activeTab, setActiveTab] = useState(0);
-    const [prevOpen, setPrevOpen] = useState(open);
     const closeRef = useRef(null);
+    const drawerRef = useRef(null);
+    const previouslyFocusedRef = useRef(null);
+    const titleId = useId();
+    const panelIdBase = useId();
 
-    // Reset tab when drawer opens (React-recommended pattern for prop-derived state)
-    if (open && !prevOpen) {
-        setActiveTab(0);
-    }
-    if (open !== prevOpen) {
-        setPrevOpen(open);
-    }
-
-    // Focus close button on open
     useEffect(() => {
         if (open) {
-            closeRef.current?.focus();
+            setActiveTab(0);
         }
     }, [open]);
 
-    // Close on Escape
     useEffect(() => {
-        if (!open) return;
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape') onClose();
+        if (open) {
+            previouslyFocusedRef.current = document.activeElement;
+            const timer = window.setTimeout(() => {
+                const focusable = getFocusableElements(drawerRef.current);
+                (focusable[0] || closeRef.current)?.focus();
+            }, 0);
+            return () => window.clearTimeout(timer);
+        }
+
+        if (previouslyFocusedRef.current?.focus) {
+            previouslyFocusedRef.current.focus();
+        }
+        return undefined;
+    }, [open]);
+
+    useEffect(() => {
+        if (!open) return undefined;
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                onClose();
+                return;
+            }
+
+            if (event.key !== 'Tab') return;
+            const focusable = getFocusableElements(drawerRef.current);
+            if (focusable.length === 0) return;
+
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const activeElement = document.activeElement;
+
+            if (event.shiftKey) {
+                if (activeElement === first || !drawerRef.current?.contains(activeElement)) {
+                    event.preventDefault();
+                    last.focus();
+                }
+                return;
+            }
+
+            if (activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
         };
+
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [open, onClose]);
 
-    // Lock body scroll while open
     useEffect(() => {
-        if (!open) return;
-        const prev = document.body.style.overflow;
+        if (!open) return undefined;
+        const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prev; };
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
     }, [open]);
 
     if (!open) return null;
@@ -45,34 +96,48 @@ export default function Drawer({ open, onClose, title, subtitle, headerExtra, ta
 
     return (
         <>
-            <div className="drawer-overlay" onClick={onClose} />
-            <aside className="drawer" role="dialog" aria-modal="true" aria-label={title || 'Painel de detalhes'}>
+            <div className="drawer-overlay" onClick={onClose} aria-hidden="true" />
+            <aside
+                ref={drawerRef}
+                className="drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={titleId}
+                aria-describedby={subtitle ? `${titleId}-subtitle` : undefined}
+            >
                 <div className="drawer__header">
                     <div className="drawer__header-text">
-                        <h2 className="drawer__title">{title}</h2>
-                        {subtitle && <p className="drawer__subtitle">{subtitle}</p>}
+                        <h2 id={titleId} className="drawer__title">{title}</h2>
+                        {subtitle ? <p id={`${titleId}-subtitle`} className="drawer__subtitle">{subtitle}</p> : null}
                     </div>
-                    {headerExtra && <div className="drawer__header-extra">{headerExtra}</div>}
-                    <button ref={closeRef} className="drawer__close" onClick={onClose} aria-label="Fechar painel">✕</button>
+                    {headerExtra ? <div className="drawer__header-extra">{headerExtra}</div> : null}
+                    <button ref={closeRef} className="drawer__close" onClick={onClose} aria-label="Fechar painel">×</button>
                 </div>
 
-                {tabs && tabs.length > 0 && (
+                {tabs && tabs.length > 0 ? (
                     <div className="drawer__tabs" role="tablist">
-                        {tabs.map((tab, i) => (
+                        {tabs.map((tab, index) => (
                             <button
-                                key={tab.label || i}
+                                key={tab.label || index}
                                 role="tab"
-                                aria-selected={i === activeTab}
-                                className={`drawer__tab ${i === activeTab ? 'drawer__tab--active' : ''}`}
-                                onClick={() => setActiveTab(i)}
+                                id={`${panelIdBase}-tab-${index}`}
+                                aria-controls={`${panelIdBase}-panel-${index}`}
+                                aria-selected={index === activeTab}
+                                className={`drawer__tab ${index === activeTab ? 'drawer__tab--active' : ''}`}
+                                onClick={() => setActiveTab(index)}
                             >
                                 {tab.label}
                             </button>
                         ))}
                     </div>
-                )}
+                ) : null}
 
-                <div className="drawer__body" role="tabpanel">
+                <div
+                    className="drawer__body"
+                    role="tabpanel"
+                    id={`${panelIdBase}-panel-${activeTab}`}
+                    aria-labelledby={tabs?.length ? `${panelIdBase}-tab-${activeTab}` : undefined}
+                >
                     {tabContent}
                 </div>
             </aside>

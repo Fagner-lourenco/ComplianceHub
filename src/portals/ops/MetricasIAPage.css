@@ -416,4 +416,5 @@
     .ops-dash__chip { min-width: 75px; padding: 10px 14px; }
     .ops-dash__cost-row { grid-template-columns: 1fr 70px; }
     .ops-dash__cost-phase { display: none; }
+    .ops-dash__token-grid { grid-template-columns: 1fr; }
 }

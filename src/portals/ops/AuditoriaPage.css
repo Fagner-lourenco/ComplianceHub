@@ -5,8 +5,49 @@
     min-width: 0;
 }
 
-.auditoria-page h2 {
-    font-size: 1.25rem;
+.auditoria-header {
+    background: linear-gradient(135deg, var(--gray-800), var(--gray-900));
+    color: #fff;
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--brand-500);
+}
+
+.auditoria-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+.auditoria-header__subtitle {
+    font-size: .875rem;
+    color: var(--gray-300);
+    margin: 0;
+}
+
+.auditoria-header__badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.auditoria-header__badge-label {
+    font-size: .75rem;
+    color: var(--gray-300);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 600;
+}
+
+.auditoria-header__badge strong {
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--brand-300);
 }
 
 .auditoria-filters {

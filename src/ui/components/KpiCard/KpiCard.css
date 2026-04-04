@@ -60,3 +60,12 @@
     border-color: var(--red-100);
     background: linear-gradient(135deg, #fff, var(--red-50));
 }
+
+.kpi-card--blue .kpi-card__value {
+    color: var(--blue-600);
+}
+
+.kpi-card--blue {
+    border-color: var(--blue-100);
+    background: linear-gradient(135deg, #fff, var(--blue-50));
+}

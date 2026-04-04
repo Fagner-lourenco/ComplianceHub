@@ -46,7 +46,6 @@
     }
 
     .app-layout__main {
-        --drawer-top-offset: 0px;
         flex: 1 1 auto;
         width: 100%;
         max-width: 100%;

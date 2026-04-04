@@ -16,8 +16,7 @@ const exportacoesPageMocks = vi.hoisted(() => ({
         cases: [],
     },
     subscribeToExports: vi.fn(),
-    createExport: vi.fn(),
-    logAuditEvent: vi.fn(),
+    callRegisterClientExport: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -30,8 +29,7 @@ vi.mock('../../hooks/useCases', () => ({
 
 vi.mock('../../core/firebase/firestoreService', () => ({
     subscribeToExports: (...args) => exportacoesPageMocks.subscribeToExports(...args),
-    createExport: (...args) => exportacoesPageMocks.createExport(...args),
-    logAuditEvent: (...args) => exportacoesPageMocks.logAuditEvent(...args),
+    callRegisterClientExport: (...args) => exportacoesPageMocks.callRegisterClientExport(...args),
 }));
 
 exportacoesPageMocks.subscribeToExports.mockImplementation((tenantId, callback) => {
@@ -44,8 +42,7 @@ const { default: ExportacoesPage } = await import('./ExportacoesPage');
 describe('ExportacoesPage', () => {
     beforeEach(() => {
         exportacoesPageMocks.subscribeToExports.mockClear();
-        exportacoesPageMocks.createExport.mockReset();
-        exportacoesPageMocks.logAuditEvent.mockReset();
+        exportacoesPageMocks.callRegisterClientExport.mockReset();
     });
 
     it('usa historico real vazio em vez de mock no portal do cliente', async () => {

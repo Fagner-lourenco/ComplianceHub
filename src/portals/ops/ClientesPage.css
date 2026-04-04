@@ -46,20 +46,6 @@
     overflow: hidden;
 }
 
-.btn-primary {
-    background: var(--brand-600);
-    color: white;
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: .875rem;
-    transition: var(--transition-fast);
-}
-
-.btn-primary:hover {
-    background: var(--brand-700);
-}
-
 .clientes-load-error {
     margin: 16px 16px 0;
     padding: 12px 14px;
@@ -163,34 +149,6 @@
     margin-bottom: 20px;
 }
 
-.form-group label {
-    display: block;
-    font-size: .875rem;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: var(--gray-700);
-}
-
-.form-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-md);
-    font-size: .875rem;
-    transition: var(--transition-fast);
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px var(--brand-100);
-}
-
-.form-input.pwd {
-    background: var(--gray-50);
-    cursor: not-allowed;
-}
-
 .modal-footer {
     padding: 16px 24px;
     background: var(--gray-50);
@@ -199,20 +157,6 @@
     justify-content: flex-end;
     gap: 12px;
     flex-shrink: 0;
-}
-
-.btn-secondary {
-    background: white;
-    border: 1px solid var(--border-strong);
-    color: var(--text-primary);
-    padding: 10px 20px;
-    border-radius: var(--radius-md);
-    font-weight: 500;
-    font-size: .875rem;
-}
-
-.btn-secondary:hover {
-    background: var(--gray-50);
 }
 
 /* --- Mobile Responsive --- */

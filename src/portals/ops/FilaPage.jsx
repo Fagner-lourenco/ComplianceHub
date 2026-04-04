@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
@@ -8,8 +8,10 @@ import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useCases } from '../../hooks/useCases';
-import { logAuditEvent, updateCase } from '../../core/firebase/firestoreService';
+import { callAssignCaseToCurrentAnalyst } from '../../core/firebase/firestoreService';
+import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { formatDate } from '../../core/formatDate';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './FilaPage.css';
 
 function EnrichmentIcon({ status }) {
@@ -28,6 +30,9 @@ function EnrichmentIcon({ status }) {
 
 export default function FilaPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const isDemoPortal = location.pathname.startsWith('/demo/');
+    const routePrefix = isDemoPortal ? '/demo' : '';
     const { user } = useAuth();
     const { selectedTenantId } = useTenant();
     const {
@@ -80,18 +85,10 @@ export default function FilaPage() {
         setAssumingCaseId(currentCase.id);
         setAssumeError(null);
         try {
-            await updateCase(currentCase.id, { assigneeId: user.uid, status: 'IN_PROGRESS' });
-            await logAuditEvent({
-                tenantId: currentCase.tenantId || null,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'CASE_ASSIGNED',
-                target: currentCase.id,
-                detail: `Caso assumido: ${currentCase.candidateName}`,
-            });
+            await callAssignCaseToCurrentAnalyst({ caseId: currentCase.id });
         } catch (err) {
             console.error('Error assuming case:', err);
-            setAssumeError('Falha ao assumir o caso. Tente novamente.');
+            setAssumeError(extractErrorMessage(err, 'Falha ao assumir o caso. Tente novamente.'));
             clearTimeout(assumeErrorTimerRef.current);
             assumeErrorTimerRef.current = setTimeout(() => setAssumeError(null), 6000);
         } finally {
@@ -159,7 +156,7 @@ export default function FilaPage() {
                         {!loading && error && (
                             <tr>
                                 <td colSpan={11} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
-                                    Nao foi possivel carregar a fila de trabalho agora.
+                                    {extractErrorMessage(error, 'Nao foi possivel carregar a fila de trabalho agora.')}
                                 </td>
                             </tr>
                         )}
@@ -180,15 +177,15 @@ export default function FilaPage() {
                                     </span>
                                 </td>
                                 <td><StatusBadge status={currentCase.status} /></td>
-                                <td style={{ textAlign: 'center' }}><EnrichmentIcon status={currentCase.enrichmentStatus} /></td>
+                                <td style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                 <td><RiskChip value={currentCase.criminalFlag} /></td>
                                 <td><ScoreBar score={currentCase.riskScore} /></td>
                                 <td><RiskChip value={currentCase.riskLevel} /></td>
                                 <td>
-                                    <div className="fila-actions">
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                         {!currentCase.assigneeId && (
                                             <button
-                                                className="fila-btn fila-btn--assume"
+                                                className="btn-primary"
                                                 title="Assumir"
                                                 disabled={assumingCaseId === currentCase.id}
                                                 onClick={() => handleAssume(currentCase)}
@@ -196,7 +193,7 @@ export default function FilaPage() {
                                                 {assumingCaseId === currentCase.id ? 'Assumindo...' : 'Assumir'}
                                             </button>
                                         )}
-                                        <button className="fila-btn fila-btn--open" onClick={() => navigate(`/ops/caso/${currentCase.id}`)}>
+                                        <button className="btn-secondary" onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}>
                                             Abrir
                                         </button>
                                     </div>

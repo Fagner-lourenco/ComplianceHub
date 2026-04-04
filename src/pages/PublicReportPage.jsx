@@ -12,15 +12,39 @@ export default function PublicReportPage() {
     const [reportHtml, setReportHtml] = useState('');
     const [copyOk, setCopyOk] = useState(false);
     const iframeRef = useRef(null);
-    const isDemoRoute = window.location.pathname.startsWith('/demo/r/');
+    const isDemoRoute = Boolean(caseId) && !token;
 
     const stripActiveContent = (html) => {
         if (!html) return '';
 
-        // Remove script tags and the embedded print button to keep controls in host page.
-        return String(html)
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/<button\s+class="print-btn"[^>]*>[\s\S]*?<\/button>/gi, '');
+        if (typeof DOMParser === 'undefined') {
+            return String(html)
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
+                .replace(/<form\b[\s\S]*?<\/form>/gi, '')
+                .replace(/<button\s+class="print-btn"[^>]*>[\s\S]*?<\/button>/gi, '')
+                .replace(/\son\w+=(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+                .replace(/\s(href|src)=("|')\s*javascript:[\s\S]*?\2/gi, ' $1="#"');
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(String(html), 'text/html');
+        doc.querySelectorAll('script, iframe, form, .print-btn').forEach((node) => node.remove());
+        doc.querySelectorAll('*').forEach((element) => {
+            [...element.attributes].forEach((attribute) => {
+                const name = attribute.name.toLowerCase();
+                const value = attribute.value || '';
+                if (name.startsWith('on')) {
+                    element.removeAttribute(attribute.name);
+                    return;
+                }
+                if ((name === 'href' || name === 'src') && /^\s*javascript:/i.test(value)) {
+                    element.setAttribute(attribute.name, '#');
+                }
+            });
+        });
+
+        return doc.documentElement.outerHTML;
     };
 
     useEffect(() => {
@@ -133,6 +157,7 @@ export default function PublicReportPage() {
                 ref={iframeRef}
                 title="Relatório Público"
                 srcDoc={reportHtml}
+                sandbox="allow-modals"
                 className="public-report__frame"
             />
         </div>

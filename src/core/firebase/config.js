@@ -6,7 +6,6 @@ import {
     persistentLocalCache,
     persistentMultipleTabManager,
 } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: (import.meta.env.VITE_FIREBASE_API_KEY || 'demo-key').trim(),
@@ -19,7 +18,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const storage = getStorage(app);
 
 const createFirestore = () => {
     if (typeof window === 'undefined') {
@@ -46,9 +44,5 @@ const createFirestore = () => {
 };
 
 export const db = createFirestore();
-
-// Secondary app just for creating users without logging out the primary operator
-const secondaryApp = initializeApp(firebaseConfig, 'SecondaryAuthApp');
-export const secondaryAuth = getAuth(secondaryApp);
 
 export default app;

@@ -51,9 +51,9 @@ export default function Topbar({ title, onMenuClick, topbarRef }) {
                 <button
                     className="topbar__menu-btn"
                     onClick={onMenuClick}
-                    aria-label="Abrir menu"
+                    aria-label="Abrir menu de navegação"
                 >
-                    =
+                    ☰
                 </button>
                 <div className="topbar__title-group">
                     <h1 className="topbar__title">{title}</h1>

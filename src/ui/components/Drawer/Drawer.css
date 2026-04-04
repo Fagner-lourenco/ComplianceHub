@@ -80,6 +80,10 @@
     padding: 0 var(--space-5);
     border-bottom: 1px solid var(--border-default);
     overflow-x: auto;
+    scrollbar-width: none;
+}
+.drawer__tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .drawer__tab {

@@ -3,9 +3,12 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
+import { isClientRole } from '../../core/rbac/permissions';
 import { useCandidates } from '../../hooks/useCandidates';
 import { useCases } from '../../hooks/useCases';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
+import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './CandidatosPage.css';
 
 function formatFullCpf(cpf) {
@@ -16,98 +19,86 @@ function formatFullCpf(cpf) {
 
 export default function CandidatosPage() {
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const { selectedTenantId } = useTenant();
+
     const isOpsPortal = location.pathname.startsWith('/ops') || location.pathname.startsWith('/demo/ops');
-    const isDemoMode = location.pathname.startsWith('/demo/');
-    const tenantOverride = isOpsPortal
-        ? (selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId)
-        : undefined;
+    const isDemoMode = !user || userProfile?.source === 'demo';
 
-    // In real mode, use both candidates and cases to enrich with verdict/totalRequests.
-    // In demo mode (no user), fall back to deriving candidates from cases (no mock candidates exist).
-    const realCandidates = useCandidates(isDemoMode ? '__skip__' : tenantOverride);
-    const realCases = useCases(isDemoMode ? '__skip__' : tenantOverride);
-    const demoCases = useCases(isDemoMode ? tenantOverride : '__skip__');
-    const useRealSource = Boolean(user) && !isDemoMode;
+    // Target tenant setup:
+    // - Demo mode: undefined (uses mock data defaults)
+    // - Ops Ops: ALL_TENANTS_ID means null (all data), otherwise specific tenant
+    // - Client: strictly their userProfile.tenantId
+    const tenantTarget = isDemoMode
+        ? undefined
+        : (isOpsPortal ? (selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId) : userProfile?.tenantId);
 
-    const {
-        candidates: rawCandidates,
-        error,
-        loading,
-    } = useRealSource
-        ? realCandidates
-        : { candidates: [], error: demoCases.error, loading: demoCases.loading };
+    // Only Ops (real data) has direct access to the `candidates` collection.
+    // Client and Demo modes build their candidate list by aggregating cases.
+    const useRawCandidates = !isDemoMode && isOpsPortal;
 
+    const { candidates: rawCands, error: errorCands, loading: loadCands } = useCandidates(useRawCandidates ? tenantTarget : '__skip__');
+    const { cases, error: errorCases, loading: loadCases } = useCases(tenantTarget);
+
+    const loading = loadCands || loadCases;
+    const error = errorCands || errorCases;
     const [searchTerm, setSearchTerm] = useState('');
 
     const candidates = useMemo(() => {
-        // For real data: enrich candidates with verdict/totalRequests from cases
-        if (useRealSource) {
-            // Build a map of candidateId -> { count, lastVerdict, lastPosition, lastDate }
-            const caseStats = new Map();
-            for (const cs of realCases.cases) {
-                const prev = caseStats.get(cs.candidateId);
-                const date = cs.createdAt || '';
-                if (!prev || date > prev.lastDate) {
-                    caseStats.set(cs.candidateId, {
-                        count: (prev?.count || 0) + 1,
-                        lastVerdict: cs.finalVerdict !== 'PENDING' ? cs.finalVerdict : (prev?.lastVerdict || null),
-                        lastPosition: cs.candidatePosition || prev?.lastPosition || '',
-                        lastDate: date,
-                    });
-                } else {
-                    prev.count += 1;
-                    if (!prev.lastVerdict && cs.finalVerdict !== 'PENDING') {
-                        prev.lastVerdict = cs.finalVerdict;
-                    }
-                }
+        const caseStats = new Map();
+        
+        // Build candidate history by aggregating cases
+        for (const cs of cases) {
+            const prev = caseStats.get(cs.candidateId);
+            const date = cs.createdAt || '';
+            if (!prev || date > prev.lastDate) {
+                caseStats.set(cs.candidateId, {
+                    count: (prev?.count || 0) + 1,
+                    lastVerdict: cs.finalVerdict !== 'PENDING' ? cs.finalVerdict : (prev?.lastVerdict || null),
+                    lastPosition: cs.candidatePosition || prev?.lastPosition || '',
+                    lastDate: date,
+                    name: cs.candidateName,
+                    cpf: cs.cpfMasked
+                });
+            } else {
+                prev.count += 1;
+                if (!prev.lastVerdict && cs.finalVerdict !== 'PENDING') prev.lastVerdict = cs.finalVerdict;
             }
+        }
 
-            const list = rawCandidates.map((c) => {
+        let list = [];
+        if (useRawCandidates) {
+            // Enrich real ops candidate profiles with stats derived from cases
+            list = rawCands.map((c) => {
                 const stats = caseStats.get(c.id);
                 return {
                     id: c.id,
                     name: c.candidateName || c.name || '',
-                    cpf: isOpsPortal ? (formatFullCpf(c.cpf) || c.cpfMasked || '') : (c.cpfMasked || c.cpf || ''),
+                    cpf: c.cpf || c.cpfMasked || '', // full cpf is shown in ops mode
                     lastPosition: stats?.lastPosition || c.candidatePosition || c.position || '',
                     lastVerdict: stats?.lastVerdict || null,
                     totalRequests: stats?.count || 1,
                 };
             });
-
-            if (!searchTerm) return list;
-            const normalizedTerm = searchTerm.toLowerCase();
-            return list.filter((candidate) => (
-                candidate.name.toLowerCase().includes(normalizedTerm)
-                || candidate.cpf.includes(normalizedTerm)
-            ));
+        } else {
+            // Derive purely from cases for Client / Demo modes
+            list = Array.from(caseStats.entries()).map(([id, stats]) => ({
+                id,
+                name: stats.name || 'Desconhecido',
+                cpf: stats.cpf || '',
+                lastPosition: stats.lastPosition || '',
+                lastVerdict: stats.lastVerdict || null,
+                totalRequests: stats.count || 1,
+            }));
         }
 
-        // Demo fallback: derive from cases
-        const candidateMap = new Map();
-        for (const currentCase of demoCases.cases) {
-            const totalRequests = demoCases.cases.filter((item) => item.candidateId === currentCase.candidateId).length;
-            if (!candidateMap.has(currentCase.candidateId)) {
-                candidateMap.set(currentCase.candidateId, {
-                    id: currentCase.candidateId,
-                    name: currentCase.candidateName,
-                    cpf: currentCase.cpfMasked,
-                    lastPosition: currentCase.candidatePosition,
-                    lastVerdict: currentCase.finalVerdict,
-                    totalRequests,
-                });
-            }
-        }
-
-        const uniqueCandidates = [...candidateMap.values()];
-        if (!searchTerm) return uniqueCandidates;
+        if (!searchTerm) return list;
         const normalizedTerm = searchTerm.toLowerCase();
-        return uniqueCandidates.filter((candidate) => (
-            candidate.name.toLowerCase().includes(normalizedTerm)
-            || candidate.cpf.includes(normalizedTerm)
+        return list.filter((c) => (
+            c.name.toLowerCase().includes(normalizedTerm)
+            || c.cpf.includes(normalizedTerm)
         ));
-    }, [useRealSource, rawCandidates, realCases.cases, demoCases.cases, searchTerm]);
+    }, [cases, rawCands, searchTerm, useRawCandidates]);
 
     return (
         <div className="candidatos-page">
@@ -148,7 +139,7 @@ export default function CandidatosPage() {
                         {!loading && error && (
                             <tr>
                                 <td colSpan={5} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
-                                    Nao foi possivel carregar os candidatos agora.
+                                    {extractErrorMessage(error, 'Nao foi possivel carregar os candidatos agora.')}
                                 </td>
                             </tr>
                         )}
@@ -161,7 +152,7 @@ export default function CandidatosPage() {
                                 <td className="data-table__td">
                                     {candidate.lastVerdict
                                         ? <RiskChip value={candidate.lastVerdict} />
-                                        : <span style={{ color: 'var(--text-tertiary)' }}>Pendente</span>}
+                                        : <StatusBadge status="PENDING" />}
                                 </td>
                             </tr>
                         ))}

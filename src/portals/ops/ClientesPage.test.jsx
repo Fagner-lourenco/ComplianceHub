@@ -9,8 +9,8 @@ const clientesPageMocks = vi.hoisted(() => ({
         selectedTenantId: 'all',
     },
     fetchClients: vi.fn(),
-    createClientUser: vi.fn(),
-    logAuditEvent: vi.fn(),
+    callCreateOpsClientUser: vi.fn(),
+    callUpdateTenantSettingsByAnalyst: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -23,8 +23,8 @@ vi.mock('../../core/contexts/useTenant', () => ({
 
 vi.mock('../../core/firebase/firestoreService', () => ({
     fetchClients: (...args) => clientesPageMocks.fetchClients(...args),
-    createClientUser: (...args) => clientesPageMocks.createClientUser(...args),
-    logAuditEvent: (...args) => clientesPageMocks.logAuditEvent(...args),
+    callCreateOpsClientUser: (...args) => clientesPageMocks.callCreateOpsClientUser(...args),
+    callUpdateTenantSettingsByAnalyst: (...args) => clientesPageMocks.callUpdateTenantSettingsByAnalyst(...args),
     DEFAULT_ANALYSIS_CONFIG: {
         criminal: { enabled: true }, labor: { enabled: true }, warrant: { enabled: true },
         osint: { enabled: true }, social: { enabled: true }, digital: { enabled: true },
@@ -50,8 +50,8 @@ const { default: ClientesPage } = await import('./ClientesPage');
 describe('ClientesPage', () => {
     beforeEach(() => {
         clientesPageMocks.fetchClients.mockReset();
-        clientesPageMocks.createClientUser.mockReset();
-        clientesPageMocks.logAuditEvent.mockReset();
+        clientesPageMocks.callCreateOpsClientUser.mockReset();
+        clientesPageMocks.callUpdateTenantSettingsByAnalyst.mockReset();
     });
 
     it('carrega e exibe a lista real de clientes', async () => {

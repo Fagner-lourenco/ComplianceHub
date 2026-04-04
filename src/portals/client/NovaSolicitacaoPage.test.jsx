@@ -21,9 +21,7 @@ vi.mock('../../core/auth/useAuth', () => ({
 }));
 
 vi.mock('../../core/firebase/firestoreService', () => ({
-    createCandidate: vi.fn(),
-    createCase: vi.fn(),
-    logAuditEvent: vi.fn(),
+    callCreateClientSolicitation: vi.fn(),
 }));
 
 describe('NovaSolicitacaoPage', () => {

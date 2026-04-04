@@ -15,8 +15,7 @@ const filaPageMocks = vi.hoisted(() => ({
         loading: false,
         error: null,
     },
-    updateCase: vi.fn(),
-    logAuditEvent: vi.fn(),
+    callAssignCaseToCurrentAnalyst: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -32,8 +31,7 @@ vi.mock('../../hooks/useCases', () => ({
 }));
 
 vi.mock('../../core/firebase/firestoreService', () => ({
-    updateCase: (...args) => filaPageMocks.updateCase(...args),
-    logAuditEvent: (...args) => filaPageMocks.logAuditEvent(...args),
+    callAssignCaseToCurrentAnalyst: (...args) => filaPageMocks.callAssignCaseToCurrentAnalyst(...args),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -49,8 +47,7 @@ const { default: FilaPage } = await import('./FilaPage');
 describe('FilaPage', () => {
     beforeEach(() => {
         filaPageMocks.navigate.mockReset();
-        filaPageMocks.updateCase.mockReset();
-        filaPageMocks.logAuditEvent.mockReset();
+        filaPageMocks.callAssignCaseToCurrentAnalyst.mockReset();
     });
 
     it('filtra "Meus casos" pelo uid do usuario autenticado, nao por string fixa', () => {
@@ -96,9 +93,8 @@ describe('FilaPage', () => {
         expect(screen.queryByText('Bob')).not.toBeInTheDocument();
     });
 
-    it('chama updateCase e logAuditEvent ao clicar em Assumir', async () => {
-        filaPageMocks.updateCase.mockResolvedValue(undefined);
-        filaPageMocks.logAuditEvent.mockResolvedValue(undefined);
+    it('chama o callable operacional ao clicar em Assumir', async () => {
+        filaPageMocks.callAssignCaseToCurrentAnalyst.mockResolvedValue(undefined);
         filaPageMocks.casesState = {
             cases: [
                 {
@@ -125,19 +121,10 @@ describe('FilaPage', () => {
         fireEvent.click(assumeButton);
 
         await vi.waitFor(() => {
-            expect(filaPageMocks.updateCase).toHaveBeenCalledWith('C3', {
-                assigneeId: 'analyst-7',
-                status: 'IN_PROGRESS',
+            expect(filaPageMocks.callAssignCaseToCurrentAnalyst).toHaveBeenCalledWith({
+                caseId: 'C3',
             });
         });
-
-        expect(filaPageMocks.logAuditEvent).toHaveBeenCalledWith(
-            expect.objectContaining({
-                userId: 'analyst-7',
-                action: 'CASE_ASSIGNED',
-                target: 'C3',
-            }),
-        );
     });
 
     it('nao mostra botao Assumir quando caso ja tem assigneeId', () => {

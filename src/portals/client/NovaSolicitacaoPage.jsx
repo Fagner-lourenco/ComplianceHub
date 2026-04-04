@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
-import { createCandidate, createCase, getEnabledPhases, getTenantSettings, logAuditEvent } from '../../core/firebase/firestoreService';
+import { callCreateClientSolicitation } from '../../core/firebase/firestoreService';
+import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import { buildClientPortalPath } from '../../core/portalPaths';
-import { useCases } from '../../hooks/useCases';
 import './NovaSolicitacaoPage.css';
 
 const INITIAL_FORM = {
@@ -81,7 +81,6 @@ export default function NovaSolicitacaoPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, userProfile } = useAuth();
-    const { cases: existingCases } = useCases();
     const tenantId = userProfile?.tenantId || null;
     const tenantLabel = userProfile?.tenantName || userProfile?.tenantId || 'Franquia em sincronizacao';
     const hasConfirmedTenant = Boolean(tenantId);
@@ -142,93 +141,33 @@ export default function NovaSolicitacaoPage() {
                 return;
             }
 
-            const tenantName = userProfile.tenantName || userProfile.tenantId;
-            const cpfMasked = maskCpf(form.cpf);
-            const cpfClean = form.cpf.replace(/\D/g, '');
-            const requestedByName = userProfile.displayName || user.displayName || null;
-            const requestedByEmail = userProfile.email || user.email || null;
-            const requestedByLabel = requestedByEmail || requestedByName || user.uid;
-
-            const tenantSettings = await getTenantSettings(tenantId);
-            const enabledPhases = getEnabledPhases(tenantSettings.analysisConfig);
-
-            // Check query limits
-            const now = new Date();
-            const todayStr = now.toISOString().slice(0, 10);
-            const monthStr = now.toISOString().slice(0, 7);
-            if (tenantSettings.dailyLimit) {
-                const todayCount = existingCases.filter(c => c.createdAt?.slice?.(0, 10) === todayStr).length;
-                if (todayCount >= tenantSettings.dailyLimit) {
-                    setErrors({ general: `Limite diario de ${tenantSettings.dailyLimit} consultas atingido. Tente novamente amanha.` });
-                    setSubmitting(false);
-                    return;
-                }
-            }
-            if (tenantSettings.monthlyLimit) {
-                const monthCount = existingCases.filter(c => c.createdAt?.slice?.(0, 7) === monthStr).length;
-                if (monthCount >= tenantSettings.monthlyLimit) {
-                    setErrors({ general: `Limite mensal de ${tenantSettings.monthlyLimit} consultas atingido. Entre em contato com o administrador.` });
-                    setSubmitting(false);
-                    return;
-                }
-            }
-
-            const candidateId = await createCandidate({
-                tenantId,
-                candidateName: form.fullName,
-                cpf: cpfClean,
-                cpfMasked,
-                candidatePosition: form.position,
-                department: form.department,
-                email: form.email,
-                phone: form.phone,
-                instagram: form.instagram,
-                facebook: form.facebook,
-                linkedin: form.linkedin,
-                tiktok: form.tiktok,
-                twitter: form.twitter,
-                youtube: form.youtube,
-                otherSocialUrls: form.otherSocialUrls,
-            });
-
-            const caseId = await createCase({
-                tenantId,
-                tenantName,
-                candidateId,
-                candidateName: form.fullName,
-                candidatePosition: form.position || '',
-                cpf: cpfClean,
-                cpfMasked,
+            await callCreateClientSolicitation({
+                fullName: form.fullName,
+                cpf: form.cpf,
+                dateOfBirth: form.dateOfBirth || '',
+                position: form.position || '',
+                department: form.department || '',
                 hiringUf: form.hiringUf || '',
+                email: form.email || '',
+                phone: form.phone || '',
                 priority: form.priority,
-                requestedBy: requestedByLabel,
-                requestedByName,
-                requestedByEmail,
-                enabledPhases,
+                digitalProfileNotes: form.digitalProfileNotes || '',
                 socialProfiles: {
-                    instagram: form.instagram,
-                    facebook: form.facebook,
-                    linkedin: form.linkedin,
-                    tiktok: form.tiktok,
-                    twitter: form.twitter,
-                    youtube: form.youtube,
+                    instagram: form.instagram || '',
+                    facebook: form.facebook || '',
+                    linkedin: form.linkedin || '',
+                    tiktok: form.tiktok || '',
+                    twitter: form.twitter || '',
+                    youtube: form.youtube || '',
                 },
-            });
-
-            await logAuditEvent({
-                tenantId,
-                userId: user.uid,
-                userEmail: user.email,
-                action: 'SOLICITATION_CREATED',
-                target: caseId,
-                detail: `Nova solicitacao criada para ${form.fullName}`,
+                otherSocialUrls: form.otherSocialUrls,
             });
 
             setSubmitted(true);
             redirectTimerRef.current = window.setTimeout(() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes')), 1500);
         } catch (error) {
             console.error('Error creating solicitation:', error);
-            setErrors({ general: 'Erro ao criar solicitacao. Tente novamente.' });
+            setErrors({ general: getUserFriendlyMessage(error, 'criar a solicitacao') });
         } finally {
             setSubmitting(false);
         }

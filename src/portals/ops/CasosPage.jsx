@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
@@ -8,7 +8,9 @@ import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatDate } from '../../core/formatDate';
 import { useCases } from '../../hooks/useCases';
-import { getCaseStats } from '../../data/mockData';
+import { getCaseStats } from '../../core/caseUtils';
+import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './CasosPage.css';
 
 function formatFullCpf(cpf) {
@@ -33,6 +35,9 @@ function EnrichmentIcon({ status }) {
 
 export default function CasosPage() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const isDemoPortal = location.pathname.startsWith('/demo/');
+    const routePrefix = isDemoPortal ? '/demo' : '';
     const { selectedTenantId } = useTenant();
     const {
         cases,
@@ -135,7 +140,7 @@ export default function CasosPage() {
                         {!loading && error && (
                             <tr>
                                 <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
-                                    Nao foi possivel carregar os casos agora.
+                                    {extractErrorMessage(error, 'Nao foi possivel carregar os casos agora.')}
                                 </td>
                             </tr>
                         )}
@@ -148,14 +153,14 @@ export default function CasosPage() {
                                 <td className="data-table__td">{currentCase.candidatePosition}</td>
                                 <td className="data-table__td">{formatDate(currentCase.createdAt)}</td>
                                 <td className="data-table__td"><StatusBadge status={currentCase.status} /></td>
-                                <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={currentCase.enrichmentStatus} /></td>
+                                <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                 <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
                                 <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
                                 <td className="data-table__td"><RiskChip value={currentCase.finalVerdict} bold /></td>
                                 <td className="data-table__td">
                                     <button
                                         className="fila-btn fila-btn--open"
-                                        onClick={() => navigate(`/ops/caso/${currentCase.id}`)}
+                                        onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
                                     >
                                         Abrir
                                     </button>

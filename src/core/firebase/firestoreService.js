@@ -1,6 +1,5 @@
 import {
     collection,
-    deleteField,
     doc,
     getDoc,
     getDocs,
@@ -9,13 +8,10 @@ import {
     orderBy,
     query,
     serverTimestamp,
-    setDoc,
-    updateDoc,
     where,
 } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
-import { auth, db, secondaryAuth } from './config';
-import { CLIENT_ROLES, ROLES } from '../rbac/permissions';
+import { auth, db } from './config';
+import { CLIENT_ROLES } from '../rbac/permissions';
 
 const FIRESTORE_QUERY_TIMEOUT_MS = 5000;
 const REST_FALLBACK_DELAY_MS = 2000;
@@ -369,43 +365,6 @@ export async function fetchClients() {
     }
 }
 
-/**
- * Creates a new Auth user (using secondary app) and their Firestore profile.
- */
-export async function createClientUser({
-    email,
-    password,
-    displayName,
-    tenantName,
-    tenantId: existingTenantId = null,
-    role = ROLES.CLIENT_MANAGER,
-}) {
-    try {
-        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-        const newUid = userCredential.user.uid;
-        const tenantId = existingTenantId || tenantName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-
-        await updateProfile(userCredential.user, { displayName });
-
-        await setDoc(doc(db, 'userProfiles', newUid), {
-            email,
-            displayName,
-            role,
-            tenantId,
-            tenantName,
-            status: 'active',
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-
-        await initializeTenantSettings(tenantId);
-
-        return { uid: newUid, tenantId };
-    } finally {
-        await signOut(secondaryAuth).catch(() => {});
-    }
-}
-
 export function subscribeToTenantDirectory(callback) {
     const q = query(collection(db, 'userProfiles'), where('role', 'in', CLIENT_ROLES));
 
@@ -445,17 +404,7 @@ export function updateTenantSettings(tenantId, analysisConfig, limits, enrichmen
     if (enrichmentConfig !== undefined) {
         payload.enrichmentConfig = enrichmentConfig;
     }
-    setDoc(doc(db, 'tenantSettings', tenantId), payload, { merge: true }).catch((error) => console.error('Tenant settings write failed:', error));
-}
-
-async function initializeTenantSettings(tenantId) {
-    const snapshot = await getDoc(doc(db, 'tenantSettings', tenantId));
-    if (snapshot.exists()) return;
-
-    await setDoc(doc(db, 'tenantSettings', tenantId), {
-        analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG },
-        updatedAt: serverTimestamp(),
-    });
+    return setDoc(doc(db, 'tenantSettings', tenantId), payload, { merge: true });
 }
 
 export function getEnabledPhases(analysisConfig) {
@@ -514,6 +463,18 @@ export function subscribeToCases(tenantId, callback) {
     });
 }
 
+export function subscribeToClientCases(tenantId, callback) {
+    const q = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt');
+
+    return onSnapshot(q, (snapshot) => {
+        const cases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
+        callback(cases, null);
+    }, (error) => {
+        console.error('Error subscribing to client cases:', error);
+        callback([], error);
+    });
+}
+
 export function fetchCases(tenantId) {
     return fetchOrderedCollection({
         collectionId: 'cases',
@@ -521,6 +482,17 @@ export function fetchCases(tenantId) {
         orderField: 'createdAt',
         timeoutMessage: 'Firestore cases query timeout.',
         fallbackMessage: 'Firestore cases REST fallback failed.',
+        mapper: mapCaseDocument,
+    });
+}
+
+export function fetchClientCases(tenantId) {
+    return fetchOrderedCollection({
+        collectionId: 'clientCases',
+        tenantId,
+        orderField: 'createdAt',
+        timeoutMessage: 'Firestore client cases query timeout.',
+        fallbackMessage: 'Firestore client cases REST fallback failed.',
         mapper: mapCaseDocument,
     });
 }
@@ -572,52 +544,6 @@ export function subscribeToCaseDoc(caseId, callback) {
     });
 }
 
-export async function createCase(data) {
-    const ref = doc(collection(db, 'cases'));
-    await setDoc(ref, {
-        ...data,
-        status: 'PENDING',
-        assigneeId: null,
-        criminalFlag: null,
-        laborFlag: null,
-        laborSeverity: null,
-        laborNotes: '',
-        warrantFlag: null,
-        warrantNotes: '',
-        osintLevel: null,
-        socialStatus: null,
-        digitalFlag: null,
-        conflictInterest: null,
-        finalVerdict: 'PENDING',
-        riskLevel: null,
-        riskScore: 0,
-        hasNotes: false,
-        hasEvidence: false,
-        enabledPhases: data.enabledPhases || Object.keys(DEFAULT_ANALYSIS_CONFIG),
-        enrichmentStatus: 'PENDING',
-        enrichmentSources: {},
-        enrichmentIdentity: null,
-        enrichmentGateResult: null,
-        enrichedAt: null,
-        enrichmentOriginalValues: {},
-        aiAnalysis: null,
-        aiCostUsd: null,
-        aiModel: null,
-        aiTokens: null,
-        aiError: null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
-    return ref.id;
-}
-
-export async function updateCase(caseId, data) {
-    await updateDoc(doc(db, 'cases', caseId), {
-        ...data,
-        updatedAt: serverTimestamp(),
-    });
-}
-
 /* =========================================================
    CANDIDATES
    ========================================================= */
@@ -645,44 +571,9 @@ export function fetchCandidates(tenantId) {
     });
 }
 
-export async function createCandidate(data) {
-    const ref = doc(collection(db, 'candidates'));
-    await setDoc(ref, {
-        ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
-    return ref.id;
-}
-
 /* =========================================================
    AUDIT LOGS
    ========================================================= */
-
-let _resolvedIp = null;
-let _ipFetchStarted = false;
-
-function warmClientIp() {
-    if (_ipFetchStarted) return;
-    _ipFetchStarted = true;
-    (async () => {
-        try {
-            const controller = new AbortController();
-            const timeoutId = window.setTimeout(() => controller.abort(), 3000);
-            const res = await fetch('https://api.ipify.org?format=json', {
-                signal: controller.signal,
-                cache: 'no-store',
-            });
-            window.clearTimeout(timeoutId);
-            const data = await res.json();
-            if (typeof data?.ip === 'string' && data.ip) {
-                _resolvedIp = data.ip;
-            }
-        } catch {
-            // IP resolution failed — falls back to 'browser'
-        }
-    })();
-}
 
 export function subscribeToAuditLogs(tenantId, callback) {
     const q = buildTenantCollectionQuery('auditLogs', tenantId, 'timestamp');
@@ -705,21 +596,6 @@ export function fetchAuditLogs(tenantId) {
         fallbackMessage: 'Firestore audit logs REST fallback failed.',
         mapper: mapAuditLogDocument,
     });
-}
-
-export function logAuditEvent({ tenantId, userId, userEmail, action, target, detail }) {
-    warmClientIp();
-    const ref = doc(collection(db, 'auditLogs'));
-    return setDoc(ref, {
-        tenantId: tenantId || null,
-        userId,
-        user: userEmail,
-        action,
-        target,
-        detail,
-        ip: _resolvedIp || 'browser',
-        timestamp: serverTimestamp(),
-    }).catch((error) => console.error('Audit log write sync failed:', error));
 }
 
 /* =========================================================
@@ -749,31 +625,16 @@ export function fetchExports(tenantId) {
     });
 }
 
-export async function createExport(data) {
-    const ref = doc(collection(db, 'exports'));
-    await setDoc(ref, {
-        ...data,
-        status: 'READY',
-        createdAt: serverTimestamp(),
-    });
-    return ref.id;
-}
-
 /* =========================================================
    PUBLIC REPORTS
    ========================================================= */
 
 export async function savePublicReport(html, meta = {}) {
-    const ref = doc(collection(db, 'publicReports'));
-    const TTL_DAYS = 30;
-    const expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
-    await setDoc(ref, {
-        html,
-        createdAt: serverTimestamp(),
-        expiresAt,
-        ...meta,
-    });
-    return ref.id;
+    const result = await callBackendFunction('createAnalystPublicReport', { html, meta });
+    if (!result?.token) {
+        throw new Error('Backend did not return a public report token.');
+    }
+    return result.token;
 }
 
 export async function getPublicReport(token) {
@@ -820,4 +681,52 @@ export async function callRerunEnrichmentPhase(caseId, phase) {
 
 export async function callRerunAiAnalysis(caseId) {
     return callRerunEnrichmentPhase(caseId, 'ai');
+}
+
+async function callBackendFunction(name, payload) {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const functions = getFunctions(undefined, 'southamerica-east1');
+    const fn = httpsCallable(functions, name);
+    const result = await fn(payload);
+    return result.data;
+}
+
+export async function callCreateClientSolicitation(payload) {
+    return callBackendFunction('createClientSolicitation', payload);
+}
+
+export async function callSubmitClientCorrection(payload) {
+    return callBackendFunction('submitClientCorrection', payload);
+}
+
+export async function callRegisterClientExport(payload) {
+    return callBackendFunction('registerClientExport', payload);
+}
+
+export async function callCreateOpsClientUser(payload) {
+    return callBackendFunction('createOpsClientUser', payload);
+}
+
+export async function callAssignCaseToCurrentAnalyst(payload) {
+    return callBackendFunction('assignCaseToCurrentAnalyst', payload);
+}
+
+export async function callReturnCaseToClient(payload) {
+    return callBackendFunction('returnCaseToClient', payload);
+}
+
+export async function callConcludeCaseByAnalyst(payload) {
+    return callBackendFunction('concludeCaseByAnalyst', payload);
+}
+
+export async function callUpdateTenantSettingsByAnalyst(payload) {
+    return callBackendFunction('updateTenantSettingsByAnalyst', payload);
+}
+
+export async function callSaveCaseDraftByAnalyst(payload) {
+    return callBackendFunction('saveCaseDraftByAnalyst', payload);
+}
+
+export async function callSetAiDecisionByAnalyst(payload) {
+    return callBackendFunction('setAiDecisionByAnalyst', payload);
 }

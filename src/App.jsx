@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { useAuth } from './core/auth/useAuth';
@@ -9,19 +10,20 @@ import {
     PERMISSIONS,
 } from './core/rbac/permissions';
 import LoginPage from './pages/LoginPage';
-import CandidatosPage from './portals/client/CandidatosPage';
-import DashboardClientePage from './portals/client/DashboardClientePage';
-import ExportacoesPage from './portals/client/ExportacoesPage';
-import NovaSolicitacaoPage from './portals/client/NovaSolicitacaoPage';
-import SolicitacoesPage from './portals/client/SolicitacoesPage';
-import AuditoriaPage from './portals/ops/AuditoriaPage';
-import MetricasIAPage from './portals/ops/MetricasIAPage';
-import CasoPage from './portals/ops/CasoPage';
-import CasosPage from './portals/ops/CasosPage';
-import ClientesPage from './portals/ops/ClientesPage';
-import FilaPage from './portals/ops/FilaPage';
 import AppLayout from './ui/layouts/AppLayout';
 import PublicReportPage from './pages/PublicReportPage';
+
+const CandidatosPage = lazy(() => import('./portals/client/CandidatosPage'));
+const DashboardClientePage = lazy(() => import('./portals/client/DashboardClientePage'));
+const ExportacoesPage = lazy(() => import('./portals/client/ExportacoesPage'));
+const NovaSolicitacaoPage = lazy(() => import('./portals/client/NovaSolicitacaoPage'));
+const SolicitacoesPage = lazy(() => import('./portals/client/SolicitacoesPage'));
+const AuditoriaPage = lazy(() => import('./portals/ops/AuditoriaPage'));
+const MetricasIAPage = lazy(() => import('./portals/ops/MetricasIAPage'));
+const CasoPage = lazy(() => import('./portals/ops/CasoPage'));
+const CasosPage = lazy(() => import('./portals/ops/CasosPage'));
+const ClientesPage = lazy(() => import('./portals/ops/ClientesPage'));
+const FilaPage = lazy(() => import('./portals/ops/FilaPage'));
 
 function SplashScreen() {
     return (
@@ -262,6 +264,7 @@ function RequirePermission({ permission, children }) {
 function AppRoutes() {
     return (
         <BrowserRouter>
+            <Suspense fallback={<SplashScreen />}>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
 
@@ -432,6 +435,7 @@ function AppRoutes() {
                 <Route path="/demo/r/:caseId" element={<PublicReportPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
         </BrowserRouter>
     );
 }

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import { useCases } from '../../hooks/useCases';
+import { useAuth } from '../../core/auth/useAuth';
 import { formatDate } from '../../core/formatDate';
 import { getClientDashboardMetrics } from '../../core/clientPortal';
 import './DashboardClientePage.css';
@@ -18,7 +19,10 @@ function formatTurnaround(hours) {
 }
 
 export default function DashboardClientePage() {
-    const { cases, loading } = useCases();
+    const { user, userProfile } = useAuth();
+    const isDemoMode = !user || userProfile?.source === 'demo';
+    const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
+    const { cases, loading } = useCases(clientTenantId);
 
     const metrics = useMemo(() => getClientDashboardMetrics(cases), [cases]);
     const maxMonthCount = metrics.maxMonthCount || 1;

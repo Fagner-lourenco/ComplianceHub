@@ -533,6 +533,11 @@
     color: var(--red-700);
 }
 
+.caso-api-badge--purple {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
 .caso-enrichment-error {
     font-size: .75rem;
     opacity: .8;
@@ -588,6 +593,19 @@
 .caso-identity-block h4 {
     margin-bottom: var(--space-3);
     color: var(--brand-700);
+}
+
+.caso-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.caso-section-header__note {
+    font-size: .75rem;
+    color: var(--text-secondary);
 }
 
 .caso-identity-consulted {
@@ -653,6 +671,9 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--space-3);
+}
+@media (max-width: 640px) {
+    .caso-grid--3 { grid-template-columns: 1fr; }
 }
 
 /* ========== Stat cards (criminal/labor/warrant summary) ========== */
@@ -911,6 +932,11 @@
     gap: 12px;
 }
 
+.ai-structured-card--homonym {
+    background: linear-gradient(180deg, #f8fafc, #f5f3ff);
+    border-color: #ddd6fe;
+}
+
 .ai-structured-card__section {
     font-size: .8125rem;
     line-height: 1.5;
@@ -951,6 +977,13 @@
     color: var(--red-700);
 }
 
+.ai-structured-card__section--muted {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+}
+
 .ai-structured-card__chips {
     display: flex;
     gap: 12px;
@@ -971,4 +1004,38 @@
     flex-wrap: wrap;
     padding-top: 8px;
     border-top: 1px solid var(--border-light);
+}
+
+.ai-homonym-process-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ai-homonym-process-item {
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: #ffffff;
+}
+
+.ai-homonym-process-item__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.ai-homonym-process-item__cnj {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+}
+
+.ai-homonym-process-item__decision {
+    font-size: .75rem;
+    color: var(--text-secondary);
 }

@@ -30,7 +30,7 @@ function avgDays(doneCases) {
     const d = doneCases
         .map(c => {
             const s = c.createdAt ? new Date(c.createdAt) : null;
-            const e = c.updatedAt ? new Date(c.updatedAt) : null;
+            const e = c.concludedAt ? new Date(c.concludedAt) : (c.updatedAt ? new Date(c.updatedAt) : null);
             return s && e && !isNaN(s) && !isNaN(e) ? (e - s) / 86400000 : null;
         }).filter(v => v !== null && v >= 0);
     return d.length ? (d.reduce((a, b) => a + b, 0) / d.length).toFixed(1) : null;
@@ -100,7 +100,7 @@ export default function MetricasIAPage() {
         const structFail = aiCases.filter(c => c.aiStructuredOk === false).length;
         const aiErrors = pc.filter(c => c.aiError && !c.aiRawResponse).length;
         const cached = aiCases.filter(c => c.aiFromCache).length;
-        const aiCostUSD = aiCases.reduce((s, c) => s + (c.aiCostUsd || 0), 0);
+        const aiCostUSD = aiCases.reduce((s, c) => s + (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0), 0);
         const tokIn = aiCases.reduce((s, c) => s + (c.aiTokens?.input || 0), 0);
         const tokOut = aiCases.reduce((s, c) => s + (c.aiTokens?.output || 0), 0);
 
@@ -116,7 +116,7 @@ export default function MetricasIAPage() {
                 if (!byTenant[t]) byTenant[t] = { total: 0, done: 0, fdCost: 0, aiCost: 0 };
                 byTenant[t].total++;
                 if (c.status === 'DONE') byTenant[t].done++;
-                byTenant[t].aiCost += c.aiCostUsd || 0;
+                byTenant[t].aiCost += (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0);
                 const src = c.enrichmentSources;
                 if (src) for (const info of Object.values(src)) byTenant[t].fdCost += parseFloat(info?.cost) || 0;
             }
@@ -283,7 +283,7 @@ export default function MetricasIAPage() {
                                     <th>Concluídos</th>
                                     <th>Custo FD (BRL)</th>
                                     <th>Custo IA (USD)</th>
-                                    <th>Custo Total (BRL)</th>
+                                    <th>Custos Consolidados</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -294,7 +294,7 @@ export default function MetricasIAPage() {
                                         <td>{d.done}</td>
                                         <td>{fmtBRL(d.fdCost)}</td>
                                         <td>{fmtUSD(d.aiCost)}</td>
-                                        <td className="ops-dash__td-total">{fmtBRL(d.fdCost + d.aiCost * 5.5)}</td>
+                                        <td className="ops-dash__td-total">{`${fmtBRL(d.fdCost)} + ${fmtUSD(d.aiCost)}`}</td>
                                     </tr>
                                 ))}
                             </tbody>

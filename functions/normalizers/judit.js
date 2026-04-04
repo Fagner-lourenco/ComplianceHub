@@ -13,6 +13,16 @@
 
 const WITNESS_TYPES = /testemunha|informante/i;
 
+function firstNumericValue(candidates = []) {
+    for (const candidate of candidates) {
+        const numeric = Number(candidate);
+        if (Number.isFinite(numeric) && numeric >= 0) {
+            return numeric;
+        }
+    }
+    return null;
+}
+
 /**
  * Find the role of a person in a lawsuit's parties by CPF.
  * @param {object[]} parties
@@ -23,27 +33,41 @@ function findPersonRole(parties, cpf) {
     if (!Array.isArray(parties) || !cpf) return null;
     const cleanCpf = (cpf || '').replace(/\D/g, '');
 
+    let anyPartyHasCpf = false;
     for (const party of parties) {
         // Check main_document
         const partyDoc = (party.main_document || '').replace(/\D/g, '');
-        if (partyDoc && partyDoc === cleanCpf) {
-            return {
-                personType: party.person_type || null,
-                side: party.side || null,
-            };
+        if (partyDoc) {
+            anyPartyHasCpf = true;
+            if (partyDoc === cleanCpf) {
+                return {
+                    personType: party.person_type || null,
+                    side: party.side || null,
+                    hasDivergentCpf: false,
+                };
+            }
         }
         // Check documents array
         if (Array.isArray(party.documents)) {
             for (const doc of party.documents) {
                 const d = (typeof doc === 'string' ? doc : doc.document || '').replace(/\D/g, '');
-                if (d && d === cleanCpf) {
-                    return {
-                        personType: party.person_type || null,
-                        side: party.side || null,
-                    };
+                if (d) {
+                    anyPartyHasCpf = true;
+                    if (d === cleanCpf) {
+                        return {
+                            personType: party.person_type || null,
+                            side: party.side || null,
+                            hasDivergentCpf: false,
+                        };
+                    }
                 }
             }
         }
+    }
+    // No CPF matched: distinguish "no party has CPF" (legitimate ambiguity)
+    // from "parties have CPFs but none match" (confirmed different person)
+    if (anyPartyHasCpf) {
+        return { personType: null, side: null, hasDivergentCpf: true };
     }
     return null;
 }
@@ -92,6 +116,8 @@ function normalizeJuditLawsuits(result, cpf) {
 
         const parties = data.parties || [];
         const role = findPersonRole(parties, cpf);
+        const hasDivergentCpf = role?.hasDivergentCpf === true;
+        const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const isWitness = role?.personType && WITNESS_TYPES.test(role.personType);
 
         roleSummary.push({
@@ -103,12 +129,17 @@ function normalizeJuditLawsuits(result, cpf) {
             situation: data.situation || null,
             amount: data.amount || null,
             tribunalAcronym: data.tribunal_acronym || null,
+            state: data.state || null,
+            city: data.city || null,
+            county: data.county || null,
             justice: data.justice || null,
             instance: data.instance || null,
             distributionDate: data.distribution_date || null,
             secrecyLevel: data.secrecy_level || 0,
             personType: role?.personType || null,
             side: role?.side || null,
+            hasExactCpfMatch,
+            hasDivergentCpf,
             isWitness,
             isCriminal,
             isPossibleHomonym: tags.possible_homonym || false,
@@ -359,6 +390,18 @@ function normalizeJuditExecution(pageData) {
 function normalizeJuditEntity(data, cpf) {
     const items = Array.isArray(data.responseData) ? data.responseData : [];
     const entity = items[0] || {};
+    const raw = data?._raw || {};
+    const cpfsComNome = firstNumericValue([
+        entity.cpfs_com_nome,
+        entity.cpfsComNome,
+        entity.same_name_cpf_count,
+        entity.cpf_count_same_name,
+        raw.cpfs_com_nome,
+        raw.cpfsComNome,
+        raw.same_name_cpf_count,
+        raw.cpf_count_same_name,
+        raw.potential_homonym_count,
+    ]);
 
     const parents = Array.isArray(entity.parents)
         ? entity.parents.map((p) => ({
@@ -390,6 +433,7 @@ function normalizeJuditEntity(data, cpf) {
         birthDate: entity.birth_date || null,
         gender: entity.gender || null,
         nationality: entity.nationality || null,
+        cpfsComNome,
         motherName: motherParent?.name || null,
         parents,
         addresses: addresses.slice(0, 5).map((a) => ({
