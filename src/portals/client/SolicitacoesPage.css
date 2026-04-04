@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-5);
+    min-width: 0;
 }
 
 /* --- Header with CTA --- */
@@ -37,9 +38,10 @@
 
 /* --- KPIs --- */
 .solicitacoes-page__kpis {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: var(--space-4);
-    flex-wrap: wrap;
+    min-width: 0;
 }
 
 /* --- Filters --- */
@@ -47,6 +49,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    min-width: 0;
 }
 
 .filter-bar {
@@ -54,6 +57,7 @@
     gap: var(--space-3);
     flex-wrap: wrap;
     align-items: center;
+    min-width: 0;
 }
 
 .filter-bar__search {
@@ -161,10 +165,12 @@
     border: 1px solid var(--border-default);
     overflow-x: auto;
     box-shadow: var(--shadow-xs);
+    max-width: 100%;
 }
 
 .data-table {
     width: 100%;
+    min-width: 1320px;
     border-collapse: collapse;
     font-size: .8125rem;
 }
@@ -281,11 +287,12 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+    min-width: 0;
 }
 
 .case-detail__risk-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: var(--space-3);
 }
 
@@ -321,6 +328,7 @@
     font-size: .8125rem;
     color: var(--text-secondary);
     line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .case-detail__finding {
@@ -383,6 +391,7 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
 }
 
 .timeline__content strong {
@@ -432,4 +441,91 @@
     .case-detail__risk-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .solicitacoes-page__pagination {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 560px) {
+    .case-detail__risk-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- 3-Segment Progress Bar --- */
+.progress-bar-3 {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+}
+
+.progress-bar-3__seg {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.progress-bar-3__seg::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gray-200);
+    z-index: 0;
+}
+
+.progress-bar-3__seg:first-child::before {
+    left: 50%;
+}
+
+.progress-bar-3__seg:last-child::before {
+    right: 50%;
+}
+
+.progress-bar-3__seg--active::before {
+    background: var(--brand-500);
+}
+
+.progress-bar-3__dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    border: 2px solid var(--gray-300);
+    z-index: 1;
+    transition: all var(--transition-fast);
+}
+
+.progress-bar-3__seg--active .progress-bar-3__dot {
+    background: var(--brand-500);
+    border-color: var(--brand-600);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+}
+
+.progress-bar-3__label {
+    font-size: .6875rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.progress-bar-3__seg--active .progress-bar-3__label {
+    color: var(--brand-700);
+    font-weight: 600;
+}
+
+/* Hidden cell placeholder */
+.data-table__hidden {
+    color: var(--gray-300);
+    font-size: .75rem;
+}
+
+.case-detail__progress-summary {
+    padding: 16px 0;
 }

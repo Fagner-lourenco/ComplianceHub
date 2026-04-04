@@ -12,6 +12,20 @@ import { logAuditEvent, updateCase } from '../../core/firebase/firestoreService'
 import { formatDate } from '../../core/formatDate';
 import './FilaPage.css';
 
+function EnrichmentIcon({ status }) {
+    if (!status || status === 'PENDING') return null;
+    const config = {
+        RUNNING: { cls: 'enrichment-icon--running', title: 'Enriquecimento em andamento', label: '' },
+        DONE: { cls: 'enrichment-icon--done', title: 'Enriquecimento concluido', label: '✓' },
+        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Enriquecimento parcial', label: '!' },
+        FAILED: { cls: 'enrichment-icon--failed', title: 'Enriquecimento falhou', label: '✕' },
+        BLOCKED: { cls: 'enrichment-icon--blocked', title: 'CPF bloqueado no gate de identidade', label: '⊘' },
+    };
+    const c = config[status];
+    if (!c) return null;
+    return <span className={`enrichment-icon ${c.cls}`} title={c.title}>{c.label}</span>;
+}
+
 export default function FilaPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -127,6 +141,7 @@ export default function FilaPage() {
                             <th scope="col">Data</th>
                             <th scope="col">Prioridade</th>
                             <th scope="col">Status</th>
+                            <th scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
                             <th scope="col">Criminal</th>
                             <th scope="col">Score</th>
                             <th scope="col">Risco</th>
@@ -136,14 +151,14 @@ export default function FilaPage() {
                     <tbody>
                         {loading && (
                             <tr>
-                                <td colSpan={10} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
+                                <td colSpan={11} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
                                     Carregando fila...
                                 </td>
                             </tr>
                         )}
                         {!loading && error && (
                             <tr>
-                                <td colSpan={10} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
+                                <td colSpan={11} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
                                     Nao foi possivel carregar a fila de trabalho agora.
                                 </td>
                             </tr>
@@ -165,6 +180,7 @@ export default function FilaPage() {
                                     </span>
                                 </td>
                                 <td><StatusBadge status={currentCase.status} /></td>
+                                <td style={{ textAlign: 'center' }}><EnrichmentIcon status={currentCase.enrichmentStatus} /></td>
                                 <td><RiskChip value={currentCase.criminalFlag} /></td>
                                 <td><ScoreBar score={currentCase.riskScore} /></td>
                                 <td><RiskChip value={currentCase.riskLevel} /></td>
@@ -189,7 +205,7 @@ export default function FilaPage() {
                         ))}
                         {!loading && !error && queue.length === 0 && (
                             <tr>
-                                <td colSpan={10} style={{ textAlign: 'center', padding: '48px' }}>
+                                <td colSpan={11} style={{ textAlign: 'center', padding: '48px' }}>
                                     <span style={{ fontSize: '2rem' }}>OK</span>
                                     <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>Nenhum caso pendente na fila.</p>
                                 </td>

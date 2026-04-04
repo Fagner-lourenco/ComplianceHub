@@ -6,15 +6,18 @@ import {
     savePublicReport,
     subscribeToExports,
 } from '../../core/firebase/firestoreService';
+import { buildCaseReportPath } from '../../core/clientPortal';
+import { getMockCaseById, getMockExports } from '../../data/mockData';
 import { useCases } from '../../hooks/useCases';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import './ExportacoesPage.css';
 
 const DEMO_EXPORTS = [
-    { id: 'EXP-001', type: 'CSV', scope: 'Todos os casos', createdAt: '2026-02-28 14:30', status: 'DONE', records: 10 },
-    { id: 'EXP-002', type: 'PDF', scope: 'Caso CASE-002', createdAt: '2026-02-27 10:15', status: 'DONE', records: 1 },
-    { id: 'EXP-003', type: 'CSV', scope: 'Casos concluidos', createdAt: '2026-02-25 09:00', status: 'DONE', records: 6 },
+    { id: 'EXP-001', type: 'CSV', scope: 'Todos os casos', createdAt: '2026-04-01 09:15', status: 'DONE', records: 10 },
+    { id: 'EXP-002', type: 'REPORT', scope: 'Casos concluídos', createdAt: '2026-03-28 14:30', status: 'DONE', records: 7 },
+    { id: 'EXP-003', type: 'PDF', scope: 'Caso CASE-002', createdAt: '2026-03-18 16:00', status: 'DONE', records: 1 },
+    { id: 'EXP-004', type: 'CSV', scope: 'Apenas alertas', createdAt: '2026-03-15 10:00', status: 'DONE', records: 2 },
 ];
 
 const SCOPE_OPTIONS = [
@@ -227,7 +230,7 @@ export default function ExportacoesPage() {
     const [feedback, setFeedback] = useState('');
     const demoTimerRef = useRef(null);
     const [exportsState, setExportsState] = useState({
-        exports: isDemoMode ? DEMO_EXPORTS : [],
+        exports: isDemoMode ? getMockExports(tenantId) : [],
         loading: !isDemoMode,
         error: null,
     });
@@ -235,7 +238,7 @@ export default function ExportacoesPage() {
     useEffect(() => {
         if (isDemoMode || !tenantId) {
             setExportsState({
-                exports: isDemoMode ? DEMO_EXPORTS : [],
+                exports: isDemoMode ? getMockExports(tenantId) : [],
                 loading: false,
                 error: null,
             });
@@ -305,9 +308,36 @@ export default function ExportacoesPage() {
         if (isDemoMode) {
             setExporting(true);
             demoTimerRef.current = window.setTimeout(() => {
-                setExporting(false);
-                setFeedback(`Exportacao demo ${exportType} preparada com ${recordCount} registros.`);
-            }, 800);
+                try {
+                    const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === exportScope)?.label || exportScope;
+                    const dateRange = (dateFrom || dateTo)
+                        ? ` (${dateFrom || '...'} a ${dateTo || '...'})`
+                        : '';
+
+                    if (exportType === 'CSV') {
+                        const csv = buildCsvContent(filteredCases);
+                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+                        const ts = new Date().toISOString().slice(0, 10);
+                        downloadBlob(blob, `compliancehub-demo-${ts}.csv`);
+                    } else if (exportType === 'REPORT') {
+                        const html = buildBatchReportHtml(filteredCases, userProfile?.tenantName || 'Demo');
+                        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                    } else {
+                        const html = buildPdfHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || 'Demo');
+                        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                    }
+
+                    setFeedback(`Exportacao ${exportType} gerada com ${recordCount} registros.`);
+                } catch {
+                    setFeedback('Erro ao gerar exportacao demo.');
+                } finally {
+                    setExporting(false);
+                }
+            }, 600);
             return;
         }
 
@@ -364,7 +394,13 @@ export default function ExportacoesPage() {
         }
     };
 
-    const history = isDemoMode ? DEMO_EXPORTS : exportsState.exports;
+    const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
+
+    const openHistoryArtifact = (item) => {
+        const caseData = item?.artifactCaseId ? getMockCaseById(item.artifactCaseId) : null;
+        if (!caseData) return;
+        window.open(buildCaseReportPath(caseData, true), '_blank');
+    };
 
     return (
         <div className="export-page">
@@ -424,17 +460,18 @@ export default function ExportacoesPage() {
                                 <th className="data-table__th" scope="col">Registros</th>
                                 <th className="data-table__th" scope="col">Data</th>
                                 <th className="data-table__th" scope="col">Status</th>
+                                <th className="data-table__th" scope="col">Acao</th>
                             </tr>
                         </thead>
                         <tbody>
                             {exportsState.loading && !isDemoMode && (
                                 <tr>
-                                    <td colSpan={6} className="data-table__empty">Carregando exportacoes...</td>
+                                    <td colSpan={7} className="data-table__empty">Carregando exportacoes...</td>
                                 </tr>
                             )}
                             {!isDemoMode && !exportsState.loading && exportsState.error && (
                                 <tr>
-                                    <td colSpan={6} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
+                                    <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
                                         Nao foi possivel carregar o historico de exportacoes agora.
                                     </td>
                                 </tr>
@@ -447,11 +484,25 @@ export default function ExportacoesPage() {
                                     <td className="data-table__td">{item.records}</td>
                                     <td className="data-table__td">{item.createdAt}</td>
                                     <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
+                                    <td className="data-table__td">
+                                        {isDemoMode && item.artifactCaseId ? (
+                                            <button
+                                                type="button"
+                                                className="export-btn"
+                                                style={{ padding: '6px 10px', fontSize: '.75rem' }}
+                                                onClick={() => openHistoryArtifact(item)}
+                                            >
+                                                Abrir
+                                            </button>
+                                        ) : (
+                                            <span style={{ color: 'var(--text-tertiary)' }}>—</span>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                             {(!exportsState.loading || isDemoMode) && !exportsState.error && history.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="data-table__empty">Nenhuma exportacao registrada.</td>
+                                    <td colSpan={7} className="data-table__empty">Nenhuma exportacao registrada.</td>
                                 </tr>
                             )}
                         </tbody>

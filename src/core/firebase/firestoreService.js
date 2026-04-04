@@ -422,24 +422,28 @@ export function subscribeToTenantDirectory(callback) {
    ========================================================= */
 
 export async function getTenantSettings(tenantId) {
-    if (!tenantId) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null };
+    if (!tenantId) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null };
 
     const snapshot = await getDoc(doc(db, 'tenantSettings', tenantId));
-    if (!snapshot.exists()) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null };
+    if (!snapshot.exists()) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null };
 
     const data = snapshot.data();
     return {
         analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG, ...data.analysisConfig },
         dailyLimit: data.dailyLimit ?? null,
         monthlyLimit: data.monthlyLimit ?? null,
+        enrichmentConfig: data.enrichmentConfig ?? null,
     };
 }
 
-export function updateTenantSettings(tenantId, analysisConfig, limits) {
+export function updateTenantSettings(tenantId, analysisConfig, limits, enrichmentConfig) {
     const payload = { analysisConfig, updatedAt: serverTimestamp() };
     if (limits) {
         payload.dailyLimit = limits.dailyLimit ?? null;
         payload.monthlyLimit = limits.monthlyLimit ?? null;
+    }
+    if (enrichmentConfig !== undefined) {
+        payload.enrichmentConfig = enrichmentConfig;
     }
     setDoc(doc(db, 'tenantSettings', tenantId), payload, { merge: true }).catch((error) => console.error('Tenant settings write failed:', error));
 }
@@ -548,6 +552,26 @@ export async function getCase(caseId) {
     };
 }
 
+export function subscribeToCaseDoc(caseId, callback) {
+    return onSnapshot(doc(db, 'cases', caseId), (snapshot) => {
+        if (!snapshot.exists()) {
+            callback(null, null);
+            return;
+        }
+        const data = snapshot.data();
+        callback({
+            id: caseId,
+            ...data,
+            createdAt: data.createdAt?.toDate?.()
+                ? data.createdAt.toDate().toISOString().split('T')[0]
+                : data.createdAt || '',
+        }, null);
+    }, (error) => {
+        console.error('Error subscribing to case doc:', error);
+        callback(null, error);
+    });
+}
+
 export async function createCase(data) {
     const ref = doc(collection(db, 'cases'));
     await setDoc(ref, {
@@ -570,6 +594,17 @@ export async function createCase(data) {
         hasNotes: false,
         hasEvidence: false,
         enabledPhases: data.enabledPhases || Object.keys(DEFAULT_ANALYSIS_CONFIG),
+        enrichmentStatus: 'PENDING',
+        enrichmentSources: {},
+        enrichmentIdentity: null,
+        enrichmentGateResult: null,
+        enrichedAt: null,
+        enrichmentOriginalValues: {},
+        aiAnalysis: null,
+        aiCostUsd: null,
+        aiModel: null,
+        aiTokens: null,
+        aiError: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
     });
@@ -624,6 +659,31 @@ export async function createCandidate(data) {
    AUDIT LOGS
    ========================================================= */
 
+let _resolvedIp = null;
+let _ipFetchStarted = false;
+
+function warmClientIp() {
+    if (_ipFetchStarted) return;
+    _ipFetchStarted = true;
+    (async () => {
+        try {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), 3000);
+            const res = await fetch('https://api.ipify.org?format=json', {
+                signal: controller.signal,
+                cache: 'no-store',
+            });
+            window.clearTimeout(timeoutId);
+            const data = await res.json();
+            if (typeof data?.ip === 'string' && data.ip) {
+                _resolvedIp = data.ip;
+            }
+        } catch {
+            // IP resolution failed — falls back to 'browser'
+        }
+    })();
+}
+
 export function subscribeToAuditLogs(tenantId, callback) {
     const q = buildTenantCollectionQuery('auditLogs', tenantId, 'timestamp');
 
@@ -648,6 +708,7 @@ export function fetchAuditLogs(tenantId) {
 }
 
 export function logAuditEvent({ tenantId, userId, userEmail, action, target, detail }) {
+    warmClientIp();
     const ref = doc(collection(db, 'auditLogs'));
     return setDoc(ref, {
         tenantId: tenantId || null,
@@ -656,7 +717,7 @@ export function logAuditEvent({ tenantId, userId, userEmail, action, target, det
         action,
         target,
         detail,
-        ip: 'browser',
+        ip: _resolvedIp || 'browser',
         timestamp: serverTimestamp(),
     }).catch((error) => console.error('Audit log write sync failed:', error));
 }
@@ -704,9 +765,12 @@ export async function createExport(data) {
 
 export async function savePublicReport(html, meta = {}) {
     const ref = doc(collection(db, 'publicReports'));
+    const TTL_DAYS = 30;
+    const expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
     await setDoc(ref, {
         html,
         createdAt: serverTimestamp(),
+        expiresAt,
         ...meta,
     });
     return ref.id;
@@ -716,4 +780,44 @@ export async function getPublicReport(token) {
     const ref = doc(db, 'publicReports', token);
     const snap = await getDoc(ref);
     return snap.exists() ? snap.data() : null;
+}
+
+/* =========================================================
+   PUBLIC RESULT — Sanitized subcollection for client access
+   ========================================================= */
+
+export function subscribeToCasePublicResult(caseId, callback) {
+    const ref = doc(db, 'cases', caseId, 'publicResult', 'latest');
+    return onSnapshot(ref, (snapshot) => {
+        if (!snapshot.exists()) {
+            callback(null, null);
+            return;
+        }
+        callback(snapshot.data(), null);
+    }, (error) => {
+        console.error('Error subscribing to publicResult:', error);
+        callback(null, error);
+    });
+}
+
+export async function getCasePublicResult(caseId) {
+    const ref = doc(db, 'cases', caseId, 'publicResult', 'latest');
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+}
+
+/* =========================================================
+   AI RE-RUN — Callable function invocation
+   ========================================================= */
+
+export async function callRerunEnrichmentPhase(caseId, phase) {
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const functions = getFunctions(undefined, 'southamerica-east1');
+    const fn = httpsCallable(functions, 'rerunEnrichmentPhase');
+    const result = await fn({ caseId, phase });
+    return result.data;
+}
+
+export async function callRerunAiAnalysis(caseId) {
+    return callRerunEnrichmentPhase(caseId, 'ai');
 }

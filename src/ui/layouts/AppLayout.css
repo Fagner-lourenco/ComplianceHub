@@ -1,24 +1,55 @@
 .app-layout {
     display: flex;
-    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 .app-layout__main {
-    flex: 1;
+    --app-topbar-current-height: var(--topbar-height);
+    --drawer-top-offset: var(--app-topbar-current-height);
+    flex: 0 1 calc(100% - var(--sidebar-width));
+    width: calc(100% - var(--sidebar-width));
+    max-width: calc(100% - var(--sidebar-width));
     margin-left: var(--sidebar-width);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100dvh;
+    min-width: 0;
 }
 
 .app-layout__content {
     flex: 1;
     padding: var(--space-6);
     animation: fadeIn var(--transition-base) forwards;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+}
+
+.app-layout__content > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 1080px) {
+    .app-layout__content {
+        padding: var(--space-5);
+    }
 }
 
 @media (max-width: 768px) {
+    .app-layout {
+        display: block;
+    }
+
     .app-layout__main {
+        --drawer-top-offset: 0px;
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: 100%;
         margin-left: 0;
     }
     
@@ -34,6 +65,6 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 35; /* Below sidebar 40, above topbar 30 */
+    z-index: var(--z-sidebar-overlay);
     animation: fadeIn var(--transition-fast);
 }

@@ -5,6 +5,7 @@ import { formatRoleLabel, hasPermission, PERMISSIONS } from '../../core/rbac/per
 import './Sidebar.css';
 
 const clientNav = [
+    { to: '/client/dashboard', icon: 'DB', label: 'Dashboard', permission: PERMISSIONS.CASE_READ },
     { to: '/client/solicitacoes', icon: '[]', label: 'Solicitacoes', permission: PERMISSIONS.CASE_READ },
     { to: '/client/nova-solicitacao', icon: '+', label: 'Nova solicitacao', permission: PERMISSIONS.CASE_CREATE_REQUEST },
     { to: '/client/candidatos', icon: 'ID', label: 'Candidatos', permission: PERMISSIONS.CASE_READ },
@@ -17,6 +18,7 @@ const opsNav = [
     { to: '/ops/candidatos', icon: 'CD', label: 'Candidatos', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/clientes', icon: 'CL', label: 'Gestao de clientes', permission: PERMISSIONS.USERS_MANAGE },
     { to: '/ops/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.AUDIT_VIEW },
+    { to: '/ops/metricas-ia', icon: 'AI', label: 'Métricas IA', permission: PERMISSIONS.AUDIT_VIEW },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -29,8 +31,9 @@ export default function Sidebar({ isOpen, onClose }) {
     const isOpsPortal = location.pathname.startsWith('/ops') || location.pathname.startsWith('/demo/ops');
     const routePrefix = isDemoPortal ? '/demo' : '';
     const currentRole = userProfile?.role || null;
+    const demoHiddenOps = ['/ops/clientes', '/ops/metricas-ia'];
     const navigationSource = isOpsPortal
-        ? opsNav.filter((item) => !(isDemoPortal && item.to === '/ops/clientes'))
+        ? opsNav.filter((item) => !(isDemoPortal && demoHiddenOps.includes(item.to)))
         : clientNav;
     const navItems = navigationSource.filter((item) => hasPermission(currentRole, item.permission));
 

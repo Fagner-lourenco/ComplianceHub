@@ -1,29 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
+import EnrichmentPipeline from '../../ui/components/EnrichmentPipeline/EnrichmentPipeline';
 import { useAuth } from '../../core/auth/useAuth';
 import {
     DEFAULT_ANALYSIS_CONFIG,
-    getCase as getCaseFromFirestore,
+    callRerunEnrichmentPhase,
     getEnabledPhases,
     getTenantSettings,
     logAuditEvent,
+    subscribeToCaseDoc,
     updateCase,
+    callRerunAiAnalysis,
 } from '../../core/firebase/firestoreService';
 import { deleteField } from 'firebase/firestore';
 import { MOCK_CASE_DETAILS, MOCK_CASES } from '../../data/mockData';
 import { buildCaseReportHtml } from '../../core/reportBuilder';
 import { savePublicReport } from '../../core/firebase/firestoreService';
+
+function formatFullCpf(cpf) {
+    const d = String(cpf || '').replace(/\D/g, '');
+    if (d.length !== 11) return cpf || '';
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
 import './CasoPage.css';
 
 const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
 const CRIMINAL_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const LABOR_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
-const WARRANT_OPTIONS = ['NEGATIVE', 'POSITIVE', 'NOT_FOUND'];
+const WARRANT_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH'];
 const OSINT_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'UNKNOWN'];
 const SOCIAL_OPTIONS = ['APPROVED', 'NEUTRAL', 'CONCERN', 'CONTRAINDICATED'];
@@ -141,70 +150,134 @@ export default function CasoPage() {
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [retryingPhase, setRetryingPhase] = useState(null);
+    const formatPendingJuditPhases = (phases = []) => phases
+        .map((phase) => ({
+            warrant: 'mandados',
+            execution: 'execucao penal',
+            lawsuits: 'processos',
+        }[phase] || phase))
+        .join(' e ');
     const [enabledPhases, setEnabledPhases] = useState(LEGACY_PHASES);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnReason, setReturnReason] = useState('');
     const [returnNotes, setReturnNotes] = useState('');
     const [returning, setReturning] = useState(false);
     const [returnError, setReturnError] = useState(null);
+    const dirtyFieldsRef = useRef(new Set());
+    const autoSaveTimerRef = useRef(null);
+
+    // Track which fields the analyst has manually edited
+    const updateWithDirty = (field, value) => {
+        dirtyFieldsRef.current.add(field);
+        setForm((previous) => ({ ...previous, [field]: value }));
+    };
+
+    // Auto-save dirty fields as draft when switching steps
+    const saveDraft = useCallback(async () => {
+        if (isDemoMode || !caseData?.id || dirtyFieldsRef.current.size === 0 || concluded) return;
+        const dirty = dirtyFieldsRef.current;
+        const payload = {};
+        for (const field of dirty) {
+            if (form[field] !== undefined) payload[field] = form[field];
+        }
+        if (Object.keys(payload).length === 0) return;
+        try {
+            await updateCase(caseData.id, { ...payload, draftSavedAt: new Date().toISOString() });
+            dirtyFieldsRef.current = new Set();
+        } catch (err) {
+            console.warn('Auto-save draft failed:', err.message);
+        }
+    }, [caseData?.id, form, isDemoMode, concluded]);
+
+    const handleRetryPhase = useCallback(async (phase) => {
+        if (isDemoMode || !caseData?.id) return;
+
+        try {
+            setRetryingPhase(phase);
+            setSaveError(null);
+            if (phase === 'ai') {
+                await callRerunAiAnalysis(caseData.id);
+            } else {
+                await callRerunEnrichmentPhase(caseData.id, phase);
+            }
+        } catch (err) {
+            setSaveError(err.message || 'Erro ao reexecutar fase.');
+        } finally {
+            setRetryingPhase(null);
+        }
+    }, [caseData?.id, isDemoMode]);
 
     useEffect(() => {
-        let cancelled = false;
+        if (isDemoMode) {
+            const demoCase = MOCK_CASES.find((currentCase) => currentCase.id === caseId) || null;
+            setCaseData(demoCase);
+            setLoadingCase(false);
+            if (!demoCase) setCaseError('Caso demo nao encontrado.');
+            return;
+        }
 
-        async function loadCase() {
-            setLoadingCase(true);
-            setCaseError(null);
-            setConcluded(false);
-            setSaveError(null);
+        setLoadingCase(true);
+        setCaseError(null);
+        setConcluded(false);
+        setSaveError(null);
+        dirtyFieldsRef.current = new Set();
 
-            if (isDemoMode) {
-                const demoCase = MOCK_CASES.find((currentCase) => currentCase.id === caseId) || null;
-
-                if (!cancelled) {
-                    setCaseData(demoCase);
-                    setLoadingCase(false);
-                    if (!demoCase) {
-                        setCaseError('Caso demo nao encontrado.');
-                    }
-                }
-
+        const unsubscribe = subscribeToCaseDoc(caseId, (nextCase, error) => {
+            if (error) {
+                console.error('Error subscribing to case:', error);
+                setCaseError('Nao foi possivel carregar este caso agora.');
+                setLoadingCase(false);
                 return;
             }
 
-            try {
-                const nextCase = await getCaseFromFirestore(caseId);
-
-                if (cancelled) {
-                    return;
-                }
-
-                if (!nextCase) {
-                    setCaseData(null);
-                    setCaseError('Caso nao encontrado no ambiente real.');
-                } else {
-                    setCaseData(nextCase);
-                }
-            } catch (error) {
-                if (cancelled) {
-                    return;
-                }
-
-                console.error('Error loading case:', error);
+            if (!nextCase) {
                 setCaseData(null);
-                setCaseError('Nao foi possivel carregar este caso agora.');
-            } finally {
-                if (!cancelled) {
-                    setLoadingCase(false);
-                }
+                setCaseError('Caso nao encontrado no ambiente real.');
+                setLoadingCase(false);
+                return;
             }
-        }
 
-        void loadCase();
+            setCaseData(nextCase);
 
-        return () => {
-            cancelled = true;
-        };
+            // Merge enrichment data into form without overwriting dirty (analyst-edited) fields
+            setForm((prevForm) => {
+                const merged = { ...prevForm };
+                const enrichableFields = [
+                    'criminalFlag', 'criminalSeverity', 'criminalNotes',
+                    'laborFlag', 'laborSeverity', 'laborNotes',
+                    'warrantFlag', 'warrantNotes',
+                ];
+                for (const field of enrichableFields) {
+                    if (!dirtyFieldsRef.current.has(field) && nextCase[field] != null && nextCase[field] !== '') {
+                        merged[field] = nextCase[field];
+                    }
+                }
+                return merged;
+            });
+
+            setLoadingCase(false);
+        });
+
+        return () => unsubscribe();
     }, [caseId, isDemoMode]);
+
+    // Warn user about unsaved data when closing/refreshing
+    useEffect(() => {
+        const handler = (e) => {
+            if (dirtyFieldsRef.current.size > 0 && !concluded) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handler);
+        return () => window.removeEventListener('beforeunload', handler);
+    }, [concluded]);
+
+    // Auto-save draft when analyst switches steps
+    useEffect(() => {
+        saveDraft();
+    }, [activeStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         setForm(createInitialForm(caseData));
@@ -242,10 +315,12 @@ export default function CasoPage() {
     const currentStepKey = steps[activeStep]?.key;
 
     const update = (field, value) => {
+        dirtyFieldsRef.current.add(field);
         setForm((previous) => ({ ...previous, [field]: value }));
     };
 
     const toggleVector = (field, value) => {
+        dirtyFieldsRef.current.add(field);
         setForm((previous) => {
             const current = Array.isArray(previous[field]) ? previous[field] : [];
             return {
@@ -271,6 +346,30 @@ export default function CasoPage() {
     ].filter(Boolean);
     const allOk = checklist.every((item) => item.ok);
     const detail = isDemoMode && caseData ? MOCK_CASE_DETAILS[caseData.id] : null;
+
+    // Enrichment helpers
+    const isEnriched = caseData?.enrichmentStatus === 'DONE' || caseData?.enrichmentStatus === 'PARTIAL';
+    const enrichmentRunning = caseData?.enrichmentStatus === 'RUNNING';
+    const enrichmentBlocked = caseData?.enrichmentStatus === 'BLOCKED';
+    const enrichedPhase = (phase) => caseData?.enrichmentSources?.[phase] && !caseData.enrichmentSources[phase].error;
+
+    const ApiBadge = ({ field }) => {
+        if (!isEnriched) return null;
+        const originals = caseData?.enrichmentOriginalValues || {};
+        if (!(field in originals)) return null;
+        // Show "via API" if field still matches the original enriched value
+        if (form[field] === originals[field]) {
+            return <span className="caso-api-badge">via API</span>;
+        }
+        return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
+    };
+
+    // Determine if a stepper step was auto-filled by enrichment
+    const isStepAutoFilled = (stepKey) => {
+        if (!isEnriched) return false;
+        const phaseMap = { criminal: 'criminal', labor: 'labor', warrant: 'warrant' };
+        return phaseMap[stepKey] ? enrichedPhase(phaseMap[stepKey]) : false;
+    };
 
     const handleReturn = async () => {
         if (!caseData || !returnReason || returning) return;
@@ -464,7 +563,7 @@ export default function CasoPage() {
                     <div className="caso-header__meta">
                         <StatusBadge status={caseData.status} />
                         <span className="caso-header__id">{caseData.id}</span>
-                        <span className="caso-header__cpf">{caseData.cpf || caseData.cpfMasked}</span>
+                        <span className="caso-header__cpf">{formatFullCpf(caseData.cpf) || caseData.cpfMasked}</span>
                         <span className="caso-header__tenant" style={{ fontSize: '.75rem', padding: '2px 6px', background: 'var(--gray-200)', borderRadius: '4px', fontWeight: 600 }}>
                             {caseData.tenantName}
                         </span>
@@ -481,7 +580,9 @@ export default function CasoPage() {
                             try {
                                 const token = await savePublicReport(html, { type: 'single', candidateName: caseData.candidateName || '', tenantId: caseData.tenantId || '' });
                                 window.open(`/r/${token}`, '_blank');
-                            } catch { alert('Erro ao gerar link do relatório.'); }
+                            } catch {
+                                setSaveError('Erro ao gerar link do relatório.');
+                            }
                         }}>🖨️ Relatório</button>
                     )}
                     <button className="caso-btn caso-btn--primary" disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
@@ -490,18 +591,62 @@ export default function CasoPage() {
                 </div>
             </div>
 
+            {/* Enrichment Pipeline — vertical provider status */}
+            <EnrichmentPipeline
+                caseData={caseData}
+                onRetryPhase={handleRetryPhase}
+                retryingPhase={retryingPhase}
+            />
+
             <div className="stepper">
                 {steps.map((step, index) => (
                     <button
                         key={step.key}
-                        className={`stepper__step ${index === activeStep ? 'stepper__step--active' : ''} ${index < activeStep ? 'stepper__step--done' : ''}`}
+                        className={`stepper__step ${index === activeStep ? 'stepper__step--active' : ''} ${index < activeStep ? 'stepper__step--done' : ''} ${isStepAutoFilled(step.key) ? 'stepper__step--autofilled' : ''}`}
                         onClick={() => setActiveStep(index)}
                     >
-                        <span className="stepper__number">{index < activeStep ? 'OK' : index + 1}</span>
+                        <span className="stepper__number">{index < activeStep ? 'OK' : isStepAutoFilled(step.key) ? '⚡' : index + 1}</span>
                         <span className="stepper__label">{step.label}</span>
                     </button>
                 ))}
             </div>
+
+            {(caseData.juditEnrichmentStatus === 'RUNNING' || caseData.enrichmentStatus === 'RUNNING') && (
+                <div className="caso-enrichment-banner caso-enrichment-banner--running">
+                    <span className="caso-enrichment-spinner" />
+                    Enriquecimento automatico em andamento... Os campos serao preenchidos automaticamente.
+                </div>
+            )}
+            {(caseData.juditEnrichmentStatus === 'DONE' || caseData.enrichmentStatus === 'DONE') && (
+                <div className="caso-enrichment-banner caso-enrichment-banner--done">
+                    Enriquecimento concluido. Revise os campos preenchidos automaticamente (marcados com <span className="caso-api-badge caso-api-badge--inline">via API</span>).
+                </div>
+            )}
+            {(caseData.juditEnrichmentStatus === 'PARTIAL' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'PARTIAL')) && (
+                <div className="caso-enrichment-banner caso-enrichment-banner--partial">
+                    {Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0
+                        ? `Enriquecimento parcial. A Judit ainda esta processando ${formatPendingJuditPhases(caseData.juditPendingAsyncPhases)} em modo assincrono e os resultados serao incorporados automaticamente.`
+                        : 'Enriquecimento parcial. Algumas consultas falharam. Revise os campos disponiveis e preencha os demais manualmente.'}
+                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({caseData.juditError || caseData.enrichmentError})</span>}
+                </div>
+            )}
+            {(caseData.juditEnrichmentStatus === 'FAILED' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'FAILED')) && (
+                <div className="caso-enrichment-banner caso-enrichment-banner--failed">
+                    Falha no enriquecimento automatico. Preencha os campos manualmente.
+                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({caseData.juditError || caseData.enrichmentError})</span>}
+                </div>
+            )}
+            {(caseData.juditEnrichmentStatus === 'BLOCKED' || (!caseData.juditEnrichmentStatus && caseData.enrichmentStatus === 'BLOCKED')) && (
+                <div className="caso-enrichment-banner caso-enrichment-banner--blocked">
+                    Gate de identidade: enriquecimento bloqueado.
+                    {(caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason) && (
+                        <span className="caso-enrichment-error"> {caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason}</span>
+                    )}
+                    {(caseData.juditGateResult?.nameSimilarity ?? caseData.enrichmentGateResult?.nameSimilarity) != null && (
+                        <span className="caso-enrichment-error"> (Similaridade: {((caseData.juditGateResult?.nameSimilarity ?? caseData.enrichmentGateResult?.nameSimilarity) * 100).toFixed(0)}%)</span>
+                    )}
+                </div>
+            )}
 
             {saveError && (
                 <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px' }}>
@@ -528,12 +673,18 @@ export default function CasoPage() {
                             </div>
                             <div className="caso-field">
                                 <label>CPF</label>
-                                <input className="caso-input caso-input--readonly" value={caseData.cpf || caseData.cpfMasked} readOnly />
+                                <input className="caso-input caso-input--readonly" value={formatFullCpf(caseData.cpf) || caseData.cpfMasked} readOnly />
                             </div>
                             <div className="caso-field">
                                 <label>Cargo</label>
                                 <input className="caso-input caso-input--readonly" value={caseData.candidatePosition} readOnly />
                             </div>
+                            {caseData.hiringUf && (
+                                <div className="caso-field">
+                                    <label>UF de contratacao</label>
+                                    <input className="caso-input caso-input--readonly" value={caseData.hiringUf} readOnly />
+                                </div>
+                            )}
                             <div className="caso-field">
                                 <label>Data da solicitacao</label>
                                 <input className="caso-input caso-input--readonly" value={caseData.createdAt} readOnly />
@@ -542,6 +693,497 @@ export default function CasoPage() {
 
                         <h4 style={{ marginTop: 20 }}>Redes sociais fornecidas</h4>
                         <SocialLinks profiles={caseData.socialProfiles || {}} size="md" showEmpty />
+
+                        {caseData.juditIdentity && (
+                            <div className="caso-identity-block">
+                                <h4>Dados Cadastrais (Judit) <span className="caso-api-badge">via API</span></h4>
+                                <div className="caso-grid">
+                                    {caseData.juditIdentity.name && (
+                                        <div className="caso-field">
+                                            <label>Nome</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.name} readOnly />
+                                        </div>
+                                    )}
+                                    <div className="caso-field">
+                                        <label>CPF ativo</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.cpfActive ? 'SIM' : 'NAO'} readOnly />
+                                    </div>
+                                    {caseData.juditIdentity.birthDate && (
+                                        <div className="caso-field">
+                                            <label>Data de nascimento</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.birthDate} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditIdentity.gender && (
+                                        <div className="caso-field">
+                                            <label>Genero</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.gender} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditIdentity.nationality && (
+                                        <div className="caso-field">
+                                            <label>Nacionalidade</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.nationality} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditIdentity.motherName && (
+                                        <div className="caso-field">
+                                            <label>Nome da mae</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditIdentity.motherName} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditPrimaryUf && (
+                                        <div className="caso-field">
+                                            <label>UF principal</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditPrimaryUf} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                {caseData.juditIdentity.consultedAt && (
+                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.juditIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {caseData.enrichmentIdentity && (
+                            <div className="caso-identity-block">
+                                <h4>Dados da Receita Federal {caseData.juditIdentity ? <span className="caso-api-badge caso-api-badge--muted">fallback</span> : <span className="caso-api-badge">via API</span>}</h4>
+                                <div className="caso-grid">
+                                    {caseData.enrichmentIdentity.name && (
+                                        <div className="caso-field">
+                                            <label>Nome (RF)</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentIdentity.name} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentIdentity.cpfStatus && (
+                                        <div className="caso-field">
+                                            <label>Situacao cadastral</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentIdentity.cpfStatus} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentIdentity.birthDate && (
+                                        <div className="caso-field">
+                                            <label>Data de nascimento</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentIdentity.birthDate} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentIdentity.hasDeathRecord && (
+                                        <div className="caso-field">
+                                            <label>Registro de obito</label>
+                                            <input className="caso-input caso-input--readonly" style={{ color: 'var(--red-600)', fontWeight: 600 }} value={`SIM${caseData.enrichmentIdentity.deathYear ? ` (${caseData.enrichmentIdentity.deathYear})` : ''}`} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                {caseData.enrichmentIdentity.consultedAt && (
+                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.enrichmentIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {caseData.enrichmentContact && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Dados Cadastrais <span className="caso-api-badge">via API</span></h4>
+                                <div className="caso-grid">
+                                    {caseData.enrichmentContact.motherName && (
+                                        <div className="caso-field">
+                                            <label>Nome da mae</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentContact.motherName} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentContact.gender && (
+                                        <div className="caso-field">
+                                            <label>Sexo</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentContact.gender} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentContact.age && (
+                                        <div className="caso-field">
+                                            <label>Idade</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentContact.age} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.enrichmentContact.estimatedIncome && (
+                                        <div className="caso-field">
+                                            <label>Renda estimada</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.enrichmentContact.estimatedIncome} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                {caseData.enrichmentContact.phones?.length > 0 && (
+                                    <div className="caso-field" style={{ marginTop: 12 }}>
+                                        <label>Telefones</label>
+                                        <div className="caso-contact-list">
+                                            {caseData.enrichmentContact.phones.map((phone, i) => (
+                                                <span key={i} className="caso-contact-chip">{phone}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {caseData.enrichmentContact.emails?.length > 0 && (
+                                    <div className="caso-field" style={{ marginTop: 8 }}>
+                                        <label>Emails</label>
+                                        <div className="caso-contact-list">
+                                            {caseData.enrichmentContact.emails.map((email, i) => (
+                                                <span key={i} className="caso-contact-chip">{email}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {caseData.enrichmentContact.addresses?.length > 0 && (
+                                    <div className="caso-field" style={{ marginTop: 8 }}>
+                                        <label>Enderecos</label>
+                                        <div className="caso-contact-list caso-contact-list--vertical">
+                                            {caseData.enrichmentContact.addresses.map((addr, i) => (
+                                                <span key={i} className="caso-contact-chip caso-contact-chip--address">{addr}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {(caseData.juditGateResult || caseData.enrichmentGateResult) && (() => {
+                            const gate = caseData.juditGateResult || caseData.enrichmentGateResult;
+                            const source = gate.source === 'fontedata-fallback' ? ' (FonteData fallback)' : gate.source === 'judit-entity' ? ' (Judit)' : '';
+                            return (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Gate de Identidade{source} <span className={`caso-api-badge ${gate.passed ? 'caso-api-badge--green' : 'caso-api-badge--red'}`}>{gate.passed ? 'APROVADO' : 'BLOQUEADO'}</span></h4>
+                                <div className="caso-grid">
+                                    <div className="caso-field">
+                                        <label>Nome informado</label>
+                                        <input className="caso-input caso-input--readonly" value={gate.nameProvided || ''} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Nome encontrado</label>
+                                        <input className="caso-input caso-input--readonly" value={gate.nameFound || ''} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Similaridade</label>
+                                        <input className="caso-input caso-input--readonly" value={`${((gate.nameSimilarity || 0) * 100).toFixed(0)}%`} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>CPF ativo</label>
+                                        <input className="caso-input caso-input--readonly" value={gate.cpfActive != null ? (gate.cpfActive ? 'SIM' : 'NAO') : (gate.cpfStatus || '')} readOnly />
+                                    </div>
+                                </div>
+                                {gate.reason && (
+                                    <p style={{ fontSize: '.8125rem', color: 'var(--red-600)', marginTop: 8 }}>Motivo: {gate.reason}</p>
+                                )}
+                            </div>
+                            );
+                        })()}
+
+                        {(caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured) && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                                    <h4>Análise de IA <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
+                                        {caseData.aiStructuredOk && <span className="caso-api-badge caso-api-badge--green" style={{ marginLeft: 4 }}>JSON ✓</span>}
+                                        {caseData.aiStructuredOk === false && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>Texto</span>}
+                                        {caseData.aiFromCache && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--gray-100)', color: 'var(--gray-600)' }}>Cache</span>}
+                                    </h4>
+                                    <button
+                                        className="caso-btn caso-btn--ghost"
+                                        style={{ fontSize: '.75rem', padding: '4px 10px' }}
+                                        disabled={saving || retryingPhase === 'ai'}
+                                        onClick={() => handleRetryPhase('ai')}
+                                    >
+                                        {retryingPhase === 'ai' ? 'Reexecutando...' : '🔄 Re-analisar'}
+                                    </button>
+                                </div>
+
+                                {/* Structured AI output */}
+                                {caseData.aiStructured && caseData.aiStructuredOk ? (
+                                    <div className="ai-structured-card">
+                                        {caseData.aiStructured.resumo && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Resumo Executivo</strong>
+                                                <p>{caseData.aiStructured.resumo}</p>
+                                            </div>
+                                        )}
+                                        {caseData.aiStructured.inconsistencias?.length > 0 && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>⚠️ Inconsistências</strong>
+                                                <ul>{caseData.aiStructured.inconsistencias.map((item, i) => <li key={i}>{item}</li>)}</ul>
+                                            </div>
+                                        )}
+                                        <div className="ai-structured-card__chips">
+                                            {caseData.aiStructured.riscoHomonimo && (
+                                                <span className="ai-structured-card__chip">
+                                                    Homonímia: <RiskChip value={caseData.aiStructured.riscoHomonimo} size="sm" />
+                                                </span>
+                                            )}
+                                            {caseData.aiStructured.confianca && (
+                                                <span className="ai-structured-card__chip">
+                                                    Confiança: <RiskChip value={caseData.aiStructured.confianca} size="sm" />
+                                                </span>
+                                            )}
+                                        </div>
+                                        {caseData.aiStructured.sugestaoScore != null && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Sugestão IA</strong>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                                                    <ScoreBar score={caseData.aiStructured.sugestaoScore} />
+                                                    {caseData.aiStructured.sugestaoVeredito && <RiskChip value={caseData.aiStructured.sugestaoVeredito} size="md" bold />}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {caseData.aiStructured.justificativa && (
+                                            <div className="ai-structured-card__section">
+                                                <strong>Justificativa</strong>
+                                                <p>{caseData.aiStructured.justificativa}</p>
+                                            </div>
+                                        )}
+                                        {caseData.aiStructured.alertas?.length > 0 && (
+                                            <div className="ai-structured-card__section ai-structured-card__section--alert">
+                                                <strong>🚨 Alertas</strong>
+                                                <ul>{caseData.aiStructured.alertas.map((a, i) => <li key={i}>{a}</li>)}</ul>
+                                            </div>
+                                        )}
+
+                                        {/* Review buttons: accept / adjust / ignore AI suggestion */}
+                                        {caseData.aiStructured.sugestaoScore != null && caseData.status !== 'DONE' && (
+                                            <div className="ai-structured-card__actions">
+                                                <button className="caso-btn caso-btn--primary" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
+                                                    setForm(f => ({
+                                                        ...f,
+                                                        ...(caseData.aiStructured.sugestaoVeredito && { finalVerdict: caseData.aiStructured.sugestaoVeredito }),
+                                                    }));
+                                                    updateCase(caseData.id, { aiDecision: 'ACCEPTED' }).catch(() => {});
+                                                }}>✓ Aceitar sugestão</button>
+                                                <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
+                                                    setForm(f => ({
+                                                        ...f,
+                                                        ...(caseData.aiStructured.sugestaoVeredito && { finalVerdict: caseData.aiStructured.sugestaoVeredito }),
+                                                    }));
+                                                    updateCase(caseData.id, { aiDecision: 'ADJUSTED' }).catch(() => {});
+                                                }}>✏️ Ajustar</button>
+                                                <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
+                                                    updateCase(caseData.id, { aiDecision: 'IGNORED' }).catch(() => {});
+                                                }}>Ignorar</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* Fallback: raw text */
+                                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.5, background: 'var(--gray-50)', padding: 12, borderRadius: 8, border: '1px solid var(--border-light)', maxHeight: 300, overflow: 'auto' }}>{caseData.aiRawResponse || caseData.aiAnalysis}</pre>
+                                )}
+
+                                {caseData.aiCostUsd != null && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
+                                        Custo IA: ${caseData.aiCostUsd.toFixed(4)} USD
+                                        {caseData.aiTokens && ` (${caseData.aiTokens.input} in / ${caseData.aiTokens.output} out tokens)`}
+                                        {caseData.aiProvidersIncluded?.length > 0 && ` · Providers: ${caseData.aiProvidersIncluded.join(', ')}`}
+                                    </p>
+                                )}
+                                {caseData.aiError && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro IA: {caseData.aiError}</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Escavador enrichment display */}
+                        {caseData.escavadorEnrichmentStatus === 'RUNNING' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--running" style={{ marginTop: 16 }}>
+                                <span className="caso-enrichment-spinner" /> Escavador: consulta em andamento...
+                            </div>
+                        )}
+                        {(caseData.escavadorEnrichmentStatus === 'DONE' || caseData.escavadorEnrichmentStatus === 'PARTIAL') && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>
+                                    Escavador <span className="caso-api-badge">via API</span>
+                                    {caseData.escavadorCriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
+                                </h4>
+                                <div className="caso-grid">
+                                    <div className="caso-field">
+                                        <label>Total de processos</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavadorProcessTotal ?? '—'} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Criminal</label>
+                                        <input className="caso-input caso-input--readonly" style={caseData.escavadorCriminalFlag === 'POSITIVE' ? { color: 'var(--red-600)', fontWeight: 600 } : {}} value={caseData.escavadorCriminalFlag || 'NEGATIVE'} readOnly />
+                                    </div>
+                                    {caseData.escavadorCriminalCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Processos criminais</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.escavadorCriminalCount} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                {caseData.escavadorNotes && (
+                                    <div className="caso-field" style={{ marginTop: 8 }}>
+                                        <label>Resumo Escavador</label>
+                                        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.4, background: caseData.escavadorCriminalFlag === 'POSITIVE' ? 'var(--red-50)' : 'var(--gray-50)', padding: 10, borderRadius: 6, border: `1px solid ${caseData.escavadorCriminalFlag === 'POSITIVE' ? 'var(--red-200)' : 'var(--border-light)'}`, maxHeight: 250, overflow: 'auto' }}>{caseData.escavadorNotes}</pre>
+                                    </div>
+                                )}
+                                {caseData.escavadorProcessos?.length > 0 && (
+                                    <details style={{ marginTop: 10 }}>
+                                        <summary style={{ fontSize: '.8125rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                            Ver {caseData.escavadorProcessos.length} processo(s) detalhado(s)
+                                        </summary>
+                                        <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 8 }}>
+                                            <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                                <thead>
+                                                    <tr>
+                                                        <th className="data-table__th">CNJ</th>
+                                                        <th className="data-table__th">Area</th>
+                                                        <th className="data-table__th">Classe</th>
+                                                        <th className="data-table__th">Polo</th>
+                                                        <th className="data-table__th">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {caseData.escavadorProcessos.map((proc, i) => (
+                                                        <tr key={i} className="data-table__row">
+                                                            <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{proc.numeroCnj || '—'}</td>
+                                                            <td className="data-table__td">{proc.area || '—'}</td>
+                                                            <td className="data-table__td">{proc.classe || '—'}</td>
+                                                            <td className="data-table__td">
+                                                                {proc.polo || '—'}
+                                                                {proc.tipoNormalizado && <span style={{ fontSize: '.6875rem', color: 'var(--text-tertiary)', marginLeft: 4 }}>({proc.tipoNormalizado})</span>}
+                                                            </td>
+                                                            <td className="data-table__td">{proc.status || '—'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </details>
+                                )}
+                                {caseData.escavadorError && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 6 }}>Erro: {caseData.escavadorError}</p>
+                                )}
+                            </div>
+                        )}
+                        {caseData.escavadorEnrichmentStatus === 'FAILED' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
+                                Escavador: falha na consulta.
+                                {caseData.escavadorError && <span className="caso-enrichment-error"> ({caseData.escavadorError})</span>}
+                            </div>
+                        )}
+
+                        {/* Judit enrichment display */}
+                        {caseData.juditEnrichmentStatus === 'RUNNING' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--running" style={{ marginTop: 16 }}>
+                                <span className="caso-enrichment-spinner" /> Judit: consulta em andamento...
+                            </div>
+                        )}
+                        {(caseData.juditEnrichmentStatus === 'DONE' || caseData.juditEnrichmentStatus === 'PARTIAL') && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>
+                                    Judit <span className="caso-api-badge">via API</span>
+                                    {caseData.juditWarrantFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>MANDADO ATIVO</span>}
+                                    {caseData.juditCriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
+                                    {caseData.juditHomonymFlag && <span className="caso-api-badge" style={{ marginLeft: 6, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>HOMONIMO</span>}
+                                </h4>
+
+                                {Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0 && (
+                                    <div className="caso-enrichment-banner caso-enrichment-banner--running" style={{ marginBottom: 12 }}>
+                                        <span className="caso-enrichment-spinner" />
+                                        Judit aguardando callback assincrono para: {formatPendingJuditPhases(caseData.juditPendingAsyncPhases)}.
+                                    </div>
+                                )}
+
+                                <div className="caso-grid">
+                                    {caseData.juditProcessTotal != null && (
+                                        <div className="caso-field">
+                                            <label>Total de processos</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditProcessTotal} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditActiveCount != null && caseData.juditActiveCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Processos ativos</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.juditActiveCount} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditCriminalCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Processos criminais</label>
+                                            <input className="caso-input caso-input--readonly" style={{ color: 'var(--red-600)', fontWeight: 600 }} value={caseData.juditCriminalCount} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditActiveWarrantCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Mandados ativos</label>
+                                            <input className="caso-input caso-input--readonly" style={{ color: 'var(--red-600)', fontWeight: 600 }} value={caseData.juditActiveWarrantCount} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.juditHomonymCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Possiveis homonimos</label>
+                                            <input className="caso-input caso-input--readonly" style={{ color: 'var(--yellow-700)' }} value={caseData.juditHomonymCount} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {caseData.juditWarrants?.length > 0 && (
+                                    <div style={{ marginTop: 10, padding: 10, background: 'var(--red-50)', borderRadius: 8, border: '1px solid var(--red-200)' }}>
+                                        <p style={{ fontSize: '.8125rem', fontWeight: 600, color: 'var(--red-700)', marginBottom: 6 }}>Mandados de Prisao (BNMP)</p>
+                                        {caseData.juditWarrants.map((w, i) => (
+                                            <div key={i} style={{ fontSize: '.75rem', marginBottom: 6, paddingBottom: 6, borderBottom: i < caseData.juditWarrants.length - 1 ? '1px solid var(--red-200)' : 'none' }}>
+                                                <span style={{ fontWeight: 600 }}>{w.warrantType || w.arrestType || 'Mandado'}</span>
+                                                {w.court && <span> — {w.court}</span>}
+                                                {w.status && <span> — Status: <strong>{w.status}</strong></span>}
+                                                {w.issueDate && <span> — Expedido: {w.issueDate}</span>}
+                                                {w.regime && <span> — Regime: {w.regime}</span>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {caseData.juditRoleSummary?.length > 0 && (
+                                    <details style={{ marginTop: 10 }}>
+                                        <summary style={{ fontSize: '.8125rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                            Papeis nos processos ({caseData.juditRoleSummary.length})
+                                        </summary>
+                                        <div className="caso-contact-list" style={{ marginTop: 6, flexWrap: 'wrap' }}>
+                                            {Object.entries(
+                                                caseData.juditRoleSummary.reduce((acc, r) => {
+                                                    const key = r.personType || 'Desconhecido';
+                                                    acc[key] = (acc[key] || 0) + 1;
+                                                    return acc;
+                                                }, {}),
+                                            ).map(([tipo, count]) => (
+                                                <span key={tipo} className="caso-contact-chip" style={/testemunha|informante/i.test(tipo) ? { background: 'var(--gray-100)', color: 'var(--text-tertiary)' } : {}}>
+                                                    {tipo}: {count}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </details>
+                                )}
+
+                                {caseData.juditWarrantNotes && (
+                                    <div className="caso-field" style={{ marginTop: 8 }}>
+                                        <label>Detalhes mandados (Judit)</label>
+                                        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.4, background: 'var(--red-50)', padding: 10, borderRadius: 6, border: '1px solid var(--red-200)', maxHeight: 200, overflow: 'auto' }}>{caseData.juditWarrantNotes}</pre>
+                                    </div>
+                                )}
+
+                                {caseData.juditNotes && (
+                                    <div className="caso-field" style={{ marginTop: 8 }}>
+                                        <label>Resumo Judit</label>
+                                        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.4, background: caseData.juditCriminalFlag === 'POSITIVE' ? 'var(--red-50)' : 'var(--gray-50)', padding: 10, borderRadius: 6, border: `1px solid ${caseData.juditCriminalFlag === 'POSITIVE' ? 'var(--red-200)' : 'var(--border-light)'}`, maxHeight: 250, overflow: 'auto' }}>{caseData.juditNotes}</pre>
+                                    </div>
+                                )}
+
+                                {caseData.juditError && (
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 6 }}>Erro: {caseData.juditError}</p>
+                                )}
+                            </div>
+                        )}
+                        {caseData.juditEnrichmentStatus === 'FAILED' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
+                                Judit: falha na consulta.
+                                {caseData.juditError && <span className="caso-enrichment-error"> ({caseData.juditError})</span>}
+                            </div>
+                        )}
+
+                        {enrichmentRunning && (
+                            <div className="caso-enrichment-skeleton">
+                                <div className="caso-skeleton-line" />
+                                <div className="caso-skeleton-line caso-skeleton-line--short" />
+                            </div>
+                        )}
 
                         <div className="caso-step-nav">
                             <div />
@@ -596,7 +1238,8 @@ export default function CasoPage() {
 
                 {currentStepKey === 'criminal' && (
                     <div className="caso-section">
-                        <h3>Analise criminal</h3>
+                        <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge field="criminalFlag" />}</h3>
+                        {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
                                 <label>Resultado <span className="caso-req">*</span></label>
@@ -614,7 +1257,7 @@ export default function CasoPage() {
                                 </div>
                             </div>
 
-                            {form.criminalFlag === 'POSITIVE' && (
+                            {(form.criminalFlag === 'POSITIVE' || form.criminalFlag === 'INCONCLUSIVE') && (
                                 <div className="caso-field">
                                     <label>Gravidade</label>
                                     <div className="caso-select-group">
@@ -634,7 +1277,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas</label>
+                            <label>Resumo / notas <ApiBadge field="criminalNotes" /></label>
                             <textarea
                                 className="caso-textarea"
                                 value={form.criminalNotes}
@@ -643,6 +1286,136 @@ export default function CasoPage() {
                                 placeholder="Descreva os achados desta etapa."
                             />
                         </div>
+
+                        {/* Consolidated process summary from all sources */}
+                        {(caseData.escavadorProcessTotal > 0 || caseData.juditProcessTotal > 0 || caseData.processTotal > 0) && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Resumo consolidado de processos</h4>
+                                <div className="caso-grid caso-grid--3">
+                                    {caseData.juditProcessTotal > 0 && (
+                                        <div className="caso-stat-card">
+                                            <span className="caso-stat-card__label">Judit</span>
+                                            <span className="caso-stat-card__value">{caseData.juditProcessTotal} processos</span>
+                                            {caseData.juditCriminalCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--red">{caseData.juditCriminalCount} criminais</span>}
+                                            {caseData.juditHomonymCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--yellow">{caseData.juditHomonymCount} homonimos</span>}
+                                        </div>
+                                    )}
+                                    {caseData.escavadorProcessTotal > 0 && (
+                                        <div className="caso-stat-card">
+                                            <span className="caso-stat-card__label">Escavador</span>
+                                            <span className="caso-stat-card__value">{caseData.escavadorProcessTotal} processos</span>
+                                            {caseData.escavadorCriminalCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--red">{caseData.escavadorCriminalCount} criminais</span>}
+                                            {caseData.escavadorActiveCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--yellow">{caseData.escavadorActiveCount} ativos</span>}
+                                        </div>
+                                    )}
+                                    {caseData.processTotal > 0 && (
+                                        <div className="caso-stat-card">
+                                            <span className="caso-stat-card__label">FonteData</span>
+                                            <span className="caso-stat-card__value">{caseData.processTotal} processos</span>
+                                            {caseData.criminalFlag === 'POSITIVE' && <span className="caso-stat-card__flag caso-stat-card__flag--red">Criminal</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {caseData.processNotes && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Resumo de processos <span className="caso-api-badge">FonteData</span></h4>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.5, background: 'var(--gray-50)', padding: 12, borderRadius: 8, border: '1px solid var(--border-light)' }}>{caseData.processNotes}</pre>
+                            </div>
+                        )}
+
+                        {/* Escavador processes table */}
+                        {caseData.escavadorProcessos?.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Processos detalhados <span className="caso-api-badge">Escavador</span></h4>
+                                <div style={{ maxHeight: 300, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Area</th>
+                                                <th className="data-table__th">Classe</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.escavadorProcessos.map((proc, i) => (
+                                                <tr key={i} className={`data-table__row ${/penal|criminal/i.test(proc.area || '') ? 'data-table__row--criminal' : ''}`}>
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{proc.numeroCnj || '—'}</td>
+                                                    <td className="data-table__td">{proc.area || '—'}</td>
+                                                    <td className="data-table__td">{proc.classe || proc.assuntoPrincipal || '—'}</td>
+                                                    <td className="data-table__td">{proc.polo || '—'}</td>
+                                                    <td className="data-table__td">{proc.status || '—'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Judit lawsuits table */}
+                        {caseData.juditRoleSummary?.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>
+                                    Processos detalhados <span className="caso-api-badge">Judit</span>
+                                    {caseData.juditHomonymFlag && <span className="caso-api-badge" style={{ marginLeft: 6, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>HOMONIMOS DETECTADOS</span>}
+                                </h4>
+                                <div style={{ maxHeight: 300, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Area</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Tipo parte</th>
+                                                <th className="data-table__th">Status</th>
+                                                <th className="data-table__th">Flags</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.juditRoleSummary.map((r, i) => (
+                                                <tr key={i} className={`data-table__row ${r.isCriminal ? 'data-table__row--criminal' : ''} ${r.isWitness ? 'data-table__row--witness' : ''}`}>
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{r.code || '—'}</td>
+                                                    <td className="data-table__td">{r.area || '—'}</td>
+                                                    <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
+                                                    <td className="data-table__td">{r.personType || '—'}</td>
+                                                    <td className="data-table__td">{r.status || '—'}</td>
+                                                    <td className="data-table__td">
+                                                        {r.isCriminal && <span className="caso-flag-chip caso-flag-chip--red">Criminal</span>}
+                                                        {r.isPossibleHomonym && <span className="caso-flag-chip caso-flag-chip--yellow">Homonimo?</span>}
+                                                        {r.isWitness && <span className="caso-flag-chip caso-flag-chip--gray">Testemunha</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Judit execution detail */}
+                        {caseData.juditExecutionFlag === 'POSITIVE' && (
+                            <div className="caso-identity-block" style={{ marginTop: 16, background: 'var(--red-50)', border: '1px solid var(--red-200)', borderRadius: 8, padding: 12 }}>
+                                <h4 style={{ color: 'var(--red-700)' }}>Execucao Penal <span className="caso-api-badge caso-api-badge--red">Judit</span></h4>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.4 }}>{caseData.juditExecutionNotes}</pre>
+                            </div>
+                        )}
+
+                        {caseData.escalation?.triggered && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Escalonamento <span className="caso-api-badge caso-api-badge--red">ATIVADO</span></h4>
+                                <p style={{ fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
+                                    Motivos: {caseData.escalation.reasons?.join(', ') || 'N/A'}
+                                </p>
+                                {caseData.processosCompletaNotes && (
+                                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.5, background: 'var(--gray-50)', padding: 12, borderRadius: 8, border: '1px solid var(--border-light)', marginTop: 8, maxHeight: 300, overflow: 'auto' }}>{caseData.processosCompletaNotes}</pre>
+                                )}
+                            </div>
+                        )}
 
                         <div className="caso-step-nav">
                             <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
@@ -653,7 +1426,8 @@ export default function CasoPage() {
 
                 {currentStepKey === 'labor' && (
                     <div className="caso-section">
-                        <h3>Analise trabalhista</h3>
+                        <h3>Analise trabalhista {enrichedPhase('labor') && <ApiBadge field="laborFlag" />}</h3>
+                        {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
                                 <label>Resultado <span className="caso-req">*</span></label>
@@ -671,7 +1445,7 @@ export default function CasoPage() {
                                 </div>
                             </div>
 
-                            {form.laborFlag === 'POSITIVE' && (
+                            {(form.laborFlag === 'POSITIVE' || form.laborFlag === 'INCONCLUSIVE') && (
                                 <div className="caso-field">
                                     <label>Gravidade</label>
                                     <div className="caso-select-group">
@@ -691,7 +1465,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas</label>
+                            <label>Resumo / notas <ApiBadge field="laborNotes" /></label>
                             <textarea
                                 className="caso-textarea"
                                 value={form.laborNotes}
@@ -700,6 +1474,66 @@ export default function CasoPage() {
                                 placeholder="Descreva os achados trabalhistas."
                             />
                         </div>
+
+                        {/* Labor process details from Escavador */}
+                        {caseData.escavadorProcessos?.some((p) => /trabalh/i.test(p.area || '')) && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Processos trabalhistas <span className="caso-api-badge">Escavador</span></h4>
+                                <div style={{ maxHeight: 250, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Classe</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.escavadorProcessos.filter((p) => /trabalh/i.test(p.area || '')).map((proc, i) => (
+                                                <tr key={i} className="data-table__row">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{proc.numeroCnj || '—'}</td>
+                                                    <td className="data-table__td">{proc.tribunalSigla || '—'}</td>
+                                                    <td className="data-table__td">{proc.classe || '—'}</td>
+                                                    <td className="data-table__td">{proc.polo || '—'}</td>
+                                                    <td className="data-table__td">{proc.status || '—'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Labor from Judit */}
+                        {caseData.juditRoleSummary?.some((r) => /trabalh/i.test(r.area || '')) && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Processos trabalhistas <span className="caso-api-badge">Judit</span></h4>
+                                <div style={{ maxHeight: 250, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Tipo parte</th>
+                                                <th className="data-table__th">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.juditRoleSummary.filter((r) => /trabalh/i.test(r.area || '')).map((r, i) => (
+                                                <tr key={i} className="data-table__row">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{r.code || '—'}</td>
+                                                    <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
+                                                    <td className="data-table__td">{r.personType || '—'}</td>
+                                                    <td className="data-table__td">{r.status || '—'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="caso-step-nav">
                             <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
@@ -710,7 +1544,8 @@ export default function CasoPage() {
 
                 {currentStepKey === 'warrant' && (
                     <div className="caso-section">
-                        <h3>Mandado de prisao</h3>
+                        <h3>Mandado de prisao {enrichedPhase('warrant') && <ApiBadge field="warrantFlag" />}</h3>
+                        {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-field">
                             <label>Resultado <span className="caso-req">*</span></label>
                             <div className="caso-select-group">
@@ -728,7 +1563,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas</label>
+                            <label>Resumo / notas <ApiBadge field="warrantNotes" /></label>
                             <textarea
                                 className="caso-textarea"
                                 value={form.warrantNotes}
@@ -737,6 +1572,78 @@ export default function CasoPage() {
                                 placeholder="Informacoes sobre mandado de prisao."
                             />
                         </div>
+
+                        {/* Judit warrant details */}
+                        {caseData.juditWarrants?.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16, background: 'var(--red-50)', borderRadius: 8, border: '1px solid var(--red-200)', padding: 12 }}>
+                                <h4 style={{ color: 'var(--red-700)', marginBottom: 8 }}>Mandados encontrados <span className="caso-api-badge caso-api-badge--red">Judit BNMP</span></h4>
+                                {caseData.juditWarrants.map((w, i) => (
+                                    <div key={i} className="caso-warrant-card">
+                                        <div className="caso-grid caso-grid--3">
+                                            <div className="caso-field">
+                                                <label>Tipo</label>
+                                                <span className="caso-field-value">{w.warrantType || w.arrestType || 'Mandado'}</span>
+                                            </div>
+                                            <div className="caso-field">
+                                                <label>Status</label>
+                                                <span className={`caso-field-value ${/pendente/i.test(w.status || '') ? 'caso-field-value--danger' : ''}`}>
+                                                    {w.status || '—'}
+                                                </span>
+                                            </div>
+                                            <div className="caso-field">
+                                                <label>Tribunal</label>
+                                                <span className="caso-field-value">{w.court || w.tribunalAcronym || '—'}</span>
+                                            </div>
+                                            {w.issueDate && (
+                                                <div className="caso-field">
+                                                    <label>Data de emissao</label>
+                                                    <span className="caso-field-value">{w.issueDate}</span>
+                                                </div>
+                                            )}
+                                            {w.code && (
+                                                <div className="caso-field">
+                                                    <label>Processo vinculado</label>
+                                                    <span className="caso-field-value" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{w.code}</span>
+                                                </div>
+                                            )}
+                                            {w.regime && (
+                                                <div className="caso-field">
+                                                    <label>Regime</label>
+                                                    <span className="caso-field-value">{w.regime}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {w.judgementSummary && (
+                                            <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.75rem', lineHeight: 1.4, marginTop: 8, background: 'var(--red-100)', padding: 8, borderRadius: 4 }}>{w.judgementSummary}</pre>
+                                        )}
+                                        {i < caseData.juditWarrants.length - 1 && <hr style={{ border: 'none', borderTop: '1px solid var(--red-200)', margin: '12px 0' }} />}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Execution details */}
+                        {caseData.juditExecutionFlag === 'POSITIVE' && (
+                            <div className="caso-identity-block" style={{ marginTop: 16, background: 'var(--red-50)', borderRadius: 8, border: '1px solid var(--red-200)', padding: 12 }}>
+                                <h4 style={{ color: 'var(--red-700)' }}>Execucao Penal <span className="caso-api-badge caso-api-badge--red">Judit</span></h4>
+                                <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8125rem', lineHeight: 1.4 }}>{caseData.juditExecutionNotes}</pre>
+                            </div>
+                        )}
+
+                        {/* FonteData warrant info */}
+                        {caseData.enrichmentSources?.warrant && !caseData.enrichmentSources.warrant.error && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Consulta CNJ Mandados <span className="caso-api-badge">FonteData</span></h4>
+                                <p style={{ fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
+                                    {caseData.warrantFlag === 'POSITIVE' ? 'Mandado detectado via FonteData cnj-mandados-prisao.' : 'Nenhum mandado encontrado via FonteData.'}
+                                </p>
+                            </div>
+                        )}
+                        {caseData.enrichmentSources?.warrant?.error && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
+                                FonteData cnj-mandados: falha na consulta. <span className="caso-enrichment-error">({caseData.enrichmentSources.warrant.error})</span>
+                            </div>
+                        )}
 
                         <div className="caso-step-nav">
                             <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
@@ -808,7 +1715,7 @@ export default function CasoPage() {
                         <div className="caso-field">
                             <label>Motivos</label>
                             <div className="caso-checkbox-group">
-                                {['Postura incompatvel', 'Discurso agressivo', 'Exposicao indevida', 'Conteudo sensivel', 'Inconsistencia de identidade'].map((value) => (
+                                {['Postura incompativel', 'Discurso agressivo', 'Exposicao indevida', 'Conteudo sensivel', 'Inconsistencia de identidade'].map((value) => (
                                     <label key={value} className="caso-checkbox">
                                         <input type="checkbox" checked={form.socialReasons.includes(value)} onChange={() => toggleVector('socialReasons', value)} />
                                         {value}
@@ -921,6 +1828,61 @@ export default function CasoPage() {
                                 <RiskChip value={risk.suggestedVerdict} size="lg" bold />
                             </div>
                         </div>
+
+                        {/* Enrichment provenance summary */}
+                        {isEnriched && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Fontes de dados consultadas</h4>
+                                <div className="caso-provenance-grid">
+                                    <div className={`caso-provenance-item ${caseData.enrichmentStatus === 'DONE' ? 'caso-provenance-item--ok' : caseData.enrichmentStatus === 'PARTIAL' ? 'caso-provenance-item--warn' : 'caso-provenance-item--fail'}`}>
+                                        <span className="caso-provenance-item__label">FonteData</span>
+                                        <span className="caso-provenance-item__status">{caseData.enrichmentStatus}</span>
+                                    </div>
+                                    {caseData.escavadorEnrichmentStatus && (
+                                        <div className={`caso-provenance-item ${caseData.escavadorEnrichmentStatus === 'DONE' ? 'caso-provenance-item--ok' : caseData.escavadorEnrichmentStatus === 'PARTIAL' ? 'caso-provenance-item--warn' : 'caso-provenance-item--fail'}`}>
+                                            <span className="caso-provenance-item__label">Escavador</span>
+                                            <span className="caso-provenance-item__status">{caseData.escavadorEnrichmentStatus}</span>
+                                            {caseData.escavadorProcessTotal > 0 && <span className="caso-provenance-item__detail">{caseData.escavadorProcessTotal} processos</span>}
+                                        </div>
+                                    )}
+                                    {caseData.juditEnrichmentStatus && (
+                                        <div className={`caso-provenance-item ${caseData.juditEnrichmentStatus === 'DONE' ? 'caso-provenance-item--ok' : caseData.juditEnrichmentStatus === 'PARTIAL' ? 'caso-provenance-item--warn' : 'caso-provenance-item--fail'}`}>
+                                            <span className="caso-provenance-item__label">Judit</span>
+                                            <span className="caso-provenance-item__status">{caseData.juditEnrichmentStatus}</span>
+                                            {caseData.juditProcessTotal > 0 && <span className="caso-provenance-item__detail">{caseData.juditProcessTotal} processos</span>}
+                                            {caseData.juditActiveWarrantCount > 0 && <span className="caso-provenance-item__detail caso-provenance-item__detail--red">{caseData.juditActiveWarrantCount} mandado(s)</span>}
+                                        </div>
+                                    )}
+                                    {caseData.aiAnalysis && (
+                                        <div className="caso-provenance-item caso-provenance-item--ok">
+                                            <span className="caso-provenance-item__label">IA ({caseData.aiModel || 'GPT'})</span>
+                                            <span className="caso-provenance-item__status">Analisado</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Auto-classification summary */}
+                        {caseData.autoClassifiedAt && (
+                            <div className="caso-identity-block" style={{ marginTop: 16, background: 'var(--blue-50)', border: '1px solid var(--blue-200)', borderRadius: 8, padding: 12 }}>
+                                <h4>Classificacao automatica <span className="caso-api-badge">auto</span></h4>
+                                <div className="caso-grid caso-grid--3">
+                                    <div className="caso-field">
+                                        <label>Criminal</label>
+                                        <RiskChip value={caseData.enrichmentOriginalValues?.criminalFlag || form.criminalFlag} size="sm" />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Mandado</label>
+                                        <RiskChip value={caseData.enrichmentOriginalValues?.warrantFlag || form.warrantFlag} size="sm" />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Trabalhista</label>
+                                        <RiskChip value={caseData.enrichmentOriginalValues?.laborFlag || form.laborFlag} size="sm" />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {detail?.executiveSummary && (
                             <div className="caso-alert" style={{ background: 'var(--gray-50)', border: '1px solid var(--gray-200)', color: 'var(--text-secondary)' }}>

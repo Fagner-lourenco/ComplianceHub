@@ -1,0 +1,1619 @@
+{
+  "httpStatus": 200,
+  "envolvido": {
+    "nome": "Francisco Taciano de Sousa",
+    "qtdProcessos": 7,
+    "cpfsComEsseNome": 1
+  },
+  "totalItems": 7,
+  "distinctCpfs": 14,
+  "criminalItems": 0,
+  "raw": {
+    "envolvido_encontrado": {
+      "nome": "Francisco Taciano de Sousa",
+      "outros_nomes": [],
+      "tipo_pessoa": "FISICA",
+      "quantidade_processos": 7,
+      "cpfs_com_esse_nome": 1
+    },
+    "items": [
+      {
+        "numero_cnj": "0205659-11.2024.8.06.0167",
+        "titulo_polo_ativo": "Josiane de Lima Monteiro e outros",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2024,
+        "data_inicio": "2024-10-03",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "COMARCA DE SOBRAL",
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2025-10-08",
+        "quantidade_movimentacoes": 3,
+        "fontes_tribunais_estao_arquivadas": false,
+        "data_ultima_verificacao": "2024-10-07T01:56:58+00:00",
+        "tempo_desde_ultima_verificacao": "há 1 ano",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 743719458,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2024-10-03",
+            "data_ultima_movimentacao": "2024-10-03",
+            "segredo_justica": false,
+            "arquivado": null,
+            "status_predito": "ATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Cumprimento de Sentença de Obrigação de Prestar Alimentos (12246)",
+              "assunto": "Alimentos (4394)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2214,
+                "nome": "Alimentos",
+                "nome_com_pai": "Família > Alimentos",
+                "path_completo": "DIREITO CIVIL > Família > Alimentos",
+                "categoria_raiz": "DIREITO CIVIL",
+                "bloqueado": false
+              },
+              "area": "CÍVEL",
+              "orgao_julgador": "2ª Vara de Família e Sucessões da Comarca de Sobral - Sobral",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Em andamento",
+              "valor_causa": {
+                "valor": "3204.7300",
+                "moeda": null,
+                "valor_formatado": "3.204,73"
+              },
+              "data_distribuicao": "2024-10-03",
+              "data_arquivamento": null,
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2024-10-07T01:56:58+00:00",
+            "quantidade_movimentacoes": 2,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3226,
+                "tipo": "Executado",
+                "tipo_normalizado": "Executado",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Promotor",
+                "tipo_normalizado": "Promotor De Justiça",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              },
+              {
+                "nome": "Defensoria Pública do Estado do Ceará",
+                "quantidade_processos": 372973,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "DEFENSOR PÚBLICO",
+                "tipo_normalizado": "Defensor Público",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "02014521000123"
+              },
+              {
+                "nome": "José Levy Lima de Sousa",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Exeqüente",
+                "tipo_normalizado": "Exequente",
+                "polo": "ATIVO",
+                "cpf": "10416980384",
+                "cnpj": null
+              },
+              {
+                "nome": "Josiane de Lima Monteiro",
+                "quantidade_processos": 6,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Genitor(a)",
+                "tipo_normalizado": "Genitor",
+                "polo": "ATIVO",
+                "cpf": "06663403311",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Executado",
+                "tipo_normalizado": "Executado",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              }
+            ]
+          },
+          {
+            "id": 22614,
+            "processo_fonte_id": 882214808,
+            "outros_numeros": [],
+            "descricao": "Diário de Justiça do Estado do Ceará",
+            "nome": "Diário de Justiça do Estado do Ceará",
+            "sigla": "DJCE",
+            "tipo": "DIARIO_OFICIAL",
+            "data_inicio": "2025-10-08",
+            "data_ultima_movimentacao": "2025-10-08",
+            "segredo_justica": null,
+            "arquivado": null,
+            "status_predito": null,
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "Site",
+            "capa": null,
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 0,
+            "data_ultima_verificacao": "2025-10-08T14:21:46+00:00",
+            "quantidade_movimentacoes": 1,
+            "tipos_envolvido_pesquisado": [],
+            "match_documento_por": null,
+            "envolvidos": []
+          }
+        ]
+      },
+      {
+        "numero_cnj": "0012198-45.2022.8.06.0167",
+        "titulo_polo_ativo": "Josiane de Lima Monteiro",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2022,
+        "data_inicio": "2022-11-24",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "COMARCA DE SOBRAL",
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2022-12-01",
+        "quantidade_movimentacoes": 9,
+        "fontes_tribunais_estao_arquivadas": false,
+        "data_ultima_verificacao": "2022-12-29T16:25:01+00:00",
+        "tempo_desde_ultima_verificacao": "há 3 anos",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 136704686,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2022-11-24",
+            "data_ultima_movimentacao": "2022-12-01",
+            "segredo_justica": false,
+            "arquivado": null,
+            "status_predito": "ATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Ação Penal - Procedimento Ordinário (283)",
+              "assunto": "Contravenções Penais (3692)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2063,
+                "nome": "Contravenções Penais",
+                "nome_com_pai": "DIREITO PENAL > Contravenções Penais",
+                "path_completo": "DIREITO PENAL > Contravenções Penais",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "4ª Vara Criminal da Comarca de Sobral - Sobral",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Em andamento",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2022-11-24",
+              "data_arquivamento": null,
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 4,
+            "data_ultima_verificacao": "2022-12-29T16:25:01+00:00",
+            "quantidade_movimentacoes": 9,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3359,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Joao Paulo Aragao Nascimento",
+                "quantidade_processos": 33,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "00466900341",
+                "cnpj": null
+              },
+              {
+                "nome": "Germano Herbert Pereira Aragao",
+                "quantidade_processos": 24,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "05113070394",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              },
+              {
+                "nome": "Josiane de Lima Monteiro",
+                "quantidade_processos": 6,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Vítima",
+                "tipo_normalizado": "Vítima",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "numero_cnj": "0013417-40.2021.8.06.0293",
+        "titulo_polo_ativo": "Delegacia Regional de Sobral e outros",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2021,
+        "data_inicio": "2022-11-16",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": null,
+          "endereco": null,
+          "classificacao": null,
+          "cidade": null,
+          "estado": null,
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2022-11-16",
+        "quantidade_movimentacoes": 49,
+        "fontes_tribunais_estao_arquivadas": true,
+        "data_ultima_verificacao": "2025-01-30T19:53:28+00:00",
+        "tempo_desde_ultima_verificacao": "há 1 ano",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 210001619,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2022-11-16",
+            "data_ultima_movimentacao": "2022-11-16",
+            "segredo_justica": false,
+            "arquivado": true,
+            "status_predito": "INATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Medidas Protetivas de urgência (Lei Maria da Penha) Criminal (1268)",
+              "assunto": "Contravenções Penais (3692)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2063,
+                "nome": "Contravenções Penais",
+                "nome_com_pai": "DIREITO PENAL > Contravenções Penais",
+                "path_completo": "DIREITO PENAL > Contravenções Penais",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "Juizado da Violência Doméstica e Familiar Contra a Mulher da Comarca de Sobral - Sobral",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Arquivado definitivamente",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2022-11-16",
+              "data_arquivamento": "2022-10-25",
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 4,
+            "data_ultima_verificacao": "2025-01-30T19:53:28+00:00",
+            "quantidade_movimentacoes": 49,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3243,
+                "tipo": "REQUERIDO",
+                "tipo_normalizado": "Requerido",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Josiane de Lima Monteiro",
+                "quantidade_processos": 6,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Vítima",
+                "tipo_normalizado": "Vítima",
+                "polo": "ATIVO",
+                "cpf": "06663403311",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "REQUERIDO",
+                "tipo_normalizado": "Requerido",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Promotor",
+                "tipo_normalizado": "Promotor De Justiça",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              },
+              {
+                "nome": "Delegacia Regional de Sobral",
+                "quantidade_processos": 5597,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Autoridade Policial",
+                "tipo_normalizado": "Outro",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "numero_cnj": "0202743-72.2022.8.06.0167",
+        "titulo_polo_ativo": "Josiane de Lima Monteiro",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2022,
+        "data_inicio": "2022-05-03",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "COMARCA DE SOBRAL",
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2024-09-10",
+        "quantidade_movimentacoes": 21,
+        "fontes_tribunais_estao_arquivadas": false,
+        "data_ultima_verificacao": "2022-10-12T07:36:48+00:00",
+        "tempo_desde_ultima_verificacao": "há 3 anos",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "DOCUMENTO_TRIBUNAL",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 103246519,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2022-05-03",
+            "data_ultima_movimentacao": "2022-06-29",
+            "segredo_justica": false,
+            "arquivado": null,
+            "status_predito": "ATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Ação Penal - Procedimento Ordinário (283)",
+              "assunto": "Violência Doméstica Contra a Mulher (10949)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 4086,
+                "nome": "Violência Doméstica Contra a Mulher",
+                "nome_com_pai": "DIREITO PENAL > Violência Doméstica Contra a Mulher",
+                "path_completo": "DIREITO PENAL > Violência Doméstica Contra a Mulher",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "3ª  Vara Criminal da Comarca de Sobral - Sobral",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Em andamento",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2022-05-03",
+              "data_arquivamento": null,
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 6,
+            "data_ultima_verificacao": "2022-10-12T07:36:48+00:00",
+            "quantidade_movimentacoes": 18,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3145,
+                "tipo": "Réu",
+                "tipo_normalizado": "Réu",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "DOCUMENTO_TRIBUNAL",
+            "envolvidos": [
+              {
+                "nome": "Josiane de Lima Monteiro",
+                "quantidade_processos": 6,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Vítima",
+                "tipo_normalizado": "Vítima",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": null
+              },
+              {
+                "nome": "José William Domingues Ripardo",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "03532276330",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Promotor",
+                "tipo_normalizado": "Promotor De Justiça",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              },
+              {
+                "nome": "Delegacia Especializada Ddm Sobral",
+                "quantidade_processos": 636,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Autoridade Policial",
+                "tipo_normalizado": "Outro",
+                "polo": "DESCONHECIDO",
+                "cpf": null,
+                "cnpj": null
+              },
+              {
+                "nome": "Cristiane de Lima Monteiro",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "02815697386",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Réu",
+                "tipo_normalizado": "Réu",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              }
+            ]
+          },
+          {
+            "id": 22614,
+            "processo_fonte_id": 728820182,
+            "outros_numeros": [],
+            "descricao": "Diário de Justiça do Estado do Ceará",
+            "nome": "Diário de Justiça do Estado do Ceará",
+            "sigla": "DJCE",
+            "tipo": "DIARIO_OFICIAL",
+            "data_inicio": "2024-08-27",
+            "data_ultima_movimentacao": "2024-09-10",
+            "segredo_justica": null,
+            "arquivado": null,
+            "status_predito": null,
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "Site",
+            "capa": null,
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2024-09-10T03:06:00+00:00",
+            "quantidade_movimentacoes": 3,
+            "tipos_envolvido_pesquisado": [],
+            "match_documento_por": null,
+            "envolvidos": [
+              {
+                "nome": "Ministério Público Estadual",
+                "quantidade_processos": 2008290,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "MINISTÉRIO PÚBLICO",
+                "tipo_normalizado": "Ministério Público",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": "03983541000175"
+              },
+              {
+                "nome": "Defensoria Pública do Estado do Ceará",
+                "quantidade_processos": 372973,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "DEFENSOR PÚBLICO",
+                "tipo_normalizado": "Defensor Público",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "02014521000123",
+                "oabs": [
+                  {
+                    "uf": "CE",
+                    "tipo": "ADVOGADO",
+                    "numero": 797743
+                  }
+                ]
+              },
+              {
+                "nome": "Ângela Teresa Gondim Carneiro Chaves",
+                "quantidade_processos": 7403,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Relator",
+                "tipo_normalizado": "Juiz",
+                "polo": "NENHUM",
+                "cpf": "31410553353",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público Estadual",
+                "quantidade_processos": 2008290,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Advogado",
+                "tipo_normalizado": "Advogado",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "03983541000175"
+              },
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Apelado",
+                "tipo_normalizado": "Apelado",
+                "polo": "PASSIVO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "numero_cnj": "3001575-02.2021.8.06.0167",
+        "titulo_polo_ativo": "Ministério Público do Estado do Ceará e outros",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2021,
+        "data_inicio": "2021-09-12",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "2ª UNIDADE DOS JUIZADOS ESPECIAIS CÍVEIS E CRIMINAIS DA COMARCA DE SOBRAL",
+          "endereco": "AV. MONSENHOR ALOISIO PINTO, 1300DOM EXPEDITO",
+          "classificacao": "JE - Juizado Especial",
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2024-10-11",
+        "quantidade_movimentacoes": 80,
+        "fontes_tribunais_estao_arquivadas": true,
+        "data_ultima_verificacao": "2025-02-10T00:20:58+00:00",
+        "tempo_desde_ultima_verificacao": "há 1 ano",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 8555,
+            "processo_fonte_id": 173847447,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2024-01-31",
+            "data_ultima_movimentacao": "2024-10-11",
+            "segredo_justica": false,
+            "arquivado": true,
+            "status_predito": "INATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "PJE",
+            "capa": {
+              "classe": "TERMO CIRCUNSTANCIADO (278)",
+              "assunto": "Porte de arma (branca) (12344)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 5475,
+                "nome": "Porte de arma (branca)",
+                "nome_com_pai": "Contravenções Penais > Porte de arma (branca)",
+                "path_completo": "DIREITO PENAL > Contravenções Penais > Porte de arma (branca)",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "2ª Unidade do Juizado Especial Cível e Criminal da Comarca de Sobral",
+              "orgao_julgador_normatizado": {
+                "nome": "2ª UNIDADE DOS JUIZADOS ESPECIAIS CÍVEIS E CRIMINAIS DA COMARCA DE SOBRAL",
+                "endereco": "AV. MONSENHOR ALOISIO PINTO, 1300DOM EXPEDITO",
+                "classificacao": "JE - Juizado Especial",
+                "cidade": "Sobral",
+                "estado": {
+                  "nome": "Ceará",
+                  "sigla": "CE"
+                },
+                "tribunal_sigla": "TJCE"
+              },
+              "situacao": "Encerrado",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2024-01-31",
+              "data_arquivamento": "2024-10-11",
+              "informacoes_complementares": [
+                {
+                  "tipo": "Fase",
+                  "valor": "CONHECIMENTO"
+                },
+                {
+                  "tipo": "Jurisdição",
+                  "valor": "SOBRAL"
+                },
+                {
+                  "tipo": "ID Órgão Julgador",
+                  "valor": "8838"
+                }
+              ]
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2025-02-10T00:20:58+00:00",
+            "quantidade_movimentacoes": 80,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3359,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Joao Paulo Aragao Nascimento",
+                "quantidade_processos": 33,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "00466900341",
+                "cnpj": null
+              },
+              {
+                "nome": "Germano Herbert Pereira Aragao",
+                "quantidade_processos": 24,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Testemunha",
+                "tipo_normalizado": "Testemunha",
+                "polo": "TERCEIRO",
+                "cpf": "05113070394",
+                "cnpj": null
+              },
+              {
+                "nome": "Josiane de Lima Monteiro",
+                "quantidade_processos": 6,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Vítima",
+                "tipo_normalizado": "Vítima",
+                "polo": "ATIVO",
+                "cpf": "06663403311",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "MP / OFENDIDO",
+                "tipo_normalizado": "Ministério Público / Ofendido",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "numero_cnj": "0053023-02.2020.8.06.0167",
+        "titulo_polo_ativo": "Daiane do Nascimento Gomes",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2020,
+        "data_inicio": "2020-09-11",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "COMARCA DE SOBRAL",
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2020-12-01",
+        "quantidade_movimentacoes": 43,
+        "fontes_tribunais_estao_arquivadas": true,
+        "data_ultima_verificacao": "2022-09-06T21:03:54+00:00",
+        "tempo_desde_ultima_verificacao": "há 3 anos",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 82996824,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2020-09-11",
+            "data_ultima_movimentacao": "2020-12-01",
+            "segredo_justica": true,
+            "arquivado": null,
+            "status_predito": "INATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Procedimento Comum Cível",
+              "assunto": "(6239) Fixação | (5779) Alimentos | (5626) Família | (899) DIREITO CIVIL",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2589,
+                "nome": "Fixação",
+                "nome_com_pai": "Alimentos > Fixação",
+                "path_completo": "DIREITO CIVIL > Família > Alimentos > Fixação",
+                "categoria_raiz": "DIREITO CIVIL",
+                "bloqueado": false
+              },
+              "area": null,
+              "orgao_julgador": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+              "orgao_julgador_normatizado": null,
+              "situacao": null,
+              "valor_causa": {
+                "valor": "1065.0000",
+                "moeda": null,
+                "valor_formatado": "1.065,00"
+              },
+              "data_distribuicao": "2020-09-11",
+              "data_arquivamento": null,
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2022-09-06T21:03:54+00:00",
+            "quantidade_movimentacoes": 41,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3243,
+                "tipo": "REQUERIDO",
+                "tipo_normalizado": "Requerido",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Francisca Talhane Nascimento Sousa",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Menor",
+                "tipo_normalizado": "Criança Ou Adolescente",
+                "polo": "DESCONHECIDO",
+                "cpf": "62784194329",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "REQUERIDO",
+                "tipo_normalizado": "Requerido",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público do Estado do Ceará",
+                "quantidade_processos": 1090945,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Promotor",
+                "tipo_normalizado": "Promotor De Justiça",
+                "polo": "ADVOGADO",
+                "cpf": null,
+                "cnpj": "06928790000156"
+              },
+              {
+                "nome": "Setor de Recursos Humanos Prefeitura de Sobral",
+                "quantidade_processos": 3,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Terceiro",
+                "tipo_normalizado": "Interessado",
+                "polo": "DESCONHECIDO",
+                "cpf": null,
+                "cnpj": null
+              },
+              {
+                "nome": "Daiane do Nascimento Gomes",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "REQUERENTE",
+                "tipo_normalizado": "Requerente",
+                "polo": "ATIVO",
+                "cpf": "06372642310",
+                "cnpj": null
+              }
+            ]
+          },
+          {
+            "id": 22614,
+            "processo_fonte_id": 378432830,
+            "outros_numeros": [],
+            "descricao": "Diário de Justiça do Estado do Ceará",
+            "nome": "Diário de Justiça do Estado do Ceará",
+            "sigla": "DJCE",
+            "tipo": "DIARIO_OFICIAL",
+            "data_inicio": "2020-09-25",
+            "data_ultima_movimentacao": "2020-11-03",
+            "segredo_justica": null,
+            "arquivado": null,
+            "status_predito": null,
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "Site",
+            "capa": null,
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 1,
+            "data_ultima_verificacao": "2020-11-03T03:06:00+00:00",
+            "quantidade_movimentacoes": 2,
+            "tipos_envolvido_pesquisado": [],
+            "match_documento_por": null,
+            "envolvidos": [
+              {
+                "nome": "Francisco Roberto Felix Rodrigues",
+                "quantidade_processos": 468,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Advogado",
+                "tipo_normalizado": "Advogado",
+                "polo": "ADVOGADO",
+                "cpf": "02182378391",
+                "cnpj": null,
+                "oabs": [
+                  {
+                    "uf": "CE",
+                    "tipo": "ADVOGADO",
+                    "numero": 17692
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "numero_cnj": "0040713-08.2013.8.06.0167",
+        "titulo_polo_ativo": "A Sociedade",
+        "titulo_polo_passivo": "Francisco Taciano de Sousa",
+        "ano_inicio": 2013,
+        "data_inicio": "2013-04-09",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": "COMARCA DE SOBRAL",
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Sobral",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2017-10-11",
+        "quantidade_movimentacoes": 55,
+        "fontes_tribunais_estao_arquivadas": true,
+        "data_ultima_verificacao": "2023-03-25T09:50:00+00:00",
+        "tempo_desde_ultima_verificacao": "há 3 anos",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "NOME",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 215881592,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2013-04-09",
+            "data_ultima_movimentacao": "2017-10-11",
+            "segredo_justica": false,
+            "arquivado": true,
+            "status_predito": "INATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Termo Circunstanciado (278)",
+              "assunto": "Contravenções Penais (3692)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2063,
+                "nome": "Contravenções Penais",
+                "nome_com_pai": "DIREITO PENAL > Contravenções Penais",
+                "path_completo": "DIREITO PENAL > Contravenções Penais",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "JECC. da Comarca de Sobral - Sobral",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Arquivado definitivamente",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2013-04-09",
+              "data_arquivamento": "2017-10-11",
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 2,
+            "data_ultima_verificacao": "2023-03-25T09:50:00+00:00",
+            "quantidade_movimentacoes": 16,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3359,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Autor do Fato",
+                "tipo_normalizado": "Autor Do Fato",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              },
+              {
+                "nome": "A Sociedade",
+                "quantidade_processos": 283930,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Vítima",
+                "tipo_normalizado": "Vítima",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": null
+              }
+            ]
+          },
+          {
+            "id": 17762,
+            "processo_fonte_id": 215897870,
+            "outros_numeros": [],
+            "descricao": "TJCE - 2º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2015-08-04",
+            "data_ultima_movimentacao": "2016-10-03",
+            "segredo_justica": false,
+            "arquivado": true,
+            "status_predito": "INATIVO",
+            "grau": 2,
+            "grau_formatado": "Segundo Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Apelação Criminal (417)",
+              "assunto": "Contravenções Penais (3692)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2063,
+                "nome": "Contravenções Penais",
+                "nome_com_pai": "DIREITO PENAL > Contravenções Penais",
+                "path_completo": "DIREITO PENAL > Contravenções Penais",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "2ª TURMA RECURSAL DOS JUIZADOS ESPECIAIS CÍVEIS E CRIMINAIS - Fortaleza",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Encerrado",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2015-08-04",
+              "data_arquivamento": "2016-10-03",
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 4,
+            "data_ultima_verificacao": "2023-03-25T09:50:00+00:00",
+            "quantidade_movimentacoes": 19,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3098,
+                "tipo": "Apelado",
+                "tipo_normalizado": "Apelado",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Apelado",
+                "tipo_normalizado": "Apelado",
+                "polo": "PASSIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público",
+                "quantidade_processos": 4465417,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Apelante",
+                "tipo_normalizado": "Apelante",
+                "polo": "ATIVO",
+                "cpf": null,
+                "cnpj": "04142491000166"
+              },
+              {
+                "nome": "Juliana Cronemberger de Negreiros Moura",
+                "quantidade_processos": 20,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "MINISTÉRIO PÚBLICO",
+                "tipo_normalizado": "Ministério Público",
+                "polo": "ATIVO",
+                "cpf": "76824276391",
+                "cnpj": null
+              },
+              {
+                "nome": "Alessandra Tavares Pereira Barroso",
+                "quantidade_processos": 3386,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "DEFENSOR PÚBLICO",
+                "tipo_normalizado": "Defensor Público",
+                "polo": "ADVOGADO",
+                "cpf": "82730296387",
+                "cnpj": null,
+                "oabs": [
+                  {
+                    "uf": "CE",
+                    "tipo": "ADVOGADO",
+                    "numero": 27067
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": 17762,
+            "processo_fonte_id": 215897318,
+            "outros_numeros": [],
+            "descricao": "TJCE - 2º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2016-09-05",
+            "data_ultima_movimentacao": "2017-08-16",
+            "segredo_justica": false,
+            "arquivado": true,
+            "status_predito": "INATIVO",
+            "grau": 2,
+            "grau_formatado": "Segundo Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Embargos de Declaração Criminal (420)",
+              "assunto": "Contravenções Penais (3692)",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2063,
+                "nome": "Contravenções Penais",
+                "nome_com_pai": "DIREITO PENAL > Contravenções Penais",
+                "path_completo": "DIREITO PENAL > Contravenções Penais",
+                "categoria_raiz": "DIREITO PENAL",
+                "bloqueado": false
+              },
+              "area": "CRIME",
+              "orgao_julgador": "2ª TURMA RECURSAL DOS JUIZADOS ESPECIAIS CÍVEIS E CRIMINAIS - Fortaleza",
+              "orgao_julgador_normatizado": null,
+              "situacao": "Encerrado",
+              "valor_causa": {
+                "valor": null,
+                "moeda": null,
+                "valor_formatado": null
+              },
+              "data_distribuicao": "2016-09-05",
+              "data_arquivamento": "2017-08-16",
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2023-03-25T09:50:00+00:00",
+            "quantidade_movimentacoes": 20,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 637,
+                "tipo": "Embargante",
+                "tipo_normalizado": "Embargante",
+                "polo": "ATIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Alessandra Tavares Pereira Barroso",
+                "quantidade_processos": 3386,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "DEFENSOR PÚBLICO",
+                "tipo_normalizado": "Defensor Público",
+                "polo": "ADVOGADO",
+                "cpf": "82730296387",
+                "cnpj": null,
+                "oabs": [
+                  {
+                    "uf": "CE",
+                    "tipo": "ADVOGADO",
+                    "numero": 27067
+                  }
+                ]
+              },
+              {
+                "nome": "Adriana Andrade de Melo",
+                "quantidade_processos": 1354,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "DEFENSOR PÚBLICO",
+                "tipo_normalizado": "Defensor Público",
+                "polo": "ADVOGADO",
+                "cpf": "26086697353",
+                "cnpj": null
+              },
+              {
+                "nome": "Ministério Público",
+                "quantidade_processos": 4465417,
+                "tipo_pessoa": "JURIDICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Embargado",
+                "tipo_normalizado": "Embargado",
+                "polo": "PASSIVO",
+                "cpf": null,
+                "cnpj": "04142491000166"
+              },
+              {
+                "nome": "Juliana Cronemberger de Negreiros Moura",
+                "quantidade_processos": 20,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "MINISTÉRIO PÚBLICO",
+                "tipo_normalizado": "Ministério Público",
+                "polo": "ATIVO",
+                "cpf": "76824276391",
+                "cnpj": null
+              },
+              {
+                "nome": "Francisco Taciano de Sousa",
+                "quantidade_processos": 7,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "Embargante",
+                "tipo_normalizado": "Embargante",
+                "polo": "ATIVO",
+                "cpf": "05023290336",
+                "cnpj": null
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "links": {
+      "next": null
+    },
+    "paginator": {
+      "per_page": 20
+    }
+  }
+}

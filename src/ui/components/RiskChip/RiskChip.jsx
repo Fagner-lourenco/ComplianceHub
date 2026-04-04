@@ -4,7 +4,7 @@ const CONFIG = {
     // Criminal / General risk
     NEGATIVE: { label: 'Negativo', icon: '✅', color: 'green' },
     POSITIVE: { label: 'Positivo', icon: '🔴', color: 'red' },
-    INCONCLUSIVE: { label: 'Inconclusivo', icon: '⚠️', color: 'yellow' },
+    INCONCLUSIVE: { label: 'Inconclusivo', icon: '🔷', color: 'blue' },
     NOT_FOUND: { label: 'Não encontrado', icon: '➖', color: 'gray' },
     // OSINT
     LOW: { label: 'Baixo', icon: '✅', color: 'green' },

@@ -64,14 +64,17 @@ export default function AuditoriaPage() {
                         onChange={(event) => setSearchTerm(event.target.value)}
                     />
                 </div>
-                <select className="filter-bar__select" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)}>
+                <select className="filter-bar__select" value={actionFilter} onChange={(event) => setActionFilter(event.target.value)} aria-label="Filtrar por acao">
                     <option value="ALL">Todas as acoes</option>
                     <option value="CASE_CONCLUDED">Caso concluido</option>
                     <option value="CASE_UPDATED">Caso atualizado</option>
                     <option value="CASE_ASSIGNED">Caso atribuido</option>
+                    <option value="CASE_RETURNED">Caso devolvido</option>
+                    <option value="CASE_CORRECTED">Caso corrigido</option>
                     <option value="EXPORT_CREATED">Exportacao</option>
                     <option value="SOLICITATION_CREATED">Nova solicitacao</option>
                     <option value="USER_CREATED">Usuario criado</option>
+                    <option value="TENANT_CONFIG_UPDATED">Config atualizada</option>
                 </select>
             </div>
 

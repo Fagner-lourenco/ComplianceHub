@@ -7,7 +7,7 @@ const casoPageMocks = vi.hoisted(() => ({
         user: { uid: 'ops-1', email: 'fagner.alexandro.lourenco@gmail.com' },
         userProfile: { role: 'admin' },
     },
-    getCase: vi.fn(),
+    subscribeToCaseDoc: vi.fn(),
     updateCase: vi.fn(),
     logAuditEvent: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock('../../core/firebase/firestoreService', async (importOriginal) => {
     const actual = await importOriginal();
     return {
         ...actual,
-        getCase: (...args) => casoPageMocks.getCase(...args),
+        subscribeToCaseDoc: (...args) => casoPageMocks.subscribeToCaseDoc(...args),
         updateCase: (...args) => casoPageMocks.updateCase(...args),
         logAuditEvent: (...args) => casoPageMocks.logAuditEvent(...args),
     };
@@ -39,13 +39,17 @@ const { default: CasoPage } = await import('./CasoPage');
 
 describe('CasoPage', () => {
     beforeEach(() => {
-        casoPageMocks.getCase.mockReset();
+        casoPageMocks.subscribeToCaseDoc.mockReset();
         casoPageMocks.updateCase.mockReset();
         casoPageMocks.logAuditEvent.mockReset();
     });
 
     it('nao exibe caso mock quando a rota real nao existe', async () => {
-        casoPageMocks.getCase.mockResolvedValue(null);
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            // Simulate case not found
+            setTimeout(() => callback(null, null), 0);
+            return () => {}; // unsubscribe
+        });
 
         render(<CasoPage />);
 

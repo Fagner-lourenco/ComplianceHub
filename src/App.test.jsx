@@ -77,6 +77,10 @@ vi.mock('./portals/client/ExportacoesPage', () => ({
     default: () => <div>CLIENT_EXPORTACOES</div>,
 }));
 
+vi.mock('./pages/PublicReportPage', () => ({
+    default: () => <div>PUBLIC_REPORT_PAGE</div>,
+}));
+
 const { default: App } = await import('./App');
 
 describe('App routing guards', () => {
@@ -138,5 +142,13 @@ describe('App routing guards', () => {
 
         expect(await screen.findByText('Confirmando permissoes e contexto')).toBeInTheDocument();
         expect(screen.getByText('Identidade confirmada no Firebase Auth')).toBeInTheDocument();
+    });
+
+    it('resolve a rota publica de relatorio demo por caseId', async () => {
+        window.history.replaceState({}, '', '/demo/r/CASE-002');
+
+        render(<App />);
+
+        expect(await screen.findByText('PUBLIC_REPORT_PAGE')).toBeInTheDocument();
     });
 });

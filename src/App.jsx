@@ -10,10 +10,12 @@ import {
 } from './core/rbac/permissions';
 import LoginPage from './pages/LoginPage';
 import CandidatosPage from './portals/client/CandidatosPage';
+import DashboardClientePage from './portals/client/DashboardClientePage';
 import ExportacoesPage from './portals/client/ExportacoesPage';
 import NovaSolicitacaoPage from './portals/client/NovaSolicitacaoPage';
 import SolicitacoesPage from './portals/client/SolicitacoesPage';
 import AuditoriaPage from './portals/ops/AuditoriaPage';
+import MetricasIAPage from './portals/ops/MetricasIAPage';
 import CasoPage from './portals/ops/CasoPage';
 import CasosPage from './portals/ops/CasosPage';
 import ClientesPage from './portals/ops/ClientesPage';
@@ -284,6 +286,14 @@ function AppRoutes() {
                 >
                     <Route index element={<Navigate to="solicitacoes" replace />} />
                     <Route
+                        path="dashboard"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
+                                <DashboardClientePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
                         path="solicitacoes"
                         element={(
                             <RequirePermission permission={PERMISSIONS.CASE_READ}>
@@ -376,6 +386,14 @@ function AppRoutes() {
                             </RequirePermission>
                         )}
                     />
+                    <Route
+                        path="metricas-ia"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.AUDIT_VIEW}>
+                                <MetricasIAPage />
+                            </RequirePermission>
+                        )}
+                    />
                 </Route>
 
                 <Route
@@ -387,6 +405,7 @@ function AppRoutes() {
                     )}
                 >
                     <Route index element={<Navigate to="solicitacoes" replace />} />
+                    <Route path="dashboard" element={<DashboardClientePage />} />
                     <Route path="solicitacoes" element={<SolicitacoesPage />} />
                     <Route path="nova-solicitacao" element={<NovaSolicitacaoPage />} />
                     <Route path="candidatos" element={<CandidatosPage />} />
@@ -410,6 +429,7 @@ function AppRoutes() {
                 </Route>
 
                 <Route path="/r/:token" element={<PublicReportPage />} />
+                <Route path="/demo/r/:caseId" element={<PublicReportPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>

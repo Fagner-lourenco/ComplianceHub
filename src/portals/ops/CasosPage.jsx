@@ -11,6 +11,26 @@ import { useCases } from '../../hooks/useCases';
 import { getCaseStats } from '../../data/mockData';
 import './CasosPage.css';
 
+function formatFullCpf(cpf) {
+    const d = String(cpf || '').replace(/\D/g, '');
+    if (d.length !== 11) return cpf || '';
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
+function EnrichmentIcon({ status }) {
+    if (!status || status === 'PENDING') return null;
+    const config = {
+        RUNNING: { cls: 'enrichment-icon--running', title: 'Enriquecimento em andamento', label: '' },
+        DONE: { cls: 'enrichment-icon--done', title: 'Enriquecimento concluido', label: '✓' },
+        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Enriquecimento parcial', label: '!' },
+        FAILED: { cls: 'enrichment-icon--failed', title: 'Enriquecimento falhou', label: '✕' },
+        BLOCKED: { cls: 'enrichment-icon--blocked', title: 'CPF bloqueado no gate de identidade', label: '⊘' },
+    };
+    const c = config[status];
+    if (!c) return null;
+    return <span className={`enrichment-icon ${c.cls}`} title={c.title}>{c.label}</span>;
+}
+
 export default function CasosPage() {
     const navigate = useNavigate();
     const { selectedTenantId } = useTenant();
@@ -97,6 +117,7 @@ export default function CasosPage() {
                             <th className="data-table__th" scope="col">Cargo</th>
                             <th className="data-table__th" scope="col">Data</th>
                             <th className="data-table__th" scope="col">Status</th>
+                            <th className="data-table__th" scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
                             <th className="data-table__th" scope="col">Criminal</th>
                             <th className="data-table__th" scope="col">Score</th>
                             <th className="data-table__th" scope="col">Veredito</th>
@@ -106,14 +127,14 @@ export default function CasosPage() {
                     <tbody>
                         {loading && (
                             <tr>
-                                <td colSpan={11} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                     Carregando casos...
                                 </td>
                             </tr>
                         )}
                         {!loading && error && (
                             <tr>
-                                <td colSpan={11} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
+                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
                                     Nao foi possivel carregar os casos agora.
                                 </td>
                             </tr>
@@ -123,10 +144,11 @@ export default function CasosPage() {
                                 <td className="data-table__td data-table__td--mono">{currentCase.id}</td>
                                 <td className="data-table__td" style={{ fontSize: '.75rem' }}>{currentCase.tenantName}</td>
                                 <td className="data-table__td data-table__td--name">{currentCase.candidateName}</td>
-                                <td className="data-table__td data-table__td--mono">{currentCase.cpf || currentCase.cpfMasked}</td>
+                                <td className="data-table__td data-table__td--mono">{formatFullCpf(currentCase.cpf) || currentCase.cpfMasked}</td>
                                 <td className="data-table__td">{currentCase.candidatePosition}</td>
                                 <td className="data-table__td">{formatDate(currentCase.createdAt)}</td>
                                 <td className="data-table__td"><StatusBadge status={currentCase.status} /></td>
+                                <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={currentCase.enrichmentStatus} /></td>
                                 <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
                                 <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
                                 <td className="data-table__td"><RiskChip value={currentCase.finalVerdict} bold /></td>
@@ -142,7 +164,7 @@ export default function CasosPage() {
                         ))}
                         {!loading && !error && filtered.length === 0 && (
                             <tr>
-                                <td colSpan={11} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                     Nenhum caso encontrado.
                                 </td>
                             </tr>

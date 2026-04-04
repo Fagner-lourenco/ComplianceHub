@@ -40,6 +40,7 @@ export default function ClientesPage() {
     const [configTenantName, setConfigTenantName] = useState('');
     const [configPhases, setConfigPhases] = useState(null);
     const [configLimits, setConfigLimits] = useState({ dailyLimit: '', monthlyLimit: '' });
+    const [configEnrichment, setConfigEnrichment] = useState({ enabled: false, phases: { identity: true, criminal: true, warrant: true, labor: true }, escalation: { enabled: true, triggers: ['criminal', 'warrant', 'highProcessCount'], processCountThreshold: 5 }, filters: { uf: '' }, gate: { minNameSimilarity: 0.7 }, ai: { enabled: false }, escavador: { enabled: false, phases: { processos: true }, filters: { incluirHomonimos: true } }, judit: { enabled: true, phases: { entity: true, lawsuits: true, warrant: true, execution: true }, filters: { useAsync: false } } });
     const [configSaving, setConfigSaving] = useState(false);
     const [tenantConfigs, setTenantConfigs] = useState({});
 
@@ -163,6 +164,8 @@ export default function ClientesPage() {
         }
     };
 
+    const DEFAULT_ENRICHMENT = { enabled: false, phases: { identity: true, criminal: true, warrant: true, labor: true }, escalation: { enabled: true, triggers: ['criminal', 'warrant', 'highProcessCount'], processCountThreshold: 5 }, filters: { uf: '' }, gate: { minNameSimilarity: 0.7 }, ai: { enabled: false }, escavador: { enabled: false, phases: { processos: true }, filters: { incluirHomonimos: true } }, judit: { enabled: true, phases: { entity: true, lawsuits: true, warrant: true, execution: true }, filters: { useAsync: false } } };
+
     const handleOpenConfig = async (tenantId, tenantName) => {
         setConfigTenantId(tenantId);
         setConfigTenantName(tenantName);
@@ -174,9 +177,32 @@ export default function ClientesPage() {
                 dailyLimit: settings.dailyLimit ?? '',
                 monthlyLimit: settings.monthlyLimit ?? '',
             });
+            const saved = settings.enrichmentConfig || {};
+            setConfigEnrichment({
+                ...DEFAULT_ENRICHMENT,
+                ...saved,
+                phases: { ...DEFAULT_ENRICHMENT.phases, ...(saved.phases || {}) },
+                escalation: { ...DEFAULT_ENRICHMENT.escalation, ...(saved.escalation || {}) },
+                filters: { ...DEFAULT_ENRICHMENT.filters, ...(saved.filters || {}) },
+                gate: { ...DEFAULT_ENRICHMENT.gate, ...(saved.gate || {}) },
+                ai: { ...DEFAULT_ENRICHMENT.ai, ...(saved.ai || {}) },
+                escavador: {
+                    ...DEFAULT_ENRICHMENT.escavador,
+                    ...(saved.escavador || {}),
+                    phases: { ...DEFAULT_ENRICHMENT.escavador.phases, ...(saved.escavador?.phases || {}) },
+                    filters: { ...DEFAULT_ENRICHMENT.escavador.filters, ...(saved.escavador?.filters || {}) },
+                },
+                judit: {
+                    ...DEFAULT_ENRICHMENT.judit,
+                    ...(saved.judit || {}),
+                    phases: { ...DEFAULT_ENRICHMENT.judit.phases, ...(saved.judit?.phases || {}) },
+                    filters: { ...DEFAULT_ENRICHMENT.judit.filters, ...(saved.judit?.filters || {}) },
+                },
+            });
         } catch {
             setConfigPhases({ ...DEFAULT_ANALYSIS_CONFIG });
             setConfigLimits({ dailyLimit: '', monthlyLimit: '' });
+            setConfigEnrichment({ ...DEFAULT_ENRICHMENT });
         }
     };
 
@@ -190,7 +216,7 @@ export default function ClientesPage() {
                 dailyLimit: rawDaily !== null && (isNaN(rawDaily) || rawDaily < 0) ? null : rawDaily,
                 monthlyLimit: rawMonthly !== null && (isNaN(rawMonthly) || rawMonthly < 0) ? null : rawMonthly,
             };
-            await updateTenantSettings(configTenantId, configPhases, limits);
+            await updateTenantSettings(configTenantId, configPhases, limits, configEnrichment);
             await logAuditEvent({
                 tenantId: configTenantId,
                 userId: user.uid,
@@ -443,6 +469,179 @@ export default function ClientesPage() {
                                     onChange={(e) => setConfigLimits((prev) => ({ ...prev, monthlyLimit: e.target.value }))}
                                 />
                             </div>
+                            <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '20px 0' }} />
+                            <p style={{ fontSize: '.875rem', fontWeight: 600, marginBottom: 8 }}>Enriquecimento automatico</p>
+                            <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 12 }}>
+                                Quando habilitado, consultas externas serao executadas automaticamente ao criar uma solicitacao (~R$ 2,12/caso base via Judit).
+                            </p>
+                            <div className="config-toggle-row">
+                                <span className="config-toggle-label">Habilitado</span>
+                                <button
+                                    type="button"
+                                    className={`config-toggle ${configEnrichment.enabled ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                    onClick={() => setConfigEnrichment((prev) => ({ ...prev, enabled: !prev.enabled }))}
+                                    aria-label={`${configEnrichment.enabled ? 'Desabilitar' : 'Habilitar'} enriquecimento`}
+                                >
+                                    <span className="config-toggle__knob" />
+                                </button>
+                            </div>
+                            {configEnrichment.enabled && (
+                                <div style={{ marginLeft: 12, marginTop: 8 }}>
+
+                                    {/* ─── JUDIT — PROVIDER PRINCIPAL ─── */}
+                                    <p style={{ fontSize: '.875rem', fontWeight: 600, marginBottom: 4 }}>Judit <span style={{ fontSize: '.75rem', fontWeight: 400, color: 'var(--text-tertiary)' }}>(provider principal)</span></p>
+                                    <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                                        Datalake judicial com processos, mandados de prisao, execucoes penais e dados cadastrais. Custo base: ~R$ 2,12/caso.
+                                    </p>
+                                    <div className="config-toggle-row" style={{ paddingBlock: 6 }}>
+                                        <span className="config-toggle-label" style={{ fontSize: '.8125rem' }}>Habilitado</span>
+                                        <button
+                                            type="button"
+                                            className={`config-toggle ${configEnrichment.judit?.enabled ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                            onClick={() => setConfigEnrichment((prev) => ({
+                                                ...prev,
+                                                judit: { ...prev.judit, enabled: !prev.judit?.enabled },
+                                            }))}
+                                            aria-label={`${configEnrichment.judit?.enabled ? 'Desabilitar' : 'Habilitar'} Judit`}
+                                        >
+                                            <span className="config-toggle__knob" />
+                                        </button>
+                                    </div>
+                                    {configEnrichment.judit?.enabled && (
+                                        <div style={{ marginLeft: 12, marginTop: 4 }}>
+                                            <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                <span style={{ fontSize: '.875rem' }}>&#128274;</span> Gate Dados Cadastrais (R$ 0,12/caso) — sempre ativo
+                                            </p>
+                                            {[
+                                                { key: 'lawsuits', label: 'Processos judiciais (datalake)', cost: 'R$ 0,50' },
+                                                { key: 'warrant', label: 'Mandados de Prisao (BNMP)', cost: 'R$ 1,00' },
+                                                { key: 'execution', label: 'Execucoes Penais', cost: 'R$ 0,50' },
+                                            ].map(({ key, label, cost }) => (
+                                                <div key={key} className="config-toggle-row" style={{ paddingBlock: 6 }}>
+                                                    <span className="config-toggle-label" style={{ fontSize: '.8125rem' }}>
+                                                        {label} <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>({cost})</span>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className={`config-toggle ${configEnrichment.judit?.phases?.[key] ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                                        onClick={() => setConfigEnrichment((prev) => ({
+                                                            ...prev,
+                                                            judit: { ...prev.judit, phases: { ...prev.judit?.phases, [key]: !prev.judit?.phases?.[key] } },
+                                                        }))}
+                                                        aria-label={`Toggle ${label} Judit`}
+                                                    >
+                                                        <span className="config-toggle__knob" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '16px 0' }} />
+                                    <p style={{ fontSize: '.8125rem', fontWeight: 600, marginBottom: 8 }}>Filtros e Gate</p>
+                                    <div className="form-group" style={{ marginBottom: 10 }}>
+                                        <label style={{ fontSize: '.8125rem' }}>Limiar de similaridade de nome <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>(0 a 1, padrao: 0,7)</span></label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="1"
+                                            step="0.05"
+                                            className="form-input"
+                                            value={configEnrichment.gate?.minNameSimilarity ?? 0.7}
+                                            onChange={(e) => setConfigEnrichment((prev) => ({
+                                                ...prev,
+                                                gate: { ...prev.gate, minNameSimilarity: parseFloat(e.target.value) || 0 },
+                                            }))}
+                                        />
+                                    </div>
+
+                                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '16px 0' }} />
+                                    <p style={{ fontSize: '.8125rem', fontWeight: 600, marginBottom: 4 }}>Escalonamento — Escavador</p>
+                                    <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                                        Quando ativado, Escavador roda como cross-validation se detectado criminal, mandado, execucao ou alto volume.
+                                    </p>
+                                    <div className="config-toggle-row" style={{ paddingBlock: 6 }}>
+                                        <span className="config-toggle-label" style={{ fontSize: '.8125rem' }}>Escavador (cross-validation)</span>
+                                        <button
+                                            type="button"
+                                            className={`config-toggle ${configEnrichment.escavador?.enabled ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                            onClick={() => setConfigEnrichment((prev) => ({
+                                                ...prev,
+                                                escavador: { ...prev.escavador, enabled: !prev.escavador?.enabled },
+                                            }))}
+                                            aria-label={`${configEnrichment.escavador?.enabled ? 'Desabilitar' : 'Habilitar'} Escavador`}
+                                        >
+                                            <span className="config-toggle__knob" />
+                                        </button>
+                                    </div>
+
+                                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '16px 0' }} />
+                                    <p style={{ fontSize: '.8125rem', fontWeight: 600, marginBottom: 4 }}>Analise de IA (GPT-5.4-nano)</p>
+                                    <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                                        Detecta homonimos, inconsistencias e gera resumo executivo. Custo estimado: ~US$ 0,0005/caso.
+                                    </p>
+                                    <div className="config-toggle-row" style={{ paddingBlock: 6 }}>
+                                        <span className="config-toggle-label" style={{ fontSize: '.8125rem' }}>
+                                            Habilitar IA
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className={`config-toggle ${configEnrichment.ai?.enabled ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                            onClick={() => setConfigEnrichment((prev) => ({
+                                                ...prev,
+                                                ai: { ...prev.ai, enabled: !prev.ai?.enabled },
+                                            }))}
+                                            aria-label={`${configEnrichment.ai?.enabled ? 'Desabilitar' : 'Habilitar'} analise de IA`}
+                                        >
+                                            <span className="config-toggle__knob" />
+                                        </button>
+                                    </div>
+
+                                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '16px 0' }} />
+                                    <details style={{ fontSize: '.8125rem' }}>
+                                        <summary style={{ fontWeight: 600, cursor: 'pointer', marginBottom: 8, color: 'var(--text-secondary)' }}>FonteData (legado / fallback)</summary>
+                                        <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginBottom: 8 }}>
+                                            Consultas via FonteData. Usado apenas como fallback quando Judit gate falha ou para dados trabalhistas (TRT).
+                                        </p>
+                                        {[
+                                            { key: 'identity', label: 'Dados Cadastrais (PF Basica)', cost: 'R$ 0,24' },
+                                            { key: 'criminal', label: 'Criminal / Processos Agrupada', cost: 'R$ 1,65' },
+                                            { key: 'warrant', label: 'Mandados de Prisao (CNJ)', cost: 'R$ 1,08' },
+                                            { key: 'labor', label: 'Processos Trabalhistas (TRT)', cost: 'R$ 0,54/regiao' },
+                                        ].map(({ key, label, cost }) => (
+                                            <div key={key} className="config-toggle-row" style={{ paddingBlock: 6 }}>
+                                                <span className="config-toggle-label" style={{ fontSize: '.8125rem' }}>
+                                                    {label} <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>({cost})</span>
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className={`config-toggle ${configEnrichment.phases?.[key] ? 'config-toggle--on' : 'config-toggle--off'}`}
+                                                    onClick={() => setConfigEnrichment((prev) => ({
+                                                        ...prev,
+                                                        phases: { ...prev.phases, [key]: !prev.phases?.[key] },
+                                                    }))}
+                                                    aria-label={`${configEnrichment.phases?.[key] ? 'Desabilitar' : 'Habilitar'} ${label}`}
+                                                >
+                                                    <span className="config-toggle__knob" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <div className="form-group" style={{ marginTop: 8, marginBottom: 0 }}>
+                                            <label style={{ fontSize: '.8125rem' }}>Filtrar por UF do TRT <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>(vazio = nacional)</span></label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                placeholder="Ex: SP, RJ, MG"
+                                                value={configEnrichment.filters?.uf || ''}
+                                                onChange={(e) => setConfigEnrichment((prev) => ({
+                                                    ...prev,
+                                                    filters: { ...prev.filters, uf: e.target.value },
+                                                }))}
+                                            />
+                                        </div>
+                                    </details>
+                                </div>
+                            )}
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn-secondary" onClick={() => { setConfigTenantId(null); setConfigPhases(null); }}>Cancelar</button>

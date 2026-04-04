@@ -2,14 +2,14 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, .35);
-    z-index: calc(var(--z-drawer) - 1);
+    z-index: var(--z-drawer-overlay);
     animation: fadeIn var(--transition-fast) forwards;
     backdrop-filter: blur(2px);
 }
 
 .drawer {
     position: fixed;
-    top: 0;
+    top: var(--drawer-top-offset, 0px);
     right: 0;
     bottom: 0;
     width: var(--drawer-width);
@@ -20,6 +20,9 @@
     display: flex;
     flex-direction: column;
     animation: slideInRight var(--transition-drawer) forwards;
+    min-height: calc(100dvh - var(--drawer-top-offset, 0px));
+    max-height: calc(100dvh - var(--drawer-top-offset, 0px));
+    will-change: transform;
 }
 
 .drawer__header {
@@ -103,6 +106,14 @@
     flex: 1;
     padding: var(--space-5);
     overflow-y: auto;
+    min-width: 0;
+}
+
+@media (max-width: 1080px) {
+    .drawer {
+        width: min(100vw, 440px);
+        max-width: 100vw;
+    }
 }
 
 /* --- Mobile Responsive --- */
@@ -110,6 +121,8 @@
     .drawer {
         width: 100vw;
         max-width: 100vw;
+        min-height: calc(100dvh - var(--drawer-top-offset, 0px));
+        max-height: calc(100dvh - var(--drawer-top-offset, 0px));
     }
     
     .drawer__body {

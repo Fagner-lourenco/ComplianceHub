@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPublicReport } from '../core/firebase/firestoreService';
+import { getMockCaseById } from '../data/mockData';
+import { buildCaseReportHtml } from '../core/reportBuilder';
+import './PublicReportPage.css';
 
 export default function PublicReportPage() {
-    const { token } = useParams();
+    const { token, caseId } = useParams();
     const [error, setError] = useState(false);
     const [loading, setLoading] = useState(true);
     const [reportHtml, setReportHtml] = useState('');
     const [copyOk, setCopyOk] = useState(false);
     const iframeRef = useRef(null);
+    const isDemoRoute = window.location.pathname.startsWith('/demo/r/');
 
     const stripActiveContent = (html) => {
         if (!html) return '';
@@ -24,6 +28,23 @@ export default function PublicReportPage() {
 
         async function load() {
             try {
+                if (isDemoRoute) {
+                    const caseData = getMockCaseById(caseId);
+                    if (!caseData) {
+                        if (!cancelled) {
+                            setError(true);
+                            setLoading(false);
+                        }
+                        return;
+                    }
+
+                    if (!cancelled) {
+                        setReportHtml(stripActiveContent(buildCaseReportHtml(caseData)));
+                        setLoading(false);
+                    }
+                    return;
+                }
+
                 const report = await getPublicReport(token);
                 if (cancelled) return;
                 if (!report?.html) {
@@ -44,17 +65,14 @@ export default function PublicReportPage() {
 
         load();
         return () => { cancelled = true; };
-    }, [token]);
+    }, [caseId, isDemoRoute, token]);
 
     if (error) {
         return (
-            <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: '#64748b',
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
-                    <h2 style={{ color: '#1e293b', marginBottom: '8px' }}>Relatório não encontrado</h2>
+            <div className="public-report__state">
+                <div className="public-report__state-card">
+                    <div className="public-report__state-icon">📄</div>
+                    <h2 className="public-report__state-title">Relatório não encontrado</h2>
                     <p>O link pode ter expirado ou ser inválido.</p>
                 </div>
             </div>
@@ -83,12 +101,9 @@ export default function PublicReportPage() {
 
     if (loading) {
         return (
-            <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: '#64748b',
-            }}>
-                <div style={{ textAlign: 'center' }}>
-                    <div style={{ marginBottom: '12px', fontSize: '18px', fontWeight: 600, color: '#4f46e5' }}>ComplianceHub</div>
+            <div className="public-report__state">
+                <div className="public-report__state-card">
+                    <div className="public-report__state-brand">ComplianceHub</div>
                     <p>Carregando relatório...</p>
                 </div>
             </div>
@@ -96,46 +111,19 @@ export default function PublicReportPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#e5e7eb' }}>
-            <div style={{
-                position: 'fixed',
-                right: 20,
-                bottom: 20,
-                display: 'flex',
-                gap: 8,
-                zIndex: 20,
-            }}>
+        <div className="public-report">
+            <div className="public-report__actions">
                 <button
                     type="button"
                     onClick={handleCopyLink}
-                    style={{
-                        background: '#0f172a',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '10px 22px',
-                        borderRadius: 7,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 18px rgba(15,23,42,.3)',
-                    }}
+                    className="public-report__button public-report__button--secondary"
                 >
                     {copyOk ? 'Link Copiado!' : 'Copiar Link'}
                 </button>
                 <button
                     type="button"
                     onClick={handlePrint}
-                    style={{
-                        background: '#4f46e5',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '10px 22px',
-                        borderRadius: 7,
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 18px rgba(79,70,229,.4)',
-                    }}
+                    className="public-report__button public-report__button--primary"
                 >
                     Imprimir / Salvar PDF
                 </button>
@@ -145,7 +133,7 @@ export default function PublicReportPage() {
                 ref={iframeRef}
                 title="Relatório Público"
                 srcDoc={reportHtml}
-                style={{ width: '100%', minHeight: '100vh', border: 'none', background: '#e5e7eb' }}
+                className="public-report__frame"
             />
         </div>
     );

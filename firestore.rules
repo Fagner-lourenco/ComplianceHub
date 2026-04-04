@@ -77,6 +77,24 @@ service cloud.firestore {
       );
       
       allow delete: if isAuthenticated() && isAdmin();
+
+      // 2a. Public Result — sanitized subcollection for client access
+      // Published by Cloud Function when analyst concludes case (status → DONE).
+      match /publicResult/{docId} {
+        allow read: if isAuthenticated() && (
+          isAnalyst() ||
+          (isClient() && isSameTenant(get(/databases/$(database)/documents/cases/$(caseId)).data.tenantId))
+        );
+        // Only Cloud Functions write here
+        allow create, update, delete: if false;
+      }
+
+      // 2b. AI Cache — internal subcollection for inference caching
+      match /aiCache/{docId} {
+        allow read: if isAuthenticated() && isAnalyst();
+        // Only Cloud Functions write here
+        allow create, update, delete: if false;
+      }
     }
 
     // 3. Candidates
@@ -135,10 +153,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 7. Public Reports (shareable links — public read, authenticated create)
+    // 7. Public Reports (shareable links — public read with TTL, authenticated create)
     match /publicReports/{token} {
-      allow read: if true;
-      allow create: if isAuthenticated();
+      allow read: if true
+        && resource.data.expiresAt is timestamp
+        && request.time < resource.data.expiresAt;
+      allow create: if isAuthenticated()
+        && request.resource.data.expiresAt is timestamp;
       allow update, delete: if false;
     }
   }

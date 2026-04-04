@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { createCandidate, createCase, getEnabledPhases, getTenantSettings, logAuditEvent } from '../../core/firebase/firestoreService';
+import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
 import './NovaSolicitacaoPage.css';
 
@@ -11,6 +12,7 @@ const INITIAL_FORM = {
     dateOfBirth: '',
     position: '',
     department: '',
+    hiringUf: '',
     email: '',
     phone: '',
     instagram: '',
@@ -23,6 +25,11 @@ const INITIAL_FORM = {
     digitalProfileNotes: '',
     priority: 'NORMAL',
 };
+
+const BRAZIL_UF_OPTIONS = [
+    'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+    'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+];
 
 function formatCpf(value) {
     const digits = value.replace(/\D/g, '').slice(0, 11);
@@ -72,6 +79,7 @@ export default function NovaSolicitacaoPage() {
     const [submitting, setSubmitting] = useState(false);
     const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, userProfile } = useAuth();
     const { cases: existingCases } = useCases();
     const tenantId = userProfile?.tenantId || null;
@@ -125,7 +133,7 @@ export default function NovaSolicitacaoPage() {
         try {
             if (!user && isDemoProfile) {
                 setSubmitted(true);
-                redirectTimerRef.current = window.setTimeout(() => navigate('/demo/client/solicitacoes'), 1500);
+                redirectTimerRef.current = window.setTimeout(() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes')), 1500);
                 return;
             }
 
@@ -191,6 +199,7 @@ export default function NovaSolicitacaoPage() {
                 candidatePosition: form.position || '',
                 cpf: cpfClean,
                 cpfMasked,
+                hiringUf: form.hiringUf || '',
                 priority: form.priority,
                 requestedBy: requestedByLabel,
                 requestedByName,
@@ -216,7 +225,7 @@ export default function NovaSolicitacaoPage() {
             });
 
             setSubmitted(true);
-            redirectTimerRef.current = window.setTimeout(() => navigate('/client/solicitacoes'), 1500);
+            redirectTimerRef.current = window.setTimeout(() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes')), 1500);
         } catch (error) {
             console.error('Error creating solicitation:', error);
             setErrors({ general: 'Erro ao criar solicitacao. Tente novamente.' });
@@ -353,6 +362,20 @@ export default function NovaSolicitacaoPage() {
                                 onChange={(event) => update('department', event.target.value)}
                                 placeholder="Ex.: Financeiro"
                             />
+                        </div>
+
+                        <div className="ns-field">
+                            <label className="ns-label">Estado (UF) de contratacao</label>
+                            <select
+                                className="ns-input"
+                                value={form.hiringUf}
+                                onChange={(event) => update('hiringUf', event.target.value)}
+                            >
+                                <option value="">Selecione o estado...</option>
+                                {BRAZIL_UF_OPTIONS.map((uf) => (
+                                    <option key={uf} value={uf}>{uf}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="ns-field">
@@ -548,7 +571,7 @@ export default function NovaSolicitacaoPage() {
                 </div>
 
                 <div className="ns-actions">
-                    <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate('/client/solicitacoes')}>
+                    <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes'))}>
                         Cancelar
                     </button>
                     <button type="submit" className="ns-btn ns-btn--primary" disabled={!canSubmit}>

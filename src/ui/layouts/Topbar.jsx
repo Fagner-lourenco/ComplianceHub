@@ -5,7 +5,7 @@ import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatRoleLabel } from '../../core/rbac/permissions';
 import './Topbar.css';
 
-export default function Topbar({ title, onMenuClick }) {
+export default function Topbar({ title, onMenuClick, topbarRef }) {
     const location = useLocation();
     const { profileStatus, userProfile } = useAuth();
     const {
@@ -46,7 +46,7 @@ export default function Topbar({ title, onMenuClick }) {
             : 'Dados do painel respeitam esse contexto';
 
     return (
-        <header className="topbar">
+        <header ref={topbarRef} className="topbar">
             <div className="topbar__left">
                 <button
                     className="topbar__menu-btn"

@@ -4,11 +4,14 @@
     top: 0;
     bottom: 0;
     width: var(--sidebar-width);
+    max-width: 100%;
     background: var(--bg-sidebar);
     display: flex;
     flex-direction: column;
     z-index: var(--z-sidebar);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    min-height: 100dvh;
 }
 
 .sidebar__brand {
@@ -195,6 +198,8 @@
 
 @media (max-width: 768px) {
     .sidebar {
+        width: min(88vw, var(--sidebar-width));
+        box-shadow: var(--shadow-xl);
         transform: translateX(-100%);
         transition: transform var(--transition-drawer);
     }

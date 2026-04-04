@@ -1,0 +1,41 @@
+{
+  "error": "Poll timeout",
+  "create": {
+    "request_id": "e1bbb769-3b6c-4ac2-a3a7-26e4d5093f14",
+    "search": {
+      "on_demand": true,
+      "search_type": "name",
+      "search_key": "ANDRE LUIZ CRUZ DOS SANTOS",
+      "search_params": {
+        "public_search": false,
+        "filter": {
+          "tribunals": {
+            "keys": [
+              "TJSP",
+              "TRT1SP",
+              "TRT2SP"
+            ],
+            "not_equal": false,
+            "_id": "69cefb74519ea1803ad25f72"
+          },
+          "party_names": [],
+          "party_documents": []
+        },
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "e1bbb769-3b6c-4ac2-a3a7-26e4d5093f14",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T23:27:48.796Z",
+    "updated_at": "2026-04-02T23:27:48.796Z",
+    "tags": {
+      "potential_homonym": true
+    }
+  },
+  "poll": {
+    "_timeout": true
+  }
+}

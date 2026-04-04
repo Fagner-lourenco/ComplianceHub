@@ -1,10 +1,19 @@
 .ns-page {
-    max-width: 800px;
+    width: 100%;
+    max-width: 1040px;
     margin: 0 auto;
+    min-width: 0;
 }
 
 .ns-page__header {
     margin-bottom: var(--space-6);
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-default);
+    background:
+        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
+        linear-gradient(135deg, #ffffff, #f8fafc);
+    box-shadow: var(--shadow-xs);
 }
 
 .ns-page__header h2 {
@@ -22,7 +31,7 @@
 .ns-section {
     background: var(--bg-card);
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--space-5);
     margin-bottom: var(--space-4);
     box-shadow: var(--shadow-xs);
@@ -59,7 +68,7 @@
 }
 
 .ns-grid--2 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 @media (max-width: 640px) {
@@ -165,6 +174,7 @@
     background: var(--gray-50);
     border-radius: var(--radius-md);
     font-size: .8125rem;
+    gap: var(--space-3);
 }
 
 .ns-other-social__remove {
@@ -185,6 +195,7 @@
 .ns-priority-selector {
     display: flex;
     gap: var(--space-2);
+    flex-wrap: wrap;
 }
 
 .ns-priority-btn {
@@ -272,6 +283,14 @@
     justify-content: flex-end;
     gap: var(--space-3);
     margin-top: var(--space-2);
+    position: sticky;
+    bottom: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    background: rgba(255, 255, 255, .92);
+    backdrop-filter: blur(14px);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Success */
@@ -305,12 +324,17 @@
 
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
+    .ns-page__header {
+        padding: var(--space-4);
+    }
+
     .ns-section {
         padding: var(--space-3);
     }
     
     .ns-actions {
         flex-direction: column;
+        position: static;
     }
     
     .ns-actions .ns-btn {
@@ -325,5 +349,11 @@
     .ns-priority-btn {
         flex: 1;
         text-align: center;
+    }
+
+    .ns-other-social,
+    .ns-add-other {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

@@ -62,3 +62,9 @@
     color: var(--gray-600);
     border: 1px solid var(--gray-200);
 }
+
+.risk-chip--blue {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 2px dashed #93c5fd;
+}

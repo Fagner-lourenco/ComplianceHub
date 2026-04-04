@@ -74,6 +74,64 @@ function phaseRow(icon, name, resultBadge, sevBadge, notes, tags, color) {
 </div>`;
 }
 
+function listBlock(title, items) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return `<div class="sec"><div class="sec__t">${esc(title)}</div><ul class="blist">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul></div>`;
+}
+
+function processHighlightsHtml(items) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return `<div class="sec"><div class="sec__t">Apontamentos Relevantes</div><div class="hlist">${items.map((group) => `
+        <div class="hcard">
+            <div class="hcard__top">
+                <div>
+                    <strong>${esc(group.title || group.area || 'Achado')}</strong>
+                    ${group.source ? `<span class="hcard__meta">${esc(group.source)}</span>` : ''}
+                </div>
+                ${group.total !== undefined ? `<span class="hcard__count">${esc(group.total)}</span>` : ''}
+            </div>
+            ${group.summary ? `<p class="hcard__summary">${esc(group.summary)}</p>` : ''}
+            ${Array.isArray(group.items) && group.items.length > 0 ? `<div class="hcard__items">${group.items.map((item) => `
+                <div class="hcard__item">
+                    <div class="hcard__item-top">
+                        <span>${esc(item.processNumber || item.reference || item.classification || 'Registro')}</span>
+                        ${item.status ? `<span class="tag">${esc(item.status)}</span>` : ''}
+                    </div>
+                    <div class="hcard__item-body">${[item.court, item.classification, item.stage].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>
+                    ${item.impact ? `<div class="hcard__impact">${esc(item.impact)}</div>` : ''}
+                </div>
+            `).join('')}</div>` : ''}
+        </div>
+    `).join('')}</div></div>`;
+}
+
+function warrantFindingsHtml(items) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return `<div class="sec"><div class="sec__t">Situacao de Mandados</div><div class="hlist">${items.map((item) => `
+        <div class="hcard">
+            <div class="hcard__top">
+                <strong>${esc(item.status || 'Sem status')}</strong>
+                ${item.source ? `<span class="hcard__meta">${esc(item.source)}</span>` : ''}
+            </div>
+            ${[item.court, item.reference].filter(Boolean).length > 0 ? `<div class="hcard__item-body">${[item.court, item.reference].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>` : ''}
+            ${item.summary ? `<p class="hcard__summary">${esc(item.summary)}</p>` : ''}
+        </div>
+    `).join('')}</div></div>`;
+}
+
+function timelineHtml(items) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return `<div class="sec"><div class="sec__t">Historico do Andamento</div><div class="tlist">${items.map((item) => `
+        <div class="titem">
+            <div class="titem__row">
+                <strong>${esc(item.title || item.type || 'Evento')}</strong>
+                ${item.at ? `<span>${esc(item.at)}</span>` : ''}
+            </div>
+            ${item.description ? `<p>${esc(item.description)}</p>` : ''}
+        </div>
+    `).join('')}</div></div>`;
+}
+
 /* ── Build body for one case (no <html> wrapper) ───────────────── */
 function buildCaseBody(c, cd, generatedAt) {
     const ep  = Array.isArray(c.enabledPhases) && c.enabledPhases.length > 0 ? c.enabledPhases : null;
@@ -146,6 +204,18 @@ function buildCaseBody(c, cd, generatedAt) {
 
     const commentSec = c.analystComment
         ? `<div class="sec"><div class="sec__t">Parecer do Analista</div><div class="cbox">${esc(c.analystComment)}</div></div>` : '';
+    const executiveSec = (c.executiveSummary || c.statusSummary || c.sourceSummary)
+        ? `<div class="sec"><div class="sec__t">Resumo Executivo</div><div class="ebox">
+            ${c.executiveSummary ? `<p><strong>Visao executiva:</strong> ${esc(c.executiveSummary)}</p>` : ''}
+            ${c.statusSummary ? `<p><strong>Situacao atual:</strong> ${esc(c.statusSummary)}</p>` : ''}
+            ${c.sourceSummary ? `<p><strong>Origem resumida dos dados:</strong> ${esc(c.sourceSummary)}</p>` : ''}
+        </div></div>`
+        : '';
+    const findingsSec = listBlock('Principais Apontamentos', c.keyFindings);
+    const nextStepsSec = listBlock('Proximos Passos', c.nextSteps);
+    const processSec = processHighlightsHtml(c.processHighlights);
+    const warrantSec = warrantFindingsHtml(c.warrantFindings);
+    const timelineSec = timelineHtml(c.timelineEvents);
 
     return `
   <div class="hdr">
@@ -155,8 +225,14 @@ function buildCaseBody(c, cd, generatedAt) {
   <div class="sec"><div class="sec__t">Identificação do Candidato</div><div class="fgrid">${idFields}</div></div>
   ${socialSec}
   <div class="sec"><div class="sec__t">Resultado da Análise de Risco</div>${riskSec}</div>
+  ${executiveSec}
+  ${findingsSec}
   ${phasesSec}
+  ${processSec}
+  ${warrantSec}
   ${commentSec}
+  ${nextStepsSec}
+  ${timelineSec}
   <div class="ftr"><div class="ftr__id">ID: ${esc(c.id||'—')}</div><div>ComplianceHub · Documento Confidencial · ${esc(generatedAt)}</div></div>`;
 }
 
@@ -203,6 +279,25 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .tag{background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
 .slinks{display:flex;flex-wrap:wrap;gap:7px}
 .slink{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;font-size:11px;color:#4f46e5;text-decoration:none;font-weight:500}
+.ebox{display:flex;flex-direction:column;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px}
+.ebox p{font-size:12px;color:#334155}
+.blist{padding-left:18px;display:flex;flex-direction:column;gap:8px}
+.blist li{font-size:12px;color:#334155}
+.hlist{display:flex;flex-direction:column;gap:12px}
+.hcard{border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;background:#fff}
+.hcard__top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.hcard__meta{display:block;font-size:10px;color:#94a3b8;margin-top:2px}
+.hcard__count{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:11px;font-weight:700}
+.hcard__summary{margin-top:8px;font-size:12px;color:#475569}
+.hcard__items{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.hcard__item{padding:10px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0}
+.hcard__item-top{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:700;color:#334155}
+.hcard__item-body{margin-top:4px;font-size:11px;color:#64748b}
+.hcard__impact{margin-top:6px;font-size:11px;color:#334155}
+.tlist{display:flex;flex-direction:column;gap:10px}
+.titem{padding:12px 14px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.titem__row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#0f172a}
+.titem p{margin-top:6px;font-size:12px;color:#475569}
 .cbox{background:#fafbff;border-left:4px solid #4f46e5;padding:14px 18px;border-radius:0 7px 7px 0;font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap}
 .ftr{margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}
 .ftr__id{font-family:monospace;font-size:9px}

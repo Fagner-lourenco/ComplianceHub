@@ -8,6 +8,12 @@ import { useCases } from '../../hooks/useCases';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import './CandidatosPage.css';
 
+function formatFullCpf(cpf) {
+    const d = String(cpf || '').replace(/\D/g, '');
+    if (d.length !== 11) return cpf || '';
+    return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+}
+
 export default function CandidatosPage() {
     const location = useLocation();
     const { user } = useAuth();
@@ -63,7 +69,7 @@ export default function CandidatosPage() {
                 return {
                     id: c.id,
                     name: c.candidateName || c.name || '',
-                    cpf: c.cpfMasked || c.cpf || '',
+                    cpf: isOpsPortal ? (formatFullCpf(c.cpf) || c.cpfMasked || '') : (c.cpfMasked || c.cpf || ''),
                     lastPosition: stats?.lastPosition || c.candidatePosition || c.position || '',
                     lastVerdict: stats?.lastVerdict || null,
                     totalRequests: stats?.count || 1,
