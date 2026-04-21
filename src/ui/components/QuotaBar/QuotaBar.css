@@ -1,0 +1,73 @@
+/* ── QuotaBar ────────────────────────────────────────────────── */
+.quota-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.quota-bar--compact { gap: 2px; }
+
+.quota-bar__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: .8125rem;
+}
+
+.quota-bar__label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.quota-bar__count {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.quota-bar__count--ok      { color: var(--green-600); }
+.quota-bar__count--warning  { color: var(--yellow-700); }
+.quota-bar__count--exceeded { color: var(--red-600); }
+.quota-bar__count--none     { color: var(--text-tertiary); }
+
+.quota-bar__track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-hover, #e5e7eb);
+    overflow: hidden;
+}
+
+.quota-bar__fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .4s ease;
+}
+.quota-bar__fill--ok       { background: var(--green-500, #22c55e); }
+.quota-bar__fill--warning  { background: var(--yellow-500, #eab308); }
+.quota-bar__fill--exceeded { background: var(--red-500, #ef4444); }
+.quota-bar__fill--none     { background: var(--gray-300); }
+
+.quota-bar__excess {
+    font-size: .6875rem;
+    font-weight: 500;
+    color: var(--red-600);
+}
+
+/* ── QuotaSummaryCard ────────────────────────────────────────── */
+.quota-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-light, #e5e7eb);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.quota-summary-card__title {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    .quota-bar__track { background: var(--bg-hover, #374151); }
+}

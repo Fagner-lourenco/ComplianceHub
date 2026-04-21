@@ -1,0 +1,204 @@
+{
+  "statuses": {
+    "_global": {
+      "basic_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "kyc": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "occupation_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "processes": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ]
+    },
+    "matchKeys": "doc{46247243804}"
+  },
+  "basicData": {
+    "found": true,
+    "name": "MATHEUS GONCALVES DOS SANTOS",
+    "alternativeName": null,
+    "taxIdStatus": "REGULAR",
+    "gender": "M",
+    "birthDate": "1997-10-30T00:00:00Z",
+    "motherName": "CRISTINA GONCALVES",
+    "fatherName": "",
+    "age": 28,
+    "namesakeCount": 304,
+    "nameWordCount": 4,
+    "_bdKeys": [
+      "TaxIdNumber",
+      "TaxIdCountry",
+      "AlternativeIdNumbers",
+      "Name",
+      "Aliases",
+      "Gender",
+      "NameWordCount",
+      "NumberOfFullNameNamesakes",
+      "NameUniquenessScore",
+      "FirstNameUniquenessScore",
+      "FirstAndLastNameUniquenessScore",
+      "BirthDate",
+      "CapturedBirthDateFromRFSource",
+      "IsValidBirthDateInRFSource",
+      "Age",
+      "ZodiacSign",
+      "ChineseSign",
+      "BirthCountry",
+      "MotherName",
+      "FatherName",
+      "MaritalStatusData",
+      "TaxIdStatus",
+      "TaxIdOrigin",
+      "TaxIdFiscalRegion",
+      "HasObitIndication",
+      "TaxIdStatusDate",
+      "TaxIdStatusRegistrationDate",
+      "CreationDate",
+      "LastUpdateDate"
+    ]
+  },
+  "processes": {
+    "total": 0,
+    "criminal": 0,
+    "labor": 0,
+    "civil": 0,
+    "active": 0,
+    "byCourt": {},
+    "byState": {},
+    "cpfMatchCount": 0,
+    "cpfMatches": [],
+    "lawsuitSummary": []
+  },
+  "kyc": {
+    "found": true,
+    "isPep": false,
+    "pepCount": 0,
+    "pepDetails": [],
+    "isCurrentlySanctioned": false,
+    "wasPreviouslySanctioned": false,
+    "sanctionCount": 0,
+    "sanctionSources": [],
+    "sanctionTypes": [],
+    "sanctionDetails": [],
+    "_kycKeys": [
+      "PEPHistory",
+      "IsCurrentlyPEP",
+      "SanctionsHistory",
+      "IsCurrentlySanctioned",
+      "WasPreviouslySanctioned",
+      "Last30DaysSanctions",
+      "Last90DaysSanctions",
+      "Last180DaysSanctions",
+      "Last365DaysSanctions",
+      "LastYearPEPOccurence",
+      "Last3YearsPEPOccurence",
+      "Last5YearsPEPOccurence",
+      "Last5PlusYearsPEPOccurence",
+      "IsCurrentlyElectoralDonor",
+      "IsHistoricalElectoralDonor",
+      "TotalElectoralDonations",
+      "TotalElectoralDonationAmount",
+      "ElectoralDonations"
+    ]
+  },
+  "profession": {
+    "found": true,
+    "count": 7,
+    "professions": [
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+        "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2021-01-01T00:00:00Z",
+        "endDate": "2021-08-23T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+        "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2021-08-23T00:00:00Z",
+        "endDate": "2021-09-01T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+        "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2019-11-20T00:00:00Z",
+        "endDate": "2020-05-01T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+        "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2019-12-01T00:00:00Z",
+        "endDate": "2020-05-01T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 1012101 - ABATE DE AVES",
+        "companyName": "GONCALVES & TORTOLA S/A",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2015-11-23T00:00:00Z",
+        "endDate": "2016-07-15T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 2330301 - FABRICACAO DE ESTRUTURAS PRE-MOLDADAS DE CONCRETO ARMADO, EM SERIE E SOB ENCOMENDA",
+        "companyName": "MATRA INDUSTRIA E COMERCIO LTDA",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2018-11-05T00:00:00Z",
+        "endDate": "2019-06-30T00:00:00Z"
+      },
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 4711302 - COMERCIO VAREJISTA DE MERCADORIAS EM GERAL, COM PREDOMINANCIA DE PRODUTOS ALIMENTICIOS - SUPERMERCADOS",
+        "companyName": "SAVEGNAGO-SUPERMERCADOS LTDA",
+        "level": "EMPLOYEE",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2016-09-14T00:00:00Z",
+        "endDate": "2018-01-09T00:00:00Z"
+      }
+    ],
+    "_profKeys": [
+      "Professions",
+      "TotalProfessions",
+      "TotalActiveProfessions",
+      "TotalIncome",
+      "TotalIncomeRange",
+      "TotalDiscounts",
+      "IsEmployed"
+    ]
+  }
+}

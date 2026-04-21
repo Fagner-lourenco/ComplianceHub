@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "ok": true,
+  "elapsedMs": 844,
+  "data": {
+    "UniqueIdentifier": "at4j2fzdcbio6gkgantqv760l",
+    "TransactionResultTypeCode": 5,
+    "TransactionResultType": "EntityNotFound",
+    "Message": "Documento/entidade inexistente ou não encontrada",
+    "TotalCostInCredits": 1,
+    "BalanceInCredits": -13,
+    "ElapsedTimeInMilliseconds": 823,
+    "Reserved": null,
+    "Date": "2026-04-07T09:14:22.9875300-03:00",
+    "OutdatedResult": false,
+    "HasPdf": false,
+    "DataSourceHtml": null,
+    "DateString": "2026-04-07T09:14:22.9875300-03:00",
+    "OriginalFilesUrl": "https://api.exato.digital/services/original-files/at4j2fzdcbio6gkgantqv760l",
+    "PdfUrl": null,
+    "TotalCost": 0,
+    "BalanceInBrl": null,
+    "DataSourceCategory": "Jurídico e Menções",
+    "ApiResultType": "not_found",
+    "ResultTypeCode": 5,
+    "ResultSubtype": null,
+    "Result": {
+      "Processos": [],
+      "TotalProcessos": 0,
+      "TotalProcessosComoSubstituto": 0,
+      "TotalProcessosComoRequerente": 0,
+      "TotalProcessosComoRequerido": 0,
+      "TotalProcessosComoOutraParte": 0
+    }
+  }
+}

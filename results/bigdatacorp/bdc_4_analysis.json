@@ -1,0 +1,439 @@
+{
+  "statuses": {
+    "_global": {
+      "basic_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "occupation_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "kyc": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "processes": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ]
+    },
+    "matchKeys": "doc{05023290336}"
+  },
+  "basicData": {
+    "found": true,
+    "name": "FRANCISCO TACIANO DE SOUSA",
+    "alternativeName": null,
+    "taxIdStatus": "REGULAR",
+    "gender": "M",
+    "birthDate": "1991-08-16T00:00:00Z",
+    "motherName": "FRANCISCA CAETANA DE SOUSA",
+    "fatherName": "",
+    "age": 34,
+    "namesakeCount": 1,
+    "nameWordCount": 4,
+    "_bdKeys": [
+      "TaxIdNumber",
+      "TaxIdCountry",
+      "AlternativeIdNumbers",
+      "Name",
+      "Aliases",
+      "Gender",
+      "NameWordCount",
+      "NumberOfFullNameNamesakes",
+      "NameUniquenessScore",
+      "FirstNameUniquenessScore",
+      "FirstAndLastNameUniquenessScore",
+      "BirthDate",
+      "CapturedBirthDateFromRFSource",
+      "IsValidBirthDateInRFSource",
+      "Age",
+      "ZodiacSign",
+      "ChineseSign",
+      "BirthCountry",
+      "MotherName",
+      "FatherName",
+      "MaritalStatusData",
+      "TaxIdStatus",
+      "TaxIdOrigin",
+      "TaxIdFiscalRegion",
+      "HasObitIndication",
+      "TaxIdStatusDate",
+      "TaxIdStatusRegistrationDate",
+      "CreationDate",
+      "LastUpdateDate"
+    ]
+  },
+  "processes": {
+    "total": 8,
+    "criminal": 5,
+    "labor": 0,
+    "civil": 3,
+    "active": 1,
+    "byCourt": {
+      "N/A": 1,
+      "TJCE": 7
+    },
+    "byState": {
+      "N/A": 1,
+      "CE": 7
+    },
+    "cpfMatchCount": 29,
+    "cpfMatches": [
+      {
+        "processo": "00134174020218060293",
+        "partyCpf": "05023290336",
+        "partyName": "FRANCISCO TACIANO DE SOUSA",
+        "polarity": "PASSIVE"
+      },
+      {
+        "processo": "00134174020218060293",
+        "partyCpf": "06663403311",
+        "partyName": "JOSIANE DE LIMA MONTEIRO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "00134174020218060293",
+        "partyCpf": "06928790000156",
+        "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02056591120248060167",
+        "partyCpf": "06928790000156",
+        "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02056591120248060167",
+        "partyCpf": "02014521000123",
+        "partyName": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02056591120248060167",
+        "partyCpf": "10416980384",
+        "partyName": "JOSE LEVY LIMA DE SOUSA",
+        "polarity": "ACTIVE"
+      },
+      {
+        "processo": "02056591120248060167",
+        "partyCpf": "06663403311",
+        "partyName": "JOSIANE DE LIMA MONTEIRO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02056591120248060167",
+        "partyCpf": "05023290336",
+        "partyName": "FRANCISCO TACIANO DE SOUSA",
+        "polarity": "PASSIVE"
+      },
+      {
+        "processo": "00407130820138060167",
+        "partyCpf": "05023290336",
+        "partyName": "FRANCISCO TACIANO DE SOUSA",
+        "polarity": "PASSIVE"
+      },
+      {
+        "processo": "30015750220218060167",
+        "partyCpf": "05023290336",
+        "partyName": "FRANCISCO TACIANO DE SOUSA",
+        "polarity": "PASSIVE"
+      },
+      {
+        "processo": "30015750220218060167",
+        "partyCpf": "06928790000156",
+        "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "30015750220218060167",
+        "partyCpf": "00466900341",
+        "partyName": "JOAO PAULO ARAGAO NASCIMENTO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "30015750220218060167",
+        "partyCpf": "05113070394",
+        "partyName": "GERMANO HERBERT PEREIRA ARAGAO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "30015750220218060167",
+        "partyCpf": "06663403311",
+        "partyName": "JOSIANE DE LIMA MONTEIRO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "06663403311",
+        "partyName": "JOSIANE DE LIMA MONTEIRO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "03532276330",
+        "partyName": "JOSE WILLIAM DOMINGUES RIPARDO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "02815697386",
+        "partyName": "CRISTIANE DE LIMA MONTEIRO",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "05023290336",
+        "partyName": "FRANCISCO TACIANO DE SOUSA",
+        "polarity": "PASSIVE"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "06928790000156",
+        "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      },
+      {
+        "processo": "02027437220228060167",
+        "partyCpf": "02014521000123",
+        "partyName": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+        "polarity": "NEUTRAL"
+      }
+    ],
+    "lawsuitSummary": [
+      {
+        "number": "00530230220208060167",
+        "status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+        "parties": 0,
+        "partiesWithDoc": 0
+      },
+      {
+        "number": "00134174020218060293",
+        "type": "MEDIDAS PROTETIVAS DE URGENCIA",
+        "subject": "CONTRAVENCOES PENAIS",
+        "courtType": "CRIMINAL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ARQUIVADO",
+        "parties": 4,
+        "partiesWithDoc": 3
+      },
+      {
+        "number": "02056591120248060167",
+        "type": "CUMPRIMENTO DE SENTENCA",
+        "subject": "ALIMENTOS",
+        "courtType": "CIVEL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ATIVO",
+        "parties": 5,
+        "partiesWithDoc": 5
+      },
+      {
+        "number": "00407130820138060167",
+        "type": "TERMO CIRCUNSTANCIADO",
+        "subject": "CONTRAVENCOES PENAIS",
+        "courtType": "",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ARQUIVADO",
+        "parties": 2,
+        "partiesWithDoc": 1
+      },
+      {
+        "number": "30015750220218060167",
+        "type": "TERMO CIRCUNSTANCIADO",
+        "subject": "PORTE DE ARMA (BRANCA)",
+        "courtType": "ESPECIAL CRIMINAL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ENCERRADO",
+        "parties": 5,
+        "partiesWithDoc": 5
+      },
+      {
+        "number": "02027437220228060167",
+        "type": "ACAO PENAL",
+        "subject": "AMEACA",
+        "courtType": "CRIMINAL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "JULGADO",
+        "parties": 8,
+        "partiesWithDoc": 6
+      },
+      {
+        "number": "00121984520228060167",
+        "type": "ACAO PENAL",
+        "subject": "CONTRAVENCOES PENAIS",
+        "courtType": "CRIMINAL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ARQUIVADO",
+        "parties": 6,
+        "partiesWithDoc": 6
+      },
+      {
+        "number": "00407130820138060167",
+        "type": "APELACAO CRIMINAL",
+        "subject": "CONTRAVENCOES PENAIS",
+        "courtType": "CRIMINAL",
+        "courtName": "TJCE",
+        "state": "CE",
+        "status": "ENCERRADO",
+        "parties": 4,
+        "partiesWithDoc": 3
+      }
+    ]
+  },
+  "kyc": {
+    "found": true,
+    "isPep": false,
+    "pepCount": 0,
+    "pepDetails": [],
+    "isCurrentlySanctioned": true,
+    "wasPreviouslySanctioned": true,
+    "sanctionCount": 49,
+    "sanctionSources": [
+      "Conselho Nacional de Justiça",
+      "ofac",
+      "interpol",
+      "fbi",
+      "ca-sanctions",
+      "ddtc",
+      "uk"
+    ],
+    "sanctionTypes": [
+      "ARREST WARRANTS",
+      "FINANCIAL CRIMES"
+    ],
+    "sanctionDetails": [
+      {
+        "source": "Conselho Nacional de Justiça",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "Conselho Nacional de Justiça",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": false,
+        "wasRecently": false
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "fbi",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "fbi",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "fbi",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      }
+    ],
+    "_kycKeys": [
+      "PEPHistory",
+      "IsCurrentlyPEP",
+      "SanctionsHistory",
+      "IsCurrentlySanctioned",
+      "WasPreviouslySanctioned",
+      "Last30DaysSanctions",
+      "Last90DaysSanctions",
+      "Last180DaysSanctions",
+      "Last365DaysSanctions",
+      "LastYearPEPOccurence",
+      "Last3YearsPEPOccurence",
+      "Last5YearsPEPOccurence",
+      "Last5PlusYearsPEPOccurence",
+      "FirstSanctionDate",
+      "LastSanctionDate",
+      "IsCurrentlyElectoralDonor",
+      "IsHistoricalElectoralDonor",
+      "TotalElectoralDonations",
+      "TotalElectoralDonationAmount",
+      "ElectoralDonations"
+    ]
+  },
+  "profession": {
+    "found": true,
+    "count": 1,
+    "professions": [
+      {
+        "source": "RAIS",
+        "sector": "PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+        "companyName": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+        "level": "EMPLOYEE",
+        "status": "ACTIVE",
+        "income": 3000,
+        "startDate": "2014-02-03T00:00:00Z",
+        "endDate": "9999-12-31T23:59:59.9999999"
+      }
+    ],
+    "_profKeys": [
+      "Professions",
+      "TotalProfessions",
+      "TotalActiveProfessions",
+      "TotalIncome",
+      "TotalIncomeRange",
+      "TotalDiscounts",
+      "IsEmployed"
+    ]
+  }
+}

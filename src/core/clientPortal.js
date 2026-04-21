@@ -11,6 +11,11 @@ const PUBLIC_RESULT_FIELDS = [
     'conflictInterest', 'conflictNotes',
     'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
     'enabledPhases',
+    'processHighlights',
+    'warrantFindings',
+    'keyFindings',
+    'executiveSummary',
+    'publicReportToken',
 ];
 
 export const CLIENT_STATUS_LABELS = {
@@ -170,7 +175,9 @@ export function resolveClientCaseView(caseData, publicResult) {
         statusLabel: CLIENT_STATUS_LABELS[caseData.status] || caseData.status || 'Sem status',
         statusSummary: caseData.statusSummary || CLIENT_STATUS_DESCRIPTIONS[caseData.status] || '',
         sourceSummary: summarizeSource(caseData),
-        keyFindings: Array.isArray(caseData.keyFindings) ? caseData.keyFindings : [],
+        keyFindings: Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0
+            ? caseData.keyFindings
+            : (Array.isArray(resolvedPublicResult.keyFindings) ? resolvedPublicResult.keyFindings : []),
         nextSteps: Array.isArray(caseData.nextSteps) ? caseData.nextSteps : [],
         clientNotes: caseData.clientNotes || '',
         timelineEvents: getCaseTimeline(caseData),
@@ -206,6 +213,15 @@ export function getReportAvailability(caseData, publicResult) {
             available: false,
             state: 'pending',
             message: 'O relatorio ainda esta sendo preparado.',
+        };
+    }
+
+    // Content minimum: require finalVerdict AND executiveSummary to ensure report has meaningful data
+    if (!resolved.finalVerdict || !resolved.executiveSummary) {
+        return {
+            available: false,
+            state: 'pending',
+            message: 'O relatorio ainda esta sendo finalizado.',
         };
     }
 

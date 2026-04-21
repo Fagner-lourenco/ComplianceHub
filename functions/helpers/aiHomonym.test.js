@@ -7,6 +7,7 @@ const {
     buildCandidateProfile,
     getGeoConsistencyBucket,
     buildHomonymAnalysisInput,
+    hasLowRiskRole,
 } = require('./aiHomonym');
 
 describe('aiHomonym helpers', () => {
@@ -109,5 +110,99 @@ describe('aiHomonym helpers', () => {
 
         expect(result.needsAnalysis).toBe(false);
         expect(result.hardFacts.sort()).toEqual(['ACTIVE_WARRANT', 'JUDIT_EXACT_CPF_MATCH']);
+    });
+
+    describe('hasLowRiskRole', () => {
+        it('recognizes testemunha as low-risk', () => {
+            expect(hasLowRiskRole('Testemunha')).toBe(true);
+            expect(hasLowRiskRole('TESTEMUNHA')).toBe(true);
+        });
+
+        it('recognizes informante as low-risk', () => {
+            expect(hasLowRiskRole('Informante')).toBe(true);
+        });
+
+        it('recognizes Outro and OUTROS PARTICIPANTES as low-risk', () => {
+            expect(hasLowRiskRole('Outro')).toBe(true);
+            expect(hasLowRiskRole('OUTROS PARTICIPANTES')).toBe(true);
+        });
+
+        it('recognizes DESCONHECIDO as low-risk', () => {
+            expect(hasLowRiskRole('DESCONHECIDO')).toBe(true);
+        });
+
+        it('does NOT match Autor (no false positive from "utor")', () => {
+            expect(hasLowRiskRole('Autor')).toBe(false);
+            expect(hasLowRiskRole('AUTOR')).toBe(false);
+        });
+
+        it('does NOT match standard roles: Reu, Reclamante, Reclamado', () => {
+            expect(hasLowRiskRole('Reu')).toBe(false);
+            expect(hasLowRiskRole('REU')).toBe(false);
+            expect(hasLowRiskRole('Reclamante')).toBe(false);
+            expect(hasLowRiskRole('Reclamado')).toBe(false);
+        });
+
+        it('does NOT match active/passive poles', () => {
+            expect(hasLowRiskRole('ATIVO')).toBe(false);
+            expect(hasLowRiskRole('PASSIVO')).toBe(false);
+        });
+
+        it('handles null/empty gracefully', () => {
+            expect(hasLowRiskRole(null)).toBe(false);
+            expect(hasLowRiskRole('')).toBe(false);
+            expect(hasLowRiskRole(undefined)).toBe(false);
+        });
+    });
+
+    it('buildHomonymAnalysisInput includes BigDataCorp candidates when BDC is DONE', () => {
+        const result = buildHomonymAnalysisInput({
+            hiringUf: 'SP',
+            bigdatacorpEnrichmentStatus: 'DONE',
+            bigdatacorpProcessos: [
+                {
+                    numero: '0001234-56.2023.8.26.0100',
+                    courtType: 'Criminal',
+                    status: 'Ativo',
+                    polo: 'PASSIVO',
+                    courtName: 'TJSP',
+                    isDirectCpfMatch: false,
+                    isCriminal: true,
+                    specificRole: 'REU',
+                },
+            ],
+            bigdatacorpCriminalCount: 1,
+            enrichmentContact: {
+                allUfs: ['SP'],
+                primaryUf: 'SP',
+            },
+        });
+
+        expect(result.needsAnalysis).toBe(true);
+        const bdcCandidates = result.processCandidates.filter((c) => c.source === 'BigDataCorp');
+        expect(bdcCandidates.length).toBe(1);
+        expect(bdcCandidates[0].isCriminal).toBe(true);
+        expect(bdcCandidates[0].lowRiskRole).toBe(false);
+    });
+
+    it('buildHomonymAnalysisInput skips BigDataCorp when status is not DONE/PARTIAL', () => {
+        const result = buildHomonymAnalysisInput({
+            hiringUf: 'SP',
+            bigdatacorpEnrichmentStatus: 'RUNNING',
+            bigdatacorpProcessos: [
+                {
+                    numero: '0001234-56.2023.8.26.0100',
+                    courtType: 'Criminal',
+                    status: 'Ativo',
+                    polo: 'PASSIVO',
+                    courtName: 'TJSP',
+                    isDirectCpfMatch: false,
+                    isCriminal: true,
+                },
+            ],
+        });
+
+        const bdcCandidates = (result.processCandidates || []).filter((c) => c.source === 'BigDataCorp');
+        expect(bdcCandidates.length).toBe(0);
     });
 });

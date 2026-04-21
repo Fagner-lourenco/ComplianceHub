@@ -50,6 +50,12 @@ function cleanMessage(raw) {
 export function extractErrorMessage(error, defaultMessage = 'Ocorreu um erro inesperado.') {
     if (!error) return defaultMessage;
 
+    // 0. Handle plain strings (backend stores provider errors as raw strings in Firestore)
+    if (typeof error === 'string') {
+        const cleaned = cleanMessage(error);
+        return (cleaned && isSafeForUser(cleaned)) ? cleaned : defaultMessage;
+    }
+
     // 1. Try the raw message / details
     let message = error.message || error.details || '';
     message = cleanMessage(message);

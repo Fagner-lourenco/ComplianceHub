@@ -3,19 +3,21 @@
 export const ROLES = {
     LEGACY_CLIENT: 'CLIENT',
     CLIENT_VIEWER: 'client_viewer',
+    CLIENT_OPERATOR: 'client_operator',
     CLIENT_MANAGER: 'client_manager',
     ANALYST: 'analyst',
     SUPERVISOR: 'supervisor',
     ADMIN: 'admin',
 };
 
-export const CLIENT_ROLES = [ROLES.LEGACY_CLIENT, ROLES.CLIENT_VIEWER, ROLES.CLIENT_MANAGER];
+export const CLIENT_ROLES = [ROLES.LEGACY_CLIENT, ROLES.CLIENT_VIEWER, ROLES.CLIENT_OPERATOR, ROLES.CLIENT_MANAGER];
 export const OPS_ROLES = [ROLES.ANALYST, ROLES.SUPERVISOR, ROLES.ADMIN];
 
 const ROLE_LABELS = {
     [ROLES.LEGACY_CLIENT]: 'Cliente',
-    [ROLES.CLIENT_VIEWER]: 'Cliente Viewer',
-    [ROLES.CLIENT_MANAGER]: 'Cliente Manager',
+    [ROLES.CLIENT_VIEWER]: 'Visualizador',
+    [ROLES.CLIENT_OPERATOR]: 'Operador',
+    [ROLES.CLIENT_MANAGER]: 'Gestor',
     [ROLES.ANALYST]: 'Analista',
     [ROLES.SUPERVISOR]: 'Supervisor',
     [ROLES.ADMIN]: 'Administrador',
@@ -31,6 +33,7 @@ export const PERMISSIONS = {
     USERS_MANAGE: 'users.manage',
     // Audit
     AUDIT_VIEW: 'audit.view',
+    TENANT_AUDIT_VIEW: 'tenant_audit.view',
     // Settings
     SETTINGS_MANAGE: 'settings.manage',
 };
@@ -40,11 +43,14 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.CASE_READ,
         PERMISSIONS.CASE_CREATE_REQUEST,
         PERMISSIONS.CASE_EXPORT,
-        PERMISSIONS.USERS_MANAGE,
-        PERMISSIONS.SETTINGS_MANAGE,
     ],
     [ROLES.CLIENT_VIEWER]: [
         PERMISSIONS.CASE_READ,
+        PERMISSIONS.CASE_EXPORT,
+    ],
+    [ROLES.CLIENT_OPERATOR]: [
+        PERMISSIONS.CASE_READ,
+        PERMISSIONS.CASE_CREATE_REQUEST,
         PERMISSIONS.CASE_EXPORT,
     ],
     [ROLES.CLIENT_MANAGER]: [
@@ -53,6 +59,7 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.CASE_EXPORT,
         PERMISSIONS.USERS_MANAGE,
         PERMISSIONS.SETTINGS_MANAGE,
+        PERMISSIONS.TENANT_AUDIT_VIEW,
     ],
     [ROLES.ANALYST]: [
         PERMISSIONS.CASE_READ,

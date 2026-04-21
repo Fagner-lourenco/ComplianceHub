@@ -1,0 +1,93 @@
+.auditoria-cliente-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+
+.auditoria-cliente-header {
+    background:
+        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
+        linear-gradient(135deg, var(--bg-card), var(--gray-50));
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--brand-500);
+}
+
+.auditoria-cliente-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+.auditoria-cliente-header__subtitle {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.auditoria-cliente-header__badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.auditoria-cliente-header__badge-label {
+    font-size: .75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 600;
+}
+
+.auditoria-cliente-header__badge strong {
+    font-size: 1.75rem;
+    line-height: 1;
+    color: var(--brand-300);
+}
+
+.auditoria-cliente-filters {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+    min-width: 0;
+}
+
+.auditoria-cliente-table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+    max-width: 100%;
+}
+
+.auditoria-cliente-table-wrapper .data-table {
+    min-width: 640px;
+}
+
+@media (max-width: 768px) {
+    .auditoria-cliente-header {
+        padding: var(--space-4);
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: stretch;
+    }
+    .auditoria-cliente-header__title { font-size: 1.125rem; }
+    .auditoria-cliente-header__badge {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--space-2);
+    }
+    .auditoria-cliente-header__badge strong { font-size: 1.25rem; }
+    .auditoria-cliente-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

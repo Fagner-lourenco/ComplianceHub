@@ -335,5 +335,11 @@
     .filter-bar__select,
     .filter-bar__toggle {
         width: 100%;
+        min-height: 44px;
+    }
+
+    .fila-btn {
+        min-height: 44px;
+        padding: var(--space-2) var(--space-3);
     }
 }

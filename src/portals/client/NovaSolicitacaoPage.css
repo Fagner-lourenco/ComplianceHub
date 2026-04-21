@@ -12,7 +12,7 @@
     border: 1px solid var(--border-default);
     background:
         radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
-        linear-gradient(135deg, #ffffff, #f8fafc);
+        linear-gradient(135deg, var(--bg-card), var(--gray-50));
     box-shadow: var(--shadow-xs);
 }
 
@@ -333,13 +333,34 @@
     }
     
     .ns-actions {
-        flex-direction: column;
         position: static;
     }
-    
-    .ns-actions .ns-btn {
-        width: 100%;
+
+    .ns-actions--wizard {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: rgba(255, 255, 255, .96);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid var(--border-default);
+        box-shadow: var(--shadow-md);
+        z-index: 30;
+        border-radius: 0;
+        margin-top: 0;
+    }
+
+    .ns-actions--wizard .ns-btn {
+        flex: 1;
+        min-height: 44px;
         text-align: center;
+    }
+
+    .ns-form {
+        padding-bottom: 80px; /* space for fixed wizard footer */
     }
     
     .ns-priority-selector {
@@ -349,6 +370,7 @@
     .ns-priority-btn {
         flex: 1;
         text-align: center;
+        min-height: 44px;
     }
 
     .ns-other-social,
@@ -356,4 +378,195 @@
         flex-direction: column;
         align-items: stretch;
     }
+}
+
+/* Stepper */
+.ns-stepper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding: var(--space-3);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+}
+
+.ns-stepper__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    justify-content: space-between;
+}
+
+.ns-stepper__track {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    right: 16px;
+    height: 3px;
+    background: var(--gray-200);
+    border-radius: 2px;
+    z-index: 0;
+    transform: translateY(-50%);
+}
+
+.ns-stepper__fill {
+    height: 100%;
+    background: var(--brand-500);
+    border-radius: 2px;
+    transition: width .3s ease;
+}
+
+.ns-stepper__dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--gray-300);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: all .2s ease;
+}
+
+.ns-stepper__dot--active {
+    border-color: var(--brand-500);
+    background: var(--brand-50);
+}
+
+.ns-stepper__dot--done {
+    border-color: var(--brand-500);
+    background: var(--brand-500);
+    color: #fff;
+}
+
+/* ── Quota banner ────────────────────────────────────────────── */
+.ns-quota-banner {
+    padding: 12px 16px;
+    border-radius: var(--radius-lg, 10px);
+    font-size: .8125rem;
+    line-height: 1.5;
+    margin-bottom: var(--space-4);
+}
+.ns-quota-banner--warning {
+    background: var(--yellow-50, #fefce8);
+    border: 1px solid var(--yellow-300, #fde68a);
+    color: var(--yellow-800, #854d0e);
+}
+.ns-quota-banner--blocked {
+    background: var(--red-50, #fef2f2);
+    border: 1px solid var(--red-300, #fca5a5);
+    color: var(--red-700, #b91c1c);
+}
+
+/* ── Exceedance confirmation modal ───────────────────────────── */
+.ns-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+.ns-modal {
+    background: var(--bg-card, #fff);
+    border-radius: var(--radius-xl, 14px);
+    padding: 24px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+}
+.ns-modal__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+.ns-modal__text {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+.ns-modal__actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.ns-stepper__num {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+
+.ns-stepper__dot--active .ns-stepper__num {
+    color: var(--brand-600);
+}
+
+.ns-stepper__dot--done .ns-stepper__num {
+    color: #fff;
+}
+
+.ns-stepper__label {
+    font-size: .8125rem;
+    font-weight: 600;
+    color: var(--brand-600);
+}
+
+/* Review step */
+.ns-review__group {
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.ns-review__group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.ns-review__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .875rem;
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.ns-review__edit {
+    font-size: .75rem;
+    font-weight: 600;
+    color: var(--brand-600);
+    padding: 4px 10px;
+    border: 1px solid var(--brand-200);
+    border-radius: var(--radius-md);
+    background: var(--brand-50);
+    min-height: 32px;
+}
+
+.ns-review__item {
+    font-size: .8125rem;
+    color: var(--text-secondary);
+    padding: 4px 0;
+}
+
+.ns-review__item span {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-right: 4px;
+}
+
+.ns-review__item--empty {
+    font-style: italic;
+    color: var(--text-tertiary);
 }

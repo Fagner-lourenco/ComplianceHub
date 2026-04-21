@@ -17,6 +17,8 @@ const PROVIDERS = [
     { key: 'judit', label: 'Judit', field: 'juditEnrichmentStatus' },
     { key: 'escavador', label: 'Escavador', field: 'escavadorEnrichmentStatus' },
     { key: 'fontedata', label: 'FonteData', field: 'enrichmentStatus' },
+    { key: 'bigdatacorp', label: 'BigDataCorp', field: 'bigdatacorpEnrichmentStatus' },
+    { key: 'djen', label: 'DJEN', field: 'djenEnrichmentStatus' },
 ];
 
 const PERIOD_OPTIONS = [

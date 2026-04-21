@@ -1,7 +1,9 @@
 /**
  * delete-case.cjs
  * Exclui permanentemente um caso do Firestore (documento + subcoleções).
- * Usage: node scripts/delete-case.cjs
+ * Usage: node scripts/delete-case.cjs <caseId> [--confirm]
+ *   Without --confirm: dry-run (shows what would be deleted)
+ *   With --confirm: actually deletes
  */
 
 const fs = require('fs');
@@ -9,7 +11,14 @@ const path = require('path');
 const https = require('https');
 
 const PROJECT_ID = 'compliance-hub-br';
-const CASE_ID = 'o70PElyraor9PXdDrKoX';
+const CASE_ID = process.argv[2];
+const CONFIRM = process.argv.includes('--confirm');
+
+if (!CASE_ID || CASE_ID.startsWith('--')) {
+    console.error('Usage: node scripts/delete-case.cjs <caseId> [--confirm]');
+    console.error('  Without --confirm: dry-run only (mostra o que seria excluído)');
+    process.exit(1);
+}
 const FIREBASE_CLI_CLIENT_ID = '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com';
 const FIREBASE_CLI_CLIENT_SECRET = 'j9iVZfS8kkCEFUPaAeJV0sAi';
 
@@ -93,7 +102,8 @@ async function deleteDoc(token, docPath) {
 
 async function main() {
     console.log('=== Delete Case ===');
-    console.log(`Case ID: ${CASE_ID}\n`);
+    console.log(`Case ID: ${CASE_ID}`);
+    console.log(`Mode: ${CONFIRM ? '⚠️  EXECUTANDO (--confirm)' : '🔍 DRY-RUN (sem --confirm)'}\n`);
 
     const token = await getAccessToken();
     console.log('Token OK.\n');
@@ -126,8 +136,12 @@ async function main() {
             const colPath = `projects/${PROJECT_ID}/databases/(default)/documents/cases/${CASE_ID}/${colId}`;
             const docs = await listDocsInCollection(token, colPath);
             for (const docName of docs) {
-                const status = await deleteDoc(token, docName);
-                console.log(`  Deletado sub-doc: ${docName.split('/').pop()} (HTTP ${status})`);
+                if (CONFIRM) {
+                    const status = await deleteDoc(token, docName);
+                    console.log(`  Deletado sub-doc: ${docName.split('/').pop()} (HTTP ${status})`);
+                } else {
+                    console.log(`  [DRY-RUN] Deletaria sub-doc: ${docName.split('/').pop()}`);
+                }
             }
         }
     } else {
@@ -135,14 +149,19 @@ async function main() {
     }
 
     // 3. Excluir o documento principal
-    console.log('\nExcluindo documento principal...');
-    const delStatus = await deleteDoc(token, CASE_DOC_PATH);
-    if (delStatus !== 200) {
-        console.error(`Falha na exclusão (HTTP ${delStatus})`);
-        process.exit(1);
+    if (CONFIRM) {
+        console.log('\nExcluindo documento principal...');
+        const delStatus = await deleteDoc(token, CASE_DOC_PATH);
+        if (delStatus !== 200) {
+            console.error(`Falha na exclusão (HTTP ${delStatus})`);
+            process.exit(1);
+        }
+        console.log(`\n✅ Caso "${name}" (${CASE_ID}) excluído com sucesso.`);
+    } else {
+        console.log(`\n🔍 [DRY-RUN] Deletaria documento principal: cases/${CASE_ID}`);
+        console.log(`\nPara executar de verdade, rode:`);
+        console.log(`  node scripts/delete-case.cjs ${CASE_ID} --confirm`);
     }
-
-    console.log(`\n✅ Caso "${name}" (${CASE_ID}) excluído com sucesso.`);
 }
 
 main().catch(err => { console.error('Erro:', err.message); process.exit(1); });

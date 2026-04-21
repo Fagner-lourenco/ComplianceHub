@@ -1,1 +1,4 @@
 .vercel
+.env
+.env.*
+service-account*.json

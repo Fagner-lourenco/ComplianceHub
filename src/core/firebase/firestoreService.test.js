@@ -2,6 +2,8 @@ import { vi } from 'vitest';
 
 const firestoreServiceMocks = vi.hoisted(() => ({
     getDocs: vi.fn(),
+    getFunctions: vi.fn(() => 'functions-instance'),
+    httpsCallable: vi.fn(),
     currentUser: {
         getIdToken: vi.fn().mockResolvedValue('token-123'),
     },
@@ -42,7 +44,18 @@ vi.mock('firebase/auth', () => ({
     updateProfile: vi.fn(),
 }));
 
-const { fetchCases, fetchClients, fetchExports } = await import('./firestoreService');
+vi.mock('firebase/functions', () => ({
+    getFunctions: (...args) => firestoreServiceMocks.getFunctions(...args),
+    httpsCallable: (...args) => firestoreServiceMocks.httpsCallable(...args),
+}));
+
+const {
+    fetchCases,
+    fetchClients,
+    fetchExports,
+    fetchClientPublicReports,
+    revokeClientPublicReport,
+} = await import('./firestoreService');
 
 describe('firestoreService.fetchClients', () => {
     beforeEach(() => {
@@ -123,6 +136,8 @@ describe('firestoreService.fetchClients', () => {
 describe('firestoreService ordered collection fetchers', () => {
     beforeEach(() => {
         firestoreServiceMocks.getDocs.mockReset();
+        firestoreServiceMocks.getFunctions.mockClear();
+        firestoreServiceMocks.httpsCallable.mockReset();
         global.fetch = vi.fn();
     });
 
@@ -149,5 +164,42 @@ describe('firestoreService ordered collection fetchers', () => {
         expect(exports).toEqual([]);
         expect(global.fetch).toHaveBeenCalled();
         expect(firestoreServiceMocks.currentUser.getIdToken).toHaveBeenCalled();
+    });
+});
+
+describe('firestoreService public report callables', () => {
+    beforeEach(() => {
+        firestoreServiceMocks.getFunctions.mockClear();
+        firestoreServiceMocks.httpsCallable.mockReset();
+    });
+
+    it('lista relatorios publicos do cliente via callable backend segura', async () => {
+        const callableMock = vi.fn().mockResolvedValue({
+            data: {
+                reports: [
+                    { token: 'rep-123', candidateName: 'Francisco Taciano de Sousa', status: 'ACTIVE' },
+                ],
+            },
+        });
+        firestoreServiceMocks.httpsCallable.mockReturnValue(callableMock);
+
+        const reports = await fetchClientPublicReports();
+
+        expect(firestoreServiceMocks.getFunctions).toHaveBeenCalledWith(undefined, 'southamerica-east1');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'listClientPublicReports');
+        expect(callableMock).toHaveBeenCalledWith({});
+        expect(reports).toEqual([
+            { token: 'rep-123', candidateName: 'Francisco Taciano de Sousa', status: 'ACTIVE' },
+        ]);
+    });
+
+    it('revoga relatorio publico do cliente via callable backend segura', async () => {
+        const callableMock = vi.fn().mockResolvedValue({ data: { success: true } });
+        firestoreServiceMocks.httpsCallable.mockReturnValue(callableMock);
+
+        await revokeClientPublicReport('rep-321');
+
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'revokeClientPublicReport');
+        expect(callableMock).toHaveBeenCalledWith({ token: 'rep-321' });
     });
 });

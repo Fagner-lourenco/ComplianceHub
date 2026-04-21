@@ -1,5 +1,7 @@
 /* Report builder — standalone HTML for print / PDF export */
 
+export const REPORT_BUILD_VERSION = 2;
+
 function esc(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -30,6 +32,15 @@ Object.assign(LABOR_LABEL, {
 Object.assign(WARRANT_LABEL, {
     INCONCLUSIVE: 'Inconclusivo',
 });
+
+function formatDateBR(value) {
+    if (!value) return '';
+    try {
+        const d = typeof value === 'string' ? new Date(value) : value.toDate ? value.toDate() : new Date(value);
+        if (isNaN(d.getTime())) return String(value);
+        return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+    } catch { return String(value); }
+}
 
 function flagColor(v) {
     if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
@@ -121,7 +132,7 @@ function processHighlightsHtml(items) {
 
 function warrantFindingsHtml(items) {
     if (!Array.isArray(items) || items.length === 0) return '';
-    return `<div class="sec"><div class="sec__t">Situacao de Mandados</div><div class="hlist">${items.map((item) => `
+    return `<div class="sec"><div class="sec__t">Situação de Mandados</div><div class="hlist">${items.map((item) => `
         <div class="hcard">
             <div class="hcard__top">
                 <strong>${esc(item.status || 'Sem status')}</strong>
@@ -135,11 +146,11 @@ function warrantFindingsHtml(items) {
 
 function timelineHtml(items) {
     if (!Array.isArray(items) || items.length === 0) return '';
-    return `<div class="sec"><div class="sec__t">Historico do Andamento</div><div class="tlist">${items.map((item) => `
+    return `<div class="sec"><div class="sec__t">Histórico do Andamento</div><div class="tlist">${items.map((item) => `
         <div class="titem">
             <div class="titem__row">
                 <strong>${esc(item.title || item.type || 'Evento')}</strong>
-                ${item.at ? `<span>${esc(item.at)}</span>` : ''}
+                ${item.at ? `<span>${esc(formatDateBR(item.at))}</span>` : ''}
             </div>
             ${item.description ? `<p>${esc(item.description)}</p>` : ''}
         </div>
@@ -158,7 +169,7 @@ function buildCaseBody(c, cd, generatedAt) {
         fieldHtml('Departamento', cd.department || c.department),
         fieldHtml('E-mail', cd.email || c.email),
         fieldHtml('Telefone', cd.phone || c.phone),
-        fieldHtml('Data da solicitação', c.createdAt),
+        fieldHtml('Data da solicitação', formatDateBR(c.createdAt)),
         fieldHtml('Prioridade', PRIORITY_LABEL[c.priority] || c.priority),
         fieldHtml('Solicitado por', formatRequestedBy(c)),
     ].filter(Boolean).join('');
@@ -217,16 +228,16 @@ function buildCaseBody(c, cd, generatedAt) {
         ? `<div class="sec"><div class="sec__t">Análises Realizadas</div><div class="plist">${rows.join('')}</div></div>` : '';
 
     const commentSec = c.analystComment
-        ? `<div class="sec"><div class="sec__t">Parecer do Analista</div><div class="cbox">${esc(c.analystComment)}</div></div>` : '';
+        ? `<div class="sec"><div class="sec__t">Justificativa Final</div><div class="cbox">${esc(c.analystComment)}</div></div>` : '';
     const executiveSec = (c.executiveSummary || c.statusSummary || c.sourceSummary)
         ? `<div class="sec"><div class="sec__t">Resumo Executivo</div><div class="ebox">
-            ${c.executiveSummary ? `<p><strong>Visao executiva:</strong> ${esc(c.executiveSummary)}</p>` : ''}
-            ${c.statusSummary ? `<p><strong>Situacao atual:</strong> ${esc(c.statusSummary)}</p>` : ''}
+            ${c.executiveSummary ? `<div class="ebox__block"><strong>Visão executiva:</strong><div class="ebox__text">${esc(c.executiveSummary)}</div></div>` : ''}
+            ${c.statusSummary ? `<p><strong>Situação atual:</strong> ${esc(c.statusSummary)}</p>` : ''}
             ${c.sourceSummary ? `<p><strong>Origem resumida dos dados:</strong> ${esc(c.sourceSummary)}</p>` : ''}
         </div></div>`
         : '';
     const findingsSec = listBlock('Principais Apontamentos', c.keyFindings);
-    const nextStepsSec = listBlock('Proximos Passos', c.nextSteps);
+    const nextStepsSec = listBlock('Próximos Passos', c.nextSteps);
     const processSec = processHighlightsHtml(c.processHighlights);
     const warrantSec = warrantFindingsHtml(c.warrantFindings);
     const timelineSec = timelineHtml(c.timelineEvents);
@@ -295,6 +306,8 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .slink{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;font-size:11px;color:#4f46e5;text-decoration:none;font-weight:500}
 .ebox{display:flex;flex-direction:column;gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 18px}
 .ebox p{font-size:12px;color:#334155}
+.ebox__block{font-size:12px;color:#334155}
+.ebox__text{white-space:pre-wrap;margin-top:6px;line-height:1.75}
 .blist{padding-left:18px;display:flex;flex-direction:column;gap:8px}
 .blist li{font-size:12px;color:#334155}
 .hlist{display:flex;flex-direction:column;gap:12px}
@@ -335,6 +348,7 @@ export function buildCaseReportHtml(caseData, candidateData) {
 
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Relatório — ${esc(c.candidateName || 'Candidato')}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>${REPORT_CSS}</style></head><body>
 <div class="page">${buildCaseBody(c, cd, generatedAt)}</div>
 <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>

@@ -43,6 +43,5 @@ describe('Topbar', () => {
         expect(screen.getByText('Administrador')).toBeInTheDocument();
         expect(screen.getByDisplayValue('TechCorp')).toBeInTheDocument();
         expect(screen.getByText('Franquia em contexto')).toBeInTheDocument();
-        expect(screen.getByText('Perfil confirmado')).toBeInTheDocument();
     });
 });

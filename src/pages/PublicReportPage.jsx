@@ -7,12 +7,15 @@ import './PublicReportPage.css';
 
 export default function PublicReportPage() {
     const { token, caseId } = useParams();
-    const [error, setError] = useState(false);
+    const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [reportHtml, setReportHtml] = useState('');
     const [copyOk, setCopyOk] = useState(false);
     const iframeRef = useRef(null);
+    const autoPrintTriggeredRef = useRef(false);
     const isDemoRoute = Boolean(caseId) && !token;
+    const shouldAutoPrint = typeof window !== 'undefined'
+        && new URLSearchParams(window.location.search).get('print') === '1';
 
     const stripActiveContent = (html) => {
         if (!html) return '';
@@ -56,7 +59,7 @@ export default function PublicReportPage() {
                     const caseData = getMockCaseById(caseId);
                     if (!caseData) {
                         if (!cancelled) {
-                            setError(true);
+                            setError('not-found');
                             setLoading(false);
                         }
                         return;
@@ -72,16 +75,39 @@ export default function PublicReportPage() {
                 const report = await getPublicReport(token);
                 if (cancelled) return;
                 if (!report?.html) {
-                    setError(true);
+                    setError('not-found');
+                    setLoading(false);
+                    return;
+                }
+
+                // AUD-012: Check if report was revoked
+                if (report.active === false) {
+                    setError('revoked');
+                    setLoading(false);
+                    return;
+                }
+
+                const now = new Date();
+                const expiresAt = report.expiresAt instanceof Date
+                    ? report.expiresAt
+                    : report.expiresAt?.toDate?.()
+                    ?? null;
+                if (expiresAt && now > expiresAt) {
+                    setError('expired');
                     setLoading(false);
                     return;
                 }
 
                 setReportHtml(stripActiveContent(report.html));
                 setLoading(false);
-            } catch {
+            } catch (err) {
                 if (!cancelled) {
-                    setError(true);
+                    const code = err?.code || '';
+                    if (code === 'permission-denied') {
+                        setError('expired');
+                    } else {
+                        setError('network');
+                    }
                     setLoading(false);
                 }
             }
@@ -91,13 +117,39 @@ export default function PublicReportPage() {
         return () => { cancelled = true; };
     }, [caseId, isDemoRoute, token]);
 
+    useEffect(() => {
+        if (!shouldAutoPrint || loading || error || !reportHtml || autoPrintTriggeredRef.current) {
+            return;
+        }
+
+        autoPrintTriggeredRef.current = true;
+        window.setTimeout(() => {
+            if (iframeRef.current?.contentWindow) {
+                iframeRef.current.contentWindow.focus();
+                iframeRef.current.contentWindow.print();
+                return;
+            }
+            window.print();
+        }, 400);
+    }, [error, loading, reportHtml, shouldAutoPrint]);
+
     if (error) {
+        const isExpired = error === 'expired';
+        const isRevoked = error === 'revoked';
         return (
             <div className="public-report__state">
                 <div className="public-report__state-card">
                     <div className="public-report__state-icon">📄</div>
-                    <h2 className="public-report__state-title">Relatório não encontrado</h2>
-                    <p>O link pode ter expirado ou ser inválido.</p>
+                    <h2 className="public-report__state-title">
+                        {isRevoked ? 'Relatório revogado' : isExpired ? 'Link expirado' : 'Relatório não encontrado'}
+                    </h2>
+                    <p>
+                        {isRevoked
+                            ? 'Este relatório foi revogado e não está mais disponível. Solicite um novo link ao responsável pela análise.'
+                            : isExpired
+                            ? 'O prazo de acesso a este relatório expirou. Solicite um novo link ao responsável pela análise.'
+                            : 'O link pode ter expirado ou ser inválido.'}
+                    </p>
                 </div>
             </div>
         );

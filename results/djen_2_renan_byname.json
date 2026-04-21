@@ -1,0 +1,306 @@
+{
+  "status": "success",
+  "message": "Sucesso",
+  "count": 7647,
+  "items": [
+    {
+      "id": 582360740,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TRT8",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "7ª VARA DO TRABALHO DE BELÉM",
+      "idOrgao": 45665,
+      "texto": "PODER JUDICIÁRIO  JUSTIÇA DO TRABALHO  TRIBUNAL REGIONAL DO TRABALHO DA 8ª REGIÃO  7ª VARA DO TRABALHO DE BELÉM  ATOrd 0000391-13.2025.5.08.0007  RECLAMANTE: RENAN AUGUSTO DA GAMA SANTOS  RECLAMADO: COMPANHIA DE SANEAMENTO DO PARA  INTIMAÇÃO  Fica V. Sa. intimado para tomar ciência do Despacho ID af54654 proferido nos autos.  DESPACHO     A COMPANHIA DE SANEAMENTO DO ESTADO DO PARÁ (COSANPA) peticionou requerendo a reconsideração da citação ID bc605bc e a aplicação do regime de precatórios à presente execução.   Para tanto, invoca a decisão proferida pelo Supremo Tribunal Federal na ADPF n. 1086, por meio da qual foi reconhecido o direito da COSANPA ao regime de precatórios, por se tratar de empresa estatal prestadora de serviços públicos essenciais, em regime não concorrencial e sem finalidade lucrativa, nos termos do artigo 100 e seguintes da Constituição Federal. A r. sentença de conhecimento, consoante o ID 4f44277, já havia referendado tal entendimento.  Considerando que a decisão do Supremo Tribunal Federal na ADPF n. 1086 é de observância obrigatória e que a reclamada preenche os requisitos ali estabelecidos para a aplicação do regime de precatórios, defere-se o pedido da parte ré.  Diante do exposto, determino à secretaria que:  a) cancele a citação ID bc605bc;  b) renove, neste ato, o expediente de Id 87062fe, à referida executada, por meio de seus advogados, com poderes constantes no documento de Id 82bfd63, tendo em vista que, embora encaminhado via domicílio eletrônico, não houve leitura pela ré;  c) expirado, o prazo sem manifestação, atualize-se a conta e expeça-se o competente precatório ou requisição de pagamento, conforme o caso.  BELEM/PA, 10 de abril de 2026.  TEREZA CRISTINA DE ALMEIDA CAVALCANTE ARANHA  Juíza do Trabalho Titular<br><br>Intimado(s) / Citado(s)<br> - COMPANHIA DE SANEAMENTO DO PARA<br>",
+      "numero_processo": "00003911320255080007",
+      "meio": "D",
+      "link": "https://pje.trt8.jus.br/pjekz/validacao/26041009252119900000055500057?instancia=1",
+      "tipoDocumento": "Notificação",
+      "nomeClasse": "AçãO TRABALHISTA - RITO ORDINáRIO",
+      "codigoClasse": "985",
+      "numeroComunicacao": 958,
+      "ativo": true,
+      "hash": "PpDAj7XqRvVQcrxu4Tny4k9RrvMJbg",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0000391-13.2025.5.08.0007",
+      "destinatarios": [
+        {
+          "polo": "P",
+          "comunicacao_id": 582360740,
+          "nome": "COMPANHIA DE SANEAMENTO DO PARA"
+        },
+        {
+          "polo": "A",
+          "comunicacao_id": 582360740,
+          "nome": "RENAN AUGUSTO DA GAMA SANTOS"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1058406241,
+          "comunicacao_id": 582360740,
+          "advogado_id": 1409401,
+          "created_at": "2026-04-10T09:31:09",
+          "updated_at": "2026-04-10T09:31:09",
+          "advogado": {
+            "id": 1409401,
+            "nome": "JACQUELINE DO SOCORRO NERI RODRIGUES LOBAO HAASE",
+            "numero_oab": "20206",
+            "uf_oab": "PA"
+          }
+        },
+        {
+          "id": 1058406242,
+          "comunicacao_id": 582360740,
+          "advogado_id": 1418859,
+          "created_at": "2026-04-10T09:31:09",
+          "updated_at": "2026-04-10T09:31:09",
+          "advogado": {
+            "id": 1418859,
+            "nome": "PAULA HELENA VIANA DE SOUSA",
+            "numero_oab": "25615",
+            "uf_oab": "PA"
+          }
+        },
+        {
+          "id": 1058406240,
+          "comunicacao_id": 582360740,
+          "advogado_id": 1410656,
+          "created_at": "2026-04-10T09:31:09",
+          "updated_at": "2026-04-10T09:31:09",
+          "advogado": {
+            "id": 1410656,
+            "nome": "JOAO VICTOR DIAS GERALDO",
+            "numero_oab": "19677",
+            "uf_oab": "PA"
+          }
+        }
+      ]
+    },
+    {
+      "id": 582275685,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TRT1",
+      "tipoComunicacao": "Lista de distribuição",
+      "nomeOrgao": "1ª Vara do Trabalho de Duque de Caxias",
+      "idOrgao": 47806,
+      "texto": "Processo 0100491-34.2026.5.01.0201 distribuído para 1ª Vara do Trabalho de Duque de Caxias na data 09/04/2026 <br> Para maiores informações, clique no link a seguir:  <a target=\"_blank\" href=\"https://pje.trt1.jus.br/pjekz/visualizacao/26041000301276700000258956697?instancia=1\">https://pje.trt1.jus.br/pjekz/visualizacao/26041000301276700000258956697?instancia=1</a>",
+      "numero_processo": "01004913420265010201",
+      "meio": "D",
+      "link": "https://pje.trt1.jus.br/pjekz/visualizacao/26041000301276700000258956697?instancia=1",
+      "tipoDocumento": "Distribuição",
+      "nomeClasse": "AçãO TRABALHISTA - RITO SUMARíSSIMO",
+      "codigoClasse": "1125",
+      "numeroComunicacao": 1046,
+      "ativo": true,
+      "hash": "dDzaKrk7RJ2PIJ8hwT8BaM5RbBEe3N",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0100491-34.2026.5.01.0201",
+      "destinatarios": [
+        {
+          "polo": "P",
+          "comunicacao_id": 582275685,
+          "nome": "5F INDUSTRIA METALURGICA LTDA"
+        },
+        {
+          "polo": "A",
+          "comunicacao_id": 582275685,
+          "nome": "RENAN AUGUSTO MARTINS PIRES"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1058223258,
+          "comunicacao_id": 582275685,
+          "advogado_id": 1725187,
+          "created_at": "2026-04-10T07:04:24",
+          "updated_at": "2026-04-10T07:04:24",
+          "advogado": {
+            "id": 1725187,
+            "nome": "DAVISON DA SILVA",
+            "numero_oab": "178826",
+            "uf_oab": "RJ"
+          }
+        }
+      ]
+    },
+    {
+      "id": 583140718,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "STJ",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "SPF COORDENADORIA DE PROCESSAMENTO DE FEITOS DE DIREITO PENAL",
+      "idOrgao": 59632,
+      "texto": "<html><body><table style='width: 100%'><tr><td colspan=\"3\"><b>AREsp 3189973/SP (2026/0072482-2)</b></td></tr><tr><td style=\"width: 20%\"><b>RELATOR</b></td><td style=\"width: 1%\"><b>:</b></td><td style=\"width: 79%\"><b>MINISTRO PRESIDENTE DO STJ</b></td></tr><tr><td style=\"width: 20%\">AGRAVANTE</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">RENAN AUGUSTO DE JESUS</td></tr><tr><td style=\"width: 20%\">ADVOGADO</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO</td></tr><tr><td style=\"width: 20%\">AGRAVADO</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">MINISTÉRIO PÚBLICO DO ESTADO DE SÃO PAULO</td></tr></table><p>\n DECISÃO \n Distribua-se o feito, nos termos do art. 9º do RISTJ. \n <p>Presidente</p><p>HERMAN BENJAMIN</p></p></body></html>",
+      "numero_processo": "15228052820248260228",
+      "meio": "D",
+      "link": "https://processo.stj.jus.br/processo/dj/documento/?seq_documento=55818010&data_pesquisa=14/04/2026&versao=impressao&nu_seguimento=00001&tipo_documento=documento",
+      "tipoDocumento": "DESPACHO / DECISÃO",
+      "nomeClasse": "AGRAVO EM RECURSO ESPECIAL",
+      "codigoClasse": "11881",
+      "numeroComunicacao": 6998,
+      "ativo": true,
+      "hash": "XxDnJOQmYN1CawGSoTy97XOZkWV9dl",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "1522805-28.2024.8.26.0228",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 583140718,
+          "nome": "1. RENAN AUGUSTO DE JESUS (AGRAVANTE)"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 583140718,
+          "nome": "2. MINISTÉRIO PÚBLICO DO ESTADO DE SÃO PAULO (AGRAVADO)"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1060104477,
+          "comunicacao_id": 583140718,
+          "advogado_id": 3957405,
+          "created_at": "2026-04-10T17:30:47",
+          "updated_at": "2026-04-10T17:30:47",
+          "advogado": {
+            "id": 3957405,
+            "nome": "DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO",
+            "numero_oab": "",
+            "uf_oab": "DF"
+          }
+        }
+      ]
+    },
+    {
+      "id": 583238903,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "STJ",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "COORDENADORIA DE CLASSIFICAÇÃO E DISTRIBUIÇÃO DE PROCESSOS",
+      "idOrgao": 106757,
+      "texto": "<html><body><table style='width: 100%'><tr><td colspan=\"3\"><b>AREsp 3189973/SP (2026/0072482-2)</b></td></tr><tr><td style=\"width: 20%\"><b>RELATOR</b></td><td style=\"width: 1%\"><b>:</b></td><td style=\"width: 79%\"><b>MINISTRO RIBEIRO DANTAS</b></td></tr><tr><td style=\"width: 20%\">AGRAVANTE</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">RENAN AUGUSTO DE JESUS</td></tr><tr><td style=\"width: 20%\">ADVOGADO</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO</td></tr><tr><td style=\"width: 20%\">AGRAVADO</td><td style=\"width: 1%\">:</td><td style=\"width: 79%\">MINISTÉRIO PÚBLICO DO ESTADO DE SÃO PAULO</td></tr></table><p>Processo distribuído pelo sistema automático em 10/04/2026.</p></body></html>",
+      "numero_processo": "15228052820248260228",
+      "meio": "D",
+      "link": "https://justica.web.stj.jus.br/api/pcp/documentos/pdf/dinamico/MzY4OTkwODc5MjAyNjAwNzI0ODIyMTc3NTg1NjYxMjM2NA==",
+      "tipoDocumento": "ATA DE DISTRIBUIÇÃO",
+      "nomeClasse": "AGRAVO EM RECURSO ESPECIAL",
+      "codigoClasse": "11881",
+      "numeroComunicacao": 7737,
+      "ativo": true,
+      "hash": "rEbP1yJd6lACklri1T7E5gOZeXxa8G",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "1522805-28.2024.8.26.0228",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 583238903,
+          "nome": "1. RENAN AUGUSTO DE JESUS (AGRAVANTE)"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 583238903,
+          "nome": "2. MINISTÉRIO PÚBLICO DO ESTADO DE SÃO PAULO (AGRAVADO)"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1060305509,
+          "comunicacao_id": 583238903,
+          "advogado_id": 3957405,
+          "created_at": "2026-04-10T18:30:12",
+          "updated_at": "2026-04-10T18:30:12",
+          "advogado": {
+            "id": 3957405,
+            "nome": "DEFENSORIA PÚBLICA DO ESTADO DE SÃO PAULO",
+            "numero_oab": "",
+            "uf_oab": "DF"
+          }
+        }
+      ]
+    },
+    {
+      "id": 582801301,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TRT2",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "13ª Vara do Trabalho de São Paulo - Zona Leste",
+      "idOrgao": 45475,
+      "texto": "PODER JUDICIÁRIO  JUSTIÇA DO TRABALHO  TRIBUNAL REGIONAL DO TRABALHO DA 2ª REGIÃO  13ª VARA DO TRABALHO DE SÃO PAULO - ZONA LESTE  ATOrd 1000563-04.2020.5.02.0613  RECLAMANTE: ANTONIO FRANCISCO DE SOUZA  RECLAMADO: BRAZ DONIZETI MARTINS CORREIA COMERCIO DE BANHEIRAS  INTIMAÇÃO  Fica V. Sa. intimado para tomar ciência da Decisão ID 7c822f3 proferida nos autos.     Nesta data, faço o feito concluso ao(a) MM(a) Juiz(a) da 13ª Vara do Trabalho de São Paulo/SP - Zona Leste.   São Paulo, data abaixo   OLGA JUNIA DE ARAUJO FREITAS GATTI     Vistos, etc.  Tendo em vista o decurso do prazo para a impugnação, HOMOLOGO, para que surta seus jurídicos e legais efeitos, a arrematação dos bens abaixo listados, através de leilão eletrônico, por Renan Augusto Francisco de Lima, portador do CPF nº 414.676.158-11, do RG nº 41365056 SSP/SP, pela importância de R$ 8.200,00, devidamente quitada, conforme avisos de créditos de Id 7ecee3f.  01 (um) SPA com hidromassagem, sem aquecedor, sem cromoterapia, medidas aproximadas 2,10 x 2,10 metros;01 (uma) banheira de hidromassagem, dupla, marca Astra; e01 (uma) banheira simples, sem hidromassagem, Grécia, medidas aproximadas de 1,80m x 1,40m. Decorrido o prazo legal, expeçam-se carta de arrematação, observando-se o auto de arrematação de Id d53b133 (24/02/2006), e mandado de busca e entrega de bem, com o acompanhamento do arrematante. Concedo ao arrematante o prazo de vinte dias para informar nos autos se recebeu o bem livre e desimpedido, bem como qualquer empecilho para a imissão na posse do bem adquirido, contados da data do cumprimento do mandado de entrega de bem.  Intimem-se as partes e o arrematante. Após, torne o feito concluso para apuração  e distribuição dos valores depositados.  Intime-se. Cumpra-se.  SAO PAULO/SP, 10 de abril de 2026.  LUCIANA SIQUEIRA ALVES GARCIA  Juíza do Trabalho Titular<br><br>Intimado(s) / Citado(s)<br> - RENAN AUGUSTO FRANCISCO DE LIMA<br>",
+      "numero_processo": "10005630420205020613",
+      "meio": "D",
+      "link": "https://pje.trt2.jus.br/pjekz/validacao/26041014030609900000454333913?instancia=1",
+      "tipoDocumento": "Notificação",
+      "nomeClasse": "AçãO TRABALHISTA - RITO ORDINáRIO",
+      "codigoClasse": "985",
+      "numeroComunicacao": 19468,
+      "ativo": true,
+      "hash": "JqKnM286Bl3ivzjhOTBm4eEYWjAkoy",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "1000563-04.2020.5.02.0613",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 582801301,
+          "nome": "ANTONIO FRANCISCO DE SOUZA"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 582801301,
+          "nome": "BRAZ DONIZETI MARTINS CORREIA COMERCIO DE BANHEIRAS"
+        },
+        {
+          "polo": "A",
+          "comunicacao_id": 582801301,
+          "nome": "RENAN AUGUSTO FRANCISCO DE LIMA"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1059369482,
+          "comunicacao_id": 582801301,
+          "advogado_id": 1405664,
+          "created_at": "2026-04-10T14:30:54",
+          "updated_at": "2026-04-10T14:30:54",
+          "advogado": {
+            "id": 1405664,
+            "nome": "GERALDO HENRIQUE LIMA SANTOS",
+            "numero_oab": "454094",
+            "uf_oab": "SP"
+          }
+        },
+        {
+          "id": 1059369481,
+          "comunicacao_id": 582801301,
+          "advogado_id": 1755271,
+          "created_at": "2026-04-10T14:30:54",
+          "updated_at": "2026-04-10T14:30:54",
+          "advogado": {
+            "id": 1755271,
+            "nome": "RENAN AUGUSTO FRANCISCO DE LIMA",
+            "numero_oab": "452303",
+            "uf_oab": "SP"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { formatRoleLabel, hasPermission, PERMISSIONS } from '../../core/rbac/permissions';
@@ -8,17 +8,20 @@ const clientNav = [
     { to: '/client/dashboard', icon: 'DB', label: 'Dashboard', permission: PERMISSIONS.CASE_READ },
     { to: '/client/solicitacoes', icon: '[]', label: 'Solicitacoes', permission: PERMISSIONS.CASE_READ },
     { to: '/client/nova-solicitacao', icon: '+', label: 'Nova solicitacao', permission: PERMISSIONS.CASE_CREATE_REQUEST },
-    { to: '/client/candidatos', icon: 'ID', label: 'Candidatos', permission: PERMISSIONS.CASE_READ },
     { to: '/client/exportacoes', icon: 'EX', label: 'Exportacoes', permission: PERMISSIONS.CASE_EXPORT },
+    { to: '/client/relatorios', icon: 'RL', label: 'Relatorios', permission: PERMISSIONS.CASE_EXPORT },
+    { to: '/client/equipe', icon: 'EQ', label: 'Equipe', permission: PERMISSIONS.USERS_MANAGE },
+    { to: '/client/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.TENANT_AUDIT_VIEW },
 ];
 
 const opsNav = [
     { to: '/ops/fila', icon: 'WK', label: 'Fila de trabalho', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/casos', icon: 'CS', label: 'Todos os casos', permission: PERMISSIONS.CASE_READ },
-    { to: '/ops/candidatos', icon: 'CD', label: 'Candidatos', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/clientes', icon: 'CL', label: 'Gestao de clientes', permission: PERMISSIONS.USERS_MANAGE },
     { to: '/ops/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.AUDIT_VIEW },
     { to: '/ops/metricas-ia', icon: 'AI', label: 'Métricas IA', permission: PERMISSIONS.AUDIT_VIEW },
+    { to: '/ops/relatorios', icon: 'RL', label: 'Relatórios', permission: PERMISSIONS.AUDIT_VIEW },
+    { to: '/ops/saude', icon: 'HP', label: 'Saúde APIs', permission: PERMISSIONS.AUDIT_VIEW },
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -83,12 +86,14 @@ export default function Sidebar({ isOpen, onClose }) {
                 </div>
 
                 <div className="sidebar__user">
-                    <div className="sidebar__avatar">{(displayName[0] || 'U').toUpperCase()}</div>
-                    <div className="sidebar__user-info">
-                        <div className="sidebar__user-name" title={displayName}>{displayName}</div>
-                        <div className="sidebar__user-email" title={displayEmail}>{displayEmail}</div>
-                        <div className="sidebar__user-role">{displayRole}</div>
-                    </div>
+                    <Link to={`${routePrefix}${isOpsPortal ? '/ops' : '/client'}/perfil`} className="sidebar__user-link" title="Meu perfil">
+                        <div className="sidebar__avatar">{(displayName[0] || 'U').toUpperCase()}</div>
+                        <div className="sidebar__user-info">
+                            <div className="sidebar__user-name" title={displayName}>{displayName}</div>
+                            <div className="sidebar__user-email" title={displayEmail}>{displayEmail}</div>
+                            <div className="sidebar__user-role">{displayRole}</div>
+                        </div>
+                    </Link>
                     <button className="sidebar__logout" onClick={handleLogout} title="Sair do sistema">
                         SAIR
                     </button>

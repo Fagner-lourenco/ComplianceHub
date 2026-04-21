@@ -1,0 +1,275 @@
+{
+  "status": "success",
+  "message": "Sucesso",
+  "count": 10000,
+  "items": [
+    {
+      "id": 579872812,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TJMG",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "TJMG - 2ª CÂMARA CRIMINAL",
+      "idOrgao": 28279,
+      "texto": "Apelante(s) - DIEGO FERNANDO PIRES; Apelado(a)(s) - MINISTÉRIO PÚBLICO DO ESTADO DE MINAS GERAIS; <br />Relator - Des(a). Matheus Chaves Jardim<br />Intimação: Designado o feito para julgamento virtual, nos termos do art. 118 do RITJMG, não havendo nesta modalidade de julgamento a possibilidade de participação de advogados, partes e interessados. Em caso de eventual oposição ao julgamento virtual, as partes deverão se manifestar no prazo de cinco dias e o feito será incluído, oportunamente, em sessão de julgamento presencial ou por videoconferência. SEGUNDA CÂMARA CRIMINAL - Ordem do dia para julgamento - Sessão VIRTUAL do dia 23/04/2026 às 13 horas e 30 minutos. Viviane Glauce Soares Urban, Escrivã. Composição Regimental: Desembargadores: Glauco Fernandes, Presidente, Beatriz Pinheiro Caires, Nelson Missias de Morais, Matheus Chaves Jardim  e Daniela Villani Bonaccorsi Rodrigues.<br />Adv - MICHELLE FERNANDA PIRES.",
+      "numero_processo": "00104442320228130701",
+      "meio": "D",
+      "link": "https://www4.tjmg.jus.br/juridico/sf/proc_resultado2.jsp?tipoPesquisa2=1&txtProcesso=00104442320228130701&comrCodigo=0024&tipoPessoa=X&naturezaProcesso=0&situacaoParte=X&numero=20&select=1&tipoConsulta=1&natureza=0&ativoBaixado=X&listaProcessos=00104442320228130701",
+      "tipoDocumento": "Apelação",
+      "nomeClasse": "APELAçãO CRIMINAL",
+      "codigoClasse": "417",
+      "numeroComunicacao": 1210,
+      "ativo": true,
+      "hash": "XxDnJOQm6NEI7jfoTy97XORkWV9dlr",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0010444-23.2022.8.13.0701",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 579872812,
+          "nome": "DIEGO FERNANDO PIRES"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 579872812,
+          "nome": "MINISTÉRIO PÚBLICO DO ESTADO DE MINAS GERAIS"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1053150550,
+          "comunicacao_id": 579872812,
+          "advogado_id": 706985,
+          "created_at": "2026-04-08T08:42:55",
+          "updated_at": "2026-04-08T08:42:55",
+          "advogado": {
+            "id": 706985,
+            "nome": "MICHELLE FERNANDA PIRES",
+            "numero_oab": "140802",
+            "uf_oab": "MG"
+          }
+        }
+      ]
+    },
+    {
+      "id": 583238638,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TRT11",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "3ª Vara do Trabalho de Boa Vista",
+      "idOrgao": 45613,
+      "texto": "PODER JUDICIÁRIO  JUSTIÇA DO TRABALHO  TRIBUNAL REGIONAL DO TRABALHO DA 11ª REGIÃO  3ª VARA DO TRABALHO DE BOA VISTA  ATOrd 0000759-36.2021.5.11.0053  RECLAMANTE: LIDIANE MARQUES SIMAO  RECLAMADO: D. FERNANDO DA SILVA E OUTROS (1)  INTIMAÇÃO  Fica V. Sa. intimado para tomar ciência da Decisão ID 6704c67 proferida nos autos.  DECISÃO PJe-JT     Vistos, etc.  I. Considerando a existência de valores bloqueados nos autos, os quais são ínfimos em relação ao crédito objeto da presente execução, determina-se a notificação do(a) exequente para, no prazo de cinco dias, informar os respectivos dados bancários com vistas à transferência dos valores, à míngua de prévia  intimação do(a) devedor(a);  II. Após, façam-se os autos conclusos;  Exp. nec.  BOA VISTA/RR, 10 de abril de 2026.  RAIMUNDO PAULINO CAVALCANTE FILHO  Juiz(a) do Trabalho Titular<br><br>Intimado(s) / Citado(s)<br> - LIDIANE MARQUES SIMAO<br>",
+      "numero_processo": "00007593620215110053",
+      "meio": "D",
+      "link": "https://pje.trt11.jus.br/pjekz/validacao/26041017274947000000036989165?instancia=1",
+      "tipoDocumento": "Notificação",
+      "nomeClasse": "AçãO TRABALHISTA - RITO ORDINáRIO",
+      "codigoClasse": "985",
+      "numeroComunicacao": 2219,
+      "ativo": true,
+      "hash": "Kg5dkqmZLBPSWjzcmTwgaJKR1NarD3",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0000759-36.2021.5.11.0053",
+      "destinatarios": [
+        {
+          "polo": "P",
+          "comunicacao_id": 583238638,
+          "nome": "D. FERNANDO DA SILVA"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 583238638,
+          "nome": "DIEGO FERNANDO DA SILVA"
+        },
+        {
+          "polo": "A",
+          "comunicacao_id": 583238638,
+          "nome": "LIDIANE MARQUES SIMAO"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1060304858,
+          "comunicacao_id": 583238638,
+          "advogado_id": 706370,
+          "created_at": "2026-04-10T18:30:10",
+          "updated_at": "2026-04-10T18:30:10",
+          "advogado": {
+            "id": 706370,
+            "nome": "DANIEL BRITO CARNEIRO",
+            "numero_oab": "205461",
+            "uf_oab": "MG"
+          }
+        }
+      ]
+    },
+    {
+      "id": 582962837,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TRT23",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "3ª VARA DO TRABALHO DE VÁRZEA GRANDE",
+      "idOrgao": 45819,
+      "texto": "PODER JUDICIÁRIO  JUSTIÇA DO TRABALHO  PJE - PROCESSO JUDICIAL ELETRÔNICO - 23ª REGIÃO  3ª VARA DO TRABALHO DE VÁRZEA GRANDE  ATOrd 0000208-28.2016.5.23.0108  RECLAMANTE: DIEGO FERNANDO PAGOTTO  RECLAMADO: CENTRO DE IMAGENOLOGIA DO CENTRO OESTE LTDA  INTIMAÇÃO  Fica V. Sa. intimado para tomar ciência do Despacho ID cd47566 proferido nos autos.  Vistos, etc...(m)  Diante do quanto certificado no id 09953f0 e manifestação da ré de id a714eff , delibero:  Intime-se a parte ré para, no prazo de 5 dias, apresentar nos autos os seus dados bancários para devolução de valores.  VARZEA GRANDE/MT, 10 de abril de 2026.  ALEX FABIANO DE SOUZA  Juiz(a) do Trabalho Substituto(a)<br><br>Intimado(s) / Citado(s)<br> - CENTRO DE IMAGENOLOGIA DO CENTRO OESTE LTDA<br>",
+      "numero_processo": "00002082820165230108",
+      "meio": "D",
+      "link": "https://pje.trt23.jus.br/pjekz/validacao/26041014541435600000044635729?instancia=1",
+      "tipoDocumento": "Notificação",
+      "nomeClasse": "AçãO TRABALHISTA - RITO ORDINáRIO",
+      "codigoClasse": "985",
+      "numeroComunicacao": 2615,
+      "ativo": true,
+      "hash": "VMlJ3No6GqEfAB3iVTp57E4YLzE4gO",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "0000208-28.2016.5.23.0108",
+      "destinatarios": [
+        {
+          "polo": "P",
+          "comunicacao_id": 582962837,
+          "nome": "CENTRO DE IMAGENOLOGIA DO CENTRO OESTE LTDA"
+        },
+        {
+          "polo": "A",
+          "comunicacao_id": 582962837,
+          "nome": "DIEGO FERNANDO PAGOTTO"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1059719324,
+          "comunicacao_id": 582962837,
+          "advogado_id": 814580,
+          "created_at": "2026-04-10T16:00:45",
+          "updated_at": "2026-04-10T16:00:45",
+          "advogado": {
+            "id": 814580,
+            "nome": "JOSE MORENO SANCHES JUNIOR",
+            "numero_oab": "4759-O",
+            "uf_oab": "MT"
+          }
+        },
+        {
+          "id": 1059719327,
+          "comunicacao_id": 582962837,
+          "advogado_id": 809098,
+          "created_at": "2026-04-10T16:00:45",
+          "updated_at": "2026-04-10T16:00:45",
+          "advogado": {
+            "id": 809098,
+            "nome": "PAOLA DE OLIVEIRA TREVISAN GOMES",
+            "numero_oab": "7573-O",
+            "uf_oab": "MT"
+          }
+        }
+      ]
+    },
+    {
+      "id": 582678110,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TJMT",
+      "tipoComunicacao": "Intimação",
+      "nomeOrgao": "VARA ÚNICA DE MATUPÁ",
+      "idOrgao": 30881,
+      "texto": "CERTIDÃO DE IMPULSIONAMENTO Nos termos do art. 11, da Resolução n. 458, de 4 de outubro de 2017, do Conselho da Justiça Federal, impulsiono o feito para intimação das partes a se manifestarem, no prazo de cinco (05) dias, acerca do inteiro teor do(s) ofício(s) requisitório(s) expedido(s), conforme anexos. (Assinado Digitalmente) REGINA MATOS DAVI Gestora Administrativa III",
+      "numero_processo": "10011105520248110111",
+      "meio": "D",
+      "link": "https://pje.tjmt.jus.br/pje/Processo/ConsultaDocumento/listView.seam?x=26040919005757400000213291103",
+      "tipoDocumento": "Intimação",
+      "nomeClasse": "CUMPRIMENTO DE SENTENçA CONTRA A FAZENDA PúBLICA",
+      "codigoClasse": "12078",
+      "numeroComunicacao": 3039,
+      "ativo": true,
+      "hash": "QpOqvB2lR3MSMvlc9TXG5ALZyPD35n",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "1001110-55.2024.8.11.0111",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 582678110,
+          "nome": "DIEGO FERNANDO DE OLIVEIRA E SILVA"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1059100150,
+          "comunicacao_id": 582678110,
+          "advogado_id": 808138,
+          "created_at": "2026-04-10T13:22:34",
+          "updated_at": "2026-04-10T13:22:34",
+          "advogado": {
+            "id": 808138,
+            "nome": "GUSTAVO SOARES BONIFÁCIO",
+            "numero_oab": "16001-A",
+            "uf_oab": "MT"
+          }
+        }
+      ]
+    },
+    {
+      "id": 582242956,
+      "data_disponibilizacao": "2026-04-13",
+      "siglaTribunal": "TJSC",
+      "tipoComunicacao": "Lista de distribuição",
+      "nomeOrgao": "Vara Estadual de Direito Bancário",
+      "idOrgao": 49668,
+      "texto": "Processo 5045558-79.2026.8.24.0930 distribuido para Vara Estadual de Direito Bancário na data de 09/04/2026.",
+      "numero_processo": "50455587920268240930",
+      "meio": "D",
+      "link": "https://eproc1g.tjsc.jus.br/eproc/externo_controlador.php?acao=processo_distribuicao_listar&sinPesquisar=S&numProcesso=50455587920268240930&hash=935dc75297371c531245e10f7d72ba2031fb6aa97f8e698d01532a23e6ef8212",
+      "tipoDocumento": "Outros",
+      "nomeClasse": "PROCEDIMENTO COMUM CíVEL",
+      "codigoClasse": "7",
+      "numeroComunicacao": 3659,
+      "ativo": true,
+      "hash": "lx8NKdwzYKQFoL2cPTKe75W6bD1mrE",
+      "status": "P",
+      "motivo_cancelamento": null,
+      "data_cancelamento": null,
+      "datadisponibilizacao": "13/04/2026",
+      "meiocompleto": "Diário de Justiça Eletrônico Nacional",
+      "numeroprocessocommascara": "5045558-79.2026.8.24.0930",
+      "destinatarios": [
+        {
+          "polo": "A",
+          "comunicacao_id": 582242956,
+          "nome": "COOPERATIVA DE CREDITO VALE DO ITAJAI   VIACREDI"
+        },
+        {
+          "polo": "P",
+          "comunicacao_id": 582242956,
+          "nome": "DIEGO FERNANDO PEREIRA"
+        }
+      ],
+      "destinatarioadvogados": [
+        {
+          "id": 1058155212,
+          "comunicacao_id": 582242956,
+          "advogado_id": 1918336,
+          "created_at": "2026-04-10T04:41:20",
+          "updated_at": "2026-04-10T04:41:20",
+          "advogado": {
+            "id": 1918336,
+            "nome": "EUSTAQUIO NEREU LAUSCHNER",
+            "numero_oab": "11427",
+            "uf_oab": "SC"
+          }
+        }
+      ]
+    }
+  ]
+}

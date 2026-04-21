@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
-import { callCreateClientSolicitation } from '../../core/firebase/firestoreService';
+import { callCreateClientSolicitation, callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import { buildClientPortalPath } from '../../core/portalPaths';
+import { validateCpf, validateUrl } from '../../core/validators';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import './NovaSolicitacaoPage.css';
+
+const STEP_LABELS = ['Dados do Candidato', 'Redes Sociais', 'Observações', 'Revisão'];
 
 const INITIAL_FORM = {
     fullName: '',
@@ -39,31 +44,6 @@ function formatCpf(value) {
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 }
 
-function validateCpf(cpf) {
-    const digits = cpf.replace(/\D/g, '');
-    if (digits.length !== 11) return false;
-    if (/^(\d)\1{10}$/.test(digits)) return false;
-    for (let t = 9; t < 11; t++) {
-        let sum = 0;
-        for (let i = 0; i < t; i++) sum += Number(digits[i]) * (t + 1 - i);
-        const remainder = (sum * 10) % 11;
-        if ((remainder === 10 ? 0 : remainder) !== Number(digits[t])) return false;
-    }
-    return true;
-}
-
-function validateUrl(url) {
-    if (!url) return true;
-    if (url.startsWith('@')) return true;
-
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
-}
-
 function maskCpf(cpf) {
     const digits = cpf.replace(/\D/g, '');
     return `***.***.***-${digits.slice(9)}`;
@@ -77,6 +57,8 @@ export default function NovaSolicitacaoPage() {
     const [otherUrl, setOtherUrl] = useState('');
     const [submitted, setSubmitted] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [quota, setQuota] = useState(null);
+    const [showExceedModal, setShowExceedModal] = useState(false);
     const redirectTimerRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -85,6 +67,16 @@ export default function NovaSolicitacaoPage() {
     const tenantLabel = userProfile?.tenantName || userProfile?.tenantId || 'Franquia em sincronizacao';
     const hasConfirmedTenant = Boolean(tenantId);
     const isDemoProfile = userProfile?.source === 'demo';
+    const isMobile = useMediaQuery('(max-width: 768px)');
+    const [step, setStep] = useState(0);
+    const totalSteps = STEP_LABELS.length;
+
+    useEffect(() => {
+        if (!user || isDemoProfile) return;
+        callGetClientQuotaStatus()
+            .then((data) => setQuota(data))
+            .catch(() => {});
+    }, [user, isDemoProfile]);
 
     const update = (field, value) => {
         setForm((previous) => ({ ...previous, [field]: value }));
@@ -127,6 +119,17 @@ export default function NovaSolicitacaoPage() {
             return;
         }
 
+        // Check if submitting would exceed limits — show confirmation modal
+        if (quota?.hasLimits && !showExceedModal) {
+            const willExceedDaily = quota.dailyLimit && quota.dailyCount >= quota.dailyLimit;
+            const willExceedMonthly = quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit;
+            if (willExceedDaily || willExceedMonthly) {
+                setShowExceedModal(true);
+                return;
+            }
+        }
+
+        setShowExceedModal(false);
         setSubmitting(true);
 
         try {
@@ -213,7 +216,11 @@ export default function NovaSolicitacaoPage() {
     }
 
     const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf);
-    const canSubmit = Boolean(isValid && !submitting && hasConfirmedTenant);
+    const quotaBlocked = quota?.hasLimits && (
+        (quota.dailyLimit && quota.dailyCount >= quota.dailyLimit && !quota.allowDailyExceedance) ||
+        (quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit && !quota.allowMonthlyExceedance)
+    );
+    const canSubmit = Boolean(isValid && !submitting && hasConfirmedTenant && !quotaBlocked);
 
     return (
         <div className="ns-page">
@@ -230,6 +237,37 @@ export default function NovaSolicitacaoPage() {
                 )}
             </div>
 
+            {quota?.hasLimits && (() => {
+                const dailyExceeded = quota.dailyLimit && quota.dailyCount >= quota.dailyLimit;
+                const monthlyExceeded = quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit;
+                const blocked = (dailyExceeded && !quota.allowDailyExceedance) || (monthlyExceeded && !quota.allowMonthlyExceedance);
+                if (blocked) {
+                    return (
+                        <>
+                            <QuotaSummaryCard quota={quota} />
+                            <div className="ns-quota-banner ns-quota-banner--blocked">
+                                <strong>Limite atingido</strong> — {dailyExceeded && !quota.allowDailyExceedance
+                                    ? `Limite diario de ${quota.dailyLimit} consultas atingido. Tente novamente amanha.`
+                                    : `Limite mensal de ${quota.monthlyLimit} consultas atingido. Entre em contato com o administrador.`}
+                            </div>
+                        </>
+                    );
+                }
+                if (dailyExceeded || monthlyExceeded) {
+                    return (
+                        <>
+                            <QuotaSummaryCard quota={quota} />
+                            <div className="ns-quota-banner ns-quota-banner--warning">
+                                <strong>Atencao</strong> — {dailyExceeded
+                                    ? `Voce ja utilizou ${quota.dailyCount}/${quota.dailyLimit} consultas hoje. A proxima sera registrada como excedente do dia.`
+                                    : `Voce ja utilizou ${quota.monthlyCount}/${quota.monthlyLimit} consultas no mes. A proxima sera faturavel no proximo ciclo.`}
+                            </div>
+                        </>
+                    );
+                }
+                return <QuotaSummaryCard quota={quota} />;
+            })()}
+
             <form className="ns-form" onSubmit={handleSubmit}>
                 {errors.general && (
                     <div className="login-form__error" style={{ marginBottom: 16 }}>
@@ -237,7 +275,23 @@ export default function NovaSolicitacaoPage() {
                     </div>
                 )}
 
-                <div className="ns-section">
+                {isMobile && (
+                    <div className="ns-stepper">
+                        <div className="ns-stepper__bar">
+                            {STEP_LABELS.map((label, i) => (
+                                <div key={label} className={`ns-stepper__dot${i <= step ? ' ns-stepper__dot--active' : ''}${i < step ? ' ns-stepper__dot--done' : ''}`}>
+                                    <span className="ns-stepper__num">{i < step ? '✓' : i + 1}</span>
+                                </div>
+                            ))}
+                            <div className="ns-stepper__track">
+                                <div className="ns-stepper__fill" style={{ width: `${(step / (totalSteps - 1)) * 100}%` }} />
+                            </div>
+                        </div>
+                        <span className="ns-stepper__label">{STEP_LABELS[step]}</span>
+                    </div>
+                )}
+
+                <div className="ns-section" style={isMobile && step !== 0 ? { display: 'none' } : undefined}>
                     <div className="ns-section__header">
                         <span className="ns-section__icon">CD</span>
                         <h3>Dados do Candidato</h3>
@@ -341,7 +395,7 @@ export default function NovaSolicitacaoPage() {
                     </div>
                 </div>
 
-                <div className="ns-section">
+                <div className="ns-section" style={isMobile && step !== 1 ? { display: 'none' } : undefined}>
                     <div className="ns-section__header">
                         <span className="ns-section__icon">RS</span>
                         <h3>Redes Sociais</h3>
@@ -469,7 +523,7 @@ export default function NovaSolicitacaoPage() {
                     )}
                 </div>
 
-                <div className="ns-section">
+                <div className="ns-section" style={isMobile && step !== 2 ? { display: 'none' } : undefined}>
                     <div className="ns-section__header">
                         <span className="ns-section__icon">NT</span>
                         <h3>Observacoes</h3>
@@ -509,15 +563,86 @@ export default function NovaSolicitacaoPage() {
                     </div>
                 </div>
 
-                <div className="ns-actions">
-                    <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes'))}>
-                        Cancelar
-                    </button>
-                    <button type="submit" className="ns-btn ns-btn--primary" disabled={!canSubmit}>
-                        {submitting ? 'Enviando...' : 'Enviar Solicitacao'}
-                    </button>
-                </div>
+                {isMobile && step === 3 && (
+                    <div className="ns-section ns-review">
+                        <div className="ns-section__header">
+                            <span className="ns-section__icon">RV</span>
+                            <h3>Revisão</h3>
+                        </div>
+                        <div className="ns-review__group">
+                            <div className="ns-review__heading">Dados do Candidato <button type="button" className="ns-review__edit" onClick={() => setStep(0)}>Editar</button></div>
+                            <div className="ns-review__item"><span>Nome:</span> {form.fullName || '—'}</div>
+                            <div className="ns-review__item"><span>CPF:</span> {form.cpf ? maskCpf(form.cpf) : '—'}</div>
+                            {form.dateOfBirth && <div className="ns-review__item"><span>Nascimento:</span> {form.dateOfBirth}</div>}
+                            {form.position && <div className="ns-review__item"><span>Cargo:</span> {form.position}</div>}
+                            {form.department && <div className="ns-review__item"><span>Departamento:</span> {form.department}</div>}
+                            {form.hiringUf && <div className="ns-review__item"><span>UF:</span> {form.hiringUf}</div>}
+                            {form.email && <div className="ns-review__item"><span>Email:</span> {form.email}</div>}
+                            {form.phone && <div className="ns-review__item"><span>Telefone:</span> {form.phone}</div>}
+                        </div>
+                        <div className="ns-review__group">
+                            <div className="ns-review__heading">Redes Sociais <button type="button" className="ns-review__edit" onClick={() => setStep(1)}>Editar</button></div>
+                            {['instagram','facebook','linkedin','tiktok','twitter','youtube'].filter(k => form[k]).map(k => (
+                                <div key={k} className="ns-review__item"><span>{k}:</span> {form[k]}</div>
+                            ))}
+                            {form.otherSocialUrls.map((s, i) => (
+                                <div key={i} className="ns-review__item"><span>{s.label}:</span> {s.url}</div>
+                            ))}
+                            {!['instagram','facebook','linkedin','tiktok','twitter','youtube'].some(k => form[k]) && form.otherSocialUrls.length === 0 && (
+                                <div className="ns-review__item ns-review__item--empty">Nenhuma rede informada</div>
+                            )}
+                        </div>
+                        <div className="ns-review__group">
+                            <div className="ns-review__heading">Observações <button type="button" className="ns-review__edit" onClick={() => setStep(2)}>Editar</button></div>
+                            <div className="ns-review__item"><span>Notas:</span> {form.digitalProfileNotes || '—'}</div>
+                            <div className="ns-review__item"><span>Prioridade:</span> {form.priority === 'HIGH' ? 'Alta' : 'Normal'}</div>
+                        </div>
+                    </div>
+                )}
+
+                {isMobile ? (
+                    <div className="ns-actions ns-actions--wizard">
+                        {step > 0 ? (
+                            <button type="button" className="ns-btn ns-btn--ghost" onClick={() => setStep(step - 1)}>Anterior</button>
+                        ) : (
+                            <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes'))}>Cancelar</button>
+                        )}
+                        {step < totalSteps - 1 ? (
+                            <button type="button" className="ns-btn ns-btn--primary" onClick={() => { if (step === 0 && !validate()) return; setStep(step + 1); }}>Próximo</button>
+                        ) : (
+                            <button type="submit" className="ns-btn ns-btn--primary" disabled={!canSubmit}>{submitting ? 'Enviando...' : 'Enviar Solicitação'}</button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="ns-actions">
+                        <button type="button" className="ns-btn ns-btn--ghost" onClick={() => navigate(buildClientPortalPath(location.pathname, 'solicitacoes'))}>
+                            Cancelar
+                        </button>
+                        <button type="submit" className="ns-btn ns-btn--primary" disabled={!canSubmit}>
+                            {submitting ? 'Enviando...' : 'Enviar Solicitacao'}
+                        </button>
+                    </div>
+                )}
             </form>
+
+            {showExceedModal && (
+                <div className="ns-modal-overlay" onClick={() => setShowExceedModal(false)}>
+                    <div className="ns-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="ns-modal__title">Confirmar envio excedente</h3>
+                        <p className="ns-modal__text">
+                            {quota?.dailyLimit && quota.dailyCount >= quota.dailyLimit
+                                ? `Voce ja utilizou ${quota.dailyCount}/${quota.dailyLimit} consultas hoje. Esta solicitacao sera registrada como excedente do dia.`
+                                : `Voce ja utilizou ${quota.monthlyCount}/${quota.monthlyLimit} consultas no mes. Esta solicitacao sera faturavel no proximo ciclo.`}
+                        </p>
+                        <div className="ns-modal__actions">
+                            <button type="button" className="ns-btn ns-btn--ghost" onClick={() => setShowExceedModal(false)}>Cancelar</button>
+                            <button type="button" className="ns-btn ns-btn--primary" disabled={submitting} onClick={(e) => handleSubmit(e)}>
+                                {submitting ? 'Enviando...' : 'Confirmar envio'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

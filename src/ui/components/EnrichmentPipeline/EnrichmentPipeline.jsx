@@ -2,8 +2,10 @@ import { extractErrorMessage } from '../../../core/errorUtils';
 import './EnrichmentPipeline.css';
 
 const PROVIDERS = [
+    { key: 'bigdatacorp', label: 'BigDataCorp', statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', costField: null },
     { key: 'judit', label: 'Judit', statusField: 'juditEnrichmentStatus', errorField: 'juditError', costField: null },
     { key: 'escavador', label: 'Escavador', statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', costField: null },
+    { key: 'djen', label: 'DJEN', statusField: 'djenEnrichmentStatus', errorField: 'djenError', costField: null, free: true },
     { key: 'autoclass', label: 'Auto-Classificação', statusField: null, errorField: null, costField: null },
     { key: 'ai', label: 'Análise IA', statusField: null, errorField: 'aiError', costField: 'aiCostUsd' },
     { key: 'fontedata', label: 'FonteData', statusField: 'enrichmentStatus', errorField: 'enrichmentError', costField: null, fallback: true },
@@ -66,7 +68,7 @@ function getProviderStatus(caseData, provider) {
 
 function canRetryProvider(provider, status, error, onRetryPhase) {
     if (!onRetryPhase || !error) return false;
-    if (!['fontedata', 'escavador', 'judit', 'ai'].includes(provider.key)) return false;
+    if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
     return status === 'FAILED' || status === 'PARTIAL';
 }
 
@@ -97,10 +99,15 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
                             <div className="enrichment-pipeline__info">
                                 <span className="enrichment-pipeline__label">{provider.label}</span>
                                 <span className="enrichment-pipeline__status">{cfg.label}</span>
+                                {provider.key === 'judit' && (status === 'RUNNING' || status === 'PARTIAL') && Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0 && (
+                                    <span className="enrichment-pipeline__detail">
+                                        Aguardando: {caseData.juditPendingAsyncPhases.map(p => ({ warrant: 'mandados', execution: 'execução penal', lawsuits: 'processos' }[p] || p)).join(', ')}
+                                    </span>
+                                )}
                                 {cost != null && <span className="enrichment-pipeline__cost">${cost.toFixed(4)}</span>}
                             </div>
                             {error && (
-                                <span className="enrichment-pipeline__error" title={error}>⚠</span>
+                                <span className="enrichment-pipeline__error-msg" title={error}>⚠ {error}</span>
                             )}
                             {canRetry && (
                                 <button

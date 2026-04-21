@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
+import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useCases } from '../../hooks/useCases';
 import { useAuth } from '../../core/auth/useAuth';
 import { formatDate } from '../../core/formatDate';
 import { getClientDashboardMetrics } from '../../core/clientPortal';
+import { callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
 import './DashboardClientePage.css';
 
@@ -24,9 +26,17 @@ export default function DashboardClientePage() {
     const isDemoMode = !user || userProfile?.source === 'demo';
     const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
     const { cases, loading, error } = useCases(clientTenantId);
+    const [quota, setQuota] = useState(null);
 
     const metrics = useMemo(() => getClientDashboardMetrics(cases), [cases]);
     const maxMonthCount = metrics.maxMonthCount || 1;
+
+    useEffect(() => {
+        if (!user || isDemoMode) return;
+        callGetClientQuotaStatus()
+            .then((data) => setQuota(data))
+            .catch(() => {});
+    }, [user, isDemoMode]);
 
     if (loading) {
         return (
@@ -71,6 +81,8 @@ export default function DashboardClientePage() {
                     <KpiCard label="Correcao solicitada" value={metrics.corrections} color="red" />
                 )}
             </div>
+
+            <QuotaSummaryCard quota={quota} />
 
             {metrics.done > 0 && (
                 <div className="dashboard-cliente__section">

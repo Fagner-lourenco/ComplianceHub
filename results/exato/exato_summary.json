@@ -1,0 +1,516 @@
+{
+  "runAt": "2026-04-07T12:12:30.163Z",
+  "endpoints": {
+    "processos": "/br/exato/processos",
+    "mandadosPrisao": "/br/cnj/mandados-prisao"
+  },
+  "cases": [
+    {
+      "id": 1,
+      "slug": "andre",
+      "nome": "ANDRE LUIZ CRUZ DOS SANTOS",
+      "cpf": "48052053854",
+      "uf": "SP",
+      "processosHttpStatus": 200,
+      "mandadosHttpStatus": 200,
+      "processosElapsedMs": 892,
+      "mandadosElapsedMs": 35177,
+      "processos": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 765,
+        "totalCost": 0,
+        "totalCostInCredits": 1,
+        "outdatedResult": false,
+        "hasPdf": false,
+        "pdfUrl": null,
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/e8tmchz336tqq4vsxx3vmmjr2",
+        "message": "Documento/entidade inexistente ou não encontrada",
+        "totalProcessos": 0,
+        "totalComoSubstituto": 0,
+        "totalComoRequerente": 0,
+        "totalComoRequerido": 0,
+        "totalComoOutraParte": 0,
+        "processNumbers": [],
+        "criminalProcessNumbers": [],
+        "laborProcessNumbers": [],
+        "activeProcessNumbers": [],
+        "processos": []
+      },
+      "mandados": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 35152,
+        "totalCost": 0,
+        "totalCostInCredits": 2,
+        "outdatedResult": false,
+        "hasPdf": true,
+        "pdfUrl": "https://api.exato.digital/services/pdf/w8zy141pv17dfhiev50nmfrrm",
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/w8zy141pv17dfhiev50nmfrrm",
+        "message": "Documento/entidade inexistente ou não encontrada. Não há mandados para este documento",
+        "totalMandados": 0,
+        "activeMandados": 0,
+        "warrantProcessNumbers": [],
+        "mandados": []
+      }
+    },
+    {
+      "id": 2,
+      "slug": "diego",
+      "nome": "DIEGO EMANUEL ALVES DE SOUZA",
+      "cpf": "10794180329",
+      "uf": "CE",
+      "processosHttpStatus": 200,
+      "mandadosHttpStatus": 200,
+      "processosElapsedMs": 1561,
+      "mandadosElapsedMs": 14497,
+      "processos": {
+        "apiResultType": "success",
+        "transactionResultType": "Success",
+        "elapsedTimeInMilliseconds": 1539,
+        "totalCost": 0,
+        "totalCostInCredits": 1,
+        "outdatedResult": false,
+        "hasPdf": false,
+        "pdfUrl": null,
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/aed3dupjm0jm7mhxnfxw7818h",
+        "message": "Sucesso",
+        "totalProcessos": 1,
+        "totalComoSubstituto": 0,
+        "totalComoRequerente": 0,
+        "totalComoRequerido": 0,
+        "totalComoOutraParte": 1,
+        "processNumbers": [
+          "01149452820188060001"
+        ],
+        "criminalProcessNumbers": [],
+        "laborProcessNumbers": [],
+        "activeProcessNumbers": [],
+        "processos": [
+          {
+            "numero": "01149452820188060001",
+            "tipo": null,
+            "assunto": null,
+            "tribunalNome": null,
+            "tribunalInstancia": null,
+            "tribunalTipo": null,
+            "tribunalDistrito": null,
+            "corpoJulgador": null,
+            "estado": null,
+            "situacao": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+            "numeroVolumes": 0,
+            "numeroPaginas": 0,
+            "valor": 0,
+            "publicacaoData": null,
+            "notificacaoData": null,
+            "ultimaMovimentacaoData": null,
+            "capturaData": null,
+            "ultimaAtualizacaoData": null,
+            "partesCount": 0,
+            "movimentacoesCount": 0,
+            "peticoesCount": 0,
+            "partes": [],
+            "movimentacoes": []
+          }
+        ]
+      },
+      "mandados": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 14473,
+        "totalCost": 0,
+        "totalCostInCredits": 2,
+        "outdatedResult": false,
+        "hasPdf": true,
+        "pdfUrl": "https://api.exato.digital/services/pdf/ckrp2j6gdxzrjj6p66m1a4xsb",
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/ckrp2j6gdxzrjj6p66m1a4xsb",
+        "message": "Documento/entidade inexistente ou não encontrada. Não há mandados para este documento",
+        "totalMandados": 0,
+        "activeMandados": 0,
+        "warrantProcessNumbers": [],
+        "mandados": []
+      }
+    },
+    {
+      "id": 3,
+      "slug": "renan",
+      "nome": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+      "cpf": "11819916766",
+      "uf": "RJ",
+      "processosHttpStatus": 200,
+      "mandadosHttpStatus": 200,
+      "processosElapsedMs": 995,
+      "mandadosElapsedMs": 17356,
+      "processos": {
+        "apiResultType": "success",
+        "transactionResultType": "Success",
+        "elapsedTimeInMilliseconds": 970,
+        "totalCost": 0,
+        "totalCostInCredits": 1,
+        "outdatedResult": false,
+        "hasPdf": false,
+        "pdfUrl": null,
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/6z0ledj7y5uv4hp1769xm2zif",
+        "message": "Sucesso",
+        "totalProcessos": 1,
+        "totalComoSubstituto": 0,
+        "totalComoRequerente": 0,
+        "totalComoRequerido": 0,
+        "totalComoOutraParte": 1,
+        "processNumbers": [
+          "01019762120165010007"
+        ],
+        "criminalProcessNumbers": [],
+        "laborProcessNumbers": [
+          "01019762120165010007"
+        ],
+        "activeProcessNumbers": [],
+        "processos": [
+          {
+            "numero": "01019762120165010007",
+            "tipo": "RITO ORDINARIO",
+            "assunto": "SALARIO/DIFERENCA SALARIAL",
+            "tribunalNome": "TRT1",
+            "tribunalInstancia": "1",
+            "tribunalTipo": "TRABALHISTA",
+            "tribunalDistrito": "RIO DE JANEIRO",
+            "corpoJulgador": null,
+            "estado": "RJ",
+            "situacao": "ARQUIVADO",
+            "numeroVolumes": 0,
+            "numeroPaginas": 0,
+            "valor": 40000,
+            "publicacaoData": null,
+            "notificacaoData": "2016-12-19T14:44:47.0000000",
+            "ultimaMovimentacaoData": "2019-06-09T17:15:16.0000000",
+            "capturaData": "2024-07-21T09:12:08.0000000",
+            "ultimaAtualizacaoData": "2024-07-21T09:12:08.0000000",
+            "partesCount": 10,
+            "movimentacoesCount": 0,
+            "peticoesCount": 0,
+            "partes": [
+              {
+                "documento": "11819916766",
+                "nome": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "71821839000139",
+                "nome": "T F C A S A",
+                "polaridade": "Passiva",
+                "tipo": "Requerido",
+                "oab": null
+              },
+              {
+                "documento": "05271247708",
+                "nome": "FLAVIO JORGE SANTOS DE ARAUJO",
+                "polaridade": "Ativa",
+                "tipo": "Requerente",
+                "oab": null
+              },
+              {
+                "documento": "15824046824",
+                "nome": "ANA KEILA MARCHIORI",
+                "polaridade": "Neutra",
+                "tipo": "Advogado",
+                "oab": null
+              },
+              {
+                "documento": "29458664802",
+                "nome": "ANNA MARIA DA SILVEIRA MUNOZ AVZARADEL",
+                "polaridade": "Neutra",
+                "tipo": "Advogado",
+                "oab": null
+              },
+              {
+                "documento": "29628920782",
+                "nome": "CARLOS ALBERTO PATRICIO DE SOUZA",
+                "polaridade": "Neutra",
+                "tipo": "Advogado",
+                "oab": null
+              },
+              {
+                "documento": "14314892714",
+                "nome": "CARLOS VINICIUS SILVA LIMA",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "03635346365",
+                "nome": "E S P N",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "10126231737",
+                "nome": "V M N",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "13154002782",
+                "nome": "WASHINGTON LUIZ DE SOUZA PESENTI",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              }
+            ],
+            "movimentacoes": []
+          }
+        ]
+      },
+      "mandados": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 17335,
+        "totalCost": 0,
+        "totalCostInCredits": 2,
+        "outdatedResult": false,
+        "hasPdf": true,
+        "pdfUrl": "https://api.exato.digital/services/pdf/2zxvn5uppy3nn9gyo2hzjpznt",
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/2zxvn5uppy3nn9gyo2hzjpznt",
+        "message": "Documento/entidade inexistente ou não encontrada. Não há mandados para este documento",
+        "totalMandados": 0,
+        "activeMandados": 0,
+        "warrantProcessNumbers": [],
+        "mandados": []
+      }
+    },
+    {
+      "id": 4,
+      "slug": "francisco",
+      "nome": "FRANCISCO TACIANO DE SOUSA",
+      "cpf": "05023290336",
+      "uf": "CE",
+      "processosHttpStatus": 200,
+      "mandadosHttpStatus": 200,
+      "processosElapsedMs": 2048,
+      "mandadosElapsedMs": 29687,
+      "processos": {
+        "apiResultType": "success",
+        "transactionResultType": "Success",
+        "elapsedTimeInMilliseconds": 2020,
+        "totalCost": 0,
+        "totalCostInCredits": 1,
+        "outdatedResult": false,
+        "hasPdf": false,
+        "pdfUrl": null,
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/d997gzoe66a9lk19irl8aguj1",
+        "message": "Sucesso",
+        "totalProcessos": 2,
+        "totalComoSubstituto": 0,
+        "totalComoRequerente": 0,
+        "totalComoRequerido": 1,
+        "totalComoOutraParte": 1,
+        "processNumbers": [
+          "02027437220228060167",
+          "00530230220208060167"
+        ],
+        "criminalProcessNumbers": [
+          "02027437220228060167"
+        ],
+        "laborProcessNumbers": [],
+        "activeProcessNumbers": [],
+        "processos": [
+          {
+            "numero": "02027437220228060167",
+            "tipo": "ACAO PENAL",
+            "assunto": "AMEACA",
+            "tribunalNome": "TJCE",
+            "tribunalInstancia": "1",
+            "tribunalTipo": "CRIMINAL",
+            "tribunalDistrito": "SOBRAL",
+            "corpoJulgador": null,
+            "estado": "CE",
+            "situacao": "JULGADO",
+            "numeroVolumes": 0,
+            "numeroPaginas": 0,
+            "valor": 0,
+            "publicacaoData": null,
+            "notificacaoData": "2022-05-03T12:51:03.0000000",
+            "ultimaMovimentacaoData": "2024-10-23T14:33:17.0000000",
+            "capturaData": "2025-12-23T19:39:45.0000000",
+            "ultimaAtualizacaoData": "2025-12-23T19:39:45.0000000",
+            "partesCount": 8,
+            "movimentacoesCount": 0,
+            "peticoesCount": 0,
+            "partes": [
+              {
+                "documento": "05023290336",
+                "nome": "FRANCISCO TACIANO DE SOUSA",
+                "polaridade": "Passiva",
+                "tipo": "Requerido",
+                "oab": null
+              },
+              {
+                "documento": "02014521000123",
+                "nome": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+                "polaridade": "Neutra",
+                "tipo": "Advogado",
+                "oab": null
+              },
+              {
+                "documento": null,
+                "nome": "DELEGACIA ESPECIALIZADA DDM SOBRAL",
+                "polaridade": "Neutra",
+                "tipo": "Outro",
+                "oab": null
+              },
+              {
+                "documento": null,
+                "nome": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+                "polaridade": "Neutra",
+                "tipo": "Outro",
+                "oab": null
+              },
+              {
+                "documento": "06928790000156",
+                "nome": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+                "polaridade": "Neutra",
+                "tipo": "Outro",
+                "oab": null
+              },
+              {
+                "documento": "02815697386",
+                "nome": "CRISTIANE DE LIMA MONTEIRO",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "03532276330",
+                "nome": "JOSE WILLIAM DOMINGUES RIPARDO",
+                "polaridade": "Neutra",
+                "tipo": "Testemunha",
+                "oab": null
+              },
+              {
+                "documento": "06663403311",
+                "nome": "JOSIANE DE LIMA MONTEIRO",
+                "polaridade": "Neutra",
+                "tipo": "Victim",
+                "oab": null
+              }
+            ],
+            "movimentacoes": []
+          },
+          {
+            "numero": "00530230220208060167",
+            "tipo": null,
+            "assunto": null,
+            "tribunalNome": null,
+            "tribunalInstancia": null,
+            "tribunalTipo": null,
+            "tribunalDistrito": null,
+            "corpoJulgador": null,
+            "estado": null,
+            "situacao": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+            "numeroVolumes": 0,
+            "numeroPaginas": 0,
+            "valor": 0,
+            "publicacaoData": null,
+            "notificacaoData": null,
+            "ultimaMovimentacaoData": null,
+            "capturaData": null,
+            "ultimaAtualizacaoData": null,
+            "partesCount": 0,
+            "movimentacoesCount": 0,
+            "peticoesCount": 0,
+            "partes": [],
+            "movimentacoes": []
+          }
+        ]
+      },
+      "mandados": {
+        "apiResultType": "success",
+        "transactionResultType": "Success",
+        "elapsedTimeInMilliseconds": 29657,
+        "totalCost": 0,
+        "totalCostInCredits": 2,
+        "outdatedResult": false,
+        "hasPdf": true,
+        "pdfUrl": "https://api.exato.digital/services/pdf/dedn4hfdpv2us0qfqypup2dlg",
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/dedn4hfdpv2us0qfqypup2dlg",
+        "message": "Sucesso",
+        "totalMandados": 1,
+        "activeMandados": 1,
+        "warrantProcessNumbers": [
+          "02047235420228060167"
+        ],
+        "mandados": [
+          {
+            "id": 203957476,
+            "numeroPeca": "0204723542022806016701000326",
+            "numeroPecaFormatado": "0204723-54.2022.8.06.0167.01.0003-26",
+            "numeroProcesso": "02047235420228060167",
+            "nomePessoa": "FRANCISCO TACIANO DE SOUSA",
+            "descricaoStatus": "Pendente de Cumprimento",
+            "dataExpedicao": "2025-11-17T00:00:00.0000000",
+            "nomeOrgao": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+            "descricaoPeca": "Mandado de Prisão",
+            "nomeMae": "FRANCISCA CAETANA DE SOUSA",
+            "nomePai": "NÃO INFORMADO",
+            "descricaoSexo": "Masculino",
+            "descricaoProfissao": null,
+            "dataNascimento": "1991-08-16T00:00:00.0000000",
+            "detalhes": null
+          }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "slug": "matheus",
+      "nome": "MATHEUS GONCALVES DOS SANTOS",
+      "cpf": "46247243804",
+      "uf": "SP",
+      "processosHttpStatus": 200,
+      "mandadosHttpStatus": 200,
+      "processosElapsedMs": 844,
+      "mandadosElapsedMs": 16772,
+      "processos": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 823,
+        "totalCost": 0,
+        "totalCostInCredits": 1,
+        "outdatedResult": false,
+        "hasPdf": false,
+        "pdfUrl": null,
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/at4j2fzdcbio6gkgantqv760l",
+        "message": "Documento/entidade inexistente ou não encontrada",
+        "totalProcessos": 0,
+        "totalComoSubstituto": 0,
+        "totalComoRequerente": 0,
+        "totalComoRequerido": 0,
+        "totalComoOutraParte": 0,
+        "processNumbers": [],
+        "criminalProcessNumbers": [],
+        "laborProcessNumbers": [],
+        "activeProcessNumbers": [],
+        "processos": []
+      },
+      "mandados": {
+        "apiResultType": "not_found",
+        "transactionResultType": "EntityNotFound",
+        "elapsedTimeInMilliseconds": 16748,
+        "totalCost": 0,
+        "totalCostInCredits": 2,
+        "outdatedResult": false,
+        "hasPdf": true,
+        "pdfUrl": "https://api.exato.digital/services/pdf/6db3xj1bnuqj70sftpyziq4mu",
+        "originalFilesUrl": "https://api.exato.digital/services/original-files/6db3xj1bnuqj70sftpyziq4mu",
+        "message": "Documento/entidade inexistente ou não encontrada. Não há mandados para este documento",
+        "totalMandados": 0,
+        "activeMandados": 0,
+        "warrantProcessNumbers": [],
+        "mandados": []
+      }
+    }
+  ]
+}

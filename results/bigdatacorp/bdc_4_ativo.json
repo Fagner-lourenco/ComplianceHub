@@ -1,0 +1,211 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "Processes": {
+        "Lawsuits": [
+          {
+            "Number": "00530230220208060167",
+            "Status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+            "LawsuitMatchType": "DOC"
+          },
+          {
+            "Number": "02056591120248060167",
+            "Type": "CUMPRIMENTO DE SENTENCA",
+            "MainSubject": "ALIMENTOS",
+            "CourtName": "TJCE",
+            "CourtLevel": "1",
+            "CourtType": "CIVEL",
+            "CourtDistrict": "SOBRAL",
+            "JudgingBody": "2 VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL - SOBRAL CIVEL",
+            "State": "CE",
+            "Status": "ATIVO",
+            "LawsuitHostService": "OTHER",
+            "RelatedLawsuits": [
+              "02047235420228060167"
+            ],
+            "InferredCNJSubjectName": "ALIMENTOS",
+            "InferredCNJSubjectNumber": 10859,
+            "InferredCNJProcedureTypeName": "CUMPRIMENTO DE SENTENÇA DE OBRIGAÇÃO DE PRESTAR ALIMENTOS",
+            "InferredCNJProcedureTypeNumber": 12246,
+            "InferredBroadCNJSubjectName": "DIREITO PROCESSUAL CIVIL E DO TRABALHO",
+            "InferredBroadCNJSubjectNumber": 8826,
+            "OtherSubjects": [
+              "ALIMENTOS"
+            ],
+            "NumberOfVolumes": 0,
+            "NumberOfPages": 0,
+            "Value": -1,
+            "ResJudicataDate": "0001-01-01T00:00:00",
+            "CloseDate": "0001-01-01T00:00:00",
+            "RedistributionDate": "0001-01-01T00:00:00",
+            "PublicationDate": "0001-01-01T00:00:00",
+            "NoticeDate": "2024-10-03T11:50:09",
+            "LastMovementDate": "2024-12-06T15:07:09",
+            "CaptureDate": "2024-12-13T22:37:18",
+            "LastUpdate": "2024-12-13T22:37:18",
+            "NumberOfParties": 5,
+            "NumberOfUpdates": 12,
+            "LawSuitAge": 554,
+            "AverageNumberOfUpdatesPerMonth": 0,
+            "ReasonForConcealedData": 0,
+            "LawsuitMatchType": "DOC",
+            "Parties": [
+              {
+                "Doc": "06928790000156",
+                "IsPartyActive": true,
+                "Name": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+                "Polarity": "NEUTRAL",
+                "Type": "OTHER",
+                "IsInference": true,
+                "PartyDetails": {
+                  "SpecificType": "PROMOTOR"
+                },
+                "LastCaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Doc": "02014521000123",
+                "IsPartyActive": true,
+                "Name": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+                "Polarity": "NEUTRAL",
+                "Type": "LAWYER",
+                "IsInference": true,
+                "PartyDetails": {
+                  "SpecificType": "DEFENSOR PUBLICO"
+                },
+                "LastCaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Doc": "10416980384",
+                "IsPartyActive": true,
+                "Name": "JOSE LEVY LIMA DE SOUSA",
+                "Polarity": "ACTIVE",
+                "Type": "CLAIMANT",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "EXEQUENTE"
+                },
+                "LastCaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Doc": "06663403311",
+                "IsPartyActive": true,
+                "Name": "JOSIANE DE LIMA MONTEIRO",
+                "Polarity": "NEUTRAL",
+                "Type": "OTHER",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "GENITOR(A)"
+                },
+                "LastCaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Doc": "05023290336",
+                "IsPartyActive": true,
+                "Name": "FRANCISCO TACIANO DE SOUSA",
+                "Polarity": "PASSIVE",
+                "Type": "CLAIMED",
+                "IsInference": true,
+                "PartyDetails": {
+                  "SpecificType": "EXECUTADO"
+                },
+                "LastCaptureDate": "2024-12-13T22:37:18"
+              }
+            ],
+            "Updates": [
+              {
+                "Content": "CERTIDAO EMITIDA",
+                "PublishDate": "2024-12-06T15:07:09",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "EXPEDICAO DE ATO ORDINATORIO | CONFORME DISPOSICAO EXPRESSA NO PROVIMENTO N. 02/2021, ARTS. 129 A 133, PUBLICADO AS FLS. 24/29 DO DJ-E QUE CIRCULOU EM 28/01/2021, EMANADO DA CORREGEDORIA GERAL DA JUSTICA, E DE ORDEM DO MM. JUIZ DE DIREITO DESTA UNIDADE JUDICIAL, DR. WYRLLENSON FLAVIO BARBOSA SOARES, DIANTE DO DECURSO DO PRAZO DA INTIMACAO DE FL. 21 (05.12.2024), ISTO E, 15 (QUI",
+                "PublishDate": "2024-12-06T15:06:18",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "JUNTADA DE PETICAO | N PROTOCOLO: WSOB.24.01835647-1 TIPO DA PETICAO: PETICOES INTERMEDIARIAS DIVERSAS DATA: 06/11/2024 19:48",
+                "PublishDate": "2024-11-06T23:07:26",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "CERTIDAO EMITIDA",
+                "PublishDate": "2024-10-21T14:27:44",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "JUNTADA DE DOCUMENTO",
+                "PublishDate": "2024-10-21T14:27:34",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "JUNTADA DE DOCUMENTO",
+                "PublishDate": "2024-10-21T14:26:04",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "CERTIDAO EMITIDA | CERTIFICO, FACE AS PRERROGATIVAS POR LEI CONFERIDAS, QUE ENCAMINHEI PARA A CEMAN O MANDADO RETRO. O REFERIDO E VERDADE. DOU FE.",
+                "PublishDate": "2024-10-17T18:13:50",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "EXPEDICAO DE MANDADO | MANDADO N: 167.2024/020707-2 SITUACAO: CUMPRIDO - ATO POSITIVO EM 21/10/2024 LOCAL: OFICIAL DE JUSTICA - RAIMUNDO MARCELINO MELO ARAGAO",
+                "PublishDate": "2024-10-17T18:07:36",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "PROCESSO APENSADO | APENSADO AO PROCESSO 0204723-54.2022.8.06.0167 - CLASSE: CUMPRIMENTO DE SENTENCA DE OBRIGACAO DE PRESTAR ALIMENTOS - ASSUNTO PRINCIPAL: FIXACAO",
+                "PublishDate": "2024-10-17T13:17:43",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | DEFIRO OS BENEFICIOS DA JUSTICA GRATUITA (ART. 98, CPC). PROCESSO EM SEGREDO DE JUSTICA (ART. 189, II DO CPC). PROCEDA-SE AO APENSAMENTO DOS PRESENTES AUTOS AO PROCESSO N. 0204723-54.2022.8.06.0167. INTIME-SE A PARTE DEVEDORA PESSOALMENTE (CPC, 513,  4), PARA QUE CUMPRA A SENTENCA E EFETUE O PAGAMENTO DOS VALORES LIQUIDADOS PELA PARTE CREDORA, E",
+                "PublishDate": "2024-10-17T01:13:32",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "CONCLUSOS",
+                "PublishDate": "2024-10-03T11:50:11",
+                "CaptureDate": "2024-12-13T22:37:18"
+              },
+              {
+                "Content": "PROCESSO DISTRIBUIDO POR DEPENDENCIA | DISTRIBUICAO POR DEPENDENCIA AO PROCESSO ONDE COBRADOS OS ALIMENTOS PELO RITO DA PRISAO CIVIL.",
+                "PublishDate": "2024-10-03T11:50:09",
+                "CaptureDate": "2024-12-13T22:37:18"
+              }
+            ],
+            "Petitions": [],
+            "Decisions": [
+              {
+                "DecisionContent": "DEFIRO OS BENEFICIOS DA JUSTICA GRATUITA (ART. 98, CPC).",
+                "DecisionDate": "2024-10-17T01:13:32"
+              }
+            ]
+          }
+        ],
+        "TotalLawsuits": 8,
+        "TotalLawsuitsAsAuthor": 0,
+        "TotalLawsuitsAsDefendant": 8,
+        "TotalLawsuitsAsOther": 0,
+        "FirstLawsuitDate": "0001-01-01T00:00:00",
+        "LastLawsuitDate": "2024-10-03T11:50:09",
+        "Last30DaysLawsuits": 0,
+        "Last90DaysLawsuits": 0,
+        "Last180DaysLawsuits": 0,
+        "Last365DaysLawsuits": 0
+      }
+    }
+  ],
+  "QueryId": "f40dc5de-30f5-47fc-be2c-997f8011ec21",
+  "ElapsedMilliseconds": 151,
+  "QueryDate": "2026-04-10T18:34:12.9448278Z",
+  "Status": {
+    "processes": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

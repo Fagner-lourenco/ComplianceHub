@@ -57,6 +57,14 @@ vi.mock('./portals/ops/AuditoriaPage', () => ({
     default: () => <div>OPS_AUDITORIA</div>,
 }));
 
+vi.mock('./portals/ops/RelatoriosPage', () => ({
+    default: () => <div>OPS_RELATORIOS</div>,
+}));
+
+vi.mock('./portals/ops/SaudePage', () => ({
+    default: () => <div>OPS_SAUDE</div>,
+}));
+
 vi.mock('./portals/ops/ClientesPage', () => ({
     default: () => <div>OPS_CLIENTES</div>,
 }));
@@ -69,16 +77,21 @@ vi.mock('./portals/client/NovaSolicitacaoPage', () => ({
     default: () => <div>CLIENT_NOVA</div>,
 }));
 
-vi.mock('./portals/client/CandidatosPage', () => ({
-    default: () => <div>CLIENT_CANDIDATOS</div>,
-}));
-
 vi.mock('./portals/client/ExportacoesPage', () => ({
     default: () => <div>CLIENT_EXPORTACOES</div>,
+}));
+vi.mock('./portals/client/RelatoriosClientePage', () => ({
+    default: () => <div>CLIENT_RELATORIOS</div>,
+}));
+vi.mock('./portals/client/EquipePage', () => ({
+    default: () => <div>CLIENT_EQUIPE</div>,
 }));
 
 vi.mock('./pages/PublicReportPage', () => ({
     default: () => <div>PUBLIC_REPORT_PAGE</div>,
+}));
+vi.mock('./pages/PerfilPage', () => ({
+    default: () => <div>PERFIL_PAGE</div>,
 }));
 
 const { default: App } = await import('./App');
@@ -150,5 +163,28 @@ describe('App routing guards', () => {
         render(<App />);
 
         expect(await screen.findByText('PUBLIC_REPORT_PAGE')).toBeInTheDocument();
+    });
+
+    it('carrega a gestao de relatorios do portal cliente para perfil com permissao de exportacao', async () => {
+        appTestMocks.authState = {
+            loading: false,
+            user: { uid: 'client-1' },
+            userProfile: {
+                uid: 'client-1',
+                role: 'client_manager',
+                tenantId: 'madero-br',
+                tenantName: 'Madero Industria e Comercio S.A.',
+                displayName: 'Analista RH',
+                email: 'analista.rh@madero.com.br',
+            },
+            profileStatus: 'ready',
+            logout: vi.fn(),
+        };
+        window.history.replaceState({}, '', '/client/relatorios');
+
+        render(<App />);
+
+        expect(await screen.findByText('CLIENT_RELATORIOS')).toBeInTheDocument();
+        expect(screen.getByTestId('layout-title')).toHaveTextContent('Portal Cliente');
     });
 });

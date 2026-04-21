@@ -1,0 +1,129 @@
+{
+  "status": 200,
+  "ok": true,
+  "elapsedMs": 995,
+  "data": {
+    "UniqueIdentifier": "6z0ledj7y5uv4hp1769xm2zif",
+    "TransactionResultTypeCode": 1,
+    "TransactionResultType": "Success",
+    "Message": "Sucesso",
+    "TotalCostInCredits": 1,
+    "BalanceInCredits": -7,
+    "ElapsedTimeInMilliseconds": 970,
+    "Reserved": null,
+    "Date": "2026-04-07T09:13:28.1265646-03:00",
+    "OutdatedResult": false,
+    "HasPdf": false,
+    "DataSourceHtml": null,
+    "DateString": "2026-04-07T09:13:28.1265646-03:00",
+    "OriginalFilesUrl": "https://api.exato.digital/services/original-files/6z0ledj7y5uv4hp1769xm2zif",
+    "PdfUrl": null,
+    "TotalCost": 0,
+    "BalanceInBrl": null,
+    "DataSourceCategory": "Jurídico e Menções",
+    "ApiResultType": "success",
+    "ResultTypeCode": 1,
+    "ResultSubtype": null,
+    "Result": {
+      "Processos": [
+        {
+          "Numero": "01019762120165010007",
+          "Tipo": "RITO ORDINARIO",
+          "Assunto": "SALARIO/DIFERENCA SALARIAL",
+          "TribunalNome": "TRT1",
+          "TribunalInstancia": "1",
+          "TribunalTipo": "TRABALHISTA",
+          "TribunalDistrito": "RIO DE JANEIRO",
+          "Estado": "RJ",
+          "Situacao": "ARQUIVADO",
+          "NumeroVolumes": 0,
+          "NumeroPaginas": 0,
+          "Valor": 40000,
+          "NotificacaoData": "2016-12-19T14:44:47.0000000",
+          "UltimaMovimentacaoData": "2019-06-09T17:15:16.0000000",
+          "CapturaData": "2024-07-21T09:12:08.0000000",
+          "UltimaAtualizacaoData": "2024-07-21T09:12:08.0000000",
+          "Partes": [
+            {
+              "Documento": "11819916766",
+              "Nome": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+              "Polaridade": "Neutra",
+              "Tipo": "Testemunha",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "71821839000139",
+              "Nome": "T F C A S A",
+              "Polaridade": "Passiva",
+              "Tipo": "Requerido",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "05271247708",
+              "Nome": "FLAVIO JORGE SANTOS DE ARAUJO",
+              "Polaridade": "Ativa",
+              "Tipo": "Requerente",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "15824046824",
+              "Nome": "ANA KEILA MARCHIORI",
+              "Polaridade": "Neutra",
+              "Tipo": "Advogado",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "29458664802",
+              "Nome": "ANNA MARIA DA SILVEIRA MUNOZ AVZARADEL",
+              "Polaridade": "Neutra",
+              "Tipo": "Advogado",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "29628920782",
+              "Nome": "CARLOS ALBERTO PATRICIO DE SOUZA",
+              "Polaridade": "Neutra",
+              "Tipo": "Advogado",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "14314892714",
+              "Nome": "CARLOS VINICIUS SILVA LIMA",
+              "Polaridade": "Neutra",
+              "Tipo": "Testemunha",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "03635346365",
+              "Nome": "E S P N",
+              "Polaridade": "Neutra",
+              "Tipo": "Testemunha",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "10126231737",
+              "Nome": "V M N",
+              "Polaridade": "Neutra",
+              "Tipo": "Testemunha",
+              "ParteDetalhes": {}
+            },
+            {
+              "Documento": "13154002782",
+              "Nome": "WASHINGTON LUIZ DE SOUZA PESENTI",
+              "Polaridade": "Neutra",
+              "Tipo": "Testemunha",
+              "ParteDetalhes": {}
+            }
+          ],
+          "Movimentacoes": [],
+          "Peticoes": []
+        }
+      ],
+      "TotalProcessos": 1,
+      "TotalProcessosComoSubstituto": 0,
+      "TotalProcessosComoRequerente": 0,
+      "TotalProcessosComoRequerido": 0,
+      "TotalProcessosComoOutraParte": 1
+    }
+  }
+}

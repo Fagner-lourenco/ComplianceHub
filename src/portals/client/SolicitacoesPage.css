@@ -237,6 +237,10 @@
     background: rgba(16, 185, 129, .08);
 }
 
+.data-table__row--heat-none {
+    background: transparent;
+}
+
 .data-table__td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--gray-100);
@@ -584,8 +588,8 @@
     font-size: .8125rem;
 }
 .case-detail__section--alert {
-    background: #fffafa;
-    border: 1px solid #fee2e2;
+    background: var(--red-50);
+    border: 1px solid var(--red-100);
     border-radius: var(--radius-md);
     padding: var(--space-4);
 }

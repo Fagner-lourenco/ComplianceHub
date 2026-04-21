@@ -5,18 +5,19 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
 
-          if (id.includes('react-dom') || id.includes('\\react-dom\\')) return 'react-dom';
-          if (id.includes('react') || id.includes('\\react\\')) return 'react-core';
+          if (/[\\/]react-dom[\\/]/.test(id)) return 'react-dom';
+          if (/[\\/]react[\\/]/.test(id)) return 'react-core';
 
-          if (id.includes('firebase/auth') || id.includes('\\firebase\\auth\\')) return 'firebase-auth';
-          if (id.includes('firebase/firestore') || id.includes('\\firebase\\firestore\\')) return 'firebase-firestore';
-          if (id.includes('firebase/functions') || id.includes('\\firebase\\functions\\')) return 'firebase-functions';
-          if (id.includes('firebase/app') || id.includes('\\firebase\\app\\')) return 'firebase-core';
+          if (/[\\/]firebase[\\/]auth[\\/]/.test(id)) return 'firebase-auth';
+          if (/[\\/]firebase[\\/]firestore[\\/]/.test(id)) return 'firebase-firestore';
+          if (/[\\/]firebase[\\/]functions[\\/]/.test(id)) return 'firebase-functions';
+          if (/[\\/]firebase[\\/]app[\\/]/.test(id)) return 'firebase-core';
           if (id.includes('firebase')) return 'firebase-shared';
         },
       },

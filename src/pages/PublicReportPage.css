@@ -1,7 +1,6 @@
 .public-report {
     min-height: 100dvh;
-    background: #e5e7eb;
-    padding-bottom: 96px;
+    background: #f0f2f5;
 }
 
 .public-report__state {
@@ -10,7 +9,7 @@
     justify-content: center;
     min-height: 100dvh;
     font-family: 'Inter', system-ui, sans-serif;
-    color: #64748b;
+    color: var(--text-secondary);
     text-align: center;
     padding: 24px;
 }
@@ -28,11 +27,11 @@
     margin-bottom: 12px;
     font-size: 18px;
     font-weight: 600;
-    color: #4f46e5;
+    color: var(--text-brand);
 }
 
 .public-report__state-title {
-    color: #1e293b;
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
@@ -42,7 +41,7 @@
     bottom: 20px;
     display: flex;
     gap: 8px;
-    z-index: var(--z-drawer);
+    z-index: 9999;
 }
 
 .public-report__button {
@@ -54,6 +53,11 @@
     cursor: pointer;
     color: #fff;
     backdrop-filter: blur(14px);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.public-report__button:active {
+    transform: scale(.96);
 }
 
 .public-report__button--secondary {
@@ -67,18 +71,14 @@
 }
 
 .public-report__frame {
+    display: block;
     width: 100%;
-    min-height: calc(100dvh - 96px);
-    height: calc(100dvh - 96px);
+    height: 100dvh;
     border: none;
-    background: #e5e7eb;
+    background: #f0f2f5;
 }
 
 @media (max-width: 640px) {
-    .public-report {
-        padding-bottom: 116px;
-    }
-
     .public-report__actions {
         left: 12px;
         right: 12px;
@@ -90,11 +90,13 @@
 
     .public-report__button {
         width: 100%;
-        padding: 11px 12px;
+        padding: 12px 12px;
+        font-size: 12px;
     }
+}
 
-    .public-report__frame {
-        min-height: calc(100dvh - 116px);
-        height: calc(100dvh - 116px);
+@media print {
+    .public-report__actions {
+        display: none;
     }
 }

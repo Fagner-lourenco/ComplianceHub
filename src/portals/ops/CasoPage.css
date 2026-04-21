@@ -18,7 +18,7 @@
     border: 1px solid var(--border-default);
     background:
         radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 32%),
-        linear-gradient(135deg, #ffffff, #f8fafc);
+        linear-gradient(135deg, var(--bg-card), var(--gray-50));
     box-shadow: var(--shadow-xs);
 }
 
@@ -115,6 +115,18 @@
     text-overflow: ellipsis;
 }
 
+.stepper__shortcuts {
+    margin-left: auto;
+    font-size: .85rem;
+    cursor: help;
+    opacity: .4;
+    transition: opacity .15s;
+}
+
+.stepper__shortcuts:hover {
+    opacity: .8;
+}
+
 /* Section */
 .caso-section {
     background: var(--bg-card);
@@ -202,6 +214,13 @@
     box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
 }
 
+.caso-textarea--autosize {
+    overflow-y: auto;
+    min-height: 4.5em;
+    max-height: 480px;
+    resize: vertical;
+}
+
 /* Select group (big buttons) */
 .caso-select-group {
     display: flex;
@@ -280,7 +299,7 @@
     display: flex;
     gap: var(--space-5);
     padding: var(--space-4);
-    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    background: linear-gradient(135deg, var(--gray-50), var(--brand-50));
     border-radius: var(--radius-md);
     margin-bottom: var(--space-4);
     border: 1px solid var(--border-default);
@@ -330,6 +349,10 @@
 
 .caso-checklist__item--missing {
     color: var(--red-600);
+}
+
+.caso-checklist__item--warn {
+    color: var(--amber-600, #d97706);
 }
 
 /* Step navigation */
@@ -412,12 +435,31 @@
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
     .caso-header {
-        padding: var(--space-4);
+        padding: var(--space-3);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        margin-bottom: var(--space-3);
+        background: rgba(255,255,255,.96);
+        backdrop-filter: blur(14px);
+        border-radius: var(--radius-lg);
+    }
+
+    .caso-header__info h2 {
+        font-size: 1rem;
+    }
+
+    .caso-header__meta {
+        flex-wrap: wrap;
+        gap: var(--space-1) var(--space-2);
     }
 
     .stepper {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        gap: 1px;
+        padding: 3px;
+        margin-bottom: var(--space-3);
     }
     
     .stepper::-webkit-scrollbar {
@@ -431,6 +473,16 @@
     .stepper__step {
         padding: 8px 10px;
         justify-content: center;
+        min-height: 44px;
+    }
+
+    .stepper__number {
+        width: 28px;
+        height: 28px;
+    }
+
+    .stepper__shortcuts {
+        display: none;
     }
     
     .caso-section {
@@ -439,11 +491,13 @@
     
     .caso-header__actions {
         width: 100%;
+        flex-wrap: wrap;
     }
     
     .caso-header__actions .caso-btn {
         flex: 1;
         text-align: center;
+        min-height: 44px;
     }
     
     .caso-step-nav {
@@ -454,6 +508,7 @@
     .caso-step-nav .caso-btn {
         width: 100%;
         text-align: center;
+        min-height: 44px;
     }
     
     .caso-risk-summary {
@@ -466,6 +521,24 @@
     
     .caso-success {
         padding: var(--space-8);
+    }
+
+    .caso-select-btn {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    .caso-comparativo > div {
+        grid-template-columns: 1fr !important;
+    }
+
+    .enrichment-pipeline {
+        padding: var(--space-3);
+    }
+
+    .enrichment-pipeline__retry {
+        min-height: 32px;
+        padding: 6px 12px;
     }
 }
 
@@ -518,9 +591,9 @@
 }
 
 .caso-enrichment-banner--blocked {
-    background: #fef3c7;
-    border: 1px solid #fbbf24;
-    color: #92400e;
+    background: var(--bg-blocked);
+    border: 1px solid var(--border-blocked);
+    color: var(--text-blocked);
 }
 
 .caso-api-badge--green {
@@ -534,8 +607,8 @@
 }
 
 .caso-api-badge--purple {
-    background: #ede9fe;
-    color: #6d28d9;
+    background: var(--bg-purple);
+    color: var(--text-purple);
 }
 
 .caso-enrichment-error {
@@ -683,6 +756,10 @@
     border-radius: var(--radius-md);
     padding: var(--space-3);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
 }
 
 .caso-stat-card__label {
@@ -700,16 +777,33 @@
     color: var(--text-primary);
 }
 
-.caso-stat-card__flag--red .caso-stat-card__value {
-    color: var(--red-600);
+.caso-stat-card__flag {
+    display: inline-block;
+    font-size: .6875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-top: 2px;
 }
 
-.caso-stat-card__flag--yellow .caso-stat-card__value {
-    color: var(--yellow-600);
+.caso-stat-card__flag--red {
+    background: var(--red-50, #fef2f2);
+    color: var(--red-700, #b91c1c);
 }
 
-.caso-stat-card__flag--green .caso-stat-card__value {
-    color: var(--green-600);
+.caso-stat-card__flag--yellow {
+    background: var(--yellow-50, #fefce8);
+    color: var(--yellow-700, #a16207);
+}
+
+.caso-stat-card__flag--green {
+    background: var(--green-50, #f0fdf4);
+    color: var(--green-700, #15803d);
+}
+
+.caso-stat-card__flag--gray {
+    background: var(--gray-100, #f3f4f6);
+    color: var(--gray-600, #4b5563);
 }
 
 /* ========== Data tables (process lists) ========== */
@@ -748,7 +842,7 @@
 }
 
 .caso-data-table__row--criminal:hover td {
-    background: #fecaca;
+    background: var(--red-100);
 }
 
 .caso-data-table__row--witness td {
@@ -898,6 +992,11 @@
     margin-top: var(--space-2);
 }
 
+/* Dark mode overrides */
+[data-theme="dark"] .stepper__step:hover {
+    background: rgba(255, 255, 255, .08);
+}
+
 .caso-execution-panel h5 {
     font-size: .75rem;
     text-transform: uppercase;
@@ -913,7 +1012,7 @@
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-md);
     max-width: 100%;
-    background: #fff;
+    background: var(--bg-card);
 }
 
 .caso-table-wrapper .caso-data-table {
@@ -933,8 +1032,8 @@
 }
 
 .ai-structured-card--homonym {
-    background: linear-gradient(180deg, #f8fafc, #f5f3ff);
-    border-color: #ddd6fe;
+    background: linear-gradient(180deg, var(--gray-50), var(--bg-purple));
+    border-color: var(--border-purple);
 }
 
 .ai-structured-card__section {
@@ -1016,7 +1115,7 @@
     padding: 10px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-light);
-    background: #ffffff;
+    background: var(--bg-card);
 }
 
 .ai-homonym-process-item__head {
@@ -1038,4 +1137,14 @@
 .ai-homonym-process-item__decision {
     font-size: .75rem;
     color: var(--text-secondary);
+}
+
+/* Warrant field values */
+.caso-field-value {
+    font-size: .8125rem;
+    color: var(--text-primary);
+}
+.caso-field-value--danger {
+    color: var(--red-600);
+    font-weight: 700;
 }

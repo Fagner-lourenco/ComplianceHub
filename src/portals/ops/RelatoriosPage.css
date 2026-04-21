@@ -1,0 +1,115 @@
+.relatorios-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+
+.relatorios-header {
+    background:
+        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
+        linear-gradient(135deg, var(--bg-card), var(--gray-50));
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--brand-500);
+}
+
+.relatorios-header__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
+}
+
+.relatorios-header__subtitle {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.relatorios-header__count {
+    font-size: .875rem;
+    color: var(--text-secondary);
+    background: var(--gray-100);
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+.relatorios-toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.relatorios-feedback {
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--brand-200);
+    background: var(--brand-50);
+    color: var(--brand-700);
+    font-size: .875rem;
+}
+
+.relatorios-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+}
+
+.relatorios-status {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.relatorios-status--active {
+    background: var(--green-50, #f0fdf4);
+    color: var(--green-700, #15803d);
+    border: 1px solid var(--green-200, #bbf7d0);
+}
+
+.relatorios-status--inactive {
+    background: var(--gray-100, #f3f4f6);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-light, #e5e7eb);
+}
+
+.relatorios-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.relatorios-action-btn {
+    min-height: 44px;
+    padding: 6px 14px;
+    font-size: .8125rem;
+}
+
+.relatorios-action-btn--inline {
+    min-height: 34px;
+    padding: 3px 10px;
+    font-size: .75rem;
+}
+
+.relatorios-action-btn--danger {
+    color: var(--red-600);
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .relatorios-header {
+        padding: var(--space-4);
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: stretch;
+    }
+    .relatorios-header__title { font-size: 1.125rem; }
+}

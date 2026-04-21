@@ -1,0 +1,367 @@
+﻿
+================================================================================
+CASO: qurTsbgGlss6XGFOslZp (qurTsbgGlss6XGFOslZp)
+================================================================================
+status: PENDING
+enrichmentStatus: undefined
+escavadorEnrichmentStatus: DONE
+juditEnrichmentStatus: DONE
+criminalFlag: POSITIVE
+laborFlag: POSITIVE
+warrantFlag: POSITIVE
+
+--- prefillNarratives.metadata ---
+{
+  "model": "gpt-5.4-nano",
+  "fromCache": false,
+  "executedAt": "2026-04-12T03:45:13.653Z",
+  "ok": false,
+  "source": "deterministic",
+  "error": "Skipped: AI general analysis failed.",
+  "mergedAt": "2026-04-12T03:45:14.453Z",
+  "promptVersion": "v1-report-prefill",
+  "deterministicVersion": "v2-deterministic-prefill"
+}
+
+--- deterministicPrefill.metadata ---
+{
+  "triggersActive": [
+    "REVIEW_RECOMMENDED",
+    "HOMONYM_AMBIGUITY",
+    "CRIMINAL_EVIDENCE_UNCERTAIN"
+  ],
+  "version": "v2-deterministic-prefill",
+  "generatedAt": "2026-04-12T03:45:14.353Z",
+  "isComplex": true,
+  "source": "deterministic"
+}
+
+--- prefillNarratives.criminalNotes ---
+Criminal POSITIVO (severidade HIGH, evidencia MIXED_STRONG_AND_WEAK): 8 processo(s) criminal(is) identificado(s) via Judit, Escavador, BigDataCorp.
+
+Processos criminais/penais (8):
+- 0202743-72.2022.8.06.0167 | Status: Finalizado | Polo: Passive | Tribunal: TJCE | Data: 2022-05-03T15:51:03.000Z | Fonte: Judit | Match: CPF confirmado
+- 0012198-45.2022.8.06.0167 | Status: Em andamento | Polo: PASSIVO | Tribunal: TJCE | Data: 2022-11-24 | Fonte: Escavador | Match: match por nome | Papel: Autor Do Fato
+- 0013417-40.2021.8.06.0293 | Status: Arquivado definitivamente | Polo: PASSIVO | Tribunal: TJCE | Data: 2022-11-16 | Fonte: Escavador | Match: match por nome | Papel: Requerido
+- 0040713-08.2013.8.06.0167 | Status: Arquivado definitivamente | Polo: N/A | Tribunal: TJCE | Data: 2013-04-09 | Fonte: Escavador | Match: match por nome
+- 00134174020218060293 | Status: ARQUIVADO | Polo: PASSIVE | Tribunal: TJCE | Fonte: BigDataCorp | Match: CPF confirmado | Papel: REQUERIDO
+- 30015750220218060167 | Status: ENCERRADO | Polo: PASSIVE | Tribunal: TJCE | Fonte: BigDataCorp | Match: CPF confirmado | Papel: AUTOR DO FATO
+- 02027437220228060167 | Status: JULGADO | Polo: PASSIVE | Tribunal: TJCE | Fonte: BigDataCorp | Match: CPF confirmado | Papel: REU | Decisao: JULGO PROCEDENTE A PRETENSAO PUNITIVA ESTATAL, DEDUZIDA NA DENUNCIA, PARA CONDENAR O REU FRANCISCO TACIANO DE SOUSA, COMO INCURSO NA PENA DO ARTIGOS 147 DO CODIGO PENAL E 24-A DA LEI N 11.340/06 C/C O
+- 00121984520228060167 | Status: AR...
+
+--- prefillNarratives.laborNotes ---
+Trabalhista POSITIVO: ao menos 1 processo(s) trabalhista(s) relevante(s) via fontes consultadas.
+
+--- prefillNarratives.warrantNotes ---
+Mandado POSITIVO: 3 mandado(s) identificado(s) (1 ativo(s) via Judit, 2 via BigDataCorp).
+
+Detalhamento Judit (1 mandado(s)):
+- 0204723-54.2022.8.06.0167 | warrant_of_arrest | provisional | Status: Pendente de Cumprimento | Tribunal: 2┬¬ VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Emitido: 2025-11-17T00:00:00.000Z
+
+Detalhamento BigDataCorp (2 mandado(s)):
+- Status: Pendente de Cumprimento
+- Status: Pendente de Cumprimento | Decisao: Em face do exposto, decreto a cust├│dia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5┬║, inc. LXVII da Constitui├º├úo Federal e art. 52
+Nota: mandados Judit e BigDataCorp podem ter sobreposicao.
+
+--- prefillNarratives.executiveSummary ---
+Analise criminal: POSITIVO (severidade HIGH). 8 processo(s) criminal(is) identificado(s). Principais: 0202743-72.2022.8.06.0167, 0012198-45.2022.8.06.0167, 0013417-40.2021.8.06.0293. Analise trabalhista: POSITIVO ÔÇö ao menos 1 processo(s) trabalhista(s) relevante(s). Mandados: POSITIVO ÔÇö 3 mandado(s) (1 Judit, 2 BigDataCorp). Sancoes: sancao ativa detectada (Conselho Nacional de Justi├ºa). Cobertura: SATISFATORIA ÔÇö fontes consultadas retornaram dados consistentes. Divergencia: MEDIA ÔÇö diferenca parcial entre providers detectada. Risco consolidado: ALTO (score 90).
+
+--- prefillNarratives.keyFindings ---
+["1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento via Judit.","Sancao ativa detectada (Conselho Nacional de Justi├ºa).","8 processo(s) criminal(is) inativo(s) ou sustentado(s) por match de nome.","Homonimia ou ambiguidade detectada em parte dos achados."]
+
+--- prefillNarratives.finalJustification ---
+Veredito: NAO RECOMENDADO.
+(veredito derivado automaticamente das flags ÔÇö analista ainda nao concluiu.)
+Severidade criminal: HIGH.
+
+Evidencias materiais:
+- 8 processo(s) criminal(is): 0202743-72.2022.8.06.0167 / Finalizado / TJCE; 0012198-45.2022.8.06.0167 / Em andamento / TJCE; 0013417-40.2021.8.06.0293 / Arquivado definitivamente / TJCE; 0040713-08.2013.8.06.0167 / Arquivado definitivamente / TJCE.
+- 1 mandado(s) Judit: warrant_of_arrest / Pendente de Cumprimento / 2┬¬ VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL.
+- 2 mandado(s) BigDataCorp.
+
+Achados-chave:
+- 1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento via Judit.
+- Sancao ativa detectada (Conselho Nacional de Justi├ºa).
+- 8 processo(s) criminal(is) inativo(s) ou sustentado(s) por match de nome.
+- Homonimia ou ambiguidade detectada em parte dos achados.
+Divergencia entre providers: MEDIUM.
+
+Justificativa: diante dos apontamentos materiais identificados (criminal, mandados ou sancoes), a continuidade do processo nao e recomendada sem avaliacao complementar.
+
+--- deterministicPrefill.keyFindings ---
+["1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento via Judit.","Sancao ativa detectada (Conselho Nacional de Justi├ºa).","8 processo(s) criminal(is) inativo(s) ou sustentado(s) por match de nome.","Homonimia ou ambiguidade detectada em parte dos achados."]
+
+--- escavadorProcessos ---
+[
+  {
+    "matchDocumentoPor": "NOME_EXATO_UNICO",
+    "processCity": "Sobral",
+    "tribunalSigla": "TJCE",
+    "polo": "PASSIVO",
+    "area": "C├ìVEL",
+    "valorCausa": "R$ 3.204,73",
+    "dataUltimaMovimentacao": "2025-10-08",
+    "segredoJustica": false,
+    "tipo": "Executado",
+    "status": "Em andamento",
+    "dataInicio": "2024-10-03",
+    "hasDivergentCpf": false,
+    "assuntoPrincipal": "Alimentos",
+    "tipoMatch": "CPF",
+    "classe": "Cumprimento de Senten├ºa de Obriga├º├úo de Prestar Alimentos (12246)",
+    "grauFormatado": "Primeiro Grau",
+    "hasExactCpfMatch": true,
+    "grau": 1,
+    "tipoNormalizado": "Executado",
+    "numeroCnj": "0205659-11.2024.8.06.0167",
+    "processUf": "CE"
+  },
+  {
+    "tribunalSigla": "TJCE",
+    "processCity": "Sobral",
+    "matchDocumentoPor": "NOME_EXATO_UNICO",
+    "area": "Criminal",
+    "valorCausa": null,
+    "polo": "PASSIVO",
+    "segredoJustica": false,
+    "dataUltimaMovimentacao": "2024-01-24",
+    "status": "Em andamento",
+    "tipo": "Autor Fato",
+    "hasDivergentCpf": false,
+    "dataInicio": "2022-11-24",
+    "tipoMatch": "CPF",
+    "assuntoPrincipal": "Contraven├º├Áes Penais",
+    "hasExactCpfMatch": true,
+    "grauFormatado": "Primeiro Grau",
+    "classe": "A├º├úo Penal - Procedimento Ordin├írio (283)",
+    "processUf": "CE",
+    "numeroCnj": "0012198-45.2022.8.06.0167",
+    "tipoNormalizado": "Autor Do Fato",
+    "grau": 1
+  },
+  {
+    "hasExactCpfMatch": true,
+    "classe": "Medidas Protetivas de urg├¬ncia (Lei Maria da Penha) Criminal (1268)",
+    "grauFormatado": "Primeiro Grau",
+    "tipoNormalizado": "Requerido",
+    "grau": 1,
+    "processUf": "CE",
+    "numeroCnj": "0013417-40.2021.8.06.0293",
+    "dataInicio": "2022-11-16",
+    "hasDivergentCpf": false,
+    "assuntoPrincipal": "Contraven├º├Áes Penais",
+    "tipoMatch": "CPF",
+    "dataUltimaMovimentacao": "2022-11-16",
+    "segredoJustica": true,
+    "status": "Arquivado definitivamente",
+    "tipo": "REQUERIDO",
+    "processCity": "Sobral",
+    "matchDocumentoPor": "DOCUMENTO_TRIBUNAL_OUTRA_FONTE",
+    "tribunalSigla": "TJCE",
+    "area": "Criminal",
+    "valorCausa": "R$ 0,01",
+    "polo": "PASSIVO"
+  },
+  {
+    "assuntoPrincipal": "Amea├ºa",
+    "tipoMatch": "CPF",
+    "dataInicio": "2022-05-03",
+    "hasDivergentCpf": false,
+    "tipoNormalizado": "R├®u",
+    "grau": 1,
+    "processUf": "CE",
+    "numeroCnj": "0202743-72.2022.8.06.0167",
+    "hasExactCpfMatch": true,
+    "grauFormatado": "Primeiro Grau",
+    "classe": "A├º├úo Penal - Procedimento Ordin├írio (283)",
+    "area": "Criminal",
+    "valorCausa": "R$ 0,01",
+    "polo": "PASSIVO",
+    "processCity": "Sobral",
+    "matchDocumentoPor": "DOCUMENTO_TRIBUNAL",
+    "tribunalSigla": "TJCE",
+    "tipo": "R├®u",
+    "status": "Em andamento",
+    "dataUltimaMovimentacao": "2024-10-23",
+    "segredoJustica": true
+  },
+  {
+    "numeroCnj": "3001575-02.2021.8.06.0167",
+    "processUf": "CE",
+    "grau": 1,
+    "tipoNormalizado": "Autor Do Fato",
+    "hasExactCpfMatch": true,
+    "classe": "
+
+--- escavadorProcessTotal ---
+6
+
+--- escavadorCriminalCount ---
+4
+
+--- escavadorCriminalFlag ---
+POSITIVE
+
+--- escavadorActiveCount ---
+0
+
+--- escavadorNotes ---
+Escavador: 6 processo(s) encontrado(s). 4 na esfera criminal/penal.
+1. 0205659-11.2024.8.06.0167 | C├ìVEL | Executado | polo PASSIVO | Em andamento | R$ 3.204,73
+2. 0012198-45.2022.8.06.0167 | Criminal | Autor Do Fato | polo PASSIVO | Em andamento
+3. 0013417-40.2021.8.06.0293 | Criminal | Requerido | polo PASSIVO | Arquivado definitivamente | R$ 0,01
+4. 0202743-72.2022.8.06.0167 | Criminal | R├®u | polo PASSIVO | Em andamento | R$ 0,01
+5. 3001575-02.2021.8.06.0167 | CRIME | Autor Do Fato | polo PASSIVO | Encerrado
+6. 0040713-08.2013.8.06.0167 | Criminal | Arquivado definitivamente
+
+--- escavadorSources ---
+{
+  "totalPages": 1,
+  "provider": "escavador",
+  "hasCriminal": true,
+  "consultedAt": "2026-04-12T03:42:56.296Z",
+  "loadedProcessos": 6,
+  "endpoint": "envolvido/processos",
+  "totalProcessos": 6,
+  "cpfsComEsseNome": 1
+}
+
+--- escavadorHomonymFlag ---
+false
+
+--- juditRoleSummary ---
+[
+  {
+    "stepsCount": 0,
+    "hasExactCpfMatch": true,
+    "isWitness": false,
+    "secrecyLevel": 0,
+    "name": "JOSE WILLIAM DOMINGUES RIPARDO X FRANCISCO TACIANO DE SOUSA",
+    "justice": "8",
+    "code": "0202743-72.2022.8.06.0167",
+    "hasDivergentCpf": false,
+    "instance": 1,
+    "classifications": [
+      "A├ç├âO PENAL - PROCEDIMENTO ORDIN├üRIO"
+    ],
+    "isPossibleHomonym": false,
+    "lastStep": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | VISTOS E ETC. CUMPRA-SE O DETERMINADO PELO EGREGIO TRIBUNAL DE JUSTICA DO CEARA, COM A EXPEDICAO DA CARTA DE GUIA DEFINITIVA E A RESPECTIVA REMESSA AO JUIZO DAS EXECUCOES PENAIS (2 VARA CRIMINAL DA COMARCA DE SOBRAL-CE). EXPEDIENTES NECESSARIOS.",
+    "side": "Passive",
+    "isCriminal": true,
+    "city": "SOBRAL",
+    "tribunalAcronym": "TJCE",
+    "amount": 0.01,
+    "county": "3┬¬ VARA CIVEL DA COMARCA DE SOBRAL",
+    "phase": "Arquivado",
+    "distributionDate": "2022-05-03T15:51:03.000Z",
+    "state": "CE",
+    "status": "Finalizado",
+    "subjects": [
+      "REAL",
+      "VIOL├èNCIA DOM├ëSTICA CONTRA A MULHER",
+      "AMEA├çA"
+    ],
+    "lastStepDate": null,
+    "situation": null,
+    "personType": "REU",
+    "area": "DIREITO PENAL"
+  }
+]
+
+--- juditProcessTotal ---
+1
+
+--- juditCriminalCount ---
+1
+
+--- juditCriminalFlag ---
+POSITIVE
+
+--- juditActiveCount ---
+0
+
+--- juditNotes ---
+Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).
+1. 0202743-72.2022.8.06.0167 | DIREITO PENAL | Fase: Arquivado | REU | polo Passive | Finalizado
+
+--- juditWarrantNotes ---
+ALERTA JUDIT: 1 mandado(s) encontrado(s), 1 PENDENTE(S) DE CUMPRIMENTO.
+1. warrant_of_arrest | provisional | Pendente de Cumprimento | TJCE | Emitido: 2025-11-17T00:00:00.000Z | 0204723-54.2022.8.06.0167
+
+--- juditActiveWarrantCount ---
+1
+
+--- juditWarrants ---
+[
+  {
+    "judgementSummary": "Em face do exposto, decreto a custodia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5┬║, inc. LXVII da Constituicao Federal e art. 528, ┬º 3┬║, do CPC, pelo prazo de 60 (sessenta) dias ou ate que seja pago o valor devido, no qual devem ser incluidas as parcelas que se vencerem ate o dia do pagamento, como constou expressamente do mandado de intimacao. Inclua-se no BNMP 3.0. DETERMINO QUE O MANDADO DE PRISAO CIVIL SEJA ENCAMINHADO PARA A CEMAN PARA FINS DE CUMPRIMENTO.",
+    "regime": null,
+    "entityGender": "male",
+    "code": "0204723-54.2022.8.06.0167",
+    "duration": null,
+    "issueDate": "2025-11-17T00:00:00.000Z",
+    "arrestType": "provisional",
+    "entityDocument": "050.232.903-36",
+    "tribunalAcronym": "TJCE",
+    "lawType": [],
+    "durationYears": null,
+    "warrantType": "warrant_of_arrest",
+    "expirationDate": "2026-04-12T03:43:31.764Z",
+    "entityBirthDate": "1991-08-16T00:00:00.000Z",
+    "durationMonths": null,
+    "court": "2┬¬ VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+    "status": "Pendente de Cumprimento",
+    "entityName": "FRANCISCO TACIANO DE SOUSA"
+  }
+]
+
+--- juditExecutionNotes ---
+Judit: Nenhuma execucao penal encontrada.
+
+--- bigdatacorpCriminalFlag ---
+POSITIVE
+
+--- bigdatacorpLaborFlag ---
+NEGATIVE
+
+--- criminalEvidenceQuality ---
+MIXED_STRONG_AND_WEAK
+
+--- criminalSeverity ---
+HIGH
+
+--- coverageLevel ---
+HIGH_COVERAGE
+
+--- providerDivergence ---
+MEDIUM
+
+--- coverageNotes ---
+[
+  "Quantidade de processos diverge entre os providers.",
+  "Ha mistura de evidencia forte com ruido por nome/homonimo."
+]
+
+--- sanctionFlag ---
+POSITIVE
+
+--- sanctionNotes ---
+BigDataCorp KYC: Nao e PEP. SANCIONADO ATUALMENTE: Conselho Nacional de Justi├ºa. Tipos: ARREST WARRANTS. ALERTA: 2 mandado(s) de prisao. (47 sancao(oes) descartada(s) por MatchRate < 90%)
+
+--- autoClassifiedAt ---
+2026-04-12T03:45:18.965Z
+
+--- criminalNotes ---
+Criminal POSITIVO: evidencia forte confirmada por BigDataCorp, Escavador, Judit, Judit/Warrant, BigDataCorp/KYC.
+Mandado ativo confirmado (1 via Judit, 2 via BigDataCorp).
+Achados adicionais por nome/match fraco (1) foram separados como evidencia ambigua e nao rebaixam o fato duro.
+Sancao ativa detectada via BigDataCorp KYC: fontes Conselho Nacional de Justi├ºa.
+
+--- laborNotes ---
+Trabalhista POSITIVO confirmado por: BigDataCorp.
+
+--- warrantNotes ---
+Mandado POSITIVO: 1 mandado(s) ativo(s) via Judit, 2 mandado(s) via BigDataCorp.
+Nota: mandados Judit e BigDataCorp podem ter sobreposicao (mesmo mandado em ambas as fontes).
+ALERTA JUDIT: 1 mandado(s) encontrado(s), 1 PENDENTE(S) DE CUMPRIMENTO.
+1. warrant_of_arrest | provisional | Pendente de Cumprimento | TJCE | Emitido: 2025-11-17T00:00:00.000Z | 0204723-54.2022.8.06.0167

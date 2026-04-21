@@ -1,0 +1,95 @@
+.filter-panel-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    width: 100%;
+}
+
+.filter-panel-mobile__top {
+    display: flex;
+    gap: var(--space-2);
+    align-items: stretch;
+}
+
+.filter-panel-mobile__top > :first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-panel-mobile__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    min-height: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.filter-panel-mobile__toggle:active {
+    background: var(--gray-50);
+}
+
+.filter-panel-mobile__toggle[aria-expanded="true"] {
+    border-color: var(--brand-400);
+    color: var(--brand-600);
+    background: var(--brand-50);
+}
+
+.filter-panel-mobile__toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.filter-panel-mobile__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    background: var(--brand-500);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.filter-panel-mobile__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    background: var(--bg-card);
+    animation: filterPanelSlideIn 0.15s ease;
+}
+
+.filter-panel-mobile__panel > select,
+.filter-panel-mobile__panel > input,
+.filter-panel-mobile__panel > .filter-bar__select,
+.filter-panel-mobile__panel > .filter-bar__toggle {
+    width: 100%;
+    min-height: 44px;
+}
+
+@keyframes filterPanelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

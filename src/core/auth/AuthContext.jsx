@@ -86,6 +86,12 @@ export function AuthProvider({ children }) {
             const source = sourceOverride || (snapshot.metadata?.fromCache ? 'cache' : 'server');
             const nextProfile = mergeUserProfile(firebaseUser, snapshot.data(), source);
 
+            // AUD-015: Block inactive users on the frontend
+            if (snapshot.data()?.status === 'inactive' && source === 'server') {
+                signOut(auth);
+                return false;
+            }
+
             setProfileError(null);
             setUserProfile((currentProfile) => {
                 if (!currentProfile || currentProfile.uid !== nextProfile.uid) {
@@ -94,7 +100,18 @@ export function AuthProvider({ children }) {
 
                 const currentRank = PROFILE_SOURCE_RANK[currentProfile.source] ?? -1;
                 const nextRank = PROFILE_SOURCE_RANK[nextProfile.source] ?? -1;
-                return nextRank >= currentRank ? nextProfile : currentProfile;
+
+                if (nextRank < currentRank) {
+                    return currentProfile;
+                }
+
+                // AUD-009: Only server is authoritative for security-critical fields.
+                // Prevent cache-sourced profiles from overriding server-confirmed role/tenantId.
+                if (currentProfile.source === 'server' && nextProfile.source !== 'server') {
+                    return { ...nextProfile, role: currentProfile.role, tenantId: currentProfile.tenantId };
+                }
+
+                return nextProfile;
             });
             setProfileStatus((currentStatus) => {
                 if (currentStatus === 'ready' && source !== 'server') {

@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "ok": true,
+  "elapsedMs": 16772,
+  "data": {
+    "UniqueIdentifier": "6db3xj1bnuqj70sftpyziq4mu",
+    "TransactionResultTypeCode": 5,
+    "TransactionResultType": "EntityNotFound",
+    "Message": "Documento/entidade inexistente ou não encontrada. Não há mandados para este documento",
+    "TotalCostInCredits": 2,
+    "BalanceInCredits": -15,
+    "ElapsedTimeInMilliseconds": 16748,
+    "Reserved": null,
+    "Date": "2026-04-07T09:14:40.9616823-03:00",
+    "OutdatedResult": false,
+    "HasPdf": true,
+    "DataSourceHtml": null,
+    "DateString": "2026-04-07T09:14:40.9616823-03:00",
+    "OriginalFilesUrl": "https://api.exato.digital/services/original-files/6db3xj1bnuqj70sftpyziq4mu",
+    "PdfUrl": "https://api.exato.digital/services/pdf/6db3xj1bnuqj70sftpyziq4mu",
+    "TotalCost": 0,
+    "BalanceInBrl": null,
+    "DataSourceCategory": "Criminal e Restritivo",
+    "ApiResultType": "not_found",
+    "ResultTypeCode": 5,
+    "ResultSubtype": null,
+    "Result": null
+  }
+}

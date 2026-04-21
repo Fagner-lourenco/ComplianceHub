@@ -1,0 +1,34 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://127.0.0.1:4173",
+      "localStorage": [
+        {
+          "name": "firestore_targets_firestore/[DEFAULT]/compliance-hub-br/_4",
+          "value": "{\"state\":\"not-current\",\"updateTimeMs\":1775777383435}"
+        },
+        {
+          "name": "ch_selected_tenant_id",
+          "value": "all"
+        },
+        {
+          "name": "firestore_online_state_firestore/[DEFAULT]/compliance-hub-br/",
+          "value": "{\"clientId\":\"beg0QRt1dGVPl3H2BFs6\",\"onlineState\":\"Online\"}"
+        },
+        {
+          "name": "firestore_targets_firestore/[DEFAULT]/compliance-hub-br/_2",
+          "value": "{\"state\":\"current\",\"updateTimeMs\":1775777383435}"
+        },
+        {
+          "name": "firestore_clients_firestore/[DEFAULT]/compliance-hub-br/_beg0QRt1dGVPl3H2BFs6",
+          "value": "{\"activeTargetIds\":[2,4],\"updateTimeMs\":1775777383440}"
+        },
+        {
+          "name": "firestore_sequence_number_firestore/[DEFAULT]/compliance-hub-br/",
+          "value": "16"
+        }
+      ]
+    }
+  ]
+}

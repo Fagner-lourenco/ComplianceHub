@@ -7,7 +7,7 @@ import {
     onSnapshot,
     orderBy,
     query,
-    serverTimestamp,
+    startAfter,
     where,
 } from 'firebase/firestore';
 import { auth, db } from './config';
@@ -163,7 +163,15 @@ function mapAuditLogDocument(id, data) {
     return {
         id,
         ...data,
-        timestamp: formatFirestoreDateTime(data.timestamp),
+        // v2 uses occurredAt; v1 uses timestamp — normalize
+        timestamp: formatFirestoreDateTime(data.occurredAt || data.timestamp),
+        // v2 actor compat
+        user: data.actor?.email || data.userEmail || data.user || null,
+        // v2 entity → target compat
+        target: data.entity?.id || data.target || null,
+        // v2 fields pass-through
+        category: data.category || null,
+        searchText: data.searchText || '',
     };
 }
 
@@ -388,23 +396,31 @@ export async function getTenantSettings(tenantId) {
 
     const data = snapshot.data();
     return {
+        tenantName: data.tenantName ?? null,
         analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG, ...data.analysisConfig },
         dailyLimit: data.dailyLimit ?? null,
         monthlyLimit: data.monthlyLimit ?? null,
+        allowDailyExceedance: data.allowDailyExceedance ?? null,
+        allowMonthlyExceedance: data.allowMonthlyExceedance ?? null,
         enrichmentConfig: data.enrichmentConfig ?? null,
     };
 }
 
-export function updateTenantSettings(tenantId, analysisConfig, limits, enrichmentConfig) {
-    const payload = { analysisConfig, updatedAt: serverTimestamp() };
-    if (limits) {
-        payload.dailyLimit = limits.dailyLimit ?? null;
-        payload.monthlyLimit = limits.monthlyLimit ?? null;
-    }
-    if (enrichmentConfig !== undefined) {
-        payload.enrichmentConfig = enrichmentConfig;
-    }
-    return setDoc(doc(db, 'tenantSettings', tenantId), payload, { merge: true });
+// AUD-019: Removed dead updateTenantSettings — was using setDoc (not imported).
+// Tenant settings are updated via the backend callable updateTenantSettingsByAnalyst.
+
+export async function getTenantUsage(tenantId) {
+    if (!tenantId) return null;
+    const snapshot = await getDoc(doc(db, 'tenantUsage', tenantId));
+    if (!snapshot.exists()) return { dailyCount: 0, monthlyCount: 0, dayKey: null, monthKey: null };
+    const data = snapshot.data();
+    return {
+        dailyCount: data.dailyCount ?? 0,
+        monthlyCount: data.monthlyCount ?? 0,
+        dayKey: data.dayKey ?? null,
+        monthKey: data.monthKey ?? null,
+        lastSubmissionAt: data.lastSubmissionAt ?? null,
+    };
 }
 
 export function getEnabledPhases(analysisConfig) {
@@ -598,6 +614,70 @@ export function fetchAuditLogs(tenantId) {
     });
 }
 
+export function subscribeToCaseAuditLogs(caseId, callback) {
+    const q = query(
+        collection(db, 'auditLogs'),
+        where('related.caseId', '==', caseId),
+        orderBy('occurredAt', 'desc'),
+        limit(50),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const logs = snapshot.docs.map((d) => mapAuditLogDocument(d.id, d.data()));
+        callback(logs, null);
+    }, (error) => {
+        console.error('Error subscribing to case audit logs:', error);
+        callback([], error);
+    });
+}
+
+const TENANT_AUDIT_QUERY_LIMIT = 200;
+
+export function subscribeToTenantAuditLogs(tenantId, callback, options = {}) {
+    const { category, cursor, pageSize = TENANT_AUDIT_QUERY_LIMIT } = options;
+    const constraints = [
+        where('tenantId', '==', tenantId),
+    ];
+    if (category) {
+        constraints.push(where('category', '==', category));
+    }
+    constraints.push(orderBy('occurredAt', 'desc'));
+    if (cursor) {
+        constraints.push(startAfter(cursor));
+    }
+    constraints.push(limit(pageSize));
+
+    const q = query(collection(db, 'tenantAuditLogs'), ...constraints);
+    return onSnapshot(q, (snapshot) => {
+        const logs = snapshot.docs.map((d) => mapAuditLogDocument(d.id, d.data()));
+        const lastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+        callback(logs, null, lastDoc);
+    }, (error) => {
+        console.error('Error subscribing to tenant audit logs:', error);
+        callback([], error, null);
+    });
+}
+
+export async function fetchPublicReports(tenantId) {
+    const constraints = [orderBy('createdAt', 'desc'), limit(200)];
+    if (tenantId) constraints.unshift(where('tenantId', '==', tenantId));
+    const q = query(collection(db, 'publicReports'), ...constraints);
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function revokePublicReport(token) {
+    await callBackendFunction('revokePublicReport', { token });
+}
+
+export async function fetchClientPublicReports() {
+    const result = await callBackendFunction('listClientPublicReports', {});
+    return Array.isArray(result?.reports) ? result.reports : [];
+}
+
+export async function revokeClientPublicReport(token) {
+    await callBackendFunction('revokeClientPublicReport', { token });
+}
+
 /* =========================================================
    EXPORTS
    ========================================================= */
@@ -630,7 +710,15 @@ export function fetchExports(tenantId) {
    ========================================================= */
 
 export async function savePublicReport(html, meta = {}) {
-    const result = await callBackendFunction('createAnalystPublicReport', { html, meta });
+    const result = await callBackendFunction('createAnalystPublicReport', { html: html || '', meta, caseId: meta.caseId || '' });
+    if (!result?.token) {
+        throw new Error('Backend did not return a public report token.');
+    }
+    return result.token;
+}
+
+export async function saveClientPublicReport(caseId) {
+    const result = await callBackendFunction('createClientPublicReport', { caseId });
     if (!result?.token) {
         throw new Error('Backend did not return a public report token.');
     }
@@ -707,6 +795,22 @@ export async function callCreateOpsClientUser(payload) {
     return callBackendFunction('createOpsClientUser', payload);
 }
 
+export async function callListTenantUsers() {
+    return callBackendFunction('listTenantUsers', {});
+}
+
+export async function callCreateTenantUser(payload) {
+    return callBackendFunction('createTenantUser', payload);
+}
+
+export async function callUpdateTenantUser(payload) {
+    return callBackendFunction('updateTenantUser', payload);
+}
+
+export async function callUpdateOwnProfile(payload) {
+    return callBackendFunction('updateOwnProfile', payload);
+}
+
 export async function callAssignCaseToCurrentAnalyst(payload) {
     return callBackendFunction('assignCaseToCurrentAnalyst', payload);
 }
@@ -729,4 +833,12 @@ export async function callSaveCaseDraftByAnalyst(payload) {
 
 export async function callSetAiDecisionByAnalyst(payload) {
     return callBackendFunction('setAiDecisionByAnalyst', payload);
+}
+
+export async function callGetSystemHealth() {
+    return callBackendFunction('getSystemHealth', {});
+}
+
+export async function callGetClientQuotaStatus() {
+    return callBackendFunction('getClientQuotaStatus', {});
 }
