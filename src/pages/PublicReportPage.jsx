@@ -87,6 +87,13 @@ export default function PublicReportPage() {
                     return;
                 }
 
+                const reportStatus = report.status || 'ready';
+                if (!['ready', 'published'].includes(reportStatus)) {
+                    setError(reportStatus === 'revoked' ? 'revoked' : 'not-found');
+                    setLoading(false);
+                    return;
+                }
+
                 const now = new Date();
                 const expiresAt = report.expiresAt instanceof Date
                     ? report.expiresAt

@@ -9,6 +9,9 @@ const casoPageMocks = vi.hoisted(() => ({
     },
     subscribeToCaseDoc: vi.fn(),
     subscribeToCaseAuditLogs: vi.fn(() => () => {}),
+    subscribeToModuleRunsForCase: vi.fn(() => () => {}),
+    subscribeToEvidenceItemsForCase: vi.fn(() => () => {}),
+    subscribeToRiskSignalsForCase: vi.fn(() => () => {}),
     callSaveCaseDraftByAnalyst: vi.fn(),
     callSetAiDecisionByAnalyst: vi.fn(),
     callReturnCaseToClient: vi.fn(),
@@ -25,6 +28,9 @@ vi.mock('../../core/firebase/firestoreService', async (importOriginal) => {
         ...actual,
         subscribeToCaseDoc: (...args) => casoPageMocks.subscribeToCaseDoc(...args),
         subscribeToCaseAuditLogs: (...args) => casoPageMocks.subscribeToCaseAuditLogs(...args),
+        subscribeToModuleRunsForCase: (...args) => casoPageMocks.subscribeToModuleRunsForCase(...args),
+        subscribeToEvidenceItemsForCase: (...args) => casoPageMocks.subscribeToEvidenceItemsForCase(...args),
+        subscribeToRiskSignalsForCase: (...args) => casoPageMocks.subscribeToRiskSignalsForCase(...args),
         callSaveCaseDraftByAnalyst: (...args) => casoPageMocks.callSaveCaseDraftByAnalyst(...args),
         callSetAiDecisionByAnalyst: (...args) => casoPageMocks.callSetAiDecisionByAnalyst(...args),
         callReturnCaseToClient: (...args) => casoPageMocks.callReturnCaseToClient(...args),
@@ -48,6 +54,12 @@ describe('CasoPage', () => {
         casoPageMocks.subscribeToCaseDoc.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToModuleRunsForCase.mockReset();
+        casoPageMocks.subscribeToModuleRunsForCase.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToEvidenceItemsForCase.mockReset();
+        casoPageMocks.subscribeToEvidenceItemsForCase.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToRiskSignalsForCase.mockReset();
+        casoPageMocks.subscribeToRiskSignalsForCase.mockImplementation(() => () => {});
         casoPageMocks.callSaveCaseDraftByAnalyst.mockReset();
         casoPageMocks.callSetAiDecisionByAnalyst.mockReset();
         casoPageMocks.callReturnCaseToClient.mockReset();
@@ -243,5 +255,146 @@ describe('CasoPage', () => {
 
         expect(screen.getByDisplayValue('Analista revisando o mandado com cautela.')).toBeInTheDocument();
         expect(screen.queryByDisplayValue('Mandado ativo confirmado pela Judit.')).not.toBeInTheDocument();
+    });
+
+    it('exibe PublicationGuardsPanel com label de produto e semantica solicitado->efetivo->executado', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Maria Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-21',
+                enabledPhases: ['criminal', 'warrant'],
+                productKey: 'kyc_individual',
+                requestedModuleKeys: ['identity_pf', 'criminal', 'warrants', 'kyc', 'decision', 'report_secure'],
+                effectiveModuleKeys: ['identity_pf', 'criminal', 'warrants', 'decision', 'report_secure'],
+                executedModuleKeys: ['identity_pf', 'criminal'],
+                moduleRunSummary: {
+                    total: 6,
+                    requestedCount: 6,
+                    effectiveCount: 5,
+                    executedCount: 2,
+                    blockedCount: 0,
+                    blockedModuleKeys: [],
+                    blocksDecision: false,
+                    blocksPublication: false,
+                    evidenceCount: 3,
+                    riskSignalCount: 1,
+                    providerRecordCount: 8,
+                },
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('KYC Individual')).toBeInTheDocument();
+        expect(screen.getByText('Gates operacionais V2')).toBeInTheDocument();
+        expect(screen.getByText('6 solicitados')).toBeInTheDocument();
+        expect(screen.getByText('5 efetivos')).toBeInTheDocument();
+        expect(screen.getByText('2 executados')).toBeInTheDocument();
+        expect(screen.getByText('3 evidencias')).toBeInTheDocument();
+        expect(screen.queryByText('Bloqueia publicacao')).not.toBeInTheDocument();
+    });
+
+    it('exibe PublicationGuardsPanel com badge de bloqueio quando moduleRunSummary bloqueia publicacao', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Carlos Andrade',
+                cpf: '98765432100',
+                createdAt: '2026-04-21',
+                enabledPhases: ['warrant'],
+                productKey: 'kyb_business',
+                requestedModuleKeys: ['identity_pj', 'warrants', 'decision', 'report_secure'],
+                effectiveModuleKeys: ['identity_pj', 'warrants', 'decision', 'report_secure'],
+                executedModuleKeys: [],
+                moduleRunSummary: {
+                    total: 4,
+                    requestedCount: 4,
+                    effectiveCount: 4,
+                    executedCount: 0,
+                    blockedCount: 2,
+                    blockedModuleKeys: ['warrants', 'decision'],
+                    blocksDecision: true,
+                    blocksPublication: true,
+                    evidenceCount: 0,
+                    riskSignalCount: 0,
+                    providerRecordCount: 0,
+                },
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('KYB Empresa')).toBeInTheDocument();
+        expect(screen.getByText('Bloqueia decisao')).toBeInTheDocument();
+        expect(screen.getByText('Bloqueia publicacao')).toBeInTheDocument();
+        expect(screen.getByText('Mandados')).toBeInTheDocument();
+        expect(screen.getByText('Decisao')).toBeInTheDocument();
+    });
+
+    it('exibe EvidenceSummaryPanel com evidencias agrupadas por modulo e severity badge', async () => {
+        casoPageMocks.subscribeToEvidenceItemsForCase.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback([
+                { id: 'ev1', caseId, moduleKey: 'criminal', kind: 'criminal_finding', summary: 'Processo criminal confirmado por CPF', severity: 'high' },
+                { id: 'ev2', caseId, moduleKey: 'criminal', kind: 'criminal_finding', summary: 'Segunda ocorrencia criminal', severity: 'medium' },
+                { id: 'ev3', caseId, moduleKey: 'warrants', kind: 'warrant_finding', summary: 'Mandado de prisao ativo', severity: 'critical' },
+            ], null), 0);
+            return () => {};
+        });
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Joao Costa',
+                cpf: '11122233344',
+                createdAt: '2026-04-21',
+                enabledPhases: ['criminal', 'warrant'],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Evidencias V2')).toBeInTheDocument();
+        expect(screen.getByText('Processo criminal confirmado por CPF')).toBeInTheDocument();
+        expect(screen.getByText('Mandado de prisao ativo')).toBeInTheDocument();
+        expect(screen.getByText('Critico')).toBeInTheDocument();
+        expect(screen.getByText('Alto')).toBeInTheDocument();
+        expect(screen.getByText('3 evidencias')).toBeInTheDocument();
+    });
+
+    it('exibe RiskSignalsPanel com sinais ordenados por severity e scoreImpact', async () => {
+        casoPageMocks.subscribeToRiskSignalsForCase.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback([
+                { id: 'sig1', caseId, moduleKey: 'warrants', kind: 'warrant_risk', severity: 'critical', scoreImpact: 50, reason: 'Mandado de prisao ativo confirmado' },
+                { id: 'sig2', caseId, moduleKey: 'criminal', kind: 'criminal_risk', severity: 'high', scoreImpact: 35, reason: 'Processo criminal com CPF exato' },
+            ], null), 0);
+            return () => {};
+        });
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Paulo Mendes',
+                cpf: '55566677788',
+                createdAt: '2026-04-21',
+                enabledPhases: ['criminal', 'warrant'],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Sinais de risco V2')).toBeInTheDocument();
+        expect(screen.getByText('Mandado de prisao ativo confirmado')).toBeInTheDocument();
+        expect(screen.getByText('Processo criminal com CPF exato')).toBeInTheDocument();
+        expect(screen.getByText('+50 pts')).toBeInTheDocument();
+        expect(screen.getByText('+35 pts')).toBeInTheDocument();
+        expect(screen.getByText('2 sinais')).toBeInTheDocument();
     });
 });

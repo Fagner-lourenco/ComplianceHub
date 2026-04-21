@@ -46,4 +46,50 @@ describe('clientPortal helpers', () => {
 
         expect(resolved.keyFindings).toEqual(['Mandado ativo pendente de cumprimento.']);
     });
+
+    it('usa PublicReportAvailability resolvido pelo backend quando existir', () => {
+        const caseData = {
+            id: 'CASE-888',
+            status: 'DONE',
+            reportReady: true,
+            finalVerdict: 'FIT',
+            executiveSummary: 'Analise concluida.',
+            reportAvailability: {
+                status: 'generating',
+                reasonCode: 'public_report_missing',
+                clientMessage: 'Relatorio em publicacao.',
+                publicReportToken: null,
+                reportSnapshotId: 'snap-1',
+                decisionId: 'dec-1',
+                isActionable: false,
+            },
+        };
+
+        const availability = getReportAvailability(caseData, null);
+
+        expect(availability.available).toBe(false);
+        expect(availability.state).toBe('generating');
+        expect(availability.message).toBe('Relatorio em publicacao.');
+    });
+
+    it('habilita abertura somente quando PublicReportAvailability estiver ready com token', () => {
+        const caseData = {
+            id: 'CASE-889',
+            status: 'DONE',
+            reportAvailability: {
+                status: 'ready',
+                reasonCode: 'ready',
+                clientMessage: 'Relatorio pronto.',
+                publicReportToken: 'token-123',
+                reportSnapshotId: 'snap-1',
+                decisionId: 'dec-1',
+                isActionable: true,
+            },
+        };
+
+        const availability = getReportAvailability(caseData, null);
+
+        expect(availability.available).toBe(true);
+        expect(availability.publicReportToken).toBe('token-123');
+    });
 });

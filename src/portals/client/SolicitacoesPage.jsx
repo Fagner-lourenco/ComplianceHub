@@ -8,7 +8,7 @@ import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
-import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings, saveClientPublicReport } from '../../core/firebase/firestoreService';
+import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getClientProjection, getEnabledPhases, getTenantSettings, saveClientPublicReport } from '../../core/firebase/firestoreService';
 import { buildCaseReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
@@ -77,7 +77,8 @@ export default function SolicitacoesPage() {
         }
         let cancelled = false;
         setPublicResultLoading(true);
-        getCasePublicResult(selectedCase.id)
+        getClientProjection(selectedCase.id)
+            .then(async (projection) => projection || getCasePublicResult(selectedCase.id))
             .then((data) => { if (!cancelled) setPublicResult(data || selectedCase.publicResultMock || null); })
             .catch(() => { if (!cancelled) setPublicResult(selectedCase.publicResultMock || null); })
             .finally(() => { if (!cancelled) setPublicResultLoading(false); });
@@ -137,8 +138,7 @@ export default function SolicitacoesPage() {
             if (isDemoMode) {
                 window.open(buildCaseReportPath(selectedCaseView, true), '_blank', 'noopener,noreferrer');
             } else {
-                // Always go through backend to ensure report freshness
-                const token = await saveClientPublicReport(selectedCase.id);
+                const token = reportAvailability.publicReportToken || await saveClientPublicReport(selectedCase.id);
                 window.open(`/r/${token}`, '_blank', 'noopener,noreferrer');
             }
             setReportStatus({ state: 'success', message: 'Relatorio aberto com sucesso.' });

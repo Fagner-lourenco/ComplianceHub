@@ -105,6 +105,57 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // 2d. ClientProjection V2 — fonte cliente-safe do portal V2
+    match /clientProjections/{caseId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      // Only Cloud Functions write here
+      allow create, update, delete: if false;
+    }
+
+    // 2e. V2 operational/reporting contracts
+    match /decisions/{decisionId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /reportSnapshots/{snapshotId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /moduleRuns/{moduleRunId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /providerRequests/{requestId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /rawSnapshots/{snapshotId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /providerRecords/{recordId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /evidenceItems/{evidenceId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /riskSignals/{signalId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
     // 3. Candidates
     match /candidates/{candidateId} {
       allow read, update: if isAuthenticated() && isAnalyst();
@@ -143,6 +194,17 @@ service cloud.firestore {
 
       allow create, update: if isAuthenticated() && isAnalyst();
       allow delete: if false;
+    }
+
+    // 5b. V2 tenant contracts/configs. Backend remains the writer.
+    match /tenantEntitlements/{tenantId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    match /tenantConfigs/{tenantId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
     }
 
     // 6. Exports

@@ -19,11 +19,16 @@ import {
     savePublicReport,
     subscribeToCaseDoc,
     subscribeToCaseAuditLogs,
+    subscribeToModuleRunsForCase,
+    subscribeToEvidenceItemsForCase,
+    subscribeToRiskSignalsForCase,
+    subscribeToSubjectForCase,
     callRerunAiAnalysis,
 } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
+import { resolveV2Risk } from '../../core/v2RiskResolver';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -77,6 +82,407 @@ const TIMELINE_ACTION_LABELS = {
     CLIENT_PUBLIC_REPORT_CREATED: 'Relatório do cliente gerado',
     ENRICHMENT_PHASE_RERUN: 'Enriquecimento re-executado',
 };
+
+const MODULE_RUN_LABELS = {
+    identity_pf: 'Identificacao PF',
+    identity_pj: 'Identificacao PJ',
+    judicial: 'Analise judicial',
+    criminal: 'Analise criminal',
+    labor: 'Analise trabalhista',
+    warrants: 'Mandados',
+    kyc: 'KYC',
+    osint: 'Risco reputacional',
+    social: 'Social',
+    digital: 'Perfil digital',
+    conflictInterest: 'Conflito de interesse',
+    decision: 'Decisao',
+    report_secure: 'Relatorio seguro',
+};
+
+const MODULE_RUN_STATUS_LABELS = {
+    not_entitled: 'Nao contratado',
+    pending: 'Pendente',
+    running: 'Em execucao',
+    completed_no_findings: 'Concluido sem achados',
+    completed_with_findings: 'Concluido com achados',
+    skipped_reuse: 'Snapshot reutilizado',
+    skipped_policy: 'Ignorado por policy',
+    failed_retryable: 'Falha temporaria',
+    failed_final: 'Falha final',
+    blocked: 'Bloqueado',
+};
+
+function getModuleRunTone(status) {
+    if (status === 'completed_with_findings') return 'finding';
+    if (status === 'completed_no_findings' || status === 'skipped_reuse') return 'ok';
+    if (status === 'running' || status === 'pending') return 'running';
+    if (status === 'not_entitled' || status === 'blocked' || status === 'failed_final') return 'blocked';
+    if (status === 'failed_retryable') return 'warning';
+    return 'neutral';
+}
+
+function ModuleRunsPanel({ moduleRuns = [], error = null }) {
+    if (error) {
+        return (
+            <div className="caso-module-runs caso-module-runs--error">
+                <strong>Status modular V2 indisponivel.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+
+    if (!moduleRuns.length) {
+        return (
+            <div className="caso-module-runs caso-module-runs--empty">
+                <strong>Status modular V2</strong>
+                <span>Aguardando materializacao de moduleRuns para este caso.</span>
+            </div>
+        );
+    }
+
+    const visibleRuns = moduleRuns.filter((run) => run.requested || run.effective || run.status !== 'not_entitled');
+
+    return (
+        <section className="caso-module-runs" aria-label="Status modular V2">
+            <div className="caso-module-runs__header">
+                <div>
+                    <strong>Status modular V2</strong>
+                    <span>Fonte operacional: moduleRuns</span>
+                </div>
+                <span className="caso-module-runs__count">{visibleRuns.length} modulos</span>
+            </div>
+            <div className="caso-module-runs__grid">
+                {visibleRuns.map((run) => {
+                    const tone = getModuleRunTone(run.status);
+                    const providerCount = Array.isArray(run.providerRequestIds) ? run.providerRequestIds.length : 0;
+                    const evidenceCount = Array.isArray(run.evidenceIds) ? run.evidenceIds.length : 0;
+                    const signalCount = Array.isArray(run.riskSignalIds) ? run.riskSignalIds.length : 0;
+                    return (
+                        <article className={`caso-module-run caso-module-run--${tone}`} key={run.id || `${run.caseId}-${run.moduleKey}`}>
+                            <div className="caso-module-run__topline">
+                                <span>{MODULE_RUN_LABELS[run.moduleKey] || run.moduleKey}</span>
+                                <span>{MODULE_RUN_STATUS_LABELS[run.status] || run.status || 'Sem status'}</span>
+                            </div>
+                            <div className="caso-module-run__meta">
+                                <span>{run.requested ? 'solicitado' : 'nao solicitado'}</span>
+                                <span>{run.effective ? 'efetivo' : run.entitled ? 'habilitado' : 'nao habilitado'}</span>
+                                {run.blocksDecision || run.blocksPublication ? <span className="caso-module-run__block">bloqueia gate</span> : null}
+                            </div>
+                            <div className="caso-module-run__counts">
+                                <span>{providerCount} provider</span>
+                                <span>{evidenceCount} evidencia</span>
+                                <span>{signalCount} sinal</span>
+                            </div>
+                        </article>
+                    );
+                })}
+            </div>
+        </section>
+    );
+}
+
+const SEVERITY_LABELS = {
+    critical: 'Critico',
+    high: 'Alto',
+    medium: 'Medio',
+    low: 'Baixo',
+};
+
+const PRODUCT_KEY_LABELS = {
+    kyc_individual: 'KYC Individual',
+    kyb_business: 'KYB Empresa',
+    kye_employee: 'KYE Colaborador',
+    kys_supplier: 'KYS Fornecedor',
+    tpr_third_party: 'TPR Terceiro',
+    reputational_risk: 'Risco Reputacional',
+    ongoing_monitoring: 'Monitoramento Continuo',
+    dossier_pf_basic: 'Dossie PF Basico',
+    dossier_pf_full: 'Dossie PF Completo',
+    dossier_pj: 'Dossie PJ',
+    report_secure: 'Relatorio Seguro',
+};
+
+const MODULE_RUN_STATUS_LABELS_SHORT = {
+    not_entitled: 'Nao contratado',
+    pending: 'Pendente',
+    running: 'Em execucao',
+    completed_no_findings: 'Sem achados',
+    completed_with_findings: 'Com achados',
+    skipped_reuse: 'Reutilizado',
+    skipped_policy: 'Por policy',
+    failed_retryable: 'Falha temp.',
+    failed_final: 'Falha final',
+    blocked: 'Bloqueado',
+};
+
+function PublicationGuardsPanel({ caseData = {}, moduleRuns = [] }) {
+    const summary = caseData.moduleRunSummary || null;
+    const productKey = caseData.productKey || null;
+    const requestedKeys = Array.isArray(caseData.requestedModuleKeys) ? caseData.requestedModuleKeys : [];
+    const effectiveKeys = Array.isArray(caseData.effectiveModuleKeys) ? caseData.effectiveModuleKeys : [];
+    const executedKeys = Array.isArray(caseData.executedModuleKeys) ? caseData.executedModuleKeys : [];
+
+    if (!summary && !productKey && moduleRuns.length === 0) return null;
+
+    const blocksDecision = summary?.blocksDecision ?? false;
+    const blocksPublication = summary?.blocksPublication ?? false;
+    const blockedKeys = Array.isArray(summary?.blockedModuleKeys) ? summary.blockedModuleKeys : [];
+    const hasBlock = blocksDecision || blocksPublication;
+
+    return (
+        <section className={`caso-v2-panel caso-publication-guard${hasBlock ? ' caso-publication-guard--blocked' : ''}`} aria-label="Guards de publicacao V2">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Gates operacionais V2</strong>
+                    <span>Fonte: moduleRunSummary + casos</span>
+                </div>
+                {productKey && (
+                    <span className="caso-product-badge" title={productKey}>
+                        {PRODUCT_KEY_LABELS[productKey] || productKey}
+                    </span>
+                )}
+            </div>
+            <div className="caso-publication-guard__semantics">
+                <span title="Modulos solicitados pelo produto">{requestedKeys.length} solicitados</span>
+                <span className="caso-publication-guard__arrow">→</span>
+                <span title="Modulos efetivamente habilitados">{effectiveKeys.length} efetivos</span>
+                <span className="caso-publication-guard__arrow">→</span>
+                <span title="Modulos que ja foram executados">{executedKeys.length} executados</span>
+            </div>
+            {hasBlock && (
+                <div className="caso-publication-guard__alert">
+                    {blocksDecision && <span className="caso-guard-badge caso-guard-badge--decision">Bloqueia decisao</span>}
+                    {blocksPublication && <span className="caso-guard-badge caso-guard-badge--publication">Bloqueia publicacao</span>}
+                    {blockedKeys.length > 0 && (
+                        <div className="caso-publication-guard__blocked-keys">
+                            {blockedKeys.map((mk) => (
+                                <span key={mk} className="caso-guard-blocked-key">{MODULE_RUN_LABELS[mk] || mk}</span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            {summary && (
+                <div className="caso-publication-guard__counts">
+                    <span>{summary.evidenceCount ?? 0} evidencias</span>
+                    <span>{summary.riskSignalCount ?? 0} sinais</span>
+                    <span>{summary.providerRecordCount ?? 0} registros</span>
+                </div>
+            )}
+        </section>
+    );
+}
+
+function EvidenceSummaryPanel({ evidenceItems = [], error = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Evidencias V2 indisponíveis.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!evidenceItems.length) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--empty">
+                <strong>Evidencias V2</strong>
+                <span>Sem evidencias materializadas para este caso.</span>
+            </div>
+        );
+    }
+
+    const byModule = evidenceItems.reduce((acc, item) => {
+        const key = item.moduleKey || 'desconhecido';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+    }, {});
+
+    return (
+        <section className="caso-v2-panel" aria-label="Evidencias V2">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Evidencias V2</strong>
+                    <span>Fonte: evidenceItems</span>
+                </div>
+                <span className="caso-module-runs__count">{evidenceItems.length} evidencias</span>
+            </div>
+            {Object.entries(byModule).map(([moduleKey, items]) => (
+                <div key={moduleKey} className="caso-evidence-group">
+                    <div className="caso-evidence-group__label">{MODULE_RUN_LABELS[moduleKey] || moduleKey}</div>
+                    {items.map((item) => (
+                        <div key={item.id} className={`caso-evidence-item caso-severity--${item.severity || 'low'}`}>
+                            <span className={`caso-severity-badge caso-severity-badge--${item.severity || 'low'}`}>
+                                {SEVERITY_LABELS[item.severity] || item.severity || 'low'}
+                            </span>
+                            <span className="caso-evidence-item__summary">{item.summary || item.kind || '—'}</span>
+                        </div>
+                    ))}
+                </div>
+            ))}
+        </section>
+    );
+}
+
+function RiskSignalsPanel({ riskSignals = [], error = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Sinais de risco V2 indisponíveis.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!riskSignals.length) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--empty">
+                <strong>Sinais de risco V2</strong>
+                <span>Sem sinais de risco materializados para este caso.</span>
+            </div>
+        );
+    }
+
+    return (
+        <section className="caso-v2-panel" aria-label="Sinais de risco V2">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Sinais de risco V2</strong>
+                    <span>Fonte: riskSignals</span>
+                </div>
+                <span className="caso-module-runs__count">{riskSignals.length} sinais</span>
+            </div>
+            <div className="caso-risk-signals__list">
+                {riskSignals.map((signal) => (
+                    <div key={signal.id} className={`caso-risk-signal caso-severity--${signal.severity || 'low'}`}>
+                        <div className="caso-risk-signal__topline">
+                            <span className={`caso-severity-badge caso-severity-badge--${signal.severity || 'low'}`}>
+                                {SEVERITY_LABELS[signal.severity] || signal.severity || '—'}
+                            </span>
+                            <span className="caso-risk-signal__module">{MODULE_RUN_LABELS[signal.moduleKey] || signal.moduleKey || '—'}</span>
+                            {signal.scoreImpact != null && (
+                                <span className="caso-risk-signal__score">+{signal.scoreImpact} pts</span>
+                            )}
+                        </div>
+                        {signal.reason && (
+                            <div className="caso-risk-signal__reason">{signal.reason}</div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+const SUBJECT_TYPE_LABELS = { pf: 'Pessoa Fisica', pj: 'Pessoa Juridica' };
+const DOC_TYPE_LABELS = { cpf: 'CPF', cnpj: 'CNPJ' };
+
+function formatMaskedDoc(primaryDocument) {
+    if (!primaryDocument?.docValue) return null;
+    const { docType, docValue } = primaryDocument;
+    if (docType === 'cpf' && docValue.length === 11) {
+        return `${docType.toUpperCase()} ***.***.${docValue.slice(6, 9)}-${docValue.slice(9)}`;
+    }
+    if (docType === 'cnpj' && docValue.length === 14) {
+        return `${docType.toUpperCase()} ${docValue.slice(0, 2)}.***.***/****-${docValue.slice(12)}`;
+    }
+    return `${DOC_TYPE_LABELS[docType] || docType} ***`;
+}
+
+function SubjectSummaryPanel({ subject = null, error = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Sujeito V2 indisponivel.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!subject) return null;
+
+    const summary = subject.lastDossierSummary || {};
+    return (
+        <section className="caso-v2-panel caso-subject-panel" aria-label="Sujeito investigado V2">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Sujeito investigado</strong>
+                    <span>Fonte: subjects</span>
+                </div>
+                {subject.type && (
+                    <span className="caso-product-badge">{SUBJECT_TYPE_LABELS[subject.type] || subject.type}</span>
+                )}
+            </div>
+            <div className="caso-subject-panel__identity">
+                {subject.declaredName && (
+                    <span className="caso-subject-panel__name">{subject.declaredName}</span>
+                )}
+                {subject.primaryDocument && (
+                    <span className="caso-subject-panel__doc">{formatMaskedDoc(subject.primaryDocument)}</span>
+                )}
+            </div>
+            {(summary.evidenceCount != null || summary.riskSignalCount != null) && (
+                <div className="caso-publication-guard__counts">
+                    {summary.productKey && <span>{PRODUCT_KEY_LABELS[summary.productKey] || summary.productKey}</span>}
+                    {summary.evidenceCount != null && <span>{summary.evidenceCount} evidencias</span>}
+                    {summary.riskSignalCount != null && <span>{summary.riskSignalCount} sinais</span>}
+                    {summary.verdict && <span>Veredito: {summary.verdict}</span>}
+                </div>
+            )}
+        </section>
+    );
+}
+
+const RISK_LEVEL_LABELS = { RED: 'Alto', YELLOW: 'Atencao', GREEN: 'Baixo' };
+const RISK_LEVEL_CLASS = { RED: 'caso-v2-risk--red', YELLOW: 'caso-v2-risk--yellow', GREEN: 'caso-v2-risk--green' };
+
+function V2RiskSummaryPanel({ riskSignals = [] }) {
+    if (!riskSignals.length) return null;
+    const { riskScore, riskLevel, topSignals, signalCount } = resolveV2Risk(riskSignals);
+    return (
+        <section className={`caso-v2-panel caso-v2-risk-panel ${RISK_LEVEL_CLASS[riskLevel] || ''}`} aria-label="Risco V2 agregado">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Risco V2 (riskSignals)</strong>
+                    <span>{signalCount} {signalCount === 1 ? 'sinal' : 'sinais'} agregados</span>
+                </div>
+                <span className="caso-product-badge">{RISK_LEVEL_LABELS[riskLevel] || riskLevel} — {riskScore}pts</span>
+            </div>
+            {topSignals.length > 0 && (
+                <ul className="caso-risk-signals__list" style={{ margin: 0, padding: 0 }}>
+                    {topSignals.map((signal) => (
+                        <li key={signal.id || signal.kind} className={`caso-risk-signal caso-severity--${signal.severity}`}>
+                            <div className="caso-risk-signal__header">
+                                <span className={`caso-severity-badge caso-severity-badge--${signal.severity}`}>{signal.severity}</span>
+                                <span className="caso-risk-signal__kind">{signal.kind}</span>
+                                {typeof signal.scoreImpact === 'number' && (
+                                    <span className="caso-risk-signal__score">+{signal.scoreImpact}pts</span>
+                                )}
+                            </div>
+                            {signal.reason && <p className="caso-risk-signal__reason">{signal.reason}</p>}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </section>
+    );
+}
+
+function getCockpitPhaseKeysFromModuleRuns(moduleRuns = [], fallbackPhases = LEGACY_PHASES) {
+    const activeRuns = moduleRuns.filter((run) => run.requested || run.effective);
+    if (!activeRuns.length) return fallbackPhases;
+    const mapped = activeRuns
+        .map((run) => ({
+            warrants: 'warrant',
+            identity_pf: 'identification',
+            identity_pj: 'identification',
+            judicial: null,
+            kyc: null,
+            decision: null,
+            report_secure: null,
+        }[run.moduleKey] ?? run.moduleKey))
+        .filter(Boolean)
+        .filter((phase) => phase !== 'identification');
+    return [...new Set(mapped)];
+}
 
 function getAiHomonymDecisionLabel(value) {
     return {
@@ -314,6 +720,14 @@ export default function CasoPage() {
     const [returnError, setReturnError] = useState(null);
     const [showHighRiskConfirm, setShowHighRiskConfirm] = useState(false);
     const [caseTimeline, setCaseTimeline] = useState([]);
+    const [moduleRuns, setModuleRuns] = useState([]);
+    const [moduleRunsError, setModuleRunsError] = useState(null);
+    const [evidenceItems, setEvidenceItems] = useState([]);
+    const [evidenceItemsError, setEvidenceItemsError] = useState(null);
+    const [riskSignals, setRiskSignals] = useState([]);
+    const [riskSignalsError, setRiskSignalsError] = useState(null);
+    const [subject, setSubject] = useState(null);
+    const [subjectError, setSubjectError] = useState(null);
     const dirtyFieldsRef = useRef(new Set());
     const highRiskConfirmedRef = useRef(false);
     const initializedCaseIdRef = useRef(null);
@@ -438,6 +852,55 @@ export default function CasoPage() {
     }, [caseId, isDemoMode]);
 
     useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setModuleRuns([]);
+            setModuleRunsError(null);
+            return undefined;
+        }
+        return subscribeToModuleRunsForCase(caseId, (nextModuleRuns, error) => {
+            setModuleRuns(nextModuleRuns || []);
+            setModuleRunsError(error || null);
+        });
+    }, [caseId, isDemoMode]);
+
+    useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setEvidenceItems([]);
+            setEvidenceItemsError(null);
+            return undefined;
+        }
+        return subscribeToEvidenceItemsForCase(caseId, (items, error) => {
+            setEvidenceItems(items || []);
+            setEvidenceItemsError(error || null);
+        });
+    }, [caseId, isDemoMode]);
+
+    useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setRiskSignals([]);
+            setRiskSignalsError(null);
+            return undefined;
+        }
+        return subscribeToRiskSignalsForCase(caseId, (signals, error) => {
+            setRiskSignals(signals || []);
+            setRiskSignalsError(error || null);
+        });
+    }, [caseId, isDemoMode]);
+
+    useEffect(() => {
+        const subjectId = caseData?.subjectId;
+        if (!caseId || isDemoMode || !subjectId) {
+            setSubject(null);
+            setSubjectError(null);
+            return undefined;
+        }
+        return subscribeToSubjectForCase(subjectId, (subjectDoc, error) => {
+            setSubject(subjectDoc || null);
+            setSubjectError(error || null);
+        });
+    }, [caseId, isDemoMode, caseData?.subjectId]);
+
+    useEffect(() => {
         if (caseId !== initializedCaseIdRef.current && caseData) {
             // New case loaded — reset form, step and dirty tracking
             initializedCaseIdRef.current = caseId;
@@ -457,7 +920,7 @@ export default function CasoPage() {
         } else if (caseData) {
             setEnabledPhases(LEGACY_PHASES);
         }
-    }, [caseData, caseId]);
+    }, [caseData, caseId, isDemoMode]);
 
     // Auto-resize textareas with --autosize class to fit content
     useEffect(() => {
@@ -468,24 +931,29 @@ export default function CasoPage() {
         }
     }, [form, activeStep]);
 
+    const cockpitPhaseKeys = useMemo(
+        () => getCockpitPhaseKeysFromModuleRuns(moduleRuns, enabledPhases),
+        [moduleRuns, enabledPhases],
+    );
+
     const steps = useMemo(() => {
         const result = [{ key: 'identification', label: 'Identificacao' }];
-        if (enabledPhases.includes('criminal')) result.push({ key: 'criminal', label: 'Criminal' });
-        if (enabledPhases.includes('labor')) result.push({ key: 'labor', label: 'Trabalhista' });
-        if (enabledPhases.includes('warrant')) result.push({ key: 'warrant', label: 'Mandado de Prisao' });
-        const hasOsint = enabledPhases.includes('osint');
-        const hasSocial = enabledPhases.includes('social');
+        if (cockpitPhaseKeys.includes('criminal')) result.push({ key: 'criminal', label: 'Criminal' });
+        if (cockpitPhaseKeys.includes('labor')) result.push({ key: 'labor', label: 'Trabalhista' });
+        if (cockpitPhaseKeys.includes('warrant')) result.push({ key: 'warrant', label: 'Mandado de Prisao' });
+        const hasOsint = cockpitPhaseKeys.includes('osint');
+        const hasSocial = cockpitPhaseKeys.includes('social');
         if (hasOsint || hasSocial) {
             result.push({ key: 'osint_social', label: hasOsint && hasSocial ? 'OSINT e Social' : hasOsint ? 'OSINT' : 'Social' });
         }
-        const hasDigital = enabledPhases.includes('digital');
-        const hasConflict = enabledPhases.includes('conflictInterest');
+        const hasDigital = cockpitPhaseKeys.includes('digital');
+        const hasConflict = cockpitPhaseKeys.includes('conflictInterest');
         if (hasDigital || hasConflict) {
             result.push({ key: 'digital', label: hasDigital ? 'Perfil Digital' : 'Conflito de Interesse' });
         }
         result.push({ key: 'review', label: 'Revisao' });
         return result;
-    }, [enabledPhases]);
+    }, [cockpitPhaseKeys]);
 
     const currentStepKey = steps[activeStep]?.key;
 
@@ -519,16 +987,16 @@ export default function CasoPage() {
         });
     };
 
-    const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
+    const risk = useMemo(() => calculateRisk(form, cockpitPhaseKeys), [form, cockpitPhaseKeys]);
 
     const checklist = [
-        enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
-        enabledPhases.includes('labor') && { label: 'Trabalhista definido', ok: Boolean(form.laborFlag) },
-        enabledPhases.includes('warrant') && { label: 'Mandado de prisao definido', ok: !!form.warrantFlag },
-        enabledPhases.includes('osint') && { label: 'OSINT definido', ok: Boolean(form.osintLevel) },
-        enabledPhases.includes('social') && { label: 'Social definido', ok: Boolean(form.socialStatus) },
-        enabledPhases.includes('digital') && { label: 'Perfil digital definido', ok: Boolean(form.digitalFlag) },
-        enabledPhases.includes('conflictInterest') && { label: 'Conflito de interesse definido', ok: Boolean(form.conflictInterest) },
+        cockpitPhaseKeys.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
+        cockpitPhaseKeys.includes('labor') && { label: 'Trabalhista definido', ok: Boolean(form.laborFlag) },
+        cockpitPhaseKeys.includes('warrant') && { label: 'Mandado de prisao definido', ok: !!form.warrantFlag },
+        cockpitPhaseKeys.includes('osint') && { label: 'OSINT definido', ok: Boolean(form.osintLevel) },
+        cockpitPhaseKeys.includes('social') && { label: 'Social definido', ok: Boolean(form.socialStatus) },
+        cockpitPhaseKeys.includes('digital') && { label: 'Perfil digital definido', ok: Boolean(form.digitalFlag) },
+        cockpitPhaseKeys.includes('conflictInterest') && { label: 'Conflito de interesse definido', ok: Boolean(form.conflictInterest) },
         { label: 'Veredito final definido', ok: Boolean(form.finalVerdict) },
         // ── Data quality warnings (non-blocking) ──
         form.criminalFlag === 'NEGATIVE' && (caseData?.juditCriminalCount || 0) > 0 && {
@@ -887,6 +1355,12 @@ export default function CasoPage() {
                 onRetryPhase={handleRetryPhase}
                 retryingPhase={retryingPhase}
             />
+            <ModuleRunsPanel moduleRuns={moduleRuns} error={moduleRunsError} />
+            <PublicationGuardsPanel caseData={caseData} moduleRuns={moduleRuns} />
+            <EvidenceSummaryPanel evidenceItems={evidenceItems} error={evidenceItemsError} />
+            <RiskSignalsPanel riskSignals={riskSignals} error={riskSignalsError} />
+            <SubjectSummaryPanel subject={subject} error={subjectError} />
+            <V2RiskSummaryPanel riskSignals={riskSignals} />
 
             {/* P09: Warning if enrichment/AI data changed after last draft save */}
             {caseData.draftSavedAt && caseData.status !== 'DONE' && (() => {

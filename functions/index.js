@@ -87,6 +87,29 @@ const {
     recordFailure,
 } = require('./helpers/circuitBreaker');
 const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
+const {
+    V2_CORE_VERSION,
+    buildClientProjectionContract,
+    buildDecisionContract,
+    buildReportSnapshotContract,
+    inferProductKey,
+    inferRequestedModuleKeys,
+    resolvePublicReportAvailability,
+    validatePublicationGates,
+} = require('./domain/v2Core.cjs');
+const {
+    V2_MODULES_VERSION,
+    buildModuleRunsForCase,
+    summarizeModuleRuns,
+} = require('./domain/v2Modules.cjs');
+const {
+    V2_OPERATIONAL_ARTIFACTS_VERSION,
+    buildOperationalArtifactsForCase,
+} = require('./domain/v2OperationalArtifacts.cjs');
+const {
+    V2_SUBJECTS_VERSION,
+    buildSubjectFromCase,
+} = require('./domain/v2Subjects.cjs');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
 
@@ -907,6 +930,12 @@ async function getTenantSettingsData(tenantId) {
     if (!tenantId) return null;
     const tenantDoc = await db.collection('tenantSettings').doc(tenantId).get();
     return tenantDoc.exists ? tenantDoc.data() : null;
+}
+
+async function getTenantEntitlementsData(tenantId) {
+    if (!tenantId) return null;
+    const entitlementDoc = await db.collection('tenantEntitlements').doc(tenantId).get();
+    return entitlementDoc.exists ? { tenantId, ...entitlementDoc.data() } : null;
 }
 
 async function loadFonteDataConfig(tenantId) {
@@ -1985,6 +2014,7 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
             enrichmentSources: { gate: gateSource },
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
         return { status: 'BLOCKED', error: gateReason || null };
     }
 
@@ -2166,6 +2196,7 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
         enrichedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });
+    await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
     const totalCost = Object.values(enrichmentSources)
         .map((source) => parseFloat(source.cost) || 0)
@@ -2255,6 +2286,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
             escavadorEnrichedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
         console.log(
             `Case ${caseId} [Escavador]: DONE. ` +
@@ -2289,6 +2321,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
             escavadorError: errMsg,
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
         // Run auto-classify even on failure — Escavador data is supplementary
         if (!options.skipAutoClassify) {
@@ -2418,6 +2451,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
                     bigdatacorpQueryDate: new Date().toISOString(),
                     updatedAt: FieldValue.serverTimestamp(),
                 });
+                await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
                 console.log(`Case ${caseId} [BigDataCorp]: BLOCKED — ${gateReason}`);
                 return { status: 'BLOCKED', error: gateReason };
             }
@@ -2461,6 +2495,8 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             updatedAt: FieldValue.serverTimestamp(),
         });
 
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
+
         console.log(
             `Case ${caseId} [BigDataCorp]: DONE in ${result.elapsedMs}ms. ` +
             `Processos: ${updatePayload.bigdatacorpProcessTotal || 0}, ` +
@@ -2496,6 +2532,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             bigdatacorpError: errMsg,
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
         return { status: 'FAILED', error: errMsg };
     }
 }
@@ -3155,6 +3192,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         juditEnrichedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     });
+    await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
     if (!options.skipAutoClassify && (juditStatus === 'DONE' || juditStatus === 'PARTIAL')) {
         try {
@@ -3663,6 +3701,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
             djenEnrichedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
         console.log(
             `Case ${caseId} [DJEN]: DONE (${strategy}). ` +
@@ -3698,6 +3737,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
             djenError: errMsg,
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
         // Run auto-classify even on DJEN failure — DJEN data is supplementary
         if (!options.skipAutoClassify) {
@@ -3820,6 +3860,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                     autoClassifiedAt: FieldValue.serverTimestamp(),
                     updatedAt: FieldValue.serverTimestamp(),
                 });
+                await materializeModuleRunsFromCaseRef(caseRef, caseId, freshData);
 
                 console.log(`Case ${caseId} [SafetyNet]: Escavador triggered for ${autoClassification.criminalFlag}. Reasons: ${safetyNet.reasons.join(', ')}`);
                 return;
@@ -4015,6 +4056,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
             autoClassifiedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await materializeModuleRunsFromCaseRef(caseRef, caseId, freshData);
     }
 }
 
@@ -4928,7 +4970,10 @@ exports.createClientSolicitation = onCall(
             updatedAt: FieldValue.serverTimestamp(),
         });
 
-        batch.set(caseRef, {
+        const requestedModuleKeys = inferRequestedModuleKeys({
+            enabledPhases: enabledPhases.length > 0 ? enabledPhases : Object.keys(DEFAULT_ANALYSIS_CONFIG),
+        });
+        const casePayload = {
             tenantId,
             tenantName,
             candidateId: candidateRef.id,
@@ -4938,6 +4983,8 @@ exports.createClientSolicitation = onCall(
             cpf: cpfDigits,
             cpfMasked: maskCpf(cpfDigits),
             hiringUf: String(hiringUf || ''),
+            productKey: 'dossier_pf_basic',
+            requestedModuleKeys,
             priority: priority === 'HIGH' ? 'HIGH' : 'NORMAL',
             requestedBy: formatRequestedBy(profile, uid),
             requestedByName: profile.displayName || null,
@@ -4988,9 +5035,11 @@ exports.createClientSolicitation = onCall(
             createdMonthKey,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+        batch.set(caseRef, casePayload);
 
         await batch.commit();
+        const moduleRunState = await materializeModuleRunsForCase(caseRef.id, casePayload);
 
         await writeAuditEvent({
             action: 'SOLICITATION_CREATED',
@@ -5006,6 +5055,7 @@ exports.createClientSolicitation = onCall(
         return {
             caseId: caseRef.id,
             candidateId: candidateRef.id,
+            moduleRunSummary: moduleRunState.summary,
         };
     },
 );
@@ -5232,11 +5282,41 @@ exports.createAnalystPublicReport = onCall(
                     throw new HttpsError('failed-precondition', 'Relatorio publico so pode ser gerado para casos concluidos.');
                 }
                 reportTenantId = caseData.tenantId || reportTenantId;
-                publicSnapshot = await syncPublicResultLatest(caseId, caseData, {}, {
+                const v2Artifacts = await materializeV2PublicationArtifacts(caseId, caseData, {
                     concludedAtOverride: caseData.concludedAt || caseData.updatedAt || new Date(),
+                    reviewer: {
+                        uid: caseData.assigneeId || caseData.analystId || caseData.updatedBy || uid,
+                        email: profile.email || uid,
+                    },
+                    reportCreatedBy: uid,
+                    source: SOURCE.PORTAL_OPS,
                 });
-                publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
 
+                await writeAuditEvent({
+                    action: 'PUBLIC_REPORT_CREATED',
+                    tenantId: reportTenantId,
+                    actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+                    entity: { type: 'REPORT_PUBLIC', id: v2Artifacts.publicReportToken, label: caseData.candidateName || meta.candidateName || v2Artifacts.publicReportToken },
+                    related: {
+                        caseId,
+                        reportToken: v2Artifacts.publicReportToken,
+                        decisionId: v2Artifacts.decisionId,
+                        reportSnapshotId: v2Artifacts.reportSnapshotId,
+                    },
+                    source: SOURCE.PORTAL_OPS,
+                    ip: getClientIp(request),
+                    detail: `Relatorio publico V2 gerado${caseData.candidateName ? ` para ${caseData.candidateName}` : ''}`,
+                });
+
+                return {
+                    token: v2Artifacts.publicReportToken,
+                    expiresAt: v2Artifacts.expiresAt?.toISOString?.() || null,
+                    reportSnapshotId: v2Artifacts.reportSnapshotId,
+                    decisionId: v2Artifacts.decisionId,
+                    reportAvailability: v2Artifacts.availability,
+                    moduleRunSummary: v2Artifacts.moduleRunSummary,
+                };
+                /*
                 // Reuse existing token if available, still valid, and fresh
                 if (caseData.publicReportToken) {
                     const existingRef = db.collection('publicReports').doc(caseData.publicReportToken);
@@ -5267,6 +5347,7 @@ exports.createAnalystPublicReport = onCall(
                 }
 
                 html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+                */
             }
         }
 
@@ -5349,6 +5430,42 @@ exports.createClientPublicReport = onCall(
             throw new HttpsError('failed-precondition', 'Relatorio disponivel apenas para casos concluidos.');
         }
 
+        const v2Artifacts = await materializeV2PublicationArtifacts(caseId, caseData, {
+            concludedAtOverride: caseData.concludedAt || caseData.updatedAt || new Date(),
+            reviewer: {
+                uid: caseData.assigneeId || caseData.analystId || caseData.updatedBy || 'legacy_ops_review',
+                email: caseData.assigneeEmail || null,
+            },
+            reportCreatedBy: uid,
+            source: SOURCE.PORTAL_CLIENT,
+        });
+
+        await writeAuditEvent({
+            action: 'CLIENT_PUBLIC_REPORT_CREATED',
+            tenantId: profile.tenantId,
+            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'REPORT_PUBLIC', id: v2Artifacts.publicReportToken, label: caseData.candidateName || caseId },
+            related: {
+                caseId,
+                reportToken: v2Artifacts.publicReportToken,
+                decisionId: v2Artifacts.decisionId,
+                reportSnapshotId: v2Artifacts.reportSnapshotId,
+            },
+            source: SOURCE.PORTAL_CLIENT,
+            ip: getClientIp(request),
+            detail: `Relatorio publico V2 aberto pelo cliente para ${caseData.candidateName || caseId}`,
+        });
+
+        return {
+            token: v2Artifacts.publicReportToken,
+            expiresAt: v2Artifacts.expiresAt?.toISOString?.() || null,
+            reportSnapshotId: v2Artifacts.reportSnapshotId,
+            decisionId: v2Artifacts.decisionId,
+            reportAvailability: v2Artifacts.availability,
+            moduleRunSummary: v2Artifacts.moduleRunSummary,
+        };
+
+        /*
         // Reuse existing token if available, still valid, and fresh
         if (caseData.publicReportToken) {
             const existingRef = db.collection('publicReports').doc(caseData.publicReportToken);
@@ -5417,6 +5534,7 @@ exports.createClientPublicReport = onCall(
             token: reportRef.id,
             expiresAt: expiresAt.toISOString(),
         };
+        */
     },
 );
 
@@ -5424,7 +5542,7 @@ function resolvePublicReportStatus(reportData, now = new Date()) {
     const expiresAt = asDate(reportData?.expiresAt);
     const active = reportData?.active !== false;
 
-    if (!active) return 'REVOKED';
+    if (!active || reportData?.status === 'revoked') return 'REVOKED';
     if (expiresAt && expiresAt < now) return 'EXPIRED';
     return 'ACTIVE';
 }
@@ -5745,6 +5863,11 @@ exports.assignCaseToCurrentAnalyst = onCall(
             assigneeId: uid,
             status: 'IN_PROGRESS',
             updatedAt: FieldValue.serverTimestamp(),
+        });
+        await materializeModuleRunsForCase(caseId, {
+            ...caseData,
+            assigneeId: uid,
+            status: 'IN_PROGRESS',
         });
 
         await writeAuditEvent({
@@ -7063,7 +7186,7 @@ async function revokeCasePublicationArtifacts(caseId, caseData) {
         const reportRef = db.collection('publicReports').doc(caseData.publicReportToken);
         const reportSnap = await reportRef.get();
         if (reportSnap.exists) {
-            await reportRef.update({ active: false });
+            await reportRef.update({ active: false, status: 'revoked', revokedAt: FieldValue.serverTimestamp() });
         }
     }
 
@@ -7072,10 +7195,423 @@ async function revokeCasePublicationArtifacts(caseId, caseData) {
     if (publicResultSnap.exists) {
         await publicResultRef.delete();
     }
+
+    await db.collection('clientProjections').doc(caseId).set({
+        reportAvailability: {
+            status: 'revoked',
+            reasonCode: 'case_unpublished',
+            clientMessage: 'Relatorio indisponivel porque o caso foi reaberto ou substituido.',
+            publicReportToken: null,
+            reportSnapshotId: caseData?.currentReportSnapshotId || null,
+            decisionId: caseData?.currentDecisionId || null,
+            isActionable: false,
+        },
+        reportReady: false,
+        publicReportToken: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true }).catch(() => {});
 }
 
 function computePublicSnapshotHash(publicData) {
     return computeSimpleHash(JSON.stringify(publicData || {}));
+}
+
+function buildV2ArtifactId(caseId, hash) {
+    const safeCaseId = String(caseId || 'case').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+    const safeHash = String(hash || computeSimpleHash(safeCaseId)).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 16);
+    return `${safeCaseId}_${safeHash}`;
+}
+
+function isUsablePublicReport(reportData, { caseId, tenantId, reportSnapshotId, now = new Date() } = {}) {
+    if (!reportData) return false;
+    if (reportData.active === false || reportData.status === 'revoked') return false;
+    if (reportData.caseId && reportData.caseId !== caseId) return false;
+    if (reportData.tenantId && tenantId && reportData.tenantId !== tenantId) return false;
+    if (reportData.reportSnapshotId && reportSnapshotId && reportData.reportSnapshotId !== reportSnapshotId) return false;
+    if (reportData.reportBuildVersion && reportData.reportBuildVersion !== REPORT_BUILD_VERSION) return false;
+    const expiresAt = asDate(reportData.expiresAt);
+    if (expiresAt && expiresAt < now) return false;
+    return true;
+}
+
+function buildModuleRunDocId(caseId, moduleKey) {
+    return `${caseId}_${moduleKey}`.replace(/[^A-Za-z0-9_-]/g, '_');
+}
+
+async function materializeModuleRunsForCase(caseId, caseData = {}, options = {}) {
+    const tenantId = caseData.tenantId || options.tenantId || null;
+    if (!caseId || !tenantId) {
+        const emptySummary = summarizeModuleRuns([]);
+        return { moduleRuns: [], summary: emptySummary };
+    }
+
+    const resolvedState = await resolveModuleRunsForCase(caseId, caseData, options);
+    const operationalArtifacts = buildOperationalArtifactsForCase({
+        caseId,
+        caseData,
+        moduleRuns: resolvedState.moduleRuns,
+    });
+    const mergeIds = (...lists) => [...new Set(lists.flat().filter(Boolean))];
+    const moduleRuns = resolvedState.moduleRuns.map((moduleRun) => {
+        const artifactIds = operationalArtifacts.artifactIdsByModule?.[moduleRun.moduleKey] || {};
+        return {
+            ...moduleRun,
+            providerRequestIds: mergeIds(moduleRun.providerRequestIds || [], artifactIds.providerRequestIds || []),
+            rawSnapshotIds: mergeIds(moduleRun.rawSnapshotIds || [], artifactIds.rawSnapshotIds || []),
+            providerRecordIds: mergeIds(moduleRun.providerRecordIds || [], artifactIds.providerRecordIds || []),
+            evidenceIds: mergeIds(moduleRun.evidenceIds || [], artifactIds.evidenceIds || []),
+            riskSignalIds: mergeIds(moduleRun.riskSignalIds || [], artifactIds.riskSignalIds || []),
+        };
+    });
+    const summary = summarizeModuleRuns(moduleRuns);
+    const batch = db.batch();
+
+    operationalArtifacts.providerRequests.forEach((providerRequest) => {
+        const providerRequestRef = db.collection('providerRequests').doc(providerRequest.id);
+        batch.set(providerRequestRef, stripUndefined({
+            ...providerRequest,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+    operationalArtifacts.rawSnapshots.forEach((snap) => {
+        const snapRef = db.collection('rawSnapshots').doc(snap.id);
+        batch.set(snapRef, stripUndefined({
+            ...snap,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+    operationalArtifacts.providerRecords.forEach((record) => {
+        const recordRef = db.collection('providerRecords').doc(record.id);
+        batch.set(recordRef, stripUndefined({
+            ...record,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+
+    operationalArtifacts.evidenceItems.forEach((evidenceItem) => {
+        const evidenceRef = db.collection('evidenceItems').doc(evidenceItem.id);
+        batch.set(evidenceRef, stripUndefined({
+            ...evidenceItem,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+    operationalArtifacts.riskSignals.forEach((riskSignal) => {
+        const riskSignalRef = db.collection('riskSignals').doc(riskSignal.id);
+        batch.set(riskSignalRef, stripUndefined({
+            ...riskSignal,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+    moduleRuns.forEach((moduleRun) => {
+        const moduleRunRef = db.collection('moduleRuns').doc(buildModuleRunDocId(caseId, moduleRun.moduleKey));
+        batch.set(moduleRunRef, stripUndefined({
+            ...moduleRun,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
+
+    const casePointerPayload = stripUndefined({
+        productKey: caseData.productKey || inferProductKey(caseData),
+        requestedModuleKeys: summary.requestedModuleKeys,
+        effectiveModuleKeys: summary.effectiveModuleKeys,
+        executedModuleKeys: summary.executedModuleKeys,
+        moduleRunSummary: {
+            total: summary.total,
+            requestedCount: summary.requestedCount,
+            effectiveCount: summary.effectiveCount,
+            executedCount: summary.executedCount,
+            blockedCount: summary.blockedCount,
+            blockedModuleKeys: summary.blockedModuleKeys,
+            blocksDecision: summary.blocksDecision,
+            blocksPublication: summary.blocksPublication,
+            providerRequestCount: operationalArtifacts.summary.providerRequestCount,
+            rawSnapshotCount: operationalArtifacts.summary.rawSnapshotCount,
+            providerRecordCount: operationalArtifacts.summary.providerRecordCount,
+            evidenceCount: operationalArtifacts.summary.evidenceCount,
+            riskSignalCount: operationalArtifacts.summary.riskSignalCount,
+            updatedAt: FieldValue.serverTimestamp(),
+        },
+        moduleRunsVersion: V2_MODULES_VERSION,
+        operationalArtifactsVersion: V2_OPERATIONAL_ARTIFACTS_VERSION,
+        updatedAt: FieldValue.serverTimestamp(),
+    });
+    batch.set(db.collection('cases').doc(caseId), casePointerPayload, { merge: true });
+
+    // Materialise subject entity (decouples investigated person from case envelope)
+    try {
+        const { subject, subjectId } = buildSubjectFromCase({
+            caseId,
+            caseData,
+            moduleRunSummary: casePointerPayload.moduleRunSummary,
+        });
+        const subjectRef = db.collection('subjects').doc(subjectId);
+        batch.set(subjectRef, stripUndefined({
+            ...subject,
+            lastDossierSummary: { ...subject.lastDossierSummary, updatedAt: FieldValue.serverTimestamp() },
+            lastCheckedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            version: V2_SUBJECTS_VERSION,
+        }), { merge: true });
+        // Back-link subjectId onto case
+        batch.set(db.collection('cases').doc(caseId), { subjectId, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    } catch (subjectErr) {
+        console.warn(`Case ${caseId}: subject materialization skipped:`, subjectErr.message);
+    }
+
+    await batch.commit();
+
+    return { moduleRuns, summary, operationalArtifacts };
+}
+
+async function materializeModuleRunsFromCaseRef(caseRef, caseId, fallbackCaseData = {}) {
+    try {
+        const freshDoc = await caseRef.get();
+        const freshData = {
+            ...fallbackCaseData,
+            ...(freshDoc.data() || {}),
+        };
+        return await materializeModuleRunsForCase(caseId, freshData);
+    } catch (err) {
+        console.warn(`Case ${caseId}: V2 module/artifact materialization failed:`, err.message);
+        return null;
+    }
+}
+
+async function resolveModuleRunsForCase(caseId, caseData = {}, options = {}) {
+    const tenantId = caseData.tenantId || options.tenantId || null;
+    if (!caseId || !tenantId) {
+        const emptySummary = summarizeModuleRuns([]);
+        return { moduleRuns: [], summary: emptySummary };
+    }
+
+    const [tenantEntitlements, tenantSettings] = await Promise.all([
+        getTenantEntitlementsData(tenantId),
+        getTenantSettingsData(tenantId),
+    ]);
+    const moduleRuns = buildModuleRunsForCase({
+        caseId,
+        caseData,
+        tenantEntitlements,
+        tenantSettings,
+        now: new Date(),
+    });
+    const summary = summarizeModuleRuns(moduleRuns);
+    return { moduleRuns, summary };
+}
+
+async function materializeV2PublicationArtifacts(caseId, caseData, options = {}) {
+    const {
+        publicSnapshot: providedPublicSnapshot = null,
+        concludedAtOverride = null,
+        reviewer = {},
+        reportCreatedBy = null,
+        source = SOURCE.PORTAL_OPS,
+        createPublicReport = true,
+    } = options;
+
+    const now = new Date();
+    const finalizedCaseData = {
+        ...caseData,
+        status: caseData.status || 'DONE',
+    };
+    const moduleRunState = await materializeModuleRunsForCase(caseId, finalizedCaseData);
+    if (moduleRunState.summary.blocksDecision || moduleRunState.summary.blocksPublication) {
+        throw new HttpsError(
+            'failed-precondition',
+            `Publicacao bloqueada por modulo(s): ${moduleRunState.summary.blockedModuleKeys.join(', ')}.`,
+        );
+    }
+    const modularCaseData = {
+        ...finalizedCaseData,
+        requestedModuleKeys: moduleRunState.summary.requestedModuleKeys,
+        effectiveModuleKeys: moduleRunState.summary.effectiveModuleKeys,
+        executedModuleKeys: moduleRunState.summary.executedModuleKeys,
+        moduleRunSummary: {
+            total: moduleRunState.summary.total,
+            requestedCount: moduleRunState.summary.requestedCount,
+            effectiveCount: moduleRunState.summary.effectiveCount,
+            executedCount: moduleRunState.summary.executedCount,
+            blockedCount: moduleRunState.summary.blockedCount,
+            blockedModuleKeys: moduleRunState.summary.blockedModuleKeys,
+            blocksDecision: moduleRunState.summary.blocksDecision,
+            blocksPublication: moduleRunState.summary.blocksPublication,
+        },
+    };
+    const publicSnapshot = providedPublicSnapshot || await syncPublicResultLatest(caseId, modularCaseData, {}, {
+        concludedAtOverride: concludedAtOverride || modularCaseData.concludedAt || modularCaseData.updatedAt || now,
+    });
+    const publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
+
+    const decisionDraft = buildDecisionContract({
+        caseId,
+        caseData: modularCaseData,
+        publicResult: publicSnapshot,
+        reviewer,
+        approvedAt: concludedAtOverride || modularCaseData.concludedAt || now,
+    });
+    const decisionId = buildV2ArtifactId(caseId, decisionDraft.evidenceSetHash);
+    const decisionRef = db.collection('decisions').doc(decisionId);
+    const decisionSnap = await decisionRef.get();
+    const decision = {
+        ...decisionDraft,
+        id: decisionId,
+        decisionId,
+        createdAt: decisionSnap.exists ? decisionSnap.data()?.createdAt || FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
+        approvedAt: decisionDraft.approvedAt || concludedAtOverride || finalizedCaseData.concludedAt || now,
+        updatedAt: FieldValue.serverTimestamp(),
+        version: V2_CORE_VERSION,
+    };
+    await decisionRef.set(decision, { merge: true });
+
+    const html = await buildCanonicalReportHtml(caseId, modularCaseData, publicSnapshot);
+    const reportSnapshotDraft = buildReportSnapshotContract({
+        caseId,
+        caseData: modularCaseData,
+        publicResult: publicSnapshot,
+        decision,
+        html,
+        builderVersion: REPORT_BUILD_VERSION,
+        createdBy: reviewer.uid || reportCreatedBy || null,
+    });
+    const reportSnapshotId = buildV2ArtifactId(caseId, reportSnapshotDraft.contentHash);
+    const reportSnapshotRef = db.collection('reportSnapshots').doc(reportSnapshotId);
+    const reportSnapshotSnap = await reportSnapshotRef.get();
+    const reportSnapshot = {
+        ...reportSnapshotDraft,
+        id: reportSnapshotId,
+        reportSnapshotId,
+        decisionId,
+        createdAt: reportSnapshotSnap.exists ? reportSnapshotSnap.data()?.createdAt || FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    const gateResult = validatePublicationGates({ decision, reportSnapshot, html });
+    if (!gateResult.ok) {
+        await reportSnapshotRef.set({
+            ...reportSnapshot,
+            status: 'failed',
+            failureReason: gateResult.reasonCode,
+        }, { merge: true });
+        throw new HttpsError('failed-precondition', `Publicacao bloqueada: ${gateResult.reasonCode}.`);
+    }
+
+    if (!reportSnapshotSnap.exists) {
+        await reportSnapshotRef.set(reportSnapshot);
+    }
+
+    let publicReport = null;
+    let publicReportToken = null;
+    let expiresAt = null;
+
+    if (createPublicReport) {
+        const existingToken = finalizedCaseData.publicReportToken;
+        if (existingToken) {
+            const existingRef = db.collection('publicReports').doc(existingToken);
+            const existingSnap = await existingRef.get();
+            if (existingSnap.exists) {
+                const existing = existingSnap.data() || {};
+                if (isUsablePublicReport(existing, {
+                    caseId,
+                    tenantId: finalizedCaseData.tenantId,
+                    reportSnapshotId,
+                    now,
+                })) {
+                    publicReportToken = existingToken;
+                    expiresAt = asDate(existing.expiresAt);
+                    publicReport = {
+                        ...existing,
+                        id: existingToken,
+                        token: existingToken,
+                        expiresAt,
+                    };
+                }
+            }
+        }
+
+        if (!publicReport) {
+            const TTL_DAYS = 365;
+            expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
+            const publicReportRef = db.collection('publicReports').doc();
+            publicReportToken = publicReportRef.id;
+            publicReport = {
+                html,
+                createdAt: FieldValue.serverTimestamp(),
+                expiresAt,
+                active: true,
+                status: 'ready',
+                tenantId: modularCaseData.tenantId || null,
+                createdBy: reportCreatedBy || reviewer.uid || null,
+                createdBySource: source,
+                caseId,
+                candidateName: String(modularCaseData.candidateName || publicSnapshot.candidateName || '').slice(0, 160),
+                reportBuildVersion: REPORT_BUILD_VERSION,
+                publicSnapshotHash,
+                reportSnapshotId,
+                decisionId,
+                contentHash: reportSnapshot.contentHash,
+                version: V2_CORE_VERSION,
+            };
+            await publicReportRef.set(publicReport);
+            publicReport = {
+                ...publicReport,
+                id: publicReportToken,
+                token: publicReportToken,
+            };
+        }
+    }
+
+    const availability = resolvePublicReportAvailability({
+        decision,
+        reportSnapshot,
+        publicReport,
+        now,
+    });
+    const clientProjection = buildClientProjectionContract({
+        caseId,
+        caseData: modularCaseData,
+        publicResult: publicSnapshot,
+        decision,
+        reportSnapshot,
+        availability,
+    });
+    await db.collection('clientProjections').doc(caseId).set({
+        ...clientProjection,
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    const casePointerPayload = {
+        productKey: inferProductKey(modularCaseData),
+        requestedModuleKeys: moduleRunState.summary.requestedModuleKeys,
+        effectiveModuleKeys: moduleRunState.summary.effectiveModuleKeys,
+        executedModuleKeys: moduleRunState.summary.executedModuleKeys,
+        currentDecisionId: decisionId,
+        currentReportSnapshotId: reportSnapshotId,
+        currentClientProjectionId: caseId,
+        currentPublicReportId: publicReportToken || FieldValue.delete(),
+        reportReady: availability.status === 'ready',
+        v2CoreVersion: V2_CORE_VERSION,
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (publicReportToken) {
+        casePointerPayload.publicReportToken = publicReportToken;
+    }
+    await db.collection('cases').doc(caseId).set(casePointerPayload, { merge: true });
+
+    return {
+        decisionId,
+        reportSnapshotId,
+        clientProjectionId: caseId,
+        publicReportToken,
+        expiresAt,
+        availability,
+        moduleRunSummary: moduleRunState.summary,
+        publicSnapshot,
+    };
 }
 
 exports.concludeCaseByAnalyst = onCall(
@@ -7177,6 +7713,13 @@ exports.concludeCaseByAnalyst = onCall(
 
         // P18: Set reportReady based on content validation
         const derivedCaseForPublish = { ...caseData, ...updatePayload, status: 'DONE' };
+        const moduleRunPreflight = await resolveModuleRunsForCase(caseId, derivedCaseForPublish);
+        if (moduleRunPreflight.summary.blocksDecision || moduleRunPreflight.summary.blocksPublication) {
+            throw new HttpsError(
+                'failed-precondition',
+                `Conclusao bloqueada por modulo(s): ${moduleRunPreflight.summary.blockedModuleKeys.join(', ')}.`,
+            );
+        }
         updatePayload.statusSummary = hasMeaningfulValue(updatePayload.statusSummary)
             ? updatePayload.statusSummary
             : buildStatusSummary(derivedCaseForPublish);
@@ -7206,9 +7749,24 @@ exports.concludeCaseByAnalyst = onCall(
 
         await caseRef.update(updatePayload);
 
+        const finalizedCaseData = {
+            ...caseData,
+            ...updatePayload,
+            status: 'DONE',
+            concludedAt: conclusionTimestamp,
+        };
+
         // Sync write to publicResult/latest — eliminates race condition with async trigger
-        await syncPublicResultLatest(caseId, caseData, updatePayload, {
+        const publicSnapshot = await syncPublicResultLatest(caseId, finalizedCaseData, {}, {
             concludedAtOverride: conclusionTimestamp,
+        });
+
+        const v2Artifacts = await materializeV2PublicationArtifacts(caseId, finalizedCaseData, {
+            publicSnapshot,
+            concludedAtOverride: conclusionTimestamp,
+            reviewer: { uid, email: profile.email || uid },
+            reportCreatedBy: uid,
+            source: SOURCE.PORTAL_OPS,
         });
 
         await writeAuditEvent({
@@ -7216,13 +7774,26 @@ exports.concludeCaseByAnalyst = onCall(
             tenantId: caseData.tenantId || null,
             actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
             entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-            related: { caseId },
+            related: {
+                caseId,
+                decisionId: v2Artifacts.decisionId,
+                reportSnapshotId: v2Artifacts.reportSnapshotId,
+                reportToken: v2Artifacts.publicReportToken,
+            },
             source: SOURCE.PORTAL_OPS,
             ip: getClientIp(request),
             detail: `Caso concluido para ${caseData.candidateName || caseId}`,
         });
 
-        return { success: true };
+        return {
+            success: true,
+            decisionId: v2Artifacts.decisionId,
+            reportSnapshotId: v2Artifacts.reportSnapshotId,
+            clientProjectionId: v2Artifacts.clientProjectionId,
+            publicReportToken: v2Artifacts.publicReportToken,
+            reportAvailability: v2Artifacts.availability,
+            moduleRunSummary: v2Artifacts.moduleRunSummary,
+        };
     },
 );
 

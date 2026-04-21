@@ -183,6 +183,14 @@ function mapExportDocument(id, data) {
     };
 }
 
+function mapModuleRunDocument(id, data) {
+    return {
+        id,
+        ...data,
+        updatedAt: formatFirestoreDateTime(data.updatedAt),
+    };
+}
+
 function createRestDocumentSnapshot(data) {
     return {
         exists: () => Boolean(data),
@@ -480,15 +488,64 @@ export function subscribeToCases(tenantId, callback) {
 }
 
 export function subscribeToClientCases(tenantId, callback) {
-    const q = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt');
+    const legacyQuery = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt');
+    const projectionQuery = tenantId
+        ? query(collection(db, 'clientProjections'), where('tenantId', '==', tenantId), limit(DEFAULT_QUERY_LIMIT))
+        : query(collection(db, 'clientProjections'), limit(DEFAULT_QUERY_LIMIT));
 
-    return onSnapshot(q, (snapshot) => {
-        const cases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
-        callback(cases, null);
+    let legacyCases = [];
+    let projectedCases = [];
+    let legacyReady = false;
+    let projectionReady = false;
+
+    const emitMergedCases = () => {
+        if (!legacyReady || !projectionReady) return;
+
+        const byId = new Map();
+        legacyCases.forEach((caseData) => byId.set(caseData.id, caseData));
+        projectedCases.forEach((caseData) => {
+            const current = byId.get(caseData.id) || {};
+            byId.set(caseData.id, {
+                ...current,
+                ...caseData,
+                publicResult: {
+                    ...(current.publicResult || {}),
+                    ...(caseData.publicResult || {}),
+                },
+            });
+        });
+
+        const merged = [...byId.values()].sort((left, right) => {
+            const leftDate = left.createdAt?.seconds || new Date(left.createdAt || left.updatedAt || 0).getTime() || 0;
+            const rightDate = right.createdAt?.seconds || new Date(right.createdAt || right.updatedAt || 0).getTime() || 0;
+            return rightDate - leftDate;
+        });
+        callback(merged, null);
+    };
+
+    const unsubscribeLegacy = onSnapshot(legacyQuery, (snapshot) => {
+        legacyReady = true;
+        legacyCases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
+        emitMergedCases();
     }, (error) => {
         console.error('Error subscribing to client cases:', error);
         callback([], error);
     });
+
+    const unsubscribeProjections = onSnapshot(projectionQuery, (snapshot) => {
+        projectionReady = true;
+        projectedCases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
+        emitMergedCases();
+    }, (error) => {
+        projectionReady = true;
+        console.warn('ClientProjection subscription unavailable, using legacy clientCases only:', error);
+        emitMergedCases();
+    });
+
+    return () => {
+        unsubscribeLegacy();
+        unsubscribeProjections();
+    };
 }
 
 export function fetchCases(tenantId) {
@@ -556,6 +613,85 @@ export function subscribeToCaseDoc(caseId, callback) {
         }, null);
     }, (error) => {
         console.error('Error subscribing to case doc:', error);
+        callback(null, error);
+    });
+}
+
+export function subscribeToModuleRunsForCase(caseId, callback) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+
+    const q = query(collection(db, 'moduleRuns'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    return onSnapshot(q, (snapshot) => {
+        const moduleRuns = snapshot.docs
+            .map((documentSnapshot) => mapModuleRunDocument(documentSnapshot.id, documentSnapshot.data()))
+            .sort((left, right) => String(left.moduleKey || '').localeCompare(String(right.moduleKey || '')));
+        callback(moduleRuns, null);
+    }, (error) => {
+        console.error('Error subscribing to module runs:', error);
+        callback([], error);
+    });
+}
+
+export async function fetchModuleRunsForCase(caseId) {
+    if (!caseId) return [];
+    const q = query(collection(db, 'moduleRuns'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const snapshot = await withFirestoreTimeout(
+        getDocs(q),
+        'Firestore moduleRuns query timeout.',
+    );
+    return snapshot.docs
+        .map((documentSnapshot) => mapModuleRunDocument(documentSnapshot.id, documentSnapshot.data()))
+        .sort((left, right) => String(left.moduleKey || '').localeCompare(String(right.moduleKey || '')));
+}
+
+export function subscribeToEvidenceItemsForCase(caseId, callback) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(collection(db, 'evidenceItems'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    return onSnapshot(q, (snapshot) => {
+        const items = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(a.moduleKey || '').localeCompare(String(b.moduleKey || '')));
+        callback(items, null);
+    }, (error) => {
+        console.error('evidenceItems subscription error:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToRiskSignalsForCase(caseId, callback) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(collection(db, 'riskSignals'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return onSnapshot(q, (snapshot) => {
+        const signals = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4));
+        callback(signals, null);
+    }, (error) => {
+        console.error('riskSignals subscription error:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToSubjectForCase(subjectId, callback) {
+    if (!subjectId) {
+        callback(null, null);
+        return () => {};
+    }
+    const ref = doc(db, 'subjects', subjectId);
+    return onSnapshot(ref, (snapshot) => {
+        callback(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null, null);
+    }, (error) => {
+        console.error('subject subscription error:', error);
         callback(null, error);
     });
 }
@@ -729,6 +865,17 @@ export async function getPublicReport(token) {
     const ref = doc(db, 'publicReports', token);
     const snap = await getDoc(ref);
     return snap.exists() ? snap.data() : null;
+}
+
+export async function getClientProjection(caseId) {
+    try {
+        const ref = doc(db, 'clientProjections', caseId);
+        const snap = await getDoc(ref);
+        return snap.exists() ? snap.data() : null;
+    } catch (error) {
+        console.warn('ClientProjection unavailable, falling back to legacy publicResult:', error);
+        return null;
+    }
 }
 
 /* =========================================================

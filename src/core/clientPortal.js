@@ -190,6 +190,25 @@ export function buildCaseReportPath(caseData, isDemoMode, token) {
     return token ? `/r/${token}` : null;
 }
 
+function normalizeBackendReportAvailability(reportAvailability) {
+    if (!reportAvailability || typeof reportAvailability !== 'object') return null;
+
+    const status = reportAvailability.status || 'unavailable';
+    const message = reportAvailability.clientMessage || reportAvailability.message || 'Relatorio indisponivel no momento.';
+
+    return {
+        available: status === 'ready' && Boolean(reportAvailability.publicReportToken),
+        state: status,
+        status,
+        reasonCode: reportAvailability.reasonCode || null,
+        message,
+        publicReportToken: reportAvailability.publicReportToken || null,
+        reportSnapshotId: reportAvailability.reportSnapshotId || null,
+        decisionId: reportAvailability.decisionId || null,
+        isActionable: reportAvailability.isActionable === true,
+    };
+}
+
 export function getReportAvailability(caseData, publicResult) {
     if (!caseData) {
         return {
@@ -197,6 +216,13 @@ export function getReportAvailability(caseData, publicResult) {
             state: 'unavailable',
             message: 'Selecione um caso para visualizar o relatorio.',
         };
+    }
+
+    const backendAvailability = normalizeBackendReportAvailability(
+        caseData.reportAvailability || publicResult?.reportAvailability,
+    );
+    if (backendAvailability) {
+        return backendAvailability;
     }
 
     if (caseData.status !== 'DONE') {
