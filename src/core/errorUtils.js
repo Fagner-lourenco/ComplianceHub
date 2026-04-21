@@ -29,7 +29,10 @@ const UNSAFE_PATTERNS = [
 
 function isSafeForUser(message) {
     if (typeof message !== 'string') return false;
-    return !UNSAFE_PATTERNS.some((pattern) => pattern.test(message));
+    if (UNSAFE_PATTERNS.some((pattern) => pattern.test(message))) return false;
+    // Single-word ASCII messages (e.g. "timeout", "forbidden") are technical, not user-friendly
+    if (/^[a-z_-]+$/i.test(message)) return false;
+    return true;
 }
 
 function cleanMessage(raw) {

@@ -212,6 +212,11 @@ export default function SolicitacoesPage() {
                             <p style={{ color: 'var(--red-700)', marginBottom: 12 }}>
                                 <strong>Motivo:</strong> {selectedCase.correctionReason || 'Revisar dados cadastrais e perfis digitais.'}
                             </p>
+                            {selectedCase.correctionNotes && (
+                                <p style={{ marginTop: 6, marginBottom: 12, color: 'var(--text-secondary)', fontSize: '.875rem' }}>
+                                    <strong>Detalhes:</strong> {selectedCase.correctionNotes}
+                                </p>
+                            )}
                             {!correctionForm ? (
                                 <button
                                     className="btn-primary"

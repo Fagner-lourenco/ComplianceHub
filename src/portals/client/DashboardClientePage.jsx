@@ -4,6 +4,7 @@ import { useCases } from '../../hooks/useCases';
 import { useAuth } from '../../core/auth/useAuth';
 import { formatDate } from '../../core/formatDate';
 import { getClientDashboardMetrics } from '../../core/clientPortal';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './DashboardClientePage.css';
 
 const VERDICT_DISPLAY = {
@@ -22,7 +23,7 @@ export default function DashboardClientePage() {
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
     const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
-    const { cases, loading } = useCases(clientTenantId);
+    const { cases, loading, error } = useCases(clientTenantId);
 
     const metrics = useMemo(() => getClientDashboardMetrics(cases), [cases]);
     const maxMonthCount = metrics.maxMonthCount || 1;
@@ -32,6 +33,15 @@ export default function DashboardClientePage() {
             <div className="dashboard-cliente">
                 <h2 className="dashboard-cliente__title">Painel de Acompanhamento</h2>
                 <p className="dashboard-cliente__loading">Carregando dados...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="dashboard-cliente">
+                <h2 className="dashboard-cliente__title">Painel de Acompanhamento</h2>
+                <p style={{ color: 'var(--red-600)', padding: '24px 0' }}>{extractErrorMessage(error, 'Nao foi possivel carregar os dados agora.')}</p>
             </div>
         );
     }

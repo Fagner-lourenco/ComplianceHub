@@ -39,6 +39,7 @@ vi.mock('react-router-dom', async () => {
     return {
         ...actual,
         useNavigate: () => filaPageMocks.navigate,
+        useLocation: () => ({ pathname: '/ops/fila', search: '', hash: '', state: null, key: 'default' }),
     };
 });
 

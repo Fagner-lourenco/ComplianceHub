@@ -47,6 +47,7 @@ const {
     queryEntityDataLake,
     queryLawsuitsByNameAsync,
     fetchResponses,
+    checkRequestStatus,
     JuditError,
 } = require('./adapters/judit');
 const {
@@ -808,9 +809,10 @@ function getProjectId() {
 }
 
 function buildJuditCallbackUrl() {
-    const region = 'southamerica-east1';
-    const projectId = getProjectId();
-    return `https://${region}-${projectId}.cloudfunctions.net/juditWebhook`;
+    // Prefer explicit env var, then fall back to the direct Cloud Run URL (v2).
+    // The cloudfunctions.net proxy may 302-redirect which some webhook callers don't follow.
+    if (process.env.JUDIT_WEBHOOK_URL) return process.env.JUDIT_WEBHOOK_URL;
+    return 'https://juditwebhook-dowqa75f4a-rj.a.run.app';
 }
 
 async function registerJuditWebhookRequest(requestId, caseId, phaseType, payload = {}) {
@@ -2699,7 +2701,10 @@ function computeAutoClassification(caseData) {
     const juditWarrantInconclusive = caseData.juditWarrantFlag === 'INCONCLUSIVE';
     const juditActiveWarrants = caseData.juditActiveWarrantCount || 0;
     const juditTotalWarrants = caseData.juditWarrantCount || 0;
-    const warrantSourceFailed = (juditFailed && caseData.juditSources?.warrant?.error) || caseData.enrichmentSources?.warrant?.error;
+    const juditWarrantStatus = caseData.juditSources?.warrant?.status;
+    const warrantSourceFailed = caseData.juditSources?.warrant?.error
+        || juditWarrantStatus === 'TIMEOUT' || juditWarrantStatus === 'CANCELLED' || juditWarrantStatus === 'FAILED' || juditWarrantStatus === 'ERROR'
+        || caseData.enrichmentSources?.warrant?.error;
 
     if (juditWarrantPositive || fontedataWarrant) {
         result.warrantFlag = 'POSITIVE';
@@ -2797,8 +2802,11 @@ function computeAutoClassification(caseData) {
    Only fires when analyst concludes (status transitions to DONE).
    ========================================================= */
 
-const PUBLIC_RESULT_FIELDS = [
+const IDENTITY_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+];
+
+const RESULT_ONLY_FIELDS = [
     'criminalFlag', 'criminalSeverity', 'criminalNotes',
     'laborFlag', 'laborSeverity', 'laborNotes',
     'warrantFlag', 'warrantNotes',
@@ -2809,6 +2817,8 @@ const PUBLIC_RESULT_FIELDS = [
     'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
     'enabledPhases',
 ];
+
+const PUBLIC_RESULT_FIELDS = [...IDENTITY_FIELDS, ...RESULT_ONLY_FIELDS];
 
 const CLIENT_CASE_FIELDS = [
     ...PUBLIC_RESULT_FIELDS,
@@ -2823,6 +2833,8 @@ const CLIENT_CASE_FIELDS = [
     'correctedAt',
     'correctionReason',
     'correctionNotes',
+    'correctionRequestedAt',
+    'correctionRequestedBy',
     'executiveSummary',
     'statusSummary',
     'sourceSummary',
@@ -2845,7 +2857,7 @@ function buildClientCasePayload(caseId, caseData) {
     // BUG-1 fix: Only include result flags (criminalFlag, warrantFlag, etc.) when case is DONE.
     // Before DONE, the client mirror should NOT expose preliminary enrichment flags.
     const isConcluded = caseData.status === 'DONE';
-    const fieldsToSync = isConcluded ? CLIENT_CASE_FIELDS : CLIENT_CASE_FIELDS.filter((f) => !PUBLIC_RESULT_FIELDS.includes(f));
+    const fieldsToSync = isConcluded ? CLIENT_CASE_FIELDS : CLIENT_CASE_FIELDS.filter((f) => !RESULT_ONLY_FIELDS.includes(f));
 
     for (const field of fieldsToSync) {
         const value = caseData[field];
@@ -3560,6 +3572,18 @@ exports.concludeCaseByAnalyst = onCall(
             updatePayload.assigneeId = caseData.assigneeId || uid;
         }
 
+        // Hard facts validation: block conclusion if Judit found active warrants but warrantFlag is unresolved
+        if (
+            (caseData.juditActiveWarrantCount || 0) > 0 &&
+            updatePayload.warrantFlag &&
+            !['POSITIVE', 'INCONCLUSIVE'].includes(updatePayload.warrantFlag)
+        ) {
+            throw new HttpsError(
+                'failed-precondition',
+                `Caso possui ${caseData.juditActiveWarrantCount} mandado(s) ativo(s) na Judit. O campo Mandado de Prisao deve ser POSITIVO ou INCONCLUSIVO para concluir.`,
+            );
+        }
+
         await caseRef.update(updatePayload);
 
         await db.collection('auditLogs').add({
@@ -4015,7 +4039,9 @@ exports.rerunEnrichmentPhase = onCall(
 /* =========================================================
    JUDIT WEBHOOK HANDLER — Receives async results from Judit
    Instead of polling, Judit sends results to this endpoint.
-   Events: response_created (incremental), request_completed (final).
+   Judit docs: event_type is always "response_created".
+   Completion: payload.response_type === "application_info" + response_data.code === 600
+   Error: payload.response_type === "application_error"
 
    To use webhooks:
    1. Configure the webhook URL in Judit dashboard pointing to this function.
@@ -4032,12 +4058,15 @@ exports.juditWebhook = onRequest(
         }
 
         const payload = req.body;
-        if (!payload || !payload.request_id) {
+        // Judit docs: top-level has reference_id; inner payload has request_id
+        const requestId = payload?.reference_id || payload?.payload?.request_id;
+        if (!requestId) {
             res.status(400).send('Missing request_id');
             return;
         }
 
-        const { request_id: requestId, event_type: eventType } = payload;
+        const eventType = payload.event_type;
+        const innerPayload = payload.payload || {};
 
         // Look up the case linked to this Judit request_id via mapping collection
         const mappingDoc = await db.collection('juditWebhookRequests').doc(requestId).get();
@@ -4057,12 +4086,19 @@ exports.juditWebhook = onRequest(
             return;
         }
 
-        console.log(`[Judit Webhook]: event=${eventType || 'unknown'} for case=${caseId}, phase=${phaseType}, request=${requestId}`);
+        console.log(`[Judit Webhook]: event=${eventType || 'unknown'} type=${innerPayload.response_type || 'unknown'} for case=${caseId}, phase=${phaseType}, request=${requestId}`);
 
         // Respond immediately to avoid Judit callback timeout
         res.status(200).json({ ok: true, case_id: caseId, event: eventType });
 
-        if (eventType === 'request_completed') {
+        // Judit docs: event_type is always "response_created".
+        // Completion = payload.response_type "application_info" + response_data.code 600
+        // Error = payload.response_type "application_error"
+        const isCompleted = innerPayload.response_type === 'application_info'
+            && innerPayload.response_data?.code === 600;
+        const isError = innerPayload.response_type === 'application_error';
+
+        if (isCompleted) {
             try {
                 const apiKey = juditApiKey.value();
                 const items = await fetchResponses(requestId, apiKey);
@@ -4132,8 +4168,44 @@ exports.juditWebhook = onRequest(
                     }
                 }
             } catch (err) {
-                console.error(`[Judit Webhook]: error processing request_completed for case ${caseId}:`, err.message);
+                console.error(`[Judit Webhook]: error processing completed for case ${caseId}:`, err.message);
             }
+        } else if (isError) {
+            try {
+                const errorCode = innerPayload.response_data?.code;
+                const errorMessage = innerPayload.response_data?.message || 'Unknown error';
+                console.error(`[Judit Webhook]: application_error for case=${caseId}, phase=${phaseType}: code=${errorCode}, msg=${errorMessage}`);
+
+                const currentCaseData = caseDoc.data() || {};
+                const currentPendingPhases = Array.isArray(currentCaseData.juditPendingAsyncPhases)
+                    ? currentCaseData.juditPendingAsyncPhases
+                    : [];
+                const remainingPendingPhases = currentPendingPhases.filter((phase) => phase !== phaseType);
+
+                const updateFields = {
+                    juditError: `${phaseType}: ${errorMessage} (code ${errorCode})`,
+                    juditPendingAsyncPhases: remainingPendingPhases.length > 0
+                        ? remainingPendingPhases
+                        : FieldValue.delete(),
+                    juditPendingAsyncCount: remainingPendingPhases.length > 0
+                        ? remainingPendingPhases.length
+                        : FieldValue.delete(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                };
+
+                if (remainingPendingPhases.length === 0) {
+                    updateFields.juditEnrichmentStatus = 'PARTIAL';
+                    updateFields.juditEnrichedAt = FieldValue.serverTimestamp();
+                }
+
+                await caseRef.update(updateFields);
+                await mappingDoc.ref.delete();
+                console.log(`[Judit Webhook]: case ${caseId} marked error for phase ${phaseType}.`);
+            } catch (err) {
+                console.error(`[Judit Webhook]: error handling application_error for case ${caseId}:`, err.message);
+            }
+        } else {
+            console.log(`[Judit Webhook]: incremental event for case=${caseId}, response_type=${innerPayload.response_type || 'unknown'}. Waiting for completion.`);
         }
     },
 );
@@ -4192,29 +4264,35 @@ exports.juditAsyncFallback = onSchedule(
                     continue;
                 }
 
-                // Try to fetch responses directly (if Judit completed but webhook was lost)
-                let items;
+                // Check if the Judit request has actually completed before fetching responses
+                let requestStatus;
                 try {
-                    items = await fetchResponses(requestId, apiKey);
-                } catch (fetchErr) {
-                    console.warn(`[Judit Fallback]: fetchResponses failed for ${requestId} (case ${caseId}, phase ${phaseType}): ${fetchErr.message}`);
-                    // If the request has been stale for over 30 min, mark as failed
-                    const createdAt = mappingDoc.data().createdAt?.toDate?.() || new Date(0);
-                    if (Date.now() - createdAt.getTime() > 30 * 60 * 1000) {
+                    requestStatus = await checkRequestStatus(requestId, apiKey);
+                } catch (statusErr) {
+                    console.warn(`[Judit Fallback]: could not check request status for ${requestId}: ${statusErr.message}`);
+                    requestStatus = 'unknown';
+                }
+
+                const createdAt = mappingDoc.data().createdAt?.toDate?.() || new Date(0);
+                const ageMs = Date.now() - createdAt.getTime();
+
+                if (requestStatus === 'pending' || requestStatus === 'unknown') {
+                    if (ageMs > 30 * 60 * 1000) {
+                        // Hard timeout — request never completed after 30 min
                         const failUpdate = {};
                         const remaining = pendingPhases.filter((p) => p !== phaseType);
-                        failUpdate[`juditSources.${phaseType}.error`] = 'Timeout: resposta Judit nao recebida apos 30min.';
+                        failUpdate[`juditSources.${phaseType}.error`] = 'Timeout: request Judit ainda pendente apos 30min.';
                         failUpdate[`juditSources.${phaseType}.status`] = 'TIMEOUT';
                         failUpdate.juditPendingAsyncPhases = remaining.length > 0 ? remaining : FieldValue.delete();
                         failUpdate.juditPendingAsyncCount = remaining.length > 0 ? remaining.length : FieldValue.delete();
                         if (remaining.length === 0) {
                             failUpdate.juditEnrichmentStatus = 'PARTIAL';
-                            failUpdate.juditError = `Timeout na fase ${phaseType}: webhook nao recebido.`;
+                            failUpdate.juditError = `Timeout na fase ${phaseType}: request Judit nao completou.`;
                         }
                         failUpdate.updatedAt = FieldValue.serverTimestamp();
                         await caseRef.update(failUpdate);
                         await mappingDoc.ref.delete();
-                        console.log(`[Judit Fallback]: marked phase ${phaseType} as TIMEOUT for case ${caseId}.`);
+                        console.log(`[Judit Fallback]: marked phase ${phaseType} as TIMEOUT for case ${caseId} (request still ${requestStatus} after ${Math.round(ageMs / 60000)}min).`);
 
                         if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
                             try {
@@ -4224,7 +4302,88 @@ exports.juditAsyncFallback = onSchedule(
                                 console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
                             }
                         }
+                        continue;
                     }
+                    // Request still pending and within acceptable window — skip, will retry next run
+                    console.log(`[Judit Fallback]: request ${requestId} still ${requestStatus} for case ${caseId} phase ${phaseType} (${Math.round(ageMs / 60000)}min old). Will retry.`);
+                    continue;
+                }
+
+                if (requestStatus === 'cancelled') {
+                    const failUpdate = {};
+                    const remaining = pendingPhases.filter((p) => p !== phaseType);
+                    failUpdate[`juditSources.${phaseType}.error`] = 'Request Judit cancelado pelo provedor.';
+                    failUpdate[`juditSources.${phaseType}.status`] = 'CANCELLED';
+                    failUpdate.juditPendingAsyncPhases = remaining.length > 0 ? remaining : FieldValue.delete();
+                    failUpdate.juditPendingAsyncCount = remaining.length > 0 ? remaining.length : FieldValue.delete();
+                    if (remaining.length === 0) {
+                        failUpdate.juditEnrichmentStatus = 'PARTIAL';
+                        failUpdate.juditError = `Fase ${phaseType} cancelada pelo provedor Judit.`;
+                    }
+                    failUpdate.updatedAt = FieldValue.serverTimestamp();
+                    await caseRef.update(failUpdate);
+                    await mappingDoc.ref.delete();
+                    console.log(`[Judit Fallback]: marked phase ${phaseType} as CANCELLED for case ${caseId} (request status: ${requestStatus}).`);
+
+                    if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
+                        try {
+                            const freshDoc = await caseRef.get();
+                            await runAutoClassifyAndAi(caseRef, caseId, freshDoc.data() || {});
+                        } catch (classifyErr) {
+                            console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
+                        }
+                    }
+                    continue;
+                }
+
+                if (requestStatus === 'failed' || requestStatus === 'error') {
+                    const failUpdate = {};
+                    const remaining = pendingPhases.filter((p) => p !== phaseType);
+                    failUpdate[`juditSources.${phaseType}.error`] = `Request Judit falhou com status: ${requestStatus}.`;
+                    failUpdate[`juditSources.${phaseType}.status`] = 'FAILED';
+                    failUpdate.juditPendingAsyncPhases = remaining.length > 0 ? remaining : FieldValue.delete();
+                    failUpdate.juditPendingAsyncCount = remaining.length > 0 ? remaining.length : FieldValue.delete();
+                    if (remaining.length === 0) {
+                        failUpdate.juditEnrichmentStatus = 'PARTIAL';
+                        failUpdate.juditError = `Falha na fase ${phaseType}: request Judit retornou ${requestStatus}.`;
+                    }
+                    failUpdate.updatedAt = FieldValue.serverTimestamp();
+                    await caseRef.update(failUpdate);
+                    await mappingDoc.ref.delete();
+                    console.log(`[Judit Fallback]: marked phase ${phaseType} as FAILED for case ${caseId} (request status: ${requestStatus}).`);
+
+                    if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
+                        try {
+                            const freshDoc = await caseRef.get();
+                            await runAutoClassifyAndAi(caseRef, caseId, freshDoc.data() || {});
+                        } catch (classifyErr) {
+                            console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
+                        }
+                    }
+                    continue;
+                }
+
+                // Request is completed — now safely fetch responses
+                let items;
+                try {
+                    items = await fetchResponses(requestId, apiKey);
+                } catch (fetchErr) {
+                    console.warn(`[Judit Fallback]: fetchResponses failed for ${requestId} (case ${caseId}, phase ${phaseType}): ${fetchErr.message}`);
+                    // If fetch fails for a completed request, mark as error
+                    const failUpdate = {};
+                    const remaining = pendingPhases.filter((p) => p !== phaseType);
+                    failUpdate[`juditSources.${phaseType}.error`] = `Erro ao buscar respostas: ${fetchErr.message}`;
+                    failUpdate[`juditSources.${phaseType}.status`] = 'ERROR';
+                    failUpdate.juditPendingAsyncPhases = remaining.length > 0 ? remaining : FieldValue.delete();
+                    failUpdate.juditPendingAsyncCount = remaining.length > 0 ? remaining.length : FieldValue.delete();
+                    if (remaining.length === 0) {
+                        failUpdate.juditEnrichmentStatus = 'PARTIAL';
+                        failUpdate.juditError = `Erro ao recuperar respostas da fase ${phaseType}.`;
+                    }
+                    failUpdate.updatedAt = FieldValue.serverTimestamp();
+                    await caseRef.update(failUpdate);
+                    await mappingDoc.ref.delete();
+                    console.log(`[Judit Fallback]: marked phase ${phaseType} as ERROR for case ${caseId}.`);
                     continue;
                 }
 

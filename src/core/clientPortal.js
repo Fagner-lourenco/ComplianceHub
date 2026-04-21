@@ -1,3 +1,5 @@
+// NOTE: PUBLIC_RESULT_FIELDS duplicates the backend list in functions/index.js.
+// Any field additions on the backend must be mirrored here to avoid silent drift.
 const PUBLIC_RESULT_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
     'criminalFlag', 'criminalSeverity', 'criminalNotes',

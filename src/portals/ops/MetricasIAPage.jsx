@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useCases } from '../../hooks/useCases';
+import { extractErrorMessage } from '../../core/errorUtils';
 import './MetricasIAPage.css';
 
 /* ── Constants ── */
@@ -44,7 +45,7 @@ function pct(n, total) { return total > 0 ? Math.round((n / total) * 100) : 0; }
 export default function MetricasIAPage() {
     const { selectedTenantId } = useTenant();
     const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
-    const { cases, loading } = useCases(tenantOverride);
+    const { cases, loading, error } = useCases(tenantOverride);
     const [periodDays, setPeriodDays] = useState(30);
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
 
@@ -140,6 +141,11 @@ export default function MetricasIAPage() {
     if (loading) return (
         <div className="ops-dash"><h2 className="ops-dash__title">Dashboard Operacional</h2>
             <p className="ops-dash__loading">Carregando dados...</p></div>
+    );
+
+    if (error) return (
+        <div className="ops-dash"><h2 className="ops-dash__title">Dashboard Operacional</h2>
+            <p style={{ color: 'var(--red-600)', padding: '24px 0' }}>{extractErrorMessage(error, 'Nao foi possivel carregar os dados agora.')}</p></div>
     );
 
     return (

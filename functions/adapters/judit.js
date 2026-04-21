@@ -198,6 +198,17 @@ async function callGet(url, apiKey) {
 }
 
 /**
+ * Check the current status of an async request without polling.
+ * @param {string} requestId
+ * @param {string} apiKey
+ * @returns {Promise<string>}  The current status ('pending', 'completed', 'failed', etc.)
+ */
+async function checkRequestStatus(requestId, apiKey) {
+    const data = await callGet(`${ASYNC_BASE_URL}/requests/${requestId}`, apiKey);
+    return data.status || data.request_status || 'unknown';
+}
+
+/**
  * Poll a Judit async request until completed.
  * @param {string} requestId
  * @param {string} apiKey
@@ -217,6 +228,9 @@ async function pollRequest(requestId, apiKey, options = {}) {
         if (status === 'completed' || status === 'done') return status;
         if (status === 'failed' || status === 'error') {
             throw new JuditError(`Judit request ${requestId} failed: ${status}`, 0, false);
+        }
+        if (status === 'cancelled') {
+            throw new JuditError(`Judit request ${requestId} was cancelled by provider`, 0, false);
         }
 
         await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
@@ -534,5 +548,6 @@ module.exports = {
     JuditError,
     // Expose for webhook handler
     fetchResponses,
+    checkRequestStatus,
     ASYNC_BASE_URL,
 };
