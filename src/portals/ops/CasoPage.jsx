@@ -23,12 +23,20 @@ import {
     subscribeToEvidenceItemsForCase,
     subscribeToRiskSignalsForCase,
     subscribeToSubjectForCase,
-    callRerunAiAnalysis,
+    subscribeToRelationshipsForCase,
+    subscribeToTimelineEventsForCase,
+    subscribeToProviderDivergencesForCase,
+    fetchSubjectHistory,
+    fetchSubjectDecisionHistory,
+    callResolveProviderDivergenceByAnalyst,
+    callMaterializeV2Artifacts,
+    callCreateWatchlist,
 } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import { resolveV2Risk } from '../../core/v2RiskResolver';
+import { PERMISSIONS, SENIOR_APPROVAL_ROLES, hasPermission } from '../../core/rbac/permissions';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -133,9 +141,9 @@ function ModuleRunsPanel({ moduleRuns = [], error = null }) {
 
     if (!moduleRuns.length) {
         return (
-            <div className="caso-module-runs caso-module-runs--empty">
-                <strong>Status modular V2</strong>
-                <span>Aguardando materializacao de moduleRuns para este caso.</span>
+            <div className="caso-module-runs caso-module-runs--legacy">
+                <strong>Status modular V1 (Legado)</strong>
+                <span>Este caso foi processado na arquitetura anterior.</span>
             </div>
         );
     }
@@ -353,7 +361,11 @@ function RiskSignalsPanel({ riskSignals = [], error = null }) {
             </div>
             <div className="caso-risk-signals__list">
                 {riskSignals.map((signal) => (
-                    <div key={signal.id} className={`caso-risk-signal caso-severity--${signal.severity || 'low'}`}>
+                    <div
+                        key={signal.id}
+                        className={`caso-risk-signal caso-severity--${signal.severity || 'low'}`}
+                        data-testid={`risk-signal-${signal.id || signal.kind || signal.moduleKey}`}
+                    >
                         <div className="caso-risk-signal__topline">
                             <span className={`caso-severity-badge caso-severity-badge--${signal.severity || 'low'}`}>
                                 {SEVERITY_LABELS[signal.severity] || signal.severity || '—'}
@@ -400,6 +412,11 @@ function SubjectSummaryPanel({ subject = null, error = null }) {
     if (!subject) return null;
 
     const summary = subject.lastDossierSummary || {};
+    const pfProfile = subject.pfProfile || null;
+    const pjProfile = subject.pjProfile || null;
+    const linkedCaseCount = Array.isArray(subject.linkedCaseIds) ? subject.linkedCaseIds.length : (subject.linkedCaseCount ?? null);
+    const knownNames = pfProfile?.knownNames || pjProfile?.knownNames || [];
+
     return (
         <section className="caso-v2-panel caso-subject-panel" aria-label="Sujeito investigado V2">
             <div className="caso-v2-panel__header">
@@ -411,6 +428,7 @@ function SubjectSummaryPanel({ subject = null, error = null }) {
                     <span className="caso-product-badge">{SUBJECT_TYPE_LABELS[subject.type] || subject.type}</span>
                 )}
             </div>
+
             <div className="caso-subject-panel__identity">
                 {subject.declaredName && (
                     <span className="caso-subject-panel__name">{subject.declaredName}</span>
@@ -419,6 +437,31 @@ function SubjectSummaryPanel({ subject = null, error = null }) {
                     <span className="caso-subject-panel__doc">{formatMaskedDoc(subject.primaryDocument)}</span>
                 )}
             </div>
+
+            {pjProfile && (
+                <div className="caso-subject-panel__profile">
+                    {pjProfile.legalName && <span><strong>Razao social:</strong> {pjProfile.legalName}</span>}
+                    {pjProfile.tradeName && <span><strong>Fantasia:</strong> {pjProfile.tradeName}</span>}
+                    {pjProfile.cnpjBase && <span><strong>CNPJ base:</strong> {pjProfile.cnpjBase}</span>}
+                </div>
+            )}
+
+            {pfProfile && pfProfile.birthDate && (
+                <div className="caso-subject-panel__profile">
+                    <span><strong>Nasc.:</strong> {pfProfile.birthDate}</span>
+                    {pfProfile.nationality && pfProfile.nationality !== 'BR' && (
+                        <span><strong>Nacionalidade:</strong> {pfProfile.nationality}</span>
+                    )}
+                </div>
+            )}
+
+            {knownNames.length > 1 && (
+                <div className="caso-subject-panel__aliases">
+                    <strong>Nomes conhecidos:</strong>
+                    <span>{knownNames.join(' · ')}</span>
+                </div>
+            )}
+
             {(summary.evidenceCount != null || summary.riskSignalCount != null) && (
                 <div className="caso-publication-guard__counts">
                     {summary.productKey && <span>{PRODUCT_KEY_LABELS[summary.productKey] || summary.productKey}</span>}
@@ -427,6 +470,296 @@ function SubjectSummaryPanel({ subject = null, error = null }) {
                     {summary.verdict && <span>Veredito: {summary.verdict}</span>}
                 </div>
             )}
+
+            {linkedCaseCount != null && linkedCaseCount > 1 && (
+                <div className="caso-subject-panel__history">
+                    <strong>Historico:</strong>
+                    <span>{linkedCaseCount} caso(s) analisados para este sujeito</span>
+                </div>
+            )}
+        </section>
+    );
+}
+
+const VERDICT_SHORT = { FIT: 'Apto', ATTENTION: 'Atencao', NOT_RECOMMENDED: 'Nao recomendado', INCONCLUSIVE: 'Inconclusivo' };
+const VERDICT_COLOR = { FIT: 'var(--green-700)', ATTENTION: 'var(--yellow-700)', NOT_RECOMMENDED: 'var(--red-600)' };
+
+function HistoricoSubjectPanel({ history = [] }) {
+    if (!history.length) return null;
+    return (
+        <section className="caso-v2-panel" aria-label="Historico do sujeito" data-testid="historico-subject-panel">
+            <div className="caso-v2-panel__header">
+                <strong>Historico de analises — mesmo sujeito</strong>
+                <span className="caso-product-badge">{history.length} caso(s) anterior(es)</span>
+            </div>
+            <div className="caso-subject-panel__history-list">
+                {history.map((pastCase) => (
+                    <div key={pastCase.id} className="caso-subject-panel__history-row">
+                        <span className="caso-subject-panel__history-date" style={{ fontSize: '.75rem', color: 'var(--text-secondary)', minWidth: 80 }}>
+                            {pastCase.createdAt?.seconds
+                                ? new Date(pastCase.createdAt.seconds * 1000).toLocaleDateString('pt-BR')
+                                : pastCase.createdAt
+                                    ? new Date(pastCase.createdAt).toLocaleDateString('pt-BR')
+                                    : '--'}
+                        </span>
+                        <span style={{ fontSize: '.8125rem', flex: 1 }}>
+                            {PRODUCT_KEY_LABELS[pastCase.productKey] || pastCase.productKey || 'Analise'}
+                        </span>
+                        {pastCase.finalVerdict && (
+                            <span style={{ fontSize: '.75rem', fontWeight: 600, color: VERDICT_COLOR[pastCase.finalVerdict] || 'var(--text-secondary)' }}>
+                                {VERDICT_SHORT[pastCase.finalVerdict] || pastCase.finalVerdict}
+                            </span>
+                        )}
+                        {pastCase.riskScore != null && (
+                            <span style={{ fontSize: '.75rem', color: 'var(--text-tertiary)' }}>{pastCase.riskScore} pts</span>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function SubjectDecisionHistoryPanel({ history = [] }) {
+    if (!history.length) return null;
+    return (
+        <section className="caso-v2-panel" aria-label="Historico de decisions do sujeito" data-testid="subject-decision-history-panel">
+            <div className="caso-v2-panel__header">
+                <strong>Comparativo historico</strong>
+                <span className="caso-product-badge">decisions/reportSnapshots</span>
+            </div>
+            <div className="caso-subject-panel__history-list">
+                {history.map((row) => (
+                    <div key={row.id} className="caso-subject-panel__history-row">
+                        <span className="caso-subject-panel__history-date" style={{ fontSize: '.75rem', color: 'var(--text-secondary)', minWidth: 80 }}>
+                            {row.approvedAt?.seconds
+                                ? new Date(row.approvedAt.seconds * 1000).toLocaleDateString('pt-BR')
+                                : row.approvedAt
+                                    ? new Date(row.approvedAt).toLocaleDateString('pt-BR')
+                                    : '--'}
+                        </span>
+                        <span style={{ fontSize: '.8125rem', flex: 1 }}>
+                            {PRODUCT_KEY_LABELS[row.productKey] || row.productKey || row.caseId || 'Decision'}
+                        </span>
+                        {row.verdict && (
+                            <span style={{ fontSize: '.75rem', fontWeight: 600, color: VERDICT_COLOR[row.verdict] || 'var(--text-secondary)' }}>
+                                {VERDICT_SHORT[row.verdict] || row.verdict}
+                            </span>
+                        )}
+                        {row.riskScore != null && (
+                            <span style={{ fontSize: '.75rem', color: 'var(--text-secondary)' }}>
+                                Score {row.riskScore}
+                                {row.scoreDeltaFromPrevious != null && (
+                                    <strong style={{ marginLeft: 4, color: row.scoreDeltaFromPrevious > 0 ? 'var(--red-600)' : 'var(--green-700)' }}>
+                                        {row.scoreDeltaFromPrevious > 0 ? '+' : ''}{row.scoreDeltaFromPrevious}
+                                    </strong>
+                                )}
+                            </span>
+                        )}
+                        {row.reportStatus && (
+                            <span className={`caso-severity-badge caso-severity-badge--${row.reportStatus === 'ready' ? 'low' : 'medium'}`}>
+                                report {row.reportStatus}
+                            </span>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+const RELATIONSHIP_TYPE_LABELS = {
+    same_subject: 'Mesmo sujeito',
+    company_person: 'Empresa -> pessoa',
+    person_company: 'Pessoa -> empresa',
+    co_occurrence: 'Coocorrencia',
+};
+
+const RELATIONSHIP_CONFIDENCE_LABELS = {
+    exact: 'Exata',
+    high: 'Alta',
+    medium: 'Media',
+    low: 'Baixa',
+};
+
+function formatRelationshipEndpoint(relationship, side) {
+    const name = relationship[`${side}Name`];
+    const doc = relationship[`${side}Document`];
+    if (name) return name;
+    if (doc?.docType && doc?.docValue) {
+        return `${String(doc.docType).toUpperCase()} ${doc.docValue}`;
+    }
+    const subjectId = relationship[`${side}SubjectId`];
+    return subjectId || 'Entidade vinculada';
+}
+
+function RelationshipsPanel({ relationships = [], error = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Relacionamentos V2 indisponiveis.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!relationships.length) return null;
+
+    return (
+        <section className="caso-v2-panel caso-relationships-panel" aria-label="Mini-relacionamentos V2" data-testid="relationships-panel">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Mini-relacionamentos</strong>
+                    <span>Fonte: relationships</span>
+                </div>
+                <span className="caso-product-badge">{relationships.length} vinculo(s)</span>
+            </div>
+            <div className="caso-relationships-panel__list">
+                {relationships.map((relationship) => (
+                    <div key={relationship.id} className="caso-relationship-item" data-testid={`relationship-${relationship.id}`}>
+                        <div className="caso-relationship-item__header">
+                            <span className="caso-relationship-item__type">
+                                {RELATIONSHIP_TYPE_LABELS[relationship.type] || relationship.type || 'Relacionamento'}
+                            </span>
+                            <span className={`caso-severity-badge caso-severity-badge--${relationship.confidence === 'exact' ? 'high' : 'medium'}`}>
+                                {RELATIONSHIP_CONFIDENCE_LABELS[relationship.confidence] || relationship.confidence || 'Media'}
+                            </span>
+                        </div>
+                        <div className="caso-relationship-item__body">
+                            <span>{formatRelationshipEndpoint(relationship, 'from')}</span>
+                            <span aria-hidden="true">{'->'}</span>
+                            <span>{formatRelationshipEndpoint(relationship, 'to')}</span>
+                        </div>
+                        {relationship.sourceItemIds?.length > 0 && (
+                            <div className="caso-relationship-item__sources">
+                                {relationship.sourceItemIds.length} evid./registro(s) de suporte
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function TimelineEventsPanel({ timelineEvents = [], error = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Timeline V2 indisponivel.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!timelineEvents.length) return null;
+
+    return (
+        <section className="caso-v2-panel" aria-label="Timeline investigativa V2" data-testid="timeline-events-panel">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Timeline investigativa</strong>
+                    <span>Fonte: timelineEvents</span>
+                </div>
+                <span className="caso-product-badge">{timelineEvents.length} evento(s)</span>
+            </div>
+            <div className="caso-relationships-panel__list">
+                {timelineEvents.map((event) => (
+                    <div key={event.id} className="caso-relationship-item">
+                        <div className="caso-relationship-item__header">
+                            <span className="caso-relationship-item__type">{event.summary || event.eventType || 'Evento'}</span>
+                            {event.severity && (
+                                <span className={`caso-severity-badge caso-severity-badge--${event.severity}`}>
+                                    {event.severity}
+                                </span>
+                            )}
+                        </div>
+                        <div className="caso-relationship-item__sources">
+                            {[event.eventType, event.moduleKey].filter(Boolean).join(' - ')}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function ProviderDivergencesPanel({ divergences = [], error = null, canResolve = false, resolvingId = null, onResolve = null }) {
+    if (error) {
+        return (
+            <div className="caso-v2-panel caso-v2-panel--error">
+                <strong>Divergencias V2 indisponiveis.</strong>
+                <span>{getUserFriendlyMessage(error)}</span>
+            </div>
+        );
+    }
+    if (!divergences.length) return null;
+
+    return (
+        <section className="caso-v2-panel caso-v2-panel--warning" aria-label="Divergencias de providers V2" data-testid="provider-divergences-panel">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Divergencias entre fontes</strong>
+                    <span>Fonte: providerDivergences</span>
+                </div>
+                <span className="caso-product-badge">{divergences.length} divergencia(s)</span>
+            </div>
+            <div className="caso-relationships-panel__list">
+                {divergences.map((divergence) => {
+                    const isOpen = ['open', 'in_review', 'needs_recheck', undefined, null].includes(divergence.status);
+                    return (
+                    <div key={divergence.id} className="caso-relationship-item">
+                        <div className="caso-relationship-item__header">
+                            <span className="caso-relationship-item__type">{divergence.reason || 'Divergencia detectada'}</span>
+                            <span className={`caso-severity-badge caso-severity-badge--${divergence.severity || 'medium'}`}>
+                                {divergence.blocksPublication ? 'bloqueia publicacao' : (divergence.status || divergence.severity || 'medium')}
+                            </span>
+                        </div>
+                        <div className="caso-relationship-item__sources">
+                            {[divergence.moduleKey, divergence.status].filter(Boolean).join(' - ')}
+                        </div>
+                        {divergence.resolution && (
+                            <div className="caso-relationship-item__sources">
+                                Resolucao: {divergence.resolution}
+                            </div>
+                        )}
+                        {canResolve && isOpen && (
+                            <button
+                                type="button"
+                                className="btn btn--secondary btn--small"
+                                disabled={resolvingId === divergence.id}
+                                onClick={() => onResolve?.(divergence)}
+                            >
+                                {resolvingId === divergence.id ? 'Resolvendo...' : 'Resolver divergencia'}
+                            </button>
+                        )}
+                    </div>
+                );})}
+            </div>
+        </section>
+    );
+}
+
+function SeniorApprovalGatePanel({ riskSignals = [], userRole = null }) {
+    const hasCritical = riskSignals.some((s) => s.severity === 'critical');
+    if (!hasCritical) return null;
+
+    const canApprove = SENIOR_APPROVAL_ROLES.includes(userRole);
+    return (
+        <section
+            className={`caso-v2-panel ${canApprove ? 'caso-v2-panel--warning' : 'caso-v2-panel--error'}`}
+            aria-label="Gate de aprovacao senior"
+            data-testid="senior-approval-gate"
+        >
+            <div className="caso-v2-panel__header">
+                <strong>Aprovacao Senior Necessaria</strong>
+                <span className={`caso-product-badge ${canApprove ? '' : 'caso-product-badge--blocked'}`}>
+                    {canApprove ? 'Voce pode aprovar' : 'Requer senior/supervisor'}
+                </span>
+            </div>
+            <p style={{ margin: '8px 0 0', fontSize: '.875rem' }}>
+                {canApprove
+                    ? 'Este caso possui sinais criticos e requer aprovacao de analista senior ou supervisor. Voce possui essa permissao.'
+                    : 'Este caso possui sinais criticos (severity=critical). Apenas analistas senior, supervisores ou admins podem concluir.'}
+            </p>
         </section>
     );
 }
@@ -462,6 +795,86 @@ function V2RiskSummaryPanel({ riskSignals = [] }) {
                     ))}
                 </ul>
             )}
+        </section>
+    );
+}
+
+function hasWatchlistEntitlement(caseData = {}) {
+    const entitlementSummary = caseData.entitlementSummary || caseData.entitlements || {};
+    const capabilityMap = entitlementSummary.enabledCapabilities || entitlementSummary.capabilities || {};
+    const moduleMap = entitlementSummary.enabledModules || entitlementSummary.modules || {};
+    const enabledProducts = entitlementSummary.enabledProducts || entitlementSummary.products || {};
+    const effectiveKeys = [
+        ...(Array.isArray(caseData.effectiveModuleKeys) ? caseData.effectiveModuleKeys : []),
+        ...(Array.isArray(caseData.reportModuleKeys) ? caseData.reportModuleKeys : []),
+        ...(Array.isArray(caseData.requestedModuleKeys) ? caseData.requestedModuleKeys : []),
+    ];
+
+    return Boolean(
+        capabilityMap.monitoring
+        || capabilityMap.watchlist_monitoring
+        || moduleMap.watchlist_screening
+        || moduleMap.alert_subscriptions
+        || moduleMap.ongoing_monitoring
+        || enabledProducts.monitoring
+        || enabledProducts.dossier_monitoring
+        || effectiveKeys.includes('watchlist_screening')
+        || effectiveKeys.includes('alert_subscriptions')
+        || effectiveKeys.includes('ongoing_monitoring')
+    );
+}
+
+function resolveWatchlistModules(caseData = {}, moduleRuns = []) {
+    const moduleKeys = [
+        ...(Array.isArray(caseData.reportModuleKeys) ? caseData.reportModuleKeys : []),
+        ...(Array.isArray(caseData.effectiveModuleKeys) ? caseData.effectiveModuleKeys : []),
+        ...(Array.isArray(caseData.requestedModuleKeys) ? caseData.requestedModuleKeys : []),
+        ...moduleRuns.map((run) => run.moduleKey).filter(Boolean),
+    ];
+    return [...new Set(moduleKeys)].filter((key) => !['decision', 'report_secure'].includes(key));
+}
+
+function WatchlistCasePanel({
+    caseData = {},
+    moduleRuns = [],
+    userRole = null,
+    creating = false,
+    message = '',
+    error = '',
+    onCreate,
+}) {
+    const isPublished = caseData.status === 'DONE' || caseData.reportPublished === true || Boolean(caseData.publicReportToken || caseData.publicReportId);
+    const canOperate = hasPermission(userRole, PERMISSIONS.CASE_WRITE);
+    const hasSubject = Boolean(caseData.subjectId);
+    const entitled = hasWatchlistEntitlement(caseData);
+    const modules = resolveWatchlistModules(caseData, moduleRuns);
+
+    if (!isPublished || !hasSubject || !entitled || !canOperate) return null;
+
+    return (
+        <section className="caso-v2-panel" data-testid="watchlist-case-panel">
+            <div className="caso-v2-panel__header">
+                <div>
+                    <strong>Monitoramento continuo</strong>
+                    <span>Crie uma watchlist para reconsultar este sujeito e gerar alertas de mudanca.</span>
+                </div>
+                <span className="caso-v2-pill">Premium</span>
+            </div>
+            <div className="caso-v2-list">
+                <span>Sujeito: {caseData.subjectId}</span>
+                <span>Modulos sugeridos: {modules.join(', ') || 'catalogo contratado'}</span>
+            </div>
+            {message && <p className="caso-v2-success" role="status">{message}</p>}
+            {error && <p className="caso-v2-error" role="alert">{error}</p>}
+            <button
+                type="button"
+                className="caso-btn caso-btn--ghost"
+                data-testid="case-create-watchlist"
+                disabled={creating}
+                onClick={() => onCreate?.(modules)}
+            >
+                {creating ? 'Criando watchlist...' : 'Adicionar a watchlist'}
+            </button>
         </section>
     );
 }
@@ -691,6 +1104,15 @@ function calculateRisk(form, enabledPhases) {
     return { riskLevel, riskScore, suggestedVerdict };
 }
 
+function resolveCaseRisk(form, enabledPhases, riskSignals = []) {
+    if (riskSignals.length > 0) {
+        const v2 = resolveV2Risk(riskSignals);
+        const suggestedVerdict = v2.riskLevel === 'RED' ? 'NOT_RECOMMENDED' : v2.riskLevel === 'YELLOW' ? 'ATTENTION' : 'FIT';
+        return { ...v2, suggestedVerdict, source: 'v2' };
+    }
+    return { ...calculateRisk(form, enabledPhases), source: 'legacy' };
+}
+
 export default function CasoPage() {
     const { caseId } = useParams();
     const navigate = useNavigate();
@@ -704,6 +1126,7 @@ export default function CasoPage() {
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [materializing, setMaterializing] = useState(false);
     const [retryingPhase, setRetryingPhase] = useState(null);
     const formatPendingJuditPhases = (phases = []) => phases
         .map((phase) => ({
@@ -728,6 +1151,19 @@ export default function CasoPage() {
     const [riskSignalsError, setRiskSignalsError] = useState(null);
     const [subject, setSubject] = useState(null);
     const [subjectError, setSubjectError] = useState(null);
+    const [subjectHistory, setSubjectHistory] = useState([]);
+    const [subjectDecisionHistory, setSubjectDecisionHistory] = useState([]);
+    const [relationships, setRelationships] = useState([]);
+    const [relationshipsError, setRelationshipsError] = useState(null);
+    const [timelineEvents, setTimelineEvents] = useState([]);
+    const [timelineEventsError, setTimelineEventsError] = useState(null);
+    const [providerDivergences, setProviderDivergences] = useState([]);
+    const [providerDivergencesError, setProviderDivergencesError] = useState(null);
+    const [resolvingDivergenceId, setResolvingDivergenceId] = useState(null);
+    const [resolveDivergenceError, setResolveDivergenceError] = useState('');
+    const [creatingWatchlist, setCreatingWatchlist] = useState(false);
+    const [watchlistMessage, setWatchlistMessage] = useState('');
+    const [watchlistError, setWatchlistError] = useState('');
     const dirtyFieldsRef = useRef(new Set());
     const highRiskConfirmedRef = useRef(false);
     const initializedCaseIdRef = useRef(null);
@@ -740,7 +1176,8 @@ export default function CasoPage() {
         for (const field of dirty) {
             if (form[field] !== undefined) payload[field] = form[field];
         }
-        const draftRisk = calculateRisk(form, enabledPhases);
+        const draftPhaseKeys = getCockpitPhaseKeysFromModuleRuns(moduleRuns, enabledPhases);
+        const draftRisk = resolveCaseRisk(form, draftPhaseKeys, riskSignals);
         payload.riskLevel = draftRisk.riskLevel;
         payload.riskScore = draftRisk.riskScore;
         if (Object.keys(payload).length === 0) return;
@@ -759,45 +1196,30 @@ export default function CasoPage() {
             // P10: Show error to analyst instead of silent failure
             setSaveError('Falha ao salvar rascunho automaticamente. Suas alteracoes podem nao ter sido salvas.');
         }
-    }, [caseData?.id, form, isDemoMode, concluded, enabledPhases]);
-
-    const handleRetryPhase = useCallback(async (phase) => {
-        if (isDemoMode || !caseData?.id) return;
-
-        try {
-            setRetryingPhase(phase);
-            setSaveError(null);
-            if (phase === 'ai') {
-                await callRerunAiAnalysis(caseData.id);
-            } else {
-                await callRerunEnrichmentPhase(caseData.id, phase);
-            }
-        } catch (err) {
-            setSaveError(extractErrorMessage(err, 'Erro ao reexecutar fase.'));
-        } finally {
-            setRetryingPhase(null);
-        }
-    }, [caseData?.id, isDemoMode]);
+    }, [caseData?.id, form, isDemoMode, concluded, enabledPhases, moduleRuns, riskSignals]);
 
     useEffect(() => {
-        if (isDemoMode) {
-            const demoCase = MOCK_CASES.find((currentCase) => currentCase.id === caseId) || null;
-            setCaseData(demoCase);
-            setLoadingCase(false);
-            if (!demoCase) setCaseError('Caso demo nao encontrado.');
-            return;
-        }
-
         setLoadingCase(true);
         setCaseError(null);
-        setConcluded(false);
-        setSaveError(null);
-        dirtyFieldsRef.current = new Set();
+
+        if (isDemoMode) {
+            const nextCase = MOCK_CASES.find((item) => item.id === caseId) || null;
+            if (!nextCase) {
+                setCaseData(null);
+                setCaseError('Caso nao encontrado no ambiente demo.');
+                setLoadingCase(false);
+                return undefined;
+            }
+            setCaseData(nextCase);
+            setForm(createInitialForm(nextCase));
+            setLoadingCase(false);
+            return undefined;
+        }
 
         const unsubscribe = subscribeToCaseDoc(caseId, (nextCase, error) => {
             if (error) {
-                console.error('Error subscribing to case:', error);
-                setCaseError(extractErrorMessage(error, 'Nao foi possivel carregar este caso agora.'));
+                setCaseData(null);
+                setCaseError(getUserFriendlyMessage(error));
                 setLoadingCase(false);
                 return;
             }
@@ -827,6 +1249,20 @@ export default function CasoPage() {
 
         return () => unsubscribe();
     }, [caseId, isDemoMode]);
+
+    const handleRetryPhase = useCallback(async (phase) => {
+        if (isDemoMode || !caseData?.id || !phase) return;
+        setRetryingPhase(phase);
+        setSaveError(null);
+        try {
+            await callRerunEnrichmentPhase({ caseId: caseData.id, phase });
+        } catch (err) {
+            console.error('Error retrying enrichment phase:', err);
+            setSaveError(getUserFriendlyMessage(err, 'reexecutar fase'));
+        } finally {
+            setRetryingPhase(null);
+        }
+    }, [caseData?.id, isDemoMode]);
 
     // Warn user about unsaved data when closing/refreshing
     useEffect(() => {
@@ -860,8 +1296,8 @@ export default function CasoPage() {
         return subscribeToModuleRunsForCase(caseId, (nextModuleRuns, error) => {
             setModuleRuns(nextModuleRuns || []);
             setModuleRunsError(error || null);
-        });
-    }, [caseId, isDemoMode]);
+        }, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
 
     useEffect(() => {
         if (!caseId || isDemoMode) {
@@ -872,8 +1308,8 @@ export default function CasoPage() {
         return subscribeToEvidenceItemsForCase(caseId, (items, error) => {
             setEvidenceItems(items || []);
             setEvidenceItemsError(error || null);
-        });
-    }, [caseId, isDemoMode]);
+        }, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
 
     useEffect(() => {
         if (!caseId || isDemoMode) {
@@ -884,8 +1320,8 @@ export default function CasoPage() {
         return subscribeToRiskSignalsForCase(caseId, (signals, error) => {
             setRiskSignals(signals || []);
             setRiskSignalsError(error || null);
-        });
-    }, [caseId, isDemoMode]);
+        }, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
 
     useEffect(() => {
         const subjectId = caseData?.subjectId;
@@ -899,6 +1335,62 @@ export default function CasoPage() {
             setSubjectError(error || null);
         });
     }, [caseId, isDemoMode, caseData?.subjectId]);
+
+    useEffect(() => {
+        const subjectId = caseData?.subjectId;
+        if (!caseId || isDemoMode || !subjectId) {
+            setSubjectHistory([]);
+            return;
+        }
+        fetchSubjectHistory(subjectId, caseId, 5).then(setSubjectHistory).catch(() => setSubjectHistory([]));
+    }, [caseId, isDemoMode, caseData?.subjectId]);
+
+    useEffect(() => {
+        const subjectId = caseData?.subjectId;
+        if (!caseId || isDemoMode || !subjectId) {
+            setSubjectDecisionHistory([]);
+            return;
+        }
+        fetchSubjectDecisionHistory(subjectId, caseId, 8)
+            .then(setSubjectDecisionHistory)
+            .catch(() => setSubjectDecisionHistory([]));
+    }, [caseId, isDemoMode, caseData?.subjectId]);
+
+    useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setRelationships([]);
+            setRelationshipsError(null);
+            return undefined;
+        }
+        return subscribeToRelationshipsForCase(caseId, (nextRelationships, error) => {
+            setRelationships(nextRelationships || []);
+            setRelationshipsError(error || null);
+        }, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
+
+    useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setTimelineEvents([]);
+            setTimelineEventsError(null);
+            return undefined;
+        }
+        return subscribeToTimelineEventsForCase(caseId, (events, error) => {
+            setTimelineEvents(events || []);
+            setTimelineEventsError(error || null);
+        }, undefined, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
+
+    useEffect(() => {
+        if (!caseId || isDemoMode) {
+            setProviderDivergences([]);
+            setProviderDivergencesError(null);
+            return undefined;
+        }
+        return subscribeToProviderDivergencesForCase(caseId, (divergences, error) => {
+            setProviderDivergences(divergences || []);
+            setProviderDivergencesError(error || null);
+        }, undefined, caseData?.tenantId || null);
+    }, [caseId, isDemoMode, caseData?.tenantId]);
 
     useEffect(() => {
         if (caseId !== initializedCaseIdRef.current && caseData) {
@@ -987,7 +1479,7 @@ export default function CasoPage() {
         });
     };
 
-    const risk = useMemo(() => calculateRisk(form, cockpitPhaseKeys), [form, cockpitPhaseKeys]);
+    const risk = useMemo(() => resolveCaseRisk(form, cockpitPhaseKeys, riskSignals), [riskSignals, form, cockpitPhaseKeys]);
 
     const checklist = [
         cockpitPhaseKeys.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
@@ -1069,6 +1561,7 @@ export default function CasoPage() {
         return phaseMap[stepKey] ? enrichedPhase(phaseMap[stepKey]) : false;
     };
 
+
     const handleReturn = async () => {
         if (!caseData || !returnReason || returning) return;
         setReturnError(null);
@@ -1099,6 +1592,70 @@ export default function CasoPage() {
             setReturnError(getUserFriendlyMessage(err, 'devolver o caso'));
         } finally {
             setReturning(false);
+        }
+    };
+
+    const handleMaterialize = async () => {
+        if (!caseId || materializing) return;
+        setMaterializing(true);
+        setSaveError(null);
+        try {
+            await callMaterializeV2Artifacts({ caseId });
+            setSaveError('✅ Artefatos rematerializados com sucesso.');
+            setTimeout(() => setSaveError(null), 3000);
+        } catch (err) {
+            console.error('Error materializing V2 artifacts:', err);
+            setSaveError(extractErrorMessage(err, 'falha ao materializar artefatos V2'));
+        } finally {
+            setMaterializing(false);
+        }
+    };
+
+    const canResolveProviderDivergences = hasPermission(userProfile?.role, PERMISSIONS.PROVIDER_DIVERGENCE_RESOLVE);
+
+    const handleCreateWatchlist = async (modules = []) => {
+        if (!caseData?.subjectId || !caseData?.tenantId || creatingWatchlist) return;
+        setCreatingWatchlist(true);
+        setWatchlistError('');
+        setWatchlistMessage('');
+        try {
+            const result = await callCreateWatchlist({
+                subjectId: caseData.subjectId,
+                tenantId: caseData.tenantId,
+                modules,
+                intervalDays: 30,
+            });
+            setWatchlistMessage(`Watchlist criada: ${result.watchlistId || caseData.subjectId}`);
+        } catch (err) {
+            console.error('Error creating watchlist from case:', err);
+            setWatchlistError(extractErrorMessage(err, 'Nao foi possivel criar a watchlist.'));
+        } finally {
+            setCreatingWatchlist(false);
+        }
+    };
+
+    const handleResolveProviderDivergence = async (divergence) => {
+        if (!divergence?.id || !caseId || resolvingDivergenceId) return;
+        const defaultText = divergence.blocksPublication
+            ? 'Divergencia revisada manualmente; evidencia suficiente para prosseguir.'
+            : 'Divergencia revisada manualmente.';
+        const resolution = window.prompt('Justificativa da resolucao da divergencia:', defaultText);
+        if (!resolution || !resolution.trim()) return;
+
+        setResolveDivergenceError('');
+        setResolvingDivergenceId(divergence.id);
+        try {
+            await callResolveProviderDivergenceByAnalyst({
+                caseId,
+                divergenceId: divergence.id,
+                status: 'resolved',
+                resolution,
+            });
+        } catch (err) {
+            console.error('Error resolving provider divergence:', err);
+            setResolveDivergenceError(getUserFriendlyMessage(err, 'resolver divergencia'));
+        } finally {
+            setResolvingDivergenceId(null);
         }
     };
 
@@ -1341,6 +1898,16 @@ export default function CasoPage() {
                             }
                         }}>🔗 Copiar Link</button>
                     )}
+                    {['supervisor', 'admin'].includes(userProfile?.role) && (
+                        <button
+                            className="caso-btn caso-btn--ghost"
+                            onClick={handleMaterialize}
+                            disabled={materializing}
+                            title="Regerar artefatos operacionais V2 (ModuleRuns, UsageMeters)"
+                        >
+                            {materializing ? 'Materializando...' : '🔄 Rematerializar V2'}
+                        </button>
+                    )}
                     {caseData.status !== 'DONE' && (
                         <button className="caso-btn caso-btn--primary" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                             {saving ? 'Salvando...' : 'Concluir'}
@@ -1360,7 +1927,34 @@ export default function CasoPage() {
             <EvidenceSummaryPanel evidenceItems={evidenceItems} error={evidenceItemsError} />
             <RiskSignalsPanel riskSignals={riskSignals} error={riskSignalsError} />
             <SubjectSummaryPanel subject={subject} error={subjectError} />
+            <HistoricoSubjectPanel history={subjectHistory} />
+            <SubjectDecisionHistoryPanel history={subjectDecisionHistory} />
+            <RelationshipsPanel relationships={relationships} error={relationshipsError} />
+            <TimelineEventsPanel timelineEvents={timelineEvents} error={timelineEventsError} />
+            {resolveDivergenceError && (
+                <div className="caso-v2-panel caso-v2-panel--error">
+                    <strong>Falha ao resolver divergencia.</strong>
+                    <span>{resolveDivergenceError}</span>
+                </div>
+            )}
+            <ProviderDivergencesPanel
+                divergences={providerDivergences}
+                error={providerDivergencesError}
+                canResolve={canResolveProviderDivergences}
+                resolvingId={resolvingDivergenceId}
+                onResolve={handleResolveProviderDivergence}
+            />
+            <WatchlistCasePanel
+                caseData={caseData}
+                moduleRuns={moduleRuns}
+                userRole={userProfile?.role || null}
+                creating={creatingWatchlist}
+                message={watchlistMessage}
+                error={watchlistError}
+                onCreate={handleCreateWatchlist}
+            />
             <V2RiskSummaryPanel riskSignals={riskSignals} />
+            <SeniorApprovalGatePanel riskSignals={riskSignals} userRole={userProfile?.role || null} />
 
             {/* P09: Warning if enrichment/AI data changed after last draft save */}
             {caseData.draftSavedAt && caseData.status !== 'DONE' && (() => {

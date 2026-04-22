@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../core/auth/useAuth';
 import { extractErrorMessage } from '../../core/errorUtils';
-import { fetchClientPublicReports, revokeClientPublicReport } from '../../core/firebase/firestoreService';
+import { revokeClientPublicReport, subscribeToClientCases } from '../../core/firebase/firestoreService';
 import { getMockPublicReports } from '../../data/mockData';
 import './RelatoriosClientePage.css';
 
@@ -26,6 +26,9 @@ function getReportStatus(report) {
     if (report.status === 'EXPIRED') {
         return { label: 'Expirado', tone: 'inactive' };
     }
+    if (report.status === 'FAILED' || report.status === 'UNAVAILABLE') {
+        return { label: 'Indisponivel', tone: 'inactive' };
+    }
     return { label: 'Ativo', tone: 'active' };
 }
 
@@ -37,6 +40,24 @@ function buildPublicReportUrl(token, isDemoMode, caseId) {
     if (!token) return '#';
     if (isDemoMode && caseId) return `${window.location.origin}/demo/r/${caseId}`;
     return `${window.location.origin}/r/${token}`;
+}
+
+function mapCaseToReport(caseData) {
+    const availability = caseData.reportAvailability || {};
+    const token = availability.publicReportToken || null;
+    const ready = availability.status === 'ready' && Boolean(token);
+    const revoked = availability.status === 'revoked';
+    const failed = availability.status === 'failed';
+    return {
+        token,
+        caseId: caseData.id,
+        candidateName: caseData.candidateName || caseData.name || null,
+        createdAt: availability.publishedAt || caseData.createdAt || null,
+        expiresAt: availability.expiresAt || null,
+        active: ready,
+        status: ready ? 'ATIVO' : revoked ? 'REVOKED' : failed ? 'FAILED' : 'UNAVAILABLE',
+        source: caseData.clientDataSource || 'clientProjections',
+    };
 }
 
 export default function RelatoriosClientePage() {
@@ -53,34 +74,29 @@ export default function RelatoriosClientePage() {
     const [feedback, setFeedback] = useState('');
 
     useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            setLoading(true);
-            setError(null);
-            setFeedback('');
-            try {
-                const data = isDemoMode
-                    ? getMockPublicReports(tenantId)
-                    : await fetchClientPublicReports();
-                if (!cancelled) {
-                    setReports(data);
-                }
-            } catch (currentError) {
-                if (!cancelled) {
-                    setError(extractErrorMessage(currentError, 'Nao foi possivel carregar os relatorios publicos.'));
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
+        if (isDemoMode) {
+            setReports(getMockPublicReports(tenantId));
+            setLoading(false);
+            return;
         }
 
-        load();
-        return () => {
-            cancelled = true;
-        };
+        setLoading(true);
+        setError(null);
+
+        const unsubscribe = subscribeToClientCases(tenantId, (cases, subscribeError) => {
+            if (subscribeError) {
+                setError(extractErrorMessage(subscribeError, 'Nao foi possivel carregar os relatorios publicos.'));
+                setLoading(false);
+                return;
+            }
+            const mapped = cases
+                .map(mapCaseToReport)
+                .filter((report) => report.token || report.status === 'REVOKED');
+            setReports(mapped);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, [isDemoMode, tenantId]);
 
     const filteredReports = useMemo(() => {
@@ -219,7 +235,7 @@ export default function RelatoriosClientePage() {
                         const status = getReportStatus(report);
                         const available = isReportAvailable(report);
                         return (
-                            <article key={report.token || report.id} className="client-public-reports__card">
+                            <article key={report.token || report.caseId} className="client-public-reports__card">
                                 <div className="client-public-reports__card-head">
                                     <div>
                                         <h3>{report.candidateName || 'Relatorio sem candidato'}</h3>
@@ -292,7 +308,7 @@ export default function RelatoriosClientePage() {
                                 const status = getReportStatus(report);
                                 const available = isReportAvailable(report);
                                 return (
-                                    <tr key={report.token || report.id} className="data-table__row">
+                                    <tr key={report.token || report.caseId} className="data-table__row">
                                         <td className="data-table__td data-table__td--mono">...{(report.token || '').slice(-8)}</td>
                                         <td className="data-table__td">{report.candidateName || '--'}</td>
                                         <td className="data-table__td">{report.caseId || '--'}</td>

@@ -237,7 +237,7 @@ async function pollRequest(requestId, apiKey, options = {}) {
     }
 
     throw new JuditError(
-        `Judit request ${requestId} ainda em processamento apos ${Math.round(maxWaitMs / 1000)}s`,
+        `Judit request ${requestId} ainda em processamento apos ${Math.round(maxWaitMs / 1000)}s (${attempts} tentativas)`,
         408,
         true,
     );

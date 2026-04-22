@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
     buildSubjectFromCase,
     buildSubjectId,
+    buildSubjectUpdatePayload,
+    buildPFProfile,
+    buildPJProfile,
+    buildCanonicalDossierArtifacts,
+    enrichSubjectWithAliases,
     inferPrimaryDocument,
     inferSubjectType,
     summarizeSubjectForCase,
@@ -136,5 +141,191 @@ describe('v2Subjects', () => {
     it('retorna null para subject invalido ou vazio', () => {
         expect(summarizeSubjectForCase(null)).toBeNull();
         expect(summarizeSubjectForCase({})).toBeNull();
+    });
+
+    it('summarize inclui linkedCaseCount quando disponivel', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-A',
+            caseData: { tenantId: 'tenant-1', cpf: '12345678901', candidateName: 'Ana Lima' },
+        });
+        subject.linkedCaseIds = ['CASE-A', 'CASE-B', 'CASE-C'];
+        const summary = summarizeSubjectForCase(subject);
+        expect(summary.linkedCaseCount).toBe(3);
+    });
+});
+
+describe('buildPFProfile', () => {
+    it('extrai campos PF do caseData', () => {
+        const profile = buildPFProfile({ birthDate: '1990-05-15', motherName: 'Maria', nationality: 'BR' });
+        expect(profile.birthDate).toBe('1990-05-15');
+        expect(profile.motherName).toBe('Maria');
+        expect(profile.nationality).toBe('BR');
+    });
+
+    it('usa nomeMae como fallback para motherName', () => {
+        const profile = buildPFProfile({ nomeMae: 'Joana' });
+        expect(profile.motherName).toBe('Joana');
+    });
+
+    it('inclui candidateName em knownNames', () => {
+        const profile = buildPFProfile({ candidateName: 'Carlos Alberto' });
+        expect(profile.knownNames).toContain('Carlos Alberto');
+    });
+});
+
+describe('buildPJProfile', () => {
+    it('extrai campos PJ do caseData', () => {
+        const profile = buildPJProfile({
+            cnpj: '12.345.678/0001-99',
+            legalName: 'Empresa LTDA',
+            tradeName: 'Empresa Trade',
+        });
+        expect(profile.legalName).toBe('Empresa LTDA');
+        expect(profile.tradeName).toBe('Empresa Trade');
+        expect(profile.cnpjBase).toBe('12345678');
+    });
+
+    it('infere legalName de razaoSocial', () => {
+        const profile = buildPJProfile({ razaoSocial: 'Razao Social SA', cnpj: '12345678000199' });
+        expect(profile.legalName).toBe('Razao Social SA');
+    });
+
+    it('inclui nomes conhecidos unicos em knownNames', () => {
+        const profile = buildPJProfile({ candidateName: 'Emp SA', legalName: 'Empresa SA', tradeName: 'Emp Trade' });
+        expect(profile.knownNames).toContain('Emp SA');
+        expect(profile.knownNames).toContain('Empresa SA');
+    });
+});
+
+describe('buildSubjectFromCase PJ', () => {
+    it('constroi subject PJ com pjProfile', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-PJ-001',
+            caseData: {
+                tenantId: 'tenant-xyz',
+                cnpj: '12345678000199',
+                legalName: 'Empresa LTDA',
+                productKey: 'kyb_business',
+            },
+        });
+        expect(subject.type).toBe('pj');
+        expect(subject.primaryDocument.docType).toBe('cnpj');
+        expect(subject.pjProfile).not.toBeNull();
+        expect(subject.pfProfile).toBeNull();
+        expect(subject.pjProfile.cnpjBase).toBe('12345678');
+    });
+});
+
+describe('buildSubjectUpdatePayload', () => {
+    it('inclui todos os campos obrigatorios sem linkedCaseIds quando sentinel nao fornecido', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-X',
+            caseData: { tenantId: 'tenant-1', cpf: '11122233344', candidateName: 'Lia' },
+        });
+        const payload = buildSubjectUpdatePayload({ subject, caseId: 'CASE-X' });
+        expect(payload).toHaveProperty('type');
+        expect(payload).toHaveProperty('lastDossierSummary');
+        expect(payload.lastDossierSummary.caseId).toBe('CASE-X');
+        expect(payload).not.toHaveProperty('linkedCaseIds');
+    });
+
+    it('inclui linkedCaseIds quando arrayUnionSentinel fornecido', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-Y',
+            caseData: { tenantId: 'tenant-2', cpf: '55566677788', candidateName: 'Pedro' },
+        });
+        const sentinel = { _methodName: 'FieldValue.arrayUnion', values: ['CASE-Y'] };
+        const payload = buildSubjectUpdatePayload({ subject, caseId: 'CASE-Y', arrayUnionSentinel: sentinel });
+        expect(payload.linkedCaseIds).toBe(sentinel);
+    });
+
+    it('lanca erro quando subject ausente', () => {
+        expect(() => buildSubjectUpdatePayload({ caseId: 'X' })).toThrow();
+    });
+});
+
+describe('enrichSubjectWithAliases', () => {
+    it('adiciona aliases ao pfProfile.knownNames sem duplicatas', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-A',
+            caseData: { tenantId: 't1', cpf: '12345678901', candidateName: 'Ana' },
+        });
+        const enriched = enrichSubjectWithAliases(subject, ['Ana Lima', 'Ana L.', 'Ana']);
+        expect(enriched.pfProfile.knownNames).toContain('Ana Lima');
+        expect(enriched.pfProfile.knownNames).toContain('Ana L.');
+        // 'Ana' already present — dedup
+        expect(enriched.pfProfile.knownNames.filter((n) => n === 'Ana').length).toBe(1);
+    });
+
+    it('retorna subject inalterado quando aliases vazio', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-B',
+            caseData: { tenantId: 't1', cpf: '11111111111', candidateName: 'Bob' },
+        });
+        const result = enrichSubjectWithAliases(subject, []);
+        expect(result).toBe(subject);
+    });
+
+    it('retorna subject inalterado quando subject null', () => {
+        expect(enrichSubjectWithAliases(null, ['nome'])).toBeNull();
+    });
+});
+
+describe('buildCanonicalDossierArtifacts', () => {
+    it('materializa pessoa canonica e fato PF a partir de subject com CPF', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-PF',
+            caseData: {
+                tenantId: 'tenant-1',
+                cpf: '12345678901',
+                candidateName: 'Ana Lima',
+                birthDate: '1990-01-01',
+            },
+        });
+
+        const artifacts = buildCanonicalDossierArtifacts({
+            subject,
+            caseId: 'CASE-PF',
+            evidenceItems: [{ id: 'ev-1' }],
+            riskSignals: [{ id: 'rs-1', severity: 'high' }],
+        });
+
+        expect(artifacts.entityCollection).toBe('persons');
+        expect(artifacts.entity.id).toMatch(/^person_cpf_/);
+        expect(artifacts.entity.cpf).toBe('12345678901');
+        expect(artifacts.subjectPatch.canonicalPersonId).toBe(artifacts.entity.id);
+        expect(artifacts.facts.find((fact) => fact.kind === 'identity_pf')).toBeTruthy();
+        expect(artifacts.facts.find((fact) => fact.kind === 'risk_summary').value.highOrCriticalCount).toBe(1);
+    });
+
+    it('materializa empresa canonica e fato PJ a partir de subject com CNPJ', () => {
+        const { subject } = buildSubjectFromCase({
+            caseId: 'CASE-PJ',
+            caseData: {
+                tenantId: 'tenant-1',
+                cnpj: '12.345.678/0001-99',
+                legalName: 'Empresa LTDA',
+                productKey: 'dossier_pj',
+            },
+        });
+
+        const artifacts = buildCanonicalDossierArtifacts({ subject, caseId: 'CASE-PJ' });
+
+        expect(artifacts.entityCollection).toBe('companies');
+        expect(artifacts.entity.id).toMatch(/^company_cnpj_/);
+        expect(artifacts.entity.cnpj).toBe('12345678000199');
+        expect(artifacts.subjectPatch.canonicalCompanyId).toBe(artifacts.entity.id);
+        expect(artifacts.facts.find((fact) => fact.kind === 'identity_pj')).toBeTruthy();
+    });
+
+    it('nao materializa entidade canonica quando faltam dados fortes', () => {
+        const artifacts = buildCanonicalDossierArtifacts({
+            subject: { id: 'subj-1', tenantId: 'tenant-1', type: 'pf', primaryDocument: null },
+            caseId: 'CASE-X',
+        });
+
+        expect(artifacts.entity).toBeNull();
+        expect(artifacts.entityCollection).toBeNull();
+        expect(artifacts.facts).toHaveLength(0);
     });
 });

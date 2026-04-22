@@ -3,6 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
     ANALYSIS_PHASE_LABELS,
     callUpdateTenantSettingsByAnalyst,
+    callGetTenantEntitlementsByAnalyst,
+    callUpdateTenantEntitlementsByAnalyst,
+    callGetTenantBillingOverview,
+    callCloseTenantBillingPeriod,
+    callGetTenantBillingSettlement,
     DEFAULT_ANALYSIS_CONFIG,
     getTenantSettings,
     getTenantUsage,
@@ -33,6 +38,47 @@ const COST_TABLE = {
     ai: 0.01,
 };
 
+const CONTRACT_PRODUCTS = [
+    { key: 'dossier_pf_basic', label: 'Dossie PF Essencial' },
+    { key: 'dossier_pf_full', label: 'Dossie PF Completo' },
+    { key: 'dossier_pj', label: 'Dossie PJ' },
+    { key: 'safe_report', label: 'Relatorio seguro' },
+];
+
+const CONTRACT_MODULES = [
+    { key: 'identity_pf', label: 'Identificacao PF' },
+    { key: 'identity_pj', label: 'Identificacao PJ' },
+    { key: 'criminal', label: 'Criminal' },
+    { key: 'labor', label: 'Trabalhista' },
+    { key: 'warrants', label: 'Mandados' },
+    { key: 'judicial', label: 'Judicial' },
+    { key: 'kyc', label: 'KYC/listas' },
+    { key: 'osint', label: 'OSINT' },
+];
+
+const CONTRACT_CAPABILITIES = [
+    { key: 'report_public_link', label: 'Link publico seguro' },
+    { key: 'evidence_viewer', label: 'Visualizador de evidencias' },
+    { key: 'billing_dashboard', label: 'Dashboard de consumo' },
+    { key: 'senior_review', label: 'Revisao senior' },
+];
+
+const DEFAULT_ENTITLEMENT_FORM = {
+    tier: 'basic',
+    status: 'active',
+    presetKey: 'start',
+    billingModel: 'postpaid',
+    maxCasesPerMonth: '',
+    enabledProducts: {},
+    enabledModules: {},
+    enabledCapabilities: {},
+    policyOverrides: {
+        reviewPolicy: 'operational',
+        seniorApproval: 'critical',
+        snapshotReuse: true,
+    },
+};
+
 function computeEstimatedCost(enrichment) {
     const bdc = enrichment.bigdatacorp?.enabled
         ? Object.entries(COST_TABLE.bigdatacorp).reduce((sum, [key, cost]) => sum + (enrichment.bigdatacorp?.phases?.[key] !== false ? cost : 0), 0)
@@ -45,6 +91,47 @@ function computeEstimatedCost(enrichment) {
     const fontedata = Object.entries(COST_TABLE.fontedata).reduce((sum, [key, cost]) => sum + (enrichment.phases?.[key] ? cost : 0), 0);
     const ai = enrichment.ai?.enabled ? COST_TABLE.ai : 0;
     return { bigdatacorp: bdc, judit, escavador, djen, fontedata, ai, total: bdc + judit + fontedata + ai };
+}
+
+function normalizeEnabledMap(value) {
+    if (Array.isArray(value)) {
+        return value.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
+    return value && typeof value === 'object' ? { ...value } : {};
+}
+
+function buildEntitlementForm(entitlements = null, resolved = null) {
+    const source = entitlements || resolved || {};
+    return {
+        ...DEFAULT_ENTITLEMENT_FORM,
+        tier: source.tier || DEFAULT_ENTITLEMENT_FORM.tier,
+        status: source.status || DEFAULT_ENTITLEMENT_FORM.status,
+        presetKey: source.presetKey || DEFAULT_ENTITLEMENT_FORM.presetKey,
+        billingModel: source.billingModel || DEFAULT_ENTITLEMENT_FORM.billingModel,
+        maxCasesPerMonth: source.maxCasesPerMonth ?? '',
+        enabledProducts: normalizeEnabledMap(source.enabledProducts),
+        enabledModules: normalizeEnabledMap(source.enabledModules),
+        enabledCapabilities: normalizeEnabledMap(source.enabledCapabilities || source.featureOverrides),
+        policyOverrides: {
+            ...DEFAULT_ENTITLEMENT_FORM.policyOverrides,
+            ...(source.policyOverrides || {}),
+        },
+    };
+}
+
+function buildEntitlementPayload(form) {
+    const maxCases = form.maxCasesPerMonth === '' ? null : Number(form.maxCasesPerMonth);
+    return {
+        tier: form.tier,
+        status: form.status,
+        presetKey: form.presetKey,
+        billingModel: form.billingModel,
+        maxCasesPerMonth: Number.isFinite(maxCases) ? maxCases : null,
+        enabledProducts: form.enabledProducts,
+        enabledModules: form.enabledModules,
+        enabledCapabilities: form.enabledCapabilities,
+        policyOverrides: form.policyOverrides,
+    };
 }
 
 function mergeEnrichment(saved) {
@@ -96,10 +183,43 @@ export default function TenantSettingsPage() {
     const [saved, setSaved] = useState(false);
     const [quota, setQuota] = useState(null);
 
+    // Entitlements V2 State
+    const [entitlementsData, setEntitlementsData] = useState(null);
+    const [entitlementsError, setEntitlementsError] = useState(null);
+    const [entitlementForm, setEntitlementForm] = useState(DEFAULT_ENTITLEMENT_FORM);
+    const [savingEntitlements, setSavingEntitlements] = useState(false);
+    const [billingOverview, setBillingOverview] = useState(null);
+    const [billingSettlement, setBillingSettlement] = useState(null);
+    const [billingError, setBillingError] = useState(null);
+    const [closingBilling, setClosingBilling] = useState(false);
+
     useEffect(() => {
         if (!tenantId) return;
         setLoading(true);
         setError(null);
+        setEntitlementsError(null);
+        setBillingError(null);
+
+        callGetTenantEntitlementsByAnalyst({ tenantId })
+            .then(data => {
+                setEntitlementsData(data);
+                setEntitlementForm(buildEntitlementForm(data?.entitlements, data?.resolvedEntitlements));
+            })
+            .catch(err => {
+                setEntitlementsError(extractErrorMessage(err, 'Nao foi possivel carregar dados contratuais'));
+            });
+
+        const currentMonthKey = new Date().toISOString().slice(0, 7);
+        callGetTenantBillingOverview({ tenantId, monthKey: currentMonthKey })
+            .then((data) => setBillingOverview(data))
+            .catch((err) => {
+                setBillingError(extractErrorMessage(err, 'Nao foi possivel carregar consumo V2'));
+                setBillingOverview(null);
+            });
+        callGetTenantBillingSettlement({ tenantId, monthKey: currentMonthKey })
+            .then((data) => setBillingSettlement(data?.settlement || null))
+            .catch(() => setBillingSettlement(null));
+
         getTenantSettings(tenantId)
             .then((settings) => {
                 setTenantName(settings.tenantName || tenantId);
@@ -165,6 +285,60 @@ export default function TenantSettingsPage() {
         }
     };
 
+    const handleSaveEntitlements = async () => {
+        if (!tenantId) return;
+        setSavingEntitlements(true);
+        try {
+            const payload = buildEntitlementPayload(entitlementForm);
+            await callUpdateTenantEntitlementsByAnalyst({
+                tenantId,
+                entitlements: payload,
+            });
+            // Update local state to reflect change
+            setEntitlementsData(prev => prev ? {
+                ...prev,
+                entitlements: { ...(prev.entitlements || {}), ...payload },
+                resolvedEntitlements: { ...(prev.resolvedEntitlements || {}), ...payload }
+            } : null);
+        } catch (err) {
+            setEntitlementsError(extractErrorMessage(err, 'Erro ao salvar contrato V2.'));
+        } finally {
+            setSavingEntitlements(false);
+        }
+    };
+
+    const updateEntitlementMap = (field, key, value) => {
+        setEntitlementForm((prev) => ({
+            ...prev,
+            [field]: {
+                ...(prev[field] || {}),
+                [key]: value,
+            },
+        }));
+    };
+
+    const handleCloseBilling = async () => {
+        if (!tenantId || !billingOverview?.monthKey) return;
+        setClosingBilling(true);
+        setBillingError(null);
+        try {
+            const result = await callCloseTenantBillingPeriod({ tenantId, monthKey: billingOverview.monthKey });
+            setBillingSettlement({
+                id: result.settlementId,
+                tenantId,
+                monthKey: billingOverview.monthKey,
+                summary: result.summary,
+                itemCount: result.itemCount,
+                status: result.status,
+                source: 'usageMeters',
+            });
+        } catch (err) {
+            setBillingError(extractErrorMessage(err, 'Nao foi possivel fechar o consumo V2.'));
+        } finally {
+            setClosingBilling(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="ts-page">
@@ -195,8 +369,219 @@ export default function TenantSettingsPage() {
                 <div className="ts-alert ts-alert--success" role="status">Configuracao salva com sucesso.</div>
             )}
 
+            {entitlementsError && (
+                <div className="ts-alert ts-alert--error" role="alert">{entitlementsError}</div>
+            )}
+            {billingError && (
+                <div className="ts-alert ts-alert--error" role="alert">{billingError}</div>
+            )}
+
             <div className="ts-grid">
+                {/* ─── Entitlements V2 (Contrato) ─── */}
+                <section className="ts-card">
+                    <div className="ts-card__header">
+                        <h3 className="ts-card__title">Contrato e Entitlements V2</h3>
+                    </div>
+                    <div className="ts-card__body">
+                        {entitlementsData ? (
+                            <>
+                                <p style={{ fontSize: '.875rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                                    Fonte atual: <strong data-testid="entitlement-source">
+                                        {entitlementsData.source === 'legacyTenantSettingsFallback' ? 'Configuracao operacional (fallback)' :
+                                         entitlementsData.source === 'tenantEntitlements' ? 'Contrato V2' : entitlementsData.source}
+                                    </strong>
+                                </p>
+
+                                <div className="ts-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                                    <div className="ts-field">
+                                        <label htmlFor="tierForm" className="ts-field__label">Tier do Contrato</label>
+                                        <select
+                                            id="tierForm"
+                                            data-testid="edit-tier"
+                                            className="ts-input"
+                                            value={entitlementForm.tier}
+                                            onChange={(e) => setEntitlementForm((prev) => ({ ...prev, tier: e.target.value }))}
+                                        >
+                                            <option value="basic">Basico</option>
+                                            <option value="standard">Standard</option>
+                                            <option value="professional">Profissional</option>
+                                            <option value="premium">Premium</option>
+                                        </select>
+                                    </div>
+                                    <div className="ts-field">
+                                        <label htmlFor="statusForm" className="ts-field__label">Status contratual</label>
+                                        <select
+                                            id="statusForm"
+                                            data-testid="edit-status"
+                                            className="ts-input"
+                                            value={entitlementForm.status}
+                                            onChange={(e) => setEntitlementForm((prev) => ({ ...prev, status: e.target.value }))}
+                                        >
+                                            <option value="active">Ativo</option>
+                                            <option value="inactive">Inativo</option>
+                                            <option value="suspended">Suspenso</option>
+                                        </select>
+                                    </div>
+                                    <div className="ts-field">
+                                        <label htmlFor="billingModel" className="ts-field__label">Modelo de billing</label>
+                                        <select
+                                            id="billingModel"
+                                            data-testid="edit-billing-model"
+                                            className="ts-input"
+                                            value={entitlementForm.billingModel}
+                                            onChange={(e) => setEntitlementForm((prev) => ({ ...prev, billingModel: e.target.value }))}
+                                        >
+                                            <option value="prepaid">Pre-pago</option>
+                                            <option value="postpaid">Pos-pago</option>
+                                            <option value="hybrid">Hibrido</option>
+                                        </select>
+                                    </div>
+                                    <div className="ts-field">
+                                        <label htmlFor="maxCases" className="ts-field__label">Casos/mes</label>
+                                        <input
+                                            id="maxCases"
+                                            data-testid="edit-max-cases"
+                                            className="ts-input"
+                                            type="number"
+                                            min="0"
+                                            value={entitlementForm.maxCasesPerMonth}
+                                            onChange={(e) => setEntitlementForm((prev) => ({ ...prev, maxCasesPerMonth: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="ts-field" style={{ marginTop: '1rem' }}>
+                                    <span className="ts-field__label">Produtos habilitados</span>
+                                    {CONTRACT_PRODUCTS.map((product) => (
+                                        <label key={product.key} className="ts-checkbox-row">
+                                            <input
+                                                type="checkbox"
+                                                data-testid={`product-${product.key}`}
+                                                checked={entitlementForm.enabledProducts?.[product.key] === true}
+                                                onChange={(event) => updateEntitlementMap('enabledProducts', product.key, event.target.checked)}
+                                            />
+                                            <span>{product.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className="ts-field" style={{ marginTop: '1rem' }}>
+                                    <span className="ts-field__label">Modulos habilitados</span>
+                                    {CONTRACT_MODULES.map((module) => (
+                                        <label key={module.key} className="ts-checkbox-row">
+                                            <input
+                                                type="checkbox"
+                                                data-testid={`module-${module.key}`}
+                                                checked={entitlementForm.enabledModules?.[module.key] === true}
+                                                onChange={(event) => updateEntitlementMap('enabledModules', module.key, event.target.checked)}
+                                            />
+                                            <span>{module.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className="ts-field" style={{ marginTop: '1rem' }}>
+                                    <span className="ts-field__label">Capabilities</span>
+                                    {CONTRACT_CAPABILITIES.map((capability) => (
+                                        <label key={capability.key} className="ts-checkbox-row">
+                                            <input
+                                                type="checkbox"
+                                                data-testid={`capability-${capability.key}`}
+                                                checked={entitlementForm.enabledCapabilities?.[capability.key] === true}
+                                                onChange={(event) => updateEntitlementMap('enabledCapabilities', capability.key, event.target.checked)}
+                                            />
+                                            <span>{capability.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className="ts-field" style={{ marginTop: '1rem' }}>
+                                    <label htmlFor="seniorPolicy" className="ts-field__label">Senior approval</label>
+                                    <select
+                                        id="seniorPolicy"
+                                        data-testid="edit-senior-approval"
+                                        className="ts-input"
+                                        value={entitlementForm.policyOverrides?.seniorApproval || 'critical'}
+                                        onChange={(e) => setEntitlementForm((prev) => ({
+                                            ...prev,
+                                            policyOverrides: { ...prev.policyOverrides, seniorApproval: e.target.value },
+                                        }))}
+                                    >
+                                        <option value="critical">Apenas critico</option>
+                                        <option value="high_risk">Alto risco</option>
+                                        <option value="negative">Veredito negativo</option>
+                                        <option value="always">Sempre</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ margin: '1rem 0' }}>
+                                    <button
+                                        type="button"
+                                        className="ts-btn ts-btn--primary"
+                                        data-testid="save-entitlements"
+                                        disabled={savingEntitlements}
+                                        onClick={handleSaveEntitlements}
+                                    >
+                                        {savingEntitlements ? 'Salvando...' : 'Salvar Contrato V2'}
+                                    </button>
+                                </div>
+
+                                <div className="ts-field" style={{ marginTop: '1rem' }}>
+                                    <span className="ts-field__label">Resumo Resolvido:</span>
+                                    <ul style={{ fontSize: '.875rem', paddingLeft: '20px' }}>
+                                        <li>Tier: <strong data-testid="entitlement-tier">{entitlementsData.resolvedEntitlements?.tier === 'professional' ? 'Profissional' : entitlementsData.resolvedEntitlements?.tier}</strong></li>
+                                        <li>Max Casos/mes: <strong data-testid="entitlement-max-cases">{entitlementsData.resolvedEntitlements?.maxCasesPerMonth || 'Ilimitado'}</strong></li>
+                                        <li>Modulos: <span data-testid="entitlement-modules">{Object.keys(entitlementsData.resolvedEntitlements?.enabledModules || {}).join(', ') || 'Nenhum'}</span></li>
+                                        <li>Produtos: <span data-testid="entitlement-products">{Object.keys(normalizeEnabledMap(entitlementsData.resolvedEntitlements?.enabledProducts || {})).join(', ') || 'Nenhum'}</span></li>
+                                        <li data-testid="entitlement-flags">Flags: {Object.entries(entitlementsData.resolvedEntitlements?.featureOverrides || entitlementsData.resolvedEntitlements?.enabledCapabilities || {}).map(([k, v]) => `${k}: ${v ? 'sim' : 'nao'}`).join(' | ') || 'Nenhuma'}</li>
+                                    </ul>
+                                </div>
+                            </>
+                        ) : (
+                            <p style={{ fontSize: '.875rem', color: 'var(--text-tertiary)' }}>Carregando dados de contrato...</p>
+                        )}
+                    </div>
+                </section>
+
                 {/* ─── Fases de Analise ─── */}
+                <section className="ts-card">
+                    <div className="ts-card__header">
+                        <h3 className="ts-card__title">Consumo V2</h3>
+                    </div>
+                    <div className="ts-card__body">
+                        {billingOverview ? (
+                            <>
+                                <p style={{ fontSize: '.875rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                                    Mes: <strong>{billingOverview.monthKey}</strong> · Fonte: <strong data-testid="billing-source">{billingOverview.source === 'usageMeters' ? 'usageMeters' : 'billingEntries fallback'}</strong>
+                                </p>
+                                <ul style={{ fontSize: '.875rem', paddingLeft: '20px' }}>
+                                    <li>Total de unidades: <strong data-testid="billing-total-quantity">{billingOverview.overview?.totalQuantity ?? 0}</strong></li>
+                                    <li>Unidades faturaveis: <strong data-testid="billing-billable-quantity">{billingOverview.overview?.commercialBillableQuantity ?? 0}</strong></li>
+                                    <li>Custo interno estimado: <strong data-testid="billing-internal-cost">R$ {(billingOverview.overview?.totalInternalCostBrl ?? 0).toFixed(2)}</strong></li>
+                                    <li>Itens usageMeters: <strong>{billingOverview.usageMeterCount ?? 0}</strong></li>
+                                </ul>
+                                <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)' }}>
+                                    Fechamento: <strong data-testid="billing-settlement-status">{billingSettlement?.status || 'Nao fechado'}</strong>
+                                </p>
+                                <button
+                                    type="button"
+                                    className="ts-btn ts-btn--secondary"
+                                    data-testid="close-billing-period"
+                                    disabled={closingBilling || billingOverview.source !== 'usageMeters'}
+                                    onClick={handleCloseBilling}
+                                >
+                                    {closingBilling ? 'Fechando...' : 'Fechar periodo V2'}
+                                </button>
+                                {billingOverview.fallbackUsed && (
+                                    <p className="ts-hint" data-testid="billing-fallback-hint">Fallback legado ativo: nenhum usageMeter encontrado para o periodo.</p>
+                                )}
+                            </>
+                        ) : (
+                            <p style={{ fontSize: '.875rem', color: 'var(--text-tertiary)' }}>Carregando consumo V2...</p>
+                        )}
+                    </div>
+                </section>
+
                 <section className="ts-card">
                     <h3 className="ts-card__title">Fases de Analise</h3>
                     <p className="ts-card__desc">Habilite ou desabilite as fases de analise para esta franquia.</p>

@@ -27,5 +27,11 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setupTests.js',
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/COMPLIANCE_HUB_V2/modelos/**',
+      '**/*.emulator.test.js',
+    ],
   },
 })

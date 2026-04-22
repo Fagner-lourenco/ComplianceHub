@@ -80,12 +80,37 @@ function stripUndefined(value) {
     );
 }
 
+const LARGE_PAYLOAD_THRESHOLD = 500 * 1024; // 500KB - Firestore limit is 1MB, we use 500KB for safety
+
 function hasMeaningfulValue(value) {
     if (value === null || value === undefined) return false;
     if (typeof value === 'string') return value.trim().length > 0;
     if (Array.isArray(value)) return value.length > 0;
     if (typeof value === 'object') return Object.keys(value).length > 0;
     return true;
+}
+
+function handlePayloadStorage(id, payload) {
+    if (!payload) return { payload: null, payloadRef: null, payloadSize: 0 };
+    const stringified = JSON.stringify(payload);
+    const size = stringified.length;
+
+    if (size > LARGE_PAYLOAD_THRESHOLD) {
+        return {
+            payload: null,
+            payloadRef: `raw_snapshots/${id}.json`,
+            payloadSize: size,
+            isLargePayload: true,
+            storagePayload: payload,
+        };
+    }
+
+    return {
+        payload,
+        payloadRef: null,
+        payloadSize: size,
+        isLargePayload: false,
+    };
 }
 
 function isPositiveLike(value) {
@@ -487,6 +512,8 @@ function buildRawSnapshotsForCase({ caseId, caseData = {}, providerRequests = []
             if (!hasMeaningfulValue(source)) return null;
 
             const id = `snap_${request.id}`;
+            const { payload, payloadRef, payloadSize, isLargePayload, storagePayload } = handlePayloadStorage(id, source);
+
             return stripUndefined({
                 id,
                 tenantId: request.tenantId,
@@ -496,7 +523,13 @@ function buildRawSnapshotsForCase({ caseId, caseData = {}, providerRequests = []
                 provider: request.provider,
                 dataset: request.datasets[0],
                 payloadHash: hashValue(source, 24),
-                payload: source,
+                payload,
+                payloadRef,
+                payloadSize,
+                isLargePayload,
+                storagePayload,
+                retentionPolicy: 'raw_payload_180d',
+                visibility: 'restricted_raw',
                 createdAt: request.finishedAt || request.startedAt || new Date().toISOString(),
                 version: V2_OPERATIONAL_ARTIFACTS_VERSION,
             });

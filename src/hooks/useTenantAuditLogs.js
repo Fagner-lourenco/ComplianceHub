@@ -32,17 +32,8 @@ export function useTenantAuditLogs(tenantId, category = null) {
 
     const key = tenantId ? `${tenantId}:${category || 'all'}` : null;
 
-    // Demo mode: return mock data immediately
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    if (!user) {
-        const filtered = category
-            ? MOCK_TENANT_AUDIT_LOGS.filter((log) => log.category === category)
-            : MOCK_TENANT_AUDIT_LOGS;
-        return { logs: filtered, loading: false, error: null };
-    }
-
     useEffect(() => {
-        if (!tenantId) return undefined;
+        if (!user || !tenantId) return undefined;
 
         const timeoutId = window.setTimeout(() => {
             setState((s) => (s.key === key ? s : { logs: [], error: new Error('Tenant audit logs timeout.'), key }));
@@ -58,6 +49,13 @@ export function useTenantAuditLogs(tenantId, category = null) {
             unsubscribe();
         };
     }, [key, tenantId, category, user]);
+
+    if (!user) {
+        const filtered = category
+            ? MOCK_TENANT_AUDIT_LOGS.filter((log) => log.category === category)
+            : MOCK_TENANT_AUDIT_LOGS;
+        return { logs: filtered, loading: false, error: null };
+    }
 
     if (!tenantId) {
         return { logs: [], loading: false, error: null };

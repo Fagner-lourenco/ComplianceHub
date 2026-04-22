@@ -11,7 +11,6 @@ const {
     normalizeJuditLawsuits,
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
-const { buildHomonymAnalysisInput } = require('./aiHomonym');
 const { __test } = require('../index');
 
 const {
@@ -1152,7 +1151,7 @@ describe('Deterministic Prefill', () => {
             expect(result.laborNotes).toContain('Processos trabalhistas identificados');
             // Fix A1 — no double space after "prisão" in keyFindings items
             for (const finding of result.keyFindings) {
-                expect(finding).not.toMatch(/prisão  /);
+                expect(finding).not.toMatch(/prisão {2}/);
             }
         });
 

@@ -12,10 +12,16 @@ const casoPageMocks = vi.hoisted(() => ({
     subscribeToModuleRunsForCase: vi.fn(() => () => {}),
     subscribeToEvidenceItemsForCase: vi.fn(() => () => {}),
     subscribeToRiskSignalsForCase: vi.fn(() => () => {}),
+    subscribeToRelationshipsForCase: vi.fn(() => () => {}),
+    subscribeToTimelineEventsForCase: vi.fn(() => () => {}),
+    subscribeToProviderDivergencesForCase: vi.fn(() => () => {}),
+    fetchSubjectDecisionHistory: vi.fn(() => Promise.resolve([])),
     callSaveCaseDraftByAnalyst: vi.fn(),
     callSetAiDecisionByAnalyst: vi.fn(),
     callReturnCaseToClient: vi.fn(),
     callConcludeCaseByAnalyst: vi.fn(),
+    callResolveProviderDivergenceByAnalyst: vi.fn(),
+    callCreateWatchlist: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -31,10 +37,16 @@ vi.mock('../../core/firebase/firestoreService', async (importOriginal) => {
         subscribeToModuleRunsForCase: (...args) => casoPageMocks.subscribeToModuleRunsForCase(...args),
         subscribeToEvidenceItemsForCase: (...args) => casoPageMocks.subscribeToEvidenceItemsForCase(...args),
         subscribeToRiskSignalsForCase: (...args) => casoPageMocks.subscribeToRiskSignalsForCase(...args),
+        subscribeToRelationshipsForCase: (...args) => casoPageMocks.subscribeToRelationshipsForCase(...args),
+        subscribeToTimelineEventsForCase: (...args) => casoPageMocks.subscribeToTimelineEventsForCase(...args),
+        subscribeToProviderDivergencesForCase: (...args) => casoPageMocks.subscribeToProviderDivergencesForCase(...args),
+        fetchSubjectDecisionHistory: (...args) => casoPageMocks.fetchSubjectDecisionHistory(...args),
         callSaveCaseDraftByAnalyst: (...args) => casoPageMocks.callSaveCaseDraftByAnalyst(...args),
         callSetAiDecisionByAnalyst: (...args) => casoPageMocks.callSetAiDecisionByAnalyst(...args),
         callReturnCaseToClient: (...args) => casoPageMocks.callReturnCaseToClient(...args),
         callConcludeCaseByAnalyst: (...args) => casoPageMocks.callConcludeCaseByAnalyst(...args),
+        callResolveProviderDivergenceByAnalyst: (...args) => casoPageMocks.callResolveProviderDivergenceByAnalyst(...args),
+        callCreateWatchlist: (...args) => casoPageMocks.callCreateWatchlist(...args),
     };
 });
 
@@ -60,10 +72,22 @@ describe('CasoPage', () => {
         casoPageMocks.subscribeToEvidenceItemsForCase.mockImplementation(() => () => {});
         casoPageMocks.subscribeToRiskSignalsForCase.mockReset();
         casoPageMocks.subscribeToRiskSignalsForCase.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToRelationshipsForCase.mockReset();
+        casoPageMocks.subscribeToRelationshipsForCase.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToTimelineEventsForCase.mockReset();
+        casoPageMocks.subscribeToTimelineEventsForCase.mockImplementation(() => () => {});
+        casoPageMocks.subscribeToProviderDivergencesForCase.mockReset();
+        casoPageMocks.subscribeToProviderDivergencesForCase.mockImplementation(() => () => {});
+        casoPageMocks.fetchSubjectDecisionHistory.mockReset();
+        casoPageMocks.fetchSubjectDecisionHistory.mockResolvedValue([]);
         casoPageMocks.callSaveCaseDraftByAnalyst.mockReset();
         casoPageMocks.callSetAiDecisionByAnalyst.mockReset();
         casoPageMocks.callReturnCaseToClient.mockReset();
         casoPageMocks.callConcludeCaseByAnalyst.mockReset();
+        casoPageMocks.callResolveProviderDivergenceByAnalyst.mockReset();
+        casoPageMocks.callResolveProviderDivergenceByAnalyst.mockResolvedValue({ success: true });
+        casoPageMocks.callCreateWatchlist.mockReset();
+        casoPageMocks.callCreateWatchlist.mockResolvedValue({ success: true, watchlistId: 'wl_subj_cpf_abc' });
     });
 
     it('nao exibe caso mock quando a rota real nao existe', async () => {
@@ -391,10 +415,188 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Sinais de risco V2')).toBeInTheDocument();
-        expect(screen.getByText('Mandado de prisao ativo confirmado')).toBeInTheDocument();
-        expect(screen.getByText('Processo criminal com CPF exato')).toBeInTheDocument();
-        expect(screen.getByText('+50 pts')).toBeInTheDocument();
-        expect(screen.getByText('+35 pts')).toBeInTheDocument();
+        expect(screen.getByTestId('risk-signal-sig1')).toBeInTheDocument();
+        expect(screen.getByTestId('risk-signal-sig2')).toBeInTheDocument();
+        expect(screen.getAllByText('Mandado de prisao ativo confirmado').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('Processo criminal com CPF exato').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('+50 pts').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('+35 pts').length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText('2 sinais')).toBeInTheDocument();
+    });
+
+    it('exibe RelationshipsPanel com mini-relacionamentos V2 do caso', async () => {
+        casoPageMocks.subscribeToRelationshipsForCase.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback([
+                {
+                    id: 'rel_company_person_1',
+                    caseId,
+                    type: 'company_person',
+                    confidence: 'medium',
+                    fromDocument: { docType: 'cnpj', docValue: '12345678000195' },
+                    toDocument: { docType: 'cpf', docValue: '98765432100' },
+                    sourceItemIds: ['ev_1'],
+                },
+            ], null), 0);
+            return () => {};
+        });
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Grupo Exemplo',
+                cnpj: '12345678000195',
+                createdAt: '2026-04-21',
+                enabledPhases: ['criminal'],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByTestId('relationships-panel')).toBeInTheDocument();
+        expect(screen.getByText('Mini-relacionamentos')).toBeInTheDocument();
+        expect(screen.getByText('Empresa -> pessoa')).toBeInTheDocument();
+        expect(screen.getByText('1 vinculo(s)')).toBeInTheDocument();
+        expect(screen.getByText('1 evid./registro(s) de suporte')).toBeInTheDocument();
+    });
+
+    it('permite resolver providerDivergence aberta com justificativa auditavel', async () => {
+        const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('Divergencia revisada e fonte confirmada.');
+        casoPageMocks.subscribeToProviderDivergencesForCase.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback([
+                {
+                    id: 'div-1',
+                    caseId,
+                    status: 'open',
+                    reason: 'Divergencia entre Judit e BigDataCorp',
+                    severity: 'critical',
+                    blocksPublication: true,
+                    moduleKey: 'criminal',
+                },
+            ], null), 0);
+            return () => {};
+        });
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Caso com Divergencia',
+                cpf: '12345678901',
+                createdAt: '2026-04-22',
+                enabledPhases: ['criminal'],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByTestId('provider-divergences-panel')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Resolver divergencia'));
+
+        expect(casoPageMocks.callResolveProviderDivergenceByAnalyst).toHaveBeenCalledWith({
+            caseId: 'CASE-999',
+            divergenceId: 'div-1',
+            status: 'resolved',
+            resolution: 'Divergencia revisada e fonte confirmada.',
+        });
+        promptSpy.mockRestore();
+    });
+
+    it('exibe comparativo historico por decisions/reportSnapshots do subject', async () => {
+        casoPageMocks.fetchSubjectDecisionHistory.mockResolvedValue([
+            {
+                id: 'dec-2',
+                caseId: 'CASE-OLD',
+                productKey: 'dossier_pf_full',
+                verdict: 'ATTENTION',
+                riskScore: 72,
+                scoreDeltaFromPrevious: 32,
+                reportStatus: 'ready',
+                approvedAt: '2026-04-20',
+            },
+        ]);
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                subjectId: 'subj_cpf_abc',
+                candidateName: 'Historico Pessoa',
+                cpf: '12345678901',
+                createdAt: '2026-04-21',
+                enabledPhases: ['criminal'],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByTestId('subject-decision-history-panel')).toBeInTheDocument();
+        expect(screen.getByText('Comparativo historico')).toBeInTheDocument();
+        expect(screen.getByText('Dossie PF Completo')).toBeInTheDocument();
+        expect(screen.getByText('Score 72')).toBeInTheDocument();
+        expect(screen.getByText('+32')).toBeInTheDocument();
+    });
+
+    it('permite criar watchlist a partir de caso concluido com entitlement de monitoramento', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'DONE',
+                subjectId: 'subj_cpf_abc',
+                tenantId: 'tenant-1',
+                candidateName: 'Pessoa Monitorada',
+                cpf: '12345678901',
+                createdAt: '2026-04-22',
+                publicReportToken: 'tok-1',
+                effectiveModuleKeys: ['identity_pf', 'criminal', 'watchlist_screening', 'report_secure'],
+                entitlementSummary: {
+                    enabledCapabilities: { watchlist_monitoring: true },
+                    enabledModules: { watchlist_screening: true },
+                },
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByTestId('watchlist-case-panel')).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(screen.getByTestId('case-create-watchlist'));
+        });
+
+        expect(casoPageMocks.callCreateWatchlist).toHaveBeenCalledWith({
+            subjectId: 'subj_cpf_abc',
+            tenantId: 'tenant-1',
+            modules: ['identity_pf', 'criminal', 'watchlist_screening'],
+            intervalDays: 30,
+        });
+        expect(await screen.findByText(/Watchlist criada/i)).toBeInTheDocument();
+    });
+
+    it('nao exibe criacao de watchlist sem entitlement de monitoramento', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'DONE',
+                subjectId: 'subj_cpf_no_watch',
+                tenantId: 'tenant-1',
+                candidateName: 'Pessoa Sem Monitoramento',
+                cpf: '12345678901',
+                createdAt: '2026-04-22',
+                publicReportToken: 'tok-2',
+                effectiveModuleKeys: ['identity_pf', 'criminal', 'report_secure'],
+                entitlementSummary: {
+                    enabledCapabilities: {},
+                    enabledModules: {},
+                },
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Pessoa Sem Monitoramento')).toBeInTheDocument();
+        expect(screen.queryByTestId('watchlist-case-panel')).toBeNull();
+        expect(casoPageMocks.callCreateWatchlist).not.toHaveBeenCalled();
     });
 });

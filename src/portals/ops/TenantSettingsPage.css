@@ -6,6 +6,21 @@
     min-width: 0;
 }
 
+.ts-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    font-size: .875rem;
+    color: var(--text-secondary);
+}
+
+.ts-checkbox-row input {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+}
+
 .ts-page__loading {
     padding: 48px 0;
     text-align: center;

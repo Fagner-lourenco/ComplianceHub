@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildOperationalArtifactsForCase,
     buildProviderRequestsForCase,
+    buildRawSnapshotsForCase,
 } from './v2OperationalArtifacts.cjs';
 
 describe('v2OperationalArtifacts', () => {
@@ -87,5 +88,40 @@ describe('v2OperationalArtifacts', () => {
         expect(laborSignal.status).toBe('preliminary');
         expect(laborSignal.reviewPolicyResult).toBe('review_if_used_in_decision');
         expect(laborSignal.supportingEvidenceIds.length).toBe(1);
+    });
+
+    it('marca payload grande para storage sem armazenar bruto inline', () => {
+        const hugeValue = 'x'.repeat(510 * 1024);
+        const providerRequests = buildProviderRequestsForCase({
+            caseId: 'case-large',
+            caseData: {
+                tenantId: 'tenant-1',
+                bigdatacorpEnrichmentStatus: 'DONE',
+                bigdatacorpSources: {
+                    processes: { requestId: 'bdc-large', payload: hugeValue },
+                },
+            },
+        });
+
+        const snapshots = buildRawSnapshotsForCase({
+            caseId: 'case-large',
+            caseData: {
+                tenantId: 'tenant-1',
+                bigdatacorpSources: {
+                    processes: { requestId: 'bdc-large', payload: hugeValue },
+                },
+            },
+            providerRequests,
+        });
+
+        expect(snapshots).toHaveLength(1);
+        expect(snapshots[0]).toEqual(expect.objectContaining({
+            payload: null,
+            payloadRef: expect.stringContaining('raw_snapshots/'),
+            isLargePayload: true,
+            retentionPolicy: 'raw_payload_180d',
+            visibility: 'restricted_raw',
+        }));
+        expect(snapshots[0].storagePayload).toBeTruthy();
     });
 });

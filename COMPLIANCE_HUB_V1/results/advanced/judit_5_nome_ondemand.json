@@ -1,0 +1,41 @@
+{
+  "error": "Poll timeout",
+  "create": {
+    "request_id": "a375e358-4247-4062-90a7-dda920c97526",
+    "search": {
+      "on_demand": true,
+      "search_type": "name",
+      "search_key": "MATHEUS GONCALVES DOS SANTOS",
+      "search_params": {
+        "public_search": false,
+        "filter": {
+          "tribunals": {
+            "keys": [
+              "TJSP",
+              "TRT1SP",
+              "TRT2SP"
+            ],
+            "not_equal": false,
+            "_id": "69cefbe0162084b1afb1306b"
+          },
+          "party_names": [],
+          "party_documents": []
+        },
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "a375e358-4247-4062-90a7-dda920c97526",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T23:29:36.082Z",
+    "updated_at": "2026-04-02T23:29:36.082Z",
+    "tags": {
+      "potential_homonym": true
+    }
+  },
+  "poll": {
+    "_timeout": true
+  }
+}

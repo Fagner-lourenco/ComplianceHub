@@ -77,7 +77,7 @@ export default function ClientesPage() {
         if (user) {
             void loadClients();
         }
-    }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [user]);
 
     const handleOpenModal = () => {
         setForm({ tenantName: '', displayName: '', email: '', existingTenantId: '' });
@@ -123,7 +123,7 @@ export default function ClientesPage() {
 
         try {
             const timeoutMs = 15000;
-            const result = await Promise.race([
+            await Promise.race([
                 callCreateOpsClientUser({
                     email: form.email,
                     password: tempPassword,

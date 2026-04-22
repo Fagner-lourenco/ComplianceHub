@@ -6,10 +6,12 @@ import './Sidebar.css';
 
 const clientNav = [
     { to: '/client/dashboard', icon: 'DB', label: 'Dashboard', permission: PERMISSIONS.CASE_READ },
+    { to: '/client/produtos', icon: 'PR', label: 'Produtos', permission: PERMISSIONS.CASE_READ },
     { to: '/client/solicitacoes', icon: '[]', label: 'Solicitacoes', permission: PERMISSIONS.CASE_READ },
     { to: '/client/nova-solicitacao', icon: '+', label: 'Nova solicitacao', permission: PERMISSIONS.CASE_CREATE_REQUEST },
     { to: '/client/exportacoes', icon: 'EX', label: 'Exportacoes', permission: PERMISSIONS.CASE_EXPORT },
     { to: '/client/relatorios', icon: 'RL', label: 'Relatorios', permission: PERMISSIONS.CASE_EXPORT },
+    { to: '/client/alertas', icon: '!', label: 'Alertas', permission: PERMISSIONS.CASE_READ },
     { to: '/client/equipe', icon: 'EQ', label: 'Equipe', permission: PERMISSIONS.USERS_MANAGE },
     { to: '/client/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.TENANT_AUDIT_VIEW },
 ];
@@ -18,6 +20,8 @@ const opsNav = [
     { to: '/ops/fila', icon: 'WK', label: 'Fila de trabalho', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/casos', icon: 'CS', label: 'Todos os casos', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/clientes', icon: 'CL', label: 'Gestao de clientes', permission: PERMISSIONS.USERS_MANAGE },
+    { to: '/ops/cotacoes', icon: '$', label: 'Cotacoes', permission: PERMISSIONS.USERS_MANAGE },
+    { to: '/ops/watchlists', icon: 'WL', label: 'Watchlists', permission: PERMISSIONS.CASE_READ },
     { to: '/ops/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.AUDIT_VIEW },
     { to: '/ops/metricas-ia', icon: 'AI', label: 'Métricas IA', permission: PERMISSIONS.AUDIT_VIEW },
     { to: '/ops/relatorios', icon: 'RL', label: 'Relatórios', permission: PERMISSIONS.AUDIT_VIEW },

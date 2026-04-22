@@ -3,12 +3,13 @@ import { buildCaseReportPath, getClientDashboardMetrics, getReportAvailability, 
 import { getMockCaseById, MOCK_CASES } from '../data/mockData';
 
 describe('clientPortal helpers', () => {
-    it('usa fallback do mock sanitizado para casos concluidos sem publicResult real', () => {
+    it('usa fallback do mock sanitizado sem liberar relatorio por flag legado', () => {
         const caseData = getMockCaseById('CASE-002');
         const resolved = resolveClientCaseView(caseData, null);
 
         expect(resolved.finalVerdict).toBe('NOT_RECOMMENDED');
-        expect(resolved.reportReady).toBe(true);
+        expect(resolved.reportReady).toBe(false);
+        expect(resolved.legacyFallbackUsed).toBe(false);
         expect(resolved.keyFindings.length).toBeGreaterThan(0);
         expect(buildCaseReportPath(caseData, true)).toBe('/demo/r/CASE-002');
     });
@@ -28,7 +29,7 @@ describe('clientPortal helpers', () => {
             NOT_RECOMMENDED: 2,
         });
         expect(getReportAvailability(getMockCaseById('CASE-003'), null).available).toBe(false);
-        expect(getReportAvailability(getMockCaseById('CASE-001'), null).available).toBe(true);
+        expect(getReportAvailability(getMockCaseById('CASE-001'), null).available).toBe(false);
     });
 
     it('preserva keyFindings do publicResult quando o espelho do clientCases ainda nao sincronizou', () => {
@@ -91,5 +92,19 @@ describe('clientPortal helpers', () => {
 
         expect(availability.available).toBe(true);
         expect(availability.publicReportToken).toBe('token-123');
+    });
+
+    it('resolve reportReady visual apenas por reportAvailability ready, nao por caseData.reportReady', () => {
+        const resolved = resolveClientCaseView({
+            id: 'CASE-890',
+            status: 'DONE',
+            reportReady: true,
+            clientDataSource: 'legacyFallback:clientCaseList',
+            legacyFallbackUsed: true,
+        }, null);
+
+        expect(resolved.reportReady).toBe(false);
+        expect(resolved.legacyFallbackUsed).toBe(true);
+        expect(resolved.legacyFallbackSource).toBe('legacyFallback:clientCaseList');
     });
 });

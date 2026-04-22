@@ -1,0 +1,144 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Basic verification
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Get the current user's profile document
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
+    }
+
+    // Check if document belongs to the same tenant as the user
+    function isSameTenant(tenantId) {
+      return getUserProfile() != null && getUserProfile().tenantId == tenantId;
+    }
+
+    // Check if user is internal staff
+    function isAnalyst() {
+      return getUserProfile() != null && getUserProfile().role in ['analyst', 'supervisor', 'admin'];
+    }
+
+    // Check if user is admin specifically
+    function isAdmin() {
+      return getUserProfile() != null && getUserProfile().role == 'admin';
+    }
+
+    // Check if user is a client
+    function isClient() {
+      return getUserProfile() != null && getUserProfile().role in ['CLIENT', 'client_viewer', 'client_manager'];
+    }
+
+    /* --- COLLECTION RULES --- */
+
+    // 1. User Profiles
+    match /userProfiles/{userId} {
+      // Users can read their own profile; tenant-wide user directories are operational-only.
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId ||
+        isAnalyst()
+      );
+      
+      // Profiles are provisioned and managed only by internal staff.
+      // This blocks self-promotion of role or tenant context from the client.
+      allow create, update, delete: if isAuthenticated() && isAnalyst();
+    }
+
+    // 2. Cases
+    match /cases/{caseId} {
+      // Raw cases are operational/internal documents.
+      // Client portal must consume the sanitized mirror in /clientCases.
+      allow read: if isAuthenticated() && isAnalyst();
+
+      // Analysts can update any case. Client corrections are handled via Cloud Functions.
+      allow update: if isAuthenticated() && isAnalyst();
+      
+      allow create: if isAuthenticated() && isAnalyst();
+      
+      allow delete: if isAuthenticated() && isAdmin();
+
+      // 2a. Public Result — sanitized subcollection for client access
+      // Published by Cloud Function when analyst concludes case (status → DONE).
+      match /publicResult/{docId} {
+        allow read: if isAuthenticated() && (
+          isAnalyst() ||
+          (isClient() && isSameTenant(get(/databases/$(database)/documents/cases/$(caseId)).data.tenantId))
+        );
+        // Only Cloud Functions write here
+        allow create, update, delete: if false;
+      }
+
+      // 2b. AI Cache — internal subcollection for inference caching
+      match /aiCache/{docId} {
+        allow read: if isAuthenticated() && isAnalyst();
+        // Only Cloud Functions write here
+        allow create, update, delete: if false;
+      }
+    }
+
+    // 2c. Client-safe mirror for the customer portal
+    match /clientCases/{caseId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      // Only Cloud Functions write here
+      allow create, update, delete: if false;
+    }
+
+    // 3. Candidates
+    match /candidates/{candidateId} {
+      allow read, update: if isAuthenticated() && isAnalyst();
+      
+      allow create: if isAuthenticated() && isAnalyst();
+      
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    // 4. Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      
+      allow create: if isAuthenticated() && isAnalyst();
+      
+      allow update, delete: if false; // Logs are immutable
+    }
+
+    // 5. Tenant Settings
+    match /tenantSettings/{tenantId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(tenantId))
+      );
+
+      allow create, update: if isAuthenticated() && isAnalyst();
+      allow delete: if false;
+    }
+
+    // 6. Exports
+    match /exports/{exportId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() || 
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      
+      allow create: if isAuthenticated() && isAnalyst();
+      
+      allow delete: if false;
+    }
+
+    // 7. Public Reports (shareable links — public read with TTL, server-only create)
+    match /publicReports/{token} {
+      allow read: if true
+        && resource.data.expiresAt is timestamp
+        && request.time < resource.data.expiresAt;
+      // Only Cloud Functions create these documents.
+      allow create: if false;
+      allow update, delete: if false;
+    }
+  }
+}

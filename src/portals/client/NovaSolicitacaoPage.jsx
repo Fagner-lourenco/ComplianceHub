@@ -2,18 +2,32 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { callCreateClientSolicitation, callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
-import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
+import { getUserFriendlyMessage } from '../../core/errorUtils';
 import { buildClientPortalPath } from '../../core/portalPaths';
-import { validateCpf, validateUrl } from '../../core/validators';
+import { validateCpf, validateCnpj, formatCnpj, validateUrl } from '../../core/validators';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import './NovaSolicitacaoPage.css';
 
 const STEP_LABELS = ['Dados do Candidato', 'Redes Sociais', 'Observações', 'Revisão'];
 
+const DEFAULT_PRODUCT_KEY = 'dossier_pf_basic';
+
+// Products that target legal entities (PJ). Wizard adapts fields (CNPJ, razao social).
+const PJ_PRODUCT_KEYS = new Set(['dossier_pj', 'kyb_business', 'kys_supplier']);
+
+function isPjProduct(productKey) {
+    return PJ_PRODUCT_KEYS.has(productKey);
+}
+
 const INITIAL_FORM = {
+    productKey: DEFAULT_PRODUCT_KEY,
     fullName: '',
     cpf: '',
+    // PJ fields (populated only when isPjProduct(form.productKey))
+    cnpj: '',
+    legalName: '',
+    tradeName: '',
     dateOfBirth: '',
     position: '',
     department: '',
@@ -78,6 +92,14 @@ export default function NovaSolicitacaoPage() {
             .catch(() => {});
     }, [user, isDemoProfile]);
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const productKey = params.get('productKey');
+        if (productKey) {
+            setForm((prev) => ({ ...prev, productKey }));
+        }
+    }, [location.search]);
+
     const update = (field, value) => {
         setForm((previous) => ({ ...previous, [field]: value }));
         if (errors[field]) {
@@ -87,10 +109,17 @@ export default function NovaSolicitacaoPage() {
 
     const validate = () => {
         const nextErrors = {};
+        const pj = isPjProduct(form.productKey);
 
-        if (!form.fullName.trim()) nextErrors.fullName = 'Nome obrigatorio';
-        if (!form.cpf.trim()) nextErrors.cpf = 'CPF obrigatorio';
-        else if (!validateCpf(form.cpf)) nextErrors.cpf = 'CPF invalido';
+        if (pj) {
+            if (!form.legalName.trim()) nextErrors.legalName = 'Razao social obrigatoria';
+            if (!form.cnpj.trim()) nextErrors.cnpj = 'CNPJ obrigatorio';
+            else if (!validateCnpj(form.cnpj)) nextErrors.cnpj = 'CNPJ invalido';
+        } else {
+            if (!form.fullName.trim()) nextErrors.fullName = 'Nome obrigatorio';
+            if (!form.cpf.trim()) nextErrors.cpf = 'CPF obrigatorio';
+            else if (!validateCpf(form.cpf)) nextErrors.cpf = 'CPF invalido';
+        }
 
         ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].forEach((field) => {
             if (form[field] && !validateUrl(form[field])) {
@@ -144,9 +173,17 @@ export default function NovaSolicitacaoPage() {
                 return;
             }
 
+            const pj = isPjProduct(form.productKey);
             await callCreateClientSolicitation({
-                fullName: form.fullName,
-                cpf: form.cpf,
+                productKey: form.productKey || DEFAULT_PRODUCT_KEY,
+                subjectType: pj ? 'pj' : 'pf',
+                // PF fields
+                fullName: pj ? (form.legalName || form.fullName) : form.fullName,
+                cpf: pj ? '' : form.cpf,
+                // PJ fields
+                cnpj: pj ? form.cnpj : '',
+                legalName: pj ? form.legalName : '',
+                tradeName: pj ? form.tradeName : '',
                 dateOfBirth: form.dateOfBirth || '',
                 position: form.position || '',
                 department: form.department || '',
@@ -215,7 +252,10 @@ export default function NovaSolicitacaoPage() {
         );
     }
 
-    const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf);
+    const pjMode = isPjProduct(form.productKey);
+    const isValid = pjMode
+        ? Boolean(form.legalName.trim() && form.cnpj.trim() && validateCnpj(form.cnpj))
+        : Boolean(form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf));
     const quotaBlocked = quota?.hasLimits && (
         (quota.dailyLimit && quota.dailyCount >= quota.dailyLimit && !quota.allowDailyExceedance) ||
         (quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit && !quota.allowMonthlyExceedance)
@@ -297,33 +337,86 @@ export default function NovaSolicitacaoPage() {
                         <h3>Dados do Candidato</h3>
                     </div>
 
-                    <div className="ns-grid ns-grid--2">
-                        <div className="ns-field">
-                            <label className="ns-label">Nome completo <span className="ns-required">*</span></label>
-                            <input
-                                type="text"
-                                className={`ns-input ${errors.fullName ? 'ns-input--error' : ''}`}
-                                value={form.fullName}
-                                onChange={(event) => update('fullName', event.target.value)}
-                                placeholder="Nome completo do candidato"
-                                aria-required="true"
-                            />
-                            {errors.fullName && <span className="ns-error">{errors.fullName}</span>}
-                        </div>
+                    {pjMode && (
+                        <p className="ns-hint" data-testid="ns-pj-banner" style={{ marginBottom: 12, padding: '8px 12px', background: 'var(--blue-50, #eff6ff)', borderLeft: '3px solid var(--blue-500, #3b82f6)', fontSize: '.875rem' }}>
+                            Produto PJ selecionado: preencha dados da empresa.
+                        </p>
+                    )}
 
-                        <div className="ns-field">
-                            <label className="ns-label">CPF <span className="ns-required">*</span></label>
-                            <input
-                                type="text"
-                                className={`ns-input ${errors.cpf ? 'ns-input--error' : ''}`}
-                                value={form.cpf}
-                                onChange={(event) => update('cpf', formatCpf(event.target.value))}
-                                placeholder="000.000.000-00"
-                                maxLength={14}
-                                aria-required="true"
-                            />
-                            {errors.cpf && <span className="ns-error">{errors.cpf}</span>}
-                        </div>
+                    <div className="ns-grid ns-grid--2">
+                        {pjMode ? (
+                            <>
+                                <div className="ns-field">
+                                    <label className="ns-label">Razao social <span className="ns-required">*</span></label>
+                                    <input
+                                        type="text"
+                                        data-testid="ns-legal-name"
+                                        className={`ns-input ${errors.legalName ? 'ns-input--error' : ''}`}
+                                        value={form.legalName}
+                                        onChange={(event) => update('legalName', event.target.value)}
+                                        placeholder="Razao social completa"
+                                        aria-required="true"
+                                    />
+                                    {errors.legalName && <span className="ns-error">{errors.legalName}</span>}
+                                </div>
+
+                                <div className="ns-field">
+                                    <label className="ns-label">CNPJ <span className="ns-required">*</span></label>
+                                    <input
+                                        type="text"
+                                        data-testid="ns-cnpj"
+                                        className={`ns-input ${errors.cnpj ? 'ns-input--error' : ''}`}
+                                        value={form.cnpj}
+                                        onChange={(event) => update('cnpj', formatCnpj(event.target.value))}
+                                        placeholder="00.000.000/0000-00"
+                                        maxLength={18}
+                                        aria-required="true"
+                                    />
+                                    {errors.cnpj && <span className="ns-error">{errors.cnpj}</span>}
+                                </div>
+
+                                <div className="ns-field">
+                                    <label className="ns-label">Nome fantasia</label>
+                                    <input
+                                        type="text"
+                                        data-testid="ns-trade-name"
+                                        className="ns-input"
+                                        value={form.tradeName}
+                                        onChange={(event) => update('tradeName', event.target.value)}
+                                        placeholder="Nome fantasia (opcional)"
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="ns-field">
+                                    <label className="ns-label">Nome completo <span className="ns-required">*</span></label>
+                                    <input
+                                        type="text"
+                                        className={`ns-input ${errors.fullName ? 'ns-input--error' : ''}`}
+                                        value={form.fullName}
+                                        onChange={(event) => update('fullName', event.target.value)}
+                                        placeholder="Nome completo do candidato"
+                                        aria-required="true"
+                                    />
+                                    {errors.fullName && <span className="ns-error">{errors.fullName}</span>}
+                                </div>
+
+                                <div className="ns-field">
+                                    <label className="ns-label">CPF <span className="ns-required">*</span></label>
+                                    <input
+                                        type="text"
+                                        className={`ns-input ${errors.cpf ? 'ns-input--error' : ''}`}
+                                        value={form.cpf}
+                                        onChange={(event) => update('cpf', formatCpf(event.target.value))}
+                                        placeholder="000.000.000-00"
+                                        maxLength={14}
+                                        aria-required="true"
+                                    />
+                                    {errors.cpf && <span className="ns-error">{errors.cpf}</span>}
+                                </div>
+                            </>
+                        )}
 
                         <div className="ns-field">
                             <label className="ns-label">Data de nascimento</label>

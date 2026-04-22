@@ -33,6 +33,8 @@ const DashboardClientePage = lazyRetry(() => import('./portals/client/DashboardC
 const EquipePage = lazyRetry(() => import('./portals/client/EquipePage'));
 const ExportacoesPage = lazyRetry(() => import('./portals/client/ExportacoesPage'));
 const NovaSolicitacaoPage = lazyRetry(() => import('./portals/client/NovaSolicitacaoPage'));
+const ProdutosPage = lazyRetry(() => import('./portals/client/ProdutosPage'));
+const AlertasClientePage = lazyRetry(() => import('./portals/client/AlertasClientePage'));
 const RelatoriosClientePage = lazyRetry(() => import('./portals/client/RelatoriosClientePage'));
 const SolicitacoesPage = lazyRetry(() => import('./portals/client/SolicitacoesPage'));
 const AuditoriaClientePage = lazyRetry(() => import('./portals/client/AuditoriaClientePage'));
@@ -45,6 +47,8 @@ const CasosPage = lazyRetry(() => import('./portals/ops/CasosPage'));
 const ClientesPage = lazyRetry(() => import('./portals/ops/ClientesPage'));
 const TenantSettingsPage = lazyRetry(() => import('./portals/ops/TenantSettingsPage'));
 const FilaPage = lazyRetry(() => import('./portals/ops/FilaPage'));
+const CotacoesPage = lazyRetry(() => import('./portals/ops/CotacoesPage'));
+const WatchlistsPage = lazyRetry(() => import('./portals/ops/WatchlistsPage'));
 const PerfilPage = lazyRetry(() => import('./pages/PerfilPage'));
 
 function SplashScreen() {
@@ -335,6 +339,22 @@ function AppRoutes() {
                         )}
                     />
                     <Route
+                        path="produtos"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
+                                <ProdutosPage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="alertas"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
+                                <AlertasClientePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
                         path="exportacoes"
                         element={(
                             <RequirePermission permission={PERMISSIONS.CASE_EXPORT}>
@@ -452,6 +472,22 @@ function AppRoutes() {
                             </RequirePermission>
                         )}
                     />
+                    <Route
+                        path="cotacoes"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.USERS_MANAGE}>
+                                <CotacoesPage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="watchlists"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
+                                <WatchlistsPage />
+                            </RequirePermission>
+                        )}
+                    />
                     <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
@@ -467,6 +503,8 @@ function AppRoutes() {
                     <Route path="dashboard" element={<DashboardClientePage />} />
                     <Route path="solicitacoes" element={<SolicitacoesPage />} />
                     <Route path="nova-solicitacao" element={<NovaSolicitacaoPage />} />
+                    <Route path="produtos" element={<ProdutosPage />} />
+                    <Route path="alertas" element={<AlertasClientePage />} />
                     <Route path="exportacoes" element={<ExportacoesPage />} />
                     <Route path="relatorios" element={<RelatoriosClientePage />} />
                     <Route path="equipe" element={<EquipePage />} />
@@ -489,6 +527,8 @@ function AppRoutes() {
                     <Route path="auditoria" element={<AuditoriaPage />} />
                     <Route path="relatorios" element={<RelatoriosPage />} />
                     <Route path="saude" element={<SaudePage />} />
+                    <Route path="cotacoes" element={<CotacoesPage />} />
+                    <Route path="watchlists" element={<WatchlistsPage />} />
                     <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 

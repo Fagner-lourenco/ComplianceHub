@@ -1,0 +1,98 @@
+.app-modal__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal, 90);
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.app-modal__content {
+    width: min(100%, 640px);
+    max-height: min(90vh, 900px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border-light);
+}
+
+.app-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.app-modal__title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.app-modal__close {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.app-modal__close:hover {
+    background: var(--gray-100);
+    color: var(--text-primary);
+}
+
+.app-modal__body {
+    padding: 20px 24px;
+    overflow: auto;
+}
+
+.app-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px 24px;
+    border-top: 1px solid var(--border-light);
+}
+
+@media (max-width: 768px) {
+    .app-modal__overlay {
+        padding: 16px;
+        align-items: flex-end;
+    }
+
+    .app-modal__content {
+        width: 100%;
+        max-height: min(92vh, 900px);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .app-modal__header,
+    .app-modal__body,
+    .app-modal__footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .app-modal__footer {
+        flex-direction: column-reverse;
+    }
+
+    .app-modal__footer > * {
+        width: 100%;
+    }
+}

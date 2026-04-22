@@ -1,0 +1,152 @@
+.fila-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+
+.fila-page__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.fila-page__filters {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.fila-filter-select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+    background: var(--bg-card);
+    outline: none;
+    cursor: pointer;
+    min-width: min(100%, 180px);
+}
+
+.fila-page__table-wrapper {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-default);
+    overflow-x: auto;
+    box-shadow: var(--shadow-xs);
+    max-width: 100%;
+}
+
+.fila-table {
+    width: 100%;
+    min-width: 1080px;
+    border-collapse: collapse;
+    font-size: .8125rem;
+}
+
+.fila-table thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: .75rem;
+    color: var(--text-secondary);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--border-default);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.fila-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+}
+
+.fila-table__row {
+    transition: background var(--transition-fast);
+}
+
+.fila-table__row:hover {
+    background: var(--gray-25);
+}
+
+.fila-table__row--high {
+    border-left: 3px solid var(--red-500);
+}
+
+.fila-table__td--name {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.fila-priority {
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.fila-priority--high {
+    color: var(--red-600);
+}
+
+.fila-priority--normal {
+    color: var(--text-secondary);
+}
+
+.fila-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.fila-btn {
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    font-size: .75rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-default);
+    white-space: nowrap;
+}
+
+.fila-btn--assume {
+    background: var(--yellow-50);
+    color: var(--yellow-700);
+    border-color: var(--yellow-100);
+}
+
+.fila-btn--assume:hover {
+    background: var(--yellow-100);
+}
+
+.fila-btn--open {
+    background: var(--brand-50);
+    color: var(--brand-700);
+    border-color: var(--brand-200);
+}
+
+.fila-btn--open:hover {
+    background: var(--brand-100);
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 768px) {
+    .fila-page__filters {
+        flex-wrap: wrap;
+    }
+    
+    .fila-filter-select {
+        width: 100%;
+    }
+    
+    .fila-actions {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .fila-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -1,0 +1,90 @@
+{
+  "has_lawsuits": true,
+  "request_id": "29b8a593-b8fe-480d-9978-38db2b9c6ead",
+  "lawsuits": [
+    {
+      "code": "1505327-09.2024.8.26.0001",
+      "instance": 1,
+      "name": "JUSTIÇA PÚBLICA X MATHEUS SANTOS GONÇALVES",
+      "free_justice": false,
+      "secrecy_level": 0,
+      "courts": [],
+      "tribunal_acronym": "TJSP",
+      "county": "02 CIVEL DE SANTANA",
+      "state": "SP",
+      "city": "SAO PAULO",
+      "distribution_date": "2024-07-22T00:16:48.000Z",
+      "last_step": {
+        "step_id": "wU8WWRgkCaE9/M492d1IyC4KXt0rjiO/dr1L+xltIw8=",
+        "step_date": "2024-07-26T23:22:12.000Z",
+        "content": "---",
+        "step_type": "60",
+        "steps_count": 1
+      },
+      "tags": {
+        "dictionary_updated_at": "2026-04-02T21:35:23.843Z"
+      },
+      "justice": "8",
+      "tribunal": "26",
+      "crawler": {
+        "source_name": "JTJ - BR - Document / Lawsuit - Auth",
+        "crawl_id": "589de8ff-f5b8-4f40-91df-06ef4675fa28",
+        "updated_at": "2024-09-24T22:26:12.452Z",
+        "weight": 0
+      },
+      "status": "Ativo",
+      "phase": "Inicial",
+      "area": "NÃO INFORMADO",
+      "justice_description": "JUSTIÇA ESTADUAL",
+      "created_at": "2024-09-24T22:29:10.137Z",
+      "updated_at": "2024-09-24T22:29:10.137Z",
+      "amount": 0,
+      "classifications": [],
+      "subjects": [],
+      "parties": [
+        {
+          "main_document": "51174001000193",
+          "name": "Justiça Pública",
+          "side": "Active",
+          "person_type": "AUTOR",
+          "documents": [
+            {
+              "document": "51174001000193",
+              "document_type": "CNPJ"
+            }
+          ],
+          "lawyers": []
+        },
+        {
+          "main_document": "46247243804",
+          "name": "Matheus Santos Gonçalves",
+          "side": "Passive",
+          "person_type": "AVERIGUADO",
+          "documents": [
+            {
+              "document": "46247243804",
+              "document_type": "CPF"
+            }
+          ],
+          "lawyers": []
+        },
+        {
+          "main_document": "52387210808",
+          "name": "Rebeca Arcadi Amaral",
+          "side": "Interested",
+          "person_type": "VÍTIMA",
+          "documents": [
+            {
+              "document": "52387210808",
+              "document_type": "CPF"
+            }
+          ],
+          "lawyers": []
+        }
+      ],
+      "attachments": [],
+      "related_lawsuits": [],
+      "steps": []
+    }
+  ]
+}

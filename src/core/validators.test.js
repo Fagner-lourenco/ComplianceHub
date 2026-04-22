@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateCpf, validateUrl } from './validators';
+import { validateCpf, validateCnpj, formatCnpj, validateUrl } from './validators';
 
 describe('validators', () => {
     // ── validateCpf ──────────────────────────────────────────────────────────
@@ -37,6 +37,55 @@ describe('validators', () => {
             // CPFs gerados algoritmicamente (sem dados reais)
             expect(validateCpf('11144477735')).toBe(true);
             expect(validateCpf('111.444.777-35')).toBe(true);
+        });
+    });
+
+    // ── validateCnpj ─────────────────────────────────────────────────────────
+
+    describe('validateCnpj', () => {
+        it('aceita CNPJ valido sem formatacao', () => {
+            expect(validateCnpj('11222333000181')).toBe(true);
+        });
+
+        it('aceita CNPJ valido com formatacao (pontos, barra, traco)', () => {
+            expect(validateCnpj('11.222.333/0001-81')).toBe(true);
+        });
+
+        it('rejeita CNPJ com todos os digitos iguais', () => {
+            expect(validateCnpj('00000000000000')).toBe(false);
+            expect(validateCnpj('11111111111111')).toBe(false);
+        });
+
+        it('rejeita CNPJ com comprimento errado', () => {
+            expect(validateCnpj('123456789012')).toBe(false);    // 12 digitos
+            expect(validateCnpj('123456789012345')).toBe(false);  // 15 digitos
+            expect(validateCnpj('')).toBe(false);
+            expect(validateCnpj(null)).toBe(false);
+        });
+
+        it('rejeita CNPJ com digito verificador incorreto', () => {
+            expect(validateCnpj('11222333000182')).toBe(false);  // ultimo DV errado
+            expect(validateCnpj('11222333000171')).toBe(false);  // penultimo DV errado
+        });
+    });
+
+    describe('formatCnpj', () => {
+        it('mascara progressivamente conforme digitos sao adicionados', () => {
+            expect(formatCnpj('11')).toBe('11');
+            expect(formatCnpj('11222')).toBe('11.222');
+            expect(formatCnpj('11222333')).toBe('11.222.333');
+            expect(formatCnpj('112223330001')).toBe('11.222.333/0001');
+            expect(formatCnpj('11222333000181')).toBe('11.222.333/0001-81');
+        });
+
+        it('trunca em 14 digitos', () => {
+            expect(formatCnpj('1122233300018199')).toBe('11.222.333/0001-81');
+        });
+
+        it('lida com nao-digitos', () => {
+            expect(formatCnpj('11a222b333')).toBe('11.222.333');
+            expect(formatCnpj('')).toBe('');
+            expect(formatCnpj(null)).toBe('');
         });
     });
 

@@ -35,7 +35,12 @@ service cloud.firestore {
 
     // Check if user is internal staff
     function isAnalyst() {
-      return getUserRole() in ['analyst', 'supervisor', 'admin'];
+      return getUserRole() in ['analyst', 'senior_analyst', 'supervisor', 'admin'];
+    }
+
+    // Sensitive raw data is limited to senior operational profiles.
+    function canReadRawEvidence() {
+      return getUserRole() in ['senior_analyst', 'supervisor', 'admin'];
     }
 
     // Check if user is admin specifically
@@ -48,140 +53,182 @@ service cloud.firestore {
       return getUserRole() in ['CLIENT', 'client_viewer', 'client_operator', 'client_manager'];
     }
 
+    function isGlobalAdmin() {
+      return getUserRole() == 'admin' && getUserTenantId() == null;
+    }
+
+    function canReadTenantDoc(tenantId) {
+      return isAuthenticated() && isAnalyst() && (
+        isGlobalAdmin() ||
+        isSameTenant(tenantId)
+      );
+    }
+
+    function canReadRawTenantDoc(tenantId) {
+      return isAuthenticated() && canReadRawEvidence() && (
+        isGlobalAdmin() ||
+        isSameTenant(tenantId)
+      );
+    }
+
     /* --- COLLECTION RULES --- */
 
     // 1. User Profiles
     match /userProfiles/{userId} {
-      // Users can read their own profile; tenant-wide user directories are operational-only.
       allow read: if isAuthenticated() && (
         request.auth.uid == userId ||
         isAnalyst()
       );
-      
-      // Profiles are provisioned and managed only by internal staff.
-      // This blocks self-promotion of role or tenant context from the client.
       allow create, update, delete: if isAuthenticated() && isAnalyst();
     }
 
     // 2. Cases
     match /cases/{caseId} {
-      // Raw cases are operational/internal documents.
-      // Client portal must consume the sanitized mirror in /clientCases.
       allow read: if isAuthenticated() && isAnalyst();
-
-      // Analysts can update any case. Client corrections are handled via Cloud Functions.
       allow update: if isAuthenticated() && isAnalyst();
-      
       allow create: if isAuthenticated() && isAnalyst();
-      
       allow delete: if isAuthenticated() && isAdmin();
 
       // 2a. Public Result — sanitized subcollection for client access
-      // Published by Cloud Function when analyst concludes case (status → DONE).
       match /publicResult/{docId} {
         allow read: if isAuthenticated() && (
           isAnalyst() ||
           (isClient() && isSameTenant(get(/databases/$(database)/documents/cases/$(caseId)).data.tenantId))
         );
-        // Only Cloud Functions write here
         allow create, update, delete: if false;
       }
 
-      // 2b. AI Cache — internal subcollection for inference caching
+      // 2b. AI Cache
       match /aiCache/{docId} {
         allow read: if isAuthenticated() && isAnalyst();
-        // Only Cloud Functions write here
         allow create, update, delete: if false;
       }
     }
 
-    // 2c. Client-safe mirror for the customer portal
+    // 2c. Client-safe mirrors and projections
     match /clientCases/{caseId} {
       allow read: if isAuthenticated() && (
         isAnalyst() ||
         (isClient() && isSameTenant(resource.data.tenantId))
       );
-      // Only Cloud Functions write here
       allow create, update, delete: if false;
     }
 
-    // 2d. ClientProjection V2 — fonte cliente-safe do portal V2
     match /clientProjections/{caseId} {
       allow read: if isAuthenticated() && (
         isAnalyst() ||
         (isClient() && isSameTenant(resource.data.tenantId))
       );
-      // Only Cloud Functions write here
+      allow create, update, delete: if false;
+    }
+
+    match /clientCaseList/{caseId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
       allow create, update, delete: if false;
     }
 
     // 2e. V2 operational/reporting contracts
     match /decisions/{decisionId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /reportSnapshots/{snapshotId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /moduleRuns/{moduleRunId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /subjects/{subjectId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /persons/{personId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /companies/{companyId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /facts/{factId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /relationships/{relationshipId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /timelineEvents/{eventId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /providerDivergences/{divergenceId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /providerRequests/{requestId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /rawSnapshots/{snapshotId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadRawTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /providerRecords/{recordId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadRawTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /evidenceItems/{evidenceId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     match /riskSignals/{signalId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /usageMeters/{usageMeterId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
       allow create, update, delete: if false;
     }
 
     // 3. Candidates
     match /candidates/{candidateId} {
-      allow read, update: if isAuthenticated() && isAnalyst();
-      
-      allow create: if isAuthenticated() && isAnalyst();
-      
+      allow read, update, create: if isAuthenticated() && isAnalyst();
       allow delete: if isAuthenticated() && isAdmin();
     }
 
-    // 4. Audit Logs (ops-only — complete trail)
+    // 4. Audit Logs
     match /auditLogs/{logId} {
-      allow read: if isAuthenticated() && isAnalyst();
-      
-      allow create: if isAuthenticated() && isAnalyst();
-      
-      allow update, delete: if false; // Logs are immutable
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create: if false;
+      allow update, delete: if false;
     }
 
-    // 4b. Tenant Audit Logs (client-safe projection — tenant-scoped)
     match /tenantAuditLogs/{logId} {
       allow read: if isAuthenticated() && (
         isAnalyst() ||
         (isClient() && isSameTenant(resource.data.tenantId))
       );
-
-      // Only Cloud Functions write here (via writeAuditEvent projection)
       allow create, update, delete: if false;
     }
 
@@ -191,19 +238,17 @@ service cloud.firestore {
         isAnalyst() ||
         (isClient() && isSameTenant(tenantId))
       );
-
-      allow create, update: if isAuthenticated() && isAnalyst();
+      allow create, update: if false;
       allow delete: if false;
     }
 
-    // 5b. V2 tenant contracts/configs. Backend remains the writer.
     match /tenantEntitlements/{tenantId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(tenantId);
       allow create, update, delete: if false;
     }
 
     match /tenantConfigs/{tenantId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if canReadTenantDoc(tenantId);
       allow create, update, delete: if false;
     }
 
@@ -213,13 +258,11 @@ service cloud.firestore {
         isAnalyst() || 
         (isClient() && isSameTenant(resource.data.tenantId))
       );
-      
-      allow create: if isAuthenticated() && isAnalyst();
-      
+      allow create: if false;
       allow delete: if false;
     }
 
-    // 7. Public Reports (shareable links — public read with TTL, analyst manage)
+    // 7. Public Reports
     match /publicReports/{token} {
       allow read: if 
         (isAuthenticated() && isAnalyst()) ||
@@ -228,26 +271,62 @@ service cloud.firestore {
           && request.time < resource.data.expiresAt
           && (resource.data.active != false)
         );
-      // Only Cloud Functions create these documents.
       allow create: if false;
-      allow update: if isAuthenticated() && isAnalyst()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active']);
+      allow update: if false;
       allow delete: if false;
     }
 
-    // 8. System Health (circuit breaker state — analyst read, Cloud Functions write)
+    // 8. System Health
     match /systemHealth/{providerId} {
       allow read: if isAuthenticated() && isAnalyst();
       allow create, update, delete: if false;
     }
 
-    // 9. Tenant Usage (quota counters — client read own tenant, Cloud Functions write)
+    // 9. Tenant Usage
     match /tenantUsage/{tenantId} {
       allow read: if isAuthenticated() && (
         isAnalyst() ||
         (isClient() && isSameTenant(tenantId))
       );
-      // Only Cloud Functions write here (via transaction in enforceTenantSubmissionLimits)
+      allow create, update, delete: if false;
+    }
+
+    match /billingSettlements/{settlementId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /billingEntries/{entryId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /watchlists/{watchlistId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /seniorReviewRequests/{requestId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /quoteRequests/{quoteId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+      allow create, update, delete: if false;
+    }
+
+    match /monitoringSubscriptions/{subscriptionId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId);
+      allow create, update, delete: if false;
+    }
+
+    match /alerts/{alertId} {
+      allow read: if canReadTenantDoc(resource.data.tenantId) ||
+        (isAuthenticated() && isClient() && isSameTenant(resource.data.tenantId));
       allow create, update, delete: if false;
     }
   }

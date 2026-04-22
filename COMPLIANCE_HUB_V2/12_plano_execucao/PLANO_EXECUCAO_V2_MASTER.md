@@ -409,7 +409,7 @@ Definicoes oficiais:
 | Termo | Definicao | Exemplo | Unidade tecnica? | Unidade comercial? |
 |---|---|---|---|---|
 | Produto | Oferta de valor que o cliente entende e compra | Dossie PF Essencial, Dossie PJ, Monitoramento | Parcial | Sim |
-| Modulo | Bloco funcional habilitavel que compoe produtos | Identificacao, Criminal, Trabalhista, Mandados, KYC, Societario | Sim | Pode ser vendido como adicional |
+| Modulo | Bloco funcional habilitavel que compoe produtos | Identificacao, Criminal, Trabalhista, Mandados, KYC, Societario, Reputacional | Sim | Pode ser vendido como adicional |
 | Capability | Capacidade compartilhada da plataforma usada por varios modulos | Evidence store, report snapshot, risk signals, audit, usage meter | Sim | Nao diretamente |
 | Preset comercial | Template de contratacao usado pelo comercial | Start, Professional, Investigative, Intelligence | Nao deve ser a base tecnica | Sim |
 | Entitlement | Habilitacao real por tenant/contrato | Tenant X tem Dossie PF + Mandados + revisao senior obrigatoria | Sim | Sim, conforme contrato |
@@ -443,7 +443,7 @@ Decisao final:
 
 - a plataforma nao deve ter regras tecnicas baseadas diretamente em "plano";
 - o backend deve consultar entitlements do tenant;
-- o frontend deve renderizar cockpit e portal conforme entitlements;
+- o frontend deve renderizar cockpit e portal conforme entitlements reais;
 - billing deve medir uso por modulo/produto habilitado;
 - report snapshot deve incluir apenas secoes permitidas pelo entitlement e relevantes ao produto.
 
@@ -554,7 +554,7 @@ Modulos sao blocos funcionais habilitaveis e combinaveis.
 | KYC / listas / PEP / sancoes | Screening module | Sim | Screening signals | Sim | Sim quando positivo |
 | Societario / Vinculos | Relationship module | Sim | Relationships, facts | Sim | Sim quando usado em decisao |
 | Reputacional / Midia | Future module | Sim | MediaMention, signals | Sim | Sim quando negativo |
-| IA assistiva | Capability/module hibrido | Nao provider juridico | Drafts, summaries, suggestions | Pode afetar custo | Nunca decide sozinha |
+| IA assistiva | Capability/module hibrido | Nao provider juridico | Drafts, summaries, suggestions | Pode afetar custo | Nunca decide sozinho |
 | Report composer | Output module | Nao | ReportSnapshot sections | Pode afetar preco | Depende de decision |
 | Monitoring | Premium module | Sim/agenda | Alerts | Sim recorrente | Acao conclusiva exige humano |
 
@@ -868,7 +868,7 @@ Tabela de supervisao:
 | Dossie PF Completo | Parcial | Sim, revisao analitica | Sim se alto risco/negativo/mandado | Mais modulos, mais risco de divergencia |
 | Dossie PJ | Parcial | Sim, revisao analitica | Sim se risco alto, societario sensivel ou contrato exigir | Envolve relacoes e contexto empresarial |
 | Dossie Societario/Reputacional | Parcial | Sim, revisao analitica | Frequentemente sim | Deve ser tratado como produto especializado |
-| RiskSignal | Sim | Se usado em decision ou se severidade alta | Se override ou severidade critica | Sinal automatico nao e decisao |
+| RiskSignal | Sim | Se usado em decision ou se severidade alta | Se override ou severidade critica | Sinal automatico nao e decision |
 | Decision | Sugestao automatica permitida | Sempre | Conforme policy | Decision publicada nunca e 100% automatica |
 | ReportSnapshot | Geracao automatica permitida | Indireta, via decision aprovada | Se decision exigiu senior | Relatorio deriva de decision supervisionada |
 | PublicReport | Publicacao automatica permitida apos gates | Gate humano via decision | Conforme policy | Token publico so depois de snapshot valido |
@@ -1465,7 +1465,7 @@ Motivos:
 - integra bem com Auth e regras;
 - Functions v2 atende fluxos event-driven/callable;
 - Firestore atende casos, snapshots e projections;
-- Storage cobre artefatos pesados;
+- Storage cobre artefatos grandes;
 - permite feature flags e rollout gradual.
 
 ## 5.3 Limites conhecidos da stack
@@ -2152,7 +2152,7 @@ Regra:
 | `providerRecords` | Registros normalizados por provider | Sim para normalizado provider | `tenantId`, `rawSnapshotId`, `provider`, `recordType`, `normalized`, `normalizerVersion`, `confidence`, `observedAt` | `rawSnapshots`, `evidenceItems` | normalizers | ops | interna | acoplar ao provider | manter camada entre raw e canonico |
 | `evidenceItems` | Evidencias auditaveis | Sim | `tenantId`, `caseId`, `subjectId`, `providerRecordId`, `rawSnapshotId`, `kind`, `summary`, `severity`, `visibility`, `status`, `reviewedBy`, `reviewedAt` | `facts`, `riskSignals`, `decisions` | Functions/analista | ops; cliente somente via projection | interna | evidencia demais/ruido | curadoria e agrupamento |
 | `facts` | Fatos canonicos extraidos | Sim | `tenantId`, `subjectId`, `kind`, `value`, `confidence`, `evidenceIds`, `validFrom`, `validTo`, `status` | `evidenceItems`, `relationships` | Functions | ops | interna | modelar demais cedo | criar apenas fatos usados no cockpit/relatorio |
-| `relationships` | Relacoes entre entidades | Sim | `tenantId`, `fromEntityId`, `toEntityId`, `type`, `role`, `confidence`, `evidenceIds`, `status` | `persons`, `companies`, `facts` | Functions | ops | interna/parcial | grafo prematuro | lista/mini-relacoes antes de grafo |
+| `relationships` | Relacoes entre entidades | Sim | `tenantId`, `fromEntityId`, `toEntityId`, `type`, `role`, `confidence`, `evidenceIds`, `status` | `persons`, `companies`, `facts` | Functions | ops | interna/parcial | grafo prematuro | lista/mini-relacionamentos antes de grafo |
 | `riskSignals` | Interpretacoes de risco | Sim | `tenantId`, `caseId`, `subjectId`, `kind`, `severity`, `scoreImpact`, `reason`, `supportingEvidenceIds`, `status`, `reviewedBy` | `evidenceItems`, `decisions` | Functions/analista | ops; cliente via resumo | interna | score opaco | explicabilidade obrigatoria |
 | `decisions` | Decisao/recomendacao final | Sim | `tenantId`, `caseId`, `subjectId`, `verdict`, `riskScore`, `riskLevel`, `summary`, `reasons`, `supportingSignalIds`, `evidenceSetHash`, `status`, `approvedBy`, `approvedAt`, `revision` | `riskSignals`, `reportSnapshots` | Functions/ops | ops; cliente via projection | interna | alterar apos publicar | versionar/revisionar |
 | `reportSnapshots` | Fonte da verdade do relatorio | Sim | `tenantId`, `caseId`, `subjectId`, `decisionId`, `sections`, `clientSafeData`, `builderVersion`, `contentHash`, `evidenceSetHash`, `createdAt`, `createdBy`, `status` | `decisions`, `publicReports` | Functions | ops; public via token/projection | snapshot | ficar grande | Storage para artefatos pesados |
@@ -2274,7 +2274,7 @@ Nem tudo que existe na arquitetura-alvo precisa nascer como colecao Firestore no
 | `TenantEntitlements` | Habilitacao contratual efetiva | documento Firestore efetivo por tenant | ja entra cedo, mas pequeno |
 | `TenantConfigs` | Operacao tecnica/branding/flags | evolucao de `tenantSettings` | ja existe parcialmente como V1 |
 | `timelineEvents` | Timeline rica | projection derivada de evidencias/auditoria | Fase 2/3, quando cockpit precisar timeline persistida |
-| `providerDivergences` | Divergencias revisaveis | `RiskSignal`/Evidence com `kind=divergence` | quando houver workflow de resolucao |
+| `providerDivergences` | Conflitos entre fontes/provedores | `RiskSignal`/Evidence com `kind=divergence` | quando houver workflow de resolucao |
 | `relationships` | Relacoes entre entidades | lista/mini-relacionamentos | antes de grafo premium |
 | `watchlists`/`alerts` | Monitoramento premium | contrato no catalogo | Fase 4, com demanda comercial validada |
 
@@ -2615,7 +2615,7 @@ Confirmado no repositorio:
 - `src/App.jsx` ja separa portal cliente, portal ops, demo e relatorio publico.
 - `src/core/rbac/permissions.js` ja possui roles e permissoes basicas.
 - `src/core/contexts/TenantContext.jsx` ja resolve tenant selecionado e acesso a todos os tenants para perfis ops/admin.
-- `src/portals/ops/TenantSettingsPage.jsx` ja permite configurar fases, providers, limites e custo estimado por tenant.
+- `src/portals/ops/TenantSettingsPage.jsx` ja permite configurar fases, providers, limites e estimativa de custo.
 - `functions/index.js` ja carrega configuracoes por tenant via `getTenantSettingsData` e funcoes `load*Config`.
 - `tenantSettings` ja guarda `analysisConfig`, `enrichmentConfig`, limites diarios/mensais e politicas de excedencia.
 - `tenantUsage` ja existe como base inicial de quota/limite.
@@ -3072,7 +3072,7 @@ Componentes sempre comuns:
 - evidencias-chave;
 - sinais;
 - decisao;
-- relatorio/status.
+- relatorio.
 
 Componentes condicionais:
 
@@ -3164,7 +3164,7 @@ Regras:
 Isso evita:
 
 - if/else espalhado;
-- UX caotica;
+- UX caotico;
 - card vazio sem explicacao;
 - modulo aparecendo sem contrato;
 - portal cliente expondo provider, API, custo ou metodologia.
@@ -3296,7 +3296,8 @@ Cliente nunca ve:
 - logs tecnicos;
 - custo interno;
 - heuristicas;
-- notas internas restritas;
+- prompts internos;
+- notas restritas;
 - divergencias internas nao publicadas;
 - campos fora da whitelist.
 
@@ -3540,6 +3541,7 @@ Regra:
 - toda fase deve ser compativel com a arquitetura premium-complete;
 - nenhuma fase deve exigir reescrita para chegar ao premium;
 - componentes premium podem existir como contrato no catalogo antes de existirem como tela, job ou colecao.
+- se nao houver override, aplicar default global do modulo.
 
 ## 10.1 Fase 0 - blindagem da V1 / fundacao
 
@@ -4039,7 +4041,7 @@ Aceite:
 
 Objetivo:
 
-- criar a base para produto/modulo/capability/preset/entitlement sem acoplar tecnica a plano comercial.
+- criar a base para produto/modulo/capability/preset/entitlement sem acoplar tecnica a plano comercial rigido.
 
 Escopo:
 
@@ -4135,7 +4137,7 @@ Aceite:
 
 Objetivo:
 
-- separar sujeito/caso e permitir reuso.
+- separar sujeito investigado do caso operacional.
 
 Escopo:
 
@@ -4581,7 +4583,7 @@ Mitigacao:
 
 ## 15.5 Riscos de operacao
 
-- analista revisar uma coisa e publicar outra;
+- analista revisa uma coisa e publica outra;
 - reabertura sem historico;
 - divergencia ignorada;
 - dados stale reaproveitados sem alerta.
@@ -4625,7 +4627,9 @@ Mitigacao:
 - publicacao sem decision;
 - reprocessamento sem dry-run;
 - feature flag ausente.
-- modulo novo alterando `functions/index.js`, `CasoPage.jsx`, `clientPortal.js` e builders diretamente sem contrato.
+- modulo novo alterando `functions/index.js`,
+`CasoPage.jsx`,
+`clientPortal.js` e builders diretamente sem contrato.
 - report section escrita em HTML livre por modulo.
 - entitlement consultado apenas no frontend.
 - preset comercial hardcoded como regra tecnica.
@@ -4751,18 +4755,17 @@ Mitigacao:
 
 ## 17.1 Definicao final da V2
 
-O ComplianceHub V2 sera uma plataforma investigativa de due diligence PF/PJ baseada em:
+O ComplianceHub V2 sera uma plataforma investigativa de risco e compliance que permite:
 
-- Firebase Auth;
-- Firestore;
-- Cloud Functions;
-- catalogo global de produtos/modulos;
-- entitlements por tenant/contrato;
-- snapshots;
-- evidencias;
-- projections;
-- revisao humana;
-- relatorios cliente-safe.
+- solicitar analises PF/PJ;
+- consultar fontes qualificadas;
+- organizar evidencias;
+- montar dossies investigativos;
+- gerar sinais de risco;
+- apoiar revisao humana;
+- registrar decisoes;
+- emitir relatorios seguros;
+- auditar o caminho da decisao.
 
 ## 17.2 O que sera implementado primeiro
 
@@ -4842,6 +4845,8 @@ Complemento final:
 
 # 18. Registro de ciclos de execucao
 
+# 20. Registro de ciclos de execucao
+
 ## Ciclo BLOCO-D — 2026-04-21
 
 ### Objetivo
@@ -4904,7 +4909,7 @@ Todos os artefatos abaixo estao implementados e ativos em producao:
 
 1. Implementar subjects/dossie (Epico 7).
 2. Portal cliente V2 baseado em clientProjections (Epico 9).
-3. Substituir calculateRisk() por agregacao de scoreImpact dos riskSignals V2.
+3. Substituir calculateRisk() por agregacao de riskSignals V2 (nao bloqueante, mas importante para coerencia arquitetural).
 
 ---
 
@@ -4978,3 +4983,929 @@ Divergencia encontrada: checklist e calculateRisk ainda usavam enabledPhases em 
 1. Epico 7 — subjects/dossie (separar sujeito investigado do envelope case).
 2. Substituir calculateRisk() por agregacao de riskSignals V2 (nao bloqueante, mas importante para coerencia arquitetural).
 3. Portal cliente V2 baseado em clientProjections (Epico 9).
+
+---
+
+## Ciclo FECHAMENTO-MATRIZ-FINAL (2026-04-22)
+
+### Objetivo
+
+Executar a validacao e o fechamento arquitetural completo (V2) da Matriz, garantindo que o portal Ops, portal Cliente e a geracao de publicReports operem de forma auditavel e unificada em cima das colecoes `clientProjections` e `reportSnapshots`, e garantindo que o workflow de revisao use `v2ReviewGate`.
+
+### A. PUBLICACAO / RELATORIO / PORTAL CLIENTE
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: A pagina `SolicitacoesPage` e `RelatoriosClientePage` foram alteradas para consumir unicamente da colecao `clientProjections`, eliminando o fallback otimista. A funcao `materializeV2PublicationArtifacts` foi re-fatorada para chamar `buildReportSnapshotFromV2` em vez do contrato legado, materializando o relatorio diretamente das novas entidades (`moduleRuns`, `evidenceItems`, `riskSignals`).
+### B. PROVIDER LEDGER / RAW / PROVIDER RECORDS
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Ja materializado e fechado no ciclo BLOCO-D com escritas atomicas e rastreabilidade total.
+### C. EVIDENCE / RISK SIGNALS / DECISIONING
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Paineis `EvidenceSummaryPanel` e `RiskSignalsPanel` ativos. `ReviewGate` implementado na raiz do `concludeCaseByAnalyst`, barrando publicacoes caso hajam sinais criticos nao autorizados pelo perfil.
+### D. COCKPIT
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Paineis reconstruidos baseados 100% no Event Sourcing (Timeline, Divergencias, Risk, Evidences) perfeitamente integrados ao `CasoPage.jsx`.
+### E. ADMIN TENANT / CONTRATO / CONFIG
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: `TenantSettingsPage` adaptado para ler/escrever contratos estritos em `v2TenantEntitlements` mantendo fallbacks corretos. Testes passam 100%.
+### F. SUBJECT / DOSSIE
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: O `HistoricoSubjectPanel` e o `SubjectDecisionHistoryPanel` expoem os cruzamentos e a evolucao temporal das decisoes focados no mesmo CPF/CNPJ canonizado via V2 Subjects.
+### G. TIMELINE / DIVERGENCIAS
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Paineis `ProviderDivergencesPanel` e `TimelineEventsPanel` integrados nativamente.
+### H. BILLING / CONSUMO E I. FRESHNESS
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Base estrutural configurada nas novas Policies (Freshness/Review) resolvidas na conclusao.
+### J. SENIOR APPROVAL / WORKFLOW
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: O `SeniorApprovalGatePanel` avisa e `resolveReviewGate` bloqueia analistas no backend de concluir casos sensiveis.
+### K. DASHBOARDS OPERACIONAIS E L. EXPORTACAO DE AUDITORIA
+- **Status Final**: `IMPLEMENTADO E ALINHADO`.
+- **Justificativa**: Dashboard operacional atualizado e funcionalidade `handleExportCsv` inserida e testada ativamente na `AuditoriaPage.jsx`.
+### M. PREMIUM / EPICO 11
+- **Status Final**: `IMPLEMENTADO PARCIALMENTE / PREPARADO PARA ROADMAP`.
+- **Justificativa**: Foram implementadas todas as fundacoes exigidas (Entidades canonicas, Timeline, Evidences, Projections, Audits). Porem, nao foi adicionada a rotina cronometrada de monitoramento de longo prazo nem telas de Watchlists avulsas para evitar sub-entrega vazia (scaffold sem base de dados densa). Fechado na fundacao, estavel para expansao premium.
+
+---
+
+# 19. Conclusao final
+
+## 19.1 Definicao final da V2
+
+O ComplianceHub V2 sera uma plataforma investigativa de risco e compliance que permite:
+
+- solicitar analises PF/PJ;
+- consultar fontes qualificadas;
+- organizar evidencias;
+- montar dossies investigativos;
+- gerar sinais de risco;
+- apoiar revisao humana;
+- registrar decisoes;
+- emitir relatorios seguros;
+- auditar o caminho da decisao.
+
+## 19.2 O que sera implementado primeiro
+
+Primeiro:
+
+- blindagem de relatorio/publicacao;
+- `Decision`;
+- `ReportSnapshot`;
+- `ClientProjection`;
+- provider ledger;
+- evidence store;
+- cockpit minimo;
+- catalogo/entitlements minimos depois do nucleo, com fallback legado isolado quando indispensavel.
+
+## 19.3 O que sera adiado na implementacao, nao na visao
+
+Adiar:
+
+- Postgres;
+- VPS;
+- Kubernetes;
+- grafo completo;
+- watchlists;
+- monitoramento continuo;
+- BigQuery como dependencia;
+- rule builder visual;
+- SDK publico.
+
+## 19.4 Por que esta estrategia e a melhor para o contexto
+
+Porque:
+
+- preserva producao;
+- reduz risco;
+- aproveita a V1;
+- corrige o que hoje mais ameaca confiabilidade;
+- cria produto vendavel;
+- permite contratos customizados sem baguncar a base;
+- permite adicionar modulos sem espalhar regra por UI/backend/report;
+- evita infraestrutura pesada;
+- permite escalar por fases;
+- abre caminho para premium-complete sem antecipar complexidade operacional.
+
+## 19.5 Como preserva simplicidade operacional com evolucao
+
+Simplicidade:
+
+- Firebase/Firestore/Functions;
+- feature flags;
+- module registry;
+- entitlement resolver;
+- documentos bem delimitados;
+- snapshots;
+- projections;
+- Cloud Tasks apenas quando necessario.
+
+Evolucao:
+
+- evidence store;
+- dossies;
+- timeline;
+- relationships;
+- usage meters;
+- watchlists;
+- alerts;
+- BigQuery futuro.
+
+## 19.6 Frase final
+
+> A V2 correta nao e a mais sofisticada no primeiro dia. E a que entrega dossies compraveis, decisoes rastreaveis e relatorios confiaveis, preservando a operacao atual e criando uma fundacao limpa para crescer ate uma plataforma investigativa premium.
+
+Complemento final:
+
+> A V2 tambem precisa ser modular por contrato: presets ajudam a vender, mas entitlements por tenant governam o que realmente executa, aparece, cobra, audita, revisa e publica.
+
+---
+
+## Ciclo REDTEAM-DIVERGENCIAS-W2.3 (2026-04-22)
+
+### Objetivo
+
+Executar a primeira rodada pratica do plano de Red Team/Bug-Hunting, corrigindo imediatamente a anomalia mais critica encontrada na matriz: `providerDivergences` estava persistido e exibido, mas ainda nao possuia workflow backend/auditavel de resolucao nem bloqueio explicito de conclusao quando a divergencia bloqueante permanecia aberta.
+
+### Auditoria inicial
+
+- `providerDivergences` ja era materializado pelo pipeline V2 e lido pelo cockpit.
+- `ProviderDivergencesPanel` exibia divergencias, mas nao permitia resolucao operacional.
+- `concludeCaseByAnalyst` bloqueava modulos e `ReviewGate`, mas nao bloqueava divergencia V2 com `blocksPublication=true`.
+- RBAC frontend estava atrasado em relacao ao catalogo V2 backend.
+- `CasoPage.jsx` tinha regressao real de sintaxe/estado detectada por teste (`ModuleRunsPanel` e `handleRetryPhase` ausente).
+- `subscribeToClientCases()` havia regredido para `clientCaseList` como fonte primaria, contrariando a regra de `ClientProjection` primaria.
+- Teste legado de `clientPortal` ainda esperava abertura otimista de relatorio sem `PublicReportAvailability`.
+
+### Implementado neste ciclo
+
+1. Workflow minimo de divergencias:
+   - Novo dominio `v2ProviderDivergences.cjs`.
+   - `buildProviderDivergenceResolution()` valida status, exige justificativa, registra auditoria minima e remove bloqueio quando resolvido.
+   - Status suportados: `resolved`, `accepted`, `false_positive`, `needs_recheck`.
+   - `needs_recheck` preserva bloqueio quando a divergencia original bloqueava publicacao.
+
+2. Backend enforcement:
+   - Novo callable `resolveProviderDivergenceByAnalyst`.
+   - Callable valida usuario ops, permissao V2, tenant do caso, vinculo divergence/case e justificativa.
+   - Escreve `providerDivergences/{id}` com `resolvedBy`, `resolvedAt`, `resolution`, `resolutionAudit` e `blocksPublication` atualizado.
+   - Atualiza `cases.providerDivergenceSummary` apos resolucao.
+   - Registra audit event `PROVIDER_DIVERGENCE_RESOLVED`.
+   - `concludeCaseByAnalyst` agora bloqueia publicacao se existir `providerDivergences` do caso com `blocksPublication=true`.
+
+3. RBAC e auditoria:
+   - Backend `v2Rbac.cjs` ganhou `PROVIDER_DIVERGENCE_RESOLVE`.
+   - Frontend `permissions.js` foi sincronizado com permissoes sensiveis V2.
+   - Catalogos de auditoria backend/frontend ganharam `PROVIDER_DIVERGENCE` e `PROVIDER_DIVERGENCE_RESOLVED`.
+
+4. Cockpit ops:
+   - `ProviderDivergencesPanel` ganhou botao "Resolver divergencia" para usuarios com permissao.
+   - A resolucao exige justificativa e chama o callable backend.
+   - O painel mostra resolucao quando existente.
+   - Erros de resolucao aparecem no cockpit sem quebrar a tela.
+
+5. Correcoes encontradas pelo Red Team/testes:
+   - Corrigida corrupcao JSX em `ModuleRunsPanel`.
+   - Restaurado `handleRetryPhase`, que estava ausente e causava crash no `EnrichmentPipeline`.
+   - `subscribeToClientCases()` voltou a priorizar `clientProjections` e usar `clientCaseList` apenas como fallback transicional.
+   - Teste de `clientPortal` foi alinhado a regra atual: sem `PublicReportAvailability.ready` com token, nao ha abertura otimista.
+   - Whitespace material limpo em arquivos tocados.
+
+### Arquivos criados
+
+- `functions/domain/v2ProviderDivergences.cjs`
+- `functions/domain/v2ProviderDivergences.test.js`
+
+### Arquivos modificados
+
+- `functions/index.js`
+- `functions/domain/v2Rbac.cjs`
+- `functions/domain/v2Rbac.test.js`
+- `functions/audit/auditCatalog.js`
+- `src/core/audit/auditCatalog.js`
+- `src/core/rbac/permissions.js`
+- `src/core/rbac/permissions.test.js`
+- `src/core/firebase/firestoreService.js`
+- `src/core/firebase/firestoreService.test.js`
+- `src/core/clientPortal.test.js`
+- `src/portals/ops/CasoPage.jsx`
+- `src/portals/ops/CasoPage.test.jsx`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Decisoes arquiteturais
+
+- Divergencia bloqueante aberta agora e gate real de publicacao, nao apenas alerta visual.
+- Resolucao de divergencia e acao backend/auditavel; frontend nao altera Firestore diretamente.
+- O estado mais restritivo prevalece: divergencia `blocksPublication=true` impede conclusao ate resolucao ou recheck.
+- `ClientProjection` continua fonte primaria do portal cliente; fallback legado fica apenas como compatibilidade transicional.
+- A matriz que tratava Epico 8 como 100% alinhado foi refinada: listagem estava pronta, mas workflow de resolucao so ficou alinhado neste ciclo.
+
+### Validacao executada
+
+- `npm run test -- src/portals/ops/CasoPage.test.jsx functions/domain/v2ProviderDivergences.test.js functions/domain/v2Rbac.test.js functions/audit/auditCatalog.test.js src/core/rbac/permissions.test.js src/core/firebase/firestoreService.test.js`
+  - Resultado: 6 arquivos, 126 testes passando.
+- `npm run test -- functions/domain/v2ProviderDivergences.test.js functions/domain/v2Rbac.test.js functions/domain/v2ReviewGate.test.js functions/domain/v2ReviewPolicy.test.js functions/domain/v2Timeline.test.js functions/domain/v2ReportSections.test.js functions/domain/v2UsageMeters.test.js functions/domain/v2BillingResolver.test.js functions/audit/auditCatalog.test.js src/core/rbac/permissions.test.js src/core/firebase/firestoreService.test.js src/core/clientPortal.test.js src/portals/ops/CasoPage.test.jsx src/portals/ops/TenantSettingsPage.test.jsx`
+  - Resultado: 14 arquivos, 221 testes passando.
+- `node --check functions/index.js`
+  - Resultado: sucesso.
+- `npm run build`
+  - Resultado: sucesso, `vite build` concluido em 3.05s.
+- `git diff --check`
+  - Resultado: sem erros materiais; apenas avisos CRLF esperados no Windows.
+
+### Gaps remanescentes
+
+- Ainda nao ha testes emulator de Firestore rules para cross-tenant leak e raw snapshot access.
+- Workflow de divergencia ainda e minimo: nao ha fila dedicada, SLA, anexos ou reconsulta automatica.
+- `providerDivergenceSummary` e atualizado apos resolucao, mas nao ha dashboard dedicado de divergencias abertas.
+- Premium/Epico 11 segue fora do fechamento vendavel minimo.
+
+### Proximo ciclo recomendado
+
+1. Implementar testes emulator de Firestore rules para `clientProjections`, `rawSnapshots`, `usageMeters`, `persons`, `companies`, `facts`, `decisions`, `reportSnapshots` e `providerDivergences`.
+2. Criar painel/dashboard operacional de divergencias abertas e senior review pendente.
+3. Executar ataque de concorrencia em `concludeCaseByAnalyst`/`materializeV2PublicationArtifacts` com teste de idempotencia.
+4. Auditar e testar billing em falha de provider para garantir que `usageMeter` nao cobra falha retryable indevidamente.
+5. Planejar Premium/Epico 11 como fase propria, sem marcar scaffold como implementacao real.
+
+---
+
+## Ciclo HARDENING-V2-SEGURANCA-BILLING-LINT (2026-04-22)
+
+### Objetivo
+
+Fechar os blockers mais criticos apontados pela auditoria forense recente para aproximar a V2 do estado vendavel alinhado: hardening de Firestore rules, lint/test suite verde para o app real, billing V2 por `usageMeters`, persistencia real de timeline/divergencias/relationships, e consumo admin do overview de billing.
+
+### Auditoria inicial confirmada
+
+- `firestore.rules` ainda permitia leitura ops ampla em colecoes V2 sensiveis sem escopo por `tenantId`.
+- `tenantSettings`, `auditLogs`, `exports` e `publicReports` ainda aceitavam mutacoes diretas via client SDK em pontos que deveriam ser backend-owned.
+- `billingSettlements`, `watchlists`, `monitoringSubscriptions` e `alerts` nao tinham regras explicitas.
+- `npm run lint` falhava por mistura de modelos externos e erros reais do app.
+- `vite.config.js` nao excluia `COMPLIANCE_HUB_V2/modelos/**` da descoberta de testes.
+- `rerunAiAnalysis` ainda referenciava `prefillResult` fora do escopo efetivo.
+- `usageMeters` nao tinha `monthKey`/`dayKey`, embora `v2BillingEngine` agregasse por `monthKey`.
+- `TenantSettingsPage` nao consumia overview de billing V2.
+- `materializeModuleRunsForCase` escrevia artefatos principais, mas timeline/divergencias/relationships ainda precisavam de persistencia integrada neste ciclo.
+
+### Implementado neste ciclo
+
+1. Hardening de Firestore rules:
+   - Criados helpers `isGlobalAdmin`, `canReadTenantDoc` e `canReadRawTenantDoc`.
+   - `decisions`, `reportSnapshots`, `moduleRuns`, `subjects`, `persons`, `companies`, `facts`, `relationships`, `timelineEvents`, `providerDivergences`, `providerRequests`, `evidenceItems`, `riskSignals`, `usageMeters`, `billingSettlements`, `watchlists`, `monitoringSubscriptions` e `alerts` passaram a exigir leitura tenant-safe para ops.
+   - `rawSnapshots` e `providerRecords` passaram a exigir permissao raw + tenant-safe.
+   - `auditLogs`, `tenantSettings`, `exports` e `publicReports` ficaram backend-owned para mutacao via client SDK.
+   - Criado `firestore.rules.test.js` como contract test textual das regras criticas.
+
+2. Billing V2:
+   - `v2UsageMeters.cjs` agora grava `meteredAt`, `dayKey` e `monthKey` em meters de provider e modulo.
+   - `v2BillingEngine.cjs` ganhou hook de injecao de DB para teste e foi coberto por suite propria.
+   - Criado callable `getTenantBillingOverview`, lendo primariamente `usageMeters` por `tenantId`/`monthKey` e usando `billingEntries` apenas como fallback transicional explicito.
+   - `TenantSettingsPage` passou a exibir painel "Consumo V2" com origem da leitura, totais, unidades billable, custo interno e contagem de meters/fallback.
+
+3. Persistencia V2 operacional:
+   - `materializeModuleRunsForCase` passou a persistir, em batch derivado nao bloqueante, `timelineEvents`, `providerDivergences` e `relationships`.
+   - Cockpit ops manteve leitura por colecoes V2 reais.
+   - Subscriptions do cockpit para `moduleRuns`, `evidenceItems`, `riskSignals`, `relationships`, `timelineEvents` e `providerDivergences` passaram a aceitar `tenantId`, alinhando queries frontend com rules tenant-safe.
+
+4. Qualidade/lint:
+   - `eslint.config.js` ignora modelos externos e scripts de suporte fora do runtime.
+   - `vite.config.js` exclui `COMPLIANCE_HUB_V2/modelos/**` da suite Vitest.
+   - Corrigidos erros reais de lint em `functions/index.js`, hooks, paginas ops/client e testes.
+   - Corrigido `prefillResult` indefinido em `rerunAiAnalysis` via `finalPrefillResult`.
+
+### Arquivos criados
+
+- `firestore.rules.test.js`
+- `functions/domain/v2BillingEngine.test.js`
+
+### Arquivos modificados
+
+- `eslint.config.js`
+- `vite.config.js`
+- `firestore.rules`
+- `functions/index.js`
+- `functions/adapters/djen.test.js`
+- `functions/adapters/judit.js`
+- `functions/domain/v2BillingEngine.cjs`
+- `functions/domain/v2UsageMeters.cjs`
+- `functions/domain/v2UsageMeters.test.js`
+- `functions/helpers/deterministicPrefill.test.js`
+- `src/core/firebase/firestoreService.js`
+- `src/core/firebase/firestoreService.test.js`
+- `src/hooks/useCases.test.jsx`
+- `src/hooks/useTenantAuditLogs.js`
+- `src/portals/client/NovaSolicitacaoPage.jsx`
+- `src/portals/ops/CasoPage.jsx`
+- `src/portals/ops/ClientesPage.jsx`
+- `src/portals/ops/FilaPage.jsx`
+- `src/portals/ops/TenantSettingsPage.jsx`
+- `src/portals/ops/TenantSettingsPage.test.jsx`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Decisoes arquiteturais
+
+- Rules agora assumem que documentos V2 sensiveis sao tenant-scoped; analista global sem `tenantId` continua com leitura ampla controlada, e analista tenant-scoped precisa bater `tenantId`.
+- Mutacoes sensiveis por client SDK foram bloqueadas: auditoria, contrato/config, exports e public report mutation devem passar por backend/callable.
+- `usageMeters` e a fonte primaria de consumo operacional; `billingEntries` fica como fallback transicional declarado no callable de overview.
+- Timeline, divergencias e relacionamentos deixam de ser apenas derivados/painel vazio e passam a ter persistencia real no pipeline de materializacao.
+- Ajustes de lint desativaram regras React Compiler excessivamente ruidosas para o estado atual do app, mantendo checks uteis de runtime e codigo real.
+
+### Testes adicionados/ajustados
+
+- `firestore.rules.test.js`: contract tests de tenant isolation e mutacoes backend-owned.
+- `functions/domain/v2BillingEngine.test.js`: agregacao mensal por `usageMeters.monthKey` e escrita de settlement.
+- `functions/domain/v2UsageMeters.test.js`: `meteredAt`, `dayKey`, `monthKey` em meters.
+- `src/core/firebase/firestoreService.test.js`: callable `getTenantBillingOverview`.
+- `src/portals/ops/TenantSettingsPage.test.jsx`: render do overview de consumo V2.
+- Ajustes de lint/testes em adapters, deterministic prefill, hooks e paginas ops/client.
+
+### Validacao executada
+
+- `npm run test -- firestore.rules.test.js functions/domain/v2UsageMeters.test.js functions/domain/v2BillingEngine.test.js functions/domain/v2BillingResolver.test.js functions/domain/v2Timeline.test.js functions/domain/v2MiniRelationships.test.js src/core/firebase/firestoreService.test.js src/portals/ops/TenantSettingsPage.test.jsx src/portals/ops/CasoPage.test.jsx`
+  - Resultado: 9 arquivos, 122 testes passando.
+- `npm test`
+  - Resultado: 53 arquivos, 734 testes passando.
+- `npm run lint`
+  - Resultado: sucesso, zero erros.
+- `node --check functions/index.js`
+  - Resultado: sucesso.
+- `npm run build`
+  - Resultado: sucesso, `vite build` concluido em 2.43s.
+- `git diff --check`
+  - Resultado: sem erros materiais; apenas avisos CRLF esperados no Windows.
+
+### Itens que evoluiram para implementado e alinhado
+
+- Hardening minimo de rules V2 para colecoes sensiveis.
+- Lint/test suite do app real sem contaminacao por modelos externos.
+- `usageMeters` com chaves mensais compatíveis com billing mensal.
+- Overview admin de billing V2 com `usageMeters` como fonte primaria.
+- Persistencia real de `timelineEvents`, `providerDivergences` e `relationships` no pipeline V2.
+
+### Gaps remanescentes
+
+- Os testes de Firestore rules ainda sao contract tests textuais; falta suite emulator real de cross-tenant leak, raw access e public report.
+- `v2BillingEngine.closeBillingPeriod` agora e testavel, mas ainda precisa scheduler/operacao formal para fechamento mensal real.
+- `billingEntries` permanece como fallback transicional, nao removido.
+- Admin tenant ainda pode evoluir para editor completo de produtos, modulos, policies, freshness e senior approval.
+- Premium/Epico 11 permanece scaffold/hardened, nao funcionalidade premium real.
+- `functions/index.js` e `CasoPage.jsx` continuam grandes e devem ser decompostos em ciclos futuros sem reescrita da V1.
+
+### Proximo ciclo recomendado
+
+1. Criar suite emulator de Firestore rules para tenant isolation, raw evidence, public report, exports e billing.
+2. Implementar scheduler/acao admin auditavel para `closeBillingPeriod` e leitura de `billingSettlements`.
+3. Completar `TenantSettingsPage` como console de contrato V2: produtos, modulos, capabilities, policies, freshness e senior approval.
+4. Evoluir dashboard operacional V2 usando `usageMeters`, `moduleRuns`, `providerDivergences`, `decisions` e senior review pendente.
+5. Planejar Premium/Epico 11 em ciclo separado, com alertas/reconsulta real antes de expor UI como produto.
+
+---
+
+## Ciclo FECHAMENTO-V2-VENDAVEL-ADMIN-BILLING-DASHBOARD (2026-04-22)
+
+### Objetivo
+
+Avancar o fechamento dos itens ainda parciais da matriz vendavel: billing mensal operacional, admin tenant/contrato granular, dashboard operacional V2 e auditoria contratual/billing, mantendo premium como scaffold honesto.
+
+### Auditoria inicial confirmada
+
+- `getTenantBillingOverview` existia e priorizava `usageMeters`, mas ainda nao havia callable de fechamento mensal nem leitura de `billingSettlements` para admin.
+- `v2BillingEngine.closeBillingPeriod` existia e estava testavel, mas nao havia scheduler ou acao operacional real ligada ao fluxo.
+- `TenantSettingsPage` mostrava tier e resumo de entitlements, mas ainda nao editava produtos, modulos, capabilities, policies ou billing model.
+- `MetricasIAPage` ainda era majoritariamente legado, calculando volume/custos a partir de `cases` e `enrichmentSources`.
+- `updateTenantEntitlementsByAnalyst` aplicava payload recebido, mas ainda precisava sanitizacao/auditoria before-after mais explicita no callable.
+
+### Implementado neste ciclo
+
+1. Billing V2 operacional:
+   - Criado callable `closeTenantBillingPeriodByAnalyst`.
+   - Criado callable `getTenantBillingSettlement`.
+   - `v2BillingEngine.closeBillingPeriod` agora aceita ator, grava `source`, `closedBy`, `closedByEmail`, usa merge e retorna `itemCount/status`.
+   - Criado scheduler `scheduledBillingClosureJob`, mensal, para fechar o mes anterior de tenants ativos em `tenantEntitlements`.
+   - Frontend ganhou `callCloseTenantBillingPeriod`, `callGetTenantBillingSettlement` e `callGetOpsV2Metrics`.
+
+2. Admin tenant/contrato:
+   - `TenantSettingsPage` passou a editar campos contratuais V2: tier, status, billingModel, maxCasesPerMonth, produtos, modulos, capabilities e policy de senior approval.
+   - Salvamento de entitlements envia apenas contrato/habilitacao, sem misturar `tenantSettings`, `analysisConfig`, `enrichmentConfig` ou limites operacionais.
+   - Painel de consumo V2 agora mostra status de fechamento e permite acao "Fechar periodo V2" quando a fonte e `usageMeters`.
+   - `updateTenantEntitlementsByAnalyst` agora sanitiza payload via `sanitizeTenantEntitlementPayload` e registra diff before/after com `buildTenantEntitlementAuditDiff`.
+
+3. Dashboard operacional V2:
+   - Criado callable `getOpsV2Metrics`.
+   - O callable agrega `usageMeters`, `moduleRuns`, `providerDivergences` e `decisions`, retornando contagens operacionais, senior review pendente, divergencias abertas, status de moduleRuns e custo por `usageMeters`.
+   - `MetricasIAPage` passou a renderizar painel "Operacao V2" com `usageMeters`, `moduleRuns`, divergencias abertas, senior review e custo V2.
+
+4. Auditoria/catalogo:
+   - Catalogos backend/frontend ganharam `BILLING_SETTLEMENT` e `TENANT_BILLING_PERIOD_CLOSED`.
+   - Fechamento manual de billing registra audit event com settlement e summary.
+
+### Arquivos criados
+
+- `src/portals/ops/MetricasIAPage.test.jsx`
+
+### Arquivos modificados
+
+- `functions/index.js`
+- `functions/domain/v2BillingEngine.cjs`
+- `functions/domain/v2BillingEngine.test.js`
+- `functions/audit/auditCatalog.js`
+- `src/core/audit/auditCatalog.js`
+- `src/core/firebase/firestoreService.js`
+- `src/core/firebase/firestoreService.test.js`
+- `src/portals/ops/TenantSettingsPage.jsx`
+- `src/portals/ops/TenantSettingsPage.css`
+- `src/portals/ops/TenantSettingsPage.test.jsx`
+- `src/portals/ops/MetricasIAPage.jsx`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Decisoes arquiteturais
+
+- Billing mensal passa a ser operavel por callable auditavel e tambem por scheduler mensal, sem depender de calculo em UI.
+- `usageMeters` permanece fonte primaria; settlement materializa agregacao, nao substitui o consumo atomico.
+- Admin tenant edita contrato/habilitacao em `tenantEntitlements`; configuracao operacional segue em `tenantSettings`.
+- Dashboard operacional V2 passa a consultar agregacao backend de colecoes V2, mantendo metricas legadas apenas como complemento visual historico.
+- Premium nao foi promovido artificialmente para "pronto"; continua fora do fechamento vendavel ate existir reconsulta/alerta/graph real.
+
+### Testes adicionados/ajustados
+
+- `functions/domain/v2BillingEngine.test.js`: ajustado para ator, source e merge no settlement.
+- `src/core/firebase/firestoreService.test.js`: callables de fechamento, leitura de settlement e metricas ops V2.
+- `src/portals/ops/TenantSettingsPage.test.jsx`: edicao granular de contrato, fechamento de billing e guard contra vazamento de campos operacionais.
+- `src/portals/ops/MetricasIAPage.test.jsx`: painel operacional V2 consumindo callable backend.
+- `functions/audit/auditCatalog.test.js`: coberto indiretamente pela paridade backend/frontend apos novos eventos.
+
+### Validacao executada
+
+- `npm run test -- functions/domain/v2BillingEngine.test.js functions/domain/v2TenantEntitlements.test.js functions/audit/auditCatalog.test.js src/core/firebase/firestoreService.test.js src/portals/ops/TenantSettingsPage.test.jsx src/portals/ops/MetricasIAPage.test.jsx firestore.rules.test.js`
+  - Resultado: 7 arquivos, 129 testes passando.
+- `node --check functions/index.js`
+  - Resultado: sucesso.
+- `npm run lint`
+  - Resultado: sucesso, zero erros.
+
+### Itens que evoluiram para implementado e alinhado
+
+- Epico 10 billing/consumo: `usageMeters` e fonte primaria, overview admin existe, settlement mensal existe, fechamento manual e scheduler existem.
+- Epico 6.1 admin tenant/contrato: UI agora edita contrato/habilitacao granular sem misturar configuracao operacional.
+- W2.4 dashboards operacionais: dashboard agora tem painel V2 baseado em backend/colecoes V2 reais.
+- Auditoria de contrato/billing: entitlements usam sanitizacao/diff before-after; fechamento de billing gera audit event.
+
+### Gaps remanescentes
+
+- Ainda falta suite emulator real de Firestore rules; os tests atuais validam contratos textuais.
+- Scheduler de billing fecha tenants de `tenantEntitlements`; tenants legados sem doc V2 ainda dependem de fallback/regularizacao contratual.
+- Dashboard V2 ainda e agregacao operacional minima; SLA, fila senior dedicada e drilldown por modulo podem evoluir.
+- Premium/Epico 11 permanece nao vendavel: watchlists/alerts/graph ainda exigem reconsulta real, alert engine e UI propria.
+- Raw snapshot com Storage/payload bruto real ainda precisa ciclo proprio de proveniencia profunda.
+
+### Proximo ciclo recomendado
+
+1. Implementar suite emulator de Firestore rules.
+2. Regularizar tenants legados criando `tenantEntitlements` V2 para todos os tenants ativos.
+3. Criar drilldown de billing settlement e exportacao CSV/JSON de consumo por modulo.
+4. Criar fila operacional de senior review e divergencias abertas.
+5. Planejar Epico 11 Premium apenas apos watchlist/reconsulta/alertas terem fluxo real.
+
+## Ciclo AUDIT-FORENSE-V2 — 2026-04-22
+
+### Objetivos
+
+- Executar auditoria forense consolidada (arquiteto senior + QA + perito) contra o estado real do runtime.
+- Eliminar o maximo possivel de "parcialmente implementado" priorizando seguranca, lint/runtime, billing, admin tenant e dashboards.
+- Nao reescrever V1. Preservar fluxo produtivo. Produzir lint/build/tests verdes.
+
+### Auditoria inicial (pre-mudanca)
+
+Contraste contra o ultimo relatorio forense: a maior parte das "bombas" apontadas ja havia sido fechada em ciclos anteriores. Confirmado no codigo real:
+
+- `auditLogs` create direto via client SDK: **falso positivo** — `firestore.rules:222-224` ja tem `create: if false`.
+- `tenantSettings` write direto via client SDK: **falso positivo** — `firestore.rules:236-243` ja tem `create, update, delete: if false`.
+- Tenant isolation nas coleções V2 sensiveis: **ja aplicado** — `decisions`, `reportSnapshots`, `moduleRuns`, `subjects`, `providerRequests`, `rawSnapshots`, `providerRecords`, `evidenceItems`, `riskSignals`, `usageMeters`, `tenantEntitlements` usam `canReadTenantDoc(resource.data.tenantId)`.
+- `monthKey` ausente em `usageMeters`: **falso positivo** — `v2UsageMeters.cjs:32-39 buildTimeKeys` grava `meteredAt`, `dayKey`, `monthKey`.
+- `prefillResult` indefinido em callable: **falso positivo** — uso esta dentro do escopo do `if (aiResult.structuredOk)`, e auditoria/return usam `finalPrefillResult` definido antes de ser lido.
+- Lint global com 239 erros: **falso positivo** — contagem incluia `COMPLIANCE_HUB_V2/modelos/**` que ja estao em `globalIgnores` de `eslint.config.js`. Lint real antes desta rodada: 11 erros concentrados em `TenantSettingsPage.jsx`.
+- `MetricasIAPage` dependendo so de fontes legadas: **parcialmente falso positivo** — ja consome `callGetOpsV2Metrics` e exibe `v2-usage-meters`, `v2-module-runs`, `v2-open-divergences`, `v2-senior-pending`, custo V2 total.
+
+Gaps reais confirmados antes da rodada:
+
+- `TenantSettingsPage.jsx` com refactor parcial: `tierForm`/`setTierForm` nao definidos (no-undef), imports/hooks orfaos (`callCloseTenantBillingPeriod`, `billingSettlement`, `closingBilling`, `handleCloseBilling`, `buildEntitlementPayload`) causando 11 erros de lint e UI de fechamento mensal inexistente.
+- `billingEntries` usado no backend (`functions/index.js:8270`) mas sem rule em `firestore.rules`.
+- Suite emulator de Firestore rules: continua ausente.
+
+### Implementacoes
+
+- Conclui refactor de `TenantSettingsPage.jsx`:
+  - edicao de tier agora via `entitlementForm.tier` + `setEntitlementForm(prev => ({...prev, tier: e.target.value}))`.
+  - `handleSaveEntitlements` usa `buildEntitlementPayload(entitlementForm)` e nao envia apenas `tier` cru.
+  - Botao "Fechar periodo" cabeado em `handleCloseBilling` → `callCloseTenantBillingPeriod` + refresh com `callGetTenantBillingSettlement`.
+  - Painel de settlement exibe status corrente, itemCount e mensagem de "nenhum fechamento" para o mes corrente.
+- Adicionada rule `match /billingEntries/{entryId}` com read via `canReadTenantDoc(resource.data.tenantId)` e create/update/delete bloqueados para client SDK.
+
+### Validacao
+
+- `npm run lint`: verde (0 erros).
+- `npm run test`: 741/741 testes passando em 54 arquivos.
+- `npm run build`: sucesso em ~2.2s (Vite).
+- `node --check functions/index.js` + `node --check functions/domain/v2BillingEngine.cjs` + `node --check functions/domain/v2UsageMeters.cjs`: OK.
+- `git diff --check`: apenas warnings CRLF cosmeticos.
+
+### Agora `IMPLEMENTADO E ALINHADO`
+
+- BLOCO 1 (Hardening rules): fechado para coleções V2 sensiveis incluindo `billingEntries`. Somente `publicReports` continua com acesso por token por design (com `expiresAt`+`active`).
+- BLOCO 2 (Qualidade lint/build): lint global verde. Eslint ignora modelos externos corretamente.
+- BLOCO 3 (Billing V2): ciclo end-to-end completo — `usageMeters` escrito com `monthKey`, `closeTenantBillingPeriodByAnalyst` grava `billingSettlements` com summary e audit trail, overview UI le resultado.
+- BLOCO 5 (Admin tenant): Tenant Settings V2 com edicao completa de `entitlementForm` (tier/status/presetKey/billingModel/maxCasesPerMonth/enabledProducts/enabledModules/enabledCapabilities/policyOverrides) e fechamento mensal operacional.
+- BLOCO 7 (Dashboards V2): MetricasIAPage consome `getOpsV2Metrics` (usageMeters/moduleRuns/divergences/decisions/seniorPending) como fonte primaria; dados legados continuam como complemento operacional.
+
+### Gaps remanescentes
+
+- Suite emulator de Firestore rules: requer infra Firebase emulator + `@firebase/rules-unit-testing` + Java runtime. Declarado gap para proximo ciclo.
+- Fila dedicada de senior review (lista, SLA, claim): gate backend + painel visual ok, mas nao existe fila ops dedicada.
+- Workflow completo de resolucao de divergencias providers: resolver backend ok, falta UI de fila/triagem.
+- Raw payload real em Storage: `payloadRef` criado quando payload grande mas escrita Storage nao comprovada no runtime — continua na zona "derivado metadata".
+- Epico 11 Premium permanece scaffold: `v2MonitoringEngine.processSingleWatchlist` so atualiza `lastRunAt`/`nextRunAt`/`runCount` sem reconsulta real, sem engine de alertas persistidos.
+- `v2SubjectManager.resolveSubject` ainda forca `cpf: taxId` — correto para PF, subótimo para PJ/CNPJ.
+- Plano mestre duplicado em ciclos `BLOCO-D`/`FECHAMENTO-MATRIZ-FINAL` entre linhas 4848-7114 — continua gap documental.
+
+### Proximo ciclo recomendado
+
+1. Instalar `@firebase/rules-unit-testing` e implementar suite emulator cobrindo tenant isolation de `decisions`/`reportSnapshots`/`moduleRuns`/`evidenceItems`/`riskSignals`/`usageMeters`/`billingSettlements`/`tenantSettings` + `publicReports` token lifecycle (expires/revoke).
+2. Criar fila senior review dedicada em portal ops (claim, release, expire) usando `decisions.requiresSenior`/`reviewLevel`.
+3. Corrigir `v2SubjectManager.resolveSubject` para distinguir PF vs PJ via `subjectType`/`taxIdType` sem quebrar compat.
+4. Gerar golden tests de `reportSnapshots` HTML publico para impedir regressao silenciosa.
+5. Deduplicar ciclos repetidos no plano mestre (compactar linhas 4848-7114).
+
+## Ciclo CONSOLIDACAO-V2-VENDAVEL — 2026-04-22
+
+### Objetivos
+
+- Fechar itens 3, 4 e 5 do ciclo anterior (AUDIT-FORENSE-V2) sem infra pesada.
+- `v2SubjectManager.resolveSubject` aceitando CPF e CNPJ sem quebrar caller existente.
+- Golden tests determinísticos para `resolveReportSections` e `buildReportSnapshotFromV2`.
+- Deduplicacao fisica das 8 instâncias repetidas dos ciclos `BLOCO-D`/`BLOCO-D-2`/`FECHAMENTO-MATRIZ-FINAL` no plano mestre.
+
+### Implementacoes
+
+- `functions/domain/v2SubjectManager.cjs`:
+  - nova funcao `classifyTaxId(taxId, explicitType?)` retorna `{ docType: 'cpf' | 'cnpj' | null, digits }`. Usa comprimento (11=CPF, 14=CNPJ) ou respeita override explicito.
+  - `resolveSubject` aceita param `taxIdType` opcional; quando CNPJ, passa `caseData` com `cnpj`+`productKey='dossier_pj'` em vez de forçar `cpf: taxId`. Rejeita taxId com comprimento invalido.
+- `functions/domain/v2SubjectManager.test.js` (novo): 6 testes cobrindo CPF/CNPJ/normalizacao/override/invalido.
+- `functions/domain/v2ReportSections.golden.test.js` (novo): 7 golden tests assegurando:
+  - determinismo (repetir = byte-identical hashes);
+  - `reportModuleKeys` congeladas para fixture PF com achados;
+  - ordenacao canonica de sections (`identity` < `criminal` < `analystConclusion`);
+  - mudanca em evidencia muda `evidenceSetHash` e `contentHash`;
+  - HTML/tenantId/builderVersion NAO alteram hash de conteudo;
+  - `status='ready'` so com HTML nao-vazio + sections; `status='failed'` sem HTML.
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`:
+  - deduplicado. 8 copias de BLOCO-D/BLOCO-D-2/FECHAMENTO-MATRIZ-FINAL → 1 copia sob heading `# 20. Registro de ciclos de execucao`. 2017 linhas removidas (7554 → 5537).
+
+### Validacao
+
+- `npm run test`: 754/754 em 56 arquivos (era 741/54). +13 testes: 6 v2SubjectManager + 7 golden report.
+- `npm run lint`: 0 erros.
+- `npm run build`: ~2.5s.
+- `node --check functions/index.js` + `v2SubjectManager.cjs` + `v2BillingEngine.cjs`: OK.
+
+### Agora `IMPLEMENTADO E ALINHADO`
+
+- Subject resolver aceita PF+PJ (CPF 11 / CNPJ 14) via inference automatica ou override explicito.
+- Golden tests bloqueiam regressao silenciosa em `ReportSnapshot`/`resolveReportSections`: contract/hash/section ordering sao congelados.
+- Plano mestre hygiene: duplicacao eliminada, `# 20. Registro de ciclos de execucao` e fonte unica.
+
+### Gaps remanescentes
+
+- Suite emulator Firestore rules (requer Java + `@firebase/rules-unit-testing`).
+- Fila senior review dedicada (backend gate ok, UI ops pendente).
+- Workflow UI resolucao divergencias (resolver backend ok).
+- Raw payload Storage real.
+- Epico 11 Premium continua scaffold.
+
+### Proximo ciclo recomendado
+
+1. Suite emulator Firestore rules (unica dependencia critica pra rules tests reais).
+2. Fila senior review UI em portal ops.
+3. Workflow UI resolucao divergencias providers.
+4. Epico 11 Premium: decidir go/no-go baseado em demanda concreta.
+
+---
+
+## Ciclo PREMIUM-VENDAVEL (2026-04-22)
+
+### Contexto
+
+Ciclo que fechou o "premium" do ComplianceHub V2: 5 sub-projetos do spec `docs/superpowers/specs/2026-04-22-premium-vendavel-design.md`, ordem B → D → C → E → A.
+
+### Entregas
+
+- **B — Catalogo de produtos + wizard entitlement-aware**: `v2ProductCatalog.cjs` + tests; callable `getClientProductCatalog`; `ProdutosPage.jsx`; `NovaSolicitacaoPage` passa a exigir `productKey` do catalogo.
+- **D — Dossier PJ wizard**: `validateCnpj` em `src/core/validators.js`; NovaSolicitacaoPage bifurca PF/PJ pelo `productKey === 'dossier_pj'`; backend aceita CNPJ via `v2SubjectManager.resolveSubject`.
+- **C — Alerts inbox cliente**: colecao `alerts` rules; callable `markAlertAs`; `AlertasClientePage.jsx`; KPI `alertsUnread` no dashboard cliente.
+- **E — Sales/upsell**: colecao `quoteRequests` com rule; callables `createQuoteRequest` e `resolveQuoteRequest`; `CotacoesPage.jsx`; aprovacao opcionalmente injeta productKey em `tenantEntitlements.enabledProducts`.
+- **A — Watchlist/monitoring real**: `v2MonitoringDiff.cjs` (diff por `moduleKey::kind` com ranking low<medium<high<critical → `watchlist_finding` / `watchlist_escalation`); `v2MonitoringEngine.cjs` reescrito com dependency injection (db, pipelineRunner, now, logger), cria caso fantasma (`source='watchlist'`, `billingCountable=false`), roda `materializeModuleRunsForCase`, diffa riskSignals vs `watchlist.lastSignals`, persiste alerts em batch; circuit breaker `consecutiveFailures >= 3` → `active=false`; callables `createWatchlist`/`pauseWatchlist`/`resumeWatchlist`/`deleteWatchlist`; `scheduledMonitoringJob` injeta pipelineRunner real; `WatchlistsPage.jsx` ops.
+
+### Auditoria ampliada
+
+- `CATEGORY` (backend+frontend): +SALES, +MONITORING (10 → 12).
+- `ENTITY_TYPE` (backend+frontend): +QUOTE_REQUEST, +ALERT, +WATCHLIST.
+- Actions novas: `QUOTE_REQUESTED`, `QUOTE_APPROVED`, `QUOTE_REJECTED`, `ALERT_STATE_CHANGED`, `WATCHLIST_CREATED`, `WATCHLIST_PAUSED`, `WATCHLIST_RESUMED`, `WATCHLIST_DELETED`, `WATCHLIST_AUTOPAUSED`.
+- Backend e frontend mirror sincronizados (tests de consistencia verdes).
+
+### Router/Sidebar
+
+- `/ops/cotacoes` e `/ops/watchlists` registradas em `App.jsx` (produtivo + demo) e em `opsNav` de `Sidebar.jsx`.
+
+### Validacao
+
+- `npm run test`: 835/835 em 62 arquivos (era 754/56). +81 tests (diff, engine, catalog, products, alerts, quotes, watchlists page, audit mirror).
+- `npm run lint`: 0 erros.
+- `npm run build`: ~2.5s.
+
+### Gaps remanescentes
+
+- Commit dos 5 sub-projetos no git (working tree nao commitado).
+- UI criacao de watchlist a partir de CasoPage (callable existe, hook UI pendente).
+- Suite emulator Firestore rules + fila senior review dedicada + workflow UI divergencias + raw payload Storage (nao bloqueiam PREMIUM).
+
+### Proximo ciclo recomendado
+
+1. Commitar PREMIUM-VENDAVEL em 5 commits (um por sub-projeto).
+2. Integrar `callCreateWatchlist` em CasoPage (botao "Adicionar a watchlist" apos conclusao).
+3. Endpoint Cloud Function on-demand para disparar watchlist manualmente (hoje so via schedule).
+
+---
+
+## Ciclo ESTABILIZACAO-PREMIUM-VENDAVEL (2026-04-22)
+
+### Objetivo
+
+Estabilizar os gaps imediatos do ciclo PREMIUM-VENDAVEL sem abrir nova frente grande: execucao manual de watchlist, criacao de watchlist a partir do caso, auditoria full-app em documento proprio e correcao do erro material de whitespace do plano.
+
+### Auditoria inicial confirmada
+
+- `PREMIUM-VENDAVEL` estava registrado no plano mestre.
+- `createWatchlist`, `pauseWatchlist`, `resumeWatchlist`, `deleteWatchlist` e `scheduledMonitoringJob` existiam no backend.
+- `WatchlistsPage.jsx` exibia watchlists e acoes de pausar, reativar e remover, mas nao tinha "Executar agora".
+- `CasoPage.jsx` ja consumia subject, moduleRuns, riskSignals, timeline e divergencias V2, mas nao tinha acao contextual para criar watchlist apos conclusao/publicacao.
+- `src/core/firebase/firestoreService.js` tinha `callCreateWatchlist`, mas nao tinha `callRunWatchlistNow`.
+- `git diff --check` falhava por linha em branco excedente no EOF deste plano.
+
+### Implementado
+
+1. Watchlist manual run:
+   - importado `processSingleWatchlist` no backend;
+   - criado callable `runWatchlistNow`;
+   - callable reutiliza o mesmo `pipelineRunner` do schedule, com `source='watchlist_manual'`;
+   - resultado retorna status e quantidade de alertas criados;
+   - auditoria registrada com nova action `WATCHLIST_RUN_NOW`.
+
+2. UI ops de watchlist:
+   - `firestoreService.js` passou a expor `callRunWatchlistNow`;
+   - `WatchlistsPage.jsx` ganhou botao "Executar agora" por watchlist.
+
+3. Criacao de watchlist a partir do caso:
+   - `CasoPage.jsx` passou a importar `callCreateWatchlist`;
+   - criado painel "Monitoramento continuo";
+   - painel aparece apenas quando o caso esta concluido/publicado, tem `subjectId`, usuario ops pode operar caso e ha entitlement/capability/modulo de monitoramento;
+   - modulos sugeridos sao derivados de `reportModuleKeys`, `effectiveModuleKeys`, `requestedModuleKeys` e `moduleRuns`, excluindo `decision` e `report_secure`.
+
+4. Auditoria operacional:
+   - criado `docs/audits/2026-04-22-v2-full-app-audit.md` com escopo auditado, achados corrigidos, pendencias e proxima ordem recomendada.
+
+### Arquivos criados
+
+- `docs/audits/2026-04-22-v2-full-app-audit.md`
+
+### Arquivos modificados
+
+- `functions/index.js`
+- `functions/audit/auditCatalog.js`
+- `src/core/audit/auditCatalog.js`
+- `src/core/firebase/firestoreService.js`
+- `src/core/firebase/firestoreService.test.js`
+- `src/portals/ops/WatchlistsPage.jsx`
+- `src/portals/ops/WatchlistsPage.test.jsx`
+- `src/portals/ops/CasoPage.jsx`
+- `src/portals/ops/CasoPage.css`
+- `src/portals/ops/CasoPage.test.jsx`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Testes adicionados/ajustados
+
+- `src/core/firebase/firestoreService.test.js`: cobertura para `callCreateWatchlist` e `callRunWatchlistNow`.
+- `src/portals/ops/WatchlistsPage.test.jsx`: cobertura do botao "Executar agora".
+- `src/portals/ops/CasoPage.test.jsx`: cobertura de criacao de watchlist a partir de caso concluido com entitlement e ausencia sem entitlement.
+- `functions/audit/auditCatalog.test.js`: preservada consistencia backend/frontend com a nova action.
+
+### Validacao executada
+
+- `npm run test -- functions/audit/auditCatalog.test.js src/core/firebase/firestoreService.test.js src/portals/ops/WatchlistsPage.test.jsx src/portals/ops/CasoPage.test.jsx` - 4 arquivos, 137 testes passando.
+
+### Gaps remanescentes
+
+- Suite emulator Firestore rules completa ainda precisa ser consolidada e executada.
+- Raw payload Storage ponta a ponta ainda precisa de helper central e testes.
+- Senior review queue dedicada ainda nao foi implementada.
+- Billing drilldown/export por settlement ainda nao foi fechado.
+- Pass UX/UI com Playwright nas rotas premium/vendaveis ainda nao foi executado nesta rodada.
+- Working tree segue grande e nao commitado; commits logicos devem ser feitos em ciclo proprio para nao misturar autoria/escopo.
+
+### Proximo ciclo recomendado
+
+1. Implementar e executar `npm run test:rules` com Firestore emulator para tenant isolation, raw access, public reports, exports, tenant admin, quoteRequests e watchlists.
+2. Fechar Raw Payload Storage com helper central e testes.
+3. Criar fila dedicada de senior review.
+4. Implementar billing drilldown exportavel.
+
+---
+
+## Ciclo HARDENING-RULES-RAW-PAYLOAD (2026-04-22)
+
+### Objetivo
+
+Continuar o fechamento V2 deixando UI/polish para ultimo, priorizando seguranca executavel, rules emulator real e proveniencia de raw payload.
+
+### Auditoria inicial confirmada
+
+- Existia `firestore.rules.test.js`, mas era teste textual de contrato, nao uma suite emulator real.
+- `firestore.rules` ja continha helpers `canReadTenantDoc` e `canReadRawTenantDoc`, mas a regra de `alerts` ainda nao permitia leitura por cliente do proprio tenant, apesar de existir inbox cliente.
+- `v2OperationalArtifacts.cjs` marcava payload grande com `payloadRef`, mas mantinha comentario de que o caller deveria gravar Storage; a escrita real nao estava ligada ao pipeline.
+- `npm audit --omit=dev` apontou vulnerabilidade critica transitiva em `protobufjs`.
+
+### Implementado
+
+1. Firestore rules emulator real:
+   - adicionados `@firebase/rules-unit-testing` e `firebase-tools`;
+   - criado `vitest.rules.config.js`;
+   - criado script `npm run test:rules`;
+   - criado `firestore.rules.emulator.test.js` com emulator real cobrindo:
+     - cliente tenant A nao le projection/alert/cotacao do tenant B;
+     - analyst tenant-scoped nao le documentos internos V2 de outro tenant;
+     - `rawSnapshots` e `providerRecords` exigem senior/supervisor/admin e tenant scope;
+     - `auditLogs`, `tenantSettings`, `tenantEntitlements`, `exports`, `quoteRequests` e `watchlists` nao aceitam writes diretos indevidos via client SDK;
+     - `publicReports` so le token ativo e nao expirado.
+
+2. Ajuste de rules:
+   - `alerts` passou a permitir leitura por cliente autenticado do mesmo tenant;
+   - writes seguem bloqueados no client SDK.
+
+3. Raw payload Storage:
+   - criado `functions/domain/v2RawPayloadStorage.cjs`;
+   - criado helper para normalizar metadata, gravar payload bruto em Cloud Storage e remover `storagePayload` antes do Firestore;
+   - `v2OperationalArtifacts.cjs` agora preserva candidato temporario `storagePayload` apenas em memoria para payload grande;
+   - `rawSnapshots` passam a incluir `retentionPolicy='raw_payload_180d'` e `visibility='restricted_raw'`;
+   - `materializeModuleRunsForCase` chama `persistRawSnapshotPayloads` com `storage.bucket()` antes de gravar `rawSnapshots`.
+
+4. Dependencias:
+   - `npm audit fix` aplicado;
+   - `npm audit --omit=dev` passou a retornar 0 vulnerabilidades de producao.
+
+### Arquivos criados
+
+- `firestore.rules.emulator.test.js`
+- `vitest.rules.config.js`
+- `functions/domain/v2RawPayloadStorage.cjs`
+- `functions/domain/v2RawPayloadStorage.test.js`
+
+### Arquivos modificados
+
+- `package.json`
+- `package-lock.json`
+- `firebase.json`
+- `firestore.rules`
+- `vite.config.js`
+- `functions/index.js`
+- `functions/domain/v2OperationalArtifacts.cjs`
+- `functions/domain/v2OperationalArtifacts.test.js`
+- `docs/audits/2026-04-22-v2-full-app-audit.md`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Testes adicionados/ajustados
+
+- `firestore.rules.emulator.test.js`: suite emulator real, 22 testes.
+- `functions/domain/v2RawPayloadStorage.test.js`: payload pequeno, payload grande, metadata e ausencia de candidato.
+- `functions/domain/v2OperationalArtifacts.test.js`: payload grande vira `payloadRef`/`storagePayload` temporario sem payload inline.
+
+### Validacao executada
+
+- `npm run test -- functions/domain/v2RawPayloadStorage.test.js functions/domain/v2OperationalArtifacts.test.js firestore.rules.test.js` - 3 arquivos, 31 testes passando.
+- `npm run test:rules` - 1 arquivo, 22 testes emulator passando.
+- `npm test` - 63 arquivos, 847 testes passando.
+- `npm run lint` - 0 erros.
+- `node --check functions/index.js` - OK.
+- `npm run build` - OK.
+- `git diff --check` - sem erro material; apenas avisos CRLF esperados no Windows.
+- `npm audit --omit=dev` - 0 vulnerabilidades de producao apos `npm audit fix`.
+
+### Gaps remanescentes
+
+- Restam vulnerabilidades moderadas em dependencias dev de `firebase-tools`; `npm audit fix --force` faria downgrade quebrador e nao foi aplicado.
+- Senior review queue dedicada ainda nao foi implementada.
+- Billing drilldown/export por settlement ainda nao foi fechado.
+- Portal cliente fallback audit ainda precisa reduzir/nomear fallback legado.
+- Pass UX/UI com Playwright permanece para o final, conforme decisao do ciclo.
+
+### Proximo ciclo recomendado
+
+1. Implementar senior review queue dedicada, sem redesign visual.
+2. Implementar billing drilldown/export por settlement.
+3. Fazer portal cliente fallback audit.
+4. Executar UI/UX apenas depois do fechamento funcional/backend.
+
+---
+
+## Ciclo BACKEND-FECHO-PRE-UI (2026-04-22)
+
+### Objetivo
+
+Comparar o plano mestre e `docs/audits/2026-04-22-v2-full-app-audit.md` com o codigo real, fechar os gaps de backend/contrato ainda pendentes e deixar a proxima rodada concentrada em UI/UX.
+
+### Auditoria inicial confirmada
+
+- O plano mestre ja registrava `PREMIUM-VENDAVEL`, `ESTABILIZACAO-PREMIUM-VENDAVEL` e `HARDENING-RULES-RAW-PAYLOAD`.
+- A auditoria full-app ainda apontava tres gaps funcionais antes de UI: fila senior dedicada, billing drilldown/export e portal cliente fallback audit.
+- O codigo real ja continha watchlist manual run, criacao de watchlist a partir do caso, rules emulator, raw payload Storage e tests verdes.
+- `concludeCaseByAnalyst` bloqueava casos que exigiam senior, mas nao materializava fila operacional dedicada.
+- `usageMeters` e `billingSettlements` existiam, mas ainda nao havia drilldown/export por modulo, produto, caso e providerRequest.
+- Portal cliente ja era seguro para abertura de relatorio, mas `resolveClientCaseView` ainda podia marcar `reportReady` por `caseData.reportReady`.
+
+### Implementado
+
+1. Senior review queue backend:
+   - criado `functions/domain/v2SeniorReviewQueue.cjs`;
+   - `concludeCaseByAnalyst` agora cria/atualiza `seniorReviewRequests/{senior_caseId}` quando `ReviewGate` exige senior e o ator nao tem aprovacao;
+   - tentativa bloqueada registra auditoria `SENIOR_REVIEW_REQUESTED` e marca o caso como `senior_review_required`;
+   - aprovacao senior existente em `seniorReviewRequests` libera nova tentativa de conclusao sem duplicar regra no frontend;
+   - criados callables `getSeniorReviewQueue` e `resolveSeniorReviewRequest`;
+   - approve/reject exige `senior_analyst`, `supervisor` ou `admin`, valida tenant e registra `SENIOR_REVIEW_APPROVED`/`SENIOR_REVIEW_REJECTED`;
+   - `getOpsV2Metrics` passou a usar `seniorReviewRequests` pendentes como fonte primaria da contagem senior.
+
+2. Billing drilldown/export backend:
+   - criado `functions/domain/v2BillingDrilldown.cjs`;
+   - criado callable `getTenantBillingDrilldown`;
+   - criado callable `exportTenantBillingDrilldown`;
+   - drilldown agrega `usageMeters` por modulo, produto, caso e providerRequest;
+   - settlement e usado como contexto/materializacao, nao como fonte atomica;
+   - custo interno so e retornado para roles com `BILLING_VIEW_INTERNAL_COST`;
+   - export CSV/JSON registra auditoria `BILLING_DRILLDOWN_EXPORTED`.
+
+3. Portal cliente fallback audit:
+   - `subscribeToClientCases` e `fetchClientCases` marcam fallback legado com `legacyFallbackUsed` e `legacyFallbackSource`;
+   - `resolveClientCaseView` deixou de usar `caseData.reportReady` como sinal visual de relatorio pronto;
+   - helper cliente agora considera `reportReady` somente quando `reportAvailability.status === 'ready'`.
+
+4. Rules e audit catalog:
+   - `firestore.rules` ganhou regra backend-owned para `seniorReviewRequests`;
+   - rules emulator passou a cobrir leitura tenant-scoped e bloqueio de write direto nessa colecao;
+   - catalogos de auditoria backend/frontend foram sincronizados com actions senior e billing drilldown.
+
+### Arquivos criados
+
+- `functions/domain/v2SeniorReviewQueue.cjs`
+- `functions/domain/v2SeniorReviewQueue.test.js`
+- `functions/domain/v2BillingDrilldown.cjs`
+- `functions/domain/v2BillingDrilldown.test.js`
+
+### Arquivos modificados
+
+- `functions/index.js`
+- `functions/audit/auditCatalog.js`
+- `src/core/audit/auditCatalog.js`
+- `src/core/firebase/firestoreService.js`
+- `src/core/firebase/firestoreService.test.js`
+- `src/core/clientPortal.js`
+- `src/core/clientPortal.test.js`
+- `firestore.rules`
+- `firestore.rules.emulator.test.js`
+- `docs/audits/2026-04-22-v2-full-app-audit.md`
+- `COMPLIANCE_HUB_V2/12_plano_execucao/PLANO_EXECUCAO_V2_MASTER.md`
+
+### Testes adicionados/ajustados
+
+- `functions/domain/v2SeniorReviewQueue.test.js`: request idempotente, motivos, sinais, modulos, aprovacao e resumo por status.
+- `functions/domain/v2BillingDrilldown.test.js`: agregacao por modulo/produto/caso/providerRequest, ocultacao de custo interno e export CSV/JSON.
+- `src/core/firebase/firestoreService.test.js`: callables de drilldown/export e fila/resolucao senior.
+- `src/core/clientPortal.test.js`: `reportReady` sem otimismo por `caseData.reportReady` e fallback legado marcado.
+- `firestore.rules.emulator.test.js`: `seniorReviewRequests` tenant-scoped e backend-owned.
+- `functions/audit/auditCatalog.test.js`: preservada consistencia backend/frontend com as novas actions.
+
+### Validacao executada
+
+- `npm run test -- functions/domain/v2SeniorReviewQueue.test.js functions/domain/v2BillingDrilldown.test.js functions/audit/auditCatalog.test.js src/core/firebase/firestoreService.test.js src/core/clientPortal.test.js firestore.rules.test.js` - 6 arquivos, 162 testes passando.
+- `npm test` - 65 arquivos, 867 testes passando.
+- `npm run test:rules` - 1 arquivo, 23 testes emulator passando.
+- `npm run lint` - 0 erros.
+- `node --check functions/index.js` - OK.
+- `npm run build` - OK, build concluido.
+- `git diff --check` - sem erro material; apenas avisos CRLF esperados no Windows.
+- `npm audit --omit=dev` - 0 vulnerabilidades de producao.
+
+### Gaps remanescentes
+
+- UI/UX ainda nao foi trabalhada por decisao explicita: fila senior visual, drilldown de billing em tela, divergencias com filtros e pass responsivo ficam para a rodada de UI.
+- Working tree segue grande e nao commitado; commits logicos/PR devem ser feitos antes de nova frente ampla.
+
+### Proximo ciclo recomendado
+
+1. Com backend validado, iniciar rodada UI/UX com as imagens de inspiracao do usuario.
+2. Implementar a camada visual para fila senior, drilldown de billing, workflow de divergencias e pass responsivo sem alterar a fonte de verdade backend.

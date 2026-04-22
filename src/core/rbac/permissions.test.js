@@ -24,6 +24,9 @@ describe('permissions — RBAC', () => {
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.CASE_WRITE)).toBe(true);
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.CASE_EXPORT)).toBe(true);
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.AUDIT_VIEW)).toBe(true);
+            expect(hasPermission(ROLES.ANALYST, PERMISSIONS.DECISION_APPROVE)).toBe(true);
+            expect(hasPermission(ROLES.ANALYST, PERMISSIONS.PROVIDER_DIVERGENCE_RESOLVE)).toBe(true);
+            expect(hasPermission(ROLES.ANALYST, PERMISSIONS.REPORT_PUBLISH)).toBe(false);
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.USERS_MANAGE)).toBe(false);
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.SETTINGS_MANAGE)).toBe(false);
             expect(hasPermission(ROLES.ANALYST, PERMISSIONS.CASE_CREATE_REQUEST)).toBe(false);
@@ -34,6 +37,9 @@ describe('permissions — RBAC', () => {
             expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.CASE_READ)).toBe(true);
             expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.CASE_WRITE)).toBe(true);
             expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.AUDIT_VIEW)).toBe(true);
+            expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.PROVIDER_DIVERGENCE_RESOLVE)).toBe(true);
+            expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.BILLING_VIEW_INTERNAL_COST)).toBe(true);
+            expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.ENTITLEMENT_MANAGE)).toBe(false);
             expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.SETTINGS_MANAGE)).toBe(false);
             expect(hasPermission(ROLES.SUPERVISOR, PERMISSIONS.TENANT_AUDIT_VIEW)).toBe(false);
         });
@@ -153,10 +159,10 @@ describe('permissions — RBAC', () => {
             }
         });
 
-        it('PERMISSIONS tem 8 permissoes distintas', () => {
+        it('PERMISSIONS tem permissoes distintas', () => {
             const perms = Object.values(PERMISSIONS);
-            expect(perms).toHaveLength(8);
-            expect(new Set(perms).size).toBe(8);
+            expect(perms).toHaveLength(16);
+            expect(new Set(perms).size).toBe(16);
         });
     });
 });

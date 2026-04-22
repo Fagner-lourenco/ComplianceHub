@@ -1,0 +1,147 @@
+{
+  "create": {
+    "request_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+    "search": {
+      "on_demand": false,
+      "search_type": "cpf",
+      "search_key": "050.232.903-36",
+      "response_type": "warrant",
+      "search_params": {
+        "public_search": false,
+        "filter": {},
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T21:38:19.570Z",
+    "updated_at": "2026-04-02T21:38:19.570Z",
+    "tags": {
+      "potential_homonym": false
+    }
+  },
+  "poll": {
+    "request_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+    "search": {
+      "on_demand": false,
+      "search_type": "cpf",
+      "search_key": "050.232.903-36",
+      "response_type": "warrant",
+      "search_params": {
+        "public_search": false,
+        "filter": {},
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "completed",
+    "created_at": "2026-04-02T21:38:19.570Z",
+    "updated_at": "2026-04-02T21:39:01.554Z",
+    "tags": {
+      "dashboard_id": null
+    }
+  },
+  "responses": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 1,
+    "all_pages_count": 1,
+    "all_count": 1,
+    "page_data": [
+      {
+        "request_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+        "response_id": "570322c8-adf1-424c-bc3f-dc32c053d6de",
+        "origin": "api",
+        "origin_id": "1a110a9e-598c-406e-8793-064dcd3ac474",
+        "response_type": "warrant",
+        "response_data": {
+          "warrant_id": "4c7b3371-bdda-4f1e-a92a-a77b4107bc85",
+          "tribunal_id": "203957476",
+          "individual_id": "203957476",
+          "warrant_type": "warrant_of_arrest",
+          "arrest_type": "provisional",
+          "law_type": {
+            "number": ""
+          },
+          "number": "0204723542022806016701000326",
+          "previous_number": "",
+          "issue_date": "2025-11-17T00:00:00.000Z",
+          "expiration_date": "2026-04-02T21:38:57.402Z",
+          "status": "Pendente de Cumprimento",
+          "code": "0204723-54.2022.8.06.0167",
+          "tribunal": "06",
+          "justice": "8",
+          "tribunal_acronym": "TJCE",
+          "court": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+          "judgementSummary": "Em face do exposto, decreto a custodia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituicao Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias ou ate que seja pago o valor devido, no qual devem ser incluidas as parcelas que se vencerem ate o dia do pagamento, como constou expressamente do mandado de intimacao. Inclua-se no BNMP 3.0. DETERMINO QUE O MANDADO DE PRISAO CIVIL SEJA ENCAMINHADO PARA A CEMAN PARA FINS DE CUMPRIMENTO.",
+          "duration_years": 0,
+          "duration_months": 0,
+          "duration_days": 0,
+          "observations": "Expeca-se o mandado de prisao, a ser cumprida no regime fechado (prazo de dois anos) e consigne-se nele o valor da divida, cuja atualizacao consta carreada no ID 172498859 (R$4.741,48, quatro mil e setecentos e quarenta e um reeais e quarenta e oito centavos).",
+          "recapture": false,
+          "crawler": {
+            "source_name": "JBnmp - BR - Warrant - No Auth",
+            "crawl_id": "c2e2c853-5f4e-4720-8fec-e49b2f95ec4d",
+            "weight": 10,
+            "updated_at": "2026-04-02T21:38:57.402Z"
+          },
+          "created_at": "2026-04-02T21:38:57.402Z",
+          "updated_at": "2026-04-02T21:38:57.402Z",
+          "entity": {
+            "entity_id": "",
+            "main_document": "050.232.903-36",
+            "entity_type": "person",
+            "name": "FRANCISCO TACIANO DE SOUSA",
+            "aka_names": [],
+            "gender": "male",
+            "birth_date": "1991-08-16T00:00:00.000Z",
+            "documents": [
+              {
+                "document": "050.232.903-36",
+                "document_type": "cpf"
+              },
+              {
+                "document": "256078251-03",
+                "document_type": "rji"
+              }
+            ],
+            "addresses": [],
+            "created_at": "2026-04-02T21:38:57.404Z",
+            "updated_at": "2026-04-02T21:38:57.404Z",
+            "contacts": [],
+            "parents": [
+              {
+                "name": "FRANCISCA CAETANA DE SOUSA",
+                "kinship": "mother"
+              }
+            ],
+            "partners": [],
+            "ethnicity": "Não Informada"
+          },
+          "attachments": [
+            {
+              "attachment_id": "203957476-1",
+              "status": "pending",
+              "extension": "pdf"
+            }
+          ],
+          "document_content": "O(a) Magistrado(a) subscritor do presente Mandado de Prisao determina ao oficial de justica da sua jurisdicao ou a qualquer Autoridade Policial competente e seus agentes, a quem este for apresentado ou dele tomar conhecimento, que PRENDA e RECOLHA, em alguma unidade prisional, a ordem e a disposicao do juizo expedidor, a pessoa acima indicada e qualificada.",
+          "post_warnings": "Decorrido o prazo contido neste Mandado, a autoridade responsavel pela custodia devera, independentemente de alvara de soltura, colocar o preso em liberdade, salvo se houver outra ordem de prisao em desfavor do interno ou comunicacao de prorrogacao, ocasiao em a liberacao devera ocorrer apos o decurso do novo prazo. A soltura devera ser precedida de pesquisa no Portal BNMP de outras ordens de prisao cumpridas e impeditivas da liberdade.Apos as formalidades de registro da prisao, a autoridade policial devera comunicar o cumprimento do mandado, imediatamente, a autoridade judicial que determinou a expedicao desta ordem e, nos casos em que forem cumpridos fora da jurisdicao do juiz processante, tambem a autoridade judicial local competente, conforme lei de organizacao judiciaria, para fins de audiencia de custodia. Informacoes Processuais: Nº do processo: 0204723-54.2022.8.06.0167 Orgao Judicial: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL - TJCE Especie de prisao: Civil Tipificacao Penal: Prazo da Prisao: 60 (contados a partir da data da prisao) Valor da Divida de Alimentos: R$ 4,741.48 Data da Atualizacao da Divida: 30/08/2025 Identificacao biometrica: Biometria nao coletada"
+        },
+        "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+        "created_at": "2026-04-02T21:38:58.462Z",
+        "request_created_at": "2026-04-02T21:38:57.943Z",
+        "tags": {
+          "dashboard_id": null
+        }
+      }
+    ]
+  },
+  "requestId": "1a110a9e-598c-406e-8793-064dcd3ac474"
+}

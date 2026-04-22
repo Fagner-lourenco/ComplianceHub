@@ -8,7 +8,7 @@ import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
-import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getClientProjection, getEnabledPhases, getTenantSettings, saveClientPublicReport } from '../../core/firebase/firestoreService';
+import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getClientProjection, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildCaseReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
@@ -78,8 +78,7 @@ export default function SolicitacoesPage() {
         let cancelled = false;
         setPublicResultLoading(true);
         getClientProjection(selectedCase.id)
-            .then(async (projection) => projection || getCasePublicResult(selectedCase.id))
-            .then((data) => { if (!cancelled) setPublicResult(data || selectedCase.publicResultMock || null); })
+            .then((projection) => { if (!cancelled) setPublicResult(projection || selectedCase.publicResultMock || null); })
             .catch(() => { if (!cancelled) setPublicResult(selectedCase.publicResultMock || null); })
             .finally(() => { if (!cancelled) setPublicResultLoading(false); });
         return () => { cancelled = true; };
@@ -138,7 +137,8 @@ export default function SolicitacoesPage() {
             if (isDemoMode) {
                 window.open(buildCaseReportPath(selectedCaseView, true), '_blank', 'noopener,noreferrer');
             } else {
-                const token = reportAvailability.publicReportToken || await saveClientPublicReport(selectedCase.id);
+                const token = reportAvailability.publicReportToken;
+                if (!token) throw new Error('Token de relatorio nao disponivel. Aguarde a publicacao pelo analista.');
                 window.open(`/r/${token}`, '_blank', 'noopener,noreferrer');
             }
             setReportStatus({ state: 'success', message: 'Relatorio aberto com sucesso.' });

@@ -1,0 +1,585 @@
+{
+  "requestId": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+  "create": {
+    "request_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+    "search": {
+      "on_demand": false,
+      "search_type": "cpf",
+      "search_key": "050.232.903-36",
+      "response_type": "lawsuits",
+      "search_params": {
+        "public_search": false,
+        "filter": {},
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T23:25:30.571Z",
+    "updated_at": "2026-04-02T23:25:30.571Z",
+    "tags": {
+      "potential_homonym": false
+    }
+  },
+  "responses": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 1,
+    "all_pages_count": 1,
+    "all_count": 1,
+    "page_data": [
+      {
+        "request_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+        "response_id": "72abc2c7-c71b-4925-b07c-0247aa5d3e72",
+        "origin": "api",
+        "origin_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+        "response_type": "lawsuit",
+        "response_data": {
+          "code": "0202743-72.2022.8.06.0167",
+          "instance": 1,
+          "name": "JOSE WILLIAM DOMINGUES RIPARDO X FRANCISCO TACIANO DE SOUSA",
+          "free_justice": false,
+          "secrecy_level": 0,
+          "courts": [
+            {
+              "code": "84782",
+              "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL"
+            },
+            {
+              "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL - SOBRAL CRIME"
+            }
+          ],
+          "tribunal_acronym": "TJCE",
+          "county": "3ª VARA CIVEL DA COMARCA DE SOBRAL",
+          "state": "CE",
+          "city": "SOBRAL",
+          "distribution_date": "2022-05-03T15:51:03.000Z",
+          "last_step": {
+            "step_id": "tPaek97LiwtZVDO+VpgE0zHf7kHhIlrmaQOzeSJjj/8=",
+            "step_date": "2024-10-23T17:33:17.000Z",
+            "content": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | VISTOS E ETC. CUMPRA-SE O DETERMINADO PELO EGREGIO TRIBUNAL DE JUSTICA DO CEARA, COM A EXPEDICAO DA CARTA DE GUIA DEFINITIVA E A RESPECTIVA REMESSA AO JUIZO DAS EXECUCOES PENAIS (2 VARA CRIMINAL DA COMARCA DE SOBRAL-CE). EXPEDIENTES NECESSARIOS.",
+            "steps_count": 82
+          },
+          "tags": {
+            "crawl_id": "797727e7-085b-4c4b-9dfb-52fc637adcc1",
+            "criminal": true,
+            "dictionary_updated_at": "2026-04-02T23:25:30.671Z",
+            "datalake_id": "02027437220228060167",
+            "datalake_segment": "JUSTICA_ESTADUAL"
+          },
+          "justice": "8",
+          "tribunal": "06",
+          "crawler": {
+            "source_name": "JBD - BR - Lawsuit - Auth",
+            "crawl_id": "b6c36565-69f9-460a-aae0-ec8aaa1d3a6d",
+            "updated_at": "2025-08-30T06:11:01.246Z",
+            "weight": 10
+          },
+          "area": "DIREITO PENAL",
+          "justice_description": "JUSTIÇA ESTADUAL",
+          "system": "OTHER",
+          "created_at": "2024-10-11T16:30:23.131Z",
+          "updated_at": "2026-04-02T17:11:56.923Z",
+          "amount": 0.01,
+          "classifications": [
+            {
+              "code": "283",
+              "name": "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+            }
+          ],
+          "subjects": [
+            {
+              "code": "12542",
+              "name": "REAL"
+            },
+            {
+              "code": "10949",
+              "name": "VIOLÊNCIA DOMÉSTICA CONTRA A MULHER"
+            },
+            {
+              "code": "3402",
+              "name": "AMEAÇA"
+            }
+          ],
+          "parties": [
+            {
+              "name": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "side": "Interested",
+              "person_type": "PROMOTOR",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "name": "DELEGACIA ESPECIALIZADA DDM SOBRAL",
+              "side": "Interested",
+              "person_type": "AUTORIDADE POLICIAL",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "main_document": "01869564007726",
+              "name": "DELEGACIA ESPECIALIZADA - DDM SOBRAL",
+              "side": "Active",
+              "person_type": "Autor",
+              "documents": [
+                {
+                  "document": "01869564007726",
+                  "document_type": "cnpj"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "05023290336",
+              "name": "FRANCISCO TACIANO DE SOUSA",
+              "side": "Passive",
+              "person_type": "REU",
+              "documents": [
+                {
+                  "document": "05023290336",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": [
+                {
+                  "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+                  "documents": []
+                }
+              ]
+            },
+            {
+              "main_document": "03532276330",
+              "name": "JOSE WILLIAM DOMINGUES RIPARDO",
+              "side": "Interested",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "03532276330",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "02815697386",
+              "name": "CRISTIANE DE LIMA MONTEIRO",
+              "side": "Interested",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "02815697386",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "",
+              "name": "JOSIANE DE LIMA MONTEIRO",
+              "side": "Active",
+              "person_type": "Autor",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "main_document": "",
+              "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+              "side": "Passive",
+              "person_type": "Advogado",
+              "documents": [],
+              "lawyers": []
+            }
+          ],
+          "attachments": [],
+          "related_lawsuits": [
+            {
+              "code": "0000000-85.0316.1.00.2022",
+              "instance": 1
+            }
+          ],
+          "steps": []
+        },
+        "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+        "created_at": "2026-04-02T23:25:30.672Z",
+        "request_created_at": "2026-04-02T23:25:30.571Z",
+        "tags": {
+          "dashboard_id": null,
+          "cached_response": true
+        }
+      }
+    ]
+  },
+  "criminalOnly": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 1,
+    "all_pages_count": 1,
+    "all_count": 1,
+    "page_data": [
+      {
+        "request_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+        "response_id": "72abc2c7-c71b-4925-b07c-0247aa5d3e72",
+        "origin": "api",
+        "origin_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+        "response_type": "lawsuit",
+        "response_data": {
+          "code": "0202743-72.2022.8.06.0167",
+          "instance": 1,
+          "name": "JOSE WILLIAM DOMINGUES RIPARDO X FRANCISCO TACIANO DE SOUSA",
+          "free_justice": false,
+          "secrecy_level": 0,
+          "courts": [
+            {
+              "code": "84782",
+              "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL"
+            },
+            {
+              "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL - SOBRAL CRIME"
+            }
+          ],
+          "tribunal_acronym": "TJCE",
+          "county": "3ª VARA CIVEL DA COMARCA DE SOBRAL",
+          "state": "CE",
+          "city": "SOBRAL",
+          "distribution_date": "2022-05-03T15:51:03.000Z",
+          "last_step": {
+            "step_id": "tPaek97LiwtZVDO+VpgE0zHf7kHhIlrmaQOzeSJjj/8=",
+            "step_date": "2024-10-23T17:33:17.000Z",
+            "content": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | VISTOS E ETC. CUMPRA-SE O DETERMINADO PELO EGREGIO TRIBUNAL DE JUSTICA DO CEARA, COM A EXPEDICAO DA CARTA DE GUIA DEFINITIVA E A RESPECTIVA REMESSA AO JUIZO DAS EXECUCOES PENAIS (2 VARA CRIMINAL DA COMARCA DE SOBRAL-CE). EXPEDIENTES NECESSARIOS.",
+            "steps_count": 82
+          },
+          "tags": {
+            "crawl_id": "797727e7-085b-4c4b-9dfb-52fc637adcc1",
+            "criminal": true,
+            "dictionary_updated_at": "2026-04-02T23:25:30.671Z",
+            "datalake_id": "02027437220228060167",
+            "datalake_segment": "JUSTICA_ESTADUAL"
+          },
+          "justice": "8",
+          "tribunal": "06",
+          "crawler": {
+            "source_name": "JBD - BR - Lawsuit - Auth",
+            "crawl_id": "b6c36565-69f9-460a-aae0-ec8aaa1d3a6d",
+            "updated_at": "2025-08-30T06:11:01.246Z",
+            "weight": 10
+          },
+          "area": "DIREITO PENAL",
+          "justice_description": "JUSTIÇA ESTADUAL",
+          "system": "OTHER",
+          "created_at": "2024-10-11T16:30:23.131Z",
+          "updated_at": "2026-04-02T17:11:56.923Z",
+          "amount": 0.01,
+          "classifications": [
+            {
+              "code": "283",
+              "name": "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+            }
+          ],
+          "subjects": [
+            {
+              "code": "12542",
+              "name": "REAL"
+            },
+            {
+              "code": "10949",
+              "name": "VIOLÊNCIA DOMÉSTICA CONTRA A MULHER"
+            },
+            {
+              "code": "3402",
+              "name": "AMEAÇA"
+            }
+          ],
+          "parties": [
+            {
+              "name": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "side": "Interested",
+              "person_type": "PROMOTOR",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "name": "DELEGACIA ESPECIALIZADA DDM SOBRAL",
+              "side": "Interested",
+              "person_type": "AUTORIDADE POLICIAL",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "main_document": "01869564007726",
+              "name": "DELEGACIA ESPECIALIZADA - DDM SOBRAL",
+              "side": "Active",
+              "person_type": "Autor",
+              "documents": [
+                {
+                  "document": "01869564007726",
+                  "document_type": "cnpj"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "05023290336",
+              "name": "FRANCISCO TACIANO DE SOUSA",
+              "side": "Passive",
+              "person_type": "REU",
+              "documents": [
+                {
+                  "document": "05023290336",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": [
+                {
+                  "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+                  "documents": []
+                }
+              ]
+            },
+            {
+              "main_document": "03532276330",
+              "name": "JOSE WILLIAM DOMINGUES RIPARDO",
+              "side": "Interested",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "03532276330",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "02815697386",
+              "name": "CRISTIANE DE LIMA MONTEIRO",
+              "side": "Interested",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "02815697386",
+                  "document_type": "cpf"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "",
+              "name": "JOSIANE DE LIMA MONTEIRO",
+              "side": "Active",
+              "person_type": "Autor",
+              "documents": [],
+              "lawyers": []
+            },
+            {
+              "main_document": "",
+              "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+              "side": "Passive",
+              "person_type": "Advogado",
+              "documents": [],
+              "lawyers": []
+            }
+          ],
+          "attachments": [],
+          "related_lawsuits": [
+            {
+              "code": "0000000-85.0316.1.00.2022",
+              "instance": 1
+            }
+          ],
+          "steps": []
+        },
+        "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+        "created_at": "2026-04-02T23:25:30.672Z",
+        "request_created_at": "2026-04-02T23:25:30.571Z",
+        "tags": {
+          "dashboard_id": null,
+          "cached_response": true
+        }
+      }
+    ]
+  },
+  "pageData": [
+    {
+      "request_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+      "response_id": "72abc2c7-c71b-4925-b07c-0247aa5d3e72",
+      "origin": "api",
+      "origin_id": "1c257196-c9b3-47b3-b4d3-aaac9dcdcb57",
+      "response_type": "lawsuit",
+      "response_data": {
+        "code": "0202743-72.2022.8.06.0167",
+        "instance": 1,
+        "name": "JOSE WILLIAM DOMINGUES RIPARDO X FRANCISCO TACIANO DE SOUSA",
+        "free_justice": false,
+        "secrecy_level": 0,
+        "courts": [
+          {
+            "code": "84782",
+            "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL"
+          },
+          {
+            "name": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL - SOBRAL CRIME"
+          }
+        ],
+        "tribunal_acronym": "TJCE",
+        "county": "3ª VARA CIVEL DA COMARCA DE SOBRAL",
+        "state": "CE",
+        "city": "SOBRAL",
+        "distribution_date": "2022-05-03T15:51:03.000Z",
+        "last_step": {
+          "step_id": "tPaek97LiwtZVDO+VpgE0zHf7kHhIlrmaQOzeSJjj/8=",
+          "step_date": "2024-10-23T17:33:17.000Z",
+          "content": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | VISTOS E ETC. CUMPRA-SE O DETERMINADO PELO EGREGIO TRIBUNAL DE JUSTICA DO CEARA, COM A EXPEDICAO DA CARTA DE GUIA DEFINITIVA E A RESPECTIVA REMESSA AO JUIZO DAS EXECUCOES PENAIS (2 VARA CRIMINAL DA COMARCA DE SOBRAL-CE). EXPEDIENTES NECESSARIOS.",
+          "steps_count": 82
+        },
+        "tags": {
+          "crawl_id": "797727e7-085b-4c4b-9dfb-52fc637adcc1",
+          "criminal": true,
+          "dictionary_updated_at": "2026-04-02T23:25:30.671Z",
+          "datalake_id": "02027437220228060167",
+          "datalake_segment": "JUSTICA_ESTADUAL"
+        },
+        "justice": "8",
+        "tribunal": "06",
+        "crawler": {
+          "source_name": "JBD - BR - Lawsuit - Auth",
+          "crawl_id": "b6c36565-69f9-460a-aae0-ec8aaa1d3a6d",
+          "updated_at": "2025-08-30T06:11:01.246Z",
+          "weight": 10
+        },
+        "area": "DIREITO PENAL",
+        "justice_description": "JUSTIÇA ESTADUAL",
+        "system": "OTHER",
+        "created_at": "2024-10-11T16:30:23.131Z",
+        "updated_at": "2026-04-02T17:11:56.923Z",
+        "amount": 0.01,
+        "classifications": [
+          {
+            "code": "283",
+            "name": "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+          }
+        ],
+        "subjects": [
+          {
+            "code": "12542",
+            "name": "REAL"
+          },
+          {
+            "code": "10949",
+            "name": "VIOLÊNCIA DOMÉSTICA CONTRA A MULHER"
+          },
+          {
+            "code": "3402",
+            "name": "AMEAÇA"
+          }
+        ],
+        "parties": [
+          {
+            "name": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+            "side": "Interested",
+            "person_type": "PROMOTOR",
+            "documents": [],
+            "lawyers": []
+          },
+          {
+            "name": "DELEGACIA ESPECIALIZADA DDM SOBRAL",
+            "side": "Interested",
+            "person_type": "AUTORIDADE POLICIAL",
+            "documents": [],
+            "lawyers": []
+          },
+          {
+            "main_document": "01869564007726",
+            "name": "DELEGACIA ESPECIALIZADA - DDM SOBRAL",
+            "side": "Active",
+            "person_type": "Autor",
+            "documents": [
+              {
+                "document": "01869564007726",
+                "document_type": "cnpj"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "05023290336",
+            "name": "FRANCISCO TACIANO DE SOUSA",
+            "side": "Passive",
+            "person_type": "REU",
+            "documents": [
+              {
+                "document": "05023290336",
+                "document_type": "cpf"
+              }
+            ],
+            "lawyers": [
+              {
+                "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+                "documents": []
+              }
+            ]
+          },
+          {
+            "main_document": "03532276330",
+            "name": "JOSE WILLIAM DOMINGUES RIPARDO",
+            "side": "Interested",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "03532276330",
+                "document_type": "cpf"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "02815697386",
+            "name": "CRISTIANE DE LIMA MONTEIRO",
+            "side": "Interested",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "02815697386",
+                "document_type": "cpf"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "",
+            "name": "JOSIANE DE LIMA MONTEIRO",
+            "side": "Active",
+            "person_type": "Autor",
+            "documents": [],
+            "lawyers": []
+          },
+          {
+            "main_document": "",
+            "name": "DEFENSORIA PÚBLICA DO ESTADO DO CEARÁ",
+            "side": "Passive",
+            "person_type": "Advogado",
+            "documents": [],
+            "lawyers": []
+          }
+        ],
+        "attachments": [],
+        "related_lawsuits": [
+          {
+            "code": "0000000-85.0316.1.00.2022",
+            "instance": 1
+          }
+        ],
+        "steps": []
+      },
+      "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+      "created_at": "2026-04-02T23:25:30.672Z",
+      "request_created_at": "2026-04-02T23:25:30.571Z",
+      "tags": {
+        "dashboard_id": null,
+        "cached_response": true
+      }
+    }
+  ],
+  "totalCount": 1
+}

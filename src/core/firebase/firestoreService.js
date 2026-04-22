@@ -265,6 +265,13 @@ function buildTenantCollectionQuery(collectionId, tenantId, orderField, queryLim
         : query(collection(db, collectionId), orderBy(orderField, 'desc'), limit(queryLimit));
 }
 
+function buildCaseScopedQuery(collectionId, caseId, tenantId, queryLimit = DEFAULT_QUERY_LIMIT) {
+    const constraints = [where('caseId', '==', caseId)];
+    if (tenantId) constraints.push(where('tenantId', '==', tenantId));
+    constraints.push(limit(queryLimit));
+    return query(collection(db, collectionId), ...constraints);
+}
+
 function buildTenantStructuredQuery(collectionId, tenantId, orderField, queryLimit = DEFAULT_QUERY_LIMIT) {
     const structuredQuery = {
         from: [{ collectionId }],
@@ -488,7 +495,9 @@ export function subscribeToCases(tenantId, callback) {
 }
 
 export function subscribeToClientCases(tenantId, callback) {
-    const legacyQuery = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt');
+    const legacyQuery = tenantId
+        ? query(collection(db, 'clientCaseList'), where('tenantId', '==', tenantId), limit(DEFAULT_QUERY_LIMIT))
+        : query(collection(db, 'clientCaseList'), limit(DEFAULT_QUERY_LIMIT));
     const projectionQuery = tenantId
         ? query(collection(db, 'clientProjections'), where('tenantId', '==', tenantId), limit(DEFAULT_QUERY_LIMIT))
         : query(collection(db, 'clientProjections'), limit(DEFAULT_QUERY_LIMIT));
@@ -498,54 +507,73 @@ export function subscribeToClientCases(tenantId, callback) {
     let legacyReady = false;
     let projectionReady = false;
 
-    const emitMergedCases = () => {
-        if (!legacyReady || !projectionReady) return;
-
-        const byId = new Map();
-        legacyCases.forEach((caseData) => byId.set(caseData.id, caseData));
-        projectedCases.forEach((caseData) => {
-            const current = byId.get(caseData.id) || {};
-            byId.set(caseData.id, {
-                ...current,
+    const emitCases = () => {
+        if (!projectionReady) return;
+        const sourceCases = projectedCases.length > 0
+            ? projectedCases.map((caseData) => ({ ...caseData, clientDataSource: 'clientProjections', legacyFallbackUsed: false, legacyFallbackSource: null }))
+            : (legacyReady ? legacyCases.map((caseData) => ({
                 ...caseData,
-                publicResult: {
-                    ...(current.publicResult || {}),
-                    ...(caseData.publicResult || {}),
-                },
-            });
-        });
+                clientDataSource: 'legacyFallback:clientCaseList',
+                legacyFallbackUsed: true,
+                legacyFallbackSource: 'clientCaseList',
+            })) : []);
 
-        const merged = [...byId.values()].sort((left, right) => {
+        const sorted = sourceCases.sort((left, right) => {
             const leftDate = left.createdAt?.seconds || new Date(left.createdAt || left.updatedAt || 0).getTime() || 0;
             const rightDate = right.createdAt?.seconds || new Date(right.createdAt || right.updatedAt || 0).getTime() || 0;
             return rightDate - leftDate;
         });
-        callback(merged, null);
+
+        callback(sorted, null);
     };
 
     const unsubscribeLegacy = onSnapshot(legacyQuery, (snapshot) => {
-        legacyReady = true;
         legacyCases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
-        emitMergedCases();
+        legacyReady = true;
+        emitCases();
     }, (error) => {
-        console.error('Error subscribing to client cases:', error);
+        console.error('clientCaseList fallback subscription error:', error);
+        legacyCases = [];
+        legacyReady = true;
+        emitCases();
+    });
+
+    const unsubscribeProjection = onSnapshot(projectionQuery, (snapshot) => {
+        projectedCases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
+        projectionReady = true;
+        emitCases();
+    }, (error) => {
+        console.error('clientProjections subscription error:', error);
         callback([], error);
     });
 
-    const unsubscribeProjections = onSnapshot(projectionQuery, (snapshot) => {
-        projectionReady = true;
-        projectedCases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
-        emitMergedCases();
-    }, (error) => {
-        projectionReady = true;
-        console.warn('ClientProjection subscription unavailable, using legacy clientCases only:', error);
-        emitMergedCases();
-    });
-
     return () => {
-        unsubscribeLegacy();
-        unsubscribeProjections();
+        unsubscribeLegacy?.();
+        unsubscribeProjection?.();
     };
+}
+
+export function subscribeToClientProjections(tenantId, callback) {
+    const projectionQuery = tenantId
+        ? query(collection(db, 'clientProjections'), where('tenantId', '==', tenantId), limit(DEFAULT_QUERY_LIMIT))
+        : query(collection(db, 'clientProjections'), limit(DEFAULT_QUERY_LIMIT));
+
+    return onSnapshot(projectionQuery, (snapshot) => {
+        const projectedCases = snapshot.docs
+            .map((documentSnapshot) => ({
+                ...mapCaseDocument(documentSnapshot.id, documentSnapshot.data()),
+                clientDataSource: 'clientProjections',
+            }))
+            .sort((left, right) => {
+                const leftDate = left.createdAt?.seconds || new Date(left.createdAt || left.updatedAt || 0).getTime() || 0;
+                const rightDate = right.createdAt?.seconds || new Date(right.createdAt || right.updatedAt || 0).getTime() || 0;
+                return rightDate - leftDate;
+            });
+        callback(projectedCases, null);
+    }, (error) => {
+        console.error('Error subscribing to client projections:', error);
+        callback([], error);
+    });
 }
 
 export function fetchCases(tenantId) {
@@ -561,13 +589,18 @@ export function fetchCases(tenantId) {
 
 export function fetchClientCases(tenantId) {
     return fetchOrderedCollection({
-        collectionId: 'clientCases',
+        collectionId: 'clientCaseList',
         tenantId,
         orderField: 'createdAt',
-        timeoutMessage: 'Firestore client cases query timeout.',
-        fallbackMessage: 'Firestore client cases REST fallback failed.',
+        timeoutMessage: 'Firestore client case list query timeout.',
+        fallbackMessage: 'Firestore client case list REST fallback failed.',
         mapper: mapCaseDocument,
-    });
+    }).then((cases) => cases.map((caseData) => ({
+        ...caseData,
+        clientDataSource: 'legacyFallback:clientCaseList',
+        legacyFallbackUsed: true,
+        legacyFallbackSource: 'clientCaseList',
+    })));
 }
 
 export async function getCase(caseId) {
@@ -617,13 +650,13 @@ export function subscribeToCaseDoc(caseId, callback) {
     });
 }
 
-export function subscribeToModuleRunsForCase(caseId, callback) {
+export function subscribeToModuleRunsForCase(caseId, callback, tenantId = null) {
     if (!caseId) {
         callback([], null);
         return () => {};
     }
 
-    const q = query(collection(db, 'moduleRuns'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const q = buildCaseScopedQuery('moduleRuns', caseId, tenantId);
     return onSnapshot(q, (snapshot) => {
         const moduleRuns = snapshot.docs
             .map((documentSnapshot) => mapModuleRunDocument(documentSnapshot.id, documentSnapshot.data()))
@@ -635,9 +668,9 @@ export function subscribeToModuleRunsForCase(caseId, callback) {
     });
 }
 
-export async function fetchModuleRunsForCase(caseId) {
+export async function fetchModuleRunsForCase(caseId, tenantId = null) {
     if (!caseId) return [];
-    const q = query(collection(db, 'moduleRuns'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const q = buildCaseScopedQuery('moduleRuns', caseId, tenantId);
     const snapshot = await withFirestoreTimeout(
         getDocs(q),
         'Firestore moduleRuns query timeout.',
@@ -647,12 +680,12 @@ export async function fetchModuleRunsForCase(caseId) {
         .sort((left, right) => String(left.moduleKey || '').localeCompare(String(right.moduleKey || '')));
 }
 
-export function subscribeToEvidenceItemsForCase(caseId, callback) {
+export function subscribeToEvidenceItemsForCase(caseId, callback, tenantId = null) {
     if (!caseId) {
         callback([], null);
         return () => {};
     }
-    const q = query(collection(db, 'evidenceItems'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const q = buildCaseScopedQuery('evidenceItems', caseId, tenantId);
     return onSnapshot(q, (snapshot) => {
         const items = snapshot.docs
             .map((d) => ({ id: d.id, ...d.data() }))
@@ -664,12 +697,12 @@ export function subscribeToEvidenceItemsForCase(caseId, callback) {
     });
 }
 
-export function subscribeToRiskSignalsForCase(caseId, callback) {
+export function subscribeToRiskSignalsForCase(caseId, callback, tenantId = null) {
     if (!caseId) {
         callback([], null);
         return () => {};
     }
-    const q = query(collection(db, 'riskSignals'), where('caseId', '==', caseId), limit(DEFAULT_QUERY_LIMIT));
+    const q = buildCaseScopedQuery('riskSignals', caseId, tenantId);
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     return onSnapshot(q, (snapshot) => {
         const signals = snapshot.docs
@@ -694,6 +727,102 @@ export function subscribeToSubjectForCase(subjectId, callback) {
         console.error('subject subscription error:', error);
         callback(null, error);
     });
+}
+
+export function subscribeToRelationshipsForCase(caseId, callback, tenantId = null) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = buildCaseScopedQuery('relationships', caseId, tenantId);
+    const confidenceOrder = { exact: 0, high: 1, medium: 2, low: 3 };
+    return onSnapshot(q, (snapshot) => {
+        const relationships = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => {
+                const confidenceDiff = (confidenceOrder[a.confidence] ?? 4) - (confidenceOrder[b.confidence] ?? 4);
+                if (confidenceDiff !== 0) return confidenceDiff;
+                return String(a.type || '').localeCompare(String(b.type || ''));
+            });
+        callback(relationships, null);
+    }, (error) => {
+        console.error('relationships subscription error:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToTimelineEventsForCase(caseId, callback, limitCount = DEFAULT_QUERY_LIMIT, tenantId = null) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = buildCaseScopedQuery('timelineEvents', caseId, tenantId, limitCount);
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const eventOrder = {
+        risk_signal_raised: 0,
+        provider_divergence: 1,
+        decision_made: 2,
+        report_generated: 3,
+        module_run_completed: 4,
+        evidence_created: 5,
+    };
+    return onSnapshot(q, (snapshot) => {
+        const events = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => {
+                const eventDiff = (eventOrder[a.eventType] ?? 9) - (eventOrder[b.eventType] ?? 9);
+                if (eventDiff !== 0) return eventDiff;
+                const severityDiff = (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4);
+                if (severityDiff !== 0) return severityDiff;
+                return String(b.occurredAt || b.createdAt || '').localeCompare(String(a.occurredAt || a.createdAt || ''));
+            });
+        callback(events, null);
+    }, (error) => {
+        console.error('timelineEvents subscription error:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToProviderDivergencesForCase(caseId, callback, limitCount = DEFAULT_QUERY_LIMIT, tenantId = null) {
+    if (!caseId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = buildCaseScopedQuery('providerDivergences', caseId, tenantId, limitCount);
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return onSnapshot(q, (snapshot) => {
+        const divergences = snapshot.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => {
+                const blockingDiff = Number(b.blocksPublication === true) - Number(a.blocksPublication === true);
+                if (blockingDiff !== 0) return blockingDiff;
+                return (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4);
+            });
+        callback(divergences, null);
+    }, (error) => {
+        console.error('providerDivergences subscription error:', error);
+        callback([], error);
+    });
+}
+
+// Fetches previous cases for same subject (excludes currentCaseId), ordered by createdAt desc.
+export async function fetchSubjectHistory(subjectId, currentCaseId, limit_ = 5) {
+    if (!subjectId) return [];
+    try {
+        const q = query(
+            collection(db, 'cases'),
+            where('subjectId', '==', subjectId),
+            orderBy('createdAt', 'desc'),
+            limit(limit_ + 1),
+        );
+        const snap = await getDocs(q);
+        return snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((c) => c.id !== currentCaseId)
+            .slice(0, limit_);
+    } catch {
+        return [];
+    }
 }
 
 /* =========================================================
@@ -873,8 +1002,65 @@ export async function getClientProjection(caseId) {
         const snap = await getDoc(ref);
         return snap.exists() ? snap.data() : null;
     } catch (error) {
-        console.warn('ClientProjection unavailable, falling back to legacy publicResult:', error);
+        console.warn('ClientProjection unavailable:', error);
         return null;
+    }
+}
+
+export async function fetchSubjectDecisionHistory(subjectId, currentCaseId, limit_ = 8) {
+    if (!subjectId) return [];
+    try {
+        const decisionsQuery = query(
+            collection(db, 'decisions'),
+            where('subjectId', '==', subjectId),
+            orderBy('approvedAt', 'desc'),
+            limit(limit_ + 1),
+        );
+        const decisionsSnap = await getDocs(decisionsQuery);
+        const decisions = decisionsSnap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((decision) => decision.caseId !== currentCaseId)
+            .slice(0, limit_);
+
+        if (decisions.length === 0) return [];
+
+        const snapshotQueries = decisions.map(async (decision) => {
+            if (!decision.caseId) return { decision, reportSnapshot: null };
+            const snapshotsQuery = query(
+                collection(db, 'reportSnapshots'),
+                where('caseId', '==', decision.caseId),
+                limit(1),
+            );
+            const snapshotsSnap = await getDocs(snapshotsQuery);
+            const reportSnapshot = snapshotsSnap.docs[0]
+                ? { id: snapshotsSnap.docs[0].id, ...snapshotsSnap.docs[0].data() }
+                : null;
+            return { decision, reportSnapshot };
+        });
+
+        const rows = await Promise.all(snapshotQueries);
+        return rows.map(({ decision, reportSnapshot }, index) => {
+            const previous = rows[index + 1]?.decision || null;
+            const currentScore = Number(decision.riskScore ?? 0);
+            const previousScore = previous ? Number(previous.riskScore ?? 0) : null;
+            return {
+                id: decision.id,
+                caseId: decision.caseId || null,
+                decisionId: decision.id,
+                reportSnapshotId: reportSnapshot?.id || reportSnapshot?.reportSnapshotId || null,
+                productKey: decision.productKey || reportSnapshot?.productKey || null,
+                verdict: decision.verdict || null,
+                riskScore: decision.riskScore ?? null,
+                riskLevel: decision.riskLevel || null,
+                approvedAt: decision.approvedAt || decision.createdAt || null,
+                reportStatus: reportSnapshot?.status || null,
+                reportModuleKeys: reportSnapshot?.reportModuleKeys || reportSnapshot?.moduleKeys || [],
+                scoreDeltaFromPrevious: previousScore == null ? null : currentScore - previousScore,
+            };
+        });
+    } catch (error) {
+        console.warn('Subject decision history unavailable:', error);
+        return [];
     }
 }
 
@@ -988,4 +1174,193 @@ export async function callGetSystemHealth() {
 
 export async function callGetClientQuotaStatus() {
     return callBackendFunction('getClientQuotaStatus', {});
+}
+
+export async function callGetClientProductCatalog() {
+    return callBackendFunction('getClientProductCatalog', {});
+}
+
+export async function callMarkAlertAs(payload) {
+    return callBackendFunction('markAlertAs', payload);
+}
+
+export async function callCreateQuoteRequest(payload) {
+    return callBackendFunction('createQuoteRequest', payload);
+}
+
+export async function callResolveQuoteRequest(payload) {
+    return callBackendFunction('resolveQuoteRequest', payload);
+}
+
+export async function callCreateWatchlist(payload) {
+    return callBackendFunction('createWatchlist', payload);
+}
+
+export async function callPauseWatchlist(payload) {
+    return callBackendFunction('pauseWatchlist', payload);
+}
+
+export async function callResumeWatchlist(payload) {
+    return callBackendFunction('resumeWatchlist', payload);
+}
+
+export async function callDeleteWatchlist(payload) {
+    return callBackendFunction('deleteWatchlist', payload);
+}
+
+export async function callRunWatchlistNow(payload) {
+    return callBackendFunction('runWatchlistNow', payload);
+}
+
+export function subscribeToAlertsByTenant(tenantId, callback) {
+    if (!tenantId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(
+        collection(db, 'alerts'),
+        where('tenantId', '==', tenantId),
+        orderBy('createdAt', 'desc'),
+        limit(100),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const alerts = snapshot.docs.map((d) => {
+            const data = d.data() || {};
+            return {
+                id: d.id,
+                tenantId: data.tenantId,
+                subjectId: data.subjectId || null,
+                caseId: data.caseId || null,
+                kind: data.kind || 'unknown',
+                severity: data.severity || 'info',
+                state: data.state || 'unread',
+                message: data.message || '',
+                createdAt: data.createdAt?.toDate?.()?.toISOString?.() || data.createdAt || null,
+                actionedAt: data.actionedAt?.toDate?.()?.toISOString?.() || data.actionedAt || null,
+                actionedBy: data.actionedBy || null,
+            };
+        });
+        callback(alerts, null);
+    }, (error) => {
+        console.error('Error subscribing to alerts:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToQuoteRequestsByTenant(tenantId, callback) {
+    if (!tenantId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(
+        collection(db, 'quoteRequests'),
+        where('tenantId', '==', tenantId),
+        orderBy('requestedAt', 'desc'),
+        limit(100),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const quotes = snapshot.docs.map((d) => {
+            const data = d.data() || {};
+            return {
+                id: d.id,
+                tenantId: data.tenantId,
+                productKey: data.productKey,
+                status: data.status || 'pending',
+                notes: data.notes || '',
+                responseNotes: data.responseNotes || null,
+                requestedBy: data.requestedBy || null,
+                requestedByEmail: data.requestedByEmail || null,
+                reviewedBy: data.reviewedBy || null,
+                reviewedByEmail: data.reviewedByEmail || null,
+                requestedAt: data.requestedAt?.toDate?.()?.toISOString?.() || data.requestedAt || null,
+                reviewedAt: data.reviewedAt?.toDate?.()?.toISOString?.() || data.reviewedAt || null,
+            };
+        });
+        callback(quotes, null);
+    }, (error) => {
+        console.error('Error subscribing to quoteRequests:', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToQuoteRequestsForAllTenants(callback) {
+    const q = query(
+        collection(db, 'quoteRequests'),
+        orderBy('requestedAt', 'desc'),
+        limit(200),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const quotes = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
+        callback(quotes, null);
+    }, (error) => {
+        console.error('Error subscribing to quoteRequests (all):', error);
+        callback([], error);
+    });
+}
+
+export function subscribeToWatchlistsByTenant(tenantId, callback) {
+    if (!tenantId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(
+        collection(db, 'watchlists'),
+        where('tenantId', '==', tenantId),
+        limit(200),
+    );
+    return onSnapshot(q, (snapshot) => {
+        const watchlists = snapshot.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
+        callback(watchlists, null);
+    }, (error) => {
+        console.error('Error subscribing to watchlists:', error);
+        callback([], error);
+    });
+}
+
+export async function callGetTenantEntitlementsByAnalyst(payload) {
+    return callBackendFunction('getTenantEntitlementsByAnalyst', payload);
+}
+
+export async function callUpdateTenantEntitlementsByAnalyst(payload) {
+    return callBackendFunction('updateTenantEntitlementsByAnalyst', payload);
+}
+
+export async function callGetTenantBillingOverview(payload) {
+    return callBackendFunction('getTenantBillingOverview', payload);
+}
+
+export async function callCloseTenantBillingPeriod(payload) {
+    return callBackendFunction('closeTenantBillingPeriodByAnalyst', payload);
+}
+
+export async function callGetTenantBillingSettlement(payload) {
+    return callBackendFunction('getTenantBillingSettlement', payload);
+}
+
+export async function callGetTenantBillingDrilldown(payload) {
+    return callBackendFunction('getTenantBillingDrilldown', payload);
+}
+
+export async function callExportTenantBillingDrilldown(payload) {
+    return callBackendFunction('exportTenantBillingDrilldown', payload);
+}
+
+export async function callGetOpsV2Metrics(payload = {}) {
+    return callBackendFunction('getOpsV2Metrics', payload);
+}
+
+export async function callGetSeniorReviewQueue(payload = {}) {
+    return callBackendFunction('getSeniorReviewQueue', payload);
+}
+
+export async function callResolveSeniorReviewRequest(payload) {
+    return callBackendFunction('resolveSeniorReviewRequest', payload);
+}
+
+export async function callResolveProviderDivergenceByAnalyst(payload) {
+    return callBackendFunction('resolveProviderDivergenceByAnalyst', payload);
+}
+
+export async function callMaterializeV2Artifacts(payload) {
+    return callBackendFunction('materializeV2Artifacts', payload);
 }

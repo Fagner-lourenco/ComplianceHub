@@ -76,6 +76,7 @@ export default function DashboardClientePage() {
                 <KpiCard label="Concluidos" value={metrics.done} color="green" />
                 <KpiCard label="Em andamento" value={metrics.inProgress} color="yellow" />
                 <KpiCard label="Pendentes" value={metrics.pending} color="neutral" />
+                <KpiCard label="Relatorios disponiveis" value={metrics.reportsAvailable} color="green" />
                 <KpiCard label="Tempo medio" value={formatTurnaround(metrics.avgTurnaroundHours)} color="neutral" />
                 {metrics.corrections > 0 && (
                     <KpiCard label="Correcao solicitada" value={metrics.corrections} color="red" />

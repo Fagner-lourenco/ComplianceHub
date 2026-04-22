@@ -27,6 +27,8 @@ const CATEGORY = {
     PROCESSING: 'PROCESSING',
     INTEGRATION: 'INTEGRATION',
     SECURITY: 'SECURITY',
+    SALES: 'SALES',
+    MONITORING: 'MONITORING',
 };
 
 const ENTITY_TYPE = {
@@ -37,6 +39,12 @@ const ENTITY_TYPE = {
     TENANT: 'TENANT',
     PROFILE: 'PROFILE',
     SETTINGS: 'SETTINGS',
+    TENANT_ENTITLEMENTS: 'TENANT_ENTITLEMENTS',
+    BILLING_SETTLEMENT: 'BILLING_SETTLEMENT',
+    PROVIDER_DIVERGENCE: 'PROVIDER_DIVERGENCE',
+    QUOTE_REQUEST: 'QUOTE_REQUEST',
+    ALERT: 'ALERT',
+    WATCHLIST: 'WATCHLIST',
 };
 
 const ACTOR_TYPE = {
@@ -105,6 +113,34 @@ const AUDIT_ACTIONS = {
         entityType: ENTITY_TYPE.CASE,
         clientVisible: false,
         summaryTemplate: 'Rascunho salvo para {candidateName}',
+    },
+    PROVIDER_DIVERGENCE_RESOLVED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.PROVIDER_DIVERGENCE,
+        clientVisible: false,
+        summaryTemplate: 'Divergencia de provider resolvida para o caso {caseId} - {status}',
+    },
+    SENIOR_REVIEW_REQUESTED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.WARNING,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Revisao senior solicitada para o caso {caseId}',
+    },
+    SENIOR_REVIEW_APPROVED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Revisao senior aprovada para o caso {caseId}',
+    },
+    SENIOR_REVIEW_REJECTED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.WARNING,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Revisao senior rejeitada para o caso {caseId}',
     },
 
     // ─── Public reports ──────────────────────────────────────────────────────
@@ -187,6 +223,30 @@ const AUDIT_ACTIONS = {
     },
 
     // ─── Settings ────────────────────────────────────────────────────────────
+    TENANT_ENTITLEMENTS_UPDATED: {
+        category: CATEGORY.SETTINGS,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.TENANT_ENTITLEMENTS,
+        clientVisible: false,
+        summaryTemplate: 'Entitlements contratuais do tenant {tenantId} atualizados',
+        clientSummaryTemplate: null,
+    },
+    TENANT_BILLING_PERIOD_CLOSED: {
+        category: CATEGORY.SETTINGS,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.BILLING_SETTLEMENT,
+        clientVisible: false,
+        summaryTemplate: 'Fechamento de consumo V2 do tenant {tenantId} gerado para {monthKey}',
+        clientSummaryTemplate: null,
+    },
+    BILLING_DRILLDOWN_EXPORTED: {
+        category: CATEGORY.SETTINGS,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.BILLING_SETTLEMENT,
+        clientVisible: false,
+        summaryTemplate: 'Drilldown de consumo V2 do tenant {tenantId} exportado para {monthKey}',
+        clientSummaryTemplate: null,
+    },
     TENANT_CONFIG_UPDATED: {
         category: CATEGORY.SETTINGS,
         level: LEVEL.AUDIT,
@@ -270,6 +330,86 @@ const AUDIT_ACTIONS = {
         entityType: ENTITY_TYPE.TENANT,
         clientVisible: true,
         summaryTemplate: 'Submissao bloqueada — limite mensal de {monthlyLimit} consultas atingido',
+    },
+
+    // ─── Sales / quotes ──────────────────────────────────────────────────────
+    QUOTE_REQUESTED: {
+        category: CATEGORY.SALES,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.QUOTE_REQUEST,
+        clientVisible: true,
+        summaryTemplate: 'Cotacao solicitada para produto {productKey}',
+        clientSummaryTemplate: 'Cotacao solicitada para produto {productKey}',
+    },
+    QUOTE_APPROVED: {
+        category: CATEGORY.SALES,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.QUOTE_REQUEST,
+        clientVisible: true,
+        summaryTemplate: 'Cotacao aprovada — produto {productKey}',
+        clientSummaryTemplate: 'Cotacao aprovada — produto {productKey}',
+    },
+    QUOTE_REJECTED: {
+        category: CATEGORY.SALES,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.QUOTE_REQUEST,
+        clientVisible: true,
+        summaryTemplate: 'Cotacao rejeitada — produto {productKey}',
+        clientSummaryTemplate: 'Cotacao rejeitada — produto {productKey}',
+    },
+
+    // ─── Alerts ──────────────────────────────────────────────────────────────
+    ALERT_STATE_CHANGED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.INFO,
+        entityType: ENTITY_TYPE.ALERT,
+        clientVisible: true,
+        summaryTemplate: 'Alerta {alertId} atualizado para {state}',
+        clientSummaryTemplate: 'Alerta atualizado — {state}',
+    },
+
+    // ─── Watchlists / monitoring ─────────────────────────────────────────────
+    WATCHLIST_CREATED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist criada para subject {subjectId}',
+    },
+    WATCHLIST_PAUSED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist pausada para subject {subjectId}',
+    },
+    WATCHLIST_RESUMED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist reativada para subject {subjectId}',
+    },
+    WATCHLIST_DELETED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist removida para subject {subjectId}',
+    },
+    WATCHLIST_RUN_NOW: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist executada manualmente para subject {subjectId}',
+    },
+    WATCHLIST_AUTOPAUSED: {
+        category: CATEGORY.MONITORING,
+        level: LEVEL.WARNING,
+        entityType: ENTITY_TYPE.WATCHLIST,
+        clientVisible: false,
+        summaryTemplate: 'Watchlist auto-pausada apos falhas consecutivas',
     },
 };
 

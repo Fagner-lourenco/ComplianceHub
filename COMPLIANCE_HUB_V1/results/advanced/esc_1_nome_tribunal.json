@@ -1,0 +1,2509 @@
+{
+  "envolvido_encontrado": {
+    "nome": "Andre Luiz Cruz dos Santos",
+    "outros_nomes": [],
+    "tipo_pessoa": "FISICA",
+    "quantidade_processos": 23,
+    "cpfs_com_esse_nome": 8
+  },
+  "items": [
+    {
+      "numero_cnj": "1015247-79.2025.8.26.0114",
+      "titulo_polo_ativo": "Andre Luiz Cruz dos Santos",
+      "titulo_polo_passivo": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+      "ano_inicio": 2025,
+      "data_inicio": "2025-04-04",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "07 CIVEL DE CAMPINAS",
+        "endereco": "Avenida Francisco Xavier de Arruda Camargo, 300",
+        "classificacao": "V - Vara",
+        "cidade": "Campinas",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2026-01-15",
+      "quantidade_movimentacoes": 36,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2026-01-30T16:00:15+00:00",
+      "tempo_desde_ultima_verificacao": "há 2 meses",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": true
+      },
+      "match_documento_por": "DOCUMENTO_TRIBUNAL",
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 815700474,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2025-04-04",
+          "data_ultima_movimentacao": "2026-01-15",
+          "segredo_justica": false,
+          "arquivado": null,
+          "status_predito": "ATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Monitória",
+            "assunto": "Pagamento",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2636,
+              "nome": "Pagamento",
+              "nome_com_pai": "Adimplemento e Extinção > Pagamento",
+              "path_completo": "DIREITO CIVIL > Obrigações > Adimplemento e Extinção > Pagamento",
+              "categoria_raiz": "DIREITO CIVIL",
+              "bloqueado": false
+            },
+            "area": "Cível",
+            "orgao_julgador": "7ª Vara Cível - Foro de Campinas",
+            "orgao_julgador_normatizado": {
+              "nome": "07 CIVEL DE CAMPINAS",
+              "endereco": "Avenida Francisco Xavier de Arruda Camargo, 300",
+              "classificacao": "V - Vara",
+              "cidade": "Campinas",
+              "estado": {
+                "nome": "São Paulo",
+                "sigla": "SP"
+              },
+              "tribunal_sigla": "TJSP"
+            },
+            "situacao": "Tramitando",
+            "valor_causa": {
+              "valor": "1890.0000",
+              "moeda": "R$",
+              "valor_formatado": "R$ 1.890,00"
+            },
+            "data_distribuicao": "2025-04-04",
+            "data_arquivamento": null,
+            "informacoes_complementares": [
+              {
+                "tipo": "Jurisdição",
+                "valor": "CAMPINAS"
+              },
+              {
+                "tipo": "ID Órgão Julgador",
+                "valor": "9458"
+              },
+              {
+                "tipo": "Controle",
+                "valor": "2025/000737"
+              },
+              {
+                "tipo": "Autos digital",
+                "valor": "Sim"
+              }
+            ]
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=360016X280000&processo.foro=114",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 5,
+          "data_ultima_verificacao": "2026-01-30T16:00:15+00:00",
+          "quantidade_movimentacoes": 31,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 1896,
+              "tipo": "Reqte",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO"
+            }
+          ],
+          "match_documento_por": "DOCUMENTO_TRIBUNAL",
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Camila Caetano da Costa",
+                  "quantidade_processos": 28,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Advogada",
+                  "tipo_normalizado": "Advogado",
+                  "polo": "ADVOGADO",
+                  "cpf": "22265846848",
+                  "cnpj": null,
+                  "oabs": [
+                    {
+                      "uf": "SP",
+                      "tipo": "ADVOGADO",
+                      "numero": 272832
+                    }
+                  ]
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Reqte",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": "27489425824",
+              "cnpj": null
+            },
+            {
+              "nome": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+              "quantidade_processos": 3,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [
+                {
+                  "nome": "Carolina de Mello Soares Ferreira",
+                  "quantidade_processos": 3,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "RepreLeg",
+                  "tipo_normalizado": "Representante",
+                  "polo": "DESCONHECIDO",
+                  "cpf": null,
+                  "cnpj": null
+                },
+                {
+                  "nome": "Everson Euclides Bassan",
+                  "quantidade_processos": 2,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "RepreLeg",
+                  "tipo_normalizado": "Representante",
+                  "polo": "DESCONHECIDO",
+                  "cpf": "39204842822",
+                  "cnpj": null
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Reqdo",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": "26262957000108"
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 816256320,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2025-04-08",
+          "data_ultima_movimentacao": "2025-08-11",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2025-08-11T03:06:00+00:00",
+          "quantidade_movimentacoes": 5,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3239,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO"
+            }
+          ],
+          "match_documento_por": "DOCUMENTO_TRIBUNAL_OUTRA_FONTE",
+          "envolvidos": [
+            {
+              "nome": "Camila Caetano da Costa",
+              "quantidade_processos": 28,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": "22265846848",
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 272832
+                }
+              ]
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": "27489425824",
+              "cnpj": null
+            },
+            {
+              "nome": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+              "quantidade_processos": 3,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERIDO",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": "26262957000108"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1014345-29.2025.8.26.0114",
+      "titulo_polo_ativo": "Andre Luiz Cruz dos Santos",
+      "titulo_polo_passivo": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+      "ano_inicio": 2025,
+      "data_inicio": "2025-03-31",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE CAMPINAS",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Campinas",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2025-07-14",
+      "quantidade_movimentacoes": 11,
+      "fontes_tribunais_estao_arquivadas": true,
+      "data_ultima_verificacao": "2025-07-21T07:13:55+00:00",
+      "tempo_desde_ultima_verificacao": "há 8 meses",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": true
+      },
+      "match_documento_por": "DOCUMENTO_TRIBUNAL",
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 815117241,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2025-03-31",
+          "data_ultima_movimentacao": "2025-07-14",
+          "segredo_justica": false,
+          "arquivado": true,
+          "status_predito": "INATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Procedimento do Juizado Especial Cível",
+            "assunto": "Obrigações",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2623,
+              "nome": "Obrigações",
+              "nome_com_pai": "DIREITO CIVIL > Obrigações",
+              "path_completo": "DIREITO CIVIL > Obrigações",
+              "categoria_raiz": "DIREITO CIVIL",
+              "bloqueado": false
+            },
+            "area": "Cível",
+            "orgao_julgador": "2ª Vara do Juizado Especial Cível - Foro de Campinas",
+            "orgao_julgador_normatizado": null,
+            "situacao": "Extinto",
+            "valor_causa": {
+              "valor": "1890.0000",
+              "moeda": "R$",
+              "valor_formatado": "R$ 1.890,00"
+            },
+            "data_distribuicao": "2025-03-31",
+            "data_arquivamento": "2025-07-14",
+            "informacoes_complementares": [
+              {
+                "tipo": "Juiz",
+                "valor": "Thais Migliorança Munhoz"
+              },
+              {
+                "tipo": "Controle",
+                "valor": "2025/001072"
+              },
+              {
+                "tipo": "Autos digital",
+                "valor": "Sim"
+              }
+            ]
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=360016VMJ0000&processo.foro=114",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 4,
+          "data_ultima_verificacao": "2025-07-21T07:13:55+00:00",
+          "quantidade_movimentacoes": 8,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 1896,
+              "tipo": "Reqte",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO"
+            }
+          ],
+          "match_documento_por": "DOCUMENTO_TRIBUNAL",
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Camila Caetano da Costa",
+                  "quantidade_processos": 28,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Advogada",
+                  "tipo_normalizado": "Advogado",
+                  "polo": "ADVOGADO",
+                  "cpf": "22265846848",
+                  "cnpj": null,
+                  "oabs": [
+                    {
+                      "uf": "SP",
+                      "tipo": "ADVOGADO",
+                      "numero": 272832
+                    }
+                  ]
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Reqte",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": "27489425824",
+              "cnpj": null
+            },
+            {
+              "nome": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+              "quantidade_processos": 3,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Reqdo",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": "26262957000108"
+            },
+            {
+              "nome": "Thais Migliorança Munhoz",
+              "quantidade_processos": 17610,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Juiz",
+              "tipo_normalizado": "Juiz",
+              "polo": "DESCONHECIDO",
+              "cpf": "31330214862",
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 814801413,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2025-04-02",
+          "data_ultima_movimentacao": "2025-04-04",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2025-04-04T03:06:00+00:00",
+          "quantidade_movimentacoes": 3,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3239,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Camila Caetano da Costa",
+              "quantidade_processos": 28,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 272832
+                }
+              ]
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Raft Fitness Atividade Em Condicionamento Fisico Ltda",
+              "quantidade_processos": 3,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERIDO",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": "26262957000108"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "0000478-49.2023.8.26.0536",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2023,
+      "data_inicio": "2023-02-23",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "PLANTÃO - 01ª CIRCUNSCRIÇÃO JUDICIÁRIA",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Santos",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2024-12-29",
+      "quantidade_movimentacoes": 17,
+      "fontes_tribunais_estao_arquivadas": true,
+      "data_ultima_verificacao": "2026-02-06T07:13:15+00:00",
+      "tempo_desde_ultima_verificacao": "há 1 mês",
+      "processos_relacionados": [
+        {
+          "numero": "0024942-35.2018.8.26.0562"
+        }
+      ],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": true
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 193819726,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2023-02-23",
+          "data_ultima_movimentacao": "2024-12-29",
+          "segredo_justica": false,
+          "arquivado": true,
+          "status_predito": "INATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Comunicado de Mandado de Prisão",
+            "assunto": "Comunicação do cumprimento do mandado de prisão",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2707,
+              "nome": "Execução Penal e de Medidas Alternativas",
+              "nome_com_pai": "DIREITO PROCESSUAL PENAL > Execução Penal e de Medidas Alternativas",
+              "path_completo": "DIREITO PROCESSUAL PENAL > Execução Penal e de Medidas Alternativas",
+              "categoria_raiz": "DIREITO PROCESSUAL PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "Vara do Júri/Execuções - Foro de Santos",
+            "orgao_julgador_normatizado": null,
+            "situacao": "Extinto",
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2023-02-23",
+            "data_arquivamento": "2024-12-29",
+            "informacoes_complementares": [
+              {
+                "tipo": "Controle",
+                "valor": "2023/000303"
+              },
+              {
+                "tipo": "Outros números",
+                "valor": "0024942-35.2018.8.26.0562"
+              },
+              {
+                "tipo": "Dados da Delegacia",
+                "valor": "Documento: Boletim de Ocorrência\nNúmero: CL2803-1/2023\nDistrito policial: 7º Distrito Policial de Santos\nMunicípio: Santos-SP"
+              },
+              {
+                "tipo": "Autos digital",
+                "valor": "Sim"
+              },
+              {
+                "tipo": "Juiz",
+                "valor": "THAIS CAROLINE BRECHT ESTEVES"
+              }
+            ]
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=EW000Y7MF0000&processo.foro=562",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2026-02-06T07:13:15+00:00",
+          "quantidade_movimentacoes": 16,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3145,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Thais Caroline Brecht Esteves",
+              "quantidade_processos": 118431,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Juiz",
+              "tipo_normalizado": "Juiz",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 439977309,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2023-02-27",
+          "data_ultima_movimentacao": "2023-02-27",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 1,
+          "data_ultima_verificacao": "2023-02-27T03:06:00+00:00",
+          "quantidade_movimentacoes": 1,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3145,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1531095-73.2019.8.26.0562",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": "Autor 3 - Desconhecido",
+      "ano_inicio": 2019,
+      "data_inicio": "2019-12-17",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE SANTOS",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Santos",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2020-10-19",
+      "quantidade_movimentacoes": 50,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2022-05-01T12:07:09+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": false,
+        "diario_oficial": true
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 47264777,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2019-12-17",
+          "data_ultima_movimentacao": "2020-10-19",
+          "segredo_justica": false,
+          "arquivado": null,
+          "status_predito": "ATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Inquérito Policial",
+            "assunto": "Homicídio Privilegiado",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 1813,
+              "nome": "Homicídio Privilegiado",
+              "nome_com_pai": "Crimes contra a vida > Homicídio Privilegiado",
+              "path_completo": "DIREITO PENAL > Crimes contra a vida > Homicídio Privilegiado",
+              "categoria_raiz": "DIREITO PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "Vara do Júri/Execuções - Foro de Santos",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2019-12-17",
+            "data_arquivamento": null,
+            "informacoes_complementares": null
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=FM000GEGJ0000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 2,
+          "data_ultima_verificacao": "2022-05-01T12:07:09+00:00",
+          "quantidade_movimentacoes": 49,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Autor 3 - Desconhecido",
+              "quantidade_processos": 2133,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Averiguada",
+              "tipo_normalizado": "Averiguado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 367731324,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2019-12-19",
+          "data_ultima_movimentacao": "2019-12-19",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 14,
+          "data_ultima_verificacao": "2019-12-19T03:06:00+00:00",
+          "quantidade_movimentacoes": 1,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3226,
+              "tipo": "Executado",
+              "tipo_normalizado": "Executado",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Autor 3 - Desconhecido",
+              "quantidade_processos": 2133,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Averiguada",
+              "tipo_normalizado": "Averiguado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Marco Antonio Dias Cardoso",
+              "quantidade_processos": 1478,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 292437
+                }
+              ]
+            },
+            {
+              "nome": "Francisco Alves",
+              "quantidade_processos": 6286,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 336466
+                }
+              ]
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Executado",
+              "tipo_normalizado": "Executado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "13.2019.8.26.0562",
+              "quantidade_processos": 43,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "28.2019.8.26.0562",
+              "quantidade_processos": 47,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Nadjane Maria da Silva",
+              "quantidade_processos": 67,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Autora do Fato",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "92.2019.8.26.0562",
+              "quantidade_processos": 41,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Fernando Gardanha",
+              "quantidade_processos": 2,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERIDO",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "58.2019.8.26.0562",
+              "quantidade_processos": 35,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "38.2019.8.26.0562",
+              "quantidade_processos": 36,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "43.2019.8.26.0562",
+              "quantidade_processos": 32,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "14.2019.8.26.0562",
+              "quantidade_processos": 50,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "81.2019.8.26.0562",
+              "quantidade_processos": 33,
+              "tipo_pessoa": null,
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "PROCESSO",
+              "tipo_normalizado": "Outro",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "0026401-38.2019.8.26.0562",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2019,
+      "data_inicio": "2019-12-17",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE SANTOS",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Santos",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2023-07-04",
+      "quantidade_movimentacoes": 26,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2025-04-19T20:33:19+00:00",
+      "tempo_desde_ultima_verificacao": "há 11 meses",
+      "processos_relacionados": [
+        {
+          "numero": "0024942-35.2018.8.26.0562"
+        },
+        {
+          "numero": "1500388-74.2017.8.26.0536"
+        }
+      ],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": false
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 107924085,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2019-12-17",
+          "data_ultima_movimentacao": "2023-07-04",
+          "segredo_justica": false,
+          "arquivado": null,
+          "status_predito": "ATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Execução da Pena",
+            "assunto": "Pena Privativa de Liberdade",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2682,
+              "nome": "Pena Privativa de Liberdade",
+              "nome_com_pai": "Execução Penal e de Medidas Alternativas > Pena Privativa de Liberdade",
+              "path_completo": "DIREITO PROCESSUAL PENAL > Execução Penal e de Medidas Alternativas > Pena Privativa de Liberdade",
+              "categoria_raiz": "DIREITO PROCESSUAL PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "Vara do Júri/Execuções - Foro de Santos",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2019-12-17",
+            "data_arquivamento": null,
+            "informacoes_complementares": [
+              {
+                "tipo": "Juiz",
+                "valor": "Alexandre Betini"
+              },
+              {
+                "tipo": "Apensado ao",
+                "valor": "0024942-35.2018.8.26.0562"
+              },
+              {
+                "tipo": "Controle",
+                "valor": "2019/001161"
+              },
+              {
+                "tipo": "Outros números",
+                "valor": "1500388-74.2017.8.26.0536"
+              },
+              {
+                "tipo": "Dados da Delegacia",
+                "valor": "Documento: Comunicação de Prisão em Flagrante\nNúmero: 1349/2017\nDistrito policial: 7º Distrito Policial de Santos\nMunicípio: Santos-SP"
+              },
+              {
+                "tipo": "Dados da Delegacia",
+                "valor": "Documento: Boletim de Ocorrência\nNúmero: 378/2017\nDistrito policial: 7º Distrito Policial de Santos\nMunicípio: Santos-SP"
+              },
+              {
+                "tipo": "Dados da Delegacia",
+                "valor": "Documento: Inquérito Policial\nNúmero: 2001349/2017\nDistrito policial: DEL.DEF.MUL. SANTOS\nMunicípio: Santos-SP"
+              },
+              {
+                "tipo": "Autos digital",
+                "valor": "Sim"
+              }
+            ]
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=FM000GEHC0000&processo.foro=562",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2025-04-19T20:33:19+00:00",
+          "quantidade_movimentacoes": 26,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3038,
+              "tipo": "Exectdo",
+              "tipo_normalizado": "Executado",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Defensoria Pública do Estado de São Paulo",
+                  "quantidade_processos": 3401176,
+                  "tipo_pessoa": "JURIDICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Def. Púb",
+                  "tipo_normalizado": "Defensor Público",
+                  "polo": "ADVOGADO",
+                  "cpf": null,
+                  "cnpj": "08036157000189"
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Exectdo",
+              "tipo_normalizado": "Executado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1500994-66.2019.8.26.0590",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2019,
+      "data_inicio": "2019-01-17",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE SÃO VICENTE",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "São Vicente",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2022-01-28",
+      "quantidade_movimentacoes": 50,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2022-05-07T20:26:59+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": false
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 51603818,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2019-01-17",
+          "data_ultima_movimentacao": "2022-01-28",
+          "segredo_justica": false,
+          "arquivado": null,
+          "status_predito": "ATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Ação Penal - Procedimento Ordinário",
+            "assunto": "Decorrente de Violência Doméstica",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2184,
+              "nome": "Decorrente de Violência Doméstica",
+              "nome_com_pai": "Lesão Corporal > Decorrente de Violência Doméstica",
+              "path_completo": "DIREITO PENAL > Lesão Corporal > Decorrente de Violência Doméstica",
+              "categoria_raiz": "DIREITO PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "3ª Vara Criminal - Foro de São Vicente",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2019-01-17",
+            "data_arquivamento": null,
+            "informacoes_complementares": null
+          },
+          "audiencias": [
+            {
+              "tipo": "Instrução, Debates e Julgamento",
+              "data": "2023-09-11",
+              "quantidade_pessoas": 5,
+              "situacao": null
+            }
+          ],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=GE0007MP50000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2022-05-07T20:26:59+00:00",
+          "quantidade_movimentacoes": 49,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3281,
+              "tipo": "Averiguado",
+              "tipo_normalizado": "Averiguado",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Defensoria Pública do Estado de São Paulo",
+                  "quantidade_processos": 3401176,
+                  "tipo_pessoa": "JURIDICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Advogado",
+                  "tipo_normalizado": "Advogado",
+                  "polo": "ADVOGADO",
+                  "cpf": null,
+                  "cnpj": "08036157000189"
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Averiguado",
+              "tipo_normalizado": "Averiguado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 343475088,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2019-01-21",
+          "data_ultima_movimentacao": "2019-01-21",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 0,
+          "data_ultima_verificacao": "2019-01-21T03:06:00+00:00",
+          "quantidade_movimentacoes": 1,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": []
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1007490-63.2018.8.26.0604",
+      "titulo_polo_ativo": "Luiz Gabriel de Oliveira Santos",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2018,
+      "data_inicio": "2018-09-11",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": null,
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Sumaré",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2020-08-21",
+      "quantidade_movimentacoes": 34,
+      "fontes_tribunais_estao_arquivadas": true,
+      "data_ultima_verificacao": "2022-05-10T11:33:33+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": false
+      },
+      "match_documento_por": "DOCUMENTO_TRIBUNAL",
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 53426766,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2018-09-11",
+          "data_ultima_movimentacao": "2020-08-21",
+          "segredo_justica": true,
+          "arquivado": null,
+          "status_predito": "INATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Alimentos - Lei Especial Nº 5.478/68",
+            "assunto": "(6239) Fixação | (5779) Alimentos | (5626) Família | (899) DIREITO CIVIL",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2589,
+              "nome": "Fixação",
+              "nome_com_pai": "Alimentos > Fixação",
+              "path_completo": "DIREITO CIVIL > Família > Alimentos > Fixação",
+              "categoria_raiz": "DIREITO CIVIL",
+              "bloqueado": false
+            },
+            "area": null,
+            "orgao_julgador": "02 CIVEL DE SUMARE",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": "1024.8000",
+              "moeda": null,
+              "valor_formatado": "1.024,80"
+            },
+            "data_distribuicao": "2018-09-11",
+            "data_arquivamento": null,
+            "informacoes_complementares": null
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=GS0002VJF0000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2022-05-10T11:33:33+00:00",
+          "quantidade_movimentacoes": 31,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3243,
+              "tipo": "REQUERIDO",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": "DOCUMENTO_TRIBUNAL",
+          "envolvidos": [
+            {
+              "nome": "Luiz Gabriel de Oliveira Santos",
+              "quantidade_processos": 6,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Jefferson Carlos dos Santos",
+                  "quantidade_processos": 405,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Advogado",
+                  "tipo_normalizado": "Advogado",
+                  "polo": "ADVOGADO",
+                  "cpf": "38383265808",
+                  "cnpj": null,
+                  "oabs": [
+                    {
+                      "uf": "SP",
+                      "tipo": "ADVOGADO",
+                      "numero": 380480
+                    }
+                  ]
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERENTE",
+              "tipo_normalizado": "Requerente",
+              "polo": "ATIVO",
+              "cpf": "47942392899",
+              "cnpj": null
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "REQUERIDO",
+              "tipo_normalizado": "Requerido",
+              "polo": "PASSIVO",
+              "cpf": "27489425824",
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 336252159,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2018-09-13",
+          "data_ultima_movimentacao": "2019-02-07",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 1,
+          "data_ultima_verificacao": "2019-02-07T03:06:00+00:00",
+          "quantidade_movimentacoes": 3,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Jefferson Carlos dos Santos",
+              "quantidade_processos": 405,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 380480
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "0005600-48.2018.8.26.0009",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2018,
+      "data_inicio": "2018-05-28",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO REGIONAL IX - VILA PRUDENTE",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "São Paulo",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2018-07-19",
+      "quantidade_movimentacoes": 13,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2022-11-05T02:53:16+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": true
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 113158925,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2018-05-28",
+          "data_ultima_movimentacao": "2018-07-19",
+          "segredo_justica": false,
+          "arquivado": null,
+          "status_predito": "ATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": true,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Carta Precatória Criminal",
+            "assunto": "Inquirição de Testemunha",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 1501,
+              "nome": "DIREITO PROCESSUAL PENAL",
+              "nome_com_pai": "DIREITO PROCESSUAL PENAL",
+              "path_completo": "DIREITO PROCESSUAL PENAL",
+              "categoria_raiz": "DIREITO PROCESSUAL PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "Vara Reg.Sul1 de Viol. Dom. e Fam.Cont.Mulher - Foro Regional IX - Vila Prudente",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2018-05-28",
+            "data_arquivamento": null,
+            "informacoes_complementares": [
+              {
+                "tipo": "Local Físico",
+                "valor": "19/07/2018 00:00 - Cartório"
+              }
+            ]
+          },
+          "audiencias": [
+            {
+              "tipo": "Instrução, Debates e Julgamento",
+              "data": "2018-07-17",
+              "quantidade_pessoas": 1,
+              "situacao": null
+            }
+          ],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=0900157A60000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 3,
+          "data_ultima_verificacao": "2022-11-05T02:53:16+00:00",
+          "quantidade_movimentacoes": 11,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3145,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [
+                {
+                  "nome": "Gloria de Jesus",
+                  "quantidade_processos": 199,
+                  "tipo_pessoa": "FISICA",
+                  "prefixo": null,
+                  "sufixo": null,
+                  "tipo": "Advogado",
+                  "tipo_normalizado": "Advogado",
+                  "polo": "ADVOGADO",
+                  "cpf": null,
+                  "cnpj": null,
+                  "oabs": [
+                    {
+                      "uf": "SP",
+                      "tipo": "ADVOGADO",
+                      "numero": 378110
+                    }
+                  ]
+                }
+              ],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 328597319,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2018-05-30",
+          "data_ultima_movimentacao": "2018-06-07",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 2,
+          "data_ultima_verificacao": "2018-06-07T03:06:00+00:00",
+          "quantidade_movimentacoes": 2,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3145,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Réu",
+              "tipo_normalizado": "Réu",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Gloria de Jesus",
+              "quantidade_processos": 199,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 378110
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1502667-52.2017.8.26.0562",
+      "titulo_polo_ativo": null,
+      "titulo_polo_passivo": null,
+      "ano_inicio": 2017,
+      "data_inicio": "2017-04-28",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE SANTOS",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Santos",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2017-05-15",
+      "quantidade_movimentacoes": 2,
+      "fontes_tribunais_estao_arquivadas": false,
+      "data_ultima_verificacao": "2022-05-29T19:04:37+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": false,
+        "diario_oficial": true
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 61670215,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": null,
+          "data_ultima_movimentacao": null,
+          "segredo_justica": true,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": null,
+            "assunto": null,
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": null,
+            "area": null,
+            "orgao_julgador": null,
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": null,
+            "data_arquivamento": null,
+            "informacoes_complementares": null
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=FM0007Q2N0000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 0,
+          "data_ultima_verificacao": "2022-05-29T19:04:37+00:00",
+          "quantidade_movimentacoes": 0,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": []
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 293928336,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2017-04-28",
+          "data_ultima_movimentacao": "2017-05-15",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 1,
+          "data_ultima_verificacao": "2017-05-15T03:06:00+00:00",
+          "quantidade_movimentacoes": 2,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3351,
+              "tipo": "Indiciado",
+              "tipo_normalizado": "Indiciado",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Indiciado",
+              "tipo_normalizado": "Indiciado",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1500388-74.2017.8.26.0536",
+      "titulo_polo_ativo": "Justiça Pública",
+      "titulo_polo_passivo": null,
+      "ano_inicio": 2017,
+      "data_inicio": "2017-02-11",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "PLANTÃO - 01ª CIRCUNSCRIÇÃO JUDICIÁRIA",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Santos",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2020-02-27",
+      "quantidade_movimentacoes": 191,
+      "fontes_tribunais_estao_arquivadas": true,
+      "data_ultima_verificacao": "2022-05-11T06:37:01+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [
+        {
+          "numero": "0026401-38.2019.8.26.0562"
+        }
+      ],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": false,
+        "diario_oficial": true
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 53880747,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2017-02-11",
+          "data_ultima_movimentacao": "2020-02-27",
+          "segredo_justica": false,
+          "arquivado": true,
+          "status_predito": "INATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Ação Penal - Procedimento Ordinário",
+            "assunto": "Leve",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 1818,
+              "nome": "Leve",
+              "nome_com_pai": "Lesão Corporal > Leve",
+              "path_completo": "DIREITO PENAL > Lesão Corporal > Leve",
+              "categoria_raiz": "DIREITO PENAL",
+              "bloqueado": false
+            },
+            "area": "Criminal",
+            "orgao_julgador": "3ª Vara Criminal - Foro de Santos",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": null,
+              "moeda": null,
+              "valor_formatado": null
+            },
+            "data_distribuicao": "2017-02-11",
+            "data_arquivamento": "2020-02-27",
+            "informacoes_complementares": null
+          },
+          "audiencias": [
+            {
+              "tipo": "Instrução, Interrogatório, Debates e Julgamento",
+              "data": "2017-11-22",
+              "quantidade_pessoas": 5,
+              "situacao": null
+            }
+          ],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=EW000043Z0000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 2,
+          "data_ultima_verificacao": "2022-05-11T06:37:01+00:00",
+          "quantidade_movimentacoes": 187,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Justiça Pública",
+              "quantidade_processos": 16748862,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "AUTOR",
+              "tipo_normalizado": "Autor",
+              "polo": "ATIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Defensoria Pública do Estado de São Paulo",
+              "quantidade_processos": 3401176,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Def. Púb",
+              "tipo_normalizado": "Defensor Público",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": "08036157000189"
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 333492773,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2018-08-20",
+          "data_ultima_movimentacao": "2019-02-20",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 5,
+          "data_ultima_verificacao": "2019-02-20T03:06:00+00:00",
+          "quantidade_movimentacoes": 4,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 3107,
+              "tipo": "Apdo/Apte",
+              "tipo_normalizado": "Apelado / Apelante",
+              "polo": "DESCONHECIDO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Defensoria Pública do Estado de São Paulo",
+              "quantidade_processos": 3401176,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "DEFENSOR PÚBLICO",
+              "tipo_normalizado": "Defensor Público",
+              "polo": "ADVOGADO",
+              "cpf": null,
+              "cnpj": "08036157000189"
+            },
+            {
+              "nome": "Rafael Braga Vinhas",
+              "quantidade_processos": 2770,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": "(Defensor Público)",
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": "95858660053",
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 258382
+                }
+              ]
+            },
+            {
+              "nome": "Ministério Público do Estado de São Paulo",
+              "quantidade_processos": 3122229,
+              "tipo_pessoa": "JURIDICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "APTE/ APDO",
+              "tipo_normalizado": "Apelante / Apelado",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": "01468760000190"
+            },
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Apdo/Apte",
+              "tipo_normalizado": "Apelado / Apelante",
+              "polo": "DESCONHECIDO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Ely Amioka",
+              "quantidade_processos": 8085,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Relator",
+              "tipo_normalizado": "Juiz",
+              "polo": "NENHUM",
+              "cpf": "00330393804",
+              "cnpj": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero_cnj": "1005009-48.2014.8.26.0223",
+      "titulo_polo_ativo": "Adriano Felizardo dos Santos",
+      "titulo_polo_passivo": "Andre Luiz Cruz dos Santos",
+      "ano_inicio": 2014,
+      "data_inicio": "2014-06-23",
+      "estado_origem": {
+        "nome": "São Paulo",
+        "sigla": "SP"
+      },
+      "unidade_origem": {
+        "nome": "FORO DE GUARUJÁ",
+        "endereco": null,
+        "classificacao": null,
+        "cidade": "Guarujá",
+        "estado": {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        },
+        "tribunal_sigla": "TJSP"
+      },
+      "data_ultima_movimentacao": "2017-02-25",
+      "quantidade_movimentacoes": 68,
+      "fontes_tribunais_estao_arquivadas": true,
+      "data_ultima_verificacao": "2022-06-17T04:54:34+00:00",
+      "tempo_desde_ultima_verificacao": "há 3 anos",
+      "processos_relacionados": [],
+      "monitoramento_id": null,
+      "tipo_match": "NOME",
+      "match_fontes": {
+        "tribunal": true,
+        "diario_oficial": false
+      },
+      "match_documento_por": null,
+      "fontes": [
+        {
+          "id": 1,
+          "processo_fonte_id": 70299915,
+          "outros_numeros": [],
+          "descricao": "TJSP - 1º grau",
+          "nome": "Tribunal de Justiça de São Paulo",
+          "sigla": "TJSP",
+          "tipo": "TRIBUNAL",
+          "data_inicio": "2014-06-23",
+          "data_ultima_movimentacao": "2017-02-25",
+          "segredo_justica": true,
+          "arquivado": null,
+          "status_predito": "INATIVO",
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "ESAJ",
+          "capa": {
+            "classe": "Alimentos - Provisionais",
+            "assunto": "(6239) Fixação | (5779) Alimentos | (5626) Família | (899) DIREITO CIVIL",
+            "assuntos_normalizados": [],
+            "assunto_principal_normalizado": {
+              "id": 2589,
+              "nome": "Fixação",
+              "nome_com_pai": "Alimentos > Fixação",
+              "path_completo": "DIREITO CIVIL > Família > Alimentos > Fixação",
+              "categoria_raiz": "DIREITO CIVIL",
+              "bloqueado": false
+            },
+            "area": null,
+            "orgao_julgador": "02 FAMILIA SUCESSOES DE GUARUJA",
+            "orgao_julgador_normatizado": null,
+            "situacao": null,
+            "valor_causa": {
+              "valor": "1000.0000",
+              "moeda": null,
+              "valor_formatado": "1.000,00"
+            },
+            "data_distribuicao": "2014-06-23",
+            "data_arquivamento": null,
+            "informacoes_complementares": null
+          },
+          "audiencias": [],
+          "url": "https://esaj.tjsp.jus.br/cpopg/show.do?processo.codigo=670000KRD0000",
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 2,
+          "data_ultima_verificacao": "2022-06-17T04:54:34+00:00",
+          "quantidade_movimentacoes": 62,
+          "tipos_envolvido_pesquisado": [
+            {
+              "id": 4491,
+              "tipo": "Alimentado",
+              "tipo_normalizado": "Alimentando",
+              "polo": "PASSIVO"
+            }
+          ],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Andre Luiz Cruz dos Santos",
+              "quantidade_processos": 23,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Alimentado",
+              "tipo_normalizado": "Alimentando",
+              "polo": "PASSIVO",
+              "cpf": null,
+              "cnpj": null
+            },
+            {
+              "nome": "Adriano Felizardo dos Santos",
+              "quantidade_processos": 10,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Alimentante",
+              "tipo_normalizado": "Alimentante",
+              "polo": "ATIVO",
+              "cpf": "21329187830",
+              "cnpj": null
+            }
+          ]
+        },
+        {
+          "id": 22054,
+          "processo_fonte_id": 267586281,
+          "outros_numeros": [],
+          "descricao": "Diário de Justiça do Estado de São Paulo",
+          "nome": "Diário de Justiça do Estado de São Paulo",
+          "sigla": "DJSP",
+          "tipo": "DIARIO_OFICIAL",
+          "data_inicio": "2014-06-27",
+          "data_ultima_movimentacao": "2014-09-05",
+          "segredo_justica": null,
+          "arquivado": null,
+          "status_predito": null,
+          "grau": 1,
+          "grau_formatado": "Primeiro Grau",
+          "fisico": null,
+          "sistema": "Site",
+          "capa": null,
+          "audiencias": [],
+          "url": null,
+          "tribunal": {
+            "id": 102,
+            "nome": "Tribunal de Justiça de São Paulo",
+            "sigla": "TJSP",
+            "categoria": null
+          },
+          "quantidade_envolvidos": 1,
+          "data_ultima_verificacao": "2014-09-05T03:06:00+00:00",
+          "quantidade_movimentacoes": 6,
+          "tipos_envolvido_pesquisado": [],
+          "match_documento_por": null,
+          "envolvidos": [
+            {
+              "nome": "Marcia Bernardino Ventura Fernandez",
+              "quantidade_processos": 117,
+              "tipo_pessoa": "FISICA",
+              "advogados": [],
+              "prefixo": null,
+              "sufixo": null,
+              "tipo": "Advogado",
+              "tipo_normalizado": "Advogado",
+              "polo": "ADVOGADO",
+              "cpf": "26614238850",
+              "cnpj": null,
+              "oabs": [
+                {
+                  "uf": "SP",
+                  "tipo": "ADVOGADO",
+                  "numero": 306886
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "links": {
+    "next": null
+  },
+  "paginator": {
+    "per_page": 100
+  }
+}

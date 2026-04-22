@@ -30,6 +30,30 @@ export default function AuditoriaPage() {
     const [categoryFilter, setCategoryFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
 
+    function handleExportCsv() {
+        const headers = ['Data/Hora', 'Usuario', 'Acao', 'Categoria', 'Alvo', 'Detalhe', 'IP', 'Nivel'];
+        const rows = filtered.map((log) => [
+            log.timestamp || '',
+            log.user || '',
+            log.action || '',
+            log.category || '',
+            log.target || '',
+            (log.detail || '').replace(/"/g, '""'),
+            log.ip || '',
+            log.level || '',
+        ]);
+        const csvContent = [headers, ...rows]
+            .map((row) => row.map((cell) => `"${cell}"`).join(','))
+            .join('\n');
+        const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `auditoria_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
     const filtered = useMemo(() => {
         let result = [...logs];
 
@@ -61,9 +85,21 @@ export default function AuditoriaPage() {
                     <h2 className="auditoria-header__title">Auditoria e Logs</h2>
                     <p className="auditoria-header__subtitle">Registros completos de ações e eventos do sistema</p>
                 </div>
-                <div className="auditoria-header__badge">
-                    <span className="auditoria-header__badge-label">Registros</span>
-                    <strong>{filtered.length}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div className="auditoria-header__badge">
+                        <span className="auditoria-header__badge-label">Registros</span>
+                        <strong>{filtered.length}</strong>
+                    </div>
+                    {filtered.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={handleExportCsv}
+                            data-testid="export-csv-btn"
+                            style={{ fontSize: '.8125rem', padding: '6px 14px', borderRadius: 6, border: '1px solid var(--gray-300)', background: 'var(--white)', cursor: 'pointer', color: 'var(--brand-700)', fontWeight: 500 }}
+                        >
+                            Exportar CSV
+                        </button>
+                    )}
                 </div>
             </div>
 

@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useCases } from '../../hooks/useCases';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { callGetOpsV2Metrics } from '../../core/firebase/firestoreService';
 import './MetricasIAPage.css';
 
 /* ── Constants ── */
@@ -49,7 +50,20 @@ export default function MetricasIAPage() {
     const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
     const { cases, loading, error } = useCases(tenantOverride);
     const [periodDays, setPeriodDays] = useState(30);
+    const [v2Metrics, setV2Metrics] = useState(null);
+    const [v2MetricsError, setV2MetricsError] = useState(null);
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
+    const currentMonthKey = new Date().toISOString().slice(0, 7);
+
+    useEffect(() => {
+        setV2MetricsError(null);
+        callGetOpsV2Metrics({ tenantId: tenantOverride, monthKey: currentMonthKey })
+            .then(setV2Metrics)
+            .catch((err) => {
+                setV2Metrics(null);
+                setV2MetricsError(extractErrorMessage(err, 'Nao foi possivel carregar metricas V2.'));
+            });
+    }, [tenantOverride, currentMonthKey]);
 
     const m = useMemo(() => {
         const now = Date.now();
@@ -174,6 +188,36 @@ export default function MetricasIAPage() {
             </div>
 
             {/* ── Row 2: Verdict chips ── */}
+            <Section title="Operacao V2" icon="V2">
+                {v2MetricsError && <p className="ops-dash__empty" role="alert">{v2MetricsError}</p>}
+                {v2Metrics ? (
+                    <div className="ops-dash__chips" data-testid="v2-metrics-panel">
+                        <div className="ops-dash__chip ops-dash__chip--blue">
+                            <span className="ops-dash__chip-n" data-testid="v2-usage-meters">{v2Metrics.counts?.usageMeters ?? 0}</span>
+                            <span className="ops-dash__chip-l">usageMeters</span>
+                        </div>
+                        <div className="ops-dash__chip ops-dash__chip--green">
+                            <span className="ops-dash__chip-n" data-testid="v2-module-runs">{v2Metrics.counts?.moduleRuns ?? 0}</span>
+                            <span className="ops-dash__chip-l">moduleRuns</span>
+                        </div>
+                        <div className="ops-dash__chip ops-dash__chip--red">
+                            <span className="ops-dash__chip-n" data-testid="v2-open-divergences">{v2Metrics.counts?.openProviderDivergences ?? 0}</span>
+                            <span className="ops-dash__chip-l">divergencias abertas</span>
+                        </div>
+                        <div className="ops-dash__chip ops-dash__chip--yellow">
+                            <span className="ops-dash__chip-n" data-testid="v2-senior-pending">{v2Metrics.counts?.seniorPending ?? 0}</span>
+                            <span className="ops-dash__chip-l">senior review</span>
+                        </div>
+                        <div className="ops-dash__chip ops-dash__chip--gray">
+                            <span className="ops-dash__chip-n">{fmtBRL(v2Metrics.usage?.totalInternalCostBrl ?? 0)}</span>
+                            <span className="ops-dash__chip-l">custo usageMeters</span>
+                        </div>
+                    </div>
+                ) : (
+                    !v2MetricsError && <p className="ops-dash__empty">Carregando metricas V2...</p>
+                )}
+            </Section>
+
             <Section title="Classificação Final" icon="⚖">
                 <div className="ops-dash__chips">
                     {VERDICT_CFG.map(v => (

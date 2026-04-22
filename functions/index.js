@@ -17,10 +17,11 @@
 const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
-const { defineString, defineSecret } = require('firebase-functions/params');
+const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 
 const {
     queryWarrant, queryLabor, queryIdentity,
@@ -91,7 +92,6 @@ const {
     V2_CORE_VERSION,
     buildClientProjectionContract,
     buildDecisionContract,
-    buildReportSnapshotContract,
     inferProductKey,
     inferRequestedModuleKeys,
     resolvePublicReportAvailability,
@@ -101,20 +101,88 @@ const {
     V2_MODULES_VERSION,
     buildModuleRunsForCase,
     summarizeModuleRuns,
+    resolveCaseEntitlements,
 } = require('./domain/v2Modules.cjs');
 const {
     V2_OPERATIONAL_ARTIFACTS_VERSION,
     buildOperationalArtifactsForCase,
 } = require('./domain/v2OperationalArtifacts.cjs');
 const {
+    persistRawSnapshotPayloads,
+} = require('./domain/v2RawPayloadStorage.cjs');
+const {
     V2_SUBJECTS_VERSION,
     buildSubjectFromCase,
 } = require('./domain/v2Subjects.cjs');
+const {
+    buildReportSnapshotFromV2,
+} = require('./domain/v2ReportSections.cjs');
+const {
+    buildUsageMetersForCase,
+    groupMeterIdsByModule,
+} = require('./domain/v2UsageMeters.cjs');
+const {
+    resolveReviewGate,
+} = require('./domain/v2ReviewGate.cjs');
+const {
+    PERMISSIONS: V2_PERMISSIONS,
+    hasPermission: hasV2Permission,
+} = require('./domain/v2Rbac.cjs');
+const {
+    buildProviderDivergenceResolution,
+} = require('./domain/v2ProviderDivergences.cjs');
+const {
+    PRODUCT_REGISTRY,
+    MODULE_REGISTRY,
+} = require('./domain/v2Modules.cjs');
+const {
+    resolveSubject,
+} = require('./domain/v2SubjectManager.cjs');
+const {
+    syncClientCaseListProjection,
+} = require('./domain/v2ClientProjectionBuilder.cjs');
+const {
+    processWatchlists,
+    processSingleWatchlist,
+    addToWatchlist,
+    pauseWatchlist,
+    resumeWatchlist,
+    deleteWatchlist,
+} = require('./domain/v2MonitoringEngine.cjs');
+const {
+    summarizeBillingOverview,
+    summarizeUsageMeters,
+} = require('./domain/v2BillingResolver.cjs');
+const {
+    buildBillingDrilldown,
+    buildBillingDrilldownExport,
+} = require('./domain/v2BillingDrilldown.cjs');
+const {
+    closeBillingPeriod,
+} = require('./domain/v2BillingEngine.cjs');
+const {
+    buildSeniorReviewRequest,
+    buildSeniorReviewRequestId,
+    isSeniorReviewApproved,
+    summarizeSeniorReviewQueue,
+} = require('./domain/v2SeniorReviewQueue.cjs');
+const {
+    sanitizeTenantEntitlementPayload,
+    buildTenantEntitlementAuditDiff,
+} = require('./domain/v2TenantEntitlements.cjs');
+const {
+    buildTimelineEventsForCase,
+    buildProviderDivergencesForCase,
+} = require('./domain/v2Timeline.cjs');
+const {
+    buildRelationshipsForCase,
+} = require('./domain/v2MiniRelationships.cjs');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
 
 initializeApp();
 let db = getFirestore();
+let storage = getStorage();
 
 const fontedataApiKey = defineSecret('FONTEDATA_API_KEY');
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
@@ -279,6 +347,14 @@ function formatDateKey(date, timeZone = 'America/Sao_Paulo') {
 function formatMonthKey(date, timeZone = 'America/Sao_Paulo') {
     const dayKey = formatDateKey(date, timeZone);
     return dayKey ? dayKey.slice(0, 7) : null;
+}
+
+function previousMonthKey(date = new Date(), timeZone = 'America/Sao_Paulo') {
+    const currentMonth = formatMonthKey(date, timeZone);
+    if (!currentMonth) return null;
+    const [year, month] = currentMonth.split('-').map(Number);
+    const previous = new Date(Date.UTC(year, month - 2, 15, 12, 0, 0));
+    return formatMonthKey(previous, timeZone);
 }
 
 function asDate(value) {
@@ -3245,7 +3321,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 
 exports.enrichJuditOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 540, memory: '512MiB', secrets: [juditApiKey, fontedataApiKey, openaiApiKey] },
-    async (event) => {
+    async () => {
         const before = event.data?.before?.data();
         const after = event.data?.after?.data();
         if (!before || !after) return;
@@ -3296,7 +3372,7 @@ exports.enrichJuditOnCase = onDocumentUpdated(
                     metadata: { phase: 'judit', status: refreshed.juditEnrichmentStatus, trigger: 'bigdatacorp_settled' },
                     templateVars: { candidateName: caseData.candidateName || caseId, phase: 'judit', status: refreshed.juditEnrichmentStatus || 'UNKNOWN' },
                 });
-            } catch (_auditErr) { /* audit failure must not block pipeline */ }
+            } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [Judit]: error:`, err.message);
             throw err;
@@ -3354,7 +3430,7 @@ exports.enrichBigDataCorpOnCase = onDocumentCreated(
                     metadata: { phase: 'bigdatacorp', status: refreshed.bigdatacorpEnrichmentStatus, trigger: 'case_created' },
                     templateVars: { candidateName: caseData.candidateName || caseId, phase: 'bigdatacorp', status: refreshed.bigdatacorpEnrichmentStatus || 'UNKNOWN' },
                 });
-            } catch (_auditErr) { /* audit failure must not block pipeline */ }
+            } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [BigDataCorp]: error:`, err.message);
             // Do NOT rethrow — BigDataCorp failure should not block the pipeline
@@ -3508,7 +3584,7 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
                     metadata: { phase: 'escavador', status: refreshed.escavadorEnrichmentStatus, trigger: 'judit_settled' },
                     templateVars: { candidateName: caseData.candidateName || caseId, phase: 'escavador', status: refreshed.escavadorEnrichmentStatus || 'UNKNOWN' },
                 });
-            } catch (_auditErr) { /* audit failure must not block pipeline */ }
+            } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [Escavador]: error:`, err.message);
             throw err;
@@ -3572,7 +3648,7 @@ exports.enrichDjenOnCase = onDocumentUpdated(
                     metadata: { phase: 'djen', status: refreshed.djenEnrichmentStatus, trigger: 'judit_settled' },
                     templateVars: { candidateName: caseData.candidateName || caseId, phase: 'djen', status: refreshed.djenEnrichmentStatus || 'UNKNOWN' },
                 });
-            } catch (_auditErr) { /* audit failure must not block pipeline */ }
+            } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [DJEN]: error:`, err.message);
         }
@@ -4524,11 +4600,12 @@ async function writeClientCaseMirror(caseId, caseData) {
 
 exports.syncClientCaseOnCreate = onDocumentCreated(
     { document: 'cases/{caseId}', region: 'southamerica-east1' },
-    async (event) => {
+    async () => {
         const caseData = event.data?.data();
         if (!caseData) return;
         const caseId = event.params.caseId;
         await writeClientCaseMirror(caseId, caseData);
+        await syncClientCaseListProjection(caseId, caseData);
     },
 );
 
@@ -4539,6 +4616,7 @@ exports.syncClientCaseOnUpdate = onDocumentUpdated(
         if (!after) return;
         const caseId = event.params.caseId;
         await writeClientCaseMirror(caseId, after);
+        await syncClientCaseListProjection(caseId, after);
     },
 );
 
@@ -4547,6 +4625,7 @@ exports.syncClientCaseOnDelete = onDocumentDeleted(
     async (event) => {
         const caseId = event.params.caseId;
         await db.collection('clientCases').doc(caseId).delete().catch(() => {});
+        await db.collection('clientCaseList').doc(caseId).delete().catch(() => {});
     },
 );
 
@@ -5037,9 +5116,25 @@ exports.createClientSolicitation = onCall(
             updatedAt: FieldValue.serverTimestamp(),
         };
         batch.set(caseRef, casePayload);
-
         await batch.commit();
-        const moduleRunState = await materializeModuleRunsForCase(caseRef.id, casePayload);
+
+        // Phase 3: Subject Identity Resolution
+        let subjectId = null;
+        try {
+            subjectId = await resolveSubject({
+                tenantId,
+                taxId: cpfDigits,
+                name: candidateName,
+                caseId: caseRef.id,
+                caseData: casePayload,
+            });
+            await caseRef.update({ subjectId });
+            console.log(`Case ${caseRef.id} linked to Subject ${subjectId}`);
+        } catch (subErr) {
+            console.warn(`Failed to resolve subject for case ${caseRef.id}:`, subErr.message);
+        }
+
+        const moduleRunState = await materializeModuleRunsForCase(caseRef.id, { ...casePayload, subjectId });
 
         await writeAuditEvent({
             action: 'SOLICITATION_CREATED',
@@ -6621,7 +6716,7 @@ function buildDetExecutiveSummary(caseData) {
         pepRisk,
         sanctionRisk,
     );
-    const riskLabel = maxRisk >= 70 ? 'ALTO' : maxRisk >= 40 ? 'MÉDIO' : 'BAIXO';
+    const _riskLabel = maxRisk >= 70 ? 'ALTO' : maxRisk >= 40 ? 'MÉDIO' : 'BAIXO';
     // Risk level omitted from text — already shown as badge in report Risk Box
 
     return parts.join('\n');
@@ -7251,6 +7346,22 @@ async function materializeModuleRunsForCase(caseId, caseData = {}, options = {})
         caseData,
         moduleRuns: resolvedState.moduleRuns,
     });
+    operationalArtifacts.rawSnapshots = await persistRawSnapshotPayloads(
+        operationalArtifacts.rawSnapshots,
+        { bucket: storage.bucket(), logger: console },
+    );
+
+    const usageMeters = buildUsageMetersForCase({
+        caseId,
+        tenantId,
+        subjectId: caseData.subjectId || null,
+        productKey: caseData.productKey || inferProductKey(caseData),
+        moduleRuns: resolvedState.moduleRuns,
+        providerRequests: operationalArtifacts.providerRequests,
+        meteredAt: caseData.createdAt || caseData.requestedAt || caseData.updatedAt || new Date(),
+    });
+    const meterIdsByModule = groupMeterIdsByModule(usageMeters);
+
     const mergeIds = (...lists) => [...new Set(lists.flat().filter(Boolean))];
     const moduleRuns = resolvedState.moduleRuns.map((moduleRun) => {
         const artifactIds = operationalArtifacts.artifactIdsByModule?.[moduleRun.moduleKey] || {};
@@ -7261,10 +7372,19 @@ async function materializeModuleRunsForCase(caseId, caseData = {}, options = {})
             providerRecordIds: mergeIds(moduleRun.providerRecordIds || [], artifactIds.providerRecordIds || []),
             evidenceIds: mergeIds(moduleRun.evidenceIds || [], artifactIds.evidenceIds || []),
             riskSignalIds: mergeIds(moduleRun.riskSignalIds || [], artifactIds.riskSignalIds || []),
+            usageMeterIds: mergeIds(moduleRun.usageMeterIds || [], meterIdsByModule[moduleRun.moduleKey] || []),
         };
     });
     const summary = summarizeModuleRuns(moduleRuns);
     const batch = db.batch();
+
+    usageMeters.forEach((meter) => {
+        const meterRef = db.collection('usageMeters').doc(meter.id);
+        batch.set(meterRef, stripUndefined({
+            ...meter,
+            updatedAt: FieldValue.serverTimestamp(),
+        }), { merge: true });
+    });
 
     operationalArtifacts.providerRequests.forEach((providerRequest) => {
         const providerRequestRef = db.collection('providerRequests').doc(providerRequest.id);
@@ -7364,6 +7484,56 @@ async function materializeModuleRunsForCase(caseId, caseData = {}, options = {})
     }
 
     await batch.commit();
+
+    try {
+        const timelineEvents = buildTimelineEventsForCase({
+            caseId,
+            tenantId,
+            moduleRuns,
+            evidenceItems: operationalArtifacts.evidenceItems,
+            riskSignals: operationalArtifacts.riskSignals,
+        });
+        const providerDivergences = buildProviderDivergencesForCase({
+            caseId,
+            tenantId,
+            evidenceItems: operationalArtifacts.evidenceItems,
+            riskSignals: operationalArtifacts.riskSignals,
+        });
+        const relationships = buildRelationshipsForCase({
+            tenantId,
+            caseId,
+            subjectId: caseData.subjectId || null,
+            productKey: caseData.productKey || inferProductKey(caseData),
+            evidenceItems: operationalArtifacts.evidenceItems,
+            providerRecords: operationalArtifacts.providerRecords,
+            createdAt: new Date().toISOString(),
+        });
+
+        const derivedBatch = db.batch();
+        timelineEvents.forEach((event) => {
+            derivedBatch.set(db.collection('timelineEvents').doc(event.id), stripUndefined({
+                ...event,
+                updatedAt: FieldValue.serverTimestamp(),
+            }), { merge: true });
+        });
+        providerDivergences.forEach((divergence) => {
+            derivedBatch.set(db.collection('providerDivergences').doc(divergence.id), stripUndefined({
+                ...divergence,
+                updatedAt: FieldValue.serverTimestamp(),
+            }), { merge: true });
+        });
+        relationships.forEach((relationship) => {
+            derivedBatch.set(db.collection('relationships').doc(relationship.id), stripUndefined({
+                ...relationship,
+                updatedAt: FieldValue.serverTimestamp(),
+            }), { merge: true });
+        });
+        if (timelineEvents.length || providerDivergences.length || relationships.length) {
+            await derivedBatch.commit();
+        }
+    } catch (derivedErr) {
+        console.warn(`Case ${caseId}: V2 derived timeline/relationship materialization skipped:`, derivedErr.message);
+    }
 
     return { moduleRuns, summary, operationalArtifacts };
 }
@@ -7468,12 +7638,21 @@ async function materializeV2PublicationArtifacts(caseId, caseData, options = {})
     };
     await decisionRef.set(decision, { merge: true });
 
+    // Fetch V2 collections to build ReportSnapshot and ReportSections using buildReportSnapshotFromV2
+    const evidenceSnap = await db.collection('evidenceItems').where('caseId', '==', caseId).get();
+    const evidenceItems = evidenceSnap.docs.map(d => d.data());
+    const signalsSnap = await db.collection('riskSignals').where('caseId', '==', caseId).get();
+    const riskSignals = signalsSnap.docs.map(d => d.data());
+
     const html = await buildCanonicalReportHtml(caseId, modularCaseData, publicSnapshot);
-    const reportSnapshotDraft = buildReportSnapshotContract({
+    const reportSnapshotDraft = buildReportSnapshotFromV2({
         caseId,
         caseData: modularCaseData,
         publicResult: publicSnapshot,
         decision,
+        moduleRuns: moduleRunState.moduleRuns,
+        evidenceItems,
+        riskSignals,
         html,
         builderVersion: REPORT_BUILD_VERSION,
         createdBy: reviewer.uid || reportCreatedBy || null,
@@ -7533,10 +7712,14 @@ async function materializeV2PublicationArtifacts(caseId, caseData, options = {})
             }
         }
 
+        // 4. Create public report with deterministic ID to prevent race conditions
         if (!publicReport) {
             const TTL_DAYS = 365;
             expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
-            const publicReportRef = db.collection('publicReports').doc();
+
+            // Generate a deterministic token based on snapshot hash to avoid orphans on race conditions
+            const deterministicToken = buildV2ArtifactId(caseId, computeSimpleHash('pr_' + reportSnapshot.contentHash));
+            const publicReportRef = db.collection('publicReports').doc(deterministicToken);
             publicReportToken = publicReportRef.id;
             publicReport = {
                 html,
@@ -7626,11 +7809,18 @@ exports.concludeCaseByAnalyst = onCall(
         if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
 
         const caseRef = db.collection('cases').doc(caseId);
+
+        // --- PHASE 1: PRE-FETCH & VALIDATION (outside transaction to avoid heavy locks) ---
         const caseDoc = await caseRef.get();
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
         const caseData = caseDoc.data() || {};
 
-        if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
+        if (caseData.status === 'DONE') {
+            return { success: true, message: 'Caso ja concluido.' };
+        }
+
+        const isGlobalAdmin = profile.role === 'admin' && !profile.tenantId;
+        if (caseData.tenantId && caseData.tenantId !== profile.tenantId && !isGlobalAdmin) {
             throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
         }
 
@@ -7639,7 +7829,7 @@ exports.concludeCaseByAnalyst = onCall(
             updatePayload.assigneeId = caseData.assigneeId || uid;
         }
 
-        // Hard facts validation: block conclusion if Judit found active warrants but warrantFlag is unresolved
+        // Hard facts validation
         if (
             (caseData.juditActiveWarrantCount || 0) > 0 &&
             updatePayload.warrantFlag &&
@@ -7672,10 +7862,8 @@ exports.concludeCaseByAnalyst = onCall(
             prefillKey: 'finalJustification',
         });
 
-        // P07: Always recompute sourceSummary to reflect current enrichment state
         updatePayload.sourceSummary = buildSourceSummary({ ...caseData, ...updatePayload });
 
-        // Flags/severity: prefer payload, fallback to reviewDraft for fields not sent
         const reviewDraft = caseData?.reviewDraft || {};
         const flagFields = [
             'criminalFlag', 'criminalSeverity', 'laborFlag', 'laborSeverity',
@@ -7688,7 +7876,6 @@ exports.concludeCaseByAnalyst = onCall(
             }
         }
 
-        // Array fields: prefer payload, fallback to reviewDraft
         const arrayFlagFields = ['osintVectors', 'socialReasons', 'digitalVectors'];
         for (const af of arrayFlagFields) {
             if (!hasMeaningfulValue(updatePayload[af]) && hasMeaningfulValue(reviewDraft[af])) {
@@ -7696,7 +7883,6 @@ exports.concludeCaseByAnalyst = onCall(
             }
         }
 
-        // P02: Fallback riskScore — compute from flags if not in payload or draft
         if (!hasMeaningfulValue(updatePayload.riskScore) || updatePayload.riskScore === 0) {
             const scores = { POSITIVE: 90, INCONCLUSIVE: 50, NEGATIVE_PARTIAL: 40, CONCERN: 60, ALERT: 70, ATTENTION: 55, UNKNOWN: 30, NOT_FOUND: 0, NOT_CHECKED: 0, NEGATIVE: 0, CLEAN: 0, FIT: 0 };
             const flagVals = [
@@ -7711,7 +7897,6 @@ exports.concludeCaseByAnalyst = onCall(
             if (maxScore > 0) updatePayload.riskScore = maxScore;
         }
 
-        // P18: Set reportReady based on content validation
         const derivedCaseForPublish = { ...caseData, ...updatePayload, status: 'DONE' };
         const moduleRunPreflight = await resolveModuleRunsForCase(caseId, derivedCaseForPublish);
         if (moduleRunPreflight.summary.blocksDecision || moduleRunPreflight.summary.blocksPublication) {
@@ -7720,6 +7905,93 @@ exports.concludeCaseByAnalyst = onCall(
                 `Conclusao bloqueada por modulo(s): ${moduleRunPreflight.summary.blockedModuleKeys.join(', ')}.`,
             );
         }
+        const blockingDivergencesSnap = await db.collection('providerDivergences')
+            .where('caseId', '==', caseId)
+            .where('blocksPublication', '==', true)
+            .limit(1)
+            .get();
+        if (!blockingDivergencesSnap.empty) {
+            const blockingDivergence = blockingDivergencesSnap.docs[0];
+            throw new HttpsError(
+                'failed-precondition',
+                `Conclusao bloqueada por divergencia de provider aberta (${blockingDivergence.id}). Resolva a divergencia com justificativa antes da publicacao.`,
+            );
+        }
+
+        // V2 Review Gate Enforced
+        const signalsSnap = await db.collection('riskSignals').where('caseId', '==', caseId).get();
+        const riskSignals = signalsSnap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
+        const reviewGateResult = resolveReviewGate({
+            moduleRuns: moduleRunPreflight.moduleRuns,
+            riskSignals,
+            caseData: derivedCaseForPublish,
+            moduleRegistry: MODULE_REGISTRY,
+            actorRole: profile.role,
+        });
+        if (!reviewGateResult.allowed) {
+            if (reviewGateResult.denialReasonCode === 'senior_approval_required') {
+                const seniorReviewRequestId = buildSeniorReviewRequestId(caseId);
+                const seniorReviewRef = db.collection('seniorReviewRequests').doc(seniorReviewRequestId);
+                const seniorReviewSnap = await seniorReviewRef.get();
+                const seniorReviewData = seniorReviewSnap.exists ? { id: seniorReviewSnap.id, ...(seniorReviewSnap.data() || {}) } : null;
+
+                if (isSeniorReviewApproved(seniorReviewData)) {
+                    updatePayload.seniorReviewRequestId = seniorReviewRequestId;
+                    updatePayload.seniorApprovalStatus = 'approved';
+                    updatePayload.seniorApprovedBy = seniorReviewData.resolvedBy || null;
+                    updatePayload.seniorApprovedAt = seniorReviewData.resolvedAt || null;
+                    derivedCaseForPublish.seniorReviewRequestId = seniorReviewRequestId;
+                    derivedCaseForPublish.seniorApprovalStatus = 'approved';
+                    derivedCaseForPublish.seniorApprovedBy = seniorReviewData.resolvedBy || null;
+                    derivedCaseForPublish.seniorApprovedAt = seniorReviewData.resolvedAt || null;
+                } else {
+                    const seniorReviewRequest = buildSeniorReviewRequest({
+                        caseId,
+                        caseData: derivedCaseForPublish,
+                        policyResult: reviewGateResult.policyResult,
+                        riskSignals,
+                        moduleRuns: moduleRunPreflight.moduleRuns,
+                        actor: { uid, email: profile.email || uid },
+                    });
+
+                    await seniorReviewRef.set({
+                        ...seniorReviewRequest,
+                        createdAt: seniorReviewSnap.exists ? (seniorReviewData.createdAt || FieldValue.serverTimestamp()) : FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    await caseRef.set({
+                        seniorReviewRequestId,
+                        seniorApprovalStatus: 'pending',
+                        status: 'senior_review_required',
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    await writeAuditEvent({
+                        action: 'SENIOR_REVIEW_REQUESTED',
+                        tenantId: caseData.tenantId || null,
+                        actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+                        entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+                        related: { caseId, seniorReviewRequestId },
+                        source: SOURCE.PORTAL_OPS,
+                        ip: getClientIp(request),
+                        detail: `Revisao senior solicitada para ${caseData.candidateName || caseId}`,
+                        metadata: {
+                            denialReasonCode: reviewGateResult.denialReasonCode,
+                            policyResult: reviewGateResult.policyResult,
+                        },
+                    });
+                    throw new HttpsError(
+                        'failed-precondition',
+                        `Conclusao bloqueada: ${reviewGateResult.denialMessage}. A pendencia senior foi registrada na fila operacional.`
+                    );
+                }
+            } else {
+            throw new HttpsError(
+                'permission-denied',
+                `Aprovacao negada (V2 Gate): ${reviewGateResult.denialMessage}`
+            );
+            }
+        }
+
         updatePayload.statusSummary = hasMeaningfulValue(updatePayload.statusSummary)
             ? updatePayload.statusSummary
             : buildStatusSummary(derivedCaseForPublish);
@@ -7746,28 +8018,42 @@ exports.concludeCaseByAnalyst = onCall(
                 || hasMeaningfulValue(updatePayload.analystComment)
             );
         updatePayload.reportReady = hasMinContent;
+        updatePayload.status = 'DONE';
+        updatePayload.concludedAt = conclusionTimestamp;
+        updatePayload.updatedAt = FieldValue.serverTimestamp();
 
-        await caseRef.update(updatePayload);
-
-        const finalizedCaseData = {
-            ...caseData,
-            ...updatePayload,
-            status: 'DONE',
-            concludedAt: conclusionTimestamp,
-        };
-
-        // Sync write to publicResult/latest — eliminates race condition with async trigger
-        const publicSnapshot = await syncPublicResultLatest(caseId, finalizedCaseData, {}, {
+        // --- PHASE 2: GENERATE ARTIFACTS BEFORE COMMIT ---
+        // V2 Artifacts materialized first. If another request is running, it will overwrite idempotently.
+        // Sync write to publicResult/latest
+        const publicSnapshot = await syncPublicResultLatest(caseId, derivedCaseForPublish, {}, {
             concludedAtOverride: conclusionTimestamp,
         });
 
-        const v2Artifacts = await materializeV2PublicationArtifacts(caseId, finalizedCaseData, {
+        const v2Artifacts = await materializeV2PublicationArtifacts(caseId, derivedCaseForPublish, {
             publicSnapshot,
             concludedAtOverride: conclusionTimestamp,
             reviewer: { uid, email: profile.email || uid },
             reportCreatedBy: uid,
             source: SOURCE.PORTAL_OPS,
         });
+
+        // --- PHASE 3: TRANSACTIONAL COMMIT ---
+        // This ensures status is checked and updated atomically, preventing duplicate audit logs.
+        // It also ensures that the case is not marked DONE if artifact generation fails.
+        const result = await db.runTransaction(async (t) => {
+            const freshSnap = await t.get(caseRef);
+            const freshData = freshSnap.data() || {};
+            if (freshData.status === 'DONE') {
+                return { aborted: true, alreadyDone: true };
+            }
+
+            t.update(caseRef, updatePayload);
+            return { aborted: false };
+        });
+
+        if (result.aborted) {
+            return { success: true, message: 'Caso ja concluido por outro processo.' };
+        }
 
         await writeAuditEvent({
             action: 'CASE_CONCLUDED',
@@ -7797,6 +8083,119 @@ exports.concludeCaseByAnalyst = onCall(
     },
 );
 
+exports.resolveProviderDivergenceByAnalyst = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 30 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        if (!hasV2Permission(profile.role, V2_PERMISSIONS.PROVIDER_DIVERGENCE_RESOLVE)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para resolver divergencias de provider.');
+        }
+
+        const divergenceId = String(request.data?.divergenceId || '').trim();
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!divergenceId || !caseId) {
+            throw new HttpsError('invalid-argument', 'divergenceId e caseId sao obrigatorios.');
+        }
+
+        const divergenceRef = db.collection('providerDivergences').doc(divergenceId);
+        const caseRef = db.collection('cases').doc(caseId);
+        const resolvedAt = new Date().toISOString();
+        let updatedDivergence = null;
+        let caseData = null;
+
+        await db.runTransaction(async (transaction) => {
+            const [divergenceDoc, caseDoc] = await Promise.all([
+                transaction.get(divergenceRef),
+                transaction.get(caseRef),
+            ]);
+            if (!divergenceDoc.exists) throw new HttpsError('not-found', 'Divergencia nao encontrada.');
+            if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+
+            const divergence = { id: divergenceDoc.id, ...(divergenceDoc.data() || {}) };
+            caseData = caseDoc.data() || {};
+            if (divergence.caseId !== caseId) {
+                throw new HttpsError('failed-precondition', 'Divergencia nao pertence ao caso informado.');
+            }
+            if (caseData.tenantId && caseData.tenantId !== profile.tenantId && profile.role !== 'admin') {
+                throw new HttpsError('permission-denied', 'Sem permissao para operar este tenant.');
+            }
+
+            let resolution;
+            try {
+                resolution = buildProviderDivergenceResolution({
+                    divergence,
+                    payload: request.data || {},
+                    actor: { uid, email: profile.email || uid },
+                    resolvedAt,
+                });
+            } catch (error) {
+                throw new HttpsError('invalid-argument', error.message || 'Resolucao invalida.');
+            }
+
+            updatedDivergence = { ...divergence, ...resolution };
+            transaction.set(divergenceRef, stripUndefined({
+                ...resolution,
+                updatedAt: FieldValue.serverTimestamp(),
+            }), { merge: true });
+            transaction.set(caseRef, stripUndefined({
+                providerDivergenceResolutionUpdatedAt: FieldValue.serverTimestamp(),
+                lastResolvedProviderDivergenceId: divergenceId,
+                updatedAt: FieldValue.serverTimestamp(),
+            }), { merge: true });
+        });
+
+        const divergencesSnap = await db.collection('providerDivergences').where('caseId', '==', caseId).get();
+        const divergences = divergencesSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const openStatuses = new Set(['open', 'in_review', 'needs_recheck']);
+        const summary = {
+            total: divergences.length,
+            openCount: divergences.filter((divergence) => openStatuses.has(divergence.status || 'open')).length,
+            resolvedCount: divergences.filter((divergence) => !openStatuses.has(divergence.status || 'open')).length,
+            blockingCount: divergences.filter((divergence) => divergence.blocksPublication === true).length,
+            updatedAt: FieldValue.serverTimestamp(),
+        };
+        await db.collection('cases').doc(caseId).set({ providerDivergenceSummary: summary }, { merge: true });
+
+        await writeAuditEvent({
+            action: 'PROVIDER_DIVERGENCE_RESOLVED',
+            tenantId: caseData?.tenantId || updatedDivergence?.tenantId || null,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'PROVIDER_DIVERGENCE', id: divergenceId, label: divergenceId },
+            related: { caseId, subjectId: caseData?.subjectId || null },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Divergencia ${divergenceId} resolvida com status ${updatedDivergence?.status}`,
+            metadata: {
+                caseId,
+                status: updatedDivergence?.status || null,
+                resolution: updatedDivergence?.resolution || null,
+                resolutionAudit: updatedDivergence?.resolutionAudit || null,
+                providerDivergenceSummary: {
+                    total: summary.total,
+                    openCount: summary.openCount,
+                    resolvedCount: summary.resolvedCount,
+                    blockingCount: summary.blockingCount,
+                },
+            },
+            templateVars: { caseId, status: updatedDivergence?.status || null },
+        });
+
+        return {
+            success: true,
+            divergence: updatedDivergence,
+            providerDivergenceSummary: {
+                total: summary.total,
+                openCount: summary.openCount,
+                resolvedCount: summary.resolvedCount,
+                blockingCount: summary.blockingCount,
+            },
+        };
+    },
+);
+
 exports.updateTenantSettingsByAnalyst = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 60 },
     async (request) => {
@@ -7810,6 +8209,9 @@ exports.updateTenantSettingsByAnalyst = onCall(
         const enrichmentConfig = request.data?.enrichmentConfig;
 
         if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para configurar este tenant.');
+        }
 
         const payload = {
             analysisConfig,
@@ -7837,6 +8239,483 @@ exports.updateTenantSettingsByAnalyst = onCall(
         });
 
         return { success: true };
+    },
+);
+
+exports.getTenantEntitlementsByAnalyst = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = String(request.data?.tenantId || '').trim();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ler contrato deste tenant.');
+        }
+
+        // Get raw entitlements
+        const entitlements = await getTenantEntitlementsData(tenantId);
+
+        // Get legacy fallback if needed
+        const tenantSettings = await getTenantSettingsData(tenantId);
+
+        // Resolve what would be the effective entitlements
+        const resolved = resolveCaseEntitlements({
+            tenantId,
+            tenantEntitlements: entitlements,
+            tenantSettings,
+        });
+
+        return {
+            tenantId,
+            entitlements,
+            resolvedEntitlements: resolved,
+            source: entitlements ? 'tenantEntitlements' : (tenantSettings ? 'legacyTenantSettingsFallback' : 'defaults'),
+        };
+    }
+);
+
+exports.updateTenantEntitlementsByAnalyst = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        if (profile.role !== 'supervisor' && profile.role !== 'admin') {
+            throw new HttpsError('permission-denied', 'Apenas supervisores podem alterar contratos.');
+        }
+
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const entitlements = request.data?.entitlements || {};
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para alterar contrato deste tenant.');
+        }
+
+        const beforeDoc = await db.collection('tenantEntitlements').doc(tenantId).get();
+        const beforeData = beforeDoc.exists ? (beforeDoc.data() || {}) : {};
+        const sanitized = sanitizeTenantEntitlementPayload(entitlements);
+        const auditDiff = buildTenantEntitlementAuditDiff(beforeData, sanitized);
+
+        const payload = {
+            ...sanitized,
+            updatedAt: FieldValue.serverTimestamp(),
+            updatedBy: uid,
+            version: 'v2',
+        };
+
+        await db.collection('tenantEntitlements').doc(tenantId).set(payload, { merge: true });
+
+        await writeAuditEvent({
+            action: 'TENANT_ENTITLEMENTS_UPDATED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'CONTRACT', id: tenantId, label: tenantId },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Entitlements V2 atualizados para ${tenantId}`,
+            templateVars: { tenantId, tier: sanitized.tier, changedFields: auditDiff.changedFields.join(',') },
+            metadata: { before: auditDiff.before, after: auditDiff.after, changedFields: auditDiff.changedFields },
+        });
+
+        return { success: true, changedFields: auditDiff.changedFields };
+    }
+);
+
+exports.getTenantBillingOverview = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const monthKey = String(request.data?.monthKey || formatMonthKey(new Date())).trim();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ver consumo deste tenant.');
+        }
+
+        const [usageMetersSnap, billingEntriesSnap] = await Promise.all([
+            db.collection('usageMeters')
+                .where('tenantId', '==', tenantId)
+                .where('monthKey', '==', monthKey)
+                .limit(500)
+                .get(),
+            db.collection('billingEntries')
+                .where('tenantId', '==', tenantId)
+                .where('monthKey', '==', monthKey)
+                .limit(500)
+                .get()
+                .catch(() => ({ docs: [] })),
+        ]);
+
+        const usageMeters = usageMetersSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const billingEntries = billingEntriesSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const overview = summarizeBillingOverview({ usageMeters, billingEntries });
+
+        return {
+            tenantId,
+            monthKey,
+            overview,
+            source: overview.source,
+            fallbackUsed: overview.fallbackUsed === true,
+            usageMeterCount: usageMeters.length,
+            billingEntryCount: billingEntries.length,
+            limitApplied: usageMeters.length >= 500 || billingEntries.length >= 500,
+        };
+    },
+);
+
+exports.closeTenantBillingPeriodByAnalyst = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        if (profile.role !== 'supervisor' && profile.role !== 'admin') {
+            throw new HttpsError('permission-denied', 'Apenas supervisores podem fechar faturamento.');
+        }
+
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const monthKey = String(request.data?.monthKey || '').trim();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para fechar faturamento deste tenant.');
+        }
+
+        const result = await closeBillingPeriod(tenantId, monthKey, {
+            actor: { uid, email: profile.email || uid },
+        });
+
+        await writeAuditEvent({
+            action: 'TENANT_BILLING_PERIOD_CLOSED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'BILLING_SETTLEMENT', id: result.settlementId, label: `${tenantId}/${monthKey}` },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Fechamento de consumo V2 gerado para ${tenantId} em ${monthKey}`,
+            templateVars: { tenantId, monthKey, settlementId: result.settlementId },
+            metadata: { summary: result.summary },
+        });
+
+        return { success: true, ...result };
+    },
+);
+
+exports.getTenantBillingSettlement = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const monthKey = String(request.data?.monthKey || '').trim();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ver fechamento deste tenant.');
+        }
+
+        const settlementId = `billing_${tenantId}_${monthKey}`;
+        const doc = await db.collection('billingSettlements').doc(settlementId).get();
+        return {
+            tenantId,
+            monthKey,
+            settlementId,
+            settlement: doc.exists ? { id: doc.id, ...(doc.data() || {}) } : null,
+        };
+    },
+);
+
+exports.getTenantBillingDrilldown = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const monthKey = String(request.data?.monthKey || '').trim();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ver consumo deste tenant.');
+        }
+
+        const includeInternalCost = hasV2Permission(profile.role, V2_PERMISSIONS.BILLING_VIEW_INTERNAL_COST);
+        const [usageSnap, settlementDoc] = await Promise.all([
+            db.collection('usageMeters')
+                .where('tenantId', '==', tenantId)
+                .where('monthKey', '==', monthKey)
+                .limit(2000)
+                .get(),
+            db.collection('billingSettlements').doc(`billing_${tenantId}_${monthKey}`).get(),
+        ]);
+        const usageMeters = usageSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const settlement = settlementDoc.exists ? { id: settlementDoc.id, ...(settlementDoc.data() || {}) } : null;
+        const drilldown = buildBillingDrilldown({ usageMeters, settlement, includeInternalCost });
+
+        return {
+            tenantId,
+            monthKey,
+            drilldown,
+            source: 'usageMeters',
+            usageMeterCount: usageMeters.length,
+            limitApplied: usageMeters.length >= 2000,
+        };
+    },
+);
+
+exports.exportTenantBillingDrilldown = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = String(request.data?.tenantId || '').trim();
+        const monthKey = String(request.data?.monthKey || '').trim();
+        const format = String(request.data?.format || 'csv').trim().toLowerCase();
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (!['csv', 'json'].includes(format)) {
+            throw new HttpsError('invalid-argument', 'format deve ser csv ou json.');
+        }
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para exportar consumo deste tenant.');
+        }
+
+        const includeInternalCost = hasV2Permission(profile.role, V2_PERMISSIONS.BILLING_VIEW_INTERNAL_COST);
+        const [usageSnap, settlementDoc] = await Promise.all([
+            db.collection('usageMeters')
+                .where('tenantId', '==', tenantId)
+                .where('monthKey', '==', monthKey)
+                .limit(2000)
+                .get(),
+            db.collection('billingSettlements').doc(`billing_${tenantId}_${monthKey}`).get(),
+        ]);
+        const usageMeters = usageSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const settlement = settlementDoc.exists ? { id: settlementDoc.id, ...(settlementDoc.data() || {}) } : null;
+        const drilldown = buildBillingDrilldown({ usageMeters, settlement, includeInternalCost });
+        const exported = buildBillingDrilldownExport({ drilldown, format });
+
+        await writeAuditEvent({
+            action: 'BILLING_DRILLDOWN_EXPORTED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'BILLING_SETTLEMENT', id: `billing_${tenantId}_${monthKey}`, label: `${tenantId}/${monthKey}` },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Drilldown de consumo V2 exportado para ${tenantId} em ${monthKey}`,
+            templateVars: { tenantId, monthKey, format },
+            metadata: { format, itemCount: drilldown.items.length, includeInternalCost },
+        });
+
+        return {
+            success: true,
+            tenantId,
+            monthKey,
+            format: exported.format,
+            mimeType: exported.mimeType,
+            content: exported.content,
+            filename: `billing-drilldown-${tenantId}-${monthKey}.${exported.format}`,
+            itemCount: drilldown.items.length,
+        };
+    },
+);
+
+exports.getSeniorReviewQueue = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const requestedTenantId = String(request.data?.tenantId || '').trim();
+        const tenantId = profile.tenantId || requestedTenantId || null;
+        if (requestedTenantId && !canOperateTenant(profile, requestedTenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ver fila senior deste tenant.');
+        }
+
+        const status = String(request.data?.status || 'pending').trim();
+        const queueQuery = tenantId
+            ? db.collection('seniorReviewRequests').where('tenantId', '==', tenantId).where('status', '==', status).limit(100)
+            : db.collection('seniorReviewRequests').where('status', '==', status).limit(100);
+        const queueSnap = await queueQuery.get();
+        const items = queueSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+
+        return {
+            tenantId,
+            status,
+            items,
+            summary: summarizeSeniorReviewQueue(items),
+            limitApplied: items.length >= 100,
+        };
+    },
+);
+
+exports.resolveSeniorReviewRequest = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        if (!['senior_analyst', 'supervisor', 'admin'].includes(profile.role)) {
+            throw new HttpsError('permission-denied', 'Apenas senior/supervisor/admin pode resolver revisao senior.');
+        }
+
+        const requestId = String(request.data?.requestId || '').trim();
+        const status = String(request.data?.status || '').trim();
+        const resolution = String(request.data?.resolution || '').trim();
+        if (!requestId) throw new HttpsError('invalid-argument', 'requestId obrigatorio.');
+        if (!['approved', 'rejected'].includes(status)) {
+            throw new HttpsError('invalid-argument', 'status deve ser approved ou rejected.');
+        }
+        if (status === 'rejected' && resolution.length < 10) {
+            throw new HttpsError('invalid-argument', 'Justificativa obrigatoria para rejeicao senior.');
+        }
+
+        const reviewRef = db.collection('seniorReviewRequests').doc(requestId);
+        const reviewSnap = await reviewRef.get();
+        if (!reviewSnap.exists) throw new HttpsError('not-found', 'Pendencia senior nao encontrada.');
+        const reviewData = reviewSnap.data() || {};
+        if (!canOperateTenant(profile, reviewData.tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para resolver esta revisao senior.');
+        }
+
+        const resolvedAt = FieldValue.serverTimestamp();
+        await reviewRef.set({
+            status,
+            resolution: resolution || (status === 'approved' ? 'Aprovado por senior.' : ''),
+            resolvedBy: uid,
+            resolvedByEmail: profile.email || uid,
+            resolvedAt,
+            updatedAt: resolvedAt,
+        }, { merge: true });
+
+        if (reviewData.caseId) {
+            await db.collection('cases').doc(reviewData.caseId).set({
+                seniorReviewRequestId: requestId,
+                seniorApprovalStatus: status,
+                seniorApprovedBy: status === 'approved' ? uid : null,
+                seniorApprovedAt: status === 'approved' ? FieldValue.serverTimestamp() : null,
+                updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+        }
+
+        await writeAuditEvent({
+            action: status === 'approved' ? 'SENIOR_REVIEW_APPROVED' : 'SENIOR_REVIEW_REJECTED',
+            tenantId: reviewData.tenantId || null,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+            entity: { type: 'CASE', id: reviewData.caseId || requestId, label: reviewData.candidateName || reviewData.caseId || requestId },
+            related: { caseId: reviewData.caseId || null, seniorReviewRequestId: requestId },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: status === 'approved'
+                ? `Revisao senior aprovada para ${reviewData.candidateName || reviewData.caseId || requestId}`
+                : `Revisao senior rejeitada para ${reviewData.candidateName || reviewData.caseId || requestId}`,
+            metadata: { resolution, status },
+        });
+
+        return { success: true, requestId, status };
+    },
+);
+
+exports.getOpsV2Metrics = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const requestedTenantId = String(request.data?.tenantId || '').trim();
+        const tenantId = profile.tenantId || requestedTenantId || null;
+        const monthKey = String(request.data?.monthKey || formatMonthKey(new Date())).trim();
+        if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+            throw new HttpsError('invalid-argument', 'monthKey deve estar no formato YYYY-MM.');
+        }
+        if (requestedTenantId && !canOperateTenant(profile, requestedTenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para ver metricas deste tenant.');
+        }
+
+        const usageQuery = tenantId
+            ? db.collection('usageMeters').where('tenantId', '==', tenantId).where('monthKey', '==', monthKey).limit(500)
+            : db.collection('usageMeters').where('monthKey', '==', monthKey).limit(500);
+        const moduleRunQuery = tenantId
+            ? db.collection('moduleRuns').where('tenantId', '==', tenantId).limit(500)
+            : db.collection('moduleRuns').limit(500);
+        const divergenceQuery = tenantId
+            ? db.collection('providerDivergences').where('tenantId', '==', tenantId).limit(500)
+            : db.collection('providerDivergences').limit(500);
+        const decisionQuery = tenantId
+            ? db.collection('decisions').where('tenantId', '==', tenantId).limit(500)
+            : db.collection('decisions').limit(500);
+        const seniorReviewQuery = tenantId
+            ? db.collection('seniorReviewRequests').where('tenantId', '==', tenantId).where('status', '==', 'pending').limit(500)
+            : db.collection('seniorReviewRequests').where('status', '==', 'pending').limit(500);
+
+        const [usageSnap, moduleRunSnap, divergenceSnap, decisionSnap, seniorReviewSnap] = await Promise.all([
+            usageQuery.get(),
+            moduleRunQuery.get(),
+            divergenceQuery.get(),
+            decisionQuery.get(),
+            seniorReviewQuery.get(),
+        ]);
+
+        const usageMeters = usageSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const moduleRuns = moduleRunSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const divergences = divergenceSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const decisions = decisionSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+        const seniorReviewRequests = seniorReviewSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+
+        const moduleStatusCounts = moduleRuns.reduce((acc, run) => {
+            const status = run.status || 'unknown';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+        const openDivergences = divergences.filter((item) => item.status !== 'resolved');
+        const seniorPending = seniorReviewRequests.length > 0
+            ? seniorReviewRequests
+            : decisions.filter((item) => item.reviewLevel === 'senior_approval' && item.requiresSenior === true);
+
+        return {
+            tenantId,
+            monthKey,
+            source: 'v2Collections',
+            usage: summarizeUsageMeters(usageMeters),
+            counts: {
+                usageMeters: usageMeters.length,
+                moduleRuns: moduleRuns.length,
+                providerDivergences: divergences.length,
+                openProviderDivergences: openDivergences.length,
+                decisions: decisions.length,
+                seniorPending: seniorPending.length,
+                seniorReviewRequests: seniorReviewRequests.length,
+            },
+            moduleStatusCounts,
+            seniorReviewSummary: summarizeSeniorReviewQueue(seniorPending),
+            limitApplied: usageMeters.length >= 500 || moduleRuns.length >= 500 || divergences.length >= 500 || decisions.length >= 500 || seniorReviewRequests.length >= 500,
+        };
     },
 );
 
@@ -7928,7 +8807,7 @@ exports.setAiDecisionByAnalyst = onCall(
    Rate limited: max 3 runs per case, min 1 min between runs.
    ========================================================= */
 
-const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin']);
+const OPS_ROLES = new Set(['analyst', 'senior_analyst', 'supervisor', 'admin']);
 const CLIENT_REQUESTER_ROLES = new Set(['CLIENT', 'client_operator', 'client_manager']);
 const CLIENT_VIEW_ROLES = new Set(['CLIENT', 'client_viewer', 'client_operator', 'client_manager']);
 const CLIENT_MANAGEABLE_ROLES = new Set(['client_viewer', 'client_operator', 'client_manager']);
@@ -7939,6 +8818,11 @@ async function getOpsUserProfile(uid) {
         throw new HttpsError('permission-denied', 'Apenas analistas podem re-executar fases do pipeline.');
     }
     return profileDoc.data();
+}
+
+function canOperateTenant(profile = {}, tenantId = null) {
+    if (!tenantId) return false;
+    return (profile.role === 'admin' && !profile.tenantId) || profile.tenantId === tenantId;
 }
 
 async function getClientUserProfile(uid, { requireRequester = false } = {}) {
@@ -8250,6 +9134,8 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         };
     }
 
+    let finalPrefillResult = null;
+
     // Deterministic prefill: generate rich content for all narrative fields (v5)
     try {
         const detPrefill = buildDeterministicPrefill(caseDataForAi);
@@ -8276,6 +9162,11 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
             },
         };
         updatePayload.prefillNarratives = mergedPrefill;
+        finalPrefillResult = {
+            structured: mergedPrefill,
+            structuredOk: true,
+            error: null,
+        };
         console.log(`Case ${caseId} [PREFILL_MERGE rerun]: source=${mergedPrefill.metadata.source}, aiOk=${aiOk}`);
     } catch (detErr) {
         console.error(`Case ${caseId} [DET_PREFILL rerun]: error:`, detErr.message);
@@ -8288,6 +9179,11 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
                 triggersActive: [],
                 isComplex: false,
             },
+        };
+        finalPrefillResult = {
+            structured: updatePayload.prefillNarratives || null,
+            structuredOk: false,
+            error: detErr.message,
         };
     }
 
@@ -8307,8 +9203,8 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
             structuredOk: aiResult.structuredOk,
             runNumber: aiRunCount + 1,
             error: aiResult.error || null,
-            prefillOk: prefillResult?.structuredOk || false,
-            prefillError: prefillResult?.error || null,
+            prefillOk: finalPrefillResult?.structuredOk || false,
+            prefillError: finalPrefillResult?.error || null,
             homonymDecision: updatePayload.aiHomonymDecision || null,
             homonymConfidence: updatePayload.aiHomonymConfidence || null,
             homonymError: updatePayload.aiHomonymError || null,
@@ -8323,8 +9219,8 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         status: aiResult.error ? 'FAILED' : 'DONE',
         structured: aiResult.structured || null,
         structuredOk: aiResult.structuredOk || false,
-        prefillNarratives: prefillResult?.structured || null,
-        prefillNarrativesOk: prefillResult?.structuredOk || false,
+        prefillNarratives: finalPrefillResult?.structured || null,
+        prefillNarrativesOk: finalPrefillResult?.structuredOk || false,
         homonymStructured: homonymResult?.structured || null,
         homonymStructuredOk: homonymResult?.structuredOk || false,
         error: aiResult.error || null,
@@ -8960,6 +9856,7 @@ exports.__test = {
     enforceTenantSubmissionLimits,
     formatDateKey,
     formatMonthKey,
+    previousMonthKey,
     getClientQuotaStatusInner,
     buildDeterministicPrefill,
     evaluateComplexityTriggers,
@@ -9027,6 +9924,329 @@ exports.getClientQuotaStatus = onCall(
     },
 );
 
+const { buildClientProductCatalog } = require('./domain/v2ProductCatalog.cjs');
+
+exports.createQuoteRequest = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+        const profile = await getClientUserProfile(request.auth.uid);
+        const tenantId = profile?.tenantId;
+        if (!tenantId) throw new HttpsError('failed-precondition', 'Tenant nao identificado.');
+
+        const productKey = String(request.data?.productKey || '').trim();
+        const notes = String(request.data?.notes || '').trim().slice(0, 1000);
+        if (!productKey) throw new HttpsError('invalid-argument', 'productKey obrigatorio.');
+
+        const quoteRef = db.collection('quoteRequests').doc();
+        await quoteRef.set({
+            id: quoteRef.id,
+            tenantId,
+            productKey,
+            notes,
+            status: 'pending',
+            requestedBy: request.auth.uid,
+            requestedByEmail: profile.email || null,
+            requestedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        await writeAuditEvent({
+            action: 'QUOTE_REQUESTED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.CLIENT_USER, id: request.auth.uid, email: profile.email || request.auth.uid },
+            entity: { type: 'QUOTE_REQUEST', id: quoteRef.id, label: productKey },
+            source: SOURCE.PORTAL_CLIENT,
+            ip: getClientIp(request),
+            metadata: { productKey, hasNotes: Boolean(notes) },
+        }).catch((err) => console.warn('createQuoteRequest audit failed:', err.message));
+
+        return { success: true, quoteId: quoteRef.id };
+    },
+);
+
+exports.resolveQuoteRequest = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+        const profile = await getOpsUserProfile(request.auth.uid);
+        if (profile.role !== 'supervisor' && profile.role !== 'admin') {
+            throw new HttpsError('permission-denied', 'Apenas supervisores podem resolver cotacoes.');
+        }
+
+        const quoteId = String(request.data?.quoteId || '').trim();
+        const decision = String(request.data?.decision || '').trim();
+        const responseNotes = String(request.data?.responseNotes || '').trim().slice(0, 1000);
+        const addProduct = Boolean(request.data?.addProduct);
+        if (!quoteId) throw new HttpsError('invalid-argument', 'quoteId obrigatorio.');
+        if (!['approved', 'rejected'].includes(decision)) {
+            throw new HttpsError('invalid-argument', 'decision deve ser approved ou rejected.');
+        }
+
+        const quoteRef = db.collection('quoteRequests').doc(quoteId);
+        const quoteDoc = await quoteRef.get();
+        if (!quoteDoc.exists) throw new HttpsError('not-found', 'Cotacao nao encontrada.');
+        const quoteData = quoteDoc.data() || {};
+        if (!canOperateTenant(profile, quoteData.tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para este tenant.');
+        }
+
+        await quoteRef.update({
+            status: decision,
+            responseNotes: responseNotes || null,
+            reviewedBy: request.auth.uid,
+            reviewedByEmail: profile.email || null,
+            reviewedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        let productAdded = false;
+        if (decision === 'approved' && addProduct && quoteData.productKey) {
+            const entDocRef = db.collection('tenantEntitlements').doc(quoteData.tenantId);
+            const entDoc = await entDocRef.get();
+            const before = entDoc.exists ? (entDoc.data() || {}) : {};
+            const currentProducts = Array.isArray(before.enabledProducts)
+                ? before.enabledProducts
+                : Object.keys(before.enabledProducts || {}).filter((k) => before.enabledProducts[k] === true);
+            if (!currentProducts.includes(quoteData.productKey)) {
+                const nextProducts = [...currentProducts, quoteData.productKey];
+                await entDocRef.set({ enabledProducts: nextProducts, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+                productAdded = true;
+            }
+        }
+
+        await writeAuditEvent({
+            action: decision === 'approved' ? 'QUOTE_APPROVED' : 'QUOTE_REJECTED',
+            tenantId: quoteData.tenantId,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: request.auth.uid, email: profile.email || request.auth.uid },
+            entity: { type: 'QUOTE_REQUEST', id: quoteId, label: quoteData.productKey || 'quote' },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            metadata: { productKey: quoteData.productKey, productAdded },
+        }).catch((err) => console.warn('resolveQuoteRequest audit failed:', err.message));
+
+        return { success: true, quoteId, decision, productAdded };
+    },
+);
+
+exports.markAlertAs = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+        const profile = await getClientUserProfile(request.auth.uid).catch(async () => {
+            return await getOpsUserProfile(request.auth.uid);
+        });
+        const tenantId = profile?.tenantId;
+        if (!tenantId) throw new HttpsError('failed-precondition', 'Tenant nao identificado.');
+
+        const alertId = String(request.data?.alertId || '').trim();
+        const state = String(request.data?.state || '').trim();
+        const validStates = ['read', 'actioned', 'dismissed'];
+        if (!alertId) throw new HttpsError('invalid-argument', 'alertId obrigatorio.');
+        if (!validStates.includes(state)) {
+            throw new HttpsError('invalid-argument', `state deve ser um de: ${validStates.join(', ')}.`);
+        }
+
+        const alertRef = db.collection('alerts').doc(alertId);
+        const alertDoc = await alertRef.get();
+        if (!alertDoc.exists) throw new HttpsError('not-found', 'Alerta nao encontrado.');
+        const alertData = alertDoc.data() || {};
+        if (alertData.tenantId !== tenantId) {
+            throw new HttpsError('permission-denied', 'Sem permissao para este alerta.');
+        }
+
+        const updatePayload = {
+            state,
+            updatedAt: FieldValue.serverTimestamp(),
+        };
+        if (state === 'actioned' || state === 'dismissed') {
+            updatePayload.actionedAt = FieldValue.serverTimestamp();
+            updatePayload.actionedBy = request.auth.uid;
+        }
+        await alertRef.update(updatePayload);
+
+        await writeAuditEvent({
+            action: 'ALERT_STATE_CHANGED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.CLIENT_USER, id: request.auth.uid, email: profile.email || request.auth.uid },
+            entity: { type: 'ALERT', id: alertId, label: alertData.kind || 'alert' },
+            source: SOURCE.PORTAL_CLIENT,
+            ip: getClientIp(request),
+            metadata: { state, previousState: alertData.state || 'unread' },
+        }).catch((err) => console.warn('markAlertAs audit failed:', err.message));
+
+        return { success: true, alertId, state };
+    },
+);
+
+exports.getClientProductCatalog = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+        const profile = await getClientUserProfile(request.auth.uid);
+        const tenantId = profile.tenantId;
+        if (!tenantId) throw new HttpsError('failed-precondition', 'Tenant nao identificado.');
+
+        const entitlements = await getTenantEntitlementsData(tenantId);
+        let fallbackUsed = false;
+        let resolvedEntitlements = entitlements;
+        if (!entitlements) {
+            const tenantSettings = await getTenantSettingsData(tenantId);
+            fallbackUsed = !tenantSettings;
+            resolvedEntitlements = tenantSettings
+                ? {
+                    tier: tenantSettings.tier || 'basic',
+                    enabledProducts: tenantSettings.enabledProducts || [],
+                }
+                : null;
+        }
+
+        const catalog = buildClientProductCatalog({
+            entitlements: resolvedEntitlements,
+            fallbackUsed,
+        });
+
+        return {
+            tenantId,
+            source: entitlements ? 'tenantEntitlements' : (fallbackUsed ? 'defaults' : 'legacyTenantSettingsFallback'),
+            ...catalog,
+        };
+    },
+);
+
+exports.materializeV2Artifacts = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+        const profile = await getOpsUserProfile(request.auth.uid);
+        if (!['analyst', 'supervisor', 'admin'].includes(profile?.role)) {
+            throw new HttpsError('permission-denied', 'Apenas analistas podem materializar artefatos.');
+        }
+
+        const { caseId } = request.data;
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId e obrigatorio.');
+
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseSnap = await caseRef.get();
+        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseSnap.data();
+
+        return await materializeModuleRunsForCase(caseId, caseData);
+    }
+);
+
+/* =========================================================
+   WATCHLIST CALLABLES (Premium - Ops)
+   ========================================================= */
+
+async function ensureOpsCanOperateWatchlist(request) {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
+    const profile = await getOpsUserProfile(request.auth.uid);
+    if (!['analyst', 'senior_analyst', 'supervisor', 'admin'].includes(profile?.role)) {
+        throw new HttpsError('permission-denied', 'Somente analistas podem gerenciar watchlists.');
+    }
+    return profile;
+}
+
+exports.createWatchlist = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => {
+        const profile = await ensureOpsCanOperateWatchlist(request);
+        const subjectId = String(request.data?.subjectId || '').trim();
+        const tenantId = String(request.data?.tenantId || profile.tenantId || '').trim();
+        const modules = Array.isArray(request.data?.modules) ? request.data.modules.map((m) => String(m)) : [];
+        const intervalDays = Number(request.data?.intervalDays) > 0 ? Number(request.data.intervalDays) : 30;
+        if (!subjectId) throw new HttpsError('invalid-argument', 'subjectId obrigatorio.');
+        if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+        if (!canOperateTenant(profile, tenantId)) {
+            throw new HttpsError('permission-denied', 'Sem permissao para este tenant.');
+        }
+
+        const watchlistId = await addToWatchlist({ subjectId, tenantId, modules, intervalDays });
+
+        await writeAuditEvent({
+            action: 'WATCHLIST_CREATED',
+            tenantId,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: request.auth.uid, email: profile.email || request.auth.uid },
+            entity: { type: 'WATCHLIST', id: watchlistId, label: subjectId },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            metadata: { subjectId, modules, intervalDays },
+        }).catch((err) => console.warn('createWatchlist audit failed:', err.message));
+
+        return { success: true, watchlistId };
+    },
+);
+
+async function withWatchlistContext(request, action, handler) {
+    const profile = await ensureOpsCanOperateWatchlist(request);
+    const watchlistId = String(request.data?.watchlistId || '').trim();
+    if (!watchlistId) throw new HttpsError('invalid-argument', 'watchlistId obrigatorio.');
+    const ref = db.collection('watchlists').doc(watchlistId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new HttpsError('not-found', 'Watchlist nao encontrada.');
+    const data = snap.data() || {};
+    if (!canOperateTenant(profile, data.tenantId)) {
+        throw new HttpsError('permission-denied', 'Sem permissao para este tenant.');
+    }
+    const result = await handler({ profile, watchlistId, data });
+    await writeAuditEvent({
+        action,
+        tenantId: data.tenantId,
+        actor: { type: ACTOR_TYPE.OPS_USER, id: request.auth.uid, email: profile.email || request.auth.uid },
+        entity: { type: 'WATCHLIST', id: watchlistId, label: data.subjectId || watchlistId },
+        source: SOURCE.PORTAL_OPS,
+        ip: getClientIp(request),
+        metadata: { subjectId: data.subjectId || null },
+    }).catch((err) => console.warn(`${action} audit failed:`, err.message));
+    return { success: true, watchlistId, ...result };
+}
+
+exports.pauseWatchlist = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => withWatchlistContext(request, 'WATCHLIST_PAUSED', async ({ watchlistId }) => {
+        await pauseWatchlist(watchlistId);
+        return { active: false };
+    }),
+);
+
+exports.resumeWatchlist = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => withWatchlistContext(request, 'WATCHLIST_RESUMED', async ({ watchlistId }) => {
+        await resumeWatchlist(watchlistId);
+        return { active: true };
+    }),
+);
+
+exports.deleteWatchlist = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => withWatchlistContext(request, 'WATCHLIST_DELETED', async ({ watchlistId }) => {
+        await deleteWatchlist(watchlistId);
+        return { deleted: true };
+    }),
+);
+
+exports.runWatchlistNow = onCall(
+    { region: 'southamerica-east1' },
+    async (request) => withWatchlistContext(request, 'WATCHLIST_RUN_NOW', async ({ watchlistId, data }) => {
+        const outcome = await processSingleWatchlist(watchlistId, data, {
+            pipelineRunner: async (caseId, caseData, runnerOptions = {}) => {
+                return materializeModuleRunsForCase(caseId, caseData, {
+                    ...runnerOptions,
+                    source: 'watchlist_manual',
+                });
+            },
+            logger: console,
+        });
+
+        return {
+            outcome,
+            alertsCreated: outcome.alertsCreated || 0,
+            status: outcome.status || 'unknown',
+        };
+    }),
+);
+
 async function getClientQuotaStatusInner(uid) {
     const profile = await getClientUserProfile(uid);
     const tenantId = profile.tenantId;
@@ -9061,3 +10281,61 @@ async function getClientQuotaStatusInner(uid) {
         allowMonthlyExceedance,
     };
 }
+
+/* =========================================================
+   SCHEDULED JOBS (Phase 4 - Premium)
+   ========================================================= */
+
+/**
+ * Daily job to process active watchlists.
+ * Runs at 03:00 AM (Sao Paulo time).
+ */
+exports.scheduledMonitoringJob = onSchedule(
+    { schedule: '00 03 * * *', timeZone: 'America/Sao_Paulo', region: 'southamerica-east1' },
+    async () => {
+        try {
+            const result = await processWatchlists({
+                pipelineRunner: async (caseId, caseData, runnerOptions = {}) => {
+                    return materializeModuleRunsForCase(caseId, caseData, {
+                        ...runnerOptions,
+                        source: 'watchlist',
+                    });
+                },
+            });
+            console.log(`scheduledMonitoringJob: Success. processed=${result.processed} alerts=${result.alertsCreated} failures=${result.failures}`);
+        } catch (error) {
+            console.error('scheduledMonitoringJob: Failed to process watchlists:', error);
+        }
+    }
+);
+
+exports.scheduledBillingClosureJob = onSchedule(
+    { schedule: '30 02 1 * *', timeZone: 'America/Sao_Paulo', region: 'southamerica-east1' },
+    async () => {
+        const monthKey = previousMonthKey(new Date());
+        if (!monthKey) {
+            console.warn('scheduledBillingClosureJob: monthKey indisponivel.');
+            return;
+        }
+
+        const tenantsSnap = await db.collection('tenantEntitlements').limit(200).get();
+        let processed = 0;
+        let failed = 0;
+
+        for (const tenantDoc of tenantsSnap.docs) {
+            const data = tenantDoc.data() || {};
+            if (data.status === 'inactive' || data.status === 'suspended') continue;
+            try {
+                await closeBillingPeriod(tenantDoc.id, monthKey, {
+                    actor: { uid: 'scheduled-billing-closure', email: 'system' },
+                });
+                processed++;
+            } catch (error) {
+                failed++;
+                console.error(`scheduledBillingClosureJob: falha ao fechar ${tenantDoc.id}/${monthKey}:`, error);
+            }
+        }
+
+        console.log(`scheduledBillingClosureJob: ${processed} fechamento(s), ${failed} falha(s), mes ${monthKey}.`);
+    }
+);

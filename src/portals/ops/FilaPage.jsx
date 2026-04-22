@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
@@ -32,7 +32,6 @@ function EnrichmentIcon({ status }) {
 
 export default function FilaPage() {
     const navigate = useNavigate();
-    const location = useLocation();
     const { user } = useAuth();
     const isDemoMode = !user;
     const routePrefix = isDemoMode ? '/demo' : '';

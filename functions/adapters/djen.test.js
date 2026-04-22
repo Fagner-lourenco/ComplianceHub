@@ -155,7 +155,6 @@ describe('queryComunicacoesByName', () => {
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
             ok: true,
             headers: new Map(),
-            headers: new Map(),
             json: async () => ({ status: 'success', count: 0, items: [] }),
         }));
 

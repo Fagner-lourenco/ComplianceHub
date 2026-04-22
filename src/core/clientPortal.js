@@ -164,23 +164,33 @@ export function getCaseTimeline(caseData) {
 export function resolveClientCaseView(caseData, publicResult) {
     if (!caseData) return null;
 
-    const resolvedPublicResult = publicResult || caseData.publicResultMock || sanitizeCaseForClient(caseData);
-    const reportReady = caseData.status === 'DONE' && caseData.reportReady !== false;
+    // V2-Alignment: Prioritize ClientProjection (publicResult).
+    // Fallback to caseData ONLY for basic metadata if projection is missing,
+    // but analytical data MUST come from projection in V2.
+    const resolvedPublicResult = publicResult || caseData.publicResultMock || {};
+    const hasProjection = Boolean(publicResult || caseData.publicResultMock);
+
+    const legacyFallbackUsed = !hasProjection || caseData.legacyFallbackUsed === true;
+    const legacyFallbackSource = caseData.legacyFallbackSource || (!hasProjection ? (caseData.clientDataSource || 'caseData') : null);
+    const reportReady = caseData.status === 'DONE' && resolvedPublicResult.reportAvailability?.status === 'ready';
 
     return {
         ...caseData,
         ...resolvedPublicResult,
         publicResult: resolvedPublicResult,
+        hasProjection,
+        legacyFallbackUsed,
+        legacyFallbackSource,
         reportReady,
         statusLabel: CLIENT_STATUS_LABELS[caseData.status] || caseData.status || 'Sem status',
-        statusSummary: caseData.statusSummary || CLIENT_STATUS_DESCRIPTIONS[caseData.status] || '',
-        sourceSummary: summarizeSource(caseData),
-        keyFindings: Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0
-            ? caseData.keyFindings
-            : (Array.isArray(resolvedPublicResult.keyFindings) ? resolvedPublicResult.keyFindings : []),
-        nextSteps: Array.isArray(caseData.nextSteps) ? caseData.nextSteps : [],
-        clientNotes: caseData.clientNotes || '',
-        timelineEvents: getCaseTimeline(caseData),
+        statusSummary: resolvedPublicResult.statusSummary || caseData.statusSummary || CLIENT_STATUS_DESCRIPTIONS[caseData.status] || '',
+        sourceSummary: summarizeSource(resolvedPublicResult.moduleKeys ? resolvedPublicResult : caseData),
+        keyFindings: Array.isArray(resolvedPublicResult.keyFindings) && resolvedPublicResult.keyFindings.length > 0
+            ? resolvedPublicResult.keyFindings
+            : (Array.isArray(caseData.keyFindings) ? caseData.keyFindings : []),
+        nextSteps: Array.isArray(resolvedPublicResult.nextSteps) ? resolvedPublicResult.nextSteps : (Array.isArray(caseData.nextSteps) ? caseData.nextSteps : []),
+        clientNotes: resolvedPublicResult.clientNotes || caseData.clientNotes || '',
+        timelineEvents: getCaseTimeline(resolvedPublicResult.timelineEvents ? resolvedPublicResult : caseData),
     };
 }
 
@@ -218,13 +228,16 @@ export function getReportAvailability(caseData, publicResult) {
         };
     }
 
+    // V2-Alignment: Strictly rely on backend-provided reportAvailability in ClientProjection
     const backendAvailability = normalizeBackendReportAvailability(
-        caseData.reportAvailability || publicResult?.reportAvailability,
+        publicResult?.reportAvailability || caseData.reportAvailability
     );
+
     if (backendAvailability) {
         return backendAvailability;
     }
 
+    // If no explicit availability data but case is done, it's either legacy or still processing
     if (caseData.status !== 'DONE') {
         return {
             available: false,
@@ -233,28 +246,10 @@ export function getReportAvailability(caseData, publicResult) {
         };
     }
 
-    const resolved = resolveClientCaseView(caseData, publicResult);
-    if (!resolved?.reportReady) {
-        return {
-            available: false,
-            state: 'pending',
-            message: 'O relatorio ainda esta sendo preparado.',
-        };
-    }
-
-    // Content minimum: require finalVerdict AND executiveSummary to ensure report has meaningful data
-    if (!resolved.finalVerdict || !resolved.executiveSummary) {
-        return {
-            available: false,
-            state: 'pending',
-            message: 'O relatorio ainda esta sendo finalizado.',
-        };
-    }
-
     return {
-        available: true,
-        state: 'ready',
-        message: 'Relatorio pronto para abertura e compartilhamento.',
+        available: false,
+        state: 'unavailable',
+        message: 'O relatorio esta sendo processado pela plataforma V2.',
     };
 }
 

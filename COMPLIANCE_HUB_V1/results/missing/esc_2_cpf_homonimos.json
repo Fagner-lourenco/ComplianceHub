@@ -1,0 +1,253 @@
+{
+  "query": {
+    "cpf": "10794180329",
+    "incluir_homonimos": true,
+    "limit": 100
+  },
+  "envolvido": {
+    "nome": "DIEGO EMANUEL ALVES DE SOUZA",
+    "outros_nomes": [],
+    "tipo_pessoa": "FISICA",
+    "quantidade_processos": 1,
+    "cpfs_com_esse_nome": 1
+  },
+  "totalItems": 1,
+  "hasNextPage": false,
+  "items_summary": [
+    {
+      "numero_cnj": "0001549-63.2024.8.06.0001",
+      "ano_inicio": 2024,
+      "titulo_polo_ativo": "Marcio Gleison Silva de Sousa",
+      "titulo_polo_passivo": "Antonia Suelanne Alves de Sousa e outros",
+      "fontes": [
+        {
+          "sigla": "TJCE",
+          "area": null,
+          "classe": "Reclamação Pré-processual",
+          "status_predito": "INATIVO"
+        },
+        {
+          "sigla": "DJCE",
+          "status_predito": null
+        }
+      ]
+    }
+  ],
+  "raw_response": {
+    "envolvido_encontrado": {
+      "nome": "DIEGO EMANUEL ALVES DE SOUZA",
+      "outros_nomes": [],
+      "tipo_pessoa": "FISICA",
+      "quantidade_processos": 1,
+      "cpfs_com_esse_nome": 1
+    },
+    "items": [
+      {
+        "numero_cnj": "0001549-63.2024.8.06.0001",
+        "titulo_polo_ativo": "Marcio Gleison Silva de Sousa",
+        "titulo_polo_passivo": "Antonia Suelanne Alves de Sousa e outros",
+        "ano_inicio": 2024,
+        "data_inicio": "2024-06-17",
+        "estado_origem": {
+          "nome": "Ceará",
+          "sigla": "CE"
+        },
+        "unidade_origem": {
+          "nome": null,
+          "endereco": null,
+          "classificacao": null,
+          "cidade": "Fortaleza",
+          "estado": {
+            "nome": "Ceará",
+            "sigla": "CE"
+          },
+          "tribunal_sigla": "TJCE"
+        },
+        "data_ultima_movimentacao": "2024-08-13",
+        "quantidade_movimentacoes": 30,
+        "fontes_tribunais_estao_arquivadas": true,
+        "data_ultima_verificacao": "2025-01-08T03:41:00+00:00",
+        "tempo_desde_ultima_verificacao": "há 1 ano",
+        "processos_relacionados": [],
+        "monitoramento_id": null,
+        "tipo_match": "CPF",
+        "match_fontes": {
+          "tribunal": true,
+          "diario_oficial": false
+        },
+        "match_documento_por": "NOME_EXATO_UNICO",
+        "fontes": [
+          {
+            "id": 17312,
+            "processo_fonte_id": 704923200,
+            "outros_numeros": [],
+            "descricao": "TJCE - 1º grau",
+            "nome": "Tribunal de Justiça do Ceará",
+            "sigla": "TJCE",
+            "tipo": "TRIBUNAL",
+            "data_inicio": "2024-06-17",
+            "data_ultima_movimentacao": "2024-08-13",
+            "segredo_justica": true,
+            "arquivado": null,
+            "status_predito": "INATIVO",
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "ESAJ",
+            "capa": {
+              "classe": "Reclamação Pré-processual",
+              "assunto": "(5787) Exoneração | (5779) Alimentos | (5626) Família | (899) DIREITO CIVIL",
+              "assuntos_normalizados": [],
+              "assunto_principal_normalizado": {
+                "id": 2215,
+                "nome": "Exoneração",
+                "nome_com_pai": "Alimentos > Exoneração",
+                "path_completo": "DIREITO CIVIL > Família > Alimentos > Exoneração",
+                "categoria_raiz": "DIREITO CIVIL",
+                "bloqueado": false
+              },
+              "area": null,
+              "orgao_julgador": " CEJUSC - CENTRO JUDICIÁRIO DE SOLUÇÃO DE CONFLITOS E CIDADANIA DA COMARCA DE FORTALEZA",
+              "orgao_julgador_normatizado": null,
+              "situacao": null,
+              "valor_causa": {
+                "valor": "1412.0000",
+                "moeda": null,
+                "valor_formatado": "1.412,00"
+              },
+              "data_distribuicao": "2024-06-17",
+              "data_arquivamento": null,
+              "informacoes_complementares": null
+            },
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 5,
+            "data_ultima_verificacao": "2025-01-08T03:41:00+00:00",
+            "quantidade_movimentacoes": 28,
+            "tipos_envolvido_pesquisado": [
+              {
+                "id": 3008,
+                "tipo": "RECLAMADO",
+                "tipo_normalizado": "Reclamado",
+                "polo": "PASSIVO"
+              }
+            ],
+            "match_documento_por": "NOME_EXATO_UNICO",
+            "envolvidos": [
+              {
+                "nome": "Marcio Gleison Silva de Sousa",
+                "quantidade_processos": 5,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "RECLAMANTE",
+                "tipo_normalizado": "Reclamante",
+                "polo": "ATIVO",
+                "cpf": "63988828300",
+                "cnpj": null
+              },
+              {
+                "nome": "Diego Emanuel Alves de Souza",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "RECLAMADO",
+                "tipo_normalizado": "Reclamado",
+                "polo": "PASSIVO",
+                "cpf": "10794180329",
+                "cnpj": null
+              },
+              {
+                "nome": "Denilson Rafael Alves de Souza",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "RECLAMADO",
+                "tipo_normalizado": "Reclamado",
+                "polo": "PASSIVO",
+                "cpf": "10794183344",
+                "cnpj": null
+              },
+              {
+                "nome": "Deilson Samuel Alves de Souza",
+                "quantidade_processos": 1,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "RECLAMADO",
+                "tipo_normalizado": "Reclamado",
+                "polo": "PASSIVO",
+                "cpf": "63709094321",
+                "cnpj": null
+              },
+              {
+                "nome": "Antonia Suelanne Alves de Sousa",
+                "quantidade_processos": 5,
+                "tipo_pessoa": "FISICA",
+                "advogados": [],
+                "prefixo": null,
+                "sufixo": null,
+                "tipo": "RECLAMADO",
+                "tipo_normalizado": "Reclamado",
+                "polo": "PASSIVO",
+                "cpf": "02604263343",
+                "cnpj": null
+              }
+            ]
+          },
+          {
+            "id": 22614,
+            "processo_fonte_id": 704893005,
+            "outros_numeros": [],
+            "descricao": "Diário de Justiça do Estado do Ceará",
+            "nome": "Diário de Justiça do Estado do Ceará",
+            "sigla": "DJCE",
+            "tipo": "DIARIO_OFICIAL",
+            "data_inicio": "2024-06-19",
+            "data_ultima_movimentacao": "2024-08-09",
+            "segredo_justica": null,
+            "arquivado": null,
+            "status_predito": null,
+            "grau": 1,
+            "grau_formatado": "Primeiro Grau",
+            "fisico": null,
+            "sistema": "Site",
+            "capa": null,
+            "audiencias": [],
+            "url": null,
+            "tribunal": {
+              "id": 82,
+              "nome": "Tribunal de Justiça do Ceará",
+              "sigla": "TJCE",
+              "categoria": null
+            },
+            "quantidade_envolvidos": 0,
+            "data_ultima_verificacao": "2024-08-09T03:06:00+00:00",
+            "quantidade_movimentacoes": 2,
+            "tipos_envolvido_pesquisado": [],
+            "match_documento_por": null,
+            "envolvidos": []
+          }
+        ]
+      }
+    ],
+    "links": {
+      "next": null
+    },
+    "paginator": {
+      "per_page": 100
+    }
+  }
+}

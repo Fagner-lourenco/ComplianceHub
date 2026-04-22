@@ -27,6 +27,8 @@ export const CATEGORY = {
     PROCESSING: 'PROCESSING',
     INTEGRATION: 'INTEGRATION',
     SECURITY: 'SECURITY',
+    SALES: 'SALES',
+    MONITORING: 'MONITORING',
 };
 
 export const ENTITY_TYPE = {
@@ -37,6 +39,12 @@ export const ENTITY_TYPE = {
     TENANT: 'TENANT',
     PROFILE: 'PROFILE',
     SETTINGS: 'SETTINGS',
+    TENANT_ENTITLEMENTS: 'TENANT_ENTITLEMENTS',
+    BILLING_SETTLEMENT: 'BILLING_SETTLEMENT',
+    PROVIDER_DIVERGENCE: 'PROVIDER_DIVERGENCE',
+    QUOTE_REQUEST: 'QUOTE_REQUEST',
+    ALERT: 'ALERT',
+    WATCHLIST: 'WATCHLIST',
 };
 
 export const ACTOR_TYPE = {
@@ -56,6 +64,10 @@ export const ACTION_LABELS = {
     CASE_CORRECTED: { label: 'Caso corrigido', category: CATEGORY.CASE },
     CASE_CONCLUDED: { label: 'Caso concluído', category: CATEGORY.CASE },
     CASE_DRAFT_SAVED: { label: 'Rascunho salvo', category: CATEGORY.CASE },
+    PROVIDER_DIVERGENCE_RESOLVED: { label: 'Divergencia resolvida', category: CATEGORY.CASE },
+    SENIOR_REVIEW_REQUESTED: { label: 'Revisao senior solicitada', category: CATEGORY.CASE },
+    SENIOR_REVIEW_APPROVED: { label: 'Revisao senior aprovada', category: CATEGORY.CASE },
+    SENIOR_REVIEW_REJECTED: { label: 'Revisao senior rejeitada', category: CATEGORY.CASE },
 
     // Public reports
     PUBLIC_REPORT_CREATED: { label: 'Relatório público gerado', category: CATEGORY.REPORT_PUBLIC },
@@ -76,6 +88,9 @@ export const ACTION_LABELS = {
 
     // Settings
     TENANT_CONFIG_UPDATED: { label: 'Config atualizada', category: CATEGORY.SETTINGS },
+    TENANT_ENTITLEMENTS_UPDATED: { label: 'Entitlements contratuais atualizados', category: CATEGORY.SETTINGS },
+    TENANT_BILLING_PERIOD_CLOSED: { label: 'Fechamento de consumo V2', category: CATEGORY.SETTINGS },
+    BILLING_DRILLDOWN_EXPORTED: { label: 'Drilldown de consumo exportado', category: CATEGORY.SETTINGS },
 
     // AI
     AI_ANALYSIS_RUN: { label: 'Análise IA', category: CATEGORY.AI },
@@ -92,6 +107,20 @@ export const ACTION_LABELS = {
     MONTHLY_LIMIT_EXCEEDED: { label: 'Limite mensal excedido', category: CATEGORY.SETTINGS },
     SUBMISSION_BLOCKED_DAILY: { label: 'Bloqueio diario', category: CATEGORY.SETTINGS },
     SUBMISSION_BLOCKED_MONTHLY: { label: 'Bloqueio mensal', category: CATEGORY.SETTINGS },
+
+    // Sales / quotes
+    QUOTE_REQUESTED: { label: 'Cotacao solicitada', category: CATEGORY.SALES },
+    QUOTE_APPROVED: { label: 'Cotacao aprovada', category: CATEGORY.SALES },
+    QUOTE_REJECTED: { label: 'Cotacao rejeitada', category: CATEGORY.SALES },
+
+    // Monitoring / alerts
+    ALERT_STATE_CHANGED: { label: 'Alerta atualizado', category: CATEGORY.MONITORING },
+    WATCHLIST_CREATED: { label: 'Watchlist criada', category: CATEGORY.MONITORING },
+    WATCHLIST_PAUSED: { label: 'Watchlist pausada', category: CATEGORY.MONITORING },
+    WATCHLIST_RESUMED: { label: 'Watchlist reativada', category: CATEGORY.MONITORING },
+    WATCHLIST_DELETED: { label: 'Watchlist removida', category: CATEGORY.MONITORING },
+    WATCHLIST_RUN_NOW: { label: 'Watchlist executada manualmente', category: CATEGORY.MONITORING },
+    WATCHLIST_AUTOPAUSED: { label: 'Watchlist auto-pausada', category: CATEGORY.MONITORING },
 };
 
 // ── Level rendering ─────────────────────────────────────────────────────────
@@ -118,6 +147,8 @@ const CATEGORY_CONFIG = {
     [CATEGORY.PROCESSING]: { label: 'Processamento', color: 'var(--gray-600)', bg: 'var(--gray-100)' },
     [CATEGORY.INTEGRATION]: { label: 'Integração', color: 'var(--orange-600)', bg: 'var(--orange-50)' },
     [CATEGORY.SECURITY]: { label: 'Segurança', color: 'var(--red-700)', bg: 'var(--red-100)' },
+    [CATEGORY.SALES]: { label: 'Vendas', color: 'var(--green-600)', bg: 'var(--green-50)' },
+    [CATEGORY.MONITORING]: { label: 'Monitoramento', color: 'var(--blue-600)', bg: 'var(--blue-50)' },
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
