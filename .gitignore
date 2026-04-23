@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 *.local
+COMPLIANCE_HUB_V2/app/node_modules
+COMPLIANCE_HUB_V2/app/functions/node_modules
+COMPLIANCE_HUB_V2/app/dist
+COMPLIANCE_HUB_V2/app/.vite
+COMPLIANCE_HUB_V2/app/.vercel
 
 # Secrets
 .env
@@ -18,6 +23,12 @@ dist-ssr
 service_account*.json
 functions/.env
 functions/service-account*.json
+COMPLIANCE_HUB_V2/app/.env
+COMPLIANCE_HUB_V2/app/.env.*
+COMPLIANCE_HUB_V2/app/functions/.env
+COMPLIANCE_HUB_V2/app/functions/.env.*
+COMPLIANCE_HUB_V2/app/functions/.secret.local
+COMPLIANCE_HUB_V2/app/functions/service-account*.json
 
 # Editor directories and files
 .vscode/*

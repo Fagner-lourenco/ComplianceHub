@@ -1,48 +1,28 @@
-# ComplianceHub V2 - Dossie de arquitetura e produto
+# ComplianceHub V2
 
-Este diretorio contem a analise comparativa e o blueprint da V2 do ComplianceHub.
+Diretorio limpo da V2 do ComplianceHub.
 
-## Navegacao recomendada
+## Estrutura
 
-1. `10_resumo_executivo/resumo_executivo_v2.md`
-2. `10_resumo_executivo/decisao_final.md`
-3. `04_comparativo/matriz_comparativa.md`
-4. `05_blueprint_v2/blueprint_v2.md`
-5. `08_bigdatacorp_architecture/bigdatacorp_first_architecture.md`
-6. `07_modelagem_dominio/entidades_canonicas.md`
-7. `06_roadmap/roadmap_v2.md`
+- `app/`: runtime ativo da V2, com frontend React/Vite, Firebase, Firestore rules, Cloud Functions e testes.
+- `PLANO_EXECUCAO_V2_MASTER.md`: plano mestre e registro historico essencial da execucao V2.
 
-## Inventarios
+## Comandos
 
-- `01_inventario_compliancehub/`
-- `02_inventario_marble/`
-- `03_inventario_ballerine/`
+Execute a partir de `app/`:
 
-## Comparativos
+```powershell
+cd COMPLIANCE_HUB_V2/app
+npm test
+npm run test:rules
+npm run lint
+node --check functions/index.js
+npm run build
+```
 
-- `04_comparativo/matriz_comparativa.md`
-- `04_comparativo/tradeoffs.md`
-- `04_comparativo/o_que_copiar_adaptar_evitar.md`
+## Politica de limpeza
 
-## Blueprint e arquitetura
-
-- `05_blueprint_v2/`
-- `07_modelagem_dominio/`
-- `08_bigdatacorp_architecture/`
-
-## Riscos e roadmap
-
-- `09_riscos_e_tradeoffs/`
-- `06_roadmap/`
-
-## Repositorios de referencia
-
-- `modelos/marble`
-- `modelos/marble-backend`
-- `modelos/marble-frontend`
-- `modelos/ballerine`
-
-## Observacao
-
-Esta etapa nao implementa a V2 e nao altera codigo de produto. Ela gera base estrategica e tecnica para decisao.
-
+- Os inventarios, comparativos antigos, referencias externas, modelos Marble/Ballerine, logs, outputs e scripts legados foram removidos.
+- `modelos/` nao faz mais parte da V2.
+- Documentacao arquivada foi removida da V2 para manter apenas o plano mestre e a documentacao do app.
+- Arquivos locais de ambiente permanecem no runtime quando necessarios para desenvolvimento local, mas devem continuar ignorados pelo Git.
