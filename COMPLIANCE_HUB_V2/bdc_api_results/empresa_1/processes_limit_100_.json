@@ -1,0 +1,254 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "Lawsuits": {
+        "Lawsuits": [
+          {
+            "Number": "00136805420248050274",
+            "Type": "CUMPRIMENTO DE SENTENCA",
+            "MainSubject": "CLAUSULAS ABUSIVAS  DIREITO DO CONSUMIDOR",
+            "CourtName": "TJBA",
+            "CourtLevel": "1",
+            "CourtType": "CIVEL",
+            "CourtDistrict": "VITORIA DA CONQUISTA",
+            "Judge": "WANDER CLEUBER OLIVEIRA LOPES",
+            "JudgingBody": "3 VARA DO SISTEMA DOS JUIZADOS- VIT. DA CONQUISTA",
+            "State": "BA",
+            "Status": "ARQUIVADO",
+            "LawsuitHostService": "OTHER",
+            "InferredCNJSubjectName": "CLÁUSULAS ABUSIVAS",
+            "InferredCNJSubjectNumber": 11974,
+            "InferredCNJProcedureTypeName": "PROCEDIMENTO DO JUIZADO ESPECIAL CÍVEL",
+            "InferredCNJProcedureTypeNumber": 436,
+            "InferredBroadCNJSubjectName": "DIREITO DO CONSUMIDOR",
+            "InferredBroadCNJSubjectNumber": 1156,
+            "OtherSubjects": [
+              "CLAUSULAS ABUSIVAS  DIREITO DO CONSUMIDOR"
+            ],
+            "NumberOfVolumes": 0,
+            "NumberOfPages": 0,
+            "Value": 6179.4,
+            "ResJudicataDate": "2025-07-28T00:00:00",
+            "CloseDate": "2025-07-28T00:00:00",
+            "RedistributionDate": "0001-01-01T00:00:00",
+            "PublicationDate": "0001-01-01T00:00:00",
+            "NoticeDate": "2024-12-13T00:00:00",
+            "LastMovementDate": "2025-07-28T00:00:00",
+            "CaptureDate": "2026-03-12T11:53:54",
+            "LastUpdate": "2026-03-12T11:53:54",
+            "NumberOfParties": 4,
+            "NumberOfUpdates": 25,
+            "LawSuitAge": 227,
+            "AverageNumberOfUpdatesPerMonth": 1,
+            "ReasonForConcealedData": 0,
+            "LawsuitMatchType": "DOC",
+            "Parties": [
+              {
+                "Doc": "73495832572",
+                "IsPartyActive": true,
+                "Name": "CRISTOVAO PEREIRA SOARES JUNIOR",
+                "Polarity": "ACTIVE",
+                "Type": "CLAIMANT",
+                "IsInference": true,
+                "PartyDetails": {
+                  "SpecificType": "EXEQUENTE"
+                },
+                "LastCaptureDate": "2026-03-12T11:53:54"
+              },
+              {
+                "Doc": "73495832572",
+                "IsPartyActive": true,
+                "Name": "CRISTOVAO PEREIRA SOARES JUNIOR",
+                "Polarity": "NEUTRAL",
+                "Type": "LAWYER",
+                "IsInference": true,
+                "PartyDetails": {
+                  "OAB": "28171N",
+                  "State": "BA",
+                  "SpecificType": "ADVOGADO (EXEQUENTE)"
+                },
+                "LastCaptureDate": "2026-03-12T11:53:54"
+              },
+              {
+                "Doc": "42975374000172",
+                "IsPartyActive": true,
+                "Name": "CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA",
+                "Polarity": "PASSIVE",
+                "Type": "CLAIMED",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "EXECUTADO"
+                },
+                "LastCaptureDate": "2026-03-12T11:53:54"
+              },
+              {
+                "Doc": "52601137568",
+                "IsPartyActive": true,
+                "Name": "WANDER CLEUBER OLIVEIRA LOPES",
+                "Polarity": "NEUTRAL",
+                "Type": "REPORTER",
+                "IsInference": true,
+                "PartyDetails": {
+                  "SpecificType": "JUIZ"
+                },
+                "LastCaptureDate": "2026-03-12T11:53:54"
+              }
+            ],
+            "Updates": [
+              {
+                "Content": "ARQUIVADO DEFINITIVAMENTE (DETERMINACAO DO JUIZ)",
+                "PublishDate": "2025-07-28T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "EVOLUCAO DA CLASSE PROCESSUAL (CLASSE DE PROCEDIMENTO DO JUIZADO ESPECIAL CIVEL PARA CUMPRIMENTO DE SENTENCA)",
+                "PublishDate": "2025-07-28T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "TRANSITADO EM JULGADO",
+                "PublishDate": "2025-07-28T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "DECORRIDO PRAZO DE CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA *REFERENTE AO EVENTO DESISTENCIA(08/05/25). PRAZO: 10 DIAS; ULTIMO DIA DE PRAZO 25/07/25",
+                "PublishDate": "2025-07-26T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "DECORRIDO PRAZO DE ADVOGADOS DE CRISTOVAO PEREIRA SOARES JUNIOR *REFERENTE AO EVENTO DESISTENCIA(08/05/25). PRAZO: 10 DIAS; ULTIMO DIA DE PRAZO 18/07/25",
+                "PublishDate": "2025-07-19T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "INTIMACAO LIDO(A) (PARA CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA) EM 11/07/25 *REFERENTE AO EVENTO EXTINTO O PROCESSO POR DESISTENCIA(08/05/25)",
+                "PublishDate": "2025-07-12T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "DISPONIBILIZACAO NO DIARIO DA JUSTICA ELETRONICO - DJEN DISPONIBILIZACAO NO DIARIO DA JUSTICA ELETRONICO EM (03/07/25) PARA CRISTOVAO PEREIRA SOARES JUNIOR *REFERENTE AO EVENTO EXTINTO O PROCESSO POR DESISTENCIA",
+                "PublishDate": "2025-07-01T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "INTIMACAO EXPEDIDO(A) (PARA CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA) PRAZO: 10 DIAS; | INTIMACAO REALIZADA ATRAVES DO DOMICILIO ELETRONICO (NACIONAL)",
+                "PublishDate": "2025-07-01T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "INTIMACAO EXPEDIDO(A) (P/ ADVGS. DE CRISTOVAO PEREIRA SOARES JUNIOR) PRAZO: 10 DIAS; AGUARDANDO DISPONIBILIZACAO NO DIARIO DA JUSTICA ELETRONICO NACIONAL - DJEN (CNJ)",
+                "PublishDate": "2025-07-01T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "EXTINTO O PROCESSO POR DESISTENCIA | TRIBUNAL DE JUSTICA DO ESTADO DA BAHIA PODER JUDICIARIO VITORIA DA CONQUISTA 3 VARA DO SISTEMA DOS JUIZADOS- VIT. DA CONQUISTA - PROJUDI ESTEVAO SANTOS, 41, FORUM JOAO MANGABEIRA, CENTRO - VITORIA DA CONQUISTA VCONQUISTA-3VSJ@TJBA.JUS.BR | TEL.: 77 3425-8936 | 07 AS 13 HR - TEL.: (77) 3425-8936 PROCESSO N. 0013680-54.2024.8.05.0274 PARTE PROMOVENTE: CRISTOVAO PEREIRA SOARES JUNIOR PARTE PROMOVIDA: CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA S E N T E N C A VISTOS, ETC. HOMOLOGO, POR SENTENCA, PARA A PRODUCAO DOS SEUS JURIDICOS E LEGAIS EFEITOS, O PEDIDO DE DESISTENCIA DA ACAO, VEICULADO EM PETICAO ANEXADA AO EVENTO DE N20 , DECRETANDO A EXTINCAO DO PROCESSO, SEM RESOLUCAO DO MERITO, NOS PRECISOS TERMOS DO ART. 485, INC. VIII, DO CODIGO DE PROCESSO CIVIL, ORDENANDO A BAIXA NO REGISTRO E O ARQUIVAMENTO DOS AUTOS. SEM CUSTAS. INTIME(M)-SE. APOS, ARQUIVE-SE. VITORIA DA CONQUISTA/BA, 8 DE MAIO DE 2025. WANDER CLEUBER OLIVEIRA LOPES JUIZ DE DIREITO DOCUMENTO ASSINADO ELETRONICAMENTE ASSINADO ELETRONICAMENTE POR: WANDER CLEUBER OLIVEIRA LOPESCODIGO DE VALIDACAO DO DOCUMENTO: A4DFAB2A A SER VALIDADO NO SITIO DO PROJUDI - TJBA.",
+                "PublishDate": "2025-05-08T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "DECORRIDO PRAZO DE ADVOGADOS DE CRISTOVAO PEREIRA SOARES JUNIOR *REFERENTE AO EVENTO MERO EXPEDIENTE(18/03/25). PRAZO: 30 DIAS; ULTIMO DIA DE PRAZO 06/05/25",
+                "PublishDate": "2025-05-07T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "CONCLUSOS PARA SENTENCA EXTINTIVA",
+                "PublishDate": "2025-05-06T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "DOCUMENTO ANALISADO",
+                "PublishDate": "2025-05-06T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "JUNTADA DE PETICAO DE REQUISICAO DE ARQUIVAMENTO",
+                "PublishDate": "2025-04-24T00:00:00",
+                "CaptureDate": "2026-01-13T17:46:30"
+              },
+              {
+                "Content": "INTIMACAO LIDO(A) (PARA CRISTOVAO PEREIRA SOARES JUNIOR) EM 18/03/25 *REFERENTE AO EVENTO PROFERIDO DESPACHO DE MERO EXPEDIENTE(18/03/25)",
+                "PublishDate": "2025-03-18T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "INTIMACAO EXPEDIDO(A) (P/ ADVGS. DE CRISTOVAO PEREIRA SOARES JUNIOR) PRAZO: 30 DIAS;",
+                "PublishDate": "2025-03-18T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | TRIBUNAL DE JUSTICA DO ESTADO DA BAHIA PODER JUDICIARIO VITORIA DA CONQUISTA 3 VARA DO SISTEMA DOS JUIZADOS- VIT. DA CONQUISTA - PROJUDI ESTEVAO SANTOS, 41, FORUM JOAO MANGABEIRA, CENTRO - VITORIA DA CONQUISTA VCONQUISTA-3VSJ@TJBA.JUS.BR | TEL.: 77 3425-8936 | 07 AS 13 HR - TEL.: (77) 3425-8936 PROCESSO N: 0013680-54.2024.8.05.0274 PARTE AUTORA: CRISTOVAO PEREIRA SOARES JUNIOR PARTE RE: CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA DESPACHO CONSIDERANDO A CERTIDAO NEGATIVA DE EVENTO N 13, INTIME-SE A PARTE A AUTORA PARA FORNECER NOVO ENDERECO NO PRAZO DE 30 DIAS, SOB PENA DE EXTINCAO DO FEITO. INTIME-SE. VCA/BA, 18 DE MARCO DE 2025. WANDER CLEUBER OLIVEIRA LOPES JUIZ DE DIREITO DOCUMENTO ASSINADO ELETRONICAMENTEASSINADO ELETRONICAMENTE POR: WANDER CLEUBER OLIVEIRA LOPESCODIGO DE VALIDACAO DO DOCUMENTO: A329F97A A SER VALIDADO NO SITIO DO PROJUDI - TJBA.",
+                "PublishDate": "2025-03-18T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "CONCLUSOS PARA DESPACHO",
+                "PublishDate": "2025-02-17T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "DOCUMENTO ANALISADO",
+                "PublishDate": "2025-02-17T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "JULGADA PROCEDENTE EM PARTE A ACAO",
+                "PublishDate": "2025-02-17T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "JUNTADA DE AR - AVISO DE RECEBIMENTO",
+                "PublishDate": "2025-02-14T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "DEVOLUCAO SEM LEITURA DE CITACAO EXPEDIDA EM 13/12/24 PARA CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA",
+                "PublishDate": "2025-02-11T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "CONCLUSOS PARA SENTENCA",
+                "PublishDate": "2025-02-07T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "AUDIENCIA UNA REALIZADA SEM CONCILIACAO | ESTA MOVIMENTACAO GEROU UMA ORDEM AUTOMATICA DE PAGAMENTO AO CONCILIADOR ISRAEL DA SILVA GUIMARAES, CONFORME DECLARACAO.",
+                "PublishDate": "2025-02-07T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              },
+              {
+                "Content": "JUNTADA DE TERMO DE AUDIENCIA | TRIBUNAL DE JUSTICA DO ESTADO DA BAHIA PODER JUDICIARIO VITORIA DA CONQUISTA 3 VARA DO SISTEMA DOS JUIZADOS ESPECIAIS DA COMARCA DE VITORIA DA CONQUISTA-BA - PROJUDI PCA. ESTEVAO SANTOS, N 41- FORUM JOAO MANGABEIRA- 4 ANDAR- CENTRO- CEP: 45.020-906- TEL: (77) 3425-8936 ATA DE SESSAO DE CONCILIACAO POR VIDEOCONFERENCIA (DECRETO JUDICIARIO 276/2020) PROCESSO NUMERO: 0013680-54.2024.8.05.0274 PROMOVENTE(S): CRISTOVAO PEREIRA SOARES JUNIOR PROMOVIDO(A/S): CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA AUDIENCIA DE CONCILIACAO POR VIDEOCONFERENCIA (DECRETO JUDICIARIO 276/2020) DO DIA 7 DE FEVEREIRO DE 2025, AS 10:30, EM QUE SAO PARTES AS ACIMA NOMINADAS, PRESIDIDA PELO CONCILIADOR ISRAEL DA SILVA GUIMARAES. FEITO O PREGAO COMPARECEU A PARTE AUTORA, QUE ADVOGA EM CAUSA PROPRIA. AUSENTE A PARTE REQUERIDA, APESAR DE TER SIDO CONCEDIDA TOLERANCIA DE DEZ MINUTOS. REALIZANDO PESQUISA ATRAVES DO SITE DOS CORREIOS VERIFICA-SE QUE CONSTA OBJETO ENTREGUE AO DESTINATARIO, POREM NAO HOUVE RETORNO DO AR DE CITACAO. DADA A PALAVRA PARA A PARTE AUTORA, FOI DITO: REQUER A DECRETACAO DA REVELIA E SEUS EFEITOS DIANTE DA AUSENCIA INJUSTIFICADA DA PARTE DEMANDADA, QUE FOI INEQUIVOCADAMENTE CITADA, REITERANDO TODOS OS PEDIDOS DA PETICAO INICIAL E REQUERENDO O JULGAMENTO ANTECIPADO DA LIDE, EM CONSONANCIA AOS ARTIGOS 22 E 23 DA LEI 9.099/95. POR FIM, FOI INFORMADO AS PARTES QUE A PRESENTE ATA SERA DEVIDAMENTE AUTENTICADA MEDIANTE A JUNTADA AO PROCESSO ELETRONICO PELO CONCILIADOR. NADA MAIS HAVENDO A DELIBERAR, A SESSAO FOI ENCERRADA PELO CONCILIADOR, COMUNICANDO ANTES AS PARTES QUE A ATA E O LINK DA GRAVACAO SERAO DISPONIBILIZADOS NO PROCESSO. LINK DA AUDIENCIA: HTTPS://PLAYBACK.LIFESIZE.COM/#/PUBLICVIDEO/F78266EA-F9B3-4163-ACA4- 1040B67C1101?VCPUBTOKEN=E3598D87-78B2-4365-BDBC-5D8463ACCE41 DIANTE DO EXPOSTO, FACO CONCLUSOS ESTES AUTOS PARA SENTENCA AO MM JUIZ DE DIREITO TITULAR DESTE JUIZADO ESPECIAL CIVEL DESTA COMARCA. VITORIA DA CONQUISTA, 7 DE FEVEREIRO DE 2025. ASSINADO ELETRONICAMENTE ISRAEL DA SILVA GUIMARAES CONCILIADOR ASSINADO ELETRONICAMENTE POR: ISRAEL DA SILVA GUIMARAES; CODIGO DE VALIDACAO DO DOCUMENTO: A1EE16CC A SER VALIDADO NO SITIO DO PROJUDI - TJBA. TRIBUNAL DE JUSTICA DO ESTADO DA BAHIA PODER JUDICIARIO VITORIA DA CONQUISTA 3 VARA DO SISTEMA DOS JUIZADOS ESPECIAIS DA COMARCA DE VITORIA DA CONQUISTA-BA - PROJUDI PCA. ESTEVAO SANTOS, N 41- FORUM JOAO MANGABEIRA- 4 ANDAR- CENTRO- CEP: 45.020-906- TEL: (77) 3425-8936 ASSINADO ELETRONICAMENTE POR: ISRAEL DA SILVA GUIMARAES; CODIGO DE VALIDACAO DO DOCUMENTO: A1EE16CC A SER VALIDADO NO SITIO DO PROJUDI - TJBA. | HTTPS://PLAYBACK.LIFESIZE.COM/#/PUBLICVIDEO/F78266EA-F9B3-4163-ACA4-1040B67C1101?VCPUBTOKEN=E3598D87-78B2-4365-BDBC-5D8463ACCE41 AUDIENCIA REALIZADA ATRAVES DA SALA VIRTUAL HTTPS://CALL.LIFESIZECLOUD.COM/7601700",
+                "PublishDate": "2025-02-07T00:00:00",
+                "CaptureDate": "2025-04-22T13:37:25"
+              }
+            ],
+            "Petitions": [],
+            "Decisions": []
+          }
+        ],
+        "TotalLawsuits": 1,
+        "TotalLawsuitsAsAuthor": 0,
+        "TotalLawsuitsAsDefendant": 1,
+        "TotalLawsuitsAsOther": 0,
+        "FirstLawsuitDate": "2024-12-13T00:00:00",
+        "LastLawsuitDate": "2024-12-13T00:00:00",
+        "Last30DaysLawsuits": 0,
+        "Last90DaysLawsuits": 0,
+        "Last180DaysLawsuits": 0,
+        "Last365DaysLawsuits": 0
+      }
+    }
+  ],
+  "QueryId": "713925aa-6aab-45cd-9e54-249751a7f246",
+  "ElapsedMilliseconds": 180,
+  "QueryDate": "2026-04-25T11:00:15.1203868Z",
+  "Status": {
+    "processes": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

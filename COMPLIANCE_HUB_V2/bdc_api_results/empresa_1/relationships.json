@@ -1,0 +1,146 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "Relationships": {
+        "Relationships": [
+          {
+            "RelatedEntityTaxIdNumber": "05118465923",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "MICHELLE DOS SANTOS",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2021-08-04T00:00:00Z",
+            "LastUpdateDate": "2026-04-11T00:00:00Z",
+            "RelationshipStartDate": "2021-08-03T00:00:00Z",
+            "RelationshipEndDate": "9999-12-31T23:59:59.9999999"
+          },
+          {
+            "RelatedEntityTaxIdNumber": "08097660946",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "RENAN ANTONIO RICHTER",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2023-08-13T00:00:00Z",
+            "LastUpdateDate": "2024-06-08T00:00:00Z",
+            "RelationshipStartDate": "2023-07-20T00:00:00Z",
+            "RelationshipEndDate": "2024-06-08T00:00:00Z"
+          },
+          {
+            "RelatedEntityTaxIdNumber": "08523197974",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2021-08-04T00:00:00Z",
+            "LastUpdateDate": "2023-07-10T00:00:00Z",
+            "RelationshipStartDate": "2021-08-03T00:00:00Z",
+            "RelationshipEndDate": "2023-07-10T00:00:00Z"
+          },
+          {
+            "RelatedEntityTaxIdNumber": "08523197974",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+            "RelationshipType": "REPRESENTANTELEGAL",
+            "RelationshipName": "",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2023-06-10T00:00:00Z",
+            "LastUpdateDate": "2023-08-13T00:00:00Z",
+            "RelationshipStartDate": "2023-06-10T00:00:00Z",
+            "RelationshipEndDate": "2023-08-13T00:00:00Z"
+          }
+        ],
+        "CurrentRelationships": [
+          {
+            "RelatedEntityTaxIdNumber": "05118465923",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "MICHELLE DOS SANTOS",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2021-08-04T00:00:00Z",
+            "LastUpdateDate": "2026-04-11T00:00:00Z",
+            "RelationshipStartDate": "2021-08-03T00:00:00Z",
+            "RelationshipEndDate": "9999-12-31T23:59:59.9999999"
+          }
+        ],
+        "HistoricalRelationships": [
+          {
+            "RelatedEntityTaxIdNumber": "08097660946",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "RENAN ANTONIO RICHTER",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2023-08-13T00:00:00Z",
+            "LastUpdateDate": "2024-06-08T00:00:00Z",
+            "RelationshipStartDate": "2023-07-20T00:00:00Z",
+            "RelationshipEndDate": "2024-06-08T00:00:00Z"
+          },
+          {
+            "RelatedEntityTaxIdNumber": "08523197974",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+            "RelationshipType": "QSA",
+            "RelationshipName": "SOCIO-ADMINISTRADOR",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2021-08-04T00:00:00Z",
+            "LastUpdateDate": "2023-07-10T00:00:00Z",
+            "RelationshipStartDate": "2021-08-03T00:00:00Z",
+            "RelationshipEndDate": "2023-07-10T00:00:00Z"
+          },
+          {
+            "RelatedEntityTaxIdNumber": "08523197974",
+            "RelatedEntityTaxIdType": "CPF",
+            "RelatedEntityTaxIdCountry": "Brazil",
+            "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+            "RelationshipType": "REPRESENTANTELEGAL",
+            "RelationshipName": "",
+            "RelationshipLevel": "Direct",
+            "RelationshipDataOrigin": "RECEITA FEDERAL",
+            "CreationDate": "2023-06-10T00:00:00Z",
+            "LastUpdateDate": "2023-08-13T00:00:00Z",
+            "RelationshipStartDate": "2023-06-10T00:00:00Z",
+            "RelationshipEndDate": "2023-08-13T00:00:00Z"
+          }
+        ],
+        "IsFamilyCompany": false,
+        "IsFamilyOperated": false,
+        "TotalRelationships": 5,
+        "TotalOwners": 3,
+        "TotalEmployees": 0,
+        "TotalOwned": 0,
+        "IsFromHeadQuartersData": false
+      }
+    }
+  ],
+  "QueryId": "1db7226a-e7b3-4495-94e3-c5505f620d56",
+  "ElapsedMilliseconds": 86,
+  "QueryDate": "2026-04-25T11:00:13.6844708Z",
+  "Status": {
+    "relationships": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

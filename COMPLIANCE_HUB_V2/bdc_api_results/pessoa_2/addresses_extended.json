@@ -1,0 +1,31 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "ExtendedAddresses": {
+        "TotalAddresses": 0,
+        "TotalActiveAddresses": 0,
+        "TotalWorkAddresses": 0,
+        "TotalPersonalAddresses": 0,
+        "TotalUniqueAddresses": 0,
+        "TotalAddressPassages": 0,
+        "TotalBadAddressPassages": 0,
+        "OldestAddressPassageDate": "0001-01-01T00:00:00",
+        "NewestAddressPassageDate": "9999-12-31T23:59:59.9999999",
+        "Addresses": []
+      }
+    }
+  ],
+  "QueryId": "a4a892cf-ec70-4d59-9c06-187b77ae0f46",
+  "ElapsedMilliseconds": 59,
+  "QueryDate": "2026-04-25T10:59:18.3498127Z",
+  "Status": {
+    "addresses_extended": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

@@ -10,7 +10,7 @@ import {
     inferPrimaryDocument,
     inferSubjectType,
     summarizeSubjectForCase,
-} from './v2Subjects.cjs';
+} from './v2Subjects.js';
 
 describe('v2Subjects', () => {
     it('infere tipo PF para caso com CPF', () => {

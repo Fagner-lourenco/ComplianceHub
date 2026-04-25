@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import os; print\\(os.path.exists\\('/tmp/bdc_catalog.txt'\\)\\)\")",
+      "Bash(cp /tmp/bdc_catalog.txt \"d:/ComplianceHub/COMPLIANCE_HUB_V2/docs/bdc_catalog_raw.txt\")",
+      "Bash(PYTHONIOENCODING=utf-8 python3)",
+      "WebFetch(domain:docs.bigdatacorp.com.br)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 d:/ComplianceHub/COMPLIANCE_HUB_V2/docs/build_catalog.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python3 d:/ComplianceHub/COMPLIANCE_HUB_V2/docs/build_macroarea_files.py)",
+      "Bash(grep -n \"exports\\\\\\\\..*=\" \"d:/ComplianceHub/COMPLIANCE_HUB_V2/app/functions/bootstrap.js\")",
+      "Bash(grep -E \"src\\\\\\\\\\\\\\\\.+error|✖\")",
+      "Bash(grep -E \"src\\\\\\\\\\\\\\\\\")",
+      "Bash(grep -A 5 \"src\\\\\\\\\\\\\\\\dossie\\\\\\\\\\\\\\\\components\\\\\\\\\\\\\\\\TopProductHeader\")",
+      "Bash(grep -A 2 \"dossie\\\\\\\\\\\\\\\\pages\")",
+      "Bash(grep -E \"src\\\\\\\\\\\\\\\\.+error\")"
+    ]
+  }
+}

@@ -1,0 +1,476 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "MerchantCategoryData": {
+        "HasDirectAssociationData": false,
+        "HasMultipleMerchantCodes": true,
+        "MerchantCategories": [],
+        "CNAECategories": [
+          {
+            "CNAE": "1013-9/01",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de produtos de carne",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1033-3/01",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de sucos concentrados de frutas, hortaliças e legumes",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1033-3/02",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de sucos de frutas, hortaliças e legumes, exceto concentrados",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1053-8/00",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de sorvetes e outros gelados comestíveis",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1091-1/01",
+            "MCC": "5462",
+            "MCCName": "Bakeries",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de produtos de panificação industrial",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1095-3/00",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de especiarias, molhos, temperos e condimentos",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "1099-6/99",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "10",
+            "Section": "IND DE TRANSFORMAÇÃO",
+            "Group": "FABRICAÇÃO DE PRODUTOS ALIMENTÍCIOS",
+            "Denomination": "Fabricação de outros produtos alimentícios não especificados anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4631-1/00",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de leite e laticínios",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4635-4/99",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de bebidas não especificadas anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4639-7/01",
+            "MCC": "5300",
+            "MCCName": "Wholesale Clubs",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de produtos alimentícios em geral",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4647-8/02",
+            "MCC": "5192",
+            "MCCName": "Books, Periodicals and Newspapers",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de livros, jornais e outras publicações",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4649-4/04",
+            "MCC": "5021",
+            "MCCName": "Office and Commercial Furniture",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de móveis e artigos de colchoaria",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4649-4/08",
+            "MCC": "2842",
+            "MCCName": "Specialty Cleaning, Polishing and Sanitation Preparations",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de produtos de higiene, limpeza e conservação domiciliar",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4649-4/99",
+            "MCC": "5199",
+            "MCCName": "Nondurable Goods (Not Elsewhere Classified)",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de outros equipamentos e artigos de uso pessoal e doméstico não especificados anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4651-6/01",
+            "MCC": "5045",
+            "MCCName": "Computers and Computer Peripheral Equipment and Software",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de equipamentos de informática",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4652-4/00",
+            "MCC": "5065",
+            "MCCName": "Electrical Parts and Equipment",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de componentes eletrônicos e equipamentos de telefonia e comunicação",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4665-6/00",
+            "MCC": "5046",
+            "MCCName": "Commercial Equipment (Not Elsewhere Classified )",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de máquinas e equipamentos para uso comercial; partes e peças",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4673-7/00",
+            "MCC": "5065",
+            "MCCName": "Electrical Parts and Equipment",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de material elétrico",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4679-6/99",
+            "MCC": "5039",
+            "MCCName": "Construction Materials (Not Elsewhere Classified)",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de materiais de construção em geral",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4683-4/00",
+            "MCC": "763",
+            "MCCName": "Agricultural Co-operatives",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de defensivos agrícolas, adubos, fertilizantes e corretivos do solo",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4691-5/00",
+            "MCC": "5300",
+            "MCCName": "Wholesale Clubs",
+            "Div": "46",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO POR ATACADO, EXCETO VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Denomination": "Comércio atacadista de mercadorias em geral, com predominância de produtos alimentícios",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4721-1/03",
+            "MCC": "5451",
+            "MCCName": "Dairy Products Stores",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de laticínios e frios",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4723-7/00",
+            "MCC": "5921",
+            "MCCName": "Package Stores – Beer, Wine, and Liquor",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de bebidas",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4729-6/02",
+            "MCC": "5499",
+            "MCCName": "Miscellaneous Food Stores – Convenience Stores and Specialty Markets",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de mercadorias em lojas de conveniência",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4729-6/99",
+            "MCC": "5499",
+            "MCCName": "Miscellaneous Food Stores – Convenience Stores and Specialty Markets",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de produtos alimentícios em geral ou especializado em produtos alimentícios não especificados anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4759-8/99",
+            "MCC": "5999",
+            "MCCName": "Miscellaneous and Specialty Retail Stores",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de outros artigos de uso pessoal e doméstico não especificados anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4761-0/01",
+            "MCC": "5942",
+            "MCCName": "Book Stores",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de livros",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4789-0/02",
+            "MCC": "5992",
+            "MCCName": "Florists",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de plantas e flores naturais",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4789-0/04",
+            "MCC": "5995",
+            "MCCName": "Pet Shops, Pet Foods and Supplies Stores",
+            "Div": "47",
+            "Section": "COMÉRCIO; REPARAÇÃO DE VEÍCULOS AUTOMOTORES E MOTOCICLETAS",
+            "Group": "COMÉRCIO VAREJISTA",
+            "Denomination": "Comércio varejista de animais vivos e de artigos e alimentos para animais de estimação",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4930-2/01",
+            "MCC": "4214",
+            "MCCName": "Motor Freight Carriers and Trucking – Local and Long Distance, Moving and Storage Companies, and Local Delivery Services",
+            "Div": "49",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "TRANSPORTE TERRESTRE",
+            "Denomination": "Transporte rodoviário de carga, exceto produtos perigosos e mudanças, municipal",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4930-2/02",
+            "MCC": "4214",
+            "MCCName": "Transportation Services (Not Elsewhere Classified)",
+            "Div": "49",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "TRANSPORTE TERRESTRE",
+            "Denomination": "Transporte rodoviário de carga, exceto produtos perigosos e mudanças, intermunicipal, interestadual e internacional",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4930-2/03",
+            "MCC": "4214",
+            "MCCName": "Motor Freight Carriers and Trucking – Local and Long Distance, Moving and Storage Companies, and Local Delivery Services",
+            "Div": "49",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "TRANSPORTE TERRESTRE",
+            "Denomination": "Transporte rodoviário de produtos perigosos",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5211-7/99",
+            "MCC": "4225",
+            "MCCName": "Public Warehousing and Storage – Farm Products, Refrigerated Goods, Household Goods, and Storage",
+            "Div": "52",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "Denomination": "Depósitos de mercadorias para terceiros, exceto armazéns gerais e guarda-móveis",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5223-1/00",
+            "MCC": "7523",
+            "MCCName": "Parking Lots, Parking Meters and Garages",
+            "Div": "52",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "Denomination": "Estacionamento de veículos",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5320-2/02",
+            "MCC": "4215",
+            "MCCName": "Courier Services – Air and Ground, and Freight Forwarders",
+            "Div": "53",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "Denomination": "Serviços de entrega rápida",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5611-2/01",
+            "MCC": "5812",
+            "MCCName": "Eating Places and Restaurants F",
+            "Div": "56",
+            "Section": "ALOJAMENTO E ALIMENTAÇÃO",
+            "Group": "ALIMENTAÇÃO",
+            "Denomination": "Restaurantes e similares",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5611-2/03",
+            "MCC": "5814",
+            "MCCName": "Fast Food Restaurants F",
+            "Div": "56",
+            "Section": "ALOJAMENTO E ALIMENTAÇÃO",
+            "Group": "ALIMENTAÇÃO",
+            "Denomination": "Lanchonetes, casas de chá, de sucos e similares",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5611-2/04",
+            "MCC": "5813",
+            "MCCName": "Drinking Places (Alcoholic Beverages) – Bars, Taverns, Nightclubs, Cocktail Lounges, and Discotheques",
+            "Div": "56",
+            "Section": "ALOJAMENTO E ALIMENTAÇÃO",
+            "Group": "ALIMENTAÇÃO",
+            "Denomination": "Bares e outros estabelecimentos especializados em servir bebidas, sem entretenimento",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5620-1/01",
+            "MCC": "5499",
+            "MCCName": "Miscellaneous Food Stores – Convenience Stores and Specialty Markets",
+            "Div": "56",
+            "Section": "ALOJAMENTO E ALIMENTAÇÃO",
+            "Group": "ALIMENTAÇÃO",
+            "Denomination": "Fornecimento de alimentos preparados preponderantemente para empresas",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5620-1/04",
+            "MCC": "5812",
+            "MCCName": "Eating Places and Restaurants F",
+            "Div": "56",
+            "Section": "ALOJAMENTO E ALIMENTAÇÃO",
+            "Group": "ALIMENTAÇÃO",
+            "Denomination": "Fornecimento de alimentos preparados preponderantemente para consumo domiciliar",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6462-0/00",
+            "MCC": "8999",
+            "MCCName": "Professional Services (Not Elsewhere Classified)",
+            "Div": "64",
+            "Section": "ATIV FINANCEIRAS, DE SEGUROS E SV RELACIONADOS",
+            "Group": "ATIVIDADES DE SERVIÇOS FINANCEIROS",
+            "Denomination": "Holdings de instituições não-financeiras",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6463-8/00",
+            "MCC": "8999",
+            "MCCName": "Professional Services (Not Elsewhere Classified)",
+            "Div": "64",
+            "Section": "ATIV FINANCEIRAS, DE SEGUROS E SV RELACIONADOS",
+            "Group": "ATIVIDADES DE SERVIÇOS FINANCEIROS",
+            "Denomination": "Outras sociedades de participação, exceto holdings",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "7740-3/00",
+            "MCC": "7392",
+            "MCCName": "Consulting, Management, and Public Relations Services",
+            "Div": "77",
+            "Section": "ATIV ADM E SV COMPLEMENT",
+            "Group": "ALUGUÉIS NÃO-IMOBILIÁRIOS E GESTÃO DE ATIVOS INTANGÍVEIS NÃO-FINANCEIROS",
+            "Denomination": "Gestão de ativos intangíveis não-financeiros",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "8020-0/01",
+            "MCC": "7393",
+            "MCCName": "Detective Agencies, Protective Services, and Security Services, Including Armored Cars, and Guard Dogs",
+            "Div": "80",
+            "Section": "ATIV ADM E SV COMPLEMENT",
+            "Group": "ATIVIDADES DE VIGILÂNCIA, SEGURANÇA E INVESTIGAÇÃO",
+            "Denomination": "Atividades de monitoramento de sistemas de segurança eletrônico",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "8211-3/00",
+            "MCC": "7392",
+            "MCCName": "Management, Consulting, and Public Relations Services",
+            "Div": "82",
+            "Section": "ATIV ADM E SV COMPLEMENT",
+            "Group": "SERVIÇOS DE ESCRITÓRIO, DE APOIO ADMINISTRATIVO E OUTROS SERVIÇOS PRESTADOS ÀS EMPRESAS",
+            "Denomination": "Serviços combinados de escritório e apoio administrativo",
+            "AlternativeMerchantCodes": {}
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "ce2580d0-533e-4365-a873-f190592a9a33",
+  "ElapsedMilliseconds": 186,
+  "QueryDate": "2026-04-25T12:53:59.9391323Z",
+  "Status": {
+    "merchant_category_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

@@ -1,0 +1,1377 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "KycData": {
+        "PEPHistory": [
+          {
+            "Level": "2",
+            "JobTitle": "PEERS",
+            "Department": "SANTO ANTONIO ENERGIA S.A.",
+            "Motive": "PUBLIC COMPANY EMPLOYEE",
+            "Source": "QSA",
+            "TaxId": "49188720691",
+            "FirstLevelPEPTaxId": "95294040778",
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "2027-06-17T00:00:00Z",
+            "CreationDate": "0001-01-01T00:00:00",
+            "LastUpdateDate": "0001-01-01T00:00:00"
+          }
+        ],
+        "IsCurrentlyPEP": true,
+        "SanctionsHistory": [
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 56,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO W S.A.",
+              "SanctionAliases|MatchRate": "HOMETEK|0"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO W S.A.",
+              "SanctionAliasesAndMatchRate": "HOMETEK|0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:27.07",
+            "LastUpdateDate": "2026-04-25T03:03:27.07",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 55,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MBS LIMITADA",
+              "SanctionAliases|MatchRate": "GRUPO MBS LDA|57"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MBS LIMITADA",
+              "SanctionAliasesAndMatchRate": "GRUPO MBS LDA|57"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:03.132",
+            "LastUpdateDate": "2026-04-25T03:03:03.132",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 55,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MINERO XILOA S.A.",
+              "SanctionAliases|MatchRate": "GRUMIXSA|18"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MINERO XILOA S.A.",
+              "SanctionAliasesAndMatchRate": "GRUMIXSA|18"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:13.156",
+            "LastUpdateDate": "2026-04-25T03:06:13.156",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 54,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO WISA, S.A.",
+              "SanctionAliases|MatchRate": "LA RIVIERA|15"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO WISA, S.A.",
+              "SanctionAliasesAndMatchRate": "LA RIVIERA|15"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:27.059",
+            "LastUpdateDate": "2026-04-25T03:03:27.059",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 54,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CONTROL 2004, C.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CONTROL 2004, C.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:41.155",
+            "LastUpdateDate": "2026-04-25T03:03:41.155",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 53,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO DIJEMA, S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO DIJEMA, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:24.233",
+            "LastUpdateDate": "2026-04-25T03:03:24.233",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO FALCON S.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO FALCON S.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:01.618",
+            "LastUpdateDate": "2026-04-25T03:03:01.618",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MBS - KAYUM CENTRE"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MBS - KAYUM CENTRE"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:03.142",
+            "LastUpdateDate": "2026-04-25T03:03:03.142",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CIMA PANAMA, S.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CIMA PANAMA, S.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:27.664",
+            "LastUpdateDate": "2026-04-25T03:03:27.664",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CEDRO PANAMA S.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CEDRO PANAMA S.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:28.014",
+            "LastUpdateDate": "2026-04-25T03:03:28.014",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO SAHECT, C.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO SAHECT, C.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:30.797",
+            "LastUpdateDate": "2026-04-25T03:03:30.797",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ZAIT, S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ZAIT, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:43.441",
+            "LastUpdateDate": "2026-04-25T03:04:43.441",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 52,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO JRCP, S. DE R.L.",
+              "SanctionAliases|MatchRate": "MARISCOS EL CAIMAN|22",
+              "remarks": "(linked to: gonzalez lomeli, jesus)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO JRCP, S. DE R.L.",
+              "SanctionAliasesAndMatchRate": "MARISCOS EL CAIMAN|22"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:02.835",
+            "LastUpdateDate": "2026-04-25T03:06:02.835",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO FALCON DE PANAMA, S.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO FALCON DE PANAMA, S.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:01.609",
+            "LastUpdateDate": "2026-04-25T03:03:01.609",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO GUADALEST S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO GUADALEST S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:01.624",
+            "LastUpdateDate": "2026-04-25T03:03:01.624",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CINJAB, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "PROVENZA RESIDENCIAL|15"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CINJAB, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "PROVENZA RESIDENCIAL|15"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:10.658",
+            "LastUpdateDate": "2026-04-25T03:03:10.658",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO IMPERGOZA, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "LA TIJERA PARQUE INDUSTRIAL|21;PROVENZA CENTER|16"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO IMPERGOZA, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "LA TIJERA PARQUE INDUSTRIAL|21;PROVENZA CENTER|16"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:10.67",
+            "LastUpdateDate": "2026-04-25T03:03:10.67",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO COMERCIAL ROOL, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "EL VIEJO LUIS|22;TEQUILA VALENTON|14"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO COMERCIAL ROOL, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "EL VIEJO LUIS|22;TEQUILA VALENTON|14"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:14.784",
+            "LastUpdateDate": "2026-04-25T03:03:14.784",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO EGMONT, S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO EGMONT, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:32.848",
+            "LastUpdateDate": "2026-04-25T03:03:32.848",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO SEGTAC, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "GRUPO SEGTAC INMOBILIARIA|49;GRUPO INMOBILIARIO SEGTAC|49"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO SEGTAC, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "GRUPO SEGTAC INMOBILIARIA|49;GRUPO INMOBILIARIO SEGTAC|49"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:33.736",
+            "LastUpdateDate": "2026-04-25T03:03:33.736",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO VINDENDE S.A. DE C.V.",
+              "remarks": "(linked to: benguiat jimenez, alberto david)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO VINDENDE S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:51.393",
+            "LastUpdateDate": "2026-04-25T03:05:51.393",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 51,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO HOTELERO JJJ, S.A. DE C.V.",
+              "remarks": "(linked to: gonzalez lomeli, jesus)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO HOTELERO JJJ, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:02.864",
+            "LastUpdateDate": "2026-04-25T03:06:02.864",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CRISTAL CORONA S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CRISTAL CORONA S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:05.496",
+            "LastUpdateDate": "2026-04-25T03:03:05.496",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO GASOLINERO COJIM, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "GRUPO COJIM, S.A. DE C.V.|52"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO GASOLINERO COJIM, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "GRUPO COJIM, S.A. DE C.V.|52"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:32.858",
+            "LastUpdateDate": "2026-04-25T03:03:32.858",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CONTROL SYSTEM 2004, C.A."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO CONTROL SYSTEM 2004, C.A."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:41.167",
+            "LastUpdateDate": "2026-04-25T03:03:41.167",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MINERO BARRA PACIFICO, S.A.P.I. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO MINERO BARRA PACIFICO, S.A.P.I. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:02.506",
+            "LastUpdateDate": "2026-04-25T03:05:02.506",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ZIPFEL DE MEXICO S.A. DE C.V.",
+              "remarks": "(linked to: benguiat jimenez, alberto david)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ZIPFEL DE MEXICO S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:41.285",
+            "LastUpdateDate": "2026-04-25T03:05:41.285",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO HORTA ZAVALA S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO HORTA ZAVALA S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:05.466",
+            "LastUpdateDate": "2026-04-25T03:03:05.466",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO COMERCIAL SAN BLAS, S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO COMERCIAL SAN BLAS, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:09.111",
+            "LastUpdateDate": "2026-04-25T03:03:09.111",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO PRODUCSIL, S.P.R. DE R.L. DE C.V.",
+              "SanctionAliases|MatchRate": "GRUPO PRODUCSIL, S. DE P.R. DE R.L. DE C.V.|49"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO PRODUCSIL, S.P.R. DE R.L. DE C.V.",
+              "SanctionAliasesAndMatchRate": "GRUPO PRODUCSIL, S. DE P.R. DE R.L. DE C.V.|49"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:32.866",
+            "LastUpdateDate": "2026-04-25T03:03:32.866",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO UNTER EMPRESARIAL S.A. DE C.V.",
+              "remarks": "(linked to: benguiat jimenez, alberto david)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO UNTER EMPRESARIAL S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:41.301",
+            "LastUpdateDate": "2026-04-25T03:05:41.301",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO JALA LOGISTICA, S.A. DE C.V."
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO JALA LOGISTICA, S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:56.621",
+            "LastUpdateDate": "2026-04-25T03:05:56.621",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 49,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ARES IMPERIAL S. DE R.L. DE C.V.",
+              "remarks": "(linked to: vazquez alvarado, edgar aaron)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO ARES IMPERIAL S. DE R.L. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:08.728",
+            "LastUpdateDate": "2026-04-25T03:06:08.728",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO INDUSTRIAL GAXIOLA HERMANOS S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "MADYVA|4;GRUPO INDUSTRIAL GAXIOLA|49"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO INDUSTRIAL GAXIOLA HERMANOS S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "MADYVA|4;GRUPO INDUSTRIAL GAXIOLA|49"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:59.751",
+            "LastUpdateDate": "2026-04-25T03:02:59.751",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO F Y F MEDICAL INTERNACIONAL DE EQUIPOS"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO F Y F MEDICAL INTERNACIONAL DE EQUIPOS"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:09.12",
+            "LastUpdateDate": "2026-04-25T03:03:09.12",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO DE ADMINISTRACION EMPRESARIAL S.A.",
+              "SanctionAliases|MatchRate": "GRUPO GAE|45;GAESA|2"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO DE ADMINISTRACION EMPRESARIAL S.A.",
+              "SanctionAliasesAndMatchRate": "GRUPO GAE|45;GAESA|2"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:06.809",
+            "LastUpdateDate": "2026-04-25T03:04:06.809",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO EMPRESARIAL EPTA, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "GRUPO EPTA|44"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO EMPRESARIAL EPTA, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "GRUPO EPTA|44"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:05:06.069",
+            "LastUpdateDate": "2026-04-25T03:05:06.069",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO INTERNACIONAL CANHYSAMEX S.A. DE C.V.",
+              "remarks": "(linked to: hysa, arben)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO INTERNACIONAL CANHYSAMEX S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:08.324",
+            "LastUpdateDate": "2026-04-25T03:06:08.324",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO RVG COMBUSTIBLES S.A. DE C.V.",
+              "remarks": "(linked to: vazquez alvarado, edgar aaron)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO RVG COMBUSTIBLES S.A. DE C.V."
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:08.718",
+            "LastUpdateDate": "2026-04-25T03:06:08.718",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 46,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO AROSFRAN EMPREENDIMENTOS E PARTICIPACOES SARL",
+              "SanctionAliases|MatchRate": "GRUPO AROSFRAN|43;GRUPO AROSFRAM|43;AROSFRAN|2"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "GRUPO AROSFRAN EMPREENDIMENTOS E PARTICIPACOES SARL",
+              "SanctionAliasesAndMatchRate": "GRUPO AROSFRAN|43;GRUPO AROSFRAM|43;AROSFRAN|2"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:06.416",
+            "LastUpdateDate": "2026-04-25T03:03:06.416",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 23,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "ROCO DEL PACIFICO INMOBILIARIA, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "ROCO INMOBILIARIA ROCO DEL PACIFICO|24;GRUPO ROCO|47",
+              "remarks": "(linked to: conde uraga, martha emilia)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "ROCO DEL PACIFICO INMOBILIARIA, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "ROCO INMOBILIARIA ROCO DEL PACIFICO|24;GRUPO ROCO|47"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:00.176",
+            "LastUpdateDate": "2026-04-25T03:06:00.176",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 22,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "ILC EXPORTACIONES, S. DE R.L. DE C.V.",
+              "SanctionAliases|MatchRate": "GRUPO ILC|45;ILC CONSULTORES ADMINISTRATIVOS, S. DE R.L. DE C.V.|22;RESTAURANTE EL HABANERO, S.A. DE C.V.|24;PERFECT SILHOUETTE|15;ULTRAVITAL|0;ULTRAPHARMA|15;EQUIPOSPA|2"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "ILC EXPORTACIONES, S. DE R.L. DE C.V.",
+              "SanctionAliasesAndMatchRate": "GRUPO ILC|45;ILC CONSULTORES ADMINISTRATIVOS, S. DE R.L. DE C.V.|22;RESTAURANTE EL HABANERO, S.A. DE C.V.|24;PERFECT SILHOUETTE|15;ULTRAVITAL|0;ULTRAPHARMA|15;EQUIPOSPA|2"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:03:02.772",
+            "LastUpdateDate": "2026-04-25T03:03:02.772",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 22,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "VG DESARROLLOS DE LA BAHIA, S.A. DE C.V.",
+              "SanctionAliases|MatchRate": "KOVAY DESARROLLOS|16;GRUPO KOVAY|43;NAVIS BY LA CRUZ|22;SANTA JULIA SEASIDE LIVING|21;QUIYA RESIDENCES|15;ZUL BY LA CRUZ|22;MARINE DIAMOND|15;FARO GRILL|17;SELVARA SIGNATURE COLLECTION|20",
+              "remarks": "(linked to: rivera miramontes, carlos humberto)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "VG DESARROLLOS DE LA BAHIA, S.A. DE C.V.",
+              "SanctionAliasesAndMatchRate": "KOVAY DESARROLLOS|16;GRUPO KOVAY|43;NAVIS BY LA CRUZ|22;SANTA JULIA SEASIDE LIVING|21;QUIYA RESIDENCES|15;ZUL BY LA CRUZ|22;MARINE DIAMOND|15;FARO GRILL|17;SELVARA SIGNATURE COLLECTION|20"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:06:11.29",
+            "LastUpdateDate": "2026-04-25T03:06:11.29",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 20,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "REVOLUTIONARY ARMED FORCES OF COLOMBIA - PEOPLE'S ARMY",
+              "SanctionAliases|MatchRate": "FARC-EP|0;FUERZAS ARMADAS REVOLUCIONARIAS DE COLOMBIA - EJERCITO DEL PUEBLO|24;FARC DISSIDENTS FARC-EP|21;REVOLUTIONARY ARMED FORCES OF COLOMBIA DISSIDENTS FARC-EP|21;FARC-D FARC-EP|14;GRUPO ARMADO ORGANIZADO RESIDUAL FARC-EP|48;GAO-R FARC-EP|15;RESIDUAL ORGANIZED ARMED GROUP FARC-EP|23"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "REVOLUTIONARY ARMED FORCES OF COLOMBIA - PEOPLE'S ARMY",
+              "SanctionAliasesAndMatchRate": "FARC-EP|0;FUERZAS ARMADAS REVOLUCIONARIAS DE COLOMBIA - EJERCITO DEL PUEBLO|24;FARC DISSIDENTS FARC-EP|21;REVOLUTIONARY ARMED FORCES OF COLOMBIA DISSIDENTS FARC-EP|21;FARC-D FARC-EP|14;GRUPO ARMADO ORGANIZADO RESIDUAL FARC-EP|48;GAO-R FARC-EP|15;RESIDUAL ORGANIZED ARMED GROUP FARC-EP|23"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:16.06",
+            "LastUpdateDate": "2026-04-25T03:04:16.06",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 16,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "SEGUNDA MARQUETALIA",
+              "SanctionAliases|MatchRate": "NEW MARQUETALIA|16;SECOND MARQUETALIA|16;LA NUEVA MARQUETALIA|23;FARC DISSIDENTS SEGUNDA MARQUETALIA|23;REVOLUTIONARY ARMED FORCES OF COLOMBIA DISSIDENTS SEGUNDA MARQUETALIA|22;FARC-D SEGUNDA MARQUETALIA|23;GRUPO ARMADO ORGANIZADO RESIDUAL SEGUNDA MARQUETALIA|47;GAO-R SEGUNDA MARQUETALIA|24;RESIDUAL ORGANIZED ARMED GROUP SEGUNDA MARQUETALIA|24;ARMED ORGANIZED RESIDUAL GROUP SEGUNDA MARQUETALIA|23"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "SEGUNDA MARQUETALIA",
+              "SanctionAliasesAndMatchRate": "NEW MARQUETALIA|16;SECOND MARQUETALIA|16;LA NUEVA MARQUETALIA|23;FARC DISSIDENTS SEGUNDA MARQUETALIA|23;REVOLUTIONARY ARMED FORCES OF COLOMBIA DISSIDENTS SEGUNDA MARQUETALIA|22;FARC-D SEGUNDA MARQUETALIA|23;GRUPO ARMADO ORGANIZADO RESIDUAL SEGUNDA MARQUETALIA|47;GAO-R SEGUNDA MARQUETALIA|24;RESIDUAL ORGANIZED ARMED GROUP SEGUNDA MARQUETALIA|24;ARMED ORGANIZED RESIDUAL GROUP SEGUNDA MARQUETALIA|23"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:16.037",
+            "LastUpdateDate": "2026-04-25T03:04:16.037",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 14,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "DISTRIECOR S.A.S.",
+              "SanctionAliases|MatchRate": "GRUPO PATRON LTDA|53"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "DISTRIECOR S.A.S.",
+              "SanctionAliasesAndMatchRate": "GRUPO PATRON LTDA|53"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:05.095",
+            "LastUpdateDate": "2026-04-25T03:04:05.095",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Gama'a al-Islamiyya|15;Islamic Group - IG|25;Al-Gama'a al-Islamiyya|14;Ισλαµική Οµάδα|13;Grupo Islâmico|43;Islamische Gruppe|17;islamisk gruppe|17;Islamiska gruppen|17;Islamitische Groep|15;IG (Islamic Group, Gama'a al-Islamiyya)|24;Grupo Islámico|43;Islámská skupina|15;islami rühmitus|13;Groupe islamique|18;Islāma grupa|19;Islamo grupė|19;Iszlám Csoport|15;Grupa Islamska|19;Islamská skupina|15;islamistična skupina|14;Ислямска група|13;Grupul Islamic|19;Grupp Islamiku|19;Dżama’a al-Islamija|14;Al-Dżama’a al-Islamija|14",
+              "language": "el;pt;de;da;sv;nl;es;cs;et;fr;lv;lt;hu;pl;sk;sl;bg;ro;mt;pl;pl"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Gama'a al-Islamiyya|15;Islamic Group - IG|25;Al-Gama'a al-Islamiyya|14;Ισλαµική Οµάδα|13;Grupo Islâmico|43;Islamische Gruppe|17;islamisk gruppe|17;Islamiska gruppen|17;Islamitische Groep|15;IG (Islamic Group, Gama'a al-Islamiyya)|24;Grupo Islámico|43;Islámská skupina|15;islami rühmitus|13;Groupe islamique|18;Islāma grupa|19;Islamo grupė|19;Iszlám Csoport|15;Grupa Islamska|19;Islamská skupina|15;islamistična skupina|14;Ислямска група|13;Grupul Islamic|19;Grupp Islamiku|19;Dżama’a al-Islamija|14;Al-Dżama’a al-Islamija|14"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.4",
+            "LastUpdateDate": "2026-04-25T03:02:40.4",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Abu Sayyaf Group|25;Al Harakat Al Islamiyya|20;Grupo Abu Sayyaf|52;Abu Sayyaf Gruppe|26;De Groep Abu Sayyaf|24;Gruppo Abu Sayyaf|50;Grupo Abu Sayyaf|52;Groupe Abu Sayyaf|26",
+              "language": "pt;de;nl;it;es;fr"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Abu Sayyaf Group|25;Al Harakat Al Islamiyya|20;Grupo Abu Sayyaf|52;Abu Sayyaf Gruppe|26;De Groep Abu Sayyaf|24;Gruppo Abu Sayyaf|50;Grupo Abu Sayyaf|52;Groupe Abu Sayyaf|26"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.54",
+            "LastUpdateDate": "2026-04-25T03:02:40.54",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Al-Qaida|0;Al Qa’ida/ Islamic Army|20;The Base|0;Al Qaeda|0;Islamic Salvation Foundation|20;The Group for the Preservation of the Holy Sites|23;The Islamic Army for the Liberation of Holy Places|21;The World Islamic Front for Jihad Against Jews and Crusaders|23;Usama Bin Laden Network|24;Usama Bin Laden Organisation|24;Al Qaida/Exército islâmico|23;Fundação da Salvação Islâmica|21;Grupo para a Preservação dos Lugares Santos|47;Exército Islâmico de Libertação dos Lugares Santos|22;Frente Islâmica Mundial para o Jihad Contra os Judeus e os Cruzados|23;Rede de Osama bin Laden|24;Organização de Osama bin Laden|24;Usama Bin Laden Organization|24;Osama bin Laden-Netzwerk|25;Osama bin Laden-Organisation|24;La Base|0;Usamah bin Laden Network|24;Usamah bin Laden Organisation|23;Αλ Κάιντα|0;Αλ Κάιντα/Ισλαμικός στρατός|20;Ισλαµικό Ίδρυµα Σωτηρίας|20;Όµιλος για τη Διαφύλαξη των Αγίων Τόπων|20;Ισλαµικός Στρατός για την Απελευθέρωση των Αγίων Τόπων|20;∆ίκτυο του Οσάµα Μπιν Λάντεν|20;armée islamique|14;la base|0;Fondation du salut islamique|20;Groupe pour la préservation des lieux saints|25;Armée islamique pour la libération des lieux saints|22;Front islamique mondial pour le Jihad contre les Juifs et les croisés|22;Réseau d'Oussama ben Laden|24;Organisation d'Oussama ben Laden|23;Παγκόσµιο Ισλαµικό Μέτωπο για τον Ιερό Πόλεµο (Τζιχάντ) κατά των Εβραίων και Σταυροφόρων|20;Al Qa’ida|0;Η Βάση|0;Ал Кайда|0;базата|0;Al Qa’ida/ Ислямска армия|20;Фондация за спасение на исляма|20;Група за опазване на светите места|20;Ислямска армия за освобождение на светите места|20;Световен ислямски фронт за джихад срещу евреите и кръстоносците|20;Мрежа Осама бин Ладен|20;Организация „Осама бин Ладен“|20;Al-Kajdá|0;síť Usámy Bin Ládina|20;organizace Usámy Bin Ládina|20;Sieć Osamy Bin Lagena|20;Organizacja Osamy Bin Ladena|23;Al Kaida|0;baza|0;Islamska rešilna fundacija|20;Skupina za ohranitev svetih krajev|21;Islamska vojska za osvoboditev svetih krajev|20;Svetovna islamska fronta za džihad proti Judom in križarjem|21;mreža Osame bin Ladna|22;organizacija Osame bin Ladna|21;Al Qa’ida / Islamska vojska|20;Baza|0;Fundația salvării islamice|20;Grupul pentru păstrarea locurilor sfinte|24;Armata islamică de eliberare a locurilor sfinte|22;Frontul islamic mondial pentru Jihadul împotriva evreilor și a cruciaților|22;Rețeaua lui Osama ben Laden|24;Organizația lui Osama ben Laden|23;Al Qa’ida/Armata islamică|21",
+              "language": "pt;pt;pt;pt;pt;pt;pt;sv;de;de;es;es;es;el;el;el;el;el;el;fr;fr;fr;fr;fr;fr;fr;fr;el;el;bg;bg;bg;bg;bg;bg;bg;bg;bg;cs;cs;cs;pl;pl;sl;sl;sl;sl;sl;sl;sl;sl;sl;ro;ro;ro;ro;ro;ro;ro;ro"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Al-Qaida|0;Al Qa’ida/ Islamic Army|20;The Base|0;Al Qaeda|0;Islamic Salvation Foundation|20;The Group for the Preservation of the Holy Sites|23;The Islamic Army for the Liberation of Holy Places|21;The World Islamic Front for Jihad Against Jews and Crusaders|23;Usama Bin Laden Network|24;Usama Bin Laden Organisation|24;Al Qaida/Exército islâmico|23;Fundação da Salvação Islâmica|21;Grupo para a Preservação dos Lugares Santos|47;Exército Islâmico de Libertação dos Lugares Santos|22;Frente Islâmica Mundial para o Jihad Contra os Judeus e os Cruzados|23;Rede de Osama bin Laden|24;Organização de Osama bin Laden|24;Usama Bin Laden Organization|24;Osama bin Laden-Netzwerk|25;Osama bin Laden-Organisation|24;La Base|0;Usamah bin Laden Network|24;Usamah bin Laden Organisation|23;Αλ Κάιντα|0;Αλ Κάιντα/Ισλαμικός στρατός|20;Ισλαµικό Ίδρυµα Σωτηρίας|20;Όµιλος για τη Διαφύλαξη των Αγίων Τόπων|20;Ισλαµικός Στρατός για την Απελευθέρωση των Αγίων Τόπων|20;∆ίκτυο του Οσάµα Μπιν Λάντεν|20;armée islamique|14;la base|0;Fondation du salut islamique|20;Groupe pour la préservation des lieux saints|25;Armée islamique pour la libération des lieux saints|22;Front islamique mondial pour le Jihad contre les Juifs et les croisés|22;Réseau d'Oussama ben Laden|24;Organisation d'Oussama ben Laden|23;Παγκόσµιο Ισλαµικό Μέτωπο για τον Ιερό Πόλεµο (Τζιχάντ) κατά των Εβραίων και Σταυροφόρων|20;Al Qa’ida|0;Η Βάση|0;Ал Кайда|0;базата|0;Al Qa’ida/ Ислямска армия|20;Фондация за спасение на исляма|20;Група за опазване на светите места|20;Ислямска армия за освобождение на светите места|20;Световен ислямски фронт за джихад срещу евреите и кръстоносците|20;Мрежа Осама бин Ладен|20;Организация „Осама бин Ладен“|20;Al-Kajdá|0;síť Usámy Bin Ládina|20;organizace Usámy Bin Ládina|20;Sieć Osamy Bin Lagena|20;Organizacja Osamy Bin Ladena|23;Al Kaida|0;baza|0;Islamska rešilna fundacija|20;Skupina za ohranitev svetih krajev|21;Islamska vojska za osvoboditev svetih krajev|20;Svetovna islamska fronta za džihad proti Judom in križarjem|21;mreža Osame bin Ladna|22;organizacija Osame bin Ladna|21;Al Qa’ida / Islamska vojska|20;Baza|0;Fundația salvării islamice|20;Grupul pentru păstrarea locurilor sfinte|24;Armata islamică de eliberare a locurilor sfinte|22;Frontul islamic mondial pentru Jihadul împotriva evreilor și a cruciaților|22;Rețeaua lui Osama ben Laden|24;Organizația lui Osama ben Laden|23;Al Qa’ida/Armata islamică|21"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.564",
+            "LastUpdateDate": "2026-04-25T03:02:40.564",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Armed Islamic Group|24;GIA|2;Al Jamm'ah Al Islamiah Al-Musallah|21;Groupe Islamique Armé|26;Grupo Islâmico Armado|53;Gruppo Islamico Armato|51;Ένοπλη Ισλαµική Οµάδα|20;Groupe islamique armé|26;Въоръжена ислямска група|20;Grupp Islamiku Armat|28;Grupul islamic armat|28;Ozbrojená islamská skupina|22",
+              "language": "pt;it;el;fr;bg;mt;ro;sk"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Armed Islamic Group|24;GIA|2;Al Jamm'ah Al Islamiah Al-Musallah|21;Groupe Islamique Armé|26;Grupo Islâmico Armado|53;Gruppo Islamico Armato|51;Ένοπλη Ισλαµική Οµάδα|20;Groupe islamique armé|26;Въоръжена ислямска група|20;Grupp Islamiku Armat|28;Grupul islamic armat|28;Ozbrojená islamská skupina|22"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.625",
+            "LastUpdateDate": "2026-04-25T03:02:40.625",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Libyan Islamic Fighting Group|23;Grupo Islâmico Combatente da Líbia|47;Groupe libyen de combat pour l'Islam|25;LIFG|0;Grupp Ġellied Iżlamiku Libjan|25;Либийска ислямска бойна група|20",
+              "language": "pt;fr;mt;bg"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Libyan Islamic Fighting Group|23;Grupo Islâmico Combatente da Líbia|47;Groupe libyen de combat pour l'Islam|25;LIFG|0;Grupp Ġellied Iżlamiku Libjan|25;Либийска ислямска бойна група|20"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.703",
+            "LastUpdateDate": "2026-04-25T03:02:40.703",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Salafist Group for Call and Combat|23;GSPC|2;Le Groupe Salafiste pour la Prédiction et le Combat|23;Grupo Salafista de Prédica e Combate|47;Gruppo salafista per la predicazione e il combattimento|45;Οµάδα σαλαφιστών µαχητών και ιεροκηρύκων|20;The Organization of Al-Qaida in the Islamic Maghreb|21;Al Qaïda au Maghreb islamique|22;AQMI|0;Grupo Salafista para la Predicación y el Combate|45;Al-Qaida organizācija Islama Magrebas valstīs|22;Organização da Al-Qaida no Magrebe Islâmico|24;Organizația Al-Qaida în Magrebul islamic|23;AQIM|0",
+              "language": "pt;it;el;es;lv;pt;ro"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Salafist Group for Call and Combat|23;GSPC|2;Le Groupe Salafiste pour la Prédiction et le Combat|23;Grupo Salafista de Prédica e Combate|47;Gruppo salafista per la predicazione e il combattimento|45;Οµάδα σαλαφιστών µαχητών και ιεροκηρύκων|20;The Organization of Al-Qaida in the Islamic Maghreb|21;Al Qaïda au Maghreb islamique|22;AQMI|0;Grupo Salafista para la Predicación y el Combate|45;Al-Qaida organizācija Islama Magrebas valstīs|22;Organização da Al-Qaida no Magrebe Islâmico|24;Organizația Al-Qaida în Magrebul islamic|23;AQIM|0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:40.744",
+            "LastUpdateDate": "2026-04-25T03:02:40.744",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Moroccan Islamic Combatant Group|23;GICM|2;Grupo Islámico Combatiente Marroquí|49;Gruppo islamico combattente marocchino|49;Groupe Islamique Combattant Marocain|26;Marokkaanse Groep van Islamitische Strijders|24;Grupo islâmico combatente marroquino|50",
+              "language": "es;it;nl;pt"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Moroccan Islamic Combatant Group|23;GICM|2;Grupo Islámico Combatiente Marroquí|49;Gruppo islamico combattente marocchino|49;Groupe Islamique Combattant Marocain|26;Marokkaanse Groep van Islamitische Strijders|24;Grupo islâmico combatente marroquino|50"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:42.643",
+            "LastUpdateDate": "2026-04-25T03:02:42.643",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Tunisian Combatant Group|24;Grupo Combatiente Tunecino|50;Groupe Combattant Tunisien|25;Groupe Islamiste Combattant Tunisien|24;GICT|2;Tunéziai Harcoló Csoportok|21;Tunezyjska Grupa Bojowa|25;Тунизийска бойна група|20",
+              "language": "es;hu;pl;bg"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Tunisian Combatant Group|24;Grupo Combatiente Tunecino|50;Groupe Combattant Tunisien|25;Groupe Islamiste Combattant Tunisien|24;GICT|2;Tunéziai Harcoló Csoportok|21;Tunezyjska Grupa Bojowa|25;Тунизийска бойна група|20"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:42.656",
+            "LastUpdateDate": "2026-04-25T03:02:42.656",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Riyadus-Salikhin Reconnaissance and Sabotage Battalion of Chechen Martyrs|22;Riyadus-Salikhin Reconnaissance and Sabotage Battalion|21;Riyadh-as-Saliheen|15;The Sabotage and Military Surveillance Group of the Riyadh al-Salihin Martyrs|23;Firqat al-Takhrib wa al-Istitla al-Askariyah li Shuhada Riyadh al-Salihin|21;Riyadu-Salikhin Reconnaissance and Sabotage battalion of Shahids (Martyrs)|22;RSRSBCM|0;Batalhão de Reconhecimento e Sabotagem dos Mártires Chechenos Riyadus-Salikhin|22;Batalhão de Reconhecimento e Sabotagem Riyadus-Salikhin|22;Grupo de Sabotagem e de Vigilância Militar dos Mártires Riyadh al-Salihin|45;Batalhão de Reconhecimento e Sabotagem dos Shahids (Mártires) Riyadu-Salikhin|22",
+              "language": "pt;pt;pt;pt"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Riyadus-Salikhin Reconnaissance and Sabotage Battalion of Chechen Martyrs|22;Riyadus-Salikhin Reconnaissance and Sabotage Battalion|21;Riyadh-as-Saliheen|15;The Sabotage and Military Surveillance Group of the Riyadh al-Salihin Martyrs|23;Firqat al-Takhrib wa al-Istitla al-Askariyah li Shuhada Riyadh al-Salihin|21;Riyadu-Salikhin Reconnaissance and Sabotage battalion of Shahids (Martyrs)|22;RSRSBCM|0;Batalhão de Reconhecimento e Sabotagem dos Mártires Chechenos Riyadus-Salikhin|22;Batalhão de Reconhecimento e Sabotagem Riyadus-Salikhin|22;Grupo de Sabotagem e de Vigilância Militar dos Mártires Riyadh al-Salihin|45;Batalhão de Reconhecimento e Sabotagem dos Shahids (Mártires) Riyadu-Salikhin|22"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:42.757",
+            "LastUpdateDate": "2026-04-25T03:02:42.757",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Islamic Jihad Group|26;Jama’at al-Jihad|16;Libyan Society|13;Kazakh Jama’at|15;Jamaat Mojahedin|16;Jamiyat|0;Jamiat al-Jihad al-Islami|21;Dzhamaat Modzhakhedov|15;Islamic Jihad Group of Uzbekistan|24;al-Djihad al-Islami|14;Grupo Islámico Jihad|52;Sociedad Libia|15;Grupo Islámico Jihad de Uzbekistan|49;Islami rühmitus Jihad|22;Liibüa ühendus|13;Usbekistani islami rühmitus Jihad|21;Gruppo Jihad islamica|50;Società libica|14;Gruppo Jihad islamica dell’Uzbekistan|48;Islamska Grupa Dżihad|26;Grupo Islâmico Jihad|52;Skupina Islamský džihád|22;Skupina Islamski džihad|23;Libijsko združenje|15;Skupina Islamski džihad v Uzbekistanu|22;Zamaat Modzhakhedov Tsentralnoy Asii|22;Islamic Jihad Union|22;Unión de la Jihad Islámica|22;skupina islámský džihád|22;Unione della Jihad islamica|22;Il-Grupp tal-Ġiħad Iżlamiku|25;is-Soċjetà Libjana|14;il-Grupp tal-Ġiħad Iżlamiku ta’ l-Użbekistan|24;l-Unjoni tal-Jihad Iżlamika|21;Unia Islamska Dżihad|22;Gruparea islamică Jihad|27;Societatea libaneză|14;Gruparea islamică Jihad din Uzbekistan|25;Uniunea Jihadului Islamic|21;Líbyjská organizácia|13;Skupina islamského džihádu Uzbekistanu|22;Únia islamského džihádu|21;Zveza islamskega džihada|21",
+              "language": "es;es;es;et;et;et;it;it;it;pl;pt;sk;sl;sl;sl;es;cs;it;mt;mt;mt;mt;pl;ro;ro;ro;ro;sk;sk;sk;sl"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Islamic Jihad Group|26;Jama’at al-Jihad|16;Libyan Society|13;Kazakh Jama’at|15;Jamaat Mojahedin|16;Jamiyat|0;Jamiat al-Jihad al-Islami|21;Dzhamaat Modzhakhedov|15;Islamic Jihad Group of Uzbekistan|24;al-Djihad al-Islami|14;Grupo Islámico Jihad|52;Sociedad Libia|15;Grupo Islámico Jihad de Uzbekistan|49;Islami rühmitus Jihad|22;Liibüa ühendus|13;Usbekistani islami rühmitus Jihad|21;Gruppo Jihad islamica|50;Società libica|14;Gruppo Jihad islamica dell’Uzbekistan|48;Islamska Grupa Dżihad|26;Grupo Islâmico Jihad|52;Skupina Islamský džihád|22;Skupina Islamski džihad|23;Libijsko združenje|15;Skupina Islamski džihad v Uzbekistanu|22;Zamaat Modzhakhedov Tsentralnoy Asii|22;Islamic Jihad Union|22;Unión de la Jihad Islámica|22;skupina islámský džihád|22;Unione della Jihad islamica|22;Il-Grupp tal-Ġiħad Iżlamiku|25;is-Soċjetà Libjana|14;il-Grupp tal-Ġiħad Iżlamiku ta’ l-Użbekistan|24;l-Unjoni tal-Jihad Iżlamika|21;Unia Islamska Dżihad|22;Gruparea islamică Jihad|27;Societatea libaneză|14;Gruparea islamică Jihad din Uzbekistan|25;Uniunea Jihadului Islamic|21;Líbyjská organizácia|13;Skupina islamského džihádu Uzbekistanu|22;Únia islamského džihádu|21;Zveza islamskega džihada|21"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:45.34",
+            "LastUpdateDate": "2026-04-25T03:02:45.34",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Special Industries Group|24;Grupo de Industrias Especiales|48;Skupina za specialno industrijo|23;Skupina speciálního průmyslu|22;Grupo das Indústrias Especiais|48;Groupe des industries spéciales|25;Gruppo industrie speciali|48;Grupp ta' Industriji Speċjali|25;Grupo de Indústrias Especiais|49;Pracoval na technikách pohonu na účely iránskeho programu balistických striel|22",
+              "language": "es;sl;cs;pt;fr;it;mt;pt;sk"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Special Industries Group|24;Grupo de Industrias Especiales|48;Skupina za specialno industrijo|23;Skupina speciálního průmyslu|22;Grupo das Indústrias Especiais|48;Groupe des industries spéciales|25;Gruppo industrie speciali|48;Grupp ta' Industriji Speċjali|25;Grupo de Indústrias Especiais|49;Pracoval na technikách pohonu na účely iránskeho programu balistických striel|22"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:46.418",
+            "LastUpdateDate": "2026-04-25T03:02:46.418",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "eu",
+            "Type": "Terrorist",
+            "StandardizedSanctionType": "TERRORISM",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": null,
+              "SanctionAliases|MatchRate": "Mechanic Industries Group|24;Skupina strojního průmyslu|24;Grupp ta' Industriji Mekkaniċi|26;Grupo das Indústrias Mecânicas|49;Skupina mechanického priemyslu|23;Skupina Mechanic Industries Group|24",
+              "language": "cs;hu;pt;sk;sl"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionAliasesAndMatchRate": "Mechanic Industries Group|24;Skupina strojního průmyslu|24;Grupp ta' Industriji Mekkaniċi|26;Grupo das Indústrias Mecânicas|49;Skupina mechanického priemyslu|23;Skupina Mechanic Industries Group|24"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:02:46.893",
+            "LastUpdateDate": "2026-04-25T03:02:46.893",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 0,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "COCHAN S.A.",
+              "SanctionAliases|MatchRate": "COCHAN GROUP|17;COCHAN|0;GRUPO COCHAN|43;COCHAN ANGOLA|14",
+              "remarks": "(linked to: fragoso do nascimento, leopoldino)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "GRUPO MADERO",
+              "SanctionName": "COCHAN S.A.",
+              "SanctionAliasesAndMatchRate": "COCHAN GROUP|17;COCHAN|0;GRUPO COCHAN|43;COCHAN ANGOLA|14"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-25T03:04:15.802",
+            "LastUpdateDate": "2026-04-25T03:04:15.802",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": true
+          }
+        ],
+        "IsCurrentlySanctioned": false,
+        "WasPreviouslySanctioned": false,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 1,
+        "FirstPEPOccurenceDate": "0001-01-01T00:00:00",
+        "LastPEPOccurenceDate": "0001-01-01T00:00:00",
+        "FirstSanctionDate": "0001-01-01T00:00:00",
+        "LastSanctionDate": "0001-01-01T00:00:00",
+        "IsCurrentlyElectoralDonor": false,
+        "IsHistoricalElectoralDonor": false,
+        "TotalElectoralDonationsLastTwoElections": 0,
+        "TotalElectoralDonations": 0,
+        "TotalElectoralDonationAmountLastTwoElections": 0,
+        "TotalElectoralDonationAmount": 0
+      }
+    }
+  ],
+  "QueryId": "893cb07a-cb5e-4359-90d1-75e2f2266370",
+  "ElapsedMilliseconds": 107,
+  "QueryDate": "2026-04-25T11:00:23.5271191Z",
+  "Status": {
+    "kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

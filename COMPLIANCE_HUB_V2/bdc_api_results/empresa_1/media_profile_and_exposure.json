@@ -1,0 +1,43 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "MediaProfileAndExposure": {
+        "MediaExposureLevel": "H",
+        "CelebrityLevel": "H",
+        "UnpopularityLevel": "H",
+        "NewsItems": [],
+        "SearchLabels": {
+          "OfficialName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+          "OfficialNameUniquenessScore": 1,
+          "TradeName": "NOVAX INTELIGENCIABR",
+          "TradeNameUniquenessScore": 1
+        },
+        "Next": "",
+        "TotalPages": 0,
+        "EntityStatistics": {
+          "NewsByRangeDate": {
+            "TotalNews": 0,
+            "TotalNewsOnLast7Days": -1,
+            "TotalNewsOnLast30Days": -1,
+            "TotalNewsOnLast90Days": -1,
+            "TotalNewsOnLast180Days": -1,
+            "TotalNewsOnLast365Days": -1
+          }
+        }
+      }
+    }
+  ],
+  "QueryId": "85ce7171-dbdb-499d-9e2d-240d0ef6423b",
+  "ElapsedMilliseconds": 180,
+  "QueryDate": "2026-04-25T12:53:02.5839091Z",
+  "Status": {
+    "media_profile_and_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

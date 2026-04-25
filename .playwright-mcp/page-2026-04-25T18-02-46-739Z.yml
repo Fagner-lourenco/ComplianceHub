@@ -1,0 +1,5 @@
+- generic [ref=e10]:
+  - img [ref=e12]
+  - heading "404" [level=1] [ref=e15]
+  - paragraph [ref=e16]: Página não encontrada.
+  - button "Voltar para Análises" [ref=e17] [cursor=pointer]

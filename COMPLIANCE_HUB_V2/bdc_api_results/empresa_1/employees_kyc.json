@@ -1,0 +1,20 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "EmployeesKycData": {}
+    }
+  ],
+  "QueryId": "a040c14a-1913-44f3-837f-f62d7f59da68",
+  "ElapsedMilliseconds": 56,
+  "QueryDate": "2026-04-25T12:52:53.3152085Z",
+  "Status": {
+    "employees_kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

@@ -1,0 +1,2443 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "MediaProfileAndExposure": {
+        "MediaExposureLevel": "H",
+        "CelebrityLevel": "H",
+        "UnpopularityLevel": "H",
+        "NewsItems": [
+          {
+            "Title": "Santos de Neymar ‘perde disputa’ e Flamengo garante que meio-campista Matheus Gonçalves não irá sair",
+            "SourceName": "msn",
+            "Url": "https://www.msn.com/pt-br/esportes/other/santos-de-neymar-perde-disputa-e-flamengo-garante-que-meio-campista-matheus-gonçalves-não-irá-sair/ar-AA1y3hVE",
+            "SentimentAnalysis": {
+              "Label": "NEGATIVE",
+              "PeopleCount": 15,
+              "PlacesCount": 7,
+              "OrganizationsCount": 16,
+              "Entities": {
+                "PEOPLE": {
+                  "ALEX SANDRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FILIPE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ARRASCAETA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DANILO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "NEY": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FILIPE LUIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JOSE BOTO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JORGINHO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VITAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "NEYMAR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALEX": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANDRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DE ARRASCAETA": {
+                    "Label": "NEUTRAL"
+                  }
+                },
+                "PLACES": {
+                  "MARACANA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MENGAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ESTADIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTOS": {
+                    "Label": "POSITIVE"
+                  },
+                  "FLAMENGO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PEIXE": {
+                    "Label": "POSITIVE"
+                  },
+                  "BOTAFOGO": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "SAMPAIO CORREA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CRF": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FLA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BOTAFOGO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INTERNACIONAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "RED BULL BRAGANTINO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FLAMENGO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FLUMINENSE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MOVIMENTACOES DO FLA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CAMPEONATO CARIOCA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VIVO   CAMPEONATO CARIOCA     DANILO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PEIXE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FLAMENGO     DANILO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "GAROTO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEITURA": {
+                    "Label": "POSITIVE"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "sport"
+            ],
+            "CaptureDate": "2025-01-29T17:51:44.382Z",
+            "PublicationDate": "2025-01-29T14:43:51Z"
+          },
+          {
+            "Title": "Enxadristas betinenses se destacam no Campeonato Mineiro de Xadrez por equipes",
+            "SourceName": "otempobetim",
+            "Url": "https://www.otempobetim.com.br/esporte/2024/12/9/enxadristas-betinenses-se-destacam-no-campeonato-mineiro-de-xadr",
+            "SentimentAnalysis": {
+              "Label": "NEUTRAL",
+              "PeopleCount": 11,
+              "PlacesCount": 5,
+              "OrganizationsCount": 4,
+              "Entities": {
+                "PEOPLE": {
+                  "ERNANDO FERREIRA VIEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASSIO MAIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LUIZ GUSTAVO RUMAO LOPES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ANTONIO PENIDO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BERNARDO HENRIQUE VIEIRA LOPES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ANTHONY GABRIEL MOREIRA DUTRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "EUDSON ANTONIO PENIDO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "KLEBER KALVAN": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BETINENSES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "PLACES": {
+                  "BETIM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CLUBE DE XADREZ DE CONTAGEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CIDADE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CONTAGEM": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTOS": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "CAMPEONATO MINEIRO DE XADREZ": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BETINENSES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "INSTITUTO RAMACRISNA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BETIM": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "sport"
+            ],
+            "CaptureDate": "2025-01-23T17:02:29.71Z",
+            "PublicationDate": "2024-12-09T23:53:45Z"
+          },
+          {
+            "Title": "Alunos do Instituto Ramacrisna se destacam na 15ª etapa do Circuito Metropolitano de Xadrez",
+            "SourceName": "otempobetim",
+            "Url": "https://www.otempobetim.com.br/esporte/2024/12/4/alunos-do-instituto-ramacrisna-se-destacam-na-15--etapa-do-circu",
+            "SentimentAnalysis": {
+              "Label": "POSITIVE",
+              "PeopleCount": 31,
+              "PlacesCount": 6,
+              "OrganizationsCount": 10,
+              "Entities": {
+                "PEOPLE": {
+                  "SOLANGE BOTTARO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BRUNO JACOMINI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ANA JULIA FERREIRA DA SILVA RIBEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIA EDUARDA REIS SILVA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BERNARDO DE SOUZA SOARES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ANTHONY GABRIEL MOREIRA DUTRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ENZO GABRIEL FERREIRA DE ALMEIDA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HENRIQUE VIEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIA EDUARDA REIS SILVA 2º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ANA JULIA FERREIRA DA SILVA RIBEIRO MODULO KIDS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ENZO GABRIEL FERREIRA DE ALMEIDA 3º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS HENRIQUE DA SILVA 4º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BERNARDO HENRIQUE VIEIRA LOPES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LUIZ GUSTAVO RUMAO LOPES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HEITOR LUCAS DE SOUZA SILVA 9º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CARLOS EDUARDO FERREIRA DA SILVA RIBEIRO 11º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MIGUEL MESSIAS GOMES DE OLIVEIRA MODULO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALICE MACIEL OLIVEIRA MODULO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS 8º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ANTHONY GABRIEL MOREIRA DUTRA 14º": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VICE PRESIDENTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS HENRIQUE DA SILVA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HEITOR LUCAS DE SOUZA SILVA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CARLOS EDUARDO FERREIRA DA SILVA RIBEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MIGUEL MESSIAS GOMES DE OLIVEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALICE MACIEL OLIVEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS HENRIQUE": {
+                    "Label": "POSITIVE"
+                  },
+                  "CARLOS EDUARDO FERREIRA": {
+                    "Label": "POSITIVE"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "POSITIVE"
+                  },
+                  "SOARES": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "PLACES": {
+                  "BELO HORIZONTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BETIM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MUNICIPIOS MINEIROS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "EM BELO HORIZONTE": {
+                    "Label": "POSITIVE"
+                  },
+                  "PATROCINIO": {
+                    "Label": "POSITIVE"
+                  },
+                  "SANTOS": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "VALE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INSTITUTO RAMACRISNA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VALE   VENCER": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEI FEDERAL DE INCENTIVO AO ESPORTE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MODULO KIDS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CIRCUITO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ASSOCIACAO MINEIRA DE CULTURA NIPO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "KIDS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MODULO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ASSOCIACAO MINEIRA DE CULTURA NIPO BRASILEIRA": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "sport"
+            ],
+            "CaptureDate": "2025-01-23T17:03:10.439Z",
+            "PublicationDate": "2024-12-04T21:00:12Z"
+          },
+          {
+            "Title": "Importância do laudo psicológico em crimes de estupro de vulnerável",
+            "SourceName": "consultorjuridico",
+            "Url": "https://www.conjur.com.br/2024-mar-14/observacoes-sobre-o-laudo-psicologico-em-crimes-de-estupro-de-vulneravel/",
+            "SentimentAnalysis": {
+              "Label": "NEGATIVE",
+              "PeopleCount": 97,
+              "PlacesCount": 25,
+              "OrganizationsCount": 50,
+              "Entities": {
+                "PEOPLE": {
+                  "TRINDADE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "NELSON DE MIRANDA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INFANTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIA DE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "COUTINHO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "RAMIRO GOMES": {
+                    "Label": "POSITIVE"
+                  },
+                  "FONSECA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ISABEL DE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REYNALDO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROBERTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CRISTINA PEREIRA GONZALES": {
+                    "Label": "NEGATIVE"
+                  },
+                  "ALEXANDRE MORAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "NORMA": {
+                    "Label": "POSITIVE"
+                  },
+                  "LAUDO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JOSE ANTONIO DALTOE CEZAR": {
+                    "Label": "POSITIVE"
+                  },
+                  "REYNALDO SOARES DA FONSECA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DANO\"": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIA DE LOURDES GALVAO BRACCINI DE GONZALEZ": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JORGE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "OLIVEIRA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEANDRO FIGUEIRA MARTINS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JAN": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ISABEL DE BORBA LUCAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TEIXEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JACINTO NELSON DE MIRANDA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "POSITIVE"
+                  },
+                  "PEDRO GUILHERME RAMOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALINE PIRES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROBERTA EGGERT": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CORDERO": {
+                    "Label": "NEGATIVE"
+                  },
+                  "ª MARIA DE LOURDES GALVAO BRACCINI DE GONZALEZ": {
+                    "Label": "NEUTRAL"
+                  },
+                  "THEODORO BALDUCCI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TIRANT LO BLANCH": {
+                    "Label": "NEUTRAL"
+                  },
+                  "RAMIRO GOMES VON": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GUARNIERI": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ª ISABEL DE BORBA LUCAS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CORREICAO PARCIAL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DALVIO LEITE DIAS TEIXEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASTILHOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ALINE PIRES DE SOUZA MACHADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CRISTINA": {
+                    "Label": "POSITIVE"
+                  },
+                  "LOPES JR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AURY": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ATOS": {
+                    "Label": "NEGATIVE"
+                  },
+                  "POLL": {
+                    "Label": "NONE"
+                  },
+                  "GONZALEZ": {
+                    "Label": "NONE"
+                  },
+                  "ED": {
+                    "Label": "NONE"
+                  },
+                  "MAI": {
+                    "Label": "NONE"
+                  },
+                  "REYNALDO SOARES": {
+                    "Label": "NONE"
+                  },
+                  "SOUZA MACHADO": {
+                    "Label": "NONE"
+                  },
+                  "DALVIO LEITE": {
+                    "Label": "NONE"
+                  },
+                  "JACINTO NELSON": {
+                    "Label": "NONE"
+                  },
+                  "ROSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DI GESU": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIA": {
+                    "Label": "NONE"
+                  },
+                  "GLAUCIA DIPP DREHER": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REL": {
+                    "Label": "NEGATIVE"
+                  },
+                  "BLANCH": {
+                    "Label": "NEGATIVE"
+                  },
+                  "VITIMA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TESTEMUNHAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MENORES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PROFISSIONAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALGUEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REALIZACAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ACUSADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CRIANCA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PERITOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADOLESCENTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUIZO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REQUISITOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "RELATOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUIZ": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PESSOAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PSICOLOGOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JULGADOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CRIANCAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JULGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADOLESCENTES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ASSISTENTES SOCIAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUIZ DE DIREITO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MAGISTRADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REU": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INFANTES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADVOGADO DO DIABO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ESPECIALISTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DESEMBARGADOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "EMPREGADA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AGENTES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "OPERADORES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MANDATARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGADO DE POLICIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MENINA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ENVOLVIDOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IN": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "RIO GRANDE DO SUL": {
+                    "Label": "POSITIVE"
+                  },
+                  "CAMARA CRIMINAL": {
+                    "Label": "NEGATIVE"
+                  },
+                  "VARA": {
+                    "Label": "POSITIVE"
+                  },
+                  "SP": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRINDADE": {
+                    "Label": "POSITIVE"
+                  },
+                  "PORTO ALEGRE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SAO PAULO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTOS": {
+                    "Label": "POSITIVE"
+                  },
+                  "CASTILHOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MACHADO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "FLORIANOPOLIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CRISTINA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PERICIA": {
+                    "Label": "POSITIVE"
+                  },
+                  "HABITUS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PENAL": {
+                    "Label": "POSITIVE"
+                  },
+                  "LOURDES": {
+                    "Label": "NONE"
+                  },
+                  "COLETA": {
+                    "Label": "POSITIVE"
+                  },
+                  "MIRANDA": {
+                    "Label": "NONE"
+                  },
+                  "FONSECA": {
+                    "Label": "NONE"
+                  },
+                  "RS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SET": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GAUCHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GAUCHA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BRASILEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PATRIO": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "CONSELHO NACIONAL DE JUSTICA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUDICIARIO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "STJ": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MINISTERIO PUBLICO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CNJ": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PODER JUDICIARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ACAO": {
+                    "Label": "POSITIVE"
+                  },
+                  "CPP": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRIBUNAL DE JUSTICA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRIBUNAL DE JUSTICA DO RIO GRANDE DO SUL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "TANTO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JUSTICA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TJRS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FACULDADE DE DIREITO DA UFPR": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JUSTICA CRIMINAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TJ RS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CODIGO DE PROCESSO PENAL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CODIGO DE PROCESSO CIVIL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "APELACAO CRIME": {
+                    "Label": "NEUTRAL"
+                  },
+                  "TRIBUNAL DE JUSTICA DO RS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "TRIBUNAL GAUCHO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MINISTERIO PUBLICO E DEFESA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "2ª VARA DA INFANCIA E JUVENTUDE DE PORTO ALEGRE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CPC": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VITIMA": {
+                    "Label": "NEGATIVE"
+                  },
+                  "OITIVA": {
+                    "Label": "POSITIVE"
+                  },
+                  "SP": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ª DES.ª GLAUCIA DIPP DREHER": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SALTIEL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DI GESU": {
+                    "Label": "POSITIVE"
+                  },
+                  "RS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ROSA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CIT GROUP, INC_DOT": {
+                    "Label": "NONE"
+                  },
+                  "PROCURADORIA GERAL": {
+                    "Label": "NEGATIVE"
+                  },
+                  "PSICOLOGICO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ORGAO JULGADOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REVISTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRIBUNAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRIBUNAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CAMARA CRIMINAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INSTITUTO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LIVRARIA DO ADVOGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ESTADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DES_DOT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "2A VARA DA INFANCIA E JUVENTUDE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AGRG": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FACULDADE DE DIREITO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "UFPR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CFR": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "safety"
+            ],
+            "CaptureDate": "2024-03-14T17:57:19.823Z",
+            "PublicationDate": "2024-03-14T10:04:00Z"
+          },
+          {
+            "Title": "Quem fica e quem sai? Veja lista de jogadores do Vitória em fim de contrato",
+            "SourceName": "bnews",
+            "Url": "https://www.bnews.com.br/noticias/esporte/quem-fica-e-quem-sai-veja-lista-de-jogadores-do-vitoria-em-fim-de-contrato.html",
+            "SentimentAnalysis": {
+              "Label": "POSITIVE",
+              "PeopleCount": 51,
+              "PlacesCount": 11,
+              "OrganizationsCount": 18,
+              "Entities": {
+                "PEOPLE": {
+                  "DIONISIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ZE HUGO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "EDUARDO MIRAIMA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "THIAGO LOPES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "OSVALDO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "FELIPPE BORGES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LEO GOMES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PABLO DIOGO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FELIPE VIERIA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DUDU": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LUCAS ARCANJO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ALISSON SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUSINHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JHONNY LUCAS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "WANDERSON": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VICENTE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "YAN SOUTO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS TRINDADE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARCELO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "WAGNER LEONARDO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "RAILAN": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATEUS MORAES": {
+                    "Label": "POSITIVE"
+                  },
+                  "JOAO VICTOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JOAO PEDRO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "IURY CASTILHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARCO ANTONIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "WELLINGTON NEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FABIO MOTA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "EDSON LUCAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "RODRIGO ANDRADE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DALTON": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GEGE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PEDRO ANTONIO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "YAN": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FABIO SOARES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "GIOVANNI AUGUSTO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ZECA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CAMUTANGA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "THIAGO RODRIGUES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "YURI SENA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEO GAMALHO": {
+                    "Label": "POSITIVE"
+                  },
+                  "JOAO CABRAL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JOHN LESSA": {
+                    "Label": "POSITIVE"
+                  },
+                  "GABRIEL SANTIAGO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PRESIDENTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TOMBENSE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITORIA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "HUGO": {
+                    "Label": "NONE"
+                  },
+                  "TRINDADE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CASTILHO": {
+                    "Label": "NEUTRAL"
+                  }
+                },
+                "PLACES": {
+                  "BARRADAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GOIAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "WHATSAPP": {
+                    "Label": "POSITIVE"
+                  },
+                  "WELLINGTON": {
+                    "Label": "NONE"
+                  },
+                  "PORTUGUESA": {
+                    "Label": "NONE"
+                  },
+                  "BRASIL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEAO": {
+                    "Label": "POSITIVE"
+                  },
+                  "VITORIA": {
+                    "Label": "SLIGHTLY_POSITIVE"
+                  },
+                  "CAMUTANGA": {
+                    "Label": "POSITIVE"
+                  },
+                  "DIONISIO": {
+                    "Label": "POSITIVE"
+                  },
+                  "PONTE PRETA": {
+                    "Label": "NEUTRAL"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "VITORIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LEAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PONTE PRETA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BNEWS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TOMBENSE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SPORT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ESPORTE CLUBE VITORIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PORTUGUESA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SERIE C": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CAMPEONATO BAIANO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "COPA DO NORDESTE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "COPA DO BRASIL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CAMPEONATO BRASILEIRO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ECV GOLS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FUTEBOL JAPONES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CAMUTANGA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "YOUTUBE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTOS": {
+                    "Label": "NEUTRAL"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "sport"
+            ],
+            "CaptureDate": "2024-11-09T18:19:11.87Z",
+            "PublicationDate": "2023-11-22T22:42:00Z"
+          },
+          {
+            "Title": "Desaparecimento de advogada de São Leopoldo chega a oito meses",
+            "SourceName": "abcmais",
+            "Url": "https://www.abcmais.com/brasil/rio-grande-do-sul/vale-do-rio-dos-sinos/sao-leopoldo/desaparecimento-de-advogada-de-sao-leopoldo-chega-a-oito-meses/",
+            "SentimentAnalysis": {
+              "Label": "POSITIVE",
+              "PeopleCount": 21,
+              "PlacesCount": 1,
+              "OrganizationsCount": 9,
+              "Entities": {
+                "PEOPLE": {
+                  "ANDRE SERRAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "EDUARDO RONI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IVETE STELLA DELLATORRE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS TRINDADE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALESSANDRA DELLATORRE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MARIANA LAMAR PIRES STUDART": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALESSANDRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGADA DA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "STELLA DELLATORRE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ADVOGADA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FAMILIARES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FILHA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AMIGOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FAMILIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGADA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADVOGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ALESSANDRA DELLATORRE FOTO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "RESPONSAVEL": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "REGIAO": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "DELEGACIA DE POLICIA DE HOMICIDIOS E PROTECAO A PESSOA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA CIVIL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MINISTERIO PUBLICO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA DE POLICIA DE HOMICIDIOS E PROTECAO A PESSOA (DPHPP": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGACIA DE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DE HOMICIDIOS E PROTECAO A PESSOA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DPHPP": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PROCURADORIA GERAL": {
+                    "Label": "NONE"
+                  },
+                  "ARQUIVO": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "national"
+            ],
+            "CaptureDate": "2024-08-21T06:57:09.389Z",
+            "PublicationDate": "2023-03-16T10:30:00Z"
+          },
+          {
+            "Title": "Polícia prende cinco acusados de homicídios durante operação em Maceió",
+            "SourceName": "cadaminuto",
+            "Url": "https://www.cadaminuto.com.br/noticia/2022/11/09/policia-prende-cinco-acusados-de-homicidios-durante-operacao-em-maceio",
+            "SentimentAnalysis": {
+              "Label": "NEUTRAL",
+              "PeopleCount": 11,
+              "PlacesCount": 17,
+              "OrganizationsCount": 15,
+              "Entities": {
+                "PEOPLE": {
+                  "TACYANE RIBEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MAXWELL NEVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ARTHUR BATISTA DA HORA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ASCOM PC": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGADA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FEITOSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ACUSADOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PESSOA": {
+                    "Label": "NEGATIVE"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "NEGATIVE"
+                  }
+                },
+                "PLACES": {
+                  "FEITOSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JACINTINHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MACEIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CLIMA BOM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTA LUCIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TABULEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PAJUCARA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO PAJUCARA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO SANTA LUCIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO JACINTINHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROTAM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CAPITAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRROS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "7A": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA DE HOMICIDIOS": {
+                    "Label": "NEGATIVE"
+                  },
+                  "SANTOS": {
+                    "Label": "NEGATIVE"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "DELEGACIA DE HOMICIDIOS E PROTECAO A PESSOA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DHPP": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BOPE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROTAM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA MILITAR": {
+                    "Label": "NEUTRAL"
+                  },
+                  "TRIBUNAL DO JURI": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS (BOPE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CAPITAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "7ª, 8ª": {
+                    "Label": "UNDEFINED"
+                  },
+                  "9ª VARAS DA CAPITAL/TRIBUNAL DO JURI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ASCOM PC": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TABULEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "9A VARAS DA CAPITAL/TRIBUNAL DO JURI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA MILITAR_DOT": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "safety"
+            ],
+            "CaptureDate": "2025-08-22T05:00:53.516Z",
+            "PublicationDate": "2022-11-09T16:49:28Z"
+          },
+          {
+            "Title": "Operação da Polícia Civil prende 5 acusados de homicídios em Maceió",
+            "SourceName": "g1.globo",
+            "Url": "https://g1.globo.com/al/alagoas/noticia/2022/11/09/operacao-da-policia-civil-prende-5-acusados-de-homicidios-em-maceio.ghtml",
+            "SentimentAnalysis": {
+              "Label": "NEGATIVE",
+              "PeopleCount": 5,
+              "PlacesCount": 8,
+              "OrganizationsCount": 15,
+              "Entities": {
+                "PEOPLE": {
+                  "ARTHUR BATISTA DA HORA": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "MAXWELL NEVES DOS SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "TACYANE RIBEIRO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGADA": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "CLIMA BOM": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "JACINTINHO": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "MACEIO": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "TABULEIRO": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "CAPITAL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PAJUCARA": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "FEITOSA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTA LUCIA": {
+                    "Label": "NEUTRAL"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "POLICIA CIVIL": {
+                    "Label": "SLIGHTLY_NEGATIVE"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BOPE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "ROTAM": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA MILITAR": {
+                    "Label": "NEUTRAL"
+                  },
+                  "G1": {
+                    "Label": "NEUTRAL"
+                  },
+                  "AL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "VEJA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS (BOPE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "7ª , 8ª": {
+                    "Label": "UNDEFINED"
+                  },
+                  "9ª VARAS DA CAPITAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "G1 AL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CIVIL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BOPE),": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "safety"
+            ],
+            "CaptureDate": "2024-11-24T09:51:59.29Z",
+            "PublicationDate": "2022-11-09T14:21:53Z"
+          },
+          {
+            "Title": "PC prende cinco acusados de homicídios em Maceió",
+            "SourceName": "tribunahoje",
+            "Url": "https://tribunahoje.com/noticias/policia/2022/11/09/111721-pc-prende-cinco-acusados-de-homicidios-em-maceio",
+            "SentimentAnalysis": {
+              "Label": "SLIGHTLY_NEGATIVE",
+              "PeopleCount": 8,
+              "PlacesCount": 15,
+              "OrganizationsCount": 10,
+              "Entities": {
+                "PEOPLE": {
+                  "MAXWELL NEVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TACYANE RIBEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ARTHUR BATISTA DA HORA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGADA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MAXWELL NEVES": {
+                    "Label": "POSITIVE"
+                  },
+                  "PESSOA": {
+                    "Label": "NEGATIVE"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "NEGATIVE"
+                  }
+                },
+                "PLACES": {
+                  "MACEIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CLIMA BOM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTA LUCIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JACINTINHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TABULEIRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PAJUCARA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FEITOSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO PAJUCARA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO SANTA LUCIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO JACINTINHO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CAPITAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BAIRRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROTAM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA DE HOMICIDIOS": {
+                    "Label": "NEGATIVE"
+                  },
+                  "SANTOS": {
+                    "Label": "NEGATIVE"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "DHPP": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BOPE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROTAM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA MILITAR": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGACIA DE HOMICIDIOS E PROTECAO A PESSOA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRIBUNAL DO JURI": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BATALHAO DE OPERACOES ESPECIAIS (BOPE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "7ª, 8ª E 9ª VARAS DA CAPITAL/TRIBUNAL DO JURI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VARAS DA": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "safety"
+            ],
+            "CaptureDate": "2024-11-07T17:43:42.068Z",
+            "PublicationDate": "2022-11-09T14:02:00Z"
+          },
+          {
+            "Title": "Homem é preso suspeito de roubar motocicleta",
+            "SourceName": "diariodamanha",
+            "Url": "https://www.dm.com.br/brasil/homem-e-preso-suspeito-de-roubar-motocicleta/",
+            "SentimentAnalysis": {
+              "Label": "NEUTRAL",
+              "PeopleCount": 14,
+              "PlacesCount": 4,
+              "OrganizationsCount": 7,
+              "Entities": {
+                "PEOPLE": {
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HOMEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AVO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IRMAOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IRMAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INVESTIGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SUSPEITO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AUTOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DITAMES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PESSOA": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "GOIANIA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SETOR RESIDENCIAL ITAMARACA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LOCAL": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "DERFRVA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS E ROUBOS DE VEICULOS AUTOMOTORES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PODER JUDICIARIO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUDICIARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PORTARIA 02/2020 PCGO": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "national"
+            ],
+            "CaptureDate": "2026-03-11T22:04:39.436Z",
+            "PublicationDate": "2022-10-08T17:37:40Z"
+          },
+          {
+            "Title": "Homem é preso suspeito de roubar motocicleta",
+            "SourceName": "diariodamanha",
+            "Url": "https://www.dm.com.br/cidades/2022/10/homem-e-preso-suspeito-de-roubar-motocicleta/",
+            "SentimentAnalysis": {
+              "Label": "SLIGHTLY_NEGATIVE",
+              "PeopleCount": 8,
+              "PlacesCount": 6,
+              "OrganizationsCount": 10,
+              "Entities": {
+                "PEOPLE": {
+                  "MATHEUS GONCALVES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "LEIA TAMBEM": {
+                    "Label": "NEGATIVE"
+                  },
+                  "HOMEM": {
+                    "Label": "NEGATIVE"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "CASA": {
+                    "Label": "NONE"
+                  },
+                  "MOTO": {
+                    "Label": "NONE"
+                  },
+                  "COR": {
+                    "Label": "POSITIVE"
+                  }
+                },
+                "PLACES": {
+                  "GOIANIA": {
+                    "Label": "NEGATIVE"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PASSAGENS": {
+                    "Label": "POSITIVE"
+                  },
+                  "SETOR RESIDENCIAL ITAMARACA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASA": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "PODER JUDICIARIO": {
+                    "Label": "SLIGHTLY_POSITIVE"
+                  },
+                  "PCGO": {
+                    "Label": "POSITIVE"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DERFRVA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "HONDA NC": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS E ROUBOS DE VEICULOS AUTOMOTORES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HONDA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LOGO": {
+                    "Label": "POSITIVE"
+                  },
+                  "DERFRVA),": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "uncategorized"
+            ],
+            "CaptureDate": "2022-10-10T00:57:48.237Z",
+            "PublicationDate": "2022-10-08T12:37:40Z"
+          },
+          {
+            "Title": "Homem é preso suspeito de roubar motocicleta",
+            "SourceName": "diariodamanha",
+            "Url": "https://www.dm.com.br/cidades/2022/10/homem-e-preso-suspeito-de-roubar-motocicleta",
+            "SentimentAnalysis": {
+              "Label": "NEUTRAL",
+              "PeopleCount": 15,
+              "PlacesCount": 7,
+              "OrganizationsCount": 8,
+              "Entities": {
+                "PEOPLE": {
+                  "MATHEUS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LEIA TAMBEM": {
+                    "Label": "NEUTRAL"
+                  },
+                  "HOMEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AVO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IRMAOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IRMAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "INVESTIGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SUSPEITO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AUTOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DITAMES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PESSOA": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "GOIANIA": {
+                    "Label": "NEGATIVE"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "PASSAGENS": {
+                    "Label": "POSITIVE"
+                  },
+                  "SETOR RESIDENCIAL ITAMARACA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LOCAL": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "DERFRVA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS E ROUBOS DE VEICULOS AUTOMOTORES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PODER JUDICIARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PCGO": {
+                    "Label": "POSITIVE"
+                  },
+                  "DELEGACIA ESTADUAL DE REPRESSAO A FURTOS": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LOGO": {
+                    "Label": "POSITIVE"
+                  },
+                  "PORTARIA 02/2020 PCGO": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "uncategorized"
+            ],
+            "CaptureDate": "2023-06-29T06:42:27.667Z",
+            "PublicationDate": "2022-10-08T11:37:00Z"
+          },
+          {
+            "Title": "Após mais de dois anos, Justiça faz primeira audiência sobre morte de adolescente em colisão causada por médico embriagado",
+            "SourceName": "clicrbs",
+            "Url": "https://gauchazh.clicrbs.com.br/geral/noticia/2021/07/apos-mais-de-dois-anos-justica-faz-primeira-audiencia-sobre-morte-de-adolescente-em-colisao-causada-por-medico-embriagado-ckrp34evz0035019368gd7ywj.html",
+            "SentimentAnalysis": {
+              "Label": "NEGATIVE",
+              "PeopleCount": 55,
+              "PlacesCount": 6,
+              "OrganizationsCount": 34,
+              "Entities": {
+                "PEOPLE": {
+                  "CAMILO SANTANA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DOUGLAS": {
+                    "Label": "NEGATIVE"
+                  },
+                  "KARINA MOMBELLIM": {
+                    "Label": "POSITIVE"
+                  },
+                  "DOUGLAS SAMUEL OZORIO DE MORAES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "NADINE ANFLOR": {
+                    "Label": "NEGATIVE"
+                  },
+                  "BARBARA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROSANGELA LOPES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FELIPE ROBERTO PALOPOLI": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS TRINDADE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VALDERNEI TONETE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GZH": {
+                    "Label": "UNDEFINED"
+                  },
+                  "LEANDRO TOLEDO DE OLIVEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BARBARA ANDRIELLI MENDES DE MORAES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MENDES DE MORAES": {
+                    "Label": "NEGATIVE"
+                  },
+                  "MATHEUS GONCALVES": {
+                    "Label": "POSITIVE"
+                  },
+                  "DOCUMENTO": {
+                    "Label": "POSITIVE"
+                  },
+                  "ROSANGELA LOPES MENDES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "POSITIVE"
+                  },
+                  "MEDICO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CONDUTOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIAIS RODOVIARIOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GAROTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SERVIDOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TESTEMUNHAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MENINA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AMIGO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIAIS_DOT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PROCURADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MOTORISTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REU": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGADO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FAMILIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PAIS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADVOGADOS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PAI": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ENFERMEIRA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ESPOSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MAE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REU MOTORISTA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "REPORTAGEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AGENTES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "AUTORIDADES": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ASSESSORIA DE COMUNICACAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "NINGUEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMAS": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VITIMA_DOT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ADOLESCENTE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "EQUIPE14/3/2019": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CHEFE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PROMOTOR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FILHA_DOT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "COLEGA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUIZ": {
+                    "Label": "UNDEFINED"
+                  },
+                  "ROSANGELA LOPES MENDES_DOT": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "RIO GRANDE DO SUL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SANTO ANTONIO DA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SANTO ANTONIO DA PATRULHA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "TRINDADE": {
+                    "Label": "POSITIVE"
+                  },
+                  "DELEGACIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "HOSPITAL": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "TRIBUNAL DE JUSTICA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA CIVIL DO RIO GRANDE DO SUL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SERVICO DE ATENDIMENTO MOVEL DE URGENCIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUDICIARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MINISTERIO PUBLICO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "POLICIA CIVIL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PRF": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CNH": {
+                    "Label": "UNDEFINED"
+                  },
+                  "BMW": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SAMU": {
+                    "Label": "UNDEFINED"
+                  },
+                  "FREEWAY": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MINISTERIO PUBLICO FEDERAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUSTICA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MPF": {
+                    "Label": "NEGATIVE"
+                  },
+                  "POLICIA RODOVIARIA FEDERAL": {
+                    "Label": "NEUTRAL"
+                  },
+                  "MINISTERIO PUBLICO DO RIO GRANDE DO SUL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VARA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "GZH": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JUSTICA DE SANTO ANTONIO DA PATRULHA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BMW X": {
+                    "Label": "NEUTRAL"
+                  },
+                  "SERVICO DE ATENDIMENTO MOVEL DE URGENCIA (SAMU": {
+                    "Label": "NEUTRAL"
+                  },
+                  "1ª VARA JUDICIAL DA COMARCA DE SANTO ANTONIO DA PATRULHA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "DEFESA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "SERVICE D'AIDE MEDICALE URGENTE": {
+                    "Label": "POSITIVE"
+                  },
+                  "BMW X5": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PROCURADORA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "MINISTERIO PUBLICO_DOT": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DELEGACIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "POLICIA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "JUSTICA21/05/2020": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CORPORACAO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "IMPRENSA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "1A VARA JUDICIAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "COMARCA DE SANTO ANTONIO DA PATRULHA": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "safety"
+            ],
+            "CaptureDate": "2023-09-26T00:59:01.841Z",
+            "PublicationDate": "2021-07-29T18:49:32Z"
+          },
+          {
+            "Title": "Moto clonada e adulterada é carbonizada em canavial",
+            "SourceName": "jornaldeuberaba",
+            "Url": "https://www.jornaldeuberaba.com.br/noticia/9871/moto-clonada-e-adulterada-e-carbonizada-em-canavial",
+            "SentimentAnalysis": {
+              "Label": "SLIGHTLY_NEGATIVE",
+              "PeopleCount": 1,
+              "PlacesCount": 9,
+              "OrganizationsCount": 11,
+              "Entities": {
+                "PEOPLE": {
+                  "MATHEUS GONCALVES DOS SANTOS": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "PLACES": {
+                  "UBERABA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "BAIRRO VALIM DE MELO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "AVENIDA FILOMENA CARTAFINA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DE": {
+                    "Label": "UNDEFINED"
+                  },
+                  "VALIM DE MELO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CANAVIAL": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CASA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "GARAGEM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "PATIO": {
+                    "Label": "UNDEFINED"
+                  }
+                },
+                "ORGANIZATIONS": {
+                  "HONDA": {
+                    "Label": "UNDEFINED"
+                  },
+                  "DETRAN": {
+                    "Label": "NEUTRAL"
+                  },
+                  "COMPANHIA INDEPENDENTE DE MEIO AMBIENTE E TRANSITO RODOVIARIO": {
+                    "Label": "NEUTRAL"
+                  },
+                  "HONDA XRE": {
+                    "Label": "NEUTRAL"
+                  },
+                  "OQQ 7066 DE UBERABA": {
+                    "Label": "NEUTRAL"
+                  },
+                  "JC": {
+                    "Label": "UNDEFINED"
+                  },
+                  "5ª COMPANHIA INDEPENDENTE DE MEIO AMBIENTE E TRANSITO RODOVIARIO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CENTRO": {
+                    "Label": "UNDEFINED"
+                  },
+                  "OPERACOES DA POLICIA MILITAR": {
+                    "Label": "UNDEFINED"
+                  },
+                  "COPOM": {
+                    "Label": "UNDEFINED"
+                  },
+                  "CENTRO DE OPERACOES DA POLICIA MILITAR": {
+                    "Label": "UNDEFINED"
+                  }
+                }
+              }
+            },
+            "Categories": [
+              "uncategorized"
+            ],
+            "CaptureDate": "2025-08-23T15:33:55.54Z",
+            "PublicationDate": "2020-04-29T08:00:00Z"
+          }
+        ],
+        "CreationDate": "2020-04-29T08:00:00Z",
+        "LastUpdateDate": "2026-03-11T22:04:39.436Z",
+        "SearchLabels": {
+          "FullName": "MATHEUS GONCALVES DOS SANTOS",
+          "FullNameUniquenessScore": 0.00328947,
+          "ShortName": "MATHEUS SANTOS",
+          "ShortNameUniquenessScore": 0.001
+        },
+        "Next": "",
+        "TotalPages": 1,
+        "EntityStatistics": {
+          "NewsByRangeDate": {
+            "TotalNews": 14,
+            "TotalNewsOnLast7Days": 0,
+            "TotalNewsOnLast30Days": 0,
+            "TotalNewsOnLast90Days": 0,
+            "TotalNewsOnLast180Days": 0,
+            "TotalNewsOnLast365Days": 0
+          }
+        }
+      }
+    }
+  ],
+  "QueryId": "18e60f45-3ce9-484d-a93b-de335fa71719",
+  "ElapsedMilliseconds": 1734,
+  "QueryDate": "2026-04-25T12:33:50.1425684Z",
+  "Status": {
+    "media_profile_and_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

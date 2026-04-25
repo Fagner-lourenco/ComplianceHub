@@ -1,0 +1,56 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "HistoricalBasicData": {
+        "CurrentName": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+        "CurrentStatus": "REGULAR",
+        "CurrentGender": "M",
+        "BirthDate": "1987-07-27T00:00:00Z",
+        "Age": 38,
+        "TaxIdNumber": "11819916766",
+        "HasObitIndication": false,
+        "NameChangeHistory": [
+          {
+            "ChangedDate": "2005-07-27T00:00:00Z",
+            "Name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+            "Gender": "M"
+          }
+        ],
+        "StatusChangeHistory": [
+          {
+            "ChangedDate": "2005-07-27T00:00:00Z",
+            "Status": "REGULAR"
+          }
+        ],
+        "NameLifetimePercent": {
+          "RENAN GUIMARAES DE SOUSA AUGUSTO": 1
+        },
+        "GenderLifetimePercent": {
+          "M": 1
+        },
+        "StatusLifetimePercent": {
+          "REGULAR": 1
+        },
+        "NameChangesTotal": 0,
+        "StatusChangesTotal": 0,
+        "LastNameChangeDate": "0001-01-01T00:00:00",
+        "LastStatusChangeDate": "0001-01-01T00:00:00",
+        "FirstNameChangeDate": "0001-01-01T00:00:00",
+        "FirstStatusChangeDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "20104529-27ab-4162-9b5c-377afadd3187",
+  "ElapsedMilliseconds": 55,
+  "QueryDate": "2026-04-25T12:32:51.4045182Z",
+  "Status": {
+    "historical_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

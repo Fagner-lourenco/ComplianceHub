@@ -1,0 +1,15 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]: CH
+    - heading "ComplianceHub" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Due Diligence & Background Check
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - text: E-mail
+      - textbox "seu@email.com" [ref=e11]
+    - generic [ref=e12]:
+      - text: Senha
+      - textbox "••••••••" [ref=e13]
+    - button "Entrando..." [disabled] [ref=e14] [cursor=pointer]:
+      - img [ref=e15]
+      - text: Entrando...

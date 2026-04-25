@@ -1,11 +1,11 @@
-/**
+﻿/**
  * Cloud Functions: Judit-First Enrichment Pipeline (Datalake-First Strategy)
  *
- * Flow (datalake-first — async DISABLED by default):
- * 1. GATE: Judit Entity Data Lake (R$ 0,12) — validate CPF active + name similarity
+ * Flow (datalake-first â€” async DISABLED by default):
+ * 1. GATE: Judit Entity Data Lake (R$ 0,12) â€” validate CPF active + name similarity
  *    Fallback: FonteData receita-federal-pf (R$ 0,54) if Judit gate fails
- * 2. If gate fails → BLOCKED
- * 3. LAWSUITS: Sync datalake simples (R$ 0,50) — DEFAULT. Datalake detalhada (R$ 1,50/1k). On Demand (R$ 6,00/1k) only if forced.
+ * 2. If gate fails â†’ BLOCKED
+ * 3. LAWSUITS: Sync datalake simples (R$ 0,50) â€” DEFAULT. Datalake detalhada (R$ 1,50/1k). On Demand (R$ 6,00/1k) only if forced.
  * 4. PARALLEL: Warrants (R$ 1,00) + Penal Execution (R$ 0,50)
  * 5. NAME SUPPLEMENT: Sync datalake by name if CPF found 0 lawsuits
  * 6. CONDITIONAL: Escavador cross-validation (triggered by criminal/warrant/execution flags)
@@ -87,7 +87,7 @@ const {
     recordSuccess,
     recordFailure,
 } = require('./helpers/circuitBreaker');
-const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
+const { REPORT_BUILD_VERSION } = require('./reportBuilder.js');
 const {
     V2_CORE_VERSION,
     buildClientProjectionContract,
@@ -96,55 +96,55 @@ const {
     inferRequestedModuleKeys,
     resolvePublicReportAvailability,
     validatePublicationGates,
-} = require('./domain/v2Core.cjs');
+} = require('./domain/v2Core.js');
 const {
     V2_MODULES_VERSION,
     buildModuleRunsForCase,
     summarizeModuleRuns,
     resolveCaseEntitlements,
-} = require('./domain/v2Modules.cjs');
+} = require('./domain/v2Modules.js');
 const {
     V2_OPERATIONAL_ARTIFACTS_VERSION,
     buildOperationalArtifactsForCase,
-} = require('./domain/v2OperationalArtifacts.cjs');
+} = require('./domain/v2OperationalArtifacts.js');
 const {
     persistRawSnapshotPayloads,
-} = require('./domain/v2RawPayloadStorage.cjs');
+} = require('./domain/v2RawPayloadStorage.js');
 const {
     V2_SUBJECTS_VERSION,
     buildSubjectFromCase,
-} = require('./domain/v2Subjects.cjs');
+} = require('./domain/v2Subjects.js');
 const {
     buildReportSnapshotFromV2,
-} = require('./domain/v2ReportSections.cjs');
+} = require('./domain/v2ReportSections.js');
 const {
     buildUsageMetersForCase,
     groupMeterIdsByModule,
-} = require('./domain/v2UsageMeters.cjs');
+} = require('./domain/v2UsageMeters.js');
 const {
     resolveReviewGate,
-} = require('./domain/v2ReviewGate.cjs');
+} = require('./domain/v2ReviewGate.js');
 const {
     PERMISSIONS: V2_PERMISSIONS,
     hasPermission: hasV2Permission,
-} = require('./domain/v2Rbac.cjs');
+} = require('./domain/v2Rbac.js');
 const {
     buildProviderDivergenceResolution,
-} = require('./domain/v2ProviderDivergences.cjs');
+} = require('./domain/v2ProviderDivergences.js');
 const {
     PRODUCT_REGISTRY,
     MODULE_REGISTRY,
-} = require('./domain/v2Modules.cjs');
+} = require('./domain/v2Modules.js');
 const {
     resolveSubject,
-} = require('./domain/v2SubjectManager.cjs');
+} = require('./domain/v2SubjectManager.js');
 const {
     isTenantFeatureEnabled,
     resolveTenantEntitlements,
-} = require('./domain/v2EntitlementResolver.cjs');
+} = require('./domain/v2EntitlementResolver.js');
 const {
     syncClientCaseListProjection,
-} = require('./domain/v2ClientProjectionBuilder.cjs');
+} = require('./domain/v2ClientProjectionBuilder.js');
 const {
     processWatchlists,
     processSingleWatchlist,
@@ -152,35 +152,35 @@ const {
     pauseWatchlist,
     resumeWatchlist,
     deleteWatchlist,
-} = require('./domain/v2MonitoringEngine.cjs');
+} = require('./domain/v2MonitoringEngine.js');
 const {
     summarizeBillingOverview,
     summarizeUsageMeters,
-} = require('./domain/v2BillingResolver.cjs');
+} = require('./domain/v2BillingResolver.js');
 const {
     buildBillingDrilldown,
     buildBillingDrilldownExport,
-} = require('./domain/v2BillingDrilldown.cjs');
+} = require('./domain/v2BillingDrilldown.js');
 const {
     closeBillingPeriod,
-} = require('./domain/v2BillingEngine.cjs');
+} = require('./domain/v2BillingEngine.js');
 const {
     buildSeniorReviewRequest,
     buildSeniorReviewRequestId,
     isSeniorReviewApproved,
     summarizeSeniorReviewQueue,
-} = require('./domain/v2SeniorReviewQueue.cjs');
+} = require('./domain/v2SeniorReviewQueue.js');
 const {
     sanitizeTenantEntitlementPayload,
     buildTenantEntitlementAuditDiff,
-} = require('./domain/v2TenantEntitlements.cjs');
+} = require('./domain/v2TenantEntitlements.js');
 const {
     buildTimelineEventsForCase,
     buildProviderDivergencesForCase,
-} = require('./domain/v2Timeline.cjs');
+} = require('./domain/v2Timeline.js');
 const {
     buildRelationshipsForCase,
-} = require('./domain/v2MiniRelationships.cjs');
+} = require('./domain/v2MiniRelationships.js');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
 
@@ -197,7 +197,7 @@ const bigdatacorpTokenId = defineSecret('BIGDATACORP_TOKEN_ID');
 
 /**
  * Default enrichment config when tenant has none configured.
- * Cenário D structure — all phases configurable.
+ * CenÃ¡rio D structure â€” all phases configurable.
  */
 const DEFAULT_ENRICHMENT_CONFIG = {
     enabled: false,
@@ -220,11 +220,11 @@ const DEFAULT_ENRICHMENT_CONFIG = {
 const DEFAULT_ESCAVADOR_CONFIG = {
     enabled: false,
     phases: {
-        processos: true,  // RESERVED: not consulted at runtime — Escavador always queries processos. Kept for future phase-gating.
+        processos: true,  // RESERVED: not consulted at runtime â€” Escavador always queries processos. Kept for future phase-gating.
     },
     filters: {
-        incluirHomonimos: true,  // ALWAYS include homonyms — critical for non-indexed CPFs
-        autoTribunais: false,    // NO tribunal filter by default — causes missed processes
+        incluirHomonimos: true,  // ALWAYS include homonyms â€” critical for non-indexed CPFs
+        autoTribunais: false,    // NO tribunal filter by default â€” causes missed processes
         tribunais: [],           // manual override
         status: null,            // 'ATIVO' | null
     },
@@ -233,20 +233,20 @@ const DEFAULT_ESCAVADOR_CONFIG = {
 const DEFAULT_JUDIT_CONFIG = {
     enabled: true,
     phases: {
-        entity: false,           // R$0.12 — gate (Dados Cadastrais Data Lake) — OFF by default, BDC is primary
+        entity: false,           // R$0.12 â€” gate (Dados Cadastrais Data Lake) â€” OFF by default, BDC is primary
         lawsuits: true,          // R$0.50 simples | R$1.50/1k datalake | R$6.00/1k on_demand
-        warrant: true,           // R$1.00 — mandado de prisao
-        execution: false,        // R$0.50 — execucao criminal (default OFF, toggleable per tenant)
+        warrant: true,           // R$1.00 â€” mandado de prisao
+        execution: false,        // R$0.50 â€” execucao criminal (default OFF, toggleable per tenant)
     },
     escalation: {
         triggerEscavador: ['criminal', 'warrant', 'execution', 'highProcessCount'],
         processCountThreshold: 5,
     },
     filters: {
-        autoTribunals: false,    // NO tribunal filter by default — causes missed processes
+        autoTribunals: false,    // NO tribunal filter by default â€” causes missed processes
         tribunals: [],           // manual override
-        useAsync: false,         // ⚠️  DEFAULT=false: sync simples (R$0.50). Async datalake (R$1.50/1k) ou on_demand (R$6.00/1k) apenas se forçado.
-        useWebhook: true,        // warrant/execution are async by contract — use callback instead of blocking polling
+        useAsync: false,         // âš ï¸  DEFAULT=false: sync simples (R$0.50). Async datalake (R$1.50/1k) ou on_demand (R$6.00/1k) apenas se forÃ§ado.
+        useWebhook: true,        // warrant/execution are async by contract â€” use callback instead of blocking polling
         cacheTtlDays: 7,        // reuse Judit cache if extracted within X days (0 = no cache)
     },
     realTime: {
@@ -265,7 +265,7 @@ const DEFAULT_JUDIT_CONFIG = {
     gate: { minNameSimilarity: 0.7 },
     nameSearchSupplement: {
         enabled: true,           // enable name-based search when CPF yields 0 lawsuits
-        maxCpfsComNome: 3,       // only search if name has ≤ N CPFs (avoid homonym pollution)
+        maxCpfsComNome: 3,       // only search if name has â‰¤ N CPFs (avoid homonym pollution)
         preferSync: true,        // use sync datalake by name (cheaper) instead of async
     },
     persistence: {
@@ -274,19 +274,19 @@ const DEFAULT_JUDIT_CONFIG = {
 };
 
 const DEFAULT_BIGDATACORP_CONFIG = {
-    enabled: true,            // PRIMARY provider — gate + processes + KYC
+    enabled: true,            // PRIMARY provider â€” gate + processes + KYC
     phases: {
-        basicData: true,      // R$0.03 — identity validation + gate
-        processes: true,      // R$0.07 — lawsuits with CPF in Parties.Doc
-        kyc: true,            // R$0.05 — PEP + sanctions (Interpol, FBI, OFAC, etc.)
-        occupation: true,     // R$0.05 — employment/profession history (included in combined call)
+        basicData: true,      // R$0.03 â€” identity validation + gate
+        processes: true,      // R$0.07 â€” lawsuits with CPF in Parties.Doc
+        kyc: true,            // R$0.05 â€” PEP + sanctions (Interpol, FBI, OFAC, etc.)
+        occupation: true,     // R$0.05 â€” employment/profession history (included in combined call)
     },
     gate: { minNameSimilarity: 0.7 },
     processLimit: 100,        // Max processes to return per query
 };
 
 const DEFAULT_DJEN_CONFIG = {
-    enabled: true,            // FREE API — no cost, always run
+    enabled: true,            // FREE API â€” no cost, always run
     phases: {
         comunicacoes: true,   // GET /comunicacao
     },
@@ -379,7 +379,7 @@ function asDate(value) {
 }
 
 /* =========================================================
-   AI ANALYSIS — Structured JSON output with anti-hallucination
+   AI ANALYSIS â€” Structured JSON output with anti-hallucination
    Runs AFTER all providers complete (FonteData + Escavador + Judit)
    ========================================================= */
 
@@ -459,7 +459,7 @@ Regras:
 - resumo: analise executiva em ate 500 caracteres
 - inconsistencias: lista de divergencias entre dados fornecidos e consultados
 - riscoHomonimo: avalie se ha indicios de homonimia comparando nomes
-- confianca: grau de confiabilidade geral dos dados disponíveis
+- confianca: grau de confiabilidade geral dos dados disponÃ­veis
 - sugestaoScore: score de risco 0 (nenhum) a 100 (maximo)
 - sugestaoVeredito: FIT=apto | ATTENTION=atencao | NOT_RECOMMENDED=nao recomendado
 - justificativa: fundamentacao do veredito em ate 300 caracteres
@@ -492,7 +492,7 @@ Regras:
 - diferencie claramente evidencia confirmada, evidencia ambigua e cobertura insuficiente
 - se houver analise especializada de homonimos, use-a como insumo consultivo sobre os achados ambiguos e cite-a explicitamente
 - O CPF do candidato aparece parcialmente mascarado (ex: 050.***.***-36) por privacidade. Os digitos visiveis (prefixo e sufixo) SAO confirmados e devem ser usados para cruzamento parcial com registros das fontes.
-- Quando a auto-classificacao ou os dados indicarem match por CPF exato (hasExactCpfMatch, matchType='CPF confirmado', evidencia 'HARD_FACT'), isso significa que o sistema ja verificou a correspondencia completa do CPF — trate como fato duro confirmado, NAO como incerteza.
+- Quando a auto-classificacao ou os dados indicarem match por CPF exato (hasExactCpfMatch, matchType='CPF confirmado', evidencia 'HARD_FACT'), isso significa que o sistema ja verificou a correspondencia completa do CPF â€” trate como fato duro confirmado, NAO como incerteza.
 - NAO trate o mascaramento do CPF como ausencia de CPF. O CPF existe, foi verificado pelo sistema de enriquecimento, e os achados com CPF confirmado sao do candidato.`;
 
 const AI_HOMONYM_SYSTEM_MESSAGE = `Voce e um analista especializado em desambiguacao de homonimos em due diligence.
@@ -504,8 +504,8 @@ Fatos duros prevalecem: CPF exato em parte, mandado ativo e execucao penal posit
 Sobre CPF e hardFacts:
 - Quando hardFacts incluir JUDIT_EXACT_CPF_MATCH, ESCAVADOR_EXACT_CPF_MATCH ou BDC_EXACT_CPF_MATCH, o candidato TEM CPF confirmado naquela fonte. NAO conclua que o candidato nao possui CPF.
 - candidateProfile.cpfConfirmedInProvider=true significa que pelo menos um provider confirmou o CPF por match exato.
-- Os ambiguousCandidates sao processos adicionais encontrados por nome ou match fraco — eles NAO invalidam os fatos duros do referenceCandidates.
-- O CPF do candidato aparece mascarado (ex: 050.***.***-36) por privacidade. O sistema ja verificou a correspondencia completa — trate como fato duro.
+- Os ambiguousCandidates sao processos adicionais encontrados por nome ou match fraco â€” eles NAO invalidam os fatos duros do referenceCandidates.
+- O CPF do candidato aparece mascarado (ex: 050.***.***-36) por privacidade. O sistema ja verificou a correspondencia completa â€” trate como fato duro.
 
 Schema de resposta (JSON):
 ${JSON.stringify(AI_HOMONYM_JSON_SCHEMA, null, 2)}
@@ -550,7 +550,7 @@ Regras:
   3. Tipo de mandado e tipo de prisao
   4. Texto da decisao judicial quando disponivel
   5. Impacto operacional para contratacao
-- keyFindings: lista de ate 12 bullets factuais e materiais para o relatorio. Cada bullet deve ser auto-contido e citar a fonte (ex: "Mandado ativo BNMP-123 no TJSP — prisao preventiva (Judit)")
+- keyFindings: lista de ate 12 bullets factuais e materiais para o relatorio. Cada bullet deve ser auto-contido e citar a fonte (ex: "Mandado ativo BNMP-123 no TJSP â€” prisao preventiva (Judit)")
 - finalJustification: justificativa PRESCRITIVA do veredito (max 900 chars). Deve recomendar a decisao (apto/atencao/nao recomendado) e fundamentar com os achados mais relevantes. NAO repita o resumo executivo. Foque em: por que este veredito e adequado, quais riscos sao materiais e quais mitigacoes sao possiveis.
 - diferencie fato confirmado, evidencia ambigua e lacuna de cobertura
 - use a analise especializada de homonimos como insumo consultivo sempre que ela existir e for relevante
@@ -558,7 +558,7 @@ Regras:
 - nao use linguagem de debug, trace ou implementacao
 - se nao houver achado relevante em uma fase, diga isso de forma objetiva sem inventar detalhes
 - quando houver dados de profissao, PEP ou sancoes, inclua essas informacoes nos campos pertinentes
-- O CPF do candidato aparece parcialmente mascarado por privacidade. Os digitos visiveis SAO confirmados. Quando os dados indicarem match por CPF exato (hasExactCpfMatch, matchType='CPF confirmado'), o sistema ja verificou a correspondencia completa — trate como fato duro. NAO trate o mascaramento como ausencia ou incerteza de CPF.`;
+- O CPF do candidato aparece parcialmente mascarado por privacidade. Os digitos visiveis SAO confirmados. Quando os dados indicarem match por CPF exato (hasExactCpfMatch, matchType='CPF confirmado'), o sistema ja verificou a correspondencia completa â€” trate como fato duro. NAO trate o mascaramento como ausencia ou incerteza de CPF.`;
 
 function isStringArray(value) {
     return !value || (Array.isArray(value) && value.every((item) => typeof item === 'string'));
@@ -823,7 +823,7 @@ function validateAiPrefillSchema(obj) {
 }
 
 /**
- * Sanitize AI response — remove any CPF/phone numbers the model may hallucinate.
+ * Sanitize AI response â€” remove any CPF/phone numbers the model may hallucinate.
  */
 function sanitizeAiOutput(text) {
     if (!text) return text;
@@ -1340,7 +1340,7 @@ async function runAiAnalysis(caseData, apiKey, options = {}) {
 
 /**
  * Normalize CNJ to digits-only for dedup across providers.
- * E.g. "0202743-72.2022.8.06.0167" and "02027437220228060167" → same key.
+ * E.g. "0202743-72.2022.8.06.0167" and "02027437220228060167" â†’ same key.
  */
 function normCnj(cnj) { return (cnj || '').replace(/\D/g, ''); }
 
@@ -1355,12 +1355,12 @@ function formatCnj(raw) {
 
 /**
  * Format ISO date string to dd/mm/yyyy (Brazilian format).
- * Returns 'data não informada' for null/undefined/invalid input.
+ * Returns 'data nÃ£o informada' for null/undefined/invalid input.
  */
 function formatDateBR(isoStr) {
-    if (!isoStr) return 'data não informada';
+    if (!isoStr) return 'data nÃ£o informada';
     const d = asDate(isoStr);
-    if (!d || isNaN(d.getTime())) return 'data não informada';
+    if (!d || isNaN(d.getTime())) return 'data nÃ£o informada';
     const dd = String(d.getUTCDate()).padStart(2, '0');
     const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
     const yyyy = d.getUTCFullYear();
@@ -1372,23 +1372,23 @@ function formatDateBR(isoStr) {
  * BDC `imprisonmentKind` is primary; Judit / decision text is fallback.
  */
 function classifyWarrantType(warrant) {
-    if (!warrant) return { type: 'CRIMINAL', label: 'Prisão criminal' };
+    if (!warrant) return { type: 'CRIMINAL', label: 'PrisÃ£o criminal' };
     // Primary: BDC structured field
     if (/^civil$/i.test(warrant.imprisonmentKind || '')) {
-        return { type: 'CIVIL', label: 'Prisão civil por dívida alimentar (art. 528, §3º, CPC)' };
+        return { type: 'CIVIL', label: 'PrisÃ£o civil por dÃ­vida alimentar (art. 528, Â§3Âº, CPC)' };
     }
     // Fallback: check decision/judgement text for civil keywords
     const txt = (warrant.decision || warrant.judgementSummary || '').toLowerCase();
-    if (/cust[oó]dia\s+civil|art\.\s*528|obriga[çc][aã]o\s+alimentar|d[ií]vida\s+alimentar|pris[aã]o\s+civil/i.test(txt)) {
-        return { type: 'CIVIL', label: 'Prisão civil por dívida alimentar (art. 528, §3º, CPC)' };
+    if (/cust[oÃ³]dia\s+civil|art\.\s*528|obriga[Ã§c][aÃ£]o\s+alimentar|d[iÃ­]vida\s+alimentar|pris[aÃ£]o\s+civil/i.test(txt)) {
+        return { type: 'CIVIL', label: 'PrisÃ£o civil por dÃ­vida alimentar (art. 528, Â§3Âº, CPC)' };
     }
     // Default
-    return { type: 'CRIMINAL', label: 'Prisão criminal' };
+    return { type: 'CRIMINAL', label: 'PrisÃ£o criminal' };
 }
 
 /**
  * Detect Carta de Guia in juditRoleSummary for a specific CNJ.
- * Returns { found, tipo: 'DEFINITIVA'|'PROVISÓRIA'|null, lastStep }.
+ * Returns { found, tipo: 'DEFINITIVA'|'PROVISÃ“RIA'|null, lastStep }.
  */
 function detectCartaDeGuia(juditRoleSummary, cnj) {
     if (!juditRoleSummary || !cnj) return { found: false, tipo: null, lastStep: null };
@@ -1399,7 +1399,7 @@ function detectCartaDeGuia(juditRoleSummary, cnj) {
         if (!/carta\s+de\s+guia/i.test(ls)) continue;
         let tipo = null;
         if (/definitiva/i.test(ls)) tipo = 'DEFINITIVA';
-        else if (/provis[oó]ria/i.test(ls)) tipo = 'PROVISÓRIA';
+        else if (/provis[oÃ³]ria/i.test(ls)) tipo = 'PROVISÃ“RIA';
         return { found: true, tipo, lastStep: ls };
     }
     return { found: false, tipo: null, lastStep: null };
@@ -1430,7 +1430,7 @@ function findLinkedCivilProcess(caseData, warrant) {
 /**
  * Extract sentence details (penalty, regime, articles, conviction flag) from BDC decisions array.
  * Uses regex on the semi-structured TJCE/BNMP format: "CHAVE: VALOR;"
- * Returns nullable fields — graceful degradation when decisions is null or pattern doesn't match.
+ * Returns nullable fields â€” graceful degradation when decisions is null or pattern doesn't match.
  */
 function extractSentenceDetails(decisions) {
     const result = { penalty: null, regime: null, situation: null, articles: [], isConviction: false };
@@ -1440,21 +1440,21 @@ function extractSentenceDetails(decisions) {
         if (!txt) continue;
         const upper = txt.toUpperCase();
         // Conviction detection
-        if (/CONDENAR|SENTEN[CÇ]A\s+CONDENAT[OÓ]RIA/i.test(upper)) {
+        if (/CONDENAR|SENTEN[CÃ‡]A\s+CONDENAT[OÃ“]RIA/i.test(upper)) {
             result.isConviction = true;
         }
         // Penalty: "DETENCAO: SETE MESES E VINTE E OITO DIAS;" or "RECLUSAO: ..."
-        const penaltyMatch = upper.match(/(?:DETEN[CÇ][AÃ]O|RECLUS[AÃ]O):\s*(.+?);/);
+        const penaltyMatch = upper.match(/(?:DETEN[CÃ‡][AÃƒ]O|RECLUS[AÃƒ]O):\s*(.+?);/);
         if (penaltyMatch && !result.penalty) {
             result.penalty = penaltyMatch[0].replace(/;$/, '').trim();
         }
         // Regime: "REGIME PARA DETENCAO: ABERTO;"
-        const regimeMatch = upper.match(/REGIME\s+(?:PARA\s+)?(?:DETEN[CÇ][AÃ]O|RECLUS[AÃ]O):\s*(.+?);/);
+        const regimeMatch = upper.match(/REGIME\s+(?:PARA\s+)?(?:DETEN[CÃ‡][AÃƒ]O|RECLUS[AÃƒ]O):\s*(.+?);/);
         if (regimeMatch && !result.regime) {
             result.regime = regimeMatch[1].trim();
         }
         // Situation: "SITUACAO: REU PRIMARIO;"
-        const sitMatch = upper.match(/SITUA[CÇ][AÃ]O:\s*(.+?);/);
+        const sitMatch = upper.match(/SITUA[CÃ‡][AÃƒ]O:\s*(.+?);/);
         if (sitMatch && !result.situation) {
             result.situation = sitMatch[1].trim();
         }
@@ -1482,7 +1482,7 @@ function formatProcessBlock(proc, options = {}) {
     lines.push(`${indent}Status: ${statusStr || 'N/A'}`);
     if (options.penalty) lines.push(`${indent}Pena: ${options.penalty}`);
     if (options.regime) lines.push(`${indent}Regime: ${options.regime}`);
-    if (options.situation) lines.push(`${indent}Situação: ${options.situation}`);
+    if (options.situation) lines.push(`${indent}SituaÃ§Ã£o: ${options.situation}`);
     if (options.articles && options.articles.length > 0) lines.push(`${indent}Artigos: ${options.articles.join(', ')}`);
     if (proc.tribunal && proc.tribunal !== 'N/A') {
         const varaStr = proc.vara ? ` | Vara: ${proc.vara}` : '';
@@ -1493,9 +1493,9 @@ function formatProcessBlock(proc, options = {}) {
     if (roleStr && roleStr !== 'N/A') lines.push(`${indent}Papel: ${roleStr}`);
     const distDate = formatDateBR(proc.distributionDate || proc.data);
     const lastDate = proc.lastMovementDate ? formatDateBR(proc.lastMovementDate) : null;
-    if (distDate !== 'data não informada' || lastDate) {
-        let dateStr = `${indent}Distribuição: ${distDate}`;
-        if (lastDate) dateStr += ` | Última mov.: ${lastDate}`;
+    if (distDate !== 'data nÃ£o informada' || lastDate) {
+        let dateStr = `${indent}DistribuiÃ§Ã£o: ${distDate}`;
+        if (lastDate) dateStr += ` | Ãšltima mov.: ${lastDate}`;
         lines.push(dateStr);
     }
     if (options.cartaDeGuia) lines.push(`${indent}Obs.: ${options.cartaDeGuia}`);
@@ -1664,7 +1664,7 @@ function selectTopProcessos(caseData, limit = 10) {
 }
 
 /**
- * Build AI prompt — PII-minimized, all providers included.
+ * Build AI prompt â€” PII-minimized, all providers included.
  * Excludes: motherName, estimatedIncome, addresses, phone numbers.
  */
 function buildAiPrompt(caseData) {
@@ -2103,10 +2103,10 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
     const uf = enrichmentConfig.filters?.uf || caseData.hiringUf || null;
     const tasks = [];
 
-    // ── Circuit Breaker: check FonteData before queuing tasks ──
+    // â”€â”€ Circuit Breaker: check FonteData before queuing tasks â”€â”€
     const fontedataCircuit = await checkCircuit('fontedata');
     if (fontedataCircuit.open) {
-        console.warn(`Case ${caseId}: FonteData circuit OPEN — skipping. ${fontedataCircuit.reason}`);
+        console.warn(`Case ${caseId}: FonteData circuit OPEN â€” skipping. ${fontedataCircuit.reason}`);
         await caseRef.update({
             enrichmentStatus: 'PARTIAL',
             enrichmentError: fontedataCircuit.reason,
@@ -2184,7 +2184,7 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
         }
     }
 
-    // ── Circuit Breaker: record FonteData outcome ──
+    // â”€â”€ Circuit Breaker: record FonteData outcome â”€â”€
     if (tasks.length > 0 && !fontedataCircuit.open) {
         if (failCount === 0) {
             recordSuccess('fontedata').catch(() => {});
@@ -2320,10 +2320,10 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
         return { status: 'FAILED', error };
     }
 
-    // ── Circuit Breaker: check Escavador ──
+    // â”€â”€ Circuit Breaker: check Escavador â”€â”€
     const escCircuit = await checkCircuit('escavador');
     if (escCircuit.open) {
-        console.warn(`Case ${caseId} [Escavador]: circuit OPEN — skipping. ${escCircuit.reason}`);
+        console.warn(`Case ${caseId} [Escavador]: circuit OPEN â€” skipping. ${escCircuit.reason}`);
         await caseRef.update({
             escavadorEnrichmentStatus: 'SKIPPED',
             escavadorError: escCircuit.reason,
@@ -2403,7 +2403,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
         });
         await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
-        // Run auto-classify even on failure — Escavador data is supplementary
+        // Run auto-classify even on failure â€” Escavador data is supplementary
         if (!options.skipAutoClassify) {
             try {
                 const freshDoc = await caseRef.get();
@@ -2421,9 +2421,9 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
 }
 
 /* =========================================================
-   BIGDATACORP — Enrichment Phase (4 datasets in 1 POST)
+   BIGDATACORP â€” Enrichment Phase (4 datasets in 1 POST)
    Runs basic_data + processes + kyc + occupation_data combined.
-   Disabled by default — requires explicit tenant enablement.
+   Disabled by default â€” requires explicit tenant enablement.
    ========================================================= */
 
 async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfig, options = {}) {
@@ -2459,7 +2459,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
     // Circuit Breaker: check BigDataCorp
     const bdcCircuit = await checkCircuit('bigdatacorp');
     if (bdcCircuit.open) {
-        console.warn(`Case ${caseId} [BigDataCorp]: circuit OPEN — skipping. ${bdcCircuit.reason}`);
+        console.warn(`Case ${caseId} [BigDataCorp]: circuit OPEN â€” skipping. ${bdcCircuit.reason}`);
         await caseRef.update({
             bigdatacorpEnrichmentStatus: 'SKIPPED',
             bigdatacorpError: bdcCircuit.reason,
@@ -2490,7 +2490,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             costBRL += 0.03;
         }
 
-        // ─── GATE: BDC Basic Data (cpfStatus + name similarity + death record) ───
+        // â”€â”€â”€ GATE: BDC Basic Data (cpfStatus + name similarity + death record) â”€â”€â”€
         if (!options.skipGate && updatePayload.bigdatacorpCpfStatus) {
             const nameFromBDC = updatePayload.bigdatacorpName || '';
             const nameProvided = caseData.candidateName || '';
@@ -2532,7 +2532,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
-                console.log(`Case ${caseId} [BigDataCorp]: BLOCKED — ${gateReason}`);
+                console.log(`Case ${caseId} [BigDataCorp]: BLOCKED â€” ${gateReason}`);
                 return { status: 'BLOCKED', error: gateReason };
             }
 
@@ -2618,7 +2618,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
 }
 
 /* =========================================================
-   ESCAVADOR NEED EVALUATION — Determines if Escavador
+   ESCAVADOR NEED EVALUATION â€” Determines if Escavador
    should run as cross-validation after Judit completes.
    ========================================================= */
 
@@ -2703,10 +2703,10 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         return { status: 'FAILED', error };
     }
 
-    // ── Circuit Breaker: check Judit ──
+    // â”€â”€ Circuit Breaker: check Judit â”€â”€
     const juditCircuit = await checkCircuit('judit');
     if (juditCircuit.open) {
-        console.warn(`Case ${caseId} [Judit]: circuit OPEN — skipping. ${juditCircuit.reason}`);
+        console.warn(`Case ${caseId} [Judit]: circuit OPEN â€” skipping. ${juditCircuit.reason}`);
         await caseRef.update({
             juditEnrichmentStatus: 'SKIPPED',
             juditError: juditCircuit.reason,
@@ -2717,7 +2717,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 
     const phases = juditConfig.phases;
 
-    // ─── GATE: BDC-primary → Judit-fallback → FonteData-fallback ───
+    // â”€â”€â”€ GATE: BDC-primary â†’ Judit-fallback â†’ FonteData-fallback â”€â”€â”€
     // Priority: 1) BigDataCorp gate result  2) Judit Entity  3) FonteData Receita Federal
     let gateEntityData = null;
     let entityUfs = [];
@@ -2730,7 +2730,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
             caseData.bigdatacorpEnrichmentStatus === 'DONE' &&
             caseData.bigdatacorpGateResult?.passed === true
         ) {
-            // ── BDC gate passed → reuse BDC identity, skip Judit gate ──
+            // â”€â”€ BDC gate passed â†’ reuse BDC identity, skip Judit gate â”€â”€
             const bdcGate = caseData.bigdatacorpGateResult;
             console.log(`Case ${caseId} [Judit]: using BigDataCorp identity gate (similarity: ${((bdcGate.nameSimilarity || 0) * 100).toFixed(0)}%).`);
 
@@ -2771,7 +2771,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                     updatedAt: FieldValue.serverTimestamp(),
                 });
             } catch (entityErr) {
-                // Entity query failed — use hiringUf as fallback for UFs
+                // Entity query failed â€” use hiringUf as fallback for UFs
                 const uf = caseData.hiringUf || null;
                 entityUfs = uf ? [uf] : [];
                 console.warn(`Case ${caseId} [Judit]: Entity UF query failed (${entityErr.message}), using hiringUf=[${entityUfs.join(', ')}].`);
@@ -2785,7 +2785,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 });
             }
         } else {
-            // ── BDC did not pass gate → run Judit gate as fallback ──
+            // â”€â”€ BDC did not pass gate â†’ run Judit gate as fallback â”€â”€
             const bdcStatus = caseData.bigdatacorpEnrichmentStatus || 'N/A';
             console.log(`Case ${caseId} [Judit]: BDC status=${bdcStatus}, running Judit identity gate as fallback.`);
             try {
@@ -2845,7 +2845,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 });
 
             } catch (gateErr) {
-                // Judit gate failed — try FonteData receita-federal as fallback
+                // Judit gate failed â€” try FonteData receita-federal as fallback
                 const gateErrMsg = gateErr instanceof JuditError
                     ? `${gateErr.message} (${gateErr.statusCode})`
                     : (gateErr.message || 'Erro desconhecido');
@@ -2946,8 +2946,8 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         entityUfs = caseData.juditAllUfs || [];
     }
 
-    // ─── ENRICHMENT: datalake-first strategy ───
-    // Flow: 1) Sync datalake lawsuits (R$0.50) → 2) Parallel warrants + execution → 3) Name supplement → 4) Async ONLY if triggered
+    // â”€â”€â”€ ENRICHMENT: datalake-first strategy â”€â”€â”€
+    // Flow: 1) Sync datalake lawsuits (R$0.50) â†’ 2) Parallel warrants + execution â†’ 3) Name supplement â†’ 4) Async ONLY if triggered
     const juditFilters = juditConfig.filters || {};
     const ufs = entityUfs.length > 0 ? entityUfs : (caseData.hiringUf ? [caseData.hiringUf] : []);
     let tribunals = juditFilters.tribunals?.length > 0 ? juditFilters.tribunals : [];
@@ -2986,16 +2986,16 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         juditSources.entity = caseData.juditSources.entity;
     }
 
-    // ─── STEP 1: Lawsuits (sync datalake by default, async only if explicitly forced) ───
+    // â”€â”€â”€ STEP 1: Lawsuits (sync datalake by default, async only if explicitly forced) â”€â”€â”€
     if (phases.lawsuits !== false) {
-        const useAsync = juditFilters.useAsync === true;  // DEFAULT=false → sync datalake
+        const useAsync = juditFilters.useAsync === true;  // DEFAULT=false â†’ sync datalake
         try {
             let lawsuitsRaw;
             if (useAsync) {
-                console.log(`Case ${caseId} [Judit]: lawsuits via ASYNC (datalake R$1.50/1k ou on_demand R$6.00/1k) — explicitly forced.`);
+                console.log(`Case ${caseId} [Judit]: lawsuits via ASYNC (datalake R$1.50/1k ou on_demand R$6.00/1k) â€” explicitly forced.`);
                 lawsuitsRaw = await queryLawsuitsAsync(cpf, apiKey, { tribunals, cacheTtlDays });
             } else {
-                console.log(`Case ${caseId} [Judit]: lawsuits via SYNC datalake (R$0.50) — default path.`);
+                console.log(`Case ${caseId} [Judit]: lawsuits via SYNC datalake (R$0.50) â€” default path.`);
                 lawsuitsRaw = await queryLawsuitsSync(cpf, apiKey);
             }
 
@@ -3028,7 +3028,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         }
     }
 
-    // ─── STEP 2: Warrants + Execution (parallel, always async — these endpoints have no sync alternative) ───
+    // â”€â”€â”€ STEP 2: Warrants + Execution (parallel, always async â€” these endpoints have no sync alternative) â”€â”€â”€
     // Optimization: skip Judit warrant (R$1.00) if BigDataCorp already confirmed arrest warrants
     let warrantSkippedByBdc = false;
     if (phases.warrant !== false) {
@@ -3041,7 +3041,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
             ) {
                 warrantSkippedByBdc = true;
                 phases.warrant = false;
-                console.log(`Case ${caseId} [Judit]: Warrant search SKIPPED — BigDataCorp already confirmed arrest warrant(s). Saving R$1.00.`);
+                console.log(`Case ${caseId} [Judit]: Warrant search SKIPPED â€” BigDataCorp already confirmed arrest warrant(s). Saving R$1.00.`);
             }
         } catch (checkErr) {
             console.warn(`Case ${caseId} [Judit]: Could not check BDC status before warrant, proceeding normally:`, checkErr.message);
@@ -3145,13 +3145,13 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
             consultedAt: new Date().toISOString(),
         };
         if (!updatePayload.juditWarrantNotes) {
-            updatePayload.juditWarrantNotes = 'Busca de mandados Judit omitida — BigDataCorp ja confirmou mandado(s) de prisao ativo(s).';
+            updatePayload.juditWarrantNotes = 'Busca de mandados Judit omitida â€” BigDataCorp ja confirmou mandado(s) de prisao ativo(s).';
         }
     }
 
     const totalPhases = (phases.lawsuits !== false ? 1 : 0) + parallelTasks.length + (warrantSkippedByBdc ? 1 : 0);
 
-    // ─── STEP 3: NAME SEARCH SUPPLEMENT — search by name when CPF found 0 lawsuits ───
+    // â”€â”€â”€ STEP 3: NAME SEARCH SUPPLEMENT â€” search by name when CPF found 0 lawsuits â”€â”€â”€
     const nameConfig = juditConfig.nameSearchSupplement || {};
     const cpfLawsuitCount = updatePayload.juditProcessTotal || 0;
     const candidateName = caseData.candidateName || '';
@@ -3221,7 +3221,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 juditSources.lawsuits_by_name = { error: nameErrMsg, consultedAt: new Date().toISOString() };
             }
         } else {
-            console.log(`Case ${caseId} [Judit]: name search skipped — ${entityHomonymCount} CPFs with same name exceeds max ${maxCpfs}.`);
+            console.log(`Case ${caseId} [Judit]: name search skipped â€” ${entityHomonymCount} CPFs with same name exceeds max ${maxCpfs}.`);
             updatePayload.juditNameSearchFlag = 'SKIPPED_HOMONYMS';
             updatePayload.juditNameSearchCpfsComNome = entityHomonymCount;
         }
@@ -3240,10 +3240,10 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         juditStatus = 'FAILED';
     }
 
-    // ─── EVALUATE: should Escavador run as cross-validation? ───
+    // â”€â”€â”€ EVALUATE: should Escavador run as cross-validation? â”€â”€â”€
     const needsEscavador = evaluateEscavadorNeed(updatePayload, juditConfig);
 
-    // ─── PERSIST ───
+    // â”€â”€â”€ PERSIST â”€â”€â”€
     const error = errors.length > 0 ? errors.join('; ') : null;
     const persistencePayload = savePersistence ? { juditRawPayloads } : {};
 
@@ -3280,7 +3280,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
             const freshData = freshDoc.data() || {};
 
             if (needsEscavador && (freshData.escavadorEnrichmentStatus === 'RUNNING' || freshData.escavadorEnrichmentStatus === 'PENDING' || !freshData.escavadorEnrichmentStatus)) {
-                console.log(`Case ${caseId} [AutoClassify]: Skipped — Escavador needed and still ${freshData.escavadorEnrichmentStatus || 'PENDING'}. Will run when Escavador completes.`);
+                console.log(`Case ${caseId} [AutoClassify]: Skipped â€” Escavador needed and still ${freshData.escavadorEnrichmentStatus || 'PENDING'}. Will run when Escavador completes.`);
             } else {
                 await runAutoClassifyAndAi(caseRef, caseId, freshData);
             }
@@ -3299,7 +3299,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         `Tribunals filter: [${tribunals.join(',')}].`,
     );
 
-    // ── Circuit Breaker: record Judit outcome ──
+    // â”€â”€ Circuit Breaker: record Judit outcome â”€â”€
     if (juditStatus === 'DONE' || juditStatus === 'PARTIAL') {
         recordSuccess('judit').catch(() => {});
     } else if (juditStatus === 'FAILED') {
@@ -3310,14 +3310,14 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 }
 
 /* =========================================================
-   FONTEDATA — Kept as helper for manual rerun only.
+   FONTEDATA â€” Kept as helper for manual rerun only.
    No longer triggered automatically on case creation.
    ========================================================= */
-// exports.enrichFonteDataOnCase removed — FonteData is now fallback only.
+// exports.enrichFonteDataOnCase removed â€” FonteData is now fallback only.
 // The runFonteDataEnrichmentPhase function is still available via rerunEnrichmentPhase.
 
 /* =========================================================
-   JUDIT — Cloud Function (triggered after BigDataCorp completes)
+   JUDIT â€” Cloud Function (triggered after BigDataCorp completes)
    BigDataCorp is the PRIMARY identity gate. Judit is the FALLBACK.
    Triggered when bigdatacorpEnrichmentStatus transitions to a
    terminal state (DONE, BLOCKED, FAILED, SKIPPED).
@@ -3385,7 +3385,7 @@ exports.enrichJuditOnCase = onDocumentUpdated(
 );
 
 /* =========================================================
-   BIGDATACORP — Cloud Function (triggered on case creation)
+   BIGDATACORP â€” Cloud Function (triggered on case creation)
    PRIMARY identity gate. Runs FIRST, then triggers Judit via
    onDocumentUpdated when it reaches a terminal state.
    Queries: basic_data + processes + kyc + occupation_data.
@@ -3437,13 +3437,13 @@ exports.enrichBigDataCorpOnCase = onDocumentCreated(
             } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [BigDataCorp]: error:`, err.message);
-            // Do NOT rethrow — BigDataCorp failure should not block the pipeline
+            // Do NOT rethrow â€” BigDataCorp failure should not block the pipeline
         }
     },
 );
 
 /* =========================================================
-   JUDIT — Re-enrichment after client correction.
+   JUDIT â€” Re-enrichment after client correction.
    Triggered when a case transitions from CORRECTION_NEEDED to
    PENDING with a fresh correctedAt. Since enrichJuditOnCase
    watches bigdatacorpEnrichmentStatus changes, this separate
@@ -3457,7 +3457,7 @@ exports.enrichJuditOnCorrection = onDocumentUpdated(
         const after = event.data?.after?.data();
         if (!before || !after) return;
 
-        // Guard: only trigger on CORRECTION_NEEDED → PENDING transition
+        // Guard: only trigger on CORRECTION_NEEDED â†’ PENDING transition
         if (before.status !== 'CORRECTION_NEEDED' || after.status !== 'PENDING') return;
 
         // Guard: must have juditEnrichmentStatus reset to PENDING
@@ -3487,13 +3487,13 @@ exports.enrichJuditOnCorrection = onDocumentUpdated(
 );
 
 /* =========================================================
-   ESCAVADOR — Sequential Cloud Function (waits for FonteData)
+   ESCAVADOR â€” Sequential Cloud Function (waits for FonteData)
    Triggered when enrichmentStatus changes to DONE/PARTIAL.
    Reads enrichmentPrimaryUf to apply tribunal filters.
    ========================================================= */
 
 /* =========================================================
-   ESCAVADOR — Conditional Cloud Function (waits for Judit)
+   ESCAVADOR â€” Conditional Cloud Function (waits for Judit)
    Triggered when juditEnrichmentStatus changes to DONE/PARTIAL.
    Only runs if juditNeedsEscavador is true OR config forces it.
    ========================================================= */
@@ -3555,7 +3555,7 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
             // Conditional: only run if Judit flagged the need OR config forces it
             const forceRun = escavadorConfig.alwaysRun === true;
             if (!caseData.juditNeedsEscavador && !forceRun) {
-                console.log(`Case ${caseId} [Escavador]: skipped — Judit found no flags requiring cross-validation.`);
+                console.log(`Case ${caseId} [Escavador]: skipped â€” Judit found no flags requiring cross-validation.`);
                 await caseRef.update({
                     escavadorEnrichmentStatus: 'SKIPPED',
                     escavadorError: null,
@@ -3597,9 +3597,9 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
 );
 
 /* =========================================================
-   DJEN — Cloud Function (triggered on case update)
-   Runs AFTER Judit completes. Searches comunicações judiciais.
-   DISABLED by default — requires tenant-level enablement.
+   DJEN â€” Cloud Function (triggered on case update)
+   Runs AFTER Judit completes. Searches comunicaÃ§Ãµes judiciais.
+   DISABLED by default â€” requires tenant-level enablement.
    ========================================================= */
 
 exports.enrichDjenOnCase = onDocumentUpdated(
@@ -3660,7 +3660,7 @@ exports.enrichDjenOnCase = onDocumentUpdated(
 );
 
 /* =========================================================
-   DJEN — Enrichment Phase (comunicações judiciais)
+   DJEN â€” Enrichment Phase (comunicaÃ§Ãµes judiciais)
    Hybrid strategy: byProcess (precise) + byName (discovery).
    Post-fetch filtering with CPF/process/name confirmation.
    FREE, no API key.
@@ -3688,7 +3688,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
         // ------ Phase 1: byProcess (precise, no homonym risk) ------
         if (strategy === 'byProcess' || strategy === 'hybrid') {
             if (knownProcesses.length > 0) {
-                console.log(`Case ${caseId} [DJEN]: phase 1 — querying ${knownProcesses.length} process(es) by number.`);
+                console.log(`Case ${caseId} [DJEN]: phase 1 â€” querying ${knownProcesses.length} process(es) by number.`);
 
                 for (const cnj of knownProcesses) {
                     const result = await queryComunicacoesByProcesso(cnj);
@@ -3706,7 +3706,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
                     }
                 }
             } else if (strategy === 'byProcess') {
-                // byProcess only + no known processes → SKIPPED
+                // byProcess only + no known processes â†’ SKIPPED
                 console.log(`Case ${caseId} [DJEN]: no known processes to search, skipping.`);
                 await caseRef.update({
                     djenEnrichmentStatus: 'SKIPPED',
@@ -3718,21 +3718,21 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
             }
         }
 
-        // ------ Phase 2: byName (discovery — finds NEW processes) ------
+        // ------ Phase 2: byName (discovery â€” finds NEW processes) ------
         if (strategy === 'byName' || strategy === 'hybrid') {
             if (!candidateName) {
                 if (strategy === 'byName') {
                     await caseRef.update({
                         djenEnrichmentStatus: 'FAILED',
-                        djenError: 'Nome do candidato não disponível.',
+                        djenError: 'Nome do candidato nÃ£o disponÃ­vel.',
                         updatedAt: FieldValue.serverTimestamp(),
                     });
-                    return { status: 'FAILED', error: 'Nome do candidato não disponível.' };
+                    return { status: 'FAILED', error: 'Nome do candidato nÃ£o disponÃ­vel.' };
                 }
                 // hybrid: byProcess already ran, just skip name phase
                 console.log(`Case ${caseId} [DJEN]: no candidate name, skipping byName phase.`);
             } else {
-                console.log(`Case ${caseId} [DJEN]: phase 2 — querying by name "${candidateName}"`);
+                console.log(`Case ${caseId} [DJEN]: phase 2 â€” querying by name "${candidateName}"`);
                 const nameResult = await queryComunicacoesByName(candidateName, {
                     maxPages: djenConfig.maxPages || 3,
                     siglaTribunal: djenConfig.filters?.siglaTribunal || undefined,
@@ -3802,7 +3802,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
                     console.error(`Case ${caseId} [AutoClassify via DJEN]: error:`, classifyErr.message);
                 }
             } else {
-                console.log(`Case ${caseId} [AutoClassify via DJEN]: deferred — Escavador still RUNNING.`);
+                console.log(`Case ${caseId} [AutoClassify via DJEN]: deferred â€” Escavador still RUNNING.`);
             }
         }
 
@@ -3819,7 +3819,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
         });
         await materializeModuleRunsFromCaseRef(caseRef, caseId, caseData);
 
-        // Run auto-classify even on DJEN failure — DJEN data is supplementary
+        // Run auto-classify even on DJEN failure â€” DJEN data is supplementary
         if (!options.skipAutoClassify) {
             try {
                 const freshDoc = await caseRef.get();
@@ -4039,7 +4039,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                     Object.assign(updatePayload, buildAiPrefillUpdatePayload(prefillResult));
                     console.log(`Case ${caseId} [AI_PREFILL]: ${prefillResult.error ? 'ERROR' : 'OK'} (${prefillResult.fromCache ? 'cached' : 'fresh'}, structured=${prefillResult.structuredOk})`);
                 } else {
-                    console.log(`Case ${caseId} [AI_PREFILL]: Skipped — AI general analysis failed or not structured.`);
+                    console.log(`Case ${caseId} [AI_PREFILL]: Skipped â€” AI general analysis failed or not structured.`);
                     updatePayload.prefillNarratives = {
                         metadata: {
                             model: AI_MODEL,
@@ -4158,7 +4158,7 @@ function computeAutoClassification(caseData) {
     const djenDone = caseData.djenEnrichmentStatus === 'DONE';
     const djenCriminal = djenDone && caseData.djenCriminalFlag === 'POSITIVE';
     const djenLabor = djenDone && caseData.djenLaborFlag === true;
-    // DJEN searches by name only — unreliable as strong evidence for common names
+    // DJEN searches by name only â€” unreliable as strong evidence for common names
     const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
     const djenReliableAsStrongEvidence = namesakeCount <= 10;
     const djenCriminalStrong = djenCriminal && djenReliableAsStrongEvidence;
@@ -4176,7 +4176,7 @@ function computeAutoClassification(caseData) {
     const coverageReasonLabels = {
         JUDIT_ZERO_ESCAVADOR_FOUND: 'Judit sem retorno processual enquanto Escavador encontrou registros.',
         ESCAVADOR_ZERO_JUDIT_FOUND: 'Escavador sem retorno enquanto Judit encontrou registros.',
-        ESCAVADOR_ZERO_BDC_COMPENSATES: 'Escavador sem retorno, porem BigDataCorp confirmou processos — divergencia reduzida.',
+        ESCAVADOR_ZERO_BDC_COMPENSATES: 'Escavador sem retorno, porem BigDataCorp confirmou processos â€” divergencia reduzida.',
         PROCESS_COUNT_DIVERGENCE: 'Quantidade de processos diverge entre os providers.',
         ONLY_WEAK_EVIDENCE: 'Ha apenas evidencias fracas por nome ou identidade parcial.',
         MIXED_STRONG_AND_WEAK_EVIDENCE: 'Ha mistura de evidencia forte com ruido por nome/homonimo.',
@@ -4310,7 +4310,7 @@ function computeAutoClassification(caseData) {
         result.criminalEvidenceQuality = 'WEAK_NAME_ONLY';
         pushUnique(criminalNotes, `Criminal INCONCLUSIVO por homonimia: ${weakCriminalCandidates.length} achado(s) dependem de nome, identidade fraca ou geografia inconsistente.`);
         if (djenCriminalWeak) {
-            pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) no Diario de Justica Eletronico desconsiderada(s) como evidencia forte — nome com ${namesakeCount} homonimos no Brasil.`);
+            pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) no Diario de Justica Eletronico desconsiderada(s) como evidencia forte â€” nome com ${namesakeCount} homonimos no Brasil.`);
         }
         ambiguityNotes.forEach((note) => pushUnique(criminalNotes, note));
     } else if (escavadorFailed && juditFailed && fontedataFailed) {
@@ -4493,13 +4493,13 @@ function computeAutoClassification(caseData) {
 }
 
 /* =========================================================
-   JUDIT onDocumentUpdated — REMOVED (now onDocumentCreated primary).
+   JUDIT onDocumentUpdated â€” REMOVED (now onDocumentCreated primary).
    Backward compat: old cases with enrichmentStatus DONE/PARTIAL
    will NOT auto-trigger Judit. Use manual rerun instead.
    ========================================================= */
 
 /* =========================================================
-   PUBLISH RESULT ON CASE DONE — Subcollection for client access
+   PUBLISH RESULT ON CASE DONE â€” Subcollection for client access
    Creates cases/{caseId}/publicResult/latest with sanitized fields.
    Only fires when analyst concludes (status transitions to DONE).
    ========================================================= */
@@ -4643,7 +4643,7 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
         const caseId = event.params.caseId;
 
         if (after.status === 'DONE') {
-            // P06: Guard — skip if concludeCaseByAnalyst already wrote publicResult/latest synchronously
+            // P06: Guard â€” skip if concludeCaseByAnalyst already wrote publicResult/latest synchronously
             const existingPublic = await db.collection('cases').doc(caseId).collection('publicResult').doc('latest').get();
             if (existingPublic.exists) {
                 const existingConcludedAt = existingPublic.data()?.concludedAt;
@@ -4751,7 +4751,7 @@ exports.createOpsClientUser = onCall(
 );
 
 /* =========================================================
-   TENANT USER MANAGEMENT — Client manager self-service
+   TENANT USER MANAGEMENT â€” Client manager self-service
    ========================================================= */
 
 exports.listTenantUsers = onCall(
@@ -4941,7 +4941,7 @@ exports.updateTenantUser = onCall(
     },
 );
 
-/* ── updateOwnProfile ── */
+/* â”€â”€ updateOwnProfile â”€â”€ */
 exports.updateOwnProfile = onCall(
     { region: 'southamerica-east1' },
     async (request) => {
@@ -6040,9 +6040,9 @@ function buildProcessHighlights(caseData) {
         area,
         source: 'Judit / Escavador / BigDataCorp',
         total: items.length,
-        summary: `${items.length} registro(s) identificado(s) na área ${area}.`,
+        summary: `${items.length} registro(s) identificado(s) na Ã¡rea ${area}.`,
         items: items.map((p) => ({
-            processNumber: p.processNumber || 'Nº não disponível',
+            processNumber: p.processNumber || 'NÂº nÃ£o disponÃ­vel',
             status: p.status,
             court: p.court,
             classification: p.classification,
@@ -6053,7 +6053,7 @@ function buildProcessHighlights(caseData) {
 
 function buildWarrantFindings(caseData) {
     const findings = (caseData.juditWarrants || []).map((w) => ({
-        status: w.status || 'Status não informado',
+        status: w.status || 'Status nÃ£o informado',
         court: w.court || w.tribunalAcronym || null,
         reference: w.code || null,
         source: 'Judit',
@@ -6064,7 +6064,7 @@ function buildWarrantFindings(caseData) {
             w.regime ? `Regime: ${w.regime}` : null,
         ].filter(Boolean).join('. '),
     }));
-    // FonteData is a reserve provider — only include its warrant finding when Judit returned nothing
+    // FonteData is a reserve provider â€” only include its warrant finding when Judit returned nothing
     if (findings.length === 0 && caseData.enrichmentSources?.warrant && !caseData.enrichmentSources.warrant.error) {
         const ws = caseData.enrichmentSources.warrant;
         if (ws.result === 'POSITIVE' || caseData.warrantFlag === 'POSITIVE') {
@@ -6083,7 +6083,7 @@ function buildWarrantFindings(caseData) {
 /* =========================================================
    DETERMINISTIC PREFILL: parallel generation for comparison.
    These helpers produce fully deterministic narratives using
-   only enrichment data + autoClassification — NO AI involved.
+   only enrichment data + autoClassification â€” NO AI involved.
    ========================================================= */
 
 function evaluateComplexityTriggers(caseData) {
@@ -6111,18 +6111,18 @@ function buildDetCriminalNotes(caseData) {
     const cpfConfirmed = criminalProcesses.filter((p) => p.matchType === 'CPF confirmado');
     const nameOnly = criminalProcesses.filter((p) => p.matchType !== 'CPF confirmado');
 
-    // Header context (no redundant status — badge already in report)
+    // Header context (no redundant status â€” badge already in report)
     if (cf === 'POSITIVE') {
-        const sev = (caseData.criminalSeverity || 'não classificada').toUpperCase();
-        parts.push(`Severidade ${sev}. Síntese dos registros em nome de ${caseData.candidateName || 'candidato(a)'}:`);
+        const sev = (caseData.criminalSeverity || 'nÃ£o classificada').toUpperCase();
+        parts.push(`Severidade ${sev}. SÃ­ntese dos registros em nome de ${caseData.candidateName || 'candidato(a)'}:`);
     } else if (cf === 'INCONCLUSIVE_HOMONYM') {
-        parts.push('Possível homonímia detectada — registros identificados podem não pertencer ao candidato.');
+        parts.push('PossÃ­vel homonÃ­mia detectada â€” registros identificados podem nÃ£o pertencer ao candidato.');
     } else if (cf === 'INCONCLUSIVE_LOW_COVERAGE') {
-        parts.push('Cobertura insuficiente das bases consultadas — resultado pode não refletir a situação real.');
+        parts.push('Cobertura insuficiente das bases consultadas â€” resultado pode nÃ£o refletir a situaÃ§Ã£o real.');
     } else if (cf === 'NEGATIVE_PARTIAL') {
-        parts.push('Consulta realizada com cobertura parcial das bases disponíveis.');
+        parts.push('Consulta realizada com cobertura parcial das bases disponÃ­veis.');
     } else if (cf === 'NOT_FOUND') {
-        parts.push('Candidato não localizado nas bases criminais consultadas.');
+        parts.push('Candidato nÃ£o localizado nas bases criminais consultadas.');
     } else {
         parts.push('Nenhum processo criminal identificado nas bases consultadas.');
         return parts.join('\n');
@@ -6145,7 +6145,7 @@ function buildDetCriminalNotes(caseData) {
             if (sentence.articles.length > 0) opts.articles = sentence.articles;
             if (cg.found) {
                 const cgLabel = cg.tipo ? `Carta de guia ${cg.tipo.toLowerCase()}` : 'Carta de guia';
-                opts.cartaDeGuia = `${cgLabel} expedida — condenação transitada em julgado`;
+                opts.cartaDeGuia = `${cgLabel} expedida â€” condenaÃ§Ã£o transitada em julgado`;
             }
             parts.push('');
             parts.push(`${i + 1}. ${formatCnj(p.cnj)}`);
@@ -6156,7 +6156,7 @@ function buildDetCriminalNotes(caseData) {
     // Name-only processes
     if (nameOnly.length > 0) {
         parts.push('');
-        const label = nameOnly.length === 1 ? 'PROCESSO ADICIONAL (sem confirmação de CPF):' : `PROCESSOS ADICIONAIS (${nameOnly.length}, sem confirmação de CPF):`;
+        const label = nameOnly.length === 1 ? 'PROCESSO ADICIONAL (sem confirmaÃ§Ã£o de CPF):' : `PROCESSOS ADICIONAIS (${nameOnly.length}, sem confirmaÃ§Ã£o de CPF):`;
         parts.push(label);
         for (const p of nameOnly) {
             parts.push('');
@@ -6164,11 +6164,11 @@ function buildDetCriminalNotes(caseData) {
         }
         if (namesakeCount != null) {
             if (namesakeCount <= 1) {
-                parts.push(`   Nota: Apenas ${namesakeCount || 1} pessoa no Brasil com o nome "${caseData.candidateName || 'N/A'}". Probabilidade alta de se referir ao mesmo indivíduo, porém sem confirmação documental.`);
+                parts.push(`   Nota: Apenas ${namesakeCount || 1} pessoa no Brasil com o nome "${caseData.candidateName || 'N/A'}". Probabilidade alta de se referir ao mesmo indivÃ­duo, porÃ©m sem confirmaÃ§Ã£o documental.`);
             } else if (namesakeCount <= 5) {
-                parts.push(`   Nota: ${namesakeCount} pessoas no Brasil com esse nome — probabilidade moderada de homonímia.`);
+                parts.push(`   Nota: ${namesakeCount} pessoas no Brasil com esse nome â€” probabilidade moderada de homonÃ­mia.`);
             } else {
-                parts.push(`   Nota: ${namesakeCount} pessoas no Brasil com esse nome — probabilidade relevante de homonímia.`);
+                parts.push(`   Nota: ${namesakeCount} pessoas no Brasil com esse nome â€” probabilidade relevante de homonÃ­mia.`);
             }
         }
     }
@@ -6176,7 +6176,7 @@ function buildDetCriminalNotes(caseData) {
     // Fallback body when header exists but no processes to list
     if (cpfConfirmed.length === 0 && nameOnly.length === 0 && cf !== 'NEGATIVE') {
         parts.push('');
-        parts.push('Dados detalhados de processos indisponíveis — classificação baseada nos indicadores das fontes consultadas.');
+        parts.push('Dados detalhados de processos indisponÃ­veis â€” classificaÃ§Ã£o baseada nos indicadores das fontes consultadas.');
     }
 
     // Observations
@@ -6186,22 +6186,22 @@ function buildDetCriminalNotes(caseData) {
         const cg = detectCartaDeGuia(juditRoleSummary, p.cnj);
         if (cg.found) {
             const cgLabel = cg.tipo ? `Carta de Guia ${cg.tipo}` : 'Carta de Guia';
-            observations.push(`${cgLabel} expedida no processo ${formatCnj(p.cnj)} — condenação em fase de execução penal`);
+            observations.push(`${cgLabel} expedida no processo ${formatCnj(p.cnj)} â€” condenaÃ§Ã£o em fase de execuÃ§Ã£o penal`);
             break;
         }
     }
     // Penal execution
     if (caseData.juditExecutionFlag === 'POSITIVE') {
-        observations.push(`Execução penal registrada: ${caseData.juditExecutionCount || 1} registro(s)`);
+        observations.push(`ExecuÃ§Ã£o penal registrada: ${caseData.juditExecutionCount || 1} registro(s)`);
     }
     // PEP / Sanctions
     if (caseData.pepFlag === 'POSITIVE') {
         observations.push(`Pessoa politicamente exposta (PEP) detectada`);
     }
     if (caseData.sanctionFlag === 'POSITIVE') {
-        observations.push(`Sanção ativa detectada`);
+        observations.push(`SanÃ§Ã£o ativa detectada`);
     } else if (caseData.sanctionFlag === 'HISTORICAL') {
-        observations.push(`Histórico de sanção (não ativa) registrado`);
+        observations.push(`HistÃ³rico de sanÃ§Ã£o (nÃ£o ativa) registrado`);
     }
     // Geographic concentration
     const comarcas = [...new Set(criminalProcesses.map((p) => p.comarca).filter(Boolean))];
@@ -6211,9 +6211,9 @@ function buildDetCriminalNotes(caseData) {
 
     if (observations.length > 0) {
         parts.push('');
-        parts.push('OBSERVAÇÕES:');
+        parts.push('OBSERVAÃ‡Ã•ES:');
         for (const obs of observations) {
-            parts.push(`• ${obs}`);
+            parts.push(`â€¢ ${obs}`);
         }
     }
 
@@ -6226,15 +6226,15 @@ function buildDetLaborNotes(caseData) {
     const topProcessos = selectTopProcessos(caseData, 20);
     const laborProcesses = topProcessos.filter((p) => p.isTrabalhista);
 
-    // Header context (no redundant status — badge already in report)
+    // Header context (no redundant status â€” badge already in report)
     if (lf === 'POSITIVE') {
         parts.push('Processos trabalhistas identificados nas bases consultadas.');
     } else if (lf === 'INCONCLUSIVE') {
-        parts.push('Resultado inconclusivo na análise trabalhista.');
+        parts.push('Resultado inconclusivo na anÃ¡lise trabalhista.');
     } else if (lf === 'NOT_FOUND') {
-        parts.push('Candidato não localizado nas bases trabalhistas consultadas.');
+        parts.push('Candidato nÃ£o localizado nas bases trabalhistas consultadas.');
     } else {
-        parts.push('Não possui, até a data da solicitação, nenhum processo trabalhista já distribuído em seu nome.');
+        parts.push('NÃ£o possui, atÃ© a data da solicitaÃ§Ã£o, nenhum processo trabalhista jÃ¡ distribuÃ­do em seu nome.');
     }
 
     // Process listing (when POSITIVE)
@@ -6252,7 +6252,7 @@ function buildDetLaborNotes(caseData) {
         }
     }
 
-    // Professional context — ALWAYS shown
+    // Professional context â€” ALWAYS shown
     parts.push('');
     parts.push('CONTEXTO PROFISSIONAL:');
     const profHistory = caseData.bigdatacorpProfessionHistory;
@@ -6263,20 +6263,20 @@ function buildDetLaborNotes(caseData) {
 
     if (employer || (profHistory && profHistory.length > 0)) {
         const prof = profHistory?.[0];
-        const empName = employer || prof?.companyName || 'não informado';
+        const empName = employer || prof?.companyName || 'nÃ£o informado';
         const cnpj = employerCnpj || prof?.companyCnpj || null;
         const rawSector = sector || prof?.sector || null;
-        // Clean sector: "PRIVATE - 6204000 - CONSULTORIA EM TI" → "Consultoria em Tecnologia da Informação (Privado)"
+        // Clean sector: "PRIVATE - 6204000 - CONSULTORIA EM TI" â†’ "Consultoria em Tecnologia da InformaÃ§Ã£o (Privado)"
         let sectorLabel = null;
         if (rawSector) {
             const sectorParts = rawSector.split(' - ');
-            const sectorType = /private/i.test(sectorParts[0] || '') ? 'Privado' : /public/i.test(sectorParts[0] || '') ? 'Público' : null;
+            const sectorType = /private/i.test(sectorParts[0] || '') ? 'Privado' : /public/i.test(sectorParts[0] || '') ? 'PÃºblico' : null;
             const sectorDesc = sectorParts.length >= 3 ? sectorParts.slice(2).join(' - ') : sectorParts[sectorParts.length - 1];
             sectorLabel = sectorDesc ? `${sectorDesc.charAt(0).toUpperCase()}${sectorDesc.slice(1).toLowerCase()}` : null;
             if (sectorType && sectorLabel) sectorLabel += ` (${sectorType})`;
         }
 
-        parts.push(`   Último empregador registrado: ${empName}`);
+        parts.push(`   Ãšltimo empregador registrado: ${empName}`);
         if (cnpj) {
             const fmtCnpj = cnpj.length === 14 ? `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12,14)}` : cnpj;
             parts.push(`   CNPJ: ${fmtCnpj}`);
@@ -6285,10 +6285,10 @@ function buildDetLaborNotes(caseData) {
         // Employment status and start date
         const startDate = prof?.startDate;
         if (isEmployed || /active/i.test(prof?.status || '')) {
-              parts.push(`   Vínculo: Registrado${startDate ? ` desde ${formatDateBR(startDate)}` : ''} (última atualização na base)`);
+              parts.push(`   VÃ­nculo: Registrado${startDate ? ` desde ${formatDateBR(startDate)}` : ''} (Ãºltima atualizaÃ§Ã£o na base)`);
         } else if (startDate) {
             const endDate = prof?.endDate && !prof.endDate.startsWith('9999') ? formatDateBR(prof.endDate) : null;
-            parts.push(`   Vínculo: Encerrado${endDate ? ` em ${endDate}` : ''}`);
+            parts.push(`   VÃ­nculo: Encerrado${endDate ? ` em ${endDate}` : ''}`);
         }
         // Salary range
         const incomeRange = prof?.incomeRange;
@@ -6302,9 +6302,9 @@ function buildDetLaborNotes(caseData) {
         }
         // Public servant check
         const isPublic = /public/i.test(rawSector || '') || /servidor|concurs/i.test(prof?.level || '');
-        parts.push(`   Servidor público: ${isPublic ? 'Sim' : 'Não'}`);
+        parts.push(`   Servidor pÃºblico: ${isPublic ? 'Sim' : 'NÃ£o'}`);
     } else {
-        parts.push('   Dados profissionais não disponíveis nas bases consultadas.');
+        parts.push('   Dados profissionais nÃ£o disponÃ­veis nas bases consultadas.');
     }
 
     return parts.join('\n');
@@ -6345,17 +6345,17 @@ function buildDetWarrantNotes(caseData) {
         unified.push({ ...w, _source: 'bdc' });
     }
 
-    // Header context (no redundant status — badge already in report)
+    // Header context (no redundant status â€” badge already in report)
     if (wf === 'POSITIVE' && unified.length > 0) {
-        // No header — go straight to warrant listing
+        // No header â€” go straight to warrant listing
     } else if (wf === 'POSITIVE' && unified.length === 0) {
-        parts.push('Mandado de prisão registrado — dados detalhados indisponíveis nas fontes. Verificar diretamente.');
+        parts.push('Mandado de prisÃ£o registrado â€” dados detalhados indisponÃ­veis nas fontes. Verificar diretamente.');
     } else if (wf === 'INCONCLUSIVE') {
-        parts.push('Resultado inconclusivo na consulta de mandados de prisão.');
+        parts.push('Resultado inconclusivo na consulta de mandados de prisÃ£o.');
     } else if (wf === 'NOT_FOUND') {
-        parts.push('Candidato não localizado nas bases de mandados consultadas.');
+        parts.push('Candidato nÃ£o localizado nas bases de mandados consultadas.');
     } else {
-        parts.push('Nenhum mandado de prisão identificado nas bases consultadas.');
+        parts.push('Nenhum mandado de prisÃ£o identificado nas bases consultadas.');
         return parts.join('\n');
     }
 
@@ -6370,7 +6370,7 @@ function buildDetWarrantNotes(caseData) {
             parts.push('');
             parts.push(`${indent}Processo: ${formatCnj(w.processNumber || w.code)}`);
             parts.push(`${indent}Tipo: ${wType.label}`);
-            parts.push(`${indent}Status: ${w.status || 'não informado'}`);
+            parts.push(`${indent}Status: ${w.status || 'nÃ£o informado'}`);
             const vara = w.agency || w.court || null;
             if (vara) parts.push(`${indent}Vara: ${vara}`);
             const comarca = w.county || null;
@@ -6379,13 +6379,13 @@ function buildDetWarrantNotes(caseData) {
             const expDate = w.expirationDate || null;
             if (issueDate || expDate) {
                 let dateStr = issueDate ? `Emitido: ${formatDateBR(issueDate)}` : '';
-                if (expDate) dateStr += `${dateStr ? ' | ' : ''}Válido até: ${formatDateBR(expDate)}`;
+                if (expDate) dateStr += `${dateStr ? ' | ' : ''}VÃ¡lido atÃ©: ${formatDateBR(expDate)}`;
                 parts.push(`${indent}${dateStr}`);
             }
             if (w.penaltyTime) {
                 const cleanPenalty = w.penaltyTime.replace(/\s*\(.*/, '').trim();
-                const suffix = /contados/i.test(w.penaltyTime) ? ' contados da data da prisão' : '';
-                parts.push(`${indent}Pena: até ${cleanPenalty}${/dias/i.test(cleanPenalty) ? '' : ' dias'}${suffix}`);
+                const suffix = /contados/i.test(w.penaltyTime) ? ' contados da data da prisÃ£o' : '';
+                parts.push(`${indent}Pena: atÃ© ${cleanPenalty}${/dias/i.test(cleanPenalty) ? '' : ' dias'}${suffix}`);
             }
             if (w.magistrate) parts.push(`${indent}Magistrado: ${w.magistrate}`);
 
@@ -6404,9 +6404,9 @@ function buildDetWarrantNotes(caseData) {
     for (const w of unified) {
         const wType = classifyWarrantType(w);
         if (wType.type === 'CIVIL') {
-            context.push(`Trata-se de prisão CIVIL por inadimplência alimentar — não é mandado de natureza criminal`);
+            context.push(`Trata-se de prisÃ£o CIVIL por inadimplÃªncia alimentar â€” nÃ£o Ã© mandado de natureza criminal`);
             if (w._linkedProcess) {
-                context.push(`Processo cível de alimentos vinculado: ${w._linkedProcess.cnj} (${w._linkedProcess.assunto}, status: ${w._linkedProcess.status})`);
+                context.push(`Processo cÃ­vel de alimentos vinculado: ${w._linkedProcess.cnj} (${w._linkedProcess.assunto}, status: ${w._linkedProcess.status})`);
             }
         }
     }
@@ -6417,7 +6417,7 @@ function buildDetWarrantNotes(caseData) {
         if (uniqueProcesses.length < bdcWarrants.length) {
             const magistrates = [...new Set(bdcWarrants.map((w) => w.magistrate).filter(Boolean))];
             if (magistrates.length > 1) {
-                context.push(`Detectadas ${bdcWarrants.length} decisões distintas — provável renovação do mandado`);
+                context.push(`Detectadas ${bdcWarrants.length} decisÃµes distintas â€” provÃ¡vel renovaÃ§Ã£o do mandado`);
             }
         }
     }
@@ -6426,7 +6426,7 @@ function buildDetWarrantNotes(caseData) {
         parts.push('');
         parts.push('CONTEXTO:');
         for (const c of context) {
-            parts.push(`• ${c}`);
+            parts.push(`â€¢ ${c}`);
         }
     }
 
@@ -6445,7 +6445,7 @@ function buildDetKeyFindings(caseData) {
     for (const p of criminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
         const sentence = extractSentenceDetails(p.allDecisions);
         if (sentence.isConviction) {
-            let txt = `Condenação criminal definitiva`;
+            let txt = `CondenaÃ§Ã£o criminal definitiva`;
             if (p.assunto) txt += ` por ${p.assunto.toLowerCase()}`;
             if (sentence.penalty) txt += `, pena: ${sentence.penalty.charAt(0) + sentence.penalty.slice(1).toLowerCase()}`;
             findings.push(txt);
@@ -6458,7 +6458,7 @@ function buildDetKeyFindings(caseData) {
         const cg = detectCartaDeGuia(juditRoleSummary, p.cnj);
         if (cg.found) {
             const cgLabel = cg.tipo ? `Carta de Guia ${cg.tipo}` : 'Carta de Guia';
-            findings.push(`${cgLabel} expedida — condenação transitada em julgado`);
+            findings.push(`${cgLabel} expedida â€” condenaÃ§Ã£o transitada em julgado`);
             break;
         }
     }
@@ -6471,8 +6471,8 @@ function buildDetKeyFindings(caseData) {
         // Classify warrant type
         const allWarrants = [...(caseData.juditWarrants || []), ...bdcWarrants];
         const wType = allWarrants.length > 0 ? classifyWarrantType(allWarrants[0]) : null;
-        let wTxt = `Mandado de prisão${wType?.type === 'CIVIL' ? ' civil' : ''} pendente de cumprimento`;
-        if (wType?.type === 'CIVIL') wTxt += ', decorrente de inadimplência de obrigação alimentar';
+        let wTxt = `Mandado de prisÃ£o${wType?.type === 'CIVIL' ? ' civil' : ''} pendente de cumprimento`;
+        if (wType?.type === 'CIVIL') wTxt += ', decorrente de inadimplÃªncia de obrigaÃ§Ã£o alimentar';
         findings.push(wTxt);
     }
 
@@ -6488,7 +6488,7 @@ function buildDetKeyFindings(caseData) {
     // Priority 5: Active alimony/civil process
     const civilActive = topProcessos.filter((p) => !p.isCriminal && !p.isTrabalhista && p.isActive && /aliment/i.test(p.assunto || ''));
     if (civilActive.length > 0) {
-        findings.push('Processo cível de alimentos ativo — candidato figura como executado');
+        findings.push('Processo cÃ­vel de alimentos ativo â€” candidato figura como executado');
     }
 
     // Priority 6: PEP
@@ -6498,14 +6498,14 @@ function buildDetKeyFindings(caseData) {
 
     // Priority 7: Sanctions
     if (caseData.sanctionFlag === 'POSITIVE') {
-        findings.push(`Sanção ativa detectada`);
+        findings.push(`SanÃ§Ã£o ativa detectada`);
     }
 
     // Priority 8: Consolidated negatives
     const negatives = [];
     const laborProcesses = topProcessos.filter((p) => p.isTrabalhista);
     if (laborProcesses.length === 0 && caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
-    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanções');
+    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanÃ§Ãµes');
     if (caseData.pepFlag !== 'POSITIVE') negatives.push('PEP');
     if (negatives.length >= 2) {
         findings.push(`Nenhum apontamento ${negatives.join(', ')} identificado`);
@@ -6534,7 +6534,7 @@ function buildDetExecutiveSummary(caseData) {
     }
     let bioLine = bioItems.join(', ') + '.';
     if (caseData.bigdatacorpMotherName) {
-        bioLine += ` Filiação materna: ${caseData.bigdatacorpMotherName}.`;
+        bioLine += ` FiliaÃ§Ã£o materna: ${caseData.bigdatacorpMotherName}.`;
     }
     parts.push(bioLine);
 
@@ -6543,14 +6543,14 @@ function buildDetExecutiveSummary(caseData) {
     const profHistory = caseData.bigdatacorpProfessionHistory;
     if (employer || (profHistory && profHistory.length > 0)) {
         const prof = profHistory?.[0];
-        const empName = employer || prof?.companyName || 'não informado';
+        const empName = employer || prof?.companyName || 'nÃ£o informado';
         const rawSector = caseData.bigdatacorpSector || prof?.sector || '';
         const sectorParts = rawSector.split(' - ');
         const sectorDesc = sectorParts.length >= 3 ? sectorParts.slice(2).join(' - ').toLowerCase() : '';
         const incomeRange = prof?.incomeRange;
         const isEmployed = caseData.bigdatacorpIsEmployed || /active/i.test(prof?.status || '');
         const startDate = prof?.startDate;
-        let profLine = `Contexto profissional: último empregador registrado — ${empName}`;
+        let profLine = `Contexto profissional: Ãºltimo empregador registrado â€” ${empName}`;
         if (sectorDesc) profLine += `, setor de ${sectorDesc}`;
         if (incomeRange) profLine += `, faixa salarial ${incomeRange}`;
             if (isEmployed && startDate) profLine += `, registrado desde ${formatDateBR(startDate)}`;
@@ -6568,48 +6568,48 @@ function buildDetExecutiveSummary(caseData) {
         for (const p of criminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
             const sentence = extractSentenceDetails(p.allDecisions);
             if (sentence.isConviction) {
-                convictionText = `condenação criminal definitiva`;
+                convictionText = `condenaÃ§Ã£o criminal definitiva`;
                 if (p.assunto) convictionText += ` por ${p.assunto.toLowerCase()}`;
                 if (sentence.penalty) convictionText += `, com pena de ${sentence.penalty.charAt(0) + sentence.penalty.slice(1).toLowerCase()}`;
                 if (sentence.regime) convictionText += ` em regime ${sentence.regime.toLowerCase()}`;
                 // Check carta de guia
                 const cg = detectCartaDeGuia(juditRoleSummary, p.cnj);
                 if (cg.found) {
-                    convictionText += '. A carta de guia definitiva já foi expedida, confirmando trânsito em julgado';
+                    convictionText += '. A carta de guia definitiva jÃ¡ foi expedida, confirmando trÃ¢nsito em julgado';
                 }
                 break;
             }
         }
         findingsSentences.push(convictionText);
     } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
-        findingsSentences.push('apontamento criminal inconclusivo pendente de confirmação');
+        findingsSentences.push('apontamento criminal inconclusivo pendente de confirmaÃ§Ã£o');
     }
 
     const wf = caseData.warrantFlag;
     if (wf === 'POSITIVE') {
         const allWarrants = [...(caseData.juditWarrants || []), ...(caseData.bigdatacorpActiveWarrants || [])];
         const wType = allWarrants.length > 0 ? classifyWarrantType(allWarrants[0]) : null;
-        let wText = 'mandado de prisão pendente de cumprimento';
-        if (wType?.type === 'CIVIL') wText = 'mandado de prisão civil pendente de cumprimento, vinculado a inadimplência de obrigação alimentar';
+        let wText = 'mandado de prisÃ£o pendente de cumprimento';
+        if (wType?.type === 'CIVIL') wText = 'mandado de prisÃ£o civil pendente de cumprimento, vinculado a inadimplÃªncia de obrigaÃ§Ã£o alimentar';
         findingsSentences.push(wText);
     }
 
     // Consolidated negatives
     const negatives = [];
     if (caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
-    if (caseData.pepFlag !== 'POSITIVE') negatives.push('exposição política (PEP)');
-    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanção internacional');
+    if (caseData.pepFlag !== 'POSITIVE') negatives.push('exposiÃ§Ã£o polÃ­tica (PEP)');
+    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanÃ§Ã£o internacional');
     if (negatives.length > 0) {
         findingsSentences.push(`nenhum apontamento ${negatives.join(', ')} identificado`);
     }
 
     // PEP / Sanctions if positive
     if (caseData.pepFlag === 'POSITIVE') findingsSentences.push('pessoa politicamente exposta (PEP) detectada');
-    if (caseData.sanctionFlag === 'POSITIVE') findingsSentences.push('sanção ativa detectada');
+    if (caseData.sanctionFlag === 'POSITIVE') findingsSentences.push('sanÃ§Ã£o ativa detectada');
 
     if (findingsSentences.length > 0) {
         parts.push('');
-        parts.push(`A análise identificou ${findingsSentences.join('. Há ')}.`);
+        parts.push(`A anÃ¡lise identificou ${findingsSentences.join('. HÃ¡ ')}.`);
     }
 
     // Paragraph 4: Risk level
@@ -6623,8 +6623,8 @@ function buildDetExecutiveSummary(caseData) {
         pepRisk,
         sanctionRisk,
     );
-    const _riskLabel = maxRisk >= 70 ? 'ALTO' : maxRisk >= 40 ? 'MÉDIO' : 'BAIXO';
-    // Risk level omitted from text — already shown as badge in report Risk Box
+    const _riskLabel = maxRisk >= 70 ? 'ALTO' : maxRisk >= 40 ? 'MÃ‰DIO' : 'BAIXO';
+    // Risk level omitted from text â€” already shown as badge in report Risk Box
 
     return parts.join('\n');
 }
@@ -6637,7 +6637,7 @@ function buildDetFinalJustification(caseData) {
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const namesakeCount = caseData.bigdatacorpNamesakeCount;
 
-    // Determine verdict — always derive from current flags (never use stale finalVerdict)
+    // Determine verdict â€” always derive from current flags (never use stale finalVerdict)
     let derivedVerdict;
     {
         const cf = caseData.criminalFlag;
@@ -6653,7 +6653,7 @@ function buildDetFinalJustification(caseData) {
         }
     }
 
-    // Verdict omitted from text — already shown as badge in report Risk Box
+    // Verdict omitted from text â€” already shown as badge in report Risk Box
 
     // Paragraph 1: Criminal analysis
     const cf = caseData.criminalFlag;
@@ -6664,7 +6664,7 @@ function buildDetFinalJustification(caseData) {
         for (const p of cpfConfirmed) {
             const sentence = extractSentenceDetails(p.allDecisions);
             if (sentence.isConviction) {
-                crimParagraph = `O candidato possui condenação criminal definitiva`;
+                crimParagraph = `O candidato possui condenaÃ§Ã£o criminal definitiva`;
                 if (p.assunto) crimParagraph += ` por ${p.assunto.toLowerCase()}`;
                 if (sentence.articles.length > 0) crimParagraph += ` (${sentence.articles.join(', ')})`;
                 if (sentence.penalty) crimParagraph += `, com pena de ${sentence.penalty.charAt(0) + sentence.penalty.slice(1).toLowerCase()}`;
@@ -6673,7 +6673,7 @@ function buildDetFinalJustification(caseData) {
                 // Carta de guia
                 const cg = detectCartaDeGuia(juditRoleSummary, p.cnj);
                 if (cg.found) {
-                    crimParagraph += `. A condenação transitou em julgado, conforme atesta a expedição da carta de guia ${cg.tipo ? cg.tipo.toLowerCase() : ''}`;
+                    crimParagraph += `. A condenaÃ§Ã£o transitou em julgado, conforme atesta a expediÃ§Ã£o da carta de guia ${cg.tipo ? cg.tipo.toLowerCase() : ''}`;
                 }
                 crimParagraph += '.';
                 break;
@@ -6684,21 +6684,21 @@ function buildDetFinalJustification(caseData) {
                 const cpfCount = criminalProcesses.filter((p) => p.matchType === 'CPF confirmado').length;
                 const nameOnlyCount = criminalProcesses.length - cpfCount;
                 if (cpfCount > 0 && nameOnlyCount === 0) {
-                    crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.`;
+                    crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado, sem condenaÃ§Ã£o definitiva identificada atÃ© o momento.`;
                 } else if (cpfCount > 0) {
-                    crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado e ${nameOnlyCount} adicional(is) sem confirmação documental. Recomenda-se validação complementar.`;
+                    crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado e ${nameOnlyCount} adicional(is) sem confirmaÃ§Ã£o documental. Recomenda-se validaÃ§Ã£o complementar.`;
                 } else {
-                    crimParagraph = `${criminalProcesses.length} processo(s) criminal(is) identificado(s) — sem confirmação documental de CPF. Recomenda-se validação complementar.`;
+                    crimParagraph = `${criminalProcesses.length} processo(s) criminal(is) identificado(s) â€” sem confirmaÃ§Ã£o documental de CPF. Recomenda-se validaÃ§Ã£o complementar.`;
                 }
             } else {
-                crimParagraph = 'Indicadores criminais positivos nas fontes consultadas, porém sem processos detalhados disponíveis.';
+                crimParagraph = 'Indicadores criminais positivos nas fontes consultadas, porÃ©m sem processos detalhados disponÃ­veis.';
             }
         }
         parts.push('');
         parts.push(crimParagraph);
     } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
         parts.push('');
-        parts.push('Foram identificados apontamentos criminais, porém sem confirmação inequívoca de identidade. Recomenda-se análise complementar.');
+        parts.push('Foram identificados apontamentos criminais, porÃ©m sem confirmaÃ§Ã£o inequÃ­voca de identidade. Recomenda-se anÃ¡lise complementar.');
     }
 
     // Paragraph 2: Warrant context
@@ -6708,9 +6708,9 @@ function buildDetFinalJustification(caseData) {
         if (allWarrants.length > 0) {
             const w = allWarrants[0];
             const wType = classifyWarrantType(w);
-            let wParagraph = 'Adicionalmente, há mandado de prisão';
+            let wParagraph = 'Adicionalmente, hÃ¡ mandado de prisÃ£o';
             if (wType.type === 'CIVIL') {
-                wParagraph += ' civil pendente de cumprimento por inadimplência de obrigação alimentar';
+                wParagraph += ' civil pendente de cumprimento por inadimplÃªncia de obrigaÃ§Ã£o alimentar';
             } else {
                 wParagraph += ' pendente de cumprimento';
             }
@@ -6718,13 +6718,13 @@ function buildDetFinalJustification(caseData) {
             if (processNum) wParagraph += ` (processo ${formatCnj(processNum)})`;
             if (w.penaltyTime) {
                 const days = w.penaltyTime.match(/\d+/)?.[0];
-                if (days) wParagraph += `, com prazo de até ${days} dias`;
+                if (days) wParagraph += `, com prazo de atÃ© ${days} dias`;
             }
             wParagraph += '.';
             // Linked civil process
             const linked = findLinkedCivilProcess(caseData, w);
             if (linked) {
-                wParagraph += ` O candidato também é parte em processo cível ativo de ${linked.assunto.toLowerCase()} na mesma vara (${linked.cnj}).`;
+                wParagraph += ` O candidato tambÃ©m Ã© parte em processo cÃ­vel ativo de ${linked.assunto.toLowerCase()} na mesma vara (${linked.cnj}).`;
             }
             parts.push('');
             parts.push(wParagraph);
@@ -6737,50 +6737,50 @@ function buildDetFinalJustification(caseData) {
         secondaries.push('apontamentos trabalhistas');
     }
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') {
-        secondaries.push('sanções internacionais');
+        secondaries.push('sanÃ§Ãµes internacionais');
     }
     if (caseData.pepFlag !== 'POSITIVE') {
-        secondaries.push('exposição política');
+        secondaries.push('exposiÃ§Ã£o polÃ­tica');
     }
     if (secondaries.length > 0) {
         parts.push('');
-        let secondaryLine = `Não foram identificados ${secondaries.join(', ')}.`;
-        if (caseData.laborFlag === 'POSITIVE') secondaryLine += ' Há processos trabalhistas registrados.';
+        let secondaryLine = `NÃ£o foram identificados ${secondaries.join(', ')}.`;
+        if (caseData.laborFlag === 'POSITIVE') secondaryLine += ' HÃ¡ processos trabalhistas registrados.';
         parts.push(secondaryLine);
     }
     if (caseData.pepFlag === 'POSITIVE') {
         parts.push(`${name} foi identificado como pessoa politicamente exposta.`);
     }
     if (caseData.sanctionFlag === 'POSITIVE') {
-        parts.push('Há sanção ativa detectada nas bases consultadas.');
+        parts.push('HÃ¡ sanÃ§Ã£o ativa detectada nas bases consultadas.');
     }
 
     // Paragraph 4: Conclusion
     parts.push('');
     if (derivedVerdict === 'NOT_RECOMMENDED') {
-        parts.push('O conjunto de evidências configura risco elevado para continuidade do processo.');
+        parts.push('O conjunto de evidÃªncias configura risco elevado para continuidade do processo.');
     } else if (derivedVerdict === 'ATTENTION') {
-        parts.push('Os apontamentos identificados exigem validação manual antes de qualquer decisão final.');
+        parts.push('Os apontamentos identificados exigem validaÃ§Ã£o manual antes de qualquer decisÃ£o final.');
     } else {
-        parts.push('Não foram identificados impeditivos materiais, observados os limites das fontes consultadas.');
+        parts.push('NÃ£o foram identificados impeditivos materiais, observados os limites das fontes consultadas.');
     }
 
-    // Caveat: segredo de justiça + namesakeCount
+    // Caveat: segredo de justiÃ§a + namesakeCount
     const secretProcesses = topProcessos.filter((p) => /segredo|sigilo|oculta/i.test(p.status || '') || /segredo|sigilo/i.test(p.assunto || ''));
     const nameOnlyProcesses = criminalProcesses.filter((p) => p.matchType !== 'CPF confirmado');
     if (secretProcesses.length > 0 || nameOnlyProcesses.length > 0 || namesakeCount != null) {
         const caveats = [];
         if (secretProcesses.length > 0) {
             const cnjs = secretProcesses.slice(0, 2).map((p) => formatCnj(p.cnj));
-            caveats.push(`${secretProcesses.length} processo(s) sob segredo de justiça (${cnjs.join(', ')}) — sem confirmação documental de CPF`);
+            caveats.push(`${secretProcesses.length} processo(s) sob segredo de justiÃ§a (${cnjs.join(', ')}) â€” sem confirmaÃ§Ã£o documental de CPF`);
         }
         if (namesakeCount != null) {
             if (namesakeCount <= 1) {
-                caveats.push(`nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia`);
+                caveats.push(`nome com ocorrÃªncia Ãºnica no Brasil, o que reduz significativamente a possibilidade de homonÃ­mia`);
             } else if (namesakeCount <= 5) {
-                caveats.push(`${namesakeCount} pessoas no Brasil com esse nome — probabilidade moderada de homonímia`);
+                caveats.push(`${namesakeCount} pessoas no Brasil com esse nome â€” probabilidade moderada de homonÃ­mia`);
             } else {
-                caveats.push(`${namesakeCount} pessoas no Brasil com esse nome — probabilidade relevante de homonímia`);
+                caveats.push(`${namesakeCount} pessoas no Brasil com esse nome â€” probabilidade relevante de homonÃ­mia`);
             }
         }
         if (caveats.length > 0) {
@@ -6821,7 +6821,7 @@ function buildKeyFindings(caseData, formPayload) {
     const aiEvidencias = (caseData.aiStructured?.evidencias || []).slice(0, 5);
     findings.push(...aiEvidencias.filter((e) => typeof e === 'string'));
     if ((caseData.juditActiveWarrantCount || 0) > 0)
-        findings.push(`${caseData.juditActiveWarrantCount} mandado(s) de prisão pendente(s) de cumprimento.`);
+        findings.push(`${caseData.juditActiveWarrantCount} mandado(s) de prisÃ£o pendente(s) de cumprimento.`);
     const criminalFlag = formPayload?.criminalFlag || caseData.criminalFlag;
     if (criminalFlag === 'POSITIVE' && (caseData.juditCriminalCount || 0) > 0)
         findings.push(`${caseData.juditCriminalCount} processo(s) criminal(is) confirmado(s).`);
@@ -8719,7 +8719,7 @@ exports.setAiDecisionByAnalyst = onCall(
 );
 
 /* =========================================================
-   RE-RUN AI ANALYSIS — Callable function for analysts
+   RE-RUN AI ANALYSIS â€” Callable function for analysts
    Rate limited: max 3 runs per case, min 1 min between runs.
    ========================================================= */
 
@@ -8852,7 +8852,7 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         sourceSummary,
         statusSummary: caseData.statusSummary || 'Analise concluida e pronta para consulta e compartilhamento.',
     };
-    const { buildCaseReportHtml } = require('./reportBuilder.cjs');
+    const { buildCaseReportHtml } = require('./reportBuilder.js');
     const rawHtml = buildCaseReportHtml(reportData);
     const html = sanitizePublicReportHtml(rawHtml);
     if (!html.trim()) {
@@ -8937,8 +8937,8 @@ async function enforceTenantSubmissionLimits(tenantId, settings, { actor, ip } =
                 source: SOURCE.PORTAL_CLIENT,
                 ip: ip || null,
                 detail: result.blockedReason === 'daily'
-                    ? `Submissao bloqueada — limite diario de ${limit} consultas atingido`
-                    : `Submissao bloqueada — limite mensal de ${limit} consultas atingido`,
+                    ? `Submissao bloqueada â€” limite diario de ${limit} consultas atingido`
+                    : `Submissao bloqueada â€” limite mensal de ${limit} consultas atingido`,
                 templateVars: result.blockedReason === 'daily'
                     ? { dailyLimit: limit }
                     : { monthlyLimit: limit },
@@ -8961,7 +8961,7 @@ async function enforceTenantSubmissionLimits(tenantId, settings, { actor, ip } =
                 entity: { type: 'TENANT', id: tenantId, label: tenantId },
                 source: SOURCE.PORTAL_CLIENT,
                 ip: ip || null,
-                detail: `Limite diario excedido (${result.dailyCount}/${result.dailyLimit}) — consulta registrada como excedente do dia`,
+                detail: `Limite diario excedido (${result.dailyCount}/${result.dailyLimit}) â€” consulta registrada como excedente do dia`,
                 templateVars: { dailyCount: result.dailyCount, dailyLimit: result.dailyLimit },
             });
         }
@@ -8973,7 +8973,7 @@ async function enforceTenantSubmissionLimits(tenantId, settings, { actor, ip } =
                 entity: { type: 'TENANT', id: tenantId, label: tenantId },
                 source: SOURCE.PORTAL_CLIENT,
                 ip: ip || null,
-                detail: `Limite mensal excedido (${result.monthlyCount}/${result.monthlyLimit}) — consulta faturavel no proximo ciclo`,
+                detail: `Limite mensal excedido (${result.monthlyCount}/${result.monthlyLimit}) â€” consulta faturavel no proximo ciclo`,
                 templateVars: { monthlyCount: result.monthlyCount, monthlyLimit: result.monthlyLimit },
             });
         }
@@ -9037,7 +9037,7 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         const prefillResult = await runAiPrefillAnalysis(caseDataForAi, aiKey, { skipCache: true });
         Object.assign(updatePayload, buildAiPrefillUpdatePayload(prefillResult));
     } else {
-        console.log(`Case ${caseId} [AI_PREFILL rerun]: Skipped — AI general analysis failed.`);
+        console.log(`Case ${caseId} [AI_PREFILL rerun]: Skipped â€” AI general analysis failed.`);
         updatePayload.prefillNarratives = {
             metadata: {
                 model: AI_MODEL,
@@ -9324,7 +9324,7 @@ exports.rerunEnrichmentPhase = onCall(
 );
 
 /* =========================================================
-   JUDIT WEBHOOK HANDLER — Receives async results from Judit
+   JUDIT WEBHOOK HANDLER â€” Receives async results from Judit
    Instead of polling, Judit sends results to this endpoint.
    Judit docs: event_type is always "response_created".
    Completion: payload.response_type === "application_info" + response_data.code === 600
@@ -9519,7 +9519,7 @@ exports.juditWebhook = onRequest(
 );
 
 /* =========================================================
-   JUDIT ASYNC FALLBACK — Polls stale webhook-pending phases
+   JUDIT ASYNC FALLBACK â€” Polls stale webhook-pending phases
    Runs every 10 minutes. If a case has been waiting for a webhook
    callback for more than 10 minutes, falls back to direct polling.
    ========================================================= */
@@ -9614,7 +9614,7 @@ exports.juditAsyncFallback = onSchedule(
 
                 if (requestStatus === 'pending' || requestStatus === 'unknown') {
                     if (ageMs > 30 * 60 * 1000) {
-                        // Hard timeout — request never completed after 30 min
+                        // Hard timeout â€” request never completed after 30 min
                         const failUpdate = {};
                         const remaining = pendingPhases.filter((p) => p !== phaseType);
                         failUpdate[`juditSources.${phaseType}.error`] = 'Timeout: request Judit ainda pendente apos 30min.';
@@ -9640,7 +9640,7 @@ exports.juditAsyncFallback = onSchedule(
                         }
                         continue;
                     }
-                    // Request still pending and within acceptable window — skip, will retry next run
+                    // Request still pending and within acceptable window â€” skip, will retry next run
                     console.log(`[Judit Fallback]: request ${requestId} still ${requestStatus} for case ${caseId} phase ${phaseType} (${Math.round(ageMs / 60000)}min old). Will retry.`);
                     continue;
                 }
@@ -9699,7 +9699,7 @@ exports.juditAsyncFallback = onSchedule(
                     continue;
                 }
 
-                // Request is completed — now safely fetch responses
+                // Request is completed â€” now safely fetch responses
                 let items;
                 try {
                     items = await fetchResponses(requestId, apiKey);
@@ -9723,7 +9723,7 @@ exports.juditAsyncFallback = onSchedule(
                     continue;
                 }
 
-                // Successfully fetched responses — process them like the webhook would
+                // Successfully fetched responses â€” process them like the webhook would
                 const cpf = (currentCaseData.cpf || '').replace(/\D/g, '');
                 let normalized;
                 if (phaseType === 'warrant') {
@@ -9771,7 +9771,7 @@ exports.juditAsyncFallback = onSchedule(
                         const freshDoc = await caseRef.get();
                         const freshData = freshDoc.data() || {};
                         if (freshData.juditNeedsEscavador && (!freshData.escavadorEnrichmentStatus || freshData.escavadorEnrichmentStatus === 'PENDING' || freshData.escavadorEnrichmentStatus === 'SKIPPED')) {
-                            console.log(`[Judit Fallback]: auto-classify skipped for case ${caseId} — Escavador still pending.`);
+                            console.log(`[Judit Fallback]: auto-classify skipped for case ${caseId} â€” Escavador still pending.`);
                         } else {
                             await runAutoClassifyAndAi(caseRef, caseId, freshData);
                         }
@@ -9820,7 +9820,7 @@ exports.__test = {
 };
 
 /* =========================================================
-   SYSTEM HEALTH — Read-only endpoint for provider status
+   SYSTEM HEALTH â€” Read-only endpoint for provider status
    ========================================================= */
 
 exports.getSystemHealth = onCall(
@@ -9852,7 +9852,7 @@ exports.getSystemHealth = onCall(
 );
 
 /* =========================================================
-   CLIENT QUOTA STATUS — Read-only quota info for client portal
+   CLIENT QUOTA STATUS â€” Read-only quota info for client portal
    ========================================================= */
 
 exports.getClientQuotaStatus = onCall(
@@ -9863,7 +9863,7 @@ exports.getClientQuotaStatus = onCall(
     },
 );
 
-const { buildClientProductCatalog } = require('./domain/v2ProductCatalog.cjs');
+const { buildClientProductCatalog } = require('./domain/v2ProductCatalog.js');
 
 exports.createQuoteRequest = onCall(
     { region: 'southamerica-east1' },
@@ -10282,5 +10282,32 @@ exports.scheduledBillingClosureJob = onSchedule(
         }
 
         console.log(`scheduledBillingClosureJob: ${processed} fechamento(s), ${failed} falha(s), mes ${monthKey}.`);
+    }
+);
+
+/* =========================================================
+   REST API V1 â€” Exposes controllers via HTTP
+   ========================================================= */
+
+const { router } = require('./interfaces/http/routes');
+const { tenantResolver } = require('./interfaces/http/middleware/tenantResolver');
+
+exports.apiV1 = onRequest(
+    {
+      region: 'southamerica-east1',
+      cors: true,
+      secrets: [bigdatacorpAccessToken, bigdatacorpTokenId],
+    },
+    async (req, res) => {
+        if (req.method === 'OPTIONS') {
+            res.set('Access-Control-Allow-Origin', '*');
+            res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+            res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            res.status(204).send('');
+            return;
+        }
+        await tenantResolver(req, res, async () => {
+            await router(req, res);
+        });
     }
 );

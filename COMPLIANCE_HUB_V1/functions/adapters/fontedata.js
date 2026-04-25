@@ -6,7 +6,7 @@
  * from response headers for audit trail.
  */
 
-const BASE_URL = 'https://app.fontedata.com/api/v1/consulta';
+const BASE_URL = process.env.FONTEDATA_BASE_URL || 'https://app.fontedata.com/api/v1/consulta';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;

@@ -52,8 +52,8 @@ describe('LoginPage', () => {
 
         expect(screen.queryByText('Criar conta')).not.toBeInTheDocument();
         expect(screen.queryByText(/Nao tem conta/i)).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Demo cliente' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Demo operacional' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Acessar demonstração' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Demo operacional' })).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'maria@empresa.com' } });
         fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'segredo123' } });
@@ -75,7 +75,7 @@ describe('LoginPage', () => {
         fireEvent.change(screen.getByLabelText('Senha'), { target: { value: '@Madero2026' } });
         fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
-        expect(await screen.findByText('Email ou senha invalidos.')).toBeInTheDocument();
+        expect(await screen.findByText('Email ou senha inválidos.')).toBeInTheDocument();
     });
 
     it('alterna para o modo de recuperacao de senha e envia o email', async () => {
@@ -89,14 +89,14 @@ describe('LoginPage', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Esqueci minha senha' }));
 
-        expect(screen.getByRole('button', { name: /Enviar link de recuperacao/ })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Enviar link de recuperação/ })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Voltar ao login' })).toBeInTheDocument();
         expect(screen.queryByLabelText('Senha')).not.toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText('Email da conta'), { target: { value: 'analista.rh@madero.com.br' } });
-        fireEvent.click(screen.getByRole('button', { name: /Enviar link de recuperacao/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Enviar link de recuperação/ }));
 
-        expect(await screen.findByText(/Link de recuperacao enviado/)).toBeInTheDocument();
+        expect(await screen.findByText(/Link de recuperação enviado/)).toBeInTheDocument();
         expect(loginPageMocks.sendPasswordResetEmail).toHaveBeenCalledWith(
             { currentUser: null },
             'analista.rh@madero.com.br',

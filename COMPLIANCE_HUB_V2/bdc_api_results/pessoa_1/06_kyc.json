@@ -1,0 +1,343 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "KycData": {
+        "PEPHistory": [],
+        "IsCurrentlyPEP": false,
+        "SanctionsHistory": [
+          {
+            "Source": "Conselho Nacional de Justiça",
+            "Type": "Law Enforcement",
+            "StandardizedSanctionType": "ARREST WARRANTS",
+            "MatchRate": 100,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "StandardizedExpirationDate": "0001-01-01T00:00:00",
+              "NameInSanctionList": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "ArrestWarrantNumber": "1500388742017826053601000126",
+              "State": "SP",
+              "Status": "Pendente de Cumprimento",
+              "Decision": "O Ministério Público requereu a decretação da prisão preventiva de André Luiz Cruz dos Santos (fls. 113-114) pelo descumprimento da ordem judicial que o proibiu de se aproximar e de manter contato com Sabrina Lima Eusébio (fls. 46-47), como se vê do teor do boletim de ocorrência juntado nas fls. 115-117.Decido. Com razão o Ministério Público.Depois de pagar fiança e de ser regularmente notificado da ordem de proibição de se aproximar e de manter contato com Sabrina Lima E",
+              "ProcessNumber": "15003887420178260536",
+              "WarrantDescription": "",
+              "ImprisonmentKind": "Mandado de Prisão",
+              "Magistrate": "Carla Milhomens Lopes de Figueiredo Gonçalves De Bonis",
+              "Agency": "03 CRIMINAL DE SANTOS",
+              "County": "",
+              "Nationality": "",
+              "Recapture": "Não",
+              "PenaltyTime": "0 ano(s) 0 mês(es) 0 dia(s).",
+              "PrisonRegime": "",
+              "BirthDate": "1997/07/24",
+              "StandardizedBirthDate": "1997-07-24T00:00:00"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "ProcessNumber": "15003887420178260536",
+              "State": "SP",
+              "NameInSanctionList": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "Status": "Pendente de Cumprimento",
+              "BirthDate": "1997/07/24",
+              "StandardizedBirthDate": "1997-07-24T00:00:00",
+              "Nationality": "",
+              "ArrestWarrantNumber": "1500388742017826053601000126",
+              "Decision": "O Ministério Público requereu a decretação da prisão preventiva de André Luiz Cruz dos Santos (fls. 113-114) pelo descumprimento da ordem judicial que o proibiu de se aproximar e de manter contato com Sabrina Lima Eusébio (fls. 46-47), como se vê do teor do boletim de ocorrência juntado nas fls. 115-117.Decido. Com razão o Ministério Público.Depois de pagar fiança e de ser regularmente notificado da ordem de proibição de se aproximar e de manter contato com Sabrina Lima E",
+              "WarrantDescription": "",
+              "ImprisonmentKind": "Mandado de Prisão",
+              "Magistrate": "Carla Milhomens Lopes de Figueiredo Gonçalves De Bonis",
+              "Agency": "03 CRIMINAL DE SANTOS",
+              "County": "",
+              "Recapture": "Não",
+              "PenaltyTime": "0 ano(s) 0 mês(es) 0 dia(s).",
+              "PrisonRegime": ""
+            },
+            "StartDate": "2017-09-27T03:00:00Z",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2021-02-22T17:20:58.095Z",
+            "LastUpdateDate": "2021-02-22T17:20:58.095Z",
+            "IsCurrentlyPresentOnSource": false,
+            "WasRecentlyPresentOnSource": false
+          },
+          {
+            "Source": "fbi",
+            "Type": "Law Enforcement",
+            "StandardizedSanctionType": "ARREST WARRANTS",
+            "MatchRate": 49,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE J. FLEURENTIN",
+              "SanctionAliases|MatchRate": "ANDRE FLEURENTIN|36;AJAYE FAEURANTIN|12;JEAN FKEURANTIN|4;JEAN A. FKEURANTIN|10;ANDRE FLEURANTIN|50;JEAN A. FLEURANTIN|10;JEAN ANDRE FLEURANTIN|27;AJ FLEURENTIN|4;JEAN A. FLEURENTIN|4;JEAN A. FLUERANTIN|11;JEAN ANDRE FLUERANTIN|28;JEANA FLUERANTIN|11;AJ|0",
+              "Nationalities": "HAITIAN",
+              "status": "fugitive",
+              "remarks": "fleurentin has ties to the dominican republic and haiti and is likely to be living in either country.",
+              "caution": "andre j. fleurentin is wanted for his alleged involvement in the murder of a man on october 1, 1992, in union county, new jersey.&nbsp; on that date, fleurentin and others had gathered in front of a residence when a man approached the group.&nbsp; it is alleged that the man and fleurentin had a brief discussion, after which fleurentin pulled a gun from his jacket and shot and killed the man.&nbsp; he also allegedly then began shooting at everyone else in the area, striking two more individuals.&nbsp; fleurentin then allegedly fled the scene before police arrived.&nbsp;&nbsp;fleurentin was charged with murder by the state of new jersey, superior court of union county,&nbsp;on&nbsp;october 1, 1992, and a warrant was issued for his arrest.&nbsp; on february 15, 1994,&nbsp;a&nbsp;federal arrest warrant was issued for&nbsp;fleurentin in the united states district court, district of new jersey,&nbsp;newark, new jersey, after he was charged with unlawful flight to avoid prosecution.",
+              "description": "unlawful flight to avoid prosecution - murder",
+              "considerations": "should be considered armed and dangerous",
+              "wanted_person_poster": "https://www.fbi.gov/wanted/murders/andre-j-fleurentin/@@download.pdf",
+              "image": "https://www.fbi.gov/wanted/murders/andre-j-fleurentin/@@images/image/thumb;https://www.fbi.gov/wanted/murders/andre-j-fleurentin/fleurentin1.jpg/@@images/image/thumb;https://www.fbi.gov/wanted/murders/andre-j-fleurentin/fleurentinage.jpg/@@images/image/thumb",
+              "hair": "black may be shaved bald",
+              "eyes": "brown",
+              "height": "5'6",
+              "weight": "140 to 150 pounds",
+              "race": "black",
+              "languages": "english, haitian creole, french-based creoles and pidgins",
+              "scars_and_marks": "fleurentin has a scar on his left forearm.",
+              "ncic": "w807106342"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE J. FLEURENTIN",
+              "SanctionAliasesAndMatchRate": "ANDRE FLEURENTIN|36;AJAYE FAEURANTIN|12;JEAN FKEURANTIN|4;JEAN A. FKEURANTIN|10;ANDRE FLEURANTIN|50;JEAN A. FLEURANTIN|10;JEAN ANDRE FLEURANTIN|27;AJ FLEURENTIN|4;JEAN A. FLEURENTIN|4;JEAN A. FLUERANTIN|11;JEAN ANDRE FLUERANTIN|28;JEANA FLUERANTIN|11;AJ|0",
+              "Nationalities": "HAITIAN"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-10T03:49:54.145",
+            "LastUpdateDate": "2026-04-10T03:49:54.145",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 48,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE RODRIGUEZ FERNANDEZ",
+              "BirthDate": "26 Aug 1971",
+              "StandardizedBirthDate": "1971-08-26T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE RODRIGUEZ FERNANDEZ",
+              "BirthDate": "26 Aug 1971",
+              "StandardizedBirthDate": "1971-08-26T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2019-11-07T00:00:00",
+            "LastUpdateDate": "2026-04-10T00:00:00",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "interpol",
+            "Type": "Law Enforcement",
+            "StandardizedSanctionType": "ARREST WARRANTS",
+            "MatchRate": 36,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE FRECKLETON",
+              "BirthDate": "1997/10/03",
+              "StandardizedBirthDate": "1997-10-03T00:00:00",
+              "SourcePossibleDateOfBirthScore": "25",
+              "Nationalities": "JAMAICA",
+              "image": "https://ws-public.interpol.int/notices/v1/red/2022-43052/images/62479533",
+              "language_spoken": "english",
+              "hair_color": "black",
+              "charges": "murder"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE FRECKLETON",
+              "Nationalities": "JAMAICA",
+              "BirthDate": "1997/10/03",
+              "StandardizedBirthDate": "1997-10-03T00:00:00",
+              "SourcePossibleDateOfBirthScore": "25"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-09T03:23:07.409",
+            "LastUpdateDate": "2026-04-09T03:23:07.409",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "uk",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 29,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE JOHNSON",
+              "SanctionAliases|MatchRate": "",
+              "Nationalities": "Haiti",
+              "ofsigroupid": "16325",
+              "designationsource": "un",
+              "position_1": "leader of 5 segond gang"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRE JOHNSON",
+              "SanctionAliasesAndMatchRate": "",
+              "Nationalities": "Haiti"
+            },
+            "StartDate": "2023-12-08T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-10T03:02:57.259",
+            "LastUpdateDate": "2026-04-10T03:02:57.259",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 27,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRIYAH SAMIR MUSHANTAF",
+              "BirthDate": "11 Mar 1966",
+              "StandardizedBirthDate": "1966-03-11T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0",
+              "SanctionAliases|MatchRate": "Andrea Samir MSHANTAF|29;Andre Samir MUSHANTAF|50;Andre Samir MSHANTAF|51;Andre Samir MISHANTAF|50;Andreih Samir MUCHANTAF|29",
+              "remarks": "(linked to: ctex exchange)"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDRIYAH SAMIR MUSHANTAF",
+              "SanctionAliasesAndMatchRate": "Andrea Samir MSHANTAF|29;Andre Samir MUSHANTAF|50;Andre Samir MSHANTAF|51;Andre Samir MISHANTAF|50;Andreih Samir MUCHANTAF|29",
+              "BirthDate": "11 Mar 1966",
+              "StandardizedBirthDate": "1966-03-11T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-10T03:05:07.391",
+            "LastUpdateDate": "2026-04-10T03:05:07.391",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 14,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDREW NYAMVUMBA",
+              "BirthDate": "01 Jan 1973",
+              "StandardizedBirthDate": "1973-01-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0",
+              "SanctionAliases|MatchRate": "Andre NYAMVUMBA|35"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ANDREW NYAMVUMBA",
+              "SanctionAliasesAndMatchRate": "Andre NYAMVUMBA|35",
+              "BirthDate": "01 Jan 1973",
+              "StandardizedBirthDate": "1973-01-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-10T03:04:40.013",
+            "LastUpdateDate": "2026-04-10T03:04:40.013",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 1,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ADIB MAYALEH",
+              "BirthDate": "1955",
+              "StandardizedBirthDate": "1955-01-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0",
+              "SanctionAliases|MatchRate": "Adib MAYALA|1;Miyal ANDRE|7;Andre MAYARD|30"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "ADIB MAYALEH",
+              "SanctionAliasesAndMatchRate": "Adib MAYALA|1;Miyal ANDRE|7;Andre MAYARD|30",
+              "BirthDate": "1955",
+              "StandardizedBirthDate": "1955-01-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2019-11-07T00:00:00",
+            "LastUpdateDate": "2026-04-10T00:00:00",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          },
+          {
+            "Source": "ofac",
+            "Type": "Money Laundering",
+            "StandardizedSanctionType": "FINANCIAL CRIMES",
+            "MatchRate": 1,
+            "NameUniquenessScore": 0.125,
+            "Details": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "LUCIEN NZABAMWITA",
+              "BirthDate": "15 Sep 1966",
+              "StandardizedBirthDate": "1966-09-15T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0",
+              "SanctionAliases|MatchRate": "Lucien NZABANITA|3;Andre KALUME|31;Karume ANDRE|8;Andrew KARUME|9"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "ANDRE LUIZ CRUZ DOS SANTOS",
+              "SanctionName": "LUCIEN NZABAMWITA",
+              "SanctionAliasesAndMatchRate": "Lucien NZABANITA|3;Andre KALUME|31;Karume ANDRE|8;Andrew KARUME|9",
+              "BirthDate": "15 Sep 1966",
+              "StandardizedBirthDate": "1966-09-15T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2019-11-07T00:00:00",
+            "LastUpdateDate": "2026-04-10T00:00:00",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          }
+        ],
+        "IsCurrentlySanctioned": false,
+        "WasPreviouslySanctioned": true,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 0,
+        "FirstSanctionDate": "0001-01-01T00:00:00",
+        "LastSanctionDate": "2023-12-08T00:00:00",
+        "IsCurrentlyElectoralDonor": false,
+        "IsHistoricalElectoralDonor": false,
+        "TotalElectoralDonations": 0,
+        "TotalElectoralDonationAmount": 0,
+        "ElectoralDonations": {}
+      }
+    }
+  ],
+  "QueryId": "6c547b93-9260-4f0c-9a10-e3341667357d",
+  "ElapsedMilliseconds": 61,
+  "QueryDate": "2026-04-10T18:33:59.5059416Z",
+  "Status": {
+    "kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

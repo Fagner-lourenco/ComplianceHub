@@ -1,0 +1,47 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - text: Monitoramento
+          - heading "Watchlists" [level=1] [ref=e57]
+          - paragraph [ref=e58]: Monitore entidades em tempo real e receba alertas quando novos eventos forem detectados.
+        - button "Nova watchlist" [ref=e59] [cursor=pointer]:
+          - img [ref=e60]
+          - text: Nova watchlist
+      - generic [ref=e61]:
+        - img [ref=e63]
+        - strong [ref=e68]: Nenhuma watchlist
+        - paragraph [ref=e69]: Crie a primeira watchlist para começar o monitoramento.
+        - button "Nova watchlist" [ref=e70] [cursor=pointer]

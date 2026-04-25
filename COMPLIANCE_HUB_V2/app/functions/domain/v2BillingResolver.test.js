@@ -7,7 +7,7 @@ import {
     summarizeUsageMeters,
     summarizeBillingOverview,
     resolveCommercialPreset,
-} from './v2BillingResolver.cjs';
+} from './v2BillingResolver.js';
 
 describe('v2BillingResolver', () => {
     describe('BILLING_UNITS', () => {

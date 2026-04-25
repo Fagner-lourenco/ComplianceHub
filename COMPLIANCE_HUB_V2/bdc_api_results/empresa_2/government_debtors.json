@@ -1,0 +1,77 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "GovernmentDebtors": {
+        "DebtorName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "TotalDebtValue": 719109.01,
+        "TotalDebtValuePerOrigin": {
+          "PREVIDENCIA": 719109.01
+        },
+        "TotalDebts": 3,
+        "TotalDebtsPerOrigin": {
+          "PREVIDENCIA": 3
+        },
+        "Debts": [
+          {
+            "Source": "PGFN",
+            "DebtOrigin": "PREVIDENCIA",
+            "ConsolidatedValue": 115308.66,
+            "DebtorType": "Principal",
+            "ResponsibleUnity": "PARANÁ",
+            "ResponsibleUnityUF": "PR",
+            "RegistrationNumber": "129425257",
+            "RegistrationSituationType": "Benefício Fiscal",
+            "RegistrationSituation": "NEGOCIADO NO SISPAR",
+            "FiledIndicator": true,
+            "RegistrationDate": "2016-08-16T00:00:00Z",
+            "CreationDate": "2023-07-15T12:12:09.692Z",
+            "LastUpdateDate": "2026-04-20T21:54:42.094Z"
+          },
+          {
+            "Source": "PGFN",
+            "DebtOrigin": "PREVIDENCIA",
+            "ConsolidatedValue": 128756.6,
+            "DebtorType": "Principal",
+            "ResponsibleUnity": "PARANÁ",
+            "ResponsibleUnityUF": "PR",
+            "RegistrationNumber": "130850691",
+            "RegistrationSituationType": "Benefício Fiscal",
+            "RegistrationSituation": "NEGOCIADO NO SISPAR",
+            "FiledIndicator": false,
+            "RegistrationDate": "2016-10-22T00:00:00Z",
+            "CreationDate": "2023-07-15T12:12:09.692Z",
+            "LastUpdateDate": "2026-04-20T21:54:42.094Z"
+          },
+          {
+            "Source": "PGFN",
+            "DebtOrigin": "PREVIDENCIA",
+            "ConsolidatedValue": 475043.75,
+            "DebtorType": "Principal",
+            "ResponsibleUnity": "PARANÁ",
+            "ResponsibleUnityUF": "PR",
+            "RegistrationNumber": "130850705",
+            "RegistrationSituationType": "Benefício Fiscal",
+            "RegistrationSituation": "NEGOCIADO NO SISPAR",
+            "FiledIndicator": false,
+            "RegistrationDate": "2016-10-22T00:00:00Z",
+            "CreationDate": "2023-07-15T12:12:09.978Z",
+            "LastUpdateDate": "2026-04-20T21:54:42.094Z"
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "78b31388-9d42-4613-b0fd-1504ceeb8195",
+  "ElapsedMilliseconds": 74,
+  "QueryDate": "2026-04-25T12:53:10.0293593Z",
+  "Status": {
+    "government_debtors": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

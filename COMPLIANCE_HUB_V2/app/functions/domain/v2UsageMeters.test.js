@@ -5,7 +5,7 @@ import {
     buildUsageMeterFromProviderRequest,
     buildUsageMeterFromModuleRun,
     groupMeterIdsByModule,
-} from './v2UsageMeters.cjs';
+} from './v2UsageMeters.js';
 
 const BASE = {
     caseId: 'CASE-001',

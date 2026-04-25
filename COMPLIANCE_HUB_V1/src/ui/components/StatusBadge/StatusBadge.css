@@ -35,12 +35,12 @@
 }
 
 .status-badge--orange {
-    background: #fff7ed;
-    color: #c2410c;
+    background: var(--bg-orange);
+    color: var(--text-orange);
 }
 
 .status-badge--orange .status-badge__dot {
-    background: #f97316;
+    background: var(--dot-orange);
 }
 
 .status-badge--green {

@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "ok": true,
+  "elapsedMs": 1561,
+  "data": {
+    "UniqueIdentifier": "aed3dupjm0jm7mhxnfxw7818h",
+    "TransactionResultTypeCode": 1,
+    "TransactionResultType": "Success",
+    "Message": "Sucesso",
+    "TotalCostInCredits": 1,
+    "BalanceInCredits": -4,
+    "ElapsedTimeInMilliseconds": 1539,
+    "Reserved": null,
+    "Date": "2026-04-07T09:13:10.1655630-03:00",
+    "OutdatedResult": false,
+    "HasPdf": false,
+    "DataSourceHtml": null,
+    "DateString": "2026-04-07T09:13:10.1655630-03:00",
+    "OriginalFilesUrl": "https://api.exato.digital/services/original-files/aed3dupjm0jm7mhxnfxw7818h",
+    "PdfUrl": null,
+    "TotalCost": 0,
+    "BalanceInBrl": null,
+    "DataSourceCategory": "Jurídico e Menções",
+    "ApiResultType": "success",
+    "ResultTypeCode": 1,
+    "ResultSubtype": null,
+    "Result": {
+      "Processos": [
+        {
+          "Numero": "01149452820188060001",
+          "Situacao": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+          "NumeroVolumes": 0,
+          "NumeroPaginas": 0,
+          "Valor": 0,
+          "Partes": [],
+          "Movimentacoes": [],
+          "Peticoes": []
+        }
+      ],
+      "TotalProcessos": 1,
+      "TotalProcessosComoSubstituto": 0,
+      "TotalProcessosComoRequerente": 0,
+      "TotalProcessosComoRequerido": 0,
+      "TotalProcessosComoOutraParte": 1
+    }
+  }
+}

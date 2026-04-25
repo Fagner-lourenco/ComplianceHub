@@ -1,0 +1,29 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "SyndicateAgreements": {
+        "TotalAgreements": 0,
+        "TotalActiveAgreements": 0,
+        "TotalAgreementsWithLifeInsuranceClause": 0,
+        "NumberOfStatesWithAgreementsPresent": 0,
+        "CurrentConsecutiveYearsWithSomeAgreementActive": -1,
+        "NumberOfMonthsSinceLastAgreementExpired": -1,
+        "NumberOfMonthsUntilActiveAgreementsExpire": -1,
+        "Agreements": []
+      }
+    }
+  ],
+  "QueryId": "24a206bc-7a37-4055-a272-363c14ec081c",
+  "ElapsedMilliseconds": 53,
+  "QueryDate": "2026-04-25T12:52:59.099832Z",
+  "Status": {
+    "syndicate_agreements": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

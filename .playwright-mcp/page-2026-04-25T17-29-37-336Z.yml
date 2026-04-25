@@ -1,0 +1,234 @@
+- generic [ref=e2]:
+  - generic [ref=e663]:
+    - complementary [ref=e664]:
+      - link "⌘ ComplianceHub" [ref=e666] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e667]: ⌘
+        - generic [ref=e668]: ComplianceHub
+      - navigation [ref=e669]:
+        - link "Nova Análise" [ref=e671] [cursor=pointer]:
+          - /url: /dossie/create
+          - img [ref=e672]
+          - text: Nova Análise
+        - generic [ref=e675]:
+          - heading "Análises" [level=3] [ref=e676]
+          - generic [ref=e677]:
+            - link "Nova Análise" [ref=e678] [cursor=pointer]:
+              - /url: /dossie/create
+              - img [ref=e679]
+              - generic [ref=e682]: Nova Análise
+            - link "Meus Dossiês" [ref=e683] [cursor=pointer]:
+              - /url: /dossie
+              - img [ref=e684]
+              - generic [ref=e686]: Meus Dossiês
+            - link "Perfis Customizados" [ref=e688] [cursor=pointer]:
+              - /url: /dossie/custom-profile
+              - img [ref=e689]
+              - generic [ref=e692]: Perfis Customizados
+        - generic [ref=e693]:
+          - heading "Exploração" [level=3] [ref=e694]
+          - generic [ref=e695]:
+            - link "LinkMap" [ref=e696] [cursor=pointer]:
+              - /url: /explore
+              - img [ref=e697]
+              - generic [ref=e700]: LinkMap
+            - link "Hub de Produtos" [ref=e701] [cursor=pointer]:
+              - /url: /hub
+              - img [ref=e702]
+              - generic [ref=e707]: Hub de Produtos
+        - generic [ref=e708]:
+          - heading "Monitoramento" [level=3] [ref=e709]
+          - link "Watchlists" [ref=e711] [cursor=pointer]:
+            - /url: /watchlists
+            - img [ref=e712]
+            - generic [ref=e714]: Watchlists
+        - generic [ref=e715]:
+          - heading "Relatórios" [level=3] [ref=e716]
+          - link "Relatórios" [ref=e718] [cursor=pointer]:
+            - /url: /reports
+            - img [ref=e719]
+            - generic [ref=e722]: Relatórios
+        - generic [ref=e723]:
+          - heading "Administração" [level=3] [ref=e724]
+          - generic [ref=e725]:
+            - link "Usuários" [ref=e726] [cursor=pointer]:
+              - /url: /settings/users
+              - img [ref=e727]
+              - generic [ref=e732]: Usuários
+            - link "Configurações" [ref=e733] [cursor=pointer]:
+              - /url: /settings/tenant
+              - img [ref=e734]
+              - generic [ref=e737]: Configurações
+            - link "Billing" [ref=e738] [cursor=pointer]:
+              - /url: /billing
+              - img [ref=e739]
+              - generic [ref=e741]: Billing
+      - generic [ref=e742]:
+        - button "Recolher menu" [ref=e743] [cursor=pointer]:
+          - img [ref=e744]
+          - text: Recolher menu
+        - generic [ref=e746]:
+          - generic [ref=e747]: T
+          - generic [ref=e748]:
+            - paragraph [ref=e749]: teste
+            - paragraph [ref=e750]: teste@compliancehub.com
+    - generic [ref=e751]:
+      - banner [ref=e752]:
+        - generic [ref=e753]:
+          - generic [ref=e754]:
+            - button "Voltar" [ref=e755] [cursor=pointer]:
+              - img [ref=e756]
+            - generic [ref=e758]:
+              - heading "Processamento" [level=1] [ref=e759]
+              - paragraph [ref=e760]: Acompanhamento da análise
+          - generic [ref=e761]:
+            - button "Ajuda" [disabled] [ref=e762] [cursor=pointer]:
+              - img [ref=e763]
+            - button "Importar em Lote" [disabled] [ref=e766] [cursor=pointer]:
+              - img [ref=e767]
+            - button "Notificações" [disabled] [ref=e770] [cursor=pointer]:
+              - img [ref=e771]
+            - button "Perfil" [ref=e775] [cursor=pointer]:
+              - generic [ref=e776]: T
+              - generic [ref=e777]: teste
+      - main [ref=e779]:
+        - generic [ref=e780]:
+          - generic [ref=e781]:
+            - button "Voltar" [ref=e782] [cursor=pointer]:
+              - img [ref=e783]
+            - generic [ref=e785]:
+              - text: Processamento
+              - heading "Análise 9AVhQEoH0stuhuRQfybg" [level=1] [ref=e786]
+            - generic [ref=e787]: Processando
+          - generic [ref=e788]:
+            - generic [ref=e789]:
+              - generic [ref=e790]:
+                - img [ref=e792]
+                - generic [ref=e794]:
+                  - heading "Status geral" [level=2] [ref=e795]
+                  - paragraph [ref=e796]: 0 de 16 fontes concluídas
+              - generic [ref=e798]: 0%
+            - generic [ref=e799]:
+              - progressbar
+          - generic [ref=e800]:
+            - heading "Execuções por módulo" [level=3] [ref=e801]:
+              - img [ref=e802]
+              - text: Execuções por módulo
+            - generic [ref=e805]:
+              - generic [ref=e806]:
+                - generic [ref=e807]:
+                  - generic [ref=e808]:
+                    - img [ref=e810]
+                    - generic [ref=e812]: fontedata criminal
+                  - generic [ref=e813]: Processando
+                - generic [ref=e817]: 50%
+              - generic [ref=e818]:
+                - generic [ref=e819]:
+                  - generic [ref=e820]:
+                    - img [ref=e822]
+                    - generic [ref=e824]: judit execution
+                  - generic [ref=e825]: Processando
+                - generic [ref=e829]: 50%
+              - generic [ref=e830]:
+                - generic [ref=e831]:
+                  - generic [ref=e832]:
+                    - img [ref=e834]
+                    - generic [ref=e836]: escavador criminal
+                  - generic [ref=e837]: Processando
+                - generic [ref=e841]: 50%
+              - generic [ref=e842]:
+                - generic [ref=e843]:
+                  - generic [ref=e844]:
+                    - img [ref=e846]
+                    - generic [ref=e848]: fontedata labor
+                  - generic [ref=e849]: Processando
+                - generic [ref=e853]: 50%
+              - generic [ref=e854]:
+                - generic [ref=e855]:
+                  - generic [ref=e856]:
+                    - img [ref=e858]
+                    - generic [ref=e860]: judit labor
+                  - generic [ref=e861]: Processando
+                - generic [ref=e865]: 50%
+              - generic [ref=e866]:
+                - generic [ref=e867]:
+                  - generic [ref=e868]:
+                    - img [ref=e870]
+                    - generic [ref=e872]: fontedata warrant
+                  - generic [ref=e873]: Processando
+                - generic [ref=e877]: 50%
+              - generic [ref=e878]:
+                - generic [ref=e879]:
+                  - generic [ref=e880]:
+                    - img [ref=e882]
+                    - generic [ref=e884]: judit warrant
+                  - generic [ref=e885]: Processando
+                - generic [ref=e889]: 50%
+              - generic [ref=e890]:
+                - generic [ref=e891]:
+                  - generic [ref=e892]:
+                    - img [ref=e894]
+                    - generic [ref=e896]: bigdatacorp processes
+                  - generic [ref=e897]: Processando
+                - generic [ref=e901]: 50%
+              - generic [ref=e902]:
+                - generic [ref=e903]:
+                  - generic [ref=e904]:
+                    - img [ref=e906]
+                    - generic [ref=e908]: judit lawsuits
+                  - generic [ref=e909]: Processando
+                - generic [ref=e913]: 50%
+              - generic [ref=e914]:
+                - generic [ref=e915]:
+                  - generic [ref=e916]:
+                    - img [ref=e918]
+                    - generic [ref=e920]: escavador processos
+                  - generic [ref=e921]: Processando
+                - generic [ref=e925]: 50%
+              - generic [ref=e926]:
+                - generic [ref=e927]:
+                  - generic [ref=e928]:
+                    - img [ref=e930]
+                    - generic [ref=e932]: djen comunicacoes
+                  - generic [ref=e933]: Processando
+                - generic [ref=e937]: 50%
+              - generic [ref=e938]:
+                - generic [ref=e939]:
+                  - generic [ref=e940]:
+                    - img [ref=e942]
+                    - generic [ref=e944]: bigdatacorp basic data
+                  - generic [ref=e945]: Processando
+                - generic [ref=e949]: 50%
+              - generic [ref=e950]:
+                - generic [ref=e951]:
+                  - generic [ref=e952]:
+                    - img [ref=e954]
+                    - generic [ref=e956]: judit entity
+                  - generic [ref=e957]: Processando
+                - generic [ref=e961]: 50%
+              - generic [ref=e962]:
+                - generic [ref=e963]:
+                  - generic [ref=e964]:
+                    - img [ref=e966]
+                    - generic [ref=e968]: fontedata identity
+                  - generic [ref=e969]: Processando
+                - generic [ref=e973]: 50%
+              - generic [ref=e974]:
+                - generic [ref=e975]:
+                  - generic [ref=e976]:
+                    - img [ref=e978]
+                    - generic [ref=e980]: fontedata gate
+                  - generic [ref=e981]: Processando
+                - generic [ref=e985]: 50%
+              - generic [ref=e986]:
+                - generic [ref=e987]:
+                  - generic [ref=e988]:
+                    - img [ref=e990]
+                    - generic [ref=e992]: bigdatacorp kyc
+                  - generic [ref=e993]: Processando
+                - generic [ref=e997]: 50%
+  - alert [ref=e999]:
+    - img [ref=e1000]
+    - generic [ref=e1003]: Consulta iniciada! Buscando nas fontes selecionadas...
+    - button "Fechar" [ref=e1004] [cursor=pointer]:
+      - img [ref=e1005]

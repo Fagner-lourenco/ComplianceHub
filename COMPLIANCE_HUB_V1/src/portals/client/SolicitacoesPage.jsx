@@ -6,15 +6,17 @@ import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
+import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
-import { callSubmitClientCorrection, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
+import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings, saveClientPublicReport } from '../../core/firebase/firestoreService';
 import { buildCaseReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
 import { getCaseStats } from '../../core/caseUtils';
 import { formatDate } from '../../core/formatDate';
-import { buildCaseReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
+import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
 import './SolicitacoesPage.css';
 
 function getMacroProgress(caseData) {
@@ -43,29 +45,25 @@ export default function SolicitacoesPage() {
     const [sortDir, setSortDir] = useState('desc');
     const [heatmapMode, setHeatmapMode] = useState(false);
     const [tenantPhases, setTenantPhases] = useState([]);
-    const [tenantLimits, setTenantLimits] = useState({ dailyLimit: null, monthlyLimit: null });
+    const [quota, setQuota] = useState(null);
     const [reportStatus, setReportStatus] = useState({ state: 'idle', message: '' });
     const [correctionForm, setCorrectionForm] = useState(null);
     const [correctionError, setCorrectionError] = useState(null);
     const [correctionSaving, setCorrectionSaving] = useState(false);
-    const now = new Date();
-    const currentDayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const currentMonthKey = currentDayKey.slice(0, 7);
-
-    const openLocalHtmlReport = (html) => {
-        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank', 'noopener,noreferrer');
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    };
 
     useEffect(() => {
-        if (!userProfile?.tenantId) return;
+        if (!userProfile?.tenantId || isDemoMode) return;
         getTenantSettings(userProfile.tenantId).then((settings) => {
             setTenantPhases(getEnabledPhases(settings.analysisConfig));
-            setTenantLimits({ dailyLimit: settings.dailyLimit ?? null, monthlyLimit: settings.monthlyLimit ?? null });
         }).catch(() => {});
-    }, [userProfile?.tenantId]);
+    }, [userProfile?.tenantId, isDemoMode]);
+
+    useEffect(() => {
+        if (!user || isDemoMode) return;
+        callGetClientQuotaStatus()
+            .then((data) => setQuota(data))
+            .catch(() => {});
+    }, [user, isDemoMode]);
 
     useEffect(() => {
         if (!selectedCase || selectedCase.status !== 'DONE') {
@@ -77,11 +75,13 @@ export default function SolicitacoesPage() {
             setPublicResult(selectedCase.publicResultMock || null);
             return;
         }
+        let cancelled = false;
         setPublicResultLoading(true);
         getCasePublicResult(selectedCase.id)
-            .then((data) => setPublicResult(data || selectedCase.publicResultMock || null))
-            .catch(() => setPublicResult(selectedCase.publicResultMock || null))
-            .finally(() => setPublicResultLoading(false));
+            .then((data) => { if (!cancelled) setPublicResult(data || selectedCase.publicResultMock || null); })
+            .catch(() => { if (!cancelled) setPublicResult(selectedCase.publicResultMock || null); })
+            .finally(() => { if (!cancelled) setPublicResultLoading(false); });
+        return () => { cancelled = true; };
     }, [isDemoMode, selectedCase]);
 
     useEffect(() => {
@@ -109,8 +109,12 @@ export default function SolicitacoesPage() {
             result = result.filter((caseData) => caseData.candidateName.toLowerCase().includes(term) || caseData.cpfMasked.includes(term) || caseData.id.toLowerCase().includes(term));
         }
         result.sort((left, right) => {
-            const leftValue = left[sortField] ?? '';
-            const rightValue = right[sortField] ?? '';
+            let leftValue = left[sortField] ?? '';
+            let rightValue = right[sortField] ?? '';
+            if (sortField === 'createdAt') {
+                leftValue = leftValue?.seconds ? leftValue.seconds : (leftValue ? new Date(leftValue).getTime() || 0 : 0);
+                rightValue = rightValue?.seconds ? rightValue.seconds : (rightValue ? new Date(rightValue).getTime() || 0 : 0);
+            }
             if (leftValue < rightValue) return sortDir === 'asc' ? -1 : 1;
             if (leftValue > rightValue) return sortDir === 'asc' ? 1 : -1;
             return 0;
@@ -133,7 +137,9 @@ export default function SolicitacoesPage() {
             if (isDemoMode) {
                 window.open(buildCaseReportPath(selectedCaseView, true), '_blank', 'noopener,noreferrer');
             } else {
-                openLocalHtmlReport(buildCaseReportHtml(selectedCaseView));
+                // Always go through backend to ensure report freshness
+                const token = await saveClientPublicReport(selectedCase.id);
+                window.open(`/r/${token}`, '_blank', 'noopener,noreferrer');
             }
             setReportStatus({ state: 'success', message: 'Relatorio aberto com sucesso.' });
         } catch (currentError) {
@@ -144,6 +150,16 @@ export default function SolicitacoesPage() {
 
     const handleResubmit = async () => {
         if (!selectedCase || !correctionForm || !user) return;
+        const name = (correctionForm.candidateName || '').trim();
+        if (name.length < 3) {
+            setCorrectionError('Nome precisa ter pelo menos 3 caracteres.');
+            return;
+        }
+        const cpfDigits = (correctionForm.cpf || '').replace(/\D/g, '');
+        if (cpfDigits.length !== 11) {
+            setCorrectionError('CPF precisa ter 11 dígitos.');
+            return;
+        }
         setCorrectionSaving(true);
         setCorrectionError(null);
         try {
@@ -199,13 +215,51 @@ export default function SolicitacoesPage() {
                     <div className="case-detail__section">
                         <h4>Dados do Caso</h4>
                         <p><strong>Candidato:</strong> {selectedCase.candidateName}</p>
-                        <p><strong>Cargo:</strong> {selectedCase.candidatePosition}</p>
+                        <p><strong>Cargo:</strong> {selectedCase.candidatePosition || '(não informado)'}</p>
                         <p><strong>CPF:</strong> {selectedCase.cpfMasked}</p>
                         <p><strong>Data da solicitacao:</strong> {formatDate(selectedCase.createdAt)}</p>
                         <p><strong>Situacao:</strong> {selectedCaseView?.statusSummary || getMacroProgress(selectedCase).label}</p>
                         {selectedCaseView?.sourceSummary && <p><strong>Origem dos dados:</strong> {selectedCaseView.sourceSummary}</p>}
                     </div>
-                    {(selectedCaseView?.processHighlights || []).map((group) => <div key={group.title || group.area} className="case-detail__section"><h4>{group.title || group.area}</h4>{group.summary && <p>{group.summary}</p>}{(group.items || []).map((item) => <p key={item.processNumber || item.reference || item.classification} className="case-detail__finding"><strong>{item.processNumber || item.reference || item.classification}:</strong> {[item.court, item.classification, item.stage, item.status].filter(Boolean).join(' · ')}</p>)}</div>)}
+                    {selectedCase.enabledPhases?.length > 0 && (
+                        <div className="case-detail__section">
+                            <h4>Fases da análise</h4>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
+                                {selectedCase.enabledPhases.map((phase) => {
+                                    const isDone = selectedCase.status === 'DONE';
+                                    const label = ANALYSIS_PHASE_LABELS[phase] || phase;
+                                    return (
+                                        <span
+                                            key={phase}
+                                            style={{
+                                                fontSize: '.75rem',
+                                                padding: '3px 9px',
+                                                borderRadius: 12,
+                                                background: isDone ? 'var(--green-50,#f0fdf4)' : 'var(--gray-100,#f3f4f6)',
+                                                color: isDone ? 'var(--green-700,#15803d)' : 'var(--text-secondary)',
+                                                border: `1px solid ${isDone ? 'var(--green-200,#bbf7d0)' : 'var(--border-light,#e5e7eb)'}`,
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            {isDone ? '✓' : '○'} {label}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {(selectedCaseView?.processHighlights || []).map((group) => (
+                        <div key={group.title || group.area} className="case-detail__section">
+                            <h4>{group.title || group.area}</h4>
+                            {group.summary && <p>{group.summary}</p>}
+                            {(group.items || []).map((item) => (
+                                <p key={item.processNumber || item.reference || item.classification} className="case-detail__finding">
+                                    <strong>{item.processNumber || item.reference || item.classification}:</strong>{' '}
+                                    {[item.court, item.classification, item.stage, item.status].filter(Boolean).join(' · ')}
+                                </p>
+                            ))}
+                        </div>
+                    ))}
                     {selectedCase.status === 'CORRECTION_NEEDED' && (
                         <div className="case-detail__section case-detail__section--alert">
                             <h4>Correção Solicitada</h4>
@@ -250,8 +304,8 @@ export default function SolicitacoesPage() {
                                     </div>
                                     <div className="correction-form__actions">
                                         <button type="button" className="btn-secondary" onClick={() => setCorrectionForm(null)}>Cancelar</button>
-                                        <button type="button" className="btn-primary" onClick={handleResubmit} disabled={correctionSaving}>
-                                            {correctionSaving ? 'Reenviando...' : 'Reenviar para o Analista'}
+                                        <button type="button" className="btn-primary" onClick={handleResubmit} disabled={correctionSaving || isDemoMode}>
+                                            {correctionSaving ? 'Reenviando...' : isDemoMode ? 'Indisponivel no demo' : 'Reenviar para o Analista'}
                                         </button>
                                     </div>
                                 </div>
@@ -288,9 +342,48 @@ export default function SolicitacoesPage() {
         <div className="solicitacoes-page">
             <div className="solicitacoes-page__header"><h2 className="solicitacoes-page__title">Minhas Solicitacoes</h2><button className="solicitacoes-page__cta" onClick={() => navigate(buildClientPortalPath(location.pathname, 'nova-solicitacao'))}>Nova Solicitacao</button></div>
             <div className="solicitacoes-page__kpis"><KpiCard label="Casos enviados" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluidos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Correcao solicitada" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Nao recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
-            {(tenantLimits.dailyLimit || tenantLimits.monthlyLimit) && <div style={{ display: 'flex', gap: 16, fontSize: '.8125rem', color: 'var(--text-secondary)', marginBottom: 12 }}>{tenantLimits.dailyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Hoje: {cases.filter((item) => (item.createdDateKey || (item.createdAt || '').slice(0, 10)) === currentDayKey).length}/{tenantLimits.dailyLimit}</span>}{tenantLimits.monthlyLimit && <span style={{ background: 'var(--bg-card)', padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border-light)' }}>Mes: {cases.filter((item) => (item.createdMonthKey || (item.createdAt || '').slice(0, 7)) === currentMonthKey).length}/{tenantLimits.monthlyLimit}</span>}</div>}
-            <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em analise</option><option value="WAITING_INFO">Aguardando info</option><option value="CORRECTION_NEEDED">Correcao necessaria</option><option value="DONE">Concluido</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)}><option value="ALL">Todos os vereditos</option><option value="FIT">Apto</option><option value="ATTENTION">Atencao</option><option value="NOT_RECOMMENDED">Nao recomendado</option><option value="PENDING">Pendente</option></select><button className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)}>Heatmap</button></div></div>
-            <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && <tr><td colSpan={14} className="data-table__empty">Carregando solicitacoes...</td></tr>}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon">📭</span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+            <QuotaSummaryCard quota={quota} />
+            <FilterPanelMobile
+                searchElement={
+                    <div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div>
+                }
+                activeFilterCount={(statusFilter !== 'ALL' ? 1 : 0) + (verdictFilter !== 'ALL' ? 1 : 0) + (heatmapMode ? 1 : 0)}
+            >
+                <div className="solicitacoes-page__filters"><div className="filter-bar"><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em analise</option><option value="WAITING_INFO">Aguardando info</option><option value="CORRECTION_NEEDED">Correcao necessaria</option><option value="DONE">Concluido</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)}><option value="ALL">Todos os vereditos</option><option value="FIT">Apto</option><option value="ATTENTION">Atencao</option><option value="NOT_RECOMMENDED">Nao recomendado</option><option value="PENDING">Pendente</option></select><button className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)}>Heatmap</button></div></div>
+            </FilterPanelMobile>
+            <MobileDataCardList
+                items={filteredCases}
+                loading={loading}
+                emptyMessage={error ? extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.') : 'Nenhuma solicitacao encontrada.'}
+                renderCard={(caseData) => (
+                    <div onClick={() => setSelectedCase(caseData)} style={{ display: 'contents' }}>
+                        <div className="mobile-card__header">
+                            <div>
+                                <div className="mobile-card__title">{caseData.candidateName}</div>
+                            </div>
+                            <StatusBadge status={caseData.status} />
+                        </div>
+                        <div className="mobile-card__meta">
+                            <span className="mobile-card__meta-item" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '.75rem' }}>{caseData.cpfMasked}</span>
+                            {caseData.candidatePosition && <span className="mobile-card__meta-item">{caseData.candidatePosition}</span>}
+                            <span className="mobile-card__meta-item">{formatDate(caseData.createdAt)}</span>
+                        </div>
+                        {caseData.status === 'DONE' && (
+                            <div className="mobile-card__badges">
+                                <RiskChip value={caseData.finalVerdict} bold size="md" />
+                                <ScoreBar score={caseData.riskScore || 0} />
+                                {caseData.hasNotes && <span>📝</span>}
+                                {caseData.hasEvidence && <span>📎</span>}
+                            </div>
+                        )}
+                        {caseData.status !== 'DONE' && (
+                            <div style={{ fontSize: '.75rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 4 }}>{getMacroProgress(caseData).label}</div>
+                        )}
+                    </div>
+                )}
+            >
+                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && <tr><td colSpan={14} className="data-table__empty">Carregando solicitacoes...</td></tr>}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon">📭</span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+            </MobileDataCardList>
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
         </div>

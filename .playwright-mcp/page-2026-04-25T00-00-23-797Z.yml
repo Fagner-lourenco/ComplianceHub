@@ -1,0 +1,31 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img [ref=e8]
+      - heading "ComplianceHub" [level=1] [ref=e11]
+      - paragraph [ref=e12]: Due Diligence & Background Check
+    - generic [ref=e13]:
+      - button "Entrar" [ref=e14] [cursor=pointer]
+      - button "Criar conta" [ref=e15] [cursor=pointer]
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: E-mail
+        - generic [ref=e19]:
+          - img
+          - textbox "seu@email.com" [ref=e20]
+      - generic [ref=e21]:
+        - generic [ref=e22]: Senha
+        - generic [ref=e23]:
+          - img
+          - textbox "••••••••" [ref=e24]
+          - button [ref=e25] [cursor=pointer]:
+            - img [ref=e26]
+      - button "Entrar na conta" [ref=e29] [cursor=pointer]:
+        - img [ref=e30]
+        - text: Entrar
+    - generic [ref=e33]:
+      - button "Criar / Logar com usuário de teste" [ref=e34] [cursor=pointer]:
+        - img [ref=e35]
+        - text: Criar / Logar com usuário de teste
+      - paragraph [ref=e38]: teste@compliancehub.com / Teste123!
+  - paragraph [ref=e39]: © 2026 ComplianceHub. Todos os direitos reservados.

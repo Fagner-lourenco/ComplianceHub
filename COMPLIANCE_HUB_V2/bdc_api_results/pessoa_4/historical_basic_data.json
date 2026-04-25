@@ -1,0 +1,56 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "HistoricalBasicData": {
+        "CurrentName": "FRANCISCO TACIANO DE SOUSA",
+        "CurrentStatus": "REGULAR",
+        "CurrentGender": "M",
+        "BirthDate": "1991-08-16T00:00:00Z",
+        "Age": 34,
+        "TaxIdNumber": "05023290336",
+        "HasObitIndication": false,
+        "NameChangeHistory": [
+          {
+            "ChangedDate": "2009-08-16T00:00:00Z",
+            "Name": "FRANCISCO TACIANO DE SOUSA",
+            "Gender": "M"
+          }
+        ],
+        "StatusChangeHistory": [
+          {
+            "ChangedDate": "2009-08-16T00:00:00Z",
+            "Status": "REGULAR"
+          }
+        ],
+        "NameLifetimePercent": {
+          "FRANCISCO TACIANO DE SOUSA": 1
+        },
+        "GenderLifetimePercent": {
+          "M": 1
+        },
+        "StatusLifetimePercent": {
+          "REGULAR": 1
+        },
+        "NameChangesTotal": 0,
+        "StatusChangesTotal": 0,
+        "LastNameChangeDate": "0001-01-01T00:00:00",
+        "LastStatusChangeDate": "0001-01-01T00:00:00",
+        "FirstNameChangeDate": "0001-01-01T00:00:00",
+        "FirstStatusChangeDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "1d4dbb8a-ac8e-457c-9c33-34f477d14b37",
+  "ElapsedMilliseconds": 81,
+  "QueryDate": "2026-04-25T12:33:13.7641412Z",
+  "Status": {
+    "historical_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

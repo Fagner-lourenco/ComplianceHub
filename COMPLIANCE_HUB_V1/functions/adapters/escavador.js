@@ -7,7 +7,7 @@
  * Pagination: cursor-based via `links.next`.
  */
 
-const BASE_URL = 'https://api.escavador.com/api/v2';
+const BASE_URL = process.env.ESCAVADOR_BASE_URL || 'https://api.escavador.com/api/v2';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
@@ -141,7 +141,7 @@ async function queryProcessosByPerson(cpf, token, options = {}) {
         page++;
     }
 
-    return { envolvido, items: allItems, totalPages: page };
+    return { envolvido, items: allItems, totalPages: page, truncated: Boolean(currentUrl) };
 }
 
 /**

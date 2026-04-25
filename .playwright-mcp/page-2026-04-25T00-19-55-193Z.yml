@@ -1,0 +1,372 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: CH
+        - generic [ref=e15]:
+          - strong [ref=e16]: ComplianceHub
+          - generic [ref=e17]: Plataforma de Análise de Risco
+      - navigation "Produtos" [ref=e18]:
+        - link "Análises" [ref=e19] [cursor=pointer]:
+          - /url: /dossie
+          - img [ref=e20]
+          - text: Análises
+        - link "LinkHub" [ref=e24] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e25]
+          - text: LinkHub
+        - link "FlagHub" [ref=e28] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e29]
+          - text: FlagHub
+        - link "SearchHub" [ref=e31] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e32]
+          - text: SearchHub
+      - generic [ref=e35]:
+        - button "Ativar modo escuro" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+        - button "Sair" [ref=e39] [cursor=pointer]
+    - navigation "Operações" [ref=e41]:
+      - link "Watchlists" [ref=e42] [cursor=pointer]:
+        - /url: /watchlists
+        - img [ref=e43]
+        - text: Watchlists
+      - link "Billing" [ref=e45] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e46]
+        - text: Billing
+      - link "Senior Review" [ref=e49] [cursor=pointer]:
+        - /url: /senior-review
+        - img [ref=e50]
+        - text: Senior Review
+      - link "Relatórios" [ref=e52] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e53]
+        - text: Relatórios
+  - main [ref=e57]:
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - button "Voltar" [ref=e60] [cursor=pointer]
+        - generic [ref=e61]:
+          - generic [ref=e62]: Surface ativa
+          - heading "Análise DOS-2026-0001" [level=1] [ref=e63]
+      - generic [ref=e64]:
+        - group "Modo de visualização" [ref=e65]:
+          - button "Analítico" [pressed] [ref=e66] [cursor=pointer]
+          - button "Detalhado" [ref=e67] [cursor=pointer]
+        - generic [ref=e68]:
+          - button "Progresso" [ref=e69] [cursor=pointer]
+          - button "Aprovar" [ref=e70] [cursor=pointer]
+          - button "Reprovar" [ref=e71] [cursor=pointer]
+          - button "Ver mapa backend" [ref=e72] [cursor=pointer]
+    - navigation "Macroáreas da análise" [ref=e73]:
+      - button "Jurídico" [ref=e74] [cursor=pointer]:
+        - img [ref=e75]
+        - text: Jurídico
+      - button "Mídia/Internet" [ref=e81] [cursor=pointer]:
+        - img [ref=e82]
+        - text: Mídia/Internet
+      - button "Financeiro" [ref=e85] [cursor=pointer]:
+        - img [ref=e86]
+        - text: Financeiro
+      - button "Cadastro" [ref=e88] [cursor=pointer]:
+        - img [ref=e89]
+        - text: Cadastro
+      - button "Reguladores" [ref=e93] [cursor=pointer]:
+        - img [ref=e94]
+        - text: Reguladores
+      - button "Bens e Imóveis" [ref=e96] [cursor=pointer]:
+        - img [ref=e97]
+        - text: Bens e Imóveis
+      - button "Listas Restritivas" [ref=e100] [cursor=pointer]:
+        - img [ref=e101]
+        - text: Listas Restritivas
+      - button "Profissional" [ref=e104] [cursor=pointer]:
+        - img [ref=e105]
+        - text: Profissional
+      - button "Socioambiental" [ref=e110] [cursor=pointer]:
+        - img [ref=e111]
+        - text: Socioambiental
+    - region "Resumo da análise" [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: Dossiê de Análise
+          - generic [ref=e117]: Pessoa Física
+        - heading "João da Silva" [level=2] [ref=e118]
+        - generic [ref=e119]:
+          - generic [ref=e120]: Baixo
+          - generic [ref=e121]: completed
+      - generic [ref=e122]:
+        - generic [ref=e123]:
+          - generic [ref=e124]: Nº da análise
+          - strong [ref=e125]: DOS-2026-0001
+        - generic [ref=e126]:
+          - generic [ref=e127]: Data de criação
+          - strong [ref=e128]: 2026-04-20
+        - generic [ref=e129]:
+          - generic [ref=e130]: Responsável
+          - strong [ref=e131]: —
+        - generic [ref=e132]:
+          - generic [ref=e133]: Perfil de risco
+          - strong [ref=e134]: —
+        - generic [ref=e135]:
+          - generic [ref=e136]: Fontes com evidências
+          - strong [ref=e137]: —
+        - generic [ref=e138]:
+          - generic [ref=e139]: Último processamento
+          - strong [ref=e140]: —
+        - generic [ref=e141]:
+          - generic [ref=e142]: Homônimos
+          - strong [ref=e143]: —
+        - generic [ref=e144]:
+          - generic [ref=e145]: Fontes sem evidências
+          - strong [ref=e146]: —
+    - generic [ref=e148]:
+      - generic [ref=e149]: A visão analítica consolida dados e resume evidências para leitura executiva.
+      - generic [ref=e150]:
+        - complementary [ref=e151]:
+          - generic [ref=e152]:
+            - strong [ref=e153]: Filtros
+            - generic [ref=e154]:
+              - button "Limpar" [ref=e155] [cursor=pointer]
+              - button "Filtrar" [ref=e156] [cursor=pointer]
+          - generic [ref=e157]:
+            - generic [ref=e158]: UF do processo
+            - combobox "UF do processo" [ref=e159]:
+              - option "Todas" [selected]
+              - option "AC"
+              - option "AL"
+              - option "AP"
+              - option "AM"
+              - option "BA"
+              - option "CE"
+              - option "DF"
+              - option "ES"
+              - option "GO"
+              - option "MA"
+              - option "MT"
+              - option "MS"
+              - option "MG"
+              - option "PA"
+              - option "PB"
+              - option "PR"
+              - option "PE"
+              - option "PI"
+              - option "RJ"
+              - option "RN"
+              - option "RS"
+              - option "RO"
+              - option "RR"
+              - option "SC"
+              - option "SP"
+              - option "SE"
+              - option "TO"
+        - generic [ref=e160]:
+          - generic [ref=e161]:
+            - generic [ref=e162]: Métricas consolidadas
+            - button "Download do resumo" [ref=e163] [cursor=pointer]
+          - generic [ref=e164]:
+            - article [ref=e165]:
+              - generic [ref=e166]: Total de processos
+              - strong [ref=e167]: —
+            - article [ref=e168]:
+              - generic [ref=e169]: Como autor
+              - strong [ref=e170]: —
+            - article [ref=e171]:
+              - generic [ref=e172]: Como réu
+              - strong [ref=e173]: —
+            - article [ref=e174]:
+              - generic [ref=e175]: Fontes com evidências
+              - strong [ref=e176]: —
+            - article [ref=e177]:
+              - generic [ref=e178]: Processos com segredo
+              - strong [ref=e179]: —
+          - generic [ref=e180]:
+            - generic [ref=e181]:
+              - strong [ref=e182]: Status de processos
+              - generic [ref=e183]: Dados consolidados
+            - paragraph [ref=e186]: Sem dados de processos para exibir.
+          - generic [ref=e187]:
+            - article [ref=e188]:
+              - generic [ref=e189]:
+                - strong [ref=e190]: Processos por tribunal
+                - generic [ref=e191]: "Render hints: compactable"
+              - generic [ref=e192]:
+                - generic [ref=e194]: 100%
+                - generic [ref=e195]:
+                  - generic [ref=e196]: Bucket 1
+                  - generic [ref=e197]: Bucket 2
+                  - generic [ref=e198]: Bucket 3
+                  - button "Ver mais" [ref=e199] [cursor=pointer]
+            - article [ref=e200]:
+              - generic [ref=e201]:
+                - strong [ref=e202]: Principais assuntos
+                - generic [ref=e203]: "Render hints: compactable"
+              - generic [ref=e204]:
+                - generic [ref=e206]: 100%
+                - generic [ref=e207]:
+                  - generic [ref=e208]: Bucket 1
+                  - generic [ref=e209]: Bucket 2
+                  - generic [ref=e210]: Bucket 3
+                  - button "Ver mais" [ref=e211] [cursor=pointer]
+            - article [ref=e212]:
+              - generic [ref=e213]:
+                - strong [ref=e214]: Varas dominantes
+                - generic [ref=e215]: "Render hints: compactable"
+              - generic [ref=e216]:
+                - generic [ref=e218]: 100%
+                - generic [ref=e219]:
+                  - generic [ref=e220]: Bucket 1
+                  - generic [ref=e221]: Bucket 2
+                  - generic [ref=e222]: Bucket 3
+                  - button "Ver mais" [ref=e223] [cursor=pointer]
+            - article [ref=e224]:
+              - generic [ref=e225]:
+                - strong [ref=e226]: Classes de processo
+                - generic [ref=e227]: "Render hints: compactable"
+              - generic [ref=e228]:
+                - generic [ref=e230]: 100%
+                - generic [ref=e231]:
+                  - generic [ref=e232]: Bucket 1
+                  - generic [ref=e233]: Bucket 2
+                  - generic [ref=e234]: Bucket 3
+                  - button "Ver mais" [ref=e235] [cursor=pointer]
+    - generic [ref=e237]:
+      - button "Fontes Criminais" [ref=e238] [cursor=pointer]:
+        - img [ref=e240]
+        - generic [ref=e242]: Fontes Criminais
+      - generic [ref=e243]:
+        - generic [ref=e244]: fontes
+        - button "Priorizar" [ref=e245] [cursor=pointer]
+    - generic [ref=e247]:
+      - button "Fontes Trabalhistas" [ref=e248] [cursor=pointer]:
+        - img [ref=e250]
+        - generic [ref=e252]: Fontes Trabalhistas
+      - generic [ref=e253]:
+        - generic [ref=e254]: fontes
+        - button "Priorizar" [ref=e255] [cursor=pointer]
+    - generic [ref=e256]:
+      - generic [ref=e257]:
+        - generic [ref=e258]:
+          - button "Análise conclusiva" [expanded] [ref=e259] [cursor=pointer]:
+            - img [ref=e261]
+            - generic [ref=e263]: Análise conclusiva
+          - button "Priorizar" [ref=e265] [cursor=pointer]
+        - generic [ref=e267]:
+          - generic [ref=e268]: Análise conclusiva
+          - textbox "Escreva sua análise conclusiva aqui..." [ref=e269]
+          - generic [ref=e270]:
+            - button "Salvar conclusão" [ref=e271] [cursor=pointer]:
+              - img [ref=e272]
+              - text: Salvar conclusão
+            - button "Aprovar" [ref=e276] [cursor=pointer]:
+              - img [ref=e277]
+              - text: Aprovar
+            - button "Reprovar" [ref=e279] [cursor=pointer]:
+              - img [ref=e280]
+              - text: Reprovar
+      - generic [ref=e282]:
+        - generic [ref=e283]:
+          - button "Comentários" [expanded] [ref=e284] [cursor=pointer]:
+            - img [ref=e286]
+            - generic [ref=e288]: Comentários
+          - button "Priorizar" [ref=e290] [cursor=pointer]
+        - generic [ref=e292]:
+          - generic [ref=e294]:
+            - paragraph [ref=e295]: Análise concluída sem ressalvas.
+            - generic [ref=e297]: 2026-04-21T10:00:00Z
+          - generic [ref=e298]:
+            - textbox "Escreva um comentário..." [ref=e299]
+            - button "Enviar" [ref=e301] [cursor=pointer]:
+              - img [ref=e302]
+              - text: Enviar
+  - generic:
+    - complementary:
+      - generic:
+        - generic:
+          - generic: Mapa funcional
+          - heading [level=2]: Camadas de backend
+          - paragraph: Leitura do dossie esta ligada aos contratos abaixo.
+        - button: Fechar
+      - generic:
+        - article:
+          - generic:
+            - strong: Schema e preset de dossie
+            - generic: Implementado
+          - paragraph: O backend principal ja resolve preset, schema, macroareas e configuracao canonica do dossie para PF, PJ e composicao custom.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Continuar usando dossierSchema como fonte unica de verdade para navegacao, visoes e cobertura funcional.
+          - generic:
+            - generic: functions/domain/dossierSchema.cjs
+            - generic: functions/domain/v2Modules.cjs
+            - generic: functions/domain/v2ProductCatalog.cjs
+        - article:
+          - generic:
+            - strong: Visao analitica materializada
+            - generic: Proximo refactor
+          - paragraph: A tela analitica exige metricas, buckets, distribuidos e facetas. Hoje o backend ainda entrega a base, mas nao o bloco analitico pronto.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Criar analyticsBlocks, filterMetadata e agregacoes versionadas dentro do snapshot do dossie.
+          - generic:
+            - generic: functions/domain/v2ReportSections.cjs
+            - generic: functions/domain/v2Core.cjs
+            - generic: functions/domain/v2Timeline.cjs
+        - article:
+          - generic:
+            - strong: Visao detalhada por entrada
+            - generic: Parcial
+          - paragraph: O snapshot ja carrega seccoes e projection do dossie, mas ainda precisa expor sourceRows e detailEntries padronizados para tabelas, textos, anexos e processos.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Padronizar renderType, sourceBlockKey, mobileSummary e payload detalhado por tipo de entrada.
+          - generic:
+            - generic: functions/domain/v2ReportSections.cjs
+            - generic: functions/domain/v2OperationalArtifactBuilder.cjs
+        - article:
+          - generic:
+            - strong: Drill-down processual
+            - generic: Proximo refactor
+          - paragraph: O dossie novo trata processo judicial como entidade completa, com bucket analitico, lista filtrada e detalhe profundo.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Criar modelo canonicamente estruturado de processo, partes, polos, classe, tribunal, eventos e relacionados.
+          - generic:
+            - generic: functions/domain/v2OperationalArtifactBuilder.cjs
+            - generic: functions/domain/v2Timeline.cjs
+        - article:
+          - generic:
+            - strong: Notas e comentarios por escopo
+            - generic: Proximo refactor
+          - paragraph: O produto principal nao usara revisao humana obrigatoria, mas ainda precisa permitir notas finais do dossie e comentarios por bloco quando isso agregar contexto.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Separar commentThread por dossie, grupo, secao e entrada sem recolocar gates de aprovacao no fluxo central.
+          - generic:
+            - generic: functions/domain/v2Core.cjs
+            - generic: functions/constants/collections.js
+        - article:
+          - generic:
+            - strong: Revisao humana saiu do produto principal
+            - generic: Fora do produto base
+          - paragraph: O pipeline central do dossie agora opera em modo automation_only. Revisao humana fica fora do fluxo padrao e pode voltar apenas como produto/plugin separado.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Nao reacoplar review gate, senior queue ou aprovacao manual ao dossie base.
+          - generic:
+            - generic: functions/domain/v2CaseStatus.cjs
+            - generic: functions/index.js
+            - generic: functions/domain/v2ReviewGate.cjs
+        - article:
+          - generic:
+            - strong: Exportacao e publicacao
+            - generic: Parcial
+          - paragraph: A publicacao segura ja existe, mas a nova UX ainda pede jobs de exportacao mais explicitos, com formato, status e reuso do snapshot correto.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Evoluir exports para exportJob estruturado sem quebrar materializeV2PublicationArtifacts.
+          - generic:
+            - generic: functions/index.js
+            - generic: functions/constants/collections.js

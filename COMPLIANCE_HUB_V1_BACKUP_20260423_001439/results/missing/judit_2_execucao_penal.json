@@ -1,0 +1,11 @@
+{
+  "query": {
+    "search_type": "cpf",
+    "search_key": "107.941.803-29",
+    "response_type": "execution"
+  },
+  "request_id": "953d62e5-b443-4dd2-8622-34acb664b9d6",
+  "status": "completed",
+  "all_count": 0,
+  "page_data": []
+}

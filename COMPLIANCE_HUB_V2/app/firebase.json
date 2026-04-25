@@ -1,9 +1,16 @@
 {
   "firestore": {
+    "database": "compliance-hub-v2",
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
     "firestore": {
       "port": 8080
     },
@@ -12,7 +19,28 @@
     },
     "singleProjectMode": true
   },
-  "functions": {
-    "source": "functions"
-  }
+  "functions": [
+    {
+      "source": "../../COMPLIANCE_HUB_V1/functions",
+      "codebase": "compliance-hub-v2",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firestore-debug.log",
+        "*.local"
+      ]
+    },
+    {
+      "source": "functions",
+      "codebase": "v2-rest-api",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firestore-debug.log",
+        "*.local"
+      ]
+    }
+  ]
 }

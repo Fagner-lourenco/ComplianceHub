@@ -1,0 +1,326 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e56]:
+        - text: Cliente
+        - heading "Centro de Produtos" [level=1] [ref=e57]
+        - paragraph [ref=e58]: Selecione uma análise para iniciar — Cliente
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - textbox "Pesquisar produto..." [ref=e61]
+          - img [ref=e62]
+        - generic [ref=e67]:
+          - button "Todos" [ref=e68] [cursor=pointer]
+          - button "Dossiê" [ref=e69] [cursor=pointer]
+          - button "Compliance" [ref=e70] [cursor=pointer]
+          - button "Terceiros" [ref=e71] [cursor=pointer]
+          - button "Risco" [ref=e72] [cursor=pointer]
+          - button "Monitoramento" [ref=e73] [cursor=pointer]
+          - button "Relatório" [ref=e74] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - img [ref=e79]
+            - generic [ref=e83]: Dossiê
+          - heading "Dossiê PF — Essencial" [level=3] [ref=e84]
+          - paragraph [ref=e85]: Análise cadastral, criminal, trabalhista e listas restritivas. Ideal para due diligence de colaboradores e parceiros comerciais.
+          - list [ref=e86]:
+            - listitem [ref=e87]:
+              - img [ref=e88]
+              - generic [ref=e91]: Cadastral completo (Receita Federal)
+            - listitem [ref=e92]:
+              - img [ref=e93]
+              - generic [ref=e96]: Antecedentes criminais
+            - listitem [ref=e97]:
+              - img [ref=e98]
+              - generic [ref=e101]: Histórico trabalhista
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - img [ref=e104]
+              - generic [ref=e107]: 2–3 minutos
+            - generic [ref=e108]:
+              - button "Ver detalhes" [ref=e109] [cursor=pointer]
+              - button "Iniciar" [ref=e110] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e111]
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - img [ref=e116]
+            - generic [ref=e120]: Dossiê
+          - heading "Dossiê PF — Completo" [level=3] [ref=e121]
+          - paragraph [ref=e122]: Investigação aprofundada com análise de mídia, perfil digital e conflitos de interesse. Recomendado para cargos de alto risco e executivos.
+          - list [ref=e123]:
+            - listitem [ref=e124]:
+              - img [ref=e125]
+              - generic [ref=e128]: Cadastral completo
+            - listitem [ref=e129]:
+              - img [ref=e130]
+              - generic [ref=e133]: Criminal + mandados
+            - listitem [ref=e134]:
+              - img [ref=e135]
+              - generic [ref=e138]: Trabalhista
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - img [ref=e141]
+              - generic [ref=e144]: 4–6 minutos
+            - generic [ref=e145]:
+              - button "Ver detalhes" [ref=e146] [cursor=pointer]
+              - button "Iniciar" [ref=e147] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e148]
+        - generic [ref=e150]:
+          - generic [ref=e151]:
+            - img [ref=e153]
+            - generic [ref=e157]: Dossiê
+          - heading "Dossiê PJ" [level=3] [ref=e158]
+          - paragraph [ref=e159]: "Análise completa de pessoa jurídica: cadastro empresarial, sócios, processos judiciais e vínculos societários."
+          - list [ref=e160]:
+            - listitem [ref=e161]:
+              - img [ref=e162]
+              - generic [ref=e165]: Cadastro empresarial (RFB)
+            - listitem [ref=e166]:
+              - img [ref=e167]
+              - generic [ref=e170]: Sócios e relações societárias
+            - listitem [ref=e171]:
+              - img [ref=e172]
+              - generic [ref=e175]: Processos judiciais
+          - generic [ref=e176]:
+            - generic [ref=e177]:
+              - img [ref=e178]
+              - generic [ref=e181]: 3–5 minutos
+            - generic [ref=e182]:
+              - button "Ver detalhes" [ref=e183] [cursor=pointer]
+              - button "Iniciar" [ref=e184] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e185]
+        - generic [ref=e187]:
+          - generic [ref=e188]:
+            - img [ref=e190]
+            - generic [ref=e193]: Compliance
+          - heading "KYC Individual" [level=3] [ref=e194]
+          - paragraph [ref=e195]: Know Your Customer para pessoa física. Validação de identidade, screening em listas restritivas e sanções internacionais.
+          - list [ref=e196]:
+            - listitem [ref=e197]:
+              - img [ref=e198]
+              - generic [ref=e201]: Validação de identidade
+            - listitem [ref=e202]:
+              - img [ref=e203]
+              - generic [ref=e206]: Screening PEP e sanções
+            - listitem [ref=e207]:
+              - img [ref=e208]
+              - generic [ref=e211]: Checagem criminal
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - img [ref=e214]
+              - generic [ref=e217]: 2–3 minutos
+            - generic [ref=e218]:
+              - button "Ver detalhes" [ref=e219] [cursor=pointer]
+              - button "Iniciar" [ref=e220] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e221]
+        - generic [ref=e223]:
+          - generic [ref=e224]:
+            - img [ref=e226]
+            - generic [ref=e230]: Compliance
+          - heading "KYB — Know Your Business" [level=3] [ref=e231]
+          - paragraph [ref=e232]: "Due diligence corporativa completa: estrutura societária, screening de sócios, processos e reputação empresarial."
+          - list [ref=e233]:
+            - listitem [ref=e234]:
+              - img [ref=e235]
+              - generic [ref=e238]: Cadastro empresarial
+            - listitem [ref=e239]:
+              - img [ref=e240]
+              - generic [ref=e243]: Sócios e estrutura societária
+            - listitem [ref=e244]:
+              - img [ref=e245]
+              - generic [ref=e248]: Screening de sanções
+          - generic [ref=e249]:
+            - generic [ref=e250]:
+              - img [ref=e251]
+              - generic [ref=e254]: 3–5 minutos
+            - generic [ref=e255]:
+              - button "Ver detalhes" [ref=e256] [cursor=pointer]
+              - button "Iniciar" [ref=e257] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e258]
+        - generic [ref=e260]:
+          - generic [ref=e261]:
+            - img [ref=e263]
+            - generic [ref=e267]: Compliance
+          - heading "KYE — Background Check Colaborador" [level=3] [ref=e268]
+          - paragraph [ref=e269]: Verificação de antecedentes para processo de admissional. Rápido, completo e em conformidade com a LGPD.
+          - list [ref=e270]:
+            - listitem [ref=e271]:
+              - img [ref=e272]
+              - generic [ref=e275]: Identidade e cadastro
+            - listitem [ref=e276]:
+              - img [ref=e277]
+              - generic [ref=e280]: Antecedentes criminais
+            - listitem [ref=e281]:
+              - img [ref=e282]
+              - generic [ref=e285]: Histórico trabalhista
+          - generic [ref=e286]:
+            - generic [ref=e287]:
+              - img [ref=e288]
+              - generic [ref=e291]: 2–3 minutos
+            - generic [ref=e292]:
+              - button "Ver detalhes" [ref=e293] [cursor=pointer]
+              - button "Iniciar" [ref=e294] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e295]
+        - generic [ref=e297]:
+          - generic [ref=e298]:
+            - img [ref=e300]
+            - generic [ref=e304]: Compliance
+          - heading "KYS — Due Diligence de Fornecedor" [level=3] [ref=e305]
+          - paragraph [ref=e306]: Avaliação de risco de cadeia de suprimentos. Identifica vínculos ocultos, sanções e riscos reputacionais de fornecedores.
+          - list [ref=e307]:
+            - listitem [ref=e308]:
+              - img [ref=e309]
+              - generic [ref=e312]: Cadastro empresarial
+            - listitem [ref=e313]:
+              - img [ref=e314]
+              - generic [ref=e317]: Sócios e vínculos
+            - listitem [ref=e318]:
+              - img [ref=e319]
+              - generic [ref=e322]: Sanções e listas
+          - generic [ref=e323]:
+            - generic [ref=e324]:
+              - img [ref=e325]
+              - generic [ref=e328]: 3–5 minutos
+            - generic [ref=e329]:
+              - button "Ver detalhes" [ref=e330] [cursor=pointer]
+              - button "Iniciar" [ref=e331] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e332]
+        - generic [ref=e334]:
+          - generic [ref=e335]:
+            - img [ref=e337]
+            - generic [ref=e340]: Terceiros
+          - heading "TPR — Terceiros em Compliance" [level=3] [ref=e341]
+          - paragraph [ref=e342]: "Due diligence avançada para terceiros com alto risco de compliance: intermediários, consultores e parceiros estratégicos."
+          - list [ref=e343]:
+            - listitem [ref=e344]:
+              - img [ref=e345]
+              - generic [ref=e348]: PF e PJ (dual)
+            - listitem [ref=e349]:
+              - img [ref=e350]
+              - generic [ref=e353]: Rede de relacionamentos
+            - listitem [ref=e354]:
+              - img [ref=e355]
+              - generic [ref=e358]: Screening completo
+          - generic [ref=e359]:
+            - generic [ref=e360]:
+              - img [ref=e361]
+              - generic [ref=e364]: 4–6 minutos
+            - generic [ref=e365]:
+              - button "Ver detalhes" [ref=e366] [cursor=pointer]
+              - button "Iniciar" [ref=e367] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e368]
+        - generic [ref=e370]:
+          - generic [ref=e371]:
+            - img [ref=e373]
+            - generic [ref=e376]: Risco
+          - heading "Risco Reputacional" [level=3] [ref=e377]
+          - paragraph [ref=e378]: Monitoramento de reputação digital e mídia adversa. Identifica notícias negativas, polêmicas e riscos de imagem.
+          - list [ref=e379]:
+            - listitem [ref=e380]:
+              - img [ref=e381]
+              - generic [ref=e384]: Mídia e notícias
+            - listitem [ref=e385]:
+              - img [ref=e386]
+              - generic [ref=e389]: Perfil digital
+            - listitem [ref=e390]:
+              - img [ref=e391]
+              - generic [ref=e394]: Redes sociais
+          - generic [ref=e395]:
+            - generic [ref=e396]:
+              - img [ref=e397]
+              - generic [ref=e400]: 2–4 minutos
+            - generic [ref=e401]:
+              - button "Ver detalhes" [ref=e402] [cursor=pointer]
+              - button "Iniciar" [ref=e403] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e404]
+        - generic [ref=e406]:
+          - generic [ref=e407]:
+            - img [ref=e409]
+            - generic [ref=e411]: Monitoramento
+          - heading "Monitoramento Contínuo" [level=3] [ref=e412]
+          - paragraph [ref=e413]: Reconsulta periódica automatizada. Seja alertado quando novos achados surgirem em bases oficiais.
+          - list [ref=e414]:
+            - listitem [ref=e415]:
+              - img [ref=e416]
+              - generic [ref=e419]: Reconsulta automática
+            - listitem [ref=e420]:
+              - img [ref=e421]
+              - generic [ref=e424]: Alertas em tempo real
+            - listitem [ref=e425]:
+              - img [ref=e426]
+              - generic [ref=e429]: Histórico comparativo
+          - generic [ref=e430]:
+            - generic [ref=e431]:
+              - img [ref=e432]
+              - generic [ref=e435]: 1–2 minutos
+            - generic [ref=e436]:
+              - button "Ver detalhes" [ref=e437] [cursor=pointer]
+              - button "Iniciar" [ref=e438] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e439]
+        - generic [ref=e441]:
+          - generic [ref=e442]:
+            - img [ref=e444]
+            - generic [ref=e447]: Relatório
+          - heading "Relatório Seguro" [level=3] [ref=e448]
+          - paragraph [ref=e449]: Geração de relatório auditável com hash de integridade. Ideal para processos jurídicos e auditorias.
+          - list [ref=e450]:
+            - listitem [ref=e451]:
+              - img [ref=e452]
+              - generic [ref=e455]: Relatório com hash
+            - listitem [ref=e456]:
+              - img [ref=e457]
+              - generic [ref=e460]: Trilha de auditoria
+            - listitem [ref=e461]:
+              - img [ref=e462]
+              - generic [ref=e465]: Link público seguro
+          - generic [ref=e466]:
+            - generic [ref=e467]:
+              - img [ref=e468]
+              - generic [ref=e471]: 1–2 minutos
+            - generic [ref=e472]:
+              - button "Ver detalhes" [ref=e473] [cursor=pointer]
+              - button "Iniciar" [ref=e474] [cursor=pointer]:
+                - text: Iniciar
+                - img [ref=e475]

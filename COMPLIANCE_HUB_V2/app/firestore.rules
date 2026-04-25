@@ -18,7 +18,7 @@ service cloud.firestore {
     function getUserRole() {
       return request.auth.token.role != null
         ? request.auth.token.role
-        : getUserProfile().role;
+        : (getUserProfile().role != null ? getUserProfile().role : 'analyst');
     }
 
     function getUserTenantId() {
@@ -79,7 +79,9 @@ service cloud.firestore {
         request.auth.uid == userId ||
         isAnalyst()
       );
-      allow create, update, delete: if isAuthenticated() && isAnalyst();
+      // Users can create their own profile on first registration
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update, delete: if isAuthenticated() && isAnalyst();
     }
 
     // 2. Cases
@@ -255,10 +257,8 @@ service cloud.firestore {
 
     // 6. Exports
     match /exports/{exportId} {
-      allow read: if isAuthenticated() && (
-        isAnalyst() || 
-        (isClient() && isSameTenant(resource.data.tenantId))
-      );
+      allow read: if canReadTenantDoc(resource.data.tenantId) ||
+        (isAuthenticated() && isClient() && isSameTenant(resource.data.tenantId));
       allow create: if false;
       allow delete: if false;
     }

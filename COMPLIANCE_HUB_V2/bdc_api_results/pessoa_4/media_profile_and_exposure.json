@@ -1,0 +1,43 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "MediaProfileAndExposure": {
+        "MediaExposureLevel": "H",
+        "CelebrityLevel": "H",
+        "UnpopularityLevel": "H",
+        "NewsItems": [],
+        "SearchLabels": {
+          "FullName": "FRANCISCO TACIANO DE SOUSA",
+          "FullNameUniquenessScore": 1,
+          "ShortName": "FRANCISCO SOUSA",
+          "ShortNameUniquenessScore": 0.001
+        },
+        "Next": "",
+        "TotalPages": 0,
+        "EntityStatistics": {
+          "NewsByRangeDate": {
+            "TotalNews": 0,
+            "TotalNewsOnLast7Days": -1,
+            "TotalNewsOnLast30Days": -1,
+            "TotalNewsOnLast90Days": -1,
+            "TotalNewsOnLast180Days": -1,
+            "TotalNewsOnLast365Days": -1
+          }
+        }
+      }
+    }
+  ],
+  "QueryId": "7487b3a9-e6cf-4b54-9ec2-391d50ec5949",
+  "ElapsedMilliseconds": 202,
+  "QueryDate": "2026-04-25T12:33:28.1328686Z",
+  "Status": {
+    "media_profile_and_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

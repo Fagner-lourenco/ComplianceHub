@@ -1,0 +1,56 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "HistoricalBasicData": {
+        "CurrentName": "DIEGO EMANUEL ALVES DE SOUZA",
+        "CurrentStatus": "REGULAR",
+        "CurrentGender": "M",
+        "BirthDate": "2002-04-20T00:00:00Z",
+        "Age": 24,
+        "TaxIdNumber": "10794180329",
+        "HasObitIndication": false,
+        "NameChangeHistory": [
+          {
+            "ChangedDate": "2020-04-20T00:00:00Z",
+            "Name": "DIEGO EMANUEL ALVES DE SOUZA",
+            "Gender": "M"
+          }
+        ],
+        "StatusChangeHistory": [
+          {
+            "ChangedDate": "2020-04-20T00:00:00Z",
+            "Status": "REGULAR"
+          }
+        ],
+        "NameLifetimePercent": {
+          "DIEGO EMANUEL ALVES DE SOUZA": 1
+        },
+        "GenderLifetimePercent": {
+          "M": 1
+        },
+        "StatusLifetimePercent": {
+          "REGULAR": 1
+        },
+        "NameChangesTotal": 0,
+        "StatusChangesTotal": 0,
+        "LastNameChangeDate": "0001-01-01T00:00:00",
+        "LastStatusChangeDate": "0001-01-01T00:00:00",
+        "FirstNameChangeDate": "0001-01-01T00:00:00",
+        "FirstStatusChangeDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "9db4e5a5-9eed-45ac-b39c-528cdd5b64ad",
+  "ElapsedMilliseconds": 57,
+  "QueryDate": "2026-04-25T12:32:29.5426775Z",
+  "Status": {
+    "historical_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

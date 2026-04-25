@@ -1,0 +1,37 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "Collections": {
+        "IsCurrentlyOnCollection": false,
+        "TotalCollectionOccurrences": 60,
+        "TotalCollectionOrigins": 1,
+        "Last30DaysCollectionOccurrences": 0,
+        "Last90DaysCollectionOccurrences": 0,
+        "Last180DaysCollectionOccurrences": 0,
+        "Last365DaysCollectionOccurrences": 0,
+        "Last30DaysCollectionOrigins": 0,
+        "Last90DaysCollectionOrigins": 0,
+        "Last180DaysCollectionOrigins": 0,
+        "Last365DaysCollectionOrigins": 0,
+        "TotalCollectionMonths": 6,
+        "CurrentConsecutiveCollectionMonths": 0,
+        "MaxConsecutiveCollectionMonths": 5,
+        "FirstCollectionDate": "2022-01-03T03:00:00Z",
+        "LastCollectionDate": "2022-09-01T03:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "bb59b2a3-224e-4cad-bfc1-acc8e30b54bd",
+  "ElapsedMilliseconds": 1614,
+  "QueryDate": "2026-04-25T12:53:11.4880504Z",
+  "Status": {
+    "collections": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

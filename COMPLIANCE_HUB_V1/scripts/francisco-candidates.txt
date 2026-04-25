@@ -1,0 +1,15 @@
+﻿=== relevantCriminalCandidates ===
+[]
+\n=== relevantLaborCandidates ===
+[]
+\n=== relevantWarrantCandidates ===
+[]
+\n=== bigdatacorpWarrants ===
+[]
+\n=== bigdatacorpCriminalProcesses ===
+[]
+\n=== bigdatacorpLaborProcesses ===
+[]
+\n=== bigdatacorpWarrantCount, bigdatacorpActiveWarrantCount ===
+undefined undefined
+\n=== riskScore === undefined

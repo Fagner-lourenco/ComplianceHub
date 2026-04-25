@@ -1,0 +1,200 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "MerchantCategoryData": {
+        "HasDirectAssociationData": false,
+        "HasMultipleMerchantCodes": true,
+        "MerchantCategories": [],
+        "CNAECategories": [
+          {
+            "CNAE": "6319-4/00",
+            "MCC": "4816",
+            "MCCName": "Computer Network/Information Services",
+            "Div": "63",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DE PRESTAÇÃO DE SERVIÇOS DE INFORMAÇÃO",
+            "Denomination": "Portais, provedores de conteúdo e outros serviços de informação na internet",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4930-2/01",
+            "MCC": "4214",
+            "MCCName": "Motor Freight Carriers and Trucking – Local and Long Distance, Moving and Storage Companies, and Local Delivery Services",
+            "Div": "49",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "TRANSPORTE TERRESTRE",
+            "Denomination": "Transporte rodoviário de carga, exceto produtos perigosos e mudanças, municipal",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "4930-2/02",
+            "MCC": "4214",
+            "MCCName": "Transportation Services (Not Elsewhere Classified)",
+            "Div": "49",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "TRANSPORTE TERRESTRE",
+            "Denomination": "Transporte rodoviário de carga, exceto produtos perigosos e mudanças, intermunicipal, interestadual e internacional",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5229-0/99",
+            "MCC": "4789",
+            "MCCName": "Transportation Services (Not Elsewhere Classified)",
+            "Div": "52",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "Denomination": "Outras atividades auxiliares dos transportes terrestres não especificadas anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5320-2/01",
+            "MCC": "4215",
+            "MCCName": "Courier Services – Air and Ground, and Freight Forwarders",
+            "Div": "53",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "Denomination": "Serviços de malote não realizados pelo Correio Nacional",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "5320-2/02",
+            "MCC": "4215",
+            "MCCName": "Courier Services – Air and Ground, and Freight Forwarders",
+            "Div": "53",
+            "Section": "TRANSPORTE, ARMAZENAGEM E CORREIO",
+            "Group": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "Denomination": "Serviços de entrega rápida",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6201-5/01",
+            "MCC": "7372",
+            "MCCName": "Computer Programming, Data Processing, and Integrated Systems Design",
+            "Div": "62",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DOS SERVIÇOS DE TECNOLOGIA DA INFORMAÇÃO",
+            "Denomination": "Desenvolvimento de programas de computador sob encomenda",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6202-3/00",
+            "MCC": "7372",
+            "MCCName": "Computer Programming, Data Processing, and Integrated Systems Design",
+            "Div": "62",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DOS SERVIÇOS DE TECNOLOGIA DA INFORMAÇÃO",
+            "Denomination": "Desenvolvimento e licenciamento de programas de computador customizáveis",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6203-1/00",
+            "MCC": "7372",
+            "MCCName": "Computer Programming, Data Processing, and Integrated Systems Design",
+            "Div": "62",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DOS SERVIÇOS DE TECNOLOGIA DA INFORMAÇÃO",
+            "Denomination": "Desenvolvimento e licenciamento de programas de computador não-customizáveis",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6204-0/00",
+            "MCC": "7372",
+            "MCCName": "Computer Programming, Data Processing, and Integrated Systems Design",
+            "Div": "62",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DOS SERVIÇOS DE TECNOLOGIA DA INFORMAÇÃO",
+            "Denomination": "Consultoria em tecnologia da informação",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6209-1/00",
+            "MCC": "7379",
+            "MCCName": "Computer Maintenance, Repair and Services (Not Elsewhere Classified)",
+            "Div": "62",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DOS SERVIÇOS DE TECNOLOGIA DA INFORMAÇÃO",
+            "Denomination": "Suporte técnico, manutenção e outros serviços em tecnologia da informação",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "6399-2/00",
+            "MCC": "7299",
+            "MCCName": "Other Services—not elsewhere classified",
+            "Div": "63",
+            "Section": "INFORMAÇÃO E COMUNICAÇÃO",
+            "Group": "ATIVIDADES DE PRESTAÇÃO DE SERVIÇOS DE INFORMAÇÃO",
+            "Denomination": "Outras atividades de prestação de serviços de informação não especificadas anteriormente",
+            "AlternativeMerchantCodes": {
+              "7375": "Information Retrieval Services I"
+            }
+          },
+          {
+            "CNAE": "7020-4/00",
+            "MCC": "7392",
+            "MCCName": "Management, Consulting, and Public Relations Services",
+            "Div": "70",
+            "Section": "ATIV PROFISSIONAIS, CIENTÍFICAS E TÉCNICAS",
+            "Group": "ATIVIDADES DE SEDES DE EMPRESAS E DE CONSULTORIA EM GESTÃO EMPRESARIAL",
+            "Denomination": "Atividades de consultoria em gestão empresarial, exceto consultoria técnica específica",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "7490-1/99",
+            "MCC": "8999",
+            "MCCName": "Professional Services (Not Elsewhere Classified)",
+            "Div": "74",
+            "Section": "ATIV PROFISSIONAIS, CIENTÍFICAS E TÉCNICAS",
+            "Group": "OUTRAS ATIVIDADES PROFISSIONAIS, CIENTÍFICAS E TÉCNICAS",
+            "Denomination": "Outras atividades profissionais, científicas e técnicas não especificadas anteriormente",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "8030-7/00",
+            "MCC": "7393",
+            "MCCName": "Detective Agencies, Protective Services, and Security Services, Including Armored Cars, and Guard Dogs",
+            "Div": "80",
+            "Section": "ATIV ADM E SV COMPLEMENT",
+            "Group": "ATIVIDADES DE VIGILÂNCIA, SEGURANÇA E INVESTIGAÇÃO",
+            "Denomination": "Atividades de investigação particular",
+            "AlternativeMerchantCodes": {}
+          },
+          {
+            "CNAE": "8299-7/99",
+            "MCC": "7299",
+            "MCCName": "Other Services—not elsewhere classified",
+            "Div": "82",
+            "Section": "ATIV ADM E SV COMPLEMENT",
+            "Group": "SERVIÇOS DE ESCRITÓRIO, DE APOIO ADMINISTRATIVO E OUTROS SERVIÇOS PRESTADOS ÀS EMPRESAS",
+            "Denomination": "Outras atividades de serviços prestados principalmente às empresas não especificadas anteriormente",
+            "AlternativeMerchantCodes": {
+              "7278": "Buying and Shopping Services and Clubs I"
+            }
+          },
+          {
+            "CNAE": "8599-6/04",
+            "MCC": "8299",
+            "MCCName": "Schools and Educational Services (Not Elsewhere Classified)",
+            "Div": "85",
+            "Section": "EDUCAÇÃO",
+            "Group": "EDUCAÇÃO",
+            "Denomination": "Treinamento em desenvolvimento profissional e gerencial",
+            "AlternativeMerchantCodes": {}
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "084bdde2-d0ee-4d46-b429-07cb694a8db4",
+  "ElapsedMilliseconds": 154,
+  "QueryDate": "2026-04-25T12:52:57.5949558Z",
+  "Status": {
+    "merchant_category_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

@@ -1,0 +1,291 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "HistoryBasicData": {
+        "CurrentName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+        "Age": 5,
+        "TotalChanges": 34,
+        "NameTotalChanges": 4,
+        "TradeNameTotalChanges": 3,
+        "TaxRegimeTotalChanges": 2,
+        "TaxIdStatusTotalChanges": 3,
+        "HeadquarterTotalChanges": 0,
+        "CnaeTotalChanges": 19,
+        "CapitalTotalChanges": 3,
+        "LastDateChanged": "2025-09-01T00:00:00",
+        "LastNameChanged": "2025-09-01T00:00:00",
+        "LastLegalNatureChanged": "0001-01-01T00:00:00",
+        "NameHistoryList": [
+          {
+            "Name": "INTELLEKT COMPANIES LTDA",
+            "TradeName": "INTELLEKT COMPANIES",
+            "OfficialName": "INTELLEKT COMPANIES LTDA",
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Name": "INTELLEKTLAB DESENVOLVIMENTO DIGITAL LTDA",
+            "TradeName": "INTELLEKT COMPANIES",
+            "OfficialName": "INTELLEKTLAB DESENVOLVIMENTO DIGITAL LTDA",
+            "ChangeDate": "2023-04-01T00:00:00"
+          },
+          {
+            "Name": "CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA",
+            "TradeName": "CORUJAGPT",
+            "OfficialName": "CORUJAGPT DESENVOLVIMENTO DIGITAL LTDA",
+            "ChangeDate": "2024-07-01T00:00:00"
+          },
+          {
+            "Name": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+            "TradeName": "NOVAX INTELIGENCIABR",
+            "OfficialName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+            "ChangeDate": "2025-09-01T00:00:00"
+          }
+        ],
+        "TradeNameHistoryList": [
+          {
+            "Name": "INTELLEKT COMPANIES LTDA",
+            "TradeName": "INTELLEKT COMPANIES",
+            "OfficialName": "INTELLEKT COMPANIES LTDA",
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Name": "INTELLEKTLAB DESENVOLVIMENTO DIGITAL LTDA",
+            "TradeName": "CORUJAGPT",
+            "OfficialName": "INTELLEKTLAB DESENVOLVIMENTO DIGITAL LTDA",
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Name": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+            "TradeName": "NOVAX INTELIGENCIABR",
+            "OfficialName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+            "ChangeDate": "2025-09-01T00:00:00"
+          }
+        ],
+        "TaxRegimeHistoryList": [
+          {
+            "TaxRegime": "LTDA",
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "TaxRegime": "SIMPLES",
+            "ChangeDate": "2025-02-01T00:00:00"
+          }
+        ],
+        "TaxIdStatusHistoryList": [
+          {
+            "TaxIdStatus": "ATIVA",
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "TaxIdStatus": "INAPTA",
+            "ChangeDate": "2023-12-01T00:00:00"
+          },
+          {
+            "TaxIdStatus": "ATIVA",
+            "ChangeDate": "2024-08-01T00:00:00"
+          }
+        ],
+        "CnaeHistoryList": [
+          {
+            "Code": "7020400",
+            "DocNumber": "",
+            "Activity": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL, EXCETO CONSULTORIA TECNICA ESPECIFICA",
+            "EconomicActivityDivision": "ATIVIDADES DE SEDES DE EMPRESAS E DE CONSULTORIA EM GESTAO EMPRESARIAL",
+            "EconomicActivityGroup": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL",
+            "IsMainEconomicActivity": true,
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Code": "7490199",
+            "DocNumber": "",
+            "Activity": "OUTRAS ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS NAO ESPECIFICADAS ANTERIORMENTE",
+            "EconomicActivityDivision": "OUTRAS ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS",
+            "EconomicActivityGroup": "ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS NAO ESPECIFICADAS ANTERIORMENTE",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Code": "7830200",
+            "DocNumber": "",
+            "Activity": "FORNECIMENTO E GESTAO DE RECURSOS HUMANOS PARA TERCEIROS",
+            "EconomicActivityDivision": "SELECAO, AGENCIAMENTO E LOCACAO DE MAO DE OBRA",
+            "EconomicActivityGroup": "FORNECIMENTO E GESTAO DE RECURSOS HUMANOS PARA TERCEIROS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Code": "8299799",
+            "DocNumber": "",
+            "Activity": "OUTRAS ATIVIDADES DE SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS NAO ESPECIFICADAS ANTERIORMENTE",
+            "EconomicActivityDivision": "SERVICOS DE ESCRITORIO, DE APOIO ADMINISTRATIVO E OUTROS SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS",
+            "EconomicActivityGroup": "OUTRAS ATIVIDADES DE SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Code": "6319400",
+            "DocNumber": "",
+            "Activity": "PORTAIS, PROVEDORES DE CONTEUDO E OUTROS SERVICOS DE INFORMACAO NA INTERNET",
+            "EconomicActivityDivision": "ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+            "EconomicActivityGroup": "TRATAMENTO DE DADOS, HOSPEDAGEM NA INTERNET E OUTRAS ATIVIDADES RELACIONADAS",
+            "IsMainEconomicActivity": true,
+            "ChangeDate": "2023-04-01T00:00:00"
+          },
+          {
+            "Code": "7020400",
+            "DocNumber": "",
+            "Activity": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL, EXCETO CONSULTORIA TECNICA ESPECIFICA",
+            "EconomicActivityDivision": "ATIVIDADES DE SEDES DE EMPRESAS E DE CONSULTORIA EM GESTAO EMPRESARIAL",
+            "EconomicActivityGroup": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-04-01T00:00:00"
+          },
+          {
+            "Code": "8599604",
+            "DocNumber": "",
+            "Activity": "TREINAMENTO EM DESENVOLVIMENTO PROFISSIONAL E GERENCIAL",
+            "EconomicActivityDivision": "EDUCACAO",
+            "EconomicActivityGroup": "OUTRAS ATIVIDADES DE ENSINO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-04-01T00:00:00"
+          },
+          {
+            "Code": "6201501",
+            "DocNumber": "",
+            "Activity": "DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA",
+            "EconomicActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Code": "6202300",
+            "DocNumber": "",
+            "Activity": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR CUSTOMIZAVEIS",
+            "EconomicActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Code": "6203100",
+            "DocNumber": "",
+            "Activity": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR NAO CUSTOMIZAVEIS",
+            "EconomicActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Code": "6204000",
+            "DocNumber": "",
+            "Activity": "CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Code": "6209100",
+            "DocNumber": "",
+            "Activity": "SUPORTE TECNICO, MANUTENCAO E OUTROS SERVICOS EM TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "EconomicActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2023-08-01T00:00:00"
+          },
+          {
+            "Code": "4930201",
+            "DocNumber": "",
+            "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, MUNICIPAL",
+            "EconomicActivityDivision": "TRANSPORTE TERRESTRE",
+            "EconomicActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "4930202",
+            "DocNumber": "",
+            "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, INTERMUNICIPAL, INTERESTADUAL E INTERNACIONAL",
+            "EconomicActivityDivision": "TRANSPORTE TERRESTRE",
+            "EconomicActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "5229099",
+            "DocNumber": "",
+            "Activity": "OUTRAS ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES NAO ESPECIFICADAS ANTERIORMENTE",
+            "EconomicActivityDivision": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "EconomicActivityGroup": "ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "5320201",
+            "DocNumber": "",
+            "Activity": "SERVICOS DE MALOTE NAO REALIZADOS PELO CORREIO NACIONAL",
+            "EconomicActivityDivision": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "EconomicActivityGroup": "ATIVIDADES DE MALOTE E DE ENTREGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "5320202",
+            "DocNumber": "",
+            "Activity": "SERVICOS DE ENTREGA RAPIDA",
+            "EconomicActivityDivision": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "EconomicActivityGroup": "ATIVIDADES DE MALOTE E DE ENTREGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "6399200",
+            "DocNumber": "",
+            "Activity": "OUTRAS ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO NAO ESPECIFICADAS ANTERIORMENTE",
+            "EconomicActivityDivision": "ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+            "EconomicActivityGroup": "OUTRAS ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          },
+          {
+            "Code": "8030700",
+            "DocNumber": "",
+            "Activity": "ATIVIDADES DE INVESTIGACAO PARTICULAR",
+            "EconomicActivityDivision": "ATIVIDADES DE VIGILANCIA, SEGURANCA E INVESTIGACAO",
+            "EconomicActivityGroup": "ATIVIDADES DE INVESTIGACAO PARTICULAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-09-01T00:00:00"
+          }
+        ],
+        "CapitalHistoryList": [
+          {
+            "Capital": "5000.00",
+            "ChangeDate": "2021-08-01T00:00:00"
+          },
+          {
+            "Capital": "000000005000.00",
+            "ChangeDate": "2023-06-01T00:00:00"
+          },
+          {
+            "Capital": "5000.00",
+            "ChangeDate": "2023-08-01T00:00:00"
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "47ae0980-e821-4df3-81b5-3e552e41e79c",
+  "ElapsedMilliseconds": 892,
+  "QueryDate": "2026-04-25T12:52:46.6691994Z",
+  "Status": {
+    "history_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

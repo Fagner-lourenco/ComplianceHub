@@ -13,24 +13,39 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
     }
 
+    // Fast role check via custom claims (set by Cloud Functions on user creation/update).
+    // Falls back to getUserProfile() when claims are not yet propagated.
+    function getUserRole() {
+      return request.auth.token.role != null
+        ? request.auth.token.role
+        : getUserProfile().role;
+    }
+
+    function getUserTenantId() {
+      return request.auth.token.tenantId != null
+        ? request.auth.token.tenantId
+        : getUserProfile().tenantId;
+    }
+
     // Check if document belongs to the same tenant as the user
     function isSameTenant(tenantId) {
-      return getUserProfile() != null && getUserProfile().tenantId == tenantId;
+      let userTenantId = getUserTenantId();
+      return userTenantId != null && tenantId != null && userTenantId == tenantId;
     }
 
     // Check if user is internal staff
     function isAnalyst() {
-      return getUserProfile() != null && getUserProfile().role in ['analyst', 'supervisor', 'admin'];
+      return getUserRole() in ['analyst', 'supervisor', 'admin'];
     }
 
     // Check if user is admin specifically
     function isAdmin() {
-      return getUserProfile() != null && getUserProfile().role == 'admin';
+      return getUserRole() == 'admin';
     }
 
     // Check if user is a client
     function isClient() {
-      return getUserProfile() != null && getUserProfile().role in ['CLIENT', 'client_viewer', 'client_manager'];
+      return getUserRole() in ['CLIENT', 'client_viewer', 'client_operator', 'client_manager'];
     }
 
     /* --- COLLECTION RULES --- */
@@ -99,13 +114,24 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isAdmin();
     }
 
-    // 4. Audit Logs
+    // 4. Audit Logs (ops-only — complete trail)
     match /auditLogs/{logId} {
       allow read: if isAuthenticated() && isAnalyst();
       
-      allow create: if isAuthenticated() && isAnalyst();
-      
-      allow update, delete: if false; // Logs are immutable
+      // Complete audit trail is written by Cloud Functions to keep projections
+      // and actor metadata consistent.
+      allow create, update, delete: if false;
+    }
+
+    // 4b. Tenant Audit Logs (client-safe projection — tenant-scoped)
+    match /tenantAuditLogs/{logId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(resource.data.tenantId))
+      );
+
+      // Only Cloud Functions write here (via writeAuditEvent projection)
+      allow create, update, delete: if false;
     }
 
     // 5. Tenant Settings
@@ -115,7 +141,8 @@ service cloud.firestore {
         (isClient() && isSameTenant(tenantId))
       );
 
-      allow create, update: if isAuthenticated() && isAnalyst();
+      // Tenant configuration changes go through updateTenantSettingsByAnalyst.
+      allow create, update: if false;
       allow delete: if false;
     }
 
@@ -126,19 +153,39 @@ service cloud.firestore {
         (isClient() && isSameTenant(resource.data.tenantId))
       );
       
-      allow create: if isAuthenticated() && isAnalyst();
-      
+      // Export registration is owned by registerClientExport.
+      allow create, update, delete: if false;
+    }
+
+    // 7. Public Reports (shareable links — public read with TTL, analyst manage)
+    match /publicReports/{token} {
+      allow read: if
+        (isAuthenticated() && isAnalyst()) ||
+        (
+          resource.data.expiresAt is timestamp
+          && request.time < resource.data.expiresAt
+          && (resource.data.active != false)
+        );
+      // Only Cloud Functions create these documents.
+      allow create: if false;
+      allow update: if false;
       allow delete: if false;
     }
 
-    // 7. Public Reports (shareable links — public read with TTL, server-only create)
-    match /publicReports/{token} {
-      allow read: if true
-        && resource.data.expiresAt is timestamp
-        && request.time < resource.data.expiresAt;
-      // Only Cloud Functions create these documents.
-      allow create: if false;
-      allow update, delete: if false;
+    // 8. System Health (circuit breaker state — analyst read, Cloud Functions write)
+    match /systemHealth/{providerId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
+    // 9. Tenant Usage (quota counters — client read own tenant, Cloud Functions write)
+    match /tenantUsage/{tenantId} {
+      allow read: if isAuthenticated() && (
+        isAnalyst() ||
+        (isClient() && isSameTenant(tenantId))
+      );
+      // Only Cloud Functions write here (via transaction in enforceTenantSubmissionLimits)
+      allow create, update, delete: if false;
     }
   }
 }

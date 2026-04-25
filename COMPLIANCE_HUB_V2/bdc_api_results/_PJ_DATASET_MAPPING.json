@@ -1,0 +1,989 @@
+{
+  "generatedAt": "2026-04-25T12:55:50.754Z",
+  "totalCnpjs": 2,
+  "totalDatasets": 20,
+  "results": {
+    "empresa_1": {
+      "doc": "42975374000172",
+      "nome": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+      "datasets": {
+        "government_debtors": {
+          "status": "error",
+          "error": "fetch failed"
+        },
+        "collections": {
+          "status": "empty",
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "TotalCollectionOccurrences",
+            "TotalCollectionOrigins",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate"
+          ]
+        },
+        "phones_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalPhones",
+            "TotalActivePhones",
+            "TotalWorkPhones",
+            "TotalPersonalPhones",
+            "TotalUniquePhones",
+            "TotalPhonePassages",
+            "TotalBadPhonePassages",
+            "TotalLast3MonthsPassages",
+            "TotalLast6MonthsPassages",
+            "TotalLast12MonthsPassages",
+            "TotalLast18MonthsPassages",
+            "OldestPhonePassageDate",
+            "NewestPhonePassageDate",
+            "Phones"
+          ],
+          "nonEmptyKeys": [
+            "TotalPhones",
+            "TotalActivePhones",
+            "TotalWorkPhones",
+            "TotalPersonalPhones",
+            "TotalUniquePhones",
+            "TotalPhonePassages",
+            "TotalBadPhonePassages",
+            "OldestPhonePassageDate",
+            "NewestPhonePassageDate",
+            "Phones"
+          ],
+          "sizeBytes": 4344
+        },
+        "addresses_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalAddresses",
+            "TotalActiveAddresses",
+            "TotalWorkAddresses",
+            "TotalPersonalAddresses",
+            "TotalUniqueAddresses",
+            "TotalAddressPassages",
+            "TotalBadAddressPassages",
+            "OldestAddressPassageDate",
+            "NewestAddressPassageDate",
+            "Addresses"
+          ],
+          "nonEmptyKeys": [
+            "TotalAddresses",
+            "TotalActiveAddresses",
+            "TotalPersonalAddresses",
+            "TotalAddressPassages",
+            "OldestAddressPassageDate",
+            "NewestAddressPassageDate",
+            "Addresses"
+          ],
+          "sizeBytes": 1975
+        },
+        "emails_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalEmails",
+            "TotalActiveEmails",
+            "TotalWorkEmails",
+            "TotalPersonalEmails",
+            "TotalUniqueEmails",
+            "TotalEmailPassages",
+            "TotalBadEmailPassages",
+            "TotalLast3MonthsPassages",
+            "TotalLast6MonthsPassages",
+            "TotalLast12MonthsPassages",
+            "TotalLast18MonthsPassages",
+            "OldestEmailPassageDate",
+            "NewestEmailPassageDate",
+            "Emails"
+          ],
+          "nonEmptyKeys": [
+            "TotalEmails",
+            "TotalWorkEmails",
+            "TotalPersonalEmails",
+            "TotalUniqueEmails",
+            "TotalEmailPassages",
+            "OldestEmailPassageDate",
+            "NewestEmailPassageDate",
+            "Emails"
+          ],
+          "sizeBytes": 4812
+        },
+        "online_presence": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "financial_data": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "history_basic_data": {
+          "status": "ok",
+          "keys": [
+            "CurrentName",
+            "Age",
+            "TotalChanges",
+            "NameTotalChanges",
+            "TradeNameTotalChanges",
+            "TaxRegimeTotalChanges",
+            "TaxIdStatusTotalChanges",
+            "HeadquarterTotalChanges",
+            "CnaeTotalChanges",
+            "CapitalTotalChanges",
+            "LastDateChanged",
+            "LastNameChanged",
+            "LastLegalNatureChanged",
+            "NameHistoryList",
+            "TradeNameHistoryList",
+            "TaxRegimeHistoryList",
+            "TaxIdStatusHistoryList",
+            "CnaeHistoryList",
+            "CapitalHistoryList"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "Age",
+            "TotalChanges",
+            "NameTotalChanges",
+            "TradeNameTotalChanges",
+            "TaxRegimeTotalChanges",
+            "TaxIdStatusTotalChanges",
+            "CnaeTotalChanges",
+            "CapitalTotalChanges",
+            "LastDateChanged",
+            "LastNameChanged",
+            "NameHistoryList",
+            "TradeNameHistoryList",
+            "TaxRegimeHistoryList",
+            "TaxIdStatusHistoryList",
+            "CnaeHistoryList",
+            "CapitalHistoryList"
+          ],
+          "sizeBytes": 8621
+        },
+        "dynamic_qsa_data": {
+          "status": "ok",
+          "keys": [
+            "BasicData",
+            "Relationships"
+          ],
+          "nonEmptyKeys": [
+            "BasicData",
+            "Relationships"
+          ],
+          "sizeBytes": 10487
+        },
+        "owners_lawsuits": {
+          "status": "ok",
+          "keys": [
+            "TotalLawsuits",
+            "TotalReplacedLawsuits",
+            "TotalLawsuitsAsAuthor",
+            "TotalLawsuitsAsDefendant",
+            "TotalLawsuitsAsOther",
+            "AverageLawsuitsPerOwner",
+            "OwnerMaxLawsuits",
+            "OwnerMinLawsuits",
+            "LawsuitsWithAllOwners",
+            "Last30DaysLawsuits",
+            "Last90DaysLawsuits",
+            "Last180DaysLawsuits",
+            "Last365DaysLawsuits",
+            "FirstLawsuitDate",
+            "LastLawsuitDate",
+            "Lawsuits",
+            "ActiveOwners",
+            "InactiveOwners"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TotalLawsuitsAsAuthor",
+            "TotalLawsuitsAsDefendant",
+            "TotalLawsuitsAsOther",
+            "AverageLawsuitsPerOwner",
+            "OwnerMaxLawsuits",
+            "Last365DaysLawsuits",
+            "LastLawsuitDate",
+            "Lawsuits",
+            "ActiveOwners",
+            "InactiveOwners"
+          ],
+          "sizeBytes": 354606
+        },
+        "employees_kyc": {
+          "status": "empty",
+          "keys": []
+        },
+        "economic_group_kyc": {
+          "status": "ok",
+          "keys": [
+            "TotalCurrentlyPEP",
+            "TotalHistoricallyPEP",
+            "TotalCurrentlySanctioned",
+            "TotalHistoricallySanctioned",
+            "AverageSanctionsPerCompany",
+            "PEPPercentage",
+            "EconomicGroupMaxSanctions",
+            "EconomicGroupMinSanctions",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstPEPOccurenceDate",
+            "LastPEPOccurenceDate",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "EconomicGroupCompaniesKycData",
+            "EconomicGroupPeopleKycData",
+            "EconomicGroupKycData"
+          ],
+          "nonEmptyKeys": [
+            "TotalHistoricallySanctioned",
+            "EconomicGroupCompaniesKycData",
+            "EconomicGroupPeopleKycData",
+            "EconomicGroupKycData"
+          ],
+          "sizeBytes": 22888
+        },
+        "merchant_category_data": {
+          "status": "ok",
+          "keys": [
+            "HasDirectAssociationData",
+            "HasMultipleMerchantCodes",
+            "MerchantCategories",
+            "CNAECategories"
+          ],
+          "nonEmptyKeys": [
+            "HasMultipleMerchantCodes",
+            "CNAECategories"
+          ],
+          "sizeBytes": 5929
+        },
+        "syndicate_agreements": {
+          "status": "ok",
+          "keys": [
+            "TotalAgreements",
+            "TotalActiveAgreements",
+            "TotalAgreementsWithLifeInsuranceClause",
+            "NumberOfStatesWithAgreementsPresent",
+            "CurrentConsecutiveYearsWithSomeAgreementActive",
+            "NumberOfMonthsSinceLastAgreementExpired",
+            "NumberOfMonthsUntilActiveAgreementsExpire",
+            "Agreements"
+          ],
+          "nonEmptyKeys": [
+            "CurrentConsecutiveYearsWithSomeAgreementActive",
+            "NumberOfMonthsSinceLastAgreementExpired",
+            "NumberOfMonthsUntilActiveAgreementsExpire"
+          ],
+          "sizeBytes": 290
+        },
+        "social_conscience": {
+          "status": "ok",
+          "keys": [
+            "OwnershipDiversityScore",
+            "EmployeesDiversityScore",
+            "OnlineAccessibilityScore"
+          ],
+          "nonEmptyKeys": [
+            "OwnershipDiversityScore",
+            "EmployeesDiversityScore",
+            "OnlineAccessibilityScore"
+          ],
+          "sizeBytes": 92
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "SearchLabels",
+            "EntityStatistics"
+          ],
+          "sizeBytes": 476
+        },
+        "online_ads": {
+          "status": "ok",
+          "keys": [
+            "0"
+          ],
+          "nonEmptyKeys": [
+            "array[1]"
+          ],
+          "sizeBytes": 677
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications",
+            "Awards",
+            "Certifications"
+          ]
+        },
+        "lawsuits_distribution_data": {
+          "status": "ok",
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "sizeBytes": 597
+        }
+      }
+    },
+    "empresa_2": {
+      "doc": "13783221000478",
+      "nome": "CNPJ 13.783.221/0004-78",
+      "datasets": {
+        "government_debtors": {
+          "status": "ok",
+          "keys": [
+            "DebtorName",
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ],
+          "nonEmptyKeys": [
+            "DebtorName",
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ],
+          "sizeBytes": 1484
+        },
+        "collections": {
+          "status": "ok",
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "TotalCollectionOccurrences",
+            "TotalCollectionOrigins",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate"
+          ],
+          "nonEmptyKeys": [
+            "TotalCollectionOccurrences",
+            "TotalCollectionOrigins",
+            "TotalCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate"
+          ],
+          "sizeBytes": 557
+        },
+        "phones_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalPhones",
+            "TotalActivePhones",
+            "TotalWorkPhones",
+            "TotalPersonalPhones",
+            "TotalUniquePhones",
+            "TotalPhonePassages",
+            "TotalBadPhonePassages",
+            "TotalLast3MonthsPassages",
+            "TotalLast6MonthsPassages",
+            "TotalLast12MonthsPassages",
+            "TotalLast18MonthsPassages",
+            "OldestPhonePassageDate",
+            "NewestPhonePassageDate",
+            "Phones"
+          ],
+          "nonEmptyKeys": [
+            "TotalPhones",
+            "TotalActivePhones",
+            "TotalWorkPhones",
+            "TotalUniquePhones",
+            "TotalPhonePassages",
+            "TotalBadPhonePassages",
+            "OldestPhonePassageDate",
+            "NewestPhonePassageDate",
+            "Phones"
+          ],
+          "sizeBytes": 4378
+        },
+        "addresses_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalAddresses",
+            "TotalActiveAddresses",
+            "TotalWorkAddresses",
+            "TotalPersonalAddresses",
+            "TotalUniqueAddresses",
+            "TotalAddressPassages",
+            "TotalBadAddressPassages",
+            "OldestAddressPassageDate",
+            "NewestAddressPassageDate",
+            "Addresses"
+          ],
+          "nonEmptyKeys": [
+            "TotalAddresses",
+            "TotalActiveAddresses",
+            "TotalWorkAddresses",
+            "TotalPersonalAddresses",
+            "TotalUniqueAddresses",
+            "TotalAddressPassages",
+            "OldestAddressPassageDate",
+            "NewestAddressPassageDate",
+            "Addresses"
+          ],
+          "sizeBytes": 3478
+        },
+        "emails_extended": {
+          "status": "ok",
+          "keys": [
+            "TotalEmails",
+            "TotalActiveEmails",
+            "TotalWorkEmails",
+            "TotalPersonalEmails",
+            "TotalUniqueEmails",
+            "TotalEmailPassages",
+            "TotalBadEmailPassages",
+            "TotalLast3MonthsPassages",
+            "TotalLast6MonthsPassages",
+            "TotalLast12MonthsPassages",
+            "TotalLast18MonthsPassages",
+            "OldestEmailPassageDate",
+            "NewestEmailPassageDate",
+            "Emails"
+          ],
+          "nonEmptyKeys": [
+            "TotalEmails",
+            "TotalWorkEmails",
+            "TotalUniqueEmails",
+            "TotalEmailPassages",
+            "OldestEmailPassageDate",
+            "NewestEmailPassageDate",
+            "Emails"
+          ],
+          "sizeBytes": 9048
+        },
+        "online_presence": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "financial_data": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "history_basic_data": {
+          "status": "ok",
+          "keys": [
+            "CurrentName",
+            "Age",
+            "TotalChanges",
+            "NameTotalChanges",
+            "TradeNameTotalChanges",
+            "TaxRegimeTotalChanges",
+            "TaxIdStatusTotalChanges",
+            "HeadquarterTotalChanges",
+            "CnaeTotalChanges",
+            "CapitalTotalChanges",
+            "LastDateChanged",
+            "LastNameChanged",
+            "LastLegalNatureChanged",
+            "NameHistoryList",
+            "TradeNameHistoryList",
+            "TaxRegimeHistoryList",
+            "TaxIdStatusHistoryList",
+            "CnaeHistoryList",
+            "CapitalHistoryList"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "Age",
+            "TotalChanges",
+            "NameTotalChanges",
+            "TradeNameTotalChanges",
+            "TaxRegimeTotalChanges",
+            "TaxIdStatusTotalChanges",
+            "CnaeTotalChanges",
+            "CapitalTotalChanges",
+            "LastDateChanged",
+            "LastNameChanged",
+            "NameHistoryList",
+            "TradeNameHistoryList",
+            "TaxRegimeHistoryList",
+            "TaxIdStatusHistoryList",
+            "CnaeHistoryList",
+            "CapitalHistoryList"
+          ],
+          "sizeBytes": 19406
+        },
+        "dynamic_qsa_data": {
+          "status": "ok",
+          "keys": [
+            "BasicData",
+            "Relationships"
+          ],
+          "nonEmptyKeys": [
+            "BasicData",
+            "Relationships"
+          ],
+          "sizeBytes": 38098
+        },
+        "owners_lawsuits": {
+          "status": "ok",
+          "keys": [
+            "TotalLawsuits",
+            "TotalReplacedLawsuits",
+            "TotalLawsuitsAsAuthor",
+            "TotalLawsuitsAsDefendant",
+            "TotalLawsuitsAsOther",
+            "AverageLawsuitsPerOwner",
+            "OwnerMaxLawsuits",
+            "OwnerMinLawsuits",
+            "LawsuitsWithAllOwners",
+            "Last30DaysLawsuits",
+            "Last90DaysLawsuits",
+            "Last180DaysLawsuits",
+            "Last365DaysLawsuits",
+            "FirstLawsuitDate",
+            "LastLawsuitDate",
+            "Lawsuits",
+            "ActiveOwners",
+            "InactiveOwners"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TotalLawsuitsAsAuthor",
+            "TotalLawsuitsAsDefendant",
+            "TotalLawsuitsAsOther",
+            "AverageLawsuitsPerOwner",
+            "OwnerMaxLawsuits",
+            "Last90DaysLawsuits",
+            "Last180DaysLawsuits",
+            "Last365DaysLawsuits",
+            "LastLawsuitDate",
+            "Lawsuits",
+            "ActiveOwners",
+            "InactiveOwners"
+          ],
+          "sizeBytes": 19952866
+        },
+        "employees_kyc": {
+          "status": "ok",
+          "keys": [
+            "EmployeesKycData",
+            "TotalCurrentlyPEP",
+            "TotalHistoricallyPEP",
+            "TotalCurrentlySanctioned",
+            "TotalHistoricallySanctioned",
+            "AverageSanctionsPerEmployee",
+            "PEPPercentage",
+            "EmployeeMaxSanctions",
+            "EmployeeMinSanctions",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "NextPageId"
+          ],
+          "nonEmptyKeys": [
+            "EmployeesKycData",
+            "TotalHistoricallySanctioned",
+            "AverageSanctionsPerEmployee",
+            "EmployeeMaxSanctions",
+            "NextPageId"
+          ],
+          "sizeBytes": 387807
+        },
+        "economic_group_kyc": {
+          "status": "ok",
+          "keys": [
+            "TotalCurrentlyPEP",
+            "TotalHistoricallyPEP",
+            "TotalCurrentlySanctioned",
+            "TotalHistoricallySanctioned",
+            "AverageSanctionsPerCompany",
+            "PEPPercentage",
+            "EconomicGroupMaxSanctions",
+            "EconomicGroupMinSanctions",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstPEPOccurenceDate",
+            "LastPEPOccurenceDate",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "EconomicGroupCompaniesKycData",
+            "EconomicGroupPeopleKycData",
+            "EconomicGroupKycData"
+          ],
+          "nonEmptyKeys": [
+            "TotalCurrentlyPEP",
+            "TotalHistoricallyPEP",
+            "TotalCurrentlySanctioned",
+            "TotalHistoricallySanctioned",
+            "AverageSanctionsPerCompany",
+            "PEPPercentage",
+            "EconomicGroupMaxSanctions",
+            "EconomicGroupMinSanctions",
+            "LastYearPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "LastSanctionDate",
+            "EconomicGroupCompaniesKycData",
+            "EconomicGroupPeopleKycData",
+            "EconomicGroupKycData"
+          ],
+          "sizeBytes": 1218658
+        },
+        "merchant_category_data": {
+          "status": "ok",
+          "keys": [
+            "HasDirectAssociationData",
+            "HasMultipleMerchantCodes",
+            "MerchantCategories",
+            "CNAECategories"
+          ],
+          "nonEmptyKeys": [
+            "HasMultipleMerchantCodes",
+            "CNAECategories"
+          ],
+          "sizeBytes": 14572
+        },
+        "syndicate_agreements": {
+          "status": "ok",
+          "keys": [
+            "TotalAgreements",
+            "TotalActiveAgreements",
+            "TotalAgreementsWithLifeInsuranceClause",
+            "NumberOfStatesWithAgreementsPresent",
+            "CurrentConsecutiveYearsWithSomeAgreementActive",
+            "NumberOfMonthsSinceLastAgreementExpired",
+            "NumberOfMonthsUntilActiveAgreementsExpire",
+            "Agreements"
+          ],
+          "nonEmptyKeys": [
+            "TotalAgreements",
+            "TotalActiveAgreements",
+            "TotalAgreementsWithLifeInsuranceClause",
+            "NumberOfStatesWithAgreementsPresent",
+            "CurrentConsecutiveYearsWithSomeAgreementActive",
+            "NumberOfMonthsSinceLastAgreementExpired",
+            "NumberOfMonthsUntilActiveAgreementsExpire",
+            "Agreements"
+          ],
+          "sizeBytes": 9780
+        },
+        "social_conscience": {
+          "status": "ok",
+          "keys": [
+            "OwnershipDiversityScore",
+            "EmployeesDiversityScore",
+            "OnlineAccessibilityScore"
+          ],
+          "nonEmptyKeys": [
+            "OwnershipDiversityScore",
+            "EmployeesDiversityScore",
+            "OnlineAccessibilityScore"
+          ],
+          "sizeBytes": 92
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "CreationDate",
+            "LastUpdateDate",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "CreationDate",
+            "LastUpdateDate",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "sizeBytes": 266187
+        },
+        "online_ads": {
+          "status": "empty",
+          "keys": []
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications",
+            "Awards",
+            "Certifications"
+          ]
+        },
+        "lawsuits_distribution_data": {
+          "status": "ok",
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "sizeBytes": 10567
+        }
+      }
+    }
+  },
+  "datasetSummary": {
+    "government_debtors": {
+      "okCount": 1,
+      "emptyCount": 0,
+      "errorCount": 1,
+      "meaningfulDataCount": 1,
+      "classification": "A"
+    },
+    "collections": {
+      "okCount": 1,
+      "emptyCount": 1,
+      "errorCount": 0,
+      "meaningfulDataCount": 1,
+      "classification": "A"
+    },
+    "phones_extended": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "addresses_extended": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "emails_extended": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "online_presence": {
+      "okCount": 0,
+      "emptyCount": 0,
+      "errorCount": 2,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "financial_data": {
+      "okCount": 0,
+      "emptyCount": 0,
+      "errorCount": 2,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "history_basic_data": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "dynamic_qsa_data": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "owners_lawsuits": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "employees_kyc": {
+      "okCount": 1,
+      "emptyCount": 1,
+      "errorCount": 0,
+      "meaningfulDataCount": 1,
+      "classification": "A"
+    },
+    "economic_group_kyc": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "merchant_category_data": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "syndicate_agreements": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "social_conscience": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "media_profile_and_exposure": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    },
+    "online_ads": {
+      "okCount": 1,
+      "emptyCount": 1,
+      "errorCount": 0,
+      "meaningfulDataCount": 1,
+      "classification": "A"
+    },
+    "property_data": {
+      "okCount": 0,
+      "emptyCount": 0,
+      "errorCount": 2,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "awards_and_certifications": {
+      "okCount": 0,
+      "emptyCount": 2,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "C"
+    },
+    "lawsuits_distribution_data": {
+      "okCount": 2,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 2,
+      "classification": "A"
+    }
+  }
+}

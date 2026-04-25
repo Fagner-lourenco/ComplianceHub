@@ -1,0 +1,53 @@
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - text: ComplianceHub®
+      - generic [ref=e16]:
+        - button "▣ Dicionário de fontes" [ref=e17] [cursor=pointer]
+        - button [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - button [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - button "Background Check" [ref=e34] [cursor=pointer]
+        - button "Due Diligence" [ref=e35] [cursor=pointer]
+        - button "Jurídico" [ref=e36] [cursor=pointer]
+        - button "Monitoramento" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e39] [cursor=pointer]
+      - button "Aplicativos ▦" [ref=e40] [cursor=pointer]
+  - main [ref=e41]:
+    - generic [ref=e43]:
+      - generic [ref=e44]: Configurações
+      - heading "Configurações do Tenant" [level=1] [ref=e45]
+      - paragraph [ref=e46]: Gerencie limites, nome do tenant e parâmetros operacionais da plataforma.
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e50]: Nome do tenant
+          - textbox "Nome do tenant" [ref=e51]:
+            - /placeholder: Nome da empresa ou departamento
+            - text: ComplianceHub Demo
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - generic [ref=e54]: Limite diário de análises
+            - spinbutton "Limite diário de análises" [ref=e55]: "500"
+          - generic [ref=e56]:
+            - generic [ref=e57]: Limite mensal de análises
+            - spinbutton "Limite mensal de análises" [ref=e58]: "10000"
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - checkbox "Permitir excedente diário (com alerta)" [checked] [ref=e61]
+            - text: Permitir excedente diário (com alerta)
+          - generic [ref=e62]:
+            - checkbox "Permitir excedente mensal (com alerta)" [ref=e63]
+            - text: Permitir excedente mensal (com alerta)
+      - button "Salvar configurações" [ref=e65] [cursor=pointer]:
+        - img [ref=e66]
+        - text: Salvar configurações

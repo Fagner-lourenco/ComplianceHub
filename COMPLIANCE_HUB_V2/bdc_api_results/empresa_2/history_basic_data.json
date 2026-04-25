@@ -1,0 +1,588 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "HistoryBasicData": {
+        "CurrentName": "MADERO INDUSTRIA E COMERCIO S.A.",
+        "Age": 13,
+        "TotalChanges": 67,
+        "NameTotalChanges": 1,
+        "TradeNameTotalChanges": 1,
+        "TaxRegimeTotalChanges": 2,
+        "TaxIdStatusTotalChanges": 1,
+        "HeadquarterTotalChanges": 0,
+        "CnaeTotalChanges": 54,
+        "CapitalTotalChanges": 8,
+        "LastDateChanged": "2025-01-01T00:00:00",
+        "LastNameChanged": "2021-02-01T00:00:00",
+        "LastLegalNatureChanged": "0001-01-01T00:00:00",
+        "NameHistoryList": [
+          {
+            "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "TradeName": "GRUPO MADERO",
+            "OfficialName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "ChangeDate": "2021-02-01T00:00:00"
+          }
+        ],
+        "TradeNameHistoryList": [
+          {
+            "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "TradeName": "GRUPO MADERO",
+            "OfficialName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "ChangeDate": "2021-02-01T00:00:00"
+          }
+        ],
+        "TaxRegimeHistoryList": [
+          {
+            "TaxRegime": "S.A.",
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "TaxRegime": "LUCRO REAL",
+            "ChangeDate": "2023-02-01T00:00:00"
+          }
+        ],
+        "TaxIdStatusHistoryList": [
+          {
+            "TaxIdStatus": "ATIVA",
+            "ChangeDate": "2021-02-01T00:00:00"
+          }
+        ],
+        "CnaeHistoryList": [
+          {
+            "Code": "1013901",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE PRODUTOS DE CARNE",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "ABATE E FABRICACAO DE PRODUTOS DE CARNE",
+            "IsMainEconomicActivity": true,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1033301",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE SUCOS CONCENTRADOS DE FRUTAS, HORTALICAS E LEGUMES",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "FABRICACAO DE CONSERVAS DE FRUTAS, LEGUMES E OUTROS VEGETAIS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1033302",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE SUCOS DE FRUTAS, HORTALICAS E LEGUMES, EXCETO CONCENTRADOS",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "FABRICACAO DE CONSERVAS DE FRUTAS, LEGUMES E OUTROS VEGETAIS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1053800",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE SORVETES E OUTROS GELADOS COMESTIVEIS",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "LATICINIOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1091101",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE PRODUTOS DE PANIFICACAO INDUSTRIAL",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "FABRICACAO DE OUTROS PRODUTOS ALIMENTICIOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1095300",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE ESPECIARIAS, MOLHOS, TEMPEROS E CONDIMENTOS",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "FABRICACAO DE OUTROS PRODUTOS ALIMENTICIOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "1099699",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE OUTROS PRODUTOS ALIMENTICIOS NAO ESPECIFICADOS ANTERIORMENTE",
+            "EconomicActivityDivision": "FABRICACAO DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityGroup": "FABRICACAO DE OUTROS PRODUTOS ALIMENTICIOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4639701",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE PRODUTOS ALIMENTICIOS EM GERAL",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4647802",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE LIVROS, JORNAIS E OUTRAS PUBLICACOES",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE PRODUTOS DE CONSUMO NAO ALIMENTAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4649404",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MOVEIS E ARTIGOS DE COLCHOARIA",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE PRODUTOS DE CONSUMO NAO ALIMENTAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4649409",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE PRODUTOS DE HIGIENE, LIMPEZA E CONSERVACAO DOMICILIAR, COM ATIVIDADE DE FRACIONAMENTO E ACONDICIONAMENTO ASSOCIADA",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE PRODUTOS DE CONSUMO NAO ALIMENTAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4649499",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE OUTROS EQUIPAMENTOS E ARTIGOS DE USO PESSOAL E DOMESTICO NAO ESPECIFICADOS ANTERIORMENTE",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE PRODUTOS DE CONSUMO NAO ALIMENTAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4651601",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE EQUIPAMENTOS DE INFORMATICA",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE EQUIPAMENTOS E PRODUTOS DE TECNOLOGIAS DE INFORMACAO E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4652400",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE COMPONENTES ELETRONICOS E EQUIPAMENTOS DE TELEFONIA E COMUNICACAO",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE EQUIPAMENTOS E PRODUTOS DE TECNOLOGIAS DE INFORMACAO E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4665600",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MAQUINAS E EQUIPAMENTOS PARA USO COMERCIAL",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE MAQUINAS, APARELHOS E EQUIPAMENTOS, EXCETO DE TECNOLOGIAS DE INFORMACAO E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4673700",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MATERIAL ELETRICO",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE MADEIRA, FERRAGENS, FERRAMENTAS, MATERIAL ELETRICO E MATERIAL DE CONSTRUCAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4679699",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MATERIAIS DE CONSTRUCAO EM GERAL",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE MADEIRA, FERRAGENS, FERRAMENTAS, MATERIAL ELETRICO E MATERIAL DE CONSTRUCAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4683400",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE DEFENSIVOS AGRICOLAS, ADUBOS, FERTILIZANTES E CORRETIVOS DO SOLO",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM OUTROS PRODUTOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4691500",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MERCADORIAS EM GERAL, COM PREDOMINANCIA DE PRODUTOS ALIMENTICIOS",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA NAO ESPECIALIZADO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4729602",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE MERCADORIAS EM LOJAS DE CONVENIENCIA",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4729699",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE PRODUTOS ALIMENTICIOS EM GERAL OU ESPECIALIZADO EM PRODUTOS ALIMENTICIOS NAO ESPECIFICADOS ANTERIORMENTE",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4759899",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE OUTROS ARTIGOS DE USO DOMESTICO NAO ESPECIFICADOS ANTERIORMENTE",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE EQUIPAMENTOS DE INFORMATICA E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4761001",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE LIVROS",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE ARTIGOS CULTURAIS, RECREATIVOS E ESPORTIVOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4789002",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE PLANTAS E FLORES NATURAIS",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS NOVOS NAO ESPECIFICADOS ANTERIORMENTE E DE PRODUTOS USADOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4930201",
+            "DocNumber": "",
+            "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, MUNICIPAL",
+            "EconomicActivityDivision": "TRANSPORTE TERRESTRE",
+            "EconomicActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4930202",
+            "DocNumber": "",
+            "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, INTERMUNICIPAL, INTERESTADUAL E INTERNACIONAL",
+            "EconomicActivityDivision": "TRANSPORTE TERRESTRE",
+            "EconomicActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "4930203",
+            "DocNumber": "",
+            "Activity": "TRANSPORTE RODOVIARIO DE PRODUTOS PERIGOSOS",
+            "EconomicActivityDivision": "TRANSPORTE TERRESTRE",
+            "EconomicActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5211799",
+            "DocNumber": "",
+            "Activity": "DEPOSITOS DE MERCADORIAS PARA TERCEIROS, EXCETO ARMAZENS GERAIS E GUARDA-MOVEIS",
+            "EconomicActivityDivision": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "EconomicActivityGroup": "ARMAZENAMENTO, CARGA E DESCARGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5223100",
+            "DocNumber": "",
+            "Activity": "ESTACIONAMENTO DE VEICULOS",
+            "EconomicActivityDivision": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+            "EconomicActivityGroup": "ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5320202",
+            "DocNumber": "",
+            "Activity": "SERVICOS DE ENTREGA RAPIDA",
+            "EconomicActivityDivision": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+            "EconomicActivityGroup": "ATIVIDADES DE MALOTE E DE ENTREGA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5611201",
+            "DocNumber": "",
+            "Activity": "RESTAURANTES E SIMILARES",
+            "EconomicActivityDivision": "ALIMENTACAO",
+            "EconomicActivityGroup": "RESTAURANTES E OUTROS SERVICOS DE ALIMENTACAO E BEBIDAS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5611203",
+            "DocNumber": "",
+            "Activity": "LANCHONETES, CASAS DE CHA, DE SUCOS E SIMILARES",
+            "EconomicActivityDivision": "ALIMENTACAO",
+            "EconomicActivityGroup": "RESTAURANTES E OUTROS SERVICOS DE ALIMENTACAO E BEBIDAS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5611204",
+            "DocNumber": "",
+            "Activity": "BARES E OUTROS ESTABELECIMENTOS ESPECIALIZADOS EM SERVIR BEBIDAS, SEM ENTRETENIMENTO",
+            "EconomicActivityDivision": "ALIMENTACAO",
+            "EconomicActivityGroup": "RESTAURANTES E OUTROS SERVICOS DE ALIMENTACAO E BEBIDAS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5620101",
+            "DocNumber": "",
+            "Activity": "FORNECIMENTO DE ALIMENTOS PREPARADOS PREPONDERANTEMENTE PARA EMPRESAS",
+            "EconomicActivityDivision": "ALIMENTACAO",
+            "EconomicActivityGroup": "SERVICOS DE CATERING, BUFE E OUTROS SERVICOS DE COMIDA PREPARADA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "5620104",
+            "DocNumber": "",
+            "Activity": "FORNECIMENTO DE ALIMENTOS PREPARADOS PREPONDERANTEMENTE PARA CONSUMO DOMICILIAR",
+            "EconomicActivityDivision": "ALIMENTACAO",
+            "EconomicActivityGroup": "SERVICOS DE CATERING, BUFE E OUTROS SERVICOS DE COMIDA PREPARADA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "6462000",
+            "DocNumber": "",
+            "Activity": "HOLDINGS DE INSTITUICOES NAO FINANCEIRAS",
+            "EconomicActivityDivision": "ATIVIDADES DE SERVICOS FINANCEIROS",
+            "EconomicActivityGroup": "ATIVIDADES DE SOCIEDADES DE PARTICIPACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "6463800",
+            "DocNumber": "",
+            "Activity": "OUTRAS SOCIEDADES DE PARTICIPACAO, EXCETO HOLDINGS",
+            "EconomicActivityDivision": "ATIVIDADES DE SERVICOS FINANCEIROS",
+            "EconomicActivityGroup": "ATIVIDADES DE SOCIEDADES DE PARTICIPACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "7740300",
+            "DocNumber": "",
+            "Activity": "GESTAO DE ATIVOS INTANGIVEIS NAO FINANCEIROS",
+            "EconomicActivityDivision": "ALUGUEIS NAO IMOBILIARIOS E GESTAO DE ATIVOS INTANGIVEIS NAO FINANCEIROS",
+            "EconomicActivityGroup": "GESTAO DE ATIVOS INTANGIVEIS NAO FINANCEIROS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "8211300",
+            "DocNumber": "",
+            "Activity": "SERVICOS COMBINADOS DE ESCRITORIO E APOIO ADMINISTRATIVO",
+            "EconomicActivityDivision": "SERVICOS DE ESCRITORIO, DE APOIO ADMINISTRATIVO E OUTROS SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS",
+            "EconomicActivityGroup": "SERVICOS DE ESCRITORIO E APOIO ADMINISTRATIVO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Code": "3101200",
+            "DocNumber": "",
+            "Activity": "FABRICACAO DE MOVEIS COM PREDOMINANCIA DE MADEIRA",
+            "EconomicActivityDivision": "FABRICACAO DE MOVEIS",
+            "EconomicActivityGroup": "FABRICACAO DE MOVEIS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-06-01T00:00:00"
+          },
+          {
+            "Code": "4754701",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE MOVEIS",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE EQUIPAMENTOS DE INFORMATICA E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-06-01T00:00:00"
+          },
+          {
+            "Code": "3319800",
+            "DocNumber": "",
+            "Activity": "MANUTENCAO E REPARACAO DE EQUIPAMENTOS E PRODUTOS NAO ESPECIFICADOS ANTERIORMENTE",
+            "EconomicActivityDivision": "MANUTENCAO, REPARACAO E INSTALACAO DE MAQUINAS E EQUIPAMENTOS",
+            "EconomicActivityGroup": "MANUTENCAO E REPARACAO DE MAQUINAS E EQUIPAMENTOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "3811400",
+            "DocNumber": "",
+            "Activity": "COLETA DE RESIDUOS NAO PERIGOSOS",
+            "EconomicActivityDivision": "COLETA, TRATAMENTO E DISPOSICAO DE RESIDUOS",
+            "EconomicActivityGroup": "COLETA DE RESIDUOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "4663000",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE MAQUINAS E EQUIPAMENTOS PARA USO INDUSTRIAL",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE MAQUINAS, APARELHOS E EQUIPAMENTOS, EXCETO DE TECNOLOGIAS DE INFORMACAO E COMUNICACAO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "4687701",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE RESIDUOS DE PAPEL E PAPELAO",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM OUTROS PRODUTOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "4687702",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE RESIDUOS E SUCATAS NAO METALICOS, EXCETO DE PAPEL E PAPELAO",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM OUTROS PRODUTOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "4687703",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE RESIDUOS E SUCATAS METALICOS",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM OUTROS PRODUTOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-07-01T00:00:00"
+          },
+          {
+            "Code": "4635499",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE BEBIDAS NAO ESPECIFICADAS ANTERIORMENTE",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-12-01T00:00:00"
+          },
+          {
+            "Code": "4723700",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE BEBIDAS",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2021-12-01T00:00:00"
+          },
+          {
+            "Code": "4789004",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE ANIMAIS VIVOS E DE ARTIGOS E ALIMENTOS PARA ANIMAIS DE ESTIMACAO",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS NOVOS NAO ESPECIFICADOS ANTERIORMENTE E DE PRODUTOS USADOS",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2022-04-01T00:00:00"
+          },
+          {
+            "Code": "4631100",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE LEITE E LATICINIOS",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA ESPECIALIZADO EM PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2022-05-01T00:00:00"
+          },
+          {
+            "Code": "4721103",
+            "DocNumber": "",
+            "Activity": "COMERCIO VAREJISTA DE LATICINIOS E FRIOS",
+            "EconomicActivityDivision": "COMERCIO VAREJISTA",
+            "EconomicActivityGroup": "COMERCIO VAREJISTA DE PRODUTOS ALIMENTICIOS, BEBIDAS E FUMO",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2022-05-01T00:00:00"
+          },
+          {
+            "Code": "4649408",
+            "DocNumber": "",
+            "Activity": "COMERCIO ATACADISTA DE PRODUTOS DE HIGIENE, LIMPEZA E CONSERVACAO DOMICILIAR",
+            "EconomicActivityDivision": "COMERCIO POR ATACADO, EXCETO VEICULOS AUTOMOTORES E MOTOCICLETAS",
+            "EconomicActivityGroup": "COMERCIO ATACADISTA DE PRODUTOS DE CONSUMO NAO ALIMENTAR",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2024-04-01T00:00:00"
+          },
+          {
+            "Code": "8020001",
+            "DocNumber": "",
+            "Activity": "ATIVIDADES DE MONITORAMENTO DE SISTEMAS DE SEGURANCA ELETRONICO",
+            "EconomicActivityDivision": "ATIVIDADES DE VIGILANCIA, SEGURANCA E INVESTIGACAO",
+            "EconomicActivityGroup": "ATIVIDADES DE MONITORAMENTO DE SISTEMAS DE SEGURANCA",
+            "IsMainEconomicActivity": false,
+            "ChangeDate": "2025-01-01T00:00:00"
+          }
+        ],
+        "CapitalHistoryList": [
+          {
+            "Capital": "31724641.00",
+            "ChangeDate": "2021-02-01T00:00:00"
+          },
+          {
+            "Capital": "722964295.97",
+            "ChangeDate": "2021-10-01T00:00:00"
+          },
+          {
+            "Capital": "1022964295.97",
+            "ChangeDate": "2022-02-01T00:00:00"
+          },
+          {
+            "Capital": "001022964295.97",
+            "ChangeDate": "2023-03-01T00:00:00"
+          },
+          {
+            "Capital": "1022964295.97",
+            "ChangeDate": "2023-04-01T00:00:00"
+          },
+          {
+            "Capital": "001022964295.97",
+            "ChangeDate": "2023-06-01T00:00:00"
+          },
+          {
+            "Capital": "1022964295.97",
+            "ChangeDate": "2023-07-01T00:00:00"
+          },
+          {
+            "Capital": "202394961.06",
+            "ChangeDate": "2025-01-01T00:00:00"
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "55a2e9f0-5be4-4acd-8683-8f2676f159bd",
+  "ElapsedMilliseconds": 316,
+  "QueryDate": "2026-04-25T12:53:24.1859768Z",
+  "Status": {
+    "history_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

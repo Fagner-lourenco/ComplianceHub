@@ -5,7 +5,7 @@ import {
     getFreshnessPolicy,
     isSnapshotFresh,
     shouldReuseSnapshot,
-} from './v2FreshnessPolicy.cjs';
+} from './v2FreshnessPolicy.js';
 
 const DAY = 86_400_000;
 

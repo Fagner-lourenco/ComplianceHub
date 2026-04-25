@@ -1,0 +1,1844 @@
+BigDataCorp - Consolidação Expandida da API
+Versão ampliada com conteúdo textual incorporado ao DOCX
+Base de origem
+https://docs.bigdatacorp.com.br/plataforma/reference/
+Entradas mapeadas
+199 URLs consolidadas do documento anterior
+Critério desta versão
+Incorporação de conteúdo textual extraído automaticamente quando disponível; manutenção de URL e contexto para todas as entradas
+Observação importante
+Algumas páginas da documentação são dinâmicas ou retornam apenas resumo curto no parser. Nesses casos, a entrada foi mantida com tema, categoria e URL direta, sem inventar conteúdo.
+Visão geral
+1. Boas-vindas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/boas-vindas
+Categoria
+Visão geral
+Slug
+boas-vindas
+Comece a integração com a BigDataCorp; a página apresenta instruções iniciais, exemplos e boas práticas para conectar produtos e APIs.
+_________________________________________________________________
+2. Autenticação e segurança
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/autenticação-e-segurança
+Categoria
+Visão geral
+Slug
+autenticação-e-segurança
+Guia introdutório sobre integrações seguras, escaláveis e rastreáveis, com foco em preservar integridade dos dados e confiabilidade das aplicações.
+_________________________________________________________________
+3. Códigos e descrições de status
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/códigos-e-descrições-de-status
+Categoria
+Visão geral
+Slug
+códigos-e-descrições-de-status
+Página de referência para interpretar os códigos de status e suas descrições nos retornos da plataforma.
+_________________________________________________________________
+Primeiros passos
+4. Primeiros passos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/primeiros-passos
+Categoria
+Primeiros passos
+Slug
+primeiros-passos
+Página de onboarding técnico para orientar a primeira integração e a primeira chamada à API com segurança.
+_________________________________________________________________
+5. Pré-requisitos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pré-requisitos
+Categoria
+Primeiros passos
+Slug
+pré-requisitos
+Lista o que é necessário antes de iniciar a integração, incluindo credenciais, tokens e acesso ao BDC Center.
+_________________________________________________________________
+6. Primeira consulta
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/primeira-consulta
+Categoria
+Primeiros passos
+Slug
+primeira-consulta
+Mostra o início da primeira chamada após a obtenção de credenciais e tokens válidos.
+_________________________________________________________________
+7. Estrutura da consulta
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/estrutura-da-consulta
+Categoria
+Primeiros passos
+Slug
+estrutura-da-consulta
+Explica a estrutura padrão das requisições enviadas à Plataforma de Dados.
+_________________________________________________________________
+8. Parâmetros de consulta
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/parametros-de-consulta
+Categoria
+Primeiros passos
+Slug
+parametros-de-consulta
+Guia específico dos parâmetros que estruturam uma consulta na plataforma.
+_________________________________________________________________
+9. Personalizar retorno
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/personalizar-retorno
+Categoria
+Primeiros passos
+Slug
+personalizar-retorno
+Explica como selecionar campos, aplicar filtros, controlar ordenação, paginar, limitar resultados e usar data de referência.
+_________________________________________________________________
+10. Recursos adicionais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/recustos-adicionais
+Categoria
+Primeiros passos
+Slug
+recustos-adicionais
+Apresenta funcionalidades complementares para tornar consultas mais seguras, rastreáveis e flexíveis.
+_________________________________________________________________
+11. Dicas e boas práticas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/dicas-e-boas-praticas
+Categoria
+Primeiros passos
+Slug
+dicas-e-boas-praticas
+Tema principal explicitado pelo título da página: “Dicas e boas práticas”. Categoria no consolidado anterior: Primeiros passos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Compliance Regulatório
+12. KYC e Compliance
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-kyc-e-compliance
+Categoria
+Compliance Regulatório
+Slug
+pessoas-kyc-e-compliance
+Dataset da API de Pessoas com endpoint POST https://plataforma.bigdatacorp.com.br/pessoas. Retorna informações de KYC e Compliance, incluindo PEP, sanções e restrições em escopo nacional e internacional. Nome técnico: kyc. Também documenta tabela de preços, chaves complementares como minmatch, considerexpandedpep e name, filtros por nível/cargo/motivo de PEP e por tipo/fonte de sanção, além de observações sobre consulta por nome e interpretação das flags de sanção.
+_________________________________________________________________
+13. KYC e Compliance dos Familiares de Primeiro Nível
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-kyc-e-compliance-dos-familiares
+Categoria
+Compliance Regulatório
+Slug
+pessoas-kyc-e-compliance-dos-familiares
+Tema principal explicitado pelo título da página: “KYC e Compliance dos Familiares de Primeiro Nível”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+14. Compliance de Casas de Apostas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-compliance-de-casas-de-apostas
+Categoria
+Compliance Regulatório
+Slug
+pessoas-compliance-de-casas-de-apostas
+Tema principal explicitado pelo título da página: “Compliance de Casas de Apostas”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Comportamento
+15. Presença Online
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-online
+Categoria
+Comportamento
+Slug
+pessoas-presenca-online
+Dataset da API de Pessoas que retorna indicadores e classificações relacionadas à presença online, intensidade de atividade digital e uso geral da internet. Nome técnico: online_presence.
+_________________________________________________________________
+16. Presença Online Familiar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-online-familiar
+Categoria
+Comportamento
+Slug
+pessoas-presenca-online-familiar
+Tema principal explicitado pelo título da página: “Presença Online Familiar”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+17. Passagens pela Web
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-passagens-pela-web
+Categoria
+Comportamento
+Slug
+pessoas-passagens-pela-web
+Tema principal explicitado pelo título da página: “Passagens pela Web”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+18. Propensão à Aposta Online
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-propensao-a-aposta-online
+Categoria
+Comportamento
+Slug
+pessoas-propensao-a-aposta-online
+Tema principal explicitado pelo título da página: “Propensão à Aposta Online”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Contatos
+19. E-mails
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-e-mails
+Categoria
+Contatos
+Slug
+pessoas-e-mails
+Tema principal explicitado pelo título da página: “E-mails”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+20. E-mails de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-emails-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+pessoas-emails-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “E-mails de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+21. Telefones
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-telefones
+Categoria
+Contatos
+Slug
+pessoas-telefones
+Tema principal explicitado pelo título da página: “Telefones”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+22. Telefones de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-telefones-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+pessoas-telefones-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “Telefones de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+23. Endereços
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-enderecos
+Categoria
+Contatos
+Slug
+pessoas-enderecos
+Tema principal explicitado pelo título da página: “Endereços”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+24. Endereços de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-enderecos-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+pessoas-enderecos-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “Endereços de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+25. Dados de Registro
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-registro
+Categoria
+Contatos
+Slug
+pessoas-dados-de-registro
+Tema principal explicitado pelo título da página: “Dados de Registro”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Dados Básicos
+26. Dados Cadastrais Básicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-cadastrais-basicos
+Categoria
+Dados Básicos
+Slug
+pessoas-dados-cadastrais-basicos
+Tema principal explicitado pelo título da página: “Dados Cadastrais Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+27. Dados Cadastrais de Recência Configurável
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-cadastrais-de-recencia-configuravel
+Categoria
+Dados Básicos
+Slug
+pessoas-dados-cadastrais-de-recencia-configuravel
+Tema principal explicitado pelo título da página: “Dados Cadastrais de Recência Configurável”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+28. Histórico de Dados Básicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-de-dados-basicos
+Categoria
+Dados Básicos
+Slug
+pessoas-historico-de-dados-basicos
+Tema principal explicitado pelo título da página: “Histórico de Dados Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Econômicos e Financeiros
+29. Informações Financeiras
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-financeiras
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-informacoes-financeiras
+Tema principal explicitado pelo título da página: “Informações Financeiras”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+30. Informações Financeiras de Familiares
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-financeiras-de-familiares
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-informacoes-financeiras-de-familiares
+Tema principal explicitado pelo título da página: “Informações Financeiras de Familiares”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+31. Programas de Benefícios e Assistência Social
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-programas-de-beneficios
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-programas-de-beneficios
+Tema principal explicitado pelo título da página: “Programas de Benefícios e Assistência Social”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+32. Programas de Benefícios e Assistência Social de Familiares
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-programas-de-beneficios-de-familiares
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-programas-de-beneficios-de-familiares
+Tema principal explicitado pelo título da página: “Programas de Benefícios e Assistência Social de Familiares”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+33. Propriedades Industriais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-propriedades-industriais
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-propriedades-industriais
+Tema principal explicitado pelo título da página: “Propriedades Industriais”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+34. Devedores do Governo
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-devedores-do-governo
+Categoria
+Econômicos e Financeiros
+Slug
+pessoas-devedores-do-governo
+Tema principal explicitado pelo título da página: “Devedores do Governo”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Envolvimento Político
+35. Nível de Envolvimento Político
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-nivel-de-envolvimento-politico
+Categoria
+Envolvimento Político
+Slug
+pessoas-nivel-de-envolvimento-politico
+Tema principal explicitado pelo título da página: “Nível de Envolvimento Político”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+36. Candidatos Eleitorais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-candidatos-eleitorais
+Categoria
+Envolvimento Político
+Slug
+pessoas-candidatos-eleitorais
+Tema principal explicitado pelo título da página: “Candidatos Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+37. Doações Eleitorais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-doacoes-eleitorais
+Categoria
+Envolvimento Político
+Slug
+pessoas-doacoes-eleitorais
+Tema principal explicitado pelo título da página: “Doações Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+38. Histórico Político Familiar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-politico-familiar
+Categoria
+Envolvimento Político
+Slug
+pessoas-historico-politico-familiar
+Tema principal explicitado pelo título da página: “Histórico Político Familiar”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+39. Prestadores de Serviços Eleitorais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-prestadores-de-servicos-eleitorais
+Categoria
+Envolvimento Político
+Slug
+pessoas-prestadores-de-servicos-eleitorais
+Tema principal explicitado pelo título da página: “Prestadores de Serviços Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Exposição Pública
+40. Dados de Popularidade
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-popularidade
+Categoria
+Exposição Pública
+Slug
+pessoas-dados-de-popularidade
+Tema principal explicitado pelo título da página: “Dados de Popularidade”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+41. Exposição e Perfil na Mídia
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-exposicao-e-perfil-na-midia
+Categoria
+Exposição Pública
+Slug
+pessoas-exposicao-e-perfil-na-midia
+Tema principal explicitado pelo título da página: “Exposição e Perfil na Mídia”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Presença Digital
+42. Anúncios Online
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-anuncios-online
+Categoria
+Presença Digital
+Slug
+pessoas-anuncios-online
+Tema principal explicitado pelo título da página: “Anúncios Online”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+43. Dados de Sites
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-sites
+Categoria
+Presença Digital
+Slug
+pessoas-dados-de-sites
+Tema principal explicitado pelo título da página: “Dados de Sites”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Processos Judiciais
+44. Processos Judiciais e Administrativos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-processos-judiciais-e-administrativos
+Categoria
+Processos Judiciais
+Slug
+pessoas-processos-judiciais-e-administrativos
+Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+45. Processos Judiciais e Administrativos de Familiares de Primeiro Nível
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-processos-judiciais-familiares
+Categoria
+Processos Judiciais
+Slug
+pessoas-processos-judiciais-familiares
+Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos de Familiares de Primeiro Nível”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+46. Dados de Distribuição de Processos Judiciais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-distribuicao-de-processos-judiciais
+Categoria
+Processos Judiciais
+Slug
+pessoas-dados-de-distribuicao-de-processos-judiciais
+Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+47. Dados de Distribuição de Processos Judiciais Familiares
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-distribuicao-de-processos-judiciais-familiares
+Categoria
+Processos Judiciais
+Slug
+pessoas-dados-de-distribuicao-de-processos-judiciais-familiares
+Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais Familiares”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Profissionais
+48. Conselhos de Classe
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-conselhos-de-classe
+Categoria
+Profissionais
+Slug
+pessoas-conselhos-de-classe
+Tema principal explicitado pelo título da página: “Conselhos de Classe”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+49. Dados Profissionais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-profissionais
+Categoria
+Profissionais
+Slug
+pessoas-dados-profissionais
+Tema principal explicitado pelo título da página: “Dados Profissionais”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+50. Histórico Escolar e Acadêmico
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-escolar-e-academico
+Categoria
+Profissionais
+Slug
+pessoas-historico-escolar-e-academico
+Tema principal explicitado pelo título da página: “Histórico Escolar e Acadêmico”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+51. Licenças e Autorizações
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-licencas-e-autorizacoes
+Categoria
+Profissionais
+Slug
+pessoas-licencas-e-autorizacoes
+Tema principal explicitado pelo título da página: “Licenças e Autorizações”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+52. Prêmios e Certificações
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-premios-e-certificacoes
+Categoria
+Profissionais
+Slug
+pessoas-premios-e-certificacoes
+Tema principal explicitado pelo título da página: “Prêmios e Certificações”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+53. Servidores Públicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-servidores-publicos
+Categoria
+Profissionais
+Slug
+pessoas-servidores-publicos
+Tema principal explicitado pelo título da página: “Servidores Públicos”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+54. Turnover Profissional
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-turnover-profissional
+Categoria
+Profissionais
+Slug
+pessoas-turnover-profissional
+Tema principal explicitado pelo título da página: “Turnover Profissional”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+55. Exposição Esportiva
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-exposicao-esportiva
+Categoria
+Profissionais
+Slug
+pessoas-exposicao-esportiva
+Tema principal explicitado pelo título da página: “Exposição Esportiva”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Risco
+56. Risco Financeiro
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-risco-financeiro
+Categoria
+Risco
+Slug
+pessoas-risco-financeiro
+Tema principal explicitado pelo título da página: “Risco Financeiro”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+57. Risco Financeiro Familiar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-risco-financeiro-familiar
+Categoria
+Risco
+Slug
+pessoas-risco-financeiro-familiar
+Tema principal explicitado pelo título da página: “Risco Financeiro Familiar”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+58. Presença em Cobrança
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-em-cobranca
+Categoria
+Risco
+Slug
+pessoas-presenca-em-cobranca
+Tema principal explicitado pelo título da página: “Presença em Cobrança”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+59. Probabilidade de Negativação
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-probabilidade-de-negativacao
+Categoria
+Risco
+Slug
+pessoas-probabilidade-de-negativacao
+Tema principal explicitado pelo título da página: “Probabilidade de Negativação”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Sócio-Demográficos
+60. Informações Sócio-Demográficas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-socio-demograficas
+Categoria
+Sócio-Demográficos
+Slug
+pessoas-informacoes-socio-demograficas
+Tema principal explicitado pelo título da página: “Informações Sócio-Demográficas”. Categoria no consolidado anterior: Sócio-Demográficos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Veículos
+61. Veículos Associados à Pessoa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-veiculos-associados-a-pessoa
+Categoria
+Veículos
+Slug
+pessoas-veiculos-associados-a-pessoa
+Tema principal explicitado pelo título da página: “Veículos Associados à Pessoa”. Categoria no consolidado anterior: Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Ativos
+62. Propriedades Industriais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais
+Categoria
+Ativos
+Slug
+empresas-propriedades-industriais
+Tema principal explicitado pelo título da página: “Propriedades Industriais”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+63. Propriedades Industriais de Funcionários
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais-de-funcionarios
+Categoria
+Ativos
+Slug
+empresas-propriedades-industriais-de-funcionarios
+Tema principal explicitado pelo título da página: “Propriedades Industriais de Funcionários”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+64. Propriedades Industriais de Sócios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais-de-socios
+Categoria
+Ativos
+Slug
+empresas-propriedades-industriais-de-socios
+Tema principal explicitado pelo título da página: “Propriedades Industriais de Sócios”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Compliance Regulatório
+65. KYC e Compliance
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance
+Categoria
+Compliance Regulatório
+Slug
+empresas-kyc-e-compliance
+Tema principal explicitado pelo título da página: “KYC e Compliance”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+66. KYC e Compliance dos Sócios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-dos-socios
+Categoria
+Compliance Regulatório
+Slug
+empresas-kyc-e-compliance-dos-socios
+Tema principal explicitado pelo título da página: “KYC e Compliance dos Sócios”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+67. KYC e Compliance dos Funcionários
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-dos-funcionarios
+Categoria
+Compliance Regulatório
+Slug
+empresas-kyc-e-compliance-dos-funcionarios
+Tema principal explicitado pelo título da página: “KYC e Compliance dos Funcionários”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+68. KYC e Compliance do Grupo Econômico
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-do-grupo-economico
+Categoria
+Compliance Regulatório
+Slug
+empresas-kyc-e-compliance-do-grupo-economico
+Tema principal explicitado pelo título da página: “KYC e Compliance do Grupo Econômico”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Contatos
+69. Dados de Registro
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-registro
+Categoria
+Contatos
+Slug
+empresas-dados-de-registro
+Tema principal explicitado pelo título da página: “Dados de Registro”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+70. E-mails
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-e-mails
+Categoria
+Contatos
+Slug
+empresas-e-mails
+Tema principal explicitado pelo título da página: “E-mails”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+71. E-mails de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-e-mails-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+empresas-e-mails-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “E-mails de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+72. Telefones
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-telefones
+Categoria
+Contatos
+Slug
+empresas-telefones
+Tema principal explicitado pelo título da página: “Telefones”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+73. Telefones de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-telefones-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+empresas-telefones-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “Telefones de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+74. Endereços
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-enderecos
+Categoria
+Contatos
+Slug
+empresas-enderecos
+Tema principal explicitado pelo título da página: “Endereços”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+75. Endereços de Pessoas Relacionadas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-enderecos-de-pessoas-relacionadas
+Categoria
+Contatos
+Slug
+empresas-enderecos-de-pessoas-relacionadas
+Tema principal explicitado pelo título da página: “Endereços de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Dados Básicos
+76. Dados Cadastrais Básicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-cadastrais-basicos
+Categoria
+Dados Básicos
+Slug
+empresas-dados-cadastrais-basicos
+Tema principal explicitado pelo título da página: “Dados Cadastrais Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+77. Histórico de Dados Básicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-historico-de-dados-basicos
+Categoria
+Dados Básicos
+Slug
+empresas-historico-de-dados-basicos
+Tema principal explicitado pelo título da página: “Histórico de Dados Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+78. Dados de Categoria Comercial - MCC
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-categoria-comercial-mcc
+Categoria
+Dados Básicos
+Slug
+empresas-dados-de-categoria-comercial-mcc
+Tema principal explicitado pelo título da página: “Dados de Categoria Comercial - MCC”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Econômicos
+79. Evolução da Empresa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-evolucao-da-empresa
+Categoria
+Econômicos
+Slug
+empresas-evolucao-da-empresa
+Dataset da API de Empresas com histórico temporal de capital social, funcionários e número de sócios. Nome técnico: company_evolution. A página também traz tabela de preços.
+_________________________________________________________________
+80. Indicadores de Atividade
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-indicadores-de-atividade
+Categoria
+Econômicos
+Slug
+empresas-indicadores-de-atividade
+Tema principal explicitado pelo título da página: “Indicadores de Atividade”. Categoria no consolidado anterior: Econômicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Envolvimento Político
+81. Envolvimento Político
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-envolvimento-politico
+Categoria
+Envolvimento Político
+Slug
+empresas-envolvimento-politico
+Tema principal explicitado pelo título da página: “Envolvimento Político”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+82. Doações Eleitorais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-doacoes-eleitorais
+Categoria
+Envolvimento Político
+Slug
+empresas-doacoes-eleitorais
+Tema principal explicitado pelo título da página: “Doações Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+83. Doações Eleitorais de Sócios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-doacoes-eleitorais-de-socios
+Categoria
+Envolvimento Político
+Slug
+empresas-doacoes-eleitorais-de-socios
+Tema principal explicitado pelo título da página: “Doações Eleitorais de Sócios”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+84. Prestadores de Serviços Eleitorais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-prestadores-de-servicos-eleitorais
+Categoria
+Envolvimento Político
+Slug
+empresas-prestadores-de-servicos-eleitorais
+Tema principal explicitado pelo título da página: “Prestadores de Serviços Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+ESG
+85. Acordos Sindicais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-acordos-sindicais
+Categoria
+ESG
+Slug
+empresas-acordos-sindicais
+Tema principal explicitado pelo título da página: “Acordos Sindicais”. Categoria no consolidado anterior: ESG. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+86. Consciência Social
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-consciencia-social
+Categoria
+ESG
+Slug
+empresas-consciencia-social
+Tema principal explicitado pelo título da página: “Consciência Social”. Categoria no consolidado anterior: ESG. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Exposição Pública
+87. Exposição e Perfil na Mídia
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-exposicao-e-perfil-na-midia
+Categoria
+Exposição Pública
+Slug
+empresas-exposicao-e-perfil-na-midia
+Tema principal explicitado pelo título da página: “Exposição e Perfil na Mídia”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+88. Influência do Quadro Societário
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-influencia-do-quadro-societario
+Categoria
+Exposição Pública
+Slug
+empresas-influencia-do-quadro-societario
+Tema principal explicitado pelo título da página: “Influência do Quadro Societário”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Presença Digital
+89. Anúncios Online
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-anuncios-online
+Categoria
+Presença Digital
+Slug
+empresas-anuncios-online
+Tema principal explicitado pelo título da página: “Anúncios Online”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+90. Dados de Sites
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-sites
+Categoria
+Presença Digital
+Slug
+empresas-dados-de-sites
+Tema principal explicitado pelo título da página: “Dados de Sites”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+91. Marketplaces
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-marketplaces
+Categoria
+Presença Digital
+Slug
+empresas-marketplaces
+Tema principal explicitado pelo título da página: “Marketplaces”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Processos Judiciais
+92. Processos Judiciais e Administrativos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-processos-judiciais-e-administrativos
+Categoria
+Processos Judiciais
+Slug
+empresas-processos-judiciais-e-administrativos
+Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+93. Processos Judiciais dos Sócios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-processos-judiciais-dos-socios
+Categoria
+Processos Judiciais
+Slug
+empresas-processos-judiciais-dos-socios
+Tema principal explicitado pelo título da página: “Processos Judiciais dos Sócios”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+94. Dados de Distribuição de Processos Judiciais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-distribuicao-de-processos-judiciais
+Categoria
+Processos Judiciais
+Slug
+empresas-dados-de-distribuicao-de-processos-judiciais
+Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+95. Dados de Distribuição de Processos dos Sócios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-distribuicao-de-processos-dos-socios
+Categoria
+Processos Judiciais
+Slug
+empresas-dados-de-distribuicao-de-processos-dos-socios
+Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos dos Sócios”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Relacionamentos
+96. Relacionamentos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-relacionamentos
+Categoria
+Relacionamentos
+Slug
+empresas-relacionamentos
+Tema principal explicitado pelo título da página: “Relacionamentos”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+97. Relacionamentos do Grupo Econômico
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-relacionamentos-do-grupo-economico
+Categoria
+Relacionamentos
+Slug
+empresas-relacionamentos-do-grupo-economico
+Tema principal explicitado pelo título da página: “Relacionamentos do Grupo Econômico”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+98. QSA de Recência Configurável
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-qsa-de-recencia-configuravel
+Categoria
+Relacionamentos
+Slug
+empresas-qsa-de-recencia-configuravel
+Tema principal explicitado pelo título da página: “QSA de Recência Configurável”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Reputação
+99. Avaliações e Reputação
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-avaliacoes-e-reputacao
+Categoria
+Reputação
+Slug
+empresas-avaliacoes-e-reputacao
+Tema principal explicitado pelo título da página: “Avaliações e Reputação”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+100. Prêmios e Certificações
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-premios-e-certificacoes
+Categoria
+Reputação
+Slug
+empresas-premios-e-certificacoes
+Tema principal explicitado pelo título da página: “Prêmios e Certificações”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Risco
+101. Presença em Cobrança
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-presenca-em-cobranca
+Categoria
+Risco
+Slug
+empresas-presenca-em-cobranca
+Tema principal explicitado pelo título da página: “Presença em Cobrança”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+102. Devedores do Governo
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-devedores-do-governo
+Categoria
+Risco
+Slug
+empresas-devedores-do-governo
+Tema principal explicitado pelo título da página: “Devedores do Governo”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Setoriais
+103. Dados de Fundos de Investimento
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-fundos-de-investimento
+Categoria
+Setoriais
+Slug
+empresas-dados-de-fundos-de-investimento
+Tema principal explicitado pelo título da página: “Dados de Fundos de Investimento”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+104. Dados de Obras Civis
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-obras-civis
+Categoria
+Setoriais
+Slug
+empresas-dados-de-obras-civis
+Tema principal explicitado pelo título da página: “Dados de Obras Civis”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+105. Mercado Financeiro
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/empresas-mercado-financeiro
+Categoria
+Setoriais
+Slug
+empresas-mercado-financeiro
+Tema principal explicitado pelo título da página: “Mercado Financeiro”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Dados Básicos
+106. Ficha Técnica
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/produtos-ficha-tecnica
+Categoria
+Dados Básicos
+Slug
+produtos-ficha-tecnica
+Tema principal explicitado pelo título da página: “Ficha Técnica”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+107. Imagens do Produto
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/produtos-imagens-do-produto
+Categoria
+Dados Básicos
+Slug
+produtos-imagens-do-produto
+Tema principal explicitado pelo título da página: “Imagens do Produto”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Relacionamentos
+108. Produtos Relacionados
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/produtos-produtos-relacionados
+Categoria
+Relacionamentos
+Slug
+produtos-produtos-relacionados
+Tema principal explicitado pelo título da página: “Produtos Relacionados”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Reputação
+109. Notas e avaliações
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/produtos-notas-e-avaliacoes
+Categoria
+Reputação
+Slug
+produtos-notas-e-avaliacoes
+Tema principal explicitado pelo título da página: “Notas e avaliações”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+API de Endereços
+110. Estatísticas de Empresas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-estatisticas-de-empresas
+Categoria
+API de Endereços
+Slug
+enderecos-estatisticas-de-empresas
+Tema principal explicitado pelo título da página: “Estatísticas de Empresas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+111. Dados de Empresas nas Proximidades
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-dados-de-empresas-nas-proximidades
+Categoria
+API de Endereços
+Slug
+enderecos-dados-de-empresas-nas-proximidades
+Tema principal explicitado pelo título da página: “Dados de Empresas nas Proximidades”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+112. Municípios
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-municipios
+Categoria
+API de Endereços
+Slug
+enderecos-municipios
+Tema principal explicitado pelo título da página: “Municípios”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+113. Dados de Propriedades Rurais SICAR
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-dados-de-propriedades-rurais-sicar
+Categoria
+API de Endereços
+Slug
+enderecos-dados-de-propriedades-rurais-sicar
+Tema principal explicitado pelo título da página: “Dados de Propriedades Rurais SICAR”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+114. Amazônia Legal
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-amazonia-legal
+Categoria
+API de Endereços
+Slug
+enderecos-amazonia-legal
+Tema principal explicitado pelo título da página: “Amazônia Legal”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+115. Áreas de Proteção Ambiental
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-areas-de-protecao-ambiental
+Categoria
+API de Endereços
+Slug
+enderecos-areas-de-protecao-ambiental
+Tema principal explicitado pelo título da página: “Áreas de Proteção Ambiental”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+116. Biomas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-biomas
+Categoria
+API de Endereços
+Slug
+enderecos-biomas
+Tema principal explicitado pelo título da página: “Biomas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+117. Consulta de Áreas Embargadas ICMBio
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-consulta-de-areas-embargadas-icmbio
+Categoria
+API de Endereços
+Slug
+enderecos-consulta-de-areas-embargadas-icmbio
+Tema principal explicitado pelo título da página: “Consulta de Áreas Embargadas ICMBio”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+118. Consulta de Reservas Legais SICAR
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-consulta-de-reservas-legais-sicar
+Categoria
+API de Endereços
+Slug
+enderecos-consulta-de-reservas-legais-sicar
+Tema principal explicitado pelo título da página: “Consulta de Reservas Legais SICAR”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+119. Sítios Arqueológicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-sitios-arqueologicos
+Categoria
+API de Endereços
+Slug
+enderecos-sitios-arqueologicos
+Tema principal explicitado pelo título da página: “Sítios Arqueológicos”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+120. Terras Indígenas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-terras-indigenas
+Categoria
+API de Endereços
+Slug
+enderecos-terras-indigenas
+Tema principal explicitado pelo título da página: “Terras Indígenas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+121. Unidades de Conservação
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-unidades-de-conservacao
+Categoria
+API de Endereços
+Slug
+enderecos-unidades-de-conservacao
+Tema principal explicitado pelo título da página: “Unidades de Conservação”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+122. Zoneamento Agroecológico
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-zoneamento-agroecologico
+Categoria
+API de Endereços
+Slug
+enderecos-zoneamento-agroecologico
+Tema principal explicitado pelo título da página: “Zoneamento Agroecológico”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+123. Endereços em Área de Risco
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-enderecos-em-area-de-risco
+Categoria
+API de Endereços
+Slug
+enderecos-enderecos-em-area-de-risco
+Tema principal explicitado pelo título da página: “Endereços em Área de Risco”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+124. Estatísticas Criminais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-estatisticas-criminais
+Categoria
+API de Endereços
+Slug
+enderecos-estatisticas-criminais
+Tema principal explicitado pelo título da página: “Estatísticas Criminais”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+API de Processos
+125. Processos do CADE
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/processos-processos-do-cade
+Categoria
+API de Processos
+Slug
+processos-processos-do-cade
+Tema principal explicitado pelo título da página: “Processos do CADE”. Categoria no consolidado anterior: API de Processos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+API de Veículos
+126. Dados Históricos de Placa de Veículo
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/veiculos-dados-historicos-de-placa-de-veiculo
+Categoria
+API de Veículos
+Slug
+veiculos-dados-historicos-de-placa-de-veiculo
+Tema principal explicitado pelo título da página: “Dados Históricos de Placa de Veículo”. Categoria no consolidado anterior: API de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Certidões de Empresas
+127. Ações Trabalhistas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-acoes-trabalhistas
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-acoes-trabalhistas
+Tema principal explicitado pelo título da página: “Ações Trabalhistas”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+128. Contratação de Pessoas com Deficiência e Beneficiários Reabilitados da Previdência Social
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-contratacao-de-pcd
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-contratacao-de-pcd
+Tema principal explicitado pelo título da página: “Contratação de Pessoas com Deficiência e Beneficiários Reabilitados da Previdência Social”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+129. CGU - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-cgu-negativa
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-cgu-negativa
+Tema principal explicitado pelo título da página: “CGU - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+130. CNJ - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-cnj-negativa
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-cnj-negativa
+Tema principal explicitado pelo título da página: “CNJ - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+131. Débitos Estaduais - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-debitos-estaduais-negativa
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-debitos-estaduais-negativa
+Tema principal explicitado pelo título da página: “Débitos Estaduais - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+132. Débitos Trabalhistas - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-debitos-trabalhistas-negativa
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-debitos-trabalhistas-negativa
+Tema principal explicitado pelo título da página: “Débitos Trabalhistas - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+133. FGTS
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-fgts
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-fgts
+Tema principal explicitado pelo título da página: “FGTS”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+134. Habilitação COMEX
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-habilitacao-comex
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-habilitacao-comex
+Tema principal explicitado pelo título da página: “Habilitação COMEX”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+135. IBAMA - Embargos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-embargos
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-ibama-embargos
+Tema principal explicitado pelo título da página: “IBAMA - Embargos”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+136. IBAMA - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-negativa
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-ibama-negativa
+Tema principal explicitado pelo título da página: “IBAMA - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+137. IBAMA - Regulatória
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-regulatoria
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-ibama-regulatoria
+Tema principal explicitado pelo título da página: “IBAMA - Regulatória”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+138. IRT
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-irt
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-irt
+Tema principal explicitado pelo título da página: “IRT”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+139. Licenças Sanitárias
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-licencas-sanitarias
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-licencas-sanitarias
+Tema principal explicitado pelo título da página: “Licenças Sanitárias”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+140. PGFN
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-pgfn
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-pgfn
+Tema principal explicitado pelo título da página: “PGFN”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+141. SIPROQUIM
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-siproquim
+Categoria
+Certidões de Empresas
+Slug
+ondemand-empresas-siproquim
+Tema principal explicitado pelo título da página: “SIPROQUIM”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Certidões de Endereços
+142. SICAR
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-enderecos-sicar
+Categoria
+Certidões de Endereços
+Slug
+ondemand-enderecos-sicar
+Tema principal explicitado pelo título da página: “SICAR”. Categoria no consolidado anterior: Certidões de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Certidões de Pessoas
+143. Ações Judiciais - Nada Consta
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-acoes-judiciais-nada-consta
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-acoes-judiciais-nada-consta
+Tema principal explicitado pelo título da página: “Ações Judiciais - Nada Consta”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+144. Ações Trabalhistas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-acoes-trabalhistas
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-acoes-trabalhistas
+Tema principal explicitado pelo título da página: “Ações Trabalhistas”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+145. CGU - Correcional Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-cgu-correcional-negativa
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-cgu-correcional-negativa
+Tema principal explicitado pelo título da página: “CGU - Correcional Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+146. CNJ - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-cnj-negativa
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-cnj-negativa
+Tema principal explicitado pelo título da página: “CNJ - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+147. Débitos Estaduais - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-debitos-estaduais-negativa
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-debitos-estaduais-negativa
+Tema principal explicitado pelo título da página: “Débitos Estaduais - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+148. Débitos Trabalhistas - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-debitos-trabalhistas-negativa
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-debitos-trabalhistas-negativa
+Tema principal explicitado pelo título da página: “Débitos Trabalhistas - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+149. IBAMA - Embargos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-embargos
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-ibama-embargos
+Tema principal explicitado pelo título da página: “IBAMA - Embargos”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+150. IBAMA - Negativa
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-negativa
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-ibama-negativa
+Tema principal explicitado pelo título da página: “IBAMA - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+151. IBAMA - Regularidade
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-regularidade
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-ibama-regularidade
+Tema principal explicitado pelo título da página: “IBAMA - Regularidade”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+152. IRT
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-irt
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-irt
+Tema principal explicitado pelo título da página: “IRT”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+153. Licenças Sanitárias
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-licencas-sanitarias
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-licencas-sanitarias
+Tema principal explicitado pelo título da página: “Licenças Sanitárias”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+154. PGFN
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-pgfn
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-pgfn
+Tema principal explicitado pelo título da página: “PGFN”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+155. Polícia Civil - Antecedentes Criminais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-policia-civil-antecedentes-criminais
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-policia-civil-antecedentes-criminais
+Tema principal explicitado pelo título da página: “Polícia Civil - Antecedentes Criminais”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+156. Polícia Federal - Antecedentes Criminais
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-policia-federal-antecedentes-criminais
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-policia-federal-antecedentes-criminais
+Tema principal explicitado pelo título da página: “Polícia Federal - Antecedentes Criminais”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+157. TSE - Quitação Eleitoral
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-tse-quitacao-eleitoral
+Categoria
+Certidões de Pessoas
+Slug
+ondemand-pessoas-tse-quitacao-eleitoral
+Tema principal explicitado pelo título da página: “TSE - Quitação Eleitoral”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Consultas de Empresas
+158. Arrecadação Simples Nacional - MEI
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-arrecadacao-simples-nacional-mei
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-arrecadacao-simples-nacional-mei
+Tema principal explicitado pelo título da página: “Arrecadação Simples Nacional - MEI”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+159. COMPROT - Processos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-comprot-processos
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-comprot-processos
+Tema principal explicitado pelo título da página: “COMPROT - Processos”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+160. Escrituração Contábil Digital
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-escrituracao-contabil-digital
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-escrituracao-contabil-digital
+Tema principal explicitado pelo título da página: “Escrituração Contábil Digital”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+161. Inscrição Municipal
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-inscricao-municipal
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-inscricao-municipal
+Tema principal explicitado pelo título da página: “Inscrição Municipal”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+162. Optante Simples
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-optante-simples
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-optante-simples
+Tema principal explicitado pelo título da página: “Optante Simples”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+163. Projetos Públicos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-projetos-publicos
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-projetos-publicos
+Tema principal explicitado pelo título da página: “Projetos Públicos”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+164. Receita Federal - QSA
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-qsa
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-receita-federal-qsa
+Tema principal explicitado pelo título da página: “Receita Federal - QSA”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+165. Receita Federal - Representante Legal
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-representante-legal
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-receita-federal-representante-legal
+Tema principal explicitado pelo título da página: “Receita Federal - Representante Legal”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+166. Receita Federal - Situação CNPJ
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-situacao-cnpj
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-receita-federal-situacao-cnpj
+Tema principal explicitado pelo título da página: “Receita Federal - Situação CNPJ”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+167. SINTEGRA
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-sintegra
+Categoria
+Consultas de Empresas
+Slug
+ondemand-consultas-de-empresas-sintegra
+Tema principal explicitado pelo título da página: “SINTEGRA”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Consultas de Notas Fiscais
+168. CTe
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-notas-fiscais-cte
+Categoria
+Consultas de Notas Fiscais
+Slug
+ondemand-consultas-de-notas-fiscais-cte
+Tema principal explicitado pelo título da página: “CTe”. Categoria no consolidado anterior: Consultas de Notas Fiscais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+169. NFe
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-notas-fiscais-nfe
+Categoria
+Consultas de Notas Fiscais
+Slug
+ondemand-consultas-de-notas-fiscais-nfe
+Tema principal explicitado pelo título da página: “NFe”. Categoria no consolidado anterior: Consultas de Notas Fiscais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Consultas de Pessoas
+170. BACEN - Sanções Administrativas
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-bacen-sancoes-administrativas
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-bacen-sancoes-administrativas
+Tema principal explicitado pelo título da página: “BACEN - Sanções Administrativas”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+171. COMPROT - Processos
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-comprot-processos
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-comprot-processos
+Tema principal explicitado pelo título da página: “COMPROT - Processos”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+172. DETRAN - Multas de Trânsito
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-detran-multas-de-transito
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-detran-multas-de-transito
+Tema principal explicitado pelo título da página: “DETRAN - Multas de Trânsito”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+173. Polícia Civil - Boletim de Ocorrência
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-policia-civil-boletim-de-ocorrencia
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-policia-civil-boletim-de-ocorrencia
+Tema principal explicitado pelo título da página: “Polícia Civil - Boletim de Ocorrência”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+174. Receita Federal - Restituição do Imposto de Renda
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-receita-federal-restituicao-do-imposto-de-renda
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-receita-federal-restituicao-do-imposto-de-renda
+Tema principal explicitado pelo título da página: “Receita Federal - Restituição do Imposto de Renda”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+175. Receita Federal - Status do CPF
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-receita-federal-status-do-cpf
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-receita-federal-status-do-cpf
+Tema principal explicitado pelo título da página: “Receita Federal - Status do CPF”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+176. SINTEGRA
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-sintegra
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-sintegra
+Tema principal explicitado pelo título da página: “SINTEGRA”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+177. SUS - Cartão
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-sus-cartao
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-sus-cartao
+Tema principal explicitado pelo título da página: “SUS - Cartão”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+178. TSE - Local de Votação
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-tse-local-de-votacao
+Categoria
+Consultas de Pessoas
+Slug
+ondemand-consultas-de-pessoas-tse-local-de-votacao
+Tema principal explicitado pelo título da página: “TSE - Local de Votação”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Consultas de Veículos
+179. DETRAN - Chassi e RENAVAM
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-veiculos-detran-chassi-e-renavam
+Categoria
+Consultas de Veículos
+Slug
+ondemand-consultas-de-veiculos-detran-chassi-e-renavam
+Tema principal explicitado pelo título da página: “DETRAN - Chassi e RENAVAM”. Categoria no consolidado anterior: Consultas de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+180. RNTRC - Transportadores
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-veiculos-rntrc-transportadores
+Categoria
+Consultas de Veículos
+Slug
+ondemand-consultas-de-veiculos-rntrc-transportadores
+Tema principal explicitado pelo título da página: “RNTRC - Transportadores”. Categoria no consolidado anterior: Consultas de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Crédito | Empresas
+181. Consulta SCR | Score Positivo
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-consulta-scr-score-positivo
+Categoria
+Crédito | Empresas
+Slug
+marketplace-consulta-scr-score-positivo
+Tema principal explicitado pelo título da página: “Consulta SCR | Score Positivo”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+182. Dados Restritivos | Birô de Crédito
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-dados-restritivos-biro-de-credito
+Categoria
+Crédito | Empresas
+Slug
+marketplace-dados-restritivos-biro-de-credito
+Tema principal explicitado pelo título da página: “Dados Restritivos | Birô de Crédito”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+183. Dados Restritivos | Quod
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-dados-restritivos-quod
+Categoria
+Crédito | Empresas
+Slug
+marketplace-dados-restritivos-quod
+Tema principal explicitado pelo título da página: “Dados Restritivos | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+184. Flags Negativos | Quod
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-flags-negativos-quod
+Categoria
+Crédito | Empresas
+Slug
+marketplace-flags-negativos-quod
+Tema principal explicitado pelo título da página: “Flags Negativos | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+185. Score de Crédito Multidados | Birô de Crédito
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-multidados-biro-de-credito
+Categoria
+Crédito | Empresas
+Slug
+marketplace-score-de-credito-multidados-biro-de-credito
+Tema principal explicitado pelo título da página: “Score de Crédito Multidados | Birô de Crédito”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+186. Score de Crédito | Murabei
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-murabei
+Categoria
+Crédito | Empresas
+Slug
+marketplace-score-de-credito-murabei
+Tema principal explicitado pelo título da página: “Score de Crédito | Murabei”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+187. Score de Crédito | Quantum
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-quantum
+Categoria
+Crédito | Empresas
+Slug
+marketplace-score-de-credito-quantum
+Tema principal explicitado pelo título da página: “Score de Crédito | Quantum”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+188. Score de Crédito | Quod
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-quod
+Categoria
+Crédito | Empresas
+Slug
+marketplace-score-de-credito-quod
+Tema principal explicitado pelo título da página: “Score de Crédito | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+Serviços auxiliares e operacionais
+189. Reference
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/
+Categoria
+Serviços auxiliares e operacionais
+Slug
+reference
+Tema principal explicitado pelo título da página: “Reference”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+190. Api Tokens Gerar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-tokens-gerar
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-tokens-gerar
+Endpoint POST https://plataforma.bigdatacorp.com.br/tokens/gerar. Gera tokens de acesso a partir de usuário, senha e expires em horas. O retorno inclui token e tokenID para rotação/desabilitação posterior.
+_________________________________________________________________
+191. Api Tokens Desabilitar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-tokens-desabilitar
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-tokens-desabilitar
+Tema principal explicitado pelo título da página: “Api Tokens Desabilitar”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+192. Api De Preços Requisicao
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-preços-requisicao
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-preços-requisicao
+Endpoint POST https://plataforma.bigdatacorp.com.br/precos/. Suporta duas modalidades: tabela completa de preços do cliente e estimativa de preço por API/datasets/locale. Não possui custo por consulta.
+_________________________________________________________________
+193. Api Eventos Requisicao
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-eventos-requisicao
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-eventos-requisicao
+Endpoint POST https://plataforma.bigdatacorp.com.br/log/. Recupera registros de log e auditoria de consultas executadas, incluindo tempo de execução, IP, parâmetros e resultado. Exige QueryId, q ou Tags no corpo; QueryDate e DateFormat são opcionais. A documentação recomenda armazenar QueryIds.
+_________________________________________________________________
+194. Api De Estatísticas De Uso Requisicao
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-estatísticas-de-uso-requisicao
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-estatísticas-de-uso-requisicao
+Tema principal explicitado pelo título da página: “Api De Estatísticas De Uso Requisicao”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+195. Api De Batch Salvar Definicao
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-batch-salvar-definicao
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-batch-salvar-definicao
+Tema principal explicitado pelo título da página: “Api De Batch Salvar Definicao”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada.
+_________________________________________________________________
+196. Api De Batch Listar
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-batch-listar
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-batch-listar
+Endpoint POST https://plataforma.bigdatacorp.com.br/lote/listar. Lista jobs batch do usuário, inclusive históricos quando ShowHistoricalJobs=true, com paginação e detalhes de cada processo.
+_________________________________________________________________
+197. Api De Monitoramento Configurar Usuario
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-monitoramento-configurar-usuario
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-monitoramento-configurar-usuario
+Permite configurar informações relevantes para o funcionamento da API de Monitoramento, como chaves e tokens de autenticação (SFTP, Authorization, OAuth etc.), sem sobrescrever campos omitidos.
+_________________________________________________________________
+198. Api De Monitoramento Listar Inscricoes
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-de-monitoramento-listar-inscricoes
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-de-monitoramento-listar-inscricoes
+Endpoint POST https://plataforma.bigdatacorp.com.br/monitoramento/listar. Lista monitoramentos ativos do domínio, com paginação e filtros. O retorno traz SubscriptionId, OriginalQueryId, API, locale, parâmetros, datasets e TargetHook.
+_________________________________________________________________
+199. Api Views Obter Detalhes
+URL
+https://docs.bigdatacorp.com.br/plataforma/reference/api-views-obter-detalhes
+Categoria
+Serviços auxiliares e operacionais
+Slug
+api-views-obter-detalhes
+Endpoint POST https://plataforma.bigdatacorp.com.br/views/obterDetalhes. Lista ou filtra consultas personalizadas (views) por escopo, nome, API e datasets; retorna itens globais ou de domínio.

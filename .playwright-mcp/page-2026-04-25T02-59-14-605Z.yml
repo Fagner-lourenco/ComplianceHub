@@ -1,0 +1,171 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - button [ref=e56] [cursor=pointer]:
+          - img [ref=e57]
+        - generic [ref=e59]:
+          - text: Surface ativa
+          - heading "Perfil personalizado" [level=1] [ref=e60]
+      - navigation "Passos" [ref=e61]:
+        - list [ref=e62]:
+          - listitem [ref=e63]:
+            - generic [ref=e64]:
+              - img [ref=e66]
+              - generic [ref=e68]: Perfil
+          - listitem [ref=e70]:
+            - generic [ref=e71]:
+              - generic [ref=e72]: "2"
+              - generic [ref=e73]: Fontes
+          - listitem [ref=e75]:
+            - generic [ref=e76]:
+              - generic [ref=e77]: "3"
+              - generic [ref=e78]: Parâmetros
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e83]: Nome do perfil
+              - textbox "Nome do perfil" [ref=e84]:
+                - /placeholder: "Ex: Compliance RH Premium"
+            - generic [ref=e85]:
+              - generic [ref=e86]: Descrição
+              - textbox "Descrição" [ref=e87]:
+                - /placeholder: Descreva o objetivo deste perfil...
+          - generic [ref=e88]:
+            - button "Pessoa física" [ref=e89] [cursor=pointer]:
+              - img [ref=e90]
+              - text: Pessoa física
+            - button "Pessoa jurídica" [ref=e93] [cursor=pointer]:
+              - img [ref=e94]
+              - text: Pessoa jurídica
+          - generic [ref=e98]:
+            - img [ref=e99]
+            - textbox "Pesquisar fonte..." [ref=e102]
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - img [ref=e106]
+              - strong [ref=e110]: Outros
+              - generic [ref=e111]: "39"
+            - generic [ref=e112]:
+              - button "processes" [ref=e113] [cursor=pointer]:
+                - generic [ref=e115]: processes
+              - button "owners_lawsuits" [ref=e116] [cursor=pointer]:
+                - generic [ref=e118]: owners_lawsuits
+              - button "lawsuits_distribution_data" [ref=e119] [cursor=pointer]:
+                - generic [ref=e121]: lawsuits_distribution_data
+              - button "basic_data" [ref=e122] [cursor=pointer]:
+                - generic [ref=e124]: basic_data
+              - button "historical_basic_data" [ref=e125] [cursor=pointer]:
+                - generic [ref=e127]: historical_basic_data
+              - button "history_basic_data" [ref=e128] [cursor=pointer]:
+                - generic [ref=e130]: history_basic_data
+              - button "basic_data_with_configurable_recency" [ref=e131] [cursor=pointer]:
+                - generic [ref=e133]: basic_data_with_configurable_recency
+              - button "emails_extended" [ref=e134] [cursor=pointer]:
+                - generic [ref=e136]: emails_extended
+              - button "phones_extended" [ref=e137] [cursor=pointer]:
+                - generic [ref=e139]: phones_extended
+              - button "addresses_extended" [ref=e140] [cursor=pointer]:
+                - generic [ref=e142]: addresses_extended
+              - button "kyc" [ref=e143] [cursor=pointer]:
+                - generic [ref=e145]: kyc
+              - button "owners_kyc" [ref=e146] [cursor=pointer]:
+                - generic [ref=e148]: owners_kyc
+              - button "employees_kyc" [ref=e149] [cursor=pointer]:
+                - generic [ref=e151]: employees_kyc
+              - button "economic_group_kyc" [ref=e152] [cursor=pointer]:
+                - generic [ref=e154]: economic_group_kyc
+              - button "financial_data" [ref=e155] [cursor=pointer]:
+                - generic [ref=e157]: financial_data
+              - button "government_debtors" [ref=e158] [cursor=pointer]:
+                - generic [ref=e160]: government_debtors
+              - button "collections" [ref=e161] [cursor=pointer]:
+                - generic [ref=e163]: collections
+              - button "financial_risk" [ref=e164] [cursor=pointer]:
+                - generic [ref=e166]: financial_risk
+              - button "indebtedness_question" [ref=e167] [cursor=pointer]:
+                - generic [ref=e169]: indebtedness_question
+              - button "company_evolution" [ref=e170] [cursor=pointer]:
+                - generic [ref=e172]: company_evolution
+              - button "activity_indicators" [ref=e173] [cursor=pointer]:
+                - generic [ref=e175]: activity_indicators
+              - button "merchant_category_data" [ref=e176] [cursor=pointer]:
+                - generic [ref=e178]: merchant_category_data
+              - button "occupation_data" [ref=e179] [cursor=pointer]:
+                - generic [ref=e181]: occupation_data
+              - button "class_organization" [ref=e182] [cursor=pointer]:
+                - generic [ref=e184]: class_organization
+              - button "university_student_data" [ref=e185] [cursor=pointer]:
+                - generic [ref=e187]: university_student_data
+              - button "profession_data" [ref=e188] [cursor=pointer]:
+                - generic [ref=e190]: profession_data
+              - button "awards_and_certifications" [ref=e191] [cursor=pointer]:
+                - generic [ref=e193]: awards_and_certifications
+              - button "sports_exposure" [ref=e194] [cursor=pointer]:
+                - generic [ref=e196]: sports_exposure
+              - button "relationships" [ref=e197] [cursor=pointer]:
+                - generic [ref=e199]: relationships
+              - button "dynamic_qsa_data" [ref=e200] [cursor=pointer]:
+                - generic [ref=e202]: dynamic_qsa_data
+              - button "online_presence" [ref=e203] [cursor=pointer]:
+                - generic [ref=e205]: online_presence
+              - button "online_ads" [ref=e206] [cursor=pointer]:
+                - generic [ref=e208]: online_ads
+              - button "political_involvement" [ref=e209] [cursor=pointer]:
+                - generic [ref=e211]: political_involvement
+              - button "election_candidate_data" [ref=e212] [cursor=pointer]:
+                - generic [ref=e214]: election_candidate_data
+              - button "media_profile_and_exposure" [ref=e215] [cursor=pointer]:
+                - generic [ref=e217]: media_profile_and_exposure
+              - button "syndicate_agreements" [ref=e218] [cursor=pointer]:
+                - generic [ref=e220]: syndicate_agreements
+              - button "social_conscience" [ref=e221] [cursor=pointer]:
+                - generic [ref=e223]: social_conscience
+              - button "collections" [ref=e224] [cursor=pointer]:
+                - generic [ref=e226]: collections
+              - button "property_data" [ref=e227] [cursor=pointer]:
+                - generic [ref=e229]: property_data
+        - complementary [ref=e230]:
+          - generic [ref=e231]:
+            - text: Resumo do perfil
+            - heading "Novo perfil" [level=2] [ref=e232]
+          - generic [ref=e233]:
+            - img [ref=e235]
+            - generic [ref=e237]:
+              - generic [ref=e238]: "0"
+              - generic [ref=e239]: fontes selecionadas
+          - button "Salvar perfil personalizado" [disabled] [ref=e240] [cursor=pointer]:
+            - img [ref=e241]
+            - text: Salvar perfil personalizado

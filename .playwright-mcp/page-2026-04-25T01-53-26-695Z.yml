@@ -1,0 +1,116 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]: Surface ativa
+        - heading "Análises" [level=1] [ref=e57]
+        - paragraph [ref=e58]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+      - generic [ref=e60]:
+        - button "Ver contratos backend" [ref=e61] [cursor=pointer]
+        - button "Criar nova análise" [ref=e62] [cursor=pointer]
+    - search "Filtros da listagem" [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]: Período
+        - textbox "Período" [ref=e66]:
+          - /placeholder: Data inicial
+      - generic [ref=e68]:
+        - generic [ref=e69]: Responsável
+        - textbox "Responsável" [ref=e70]:
+          - /placeholder: Nome do analista
+      - generic [ref=e72]:
+        - generic [ref=e73]: Status
+        - combobox "Status" [ref=e74]:
+          - option "Todos" [selected]
+          - option "Pronto"
+          - option "Publicado"
+          - option "Processando"
+          - option "Na fila"
+          - option "Erro"
+          - option "Falhou"
+    - status "Carregando" [ref=e75]
+  - generic:
+    - complementary:
+      - generic:
+        - generic:
+          - generic: Mapa funcional
+          - heading [level=2]: Camadas de backend
+          - paragraph: Historico de dossies esta ligada aos contratos abaixo.
+        - button: Fechar
+      - generic:
+        - article:
+          - generic:
+            - strong: Schema e preset de dossie
+            - generic: Implementado
+          - paragraph: O backend principal ja resolve preset, schema, macroareas e configuracao canonica do dossie para PF, PJ e composicao custom.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Continuar usando dossierSchema como fonte unica de verdade para navegacao, visoes e cobertura funcional.
+          - generic:
+            - generic: functions/domain/dossierSchema.cjs
+            - generic: functions/domain/v2Modules.cjs
+            - generic: functions/domain/v2ProductCatalog.cjs
+        - article:
+          - generic:
+            - strong: Listagem e historico
+            - generic: Parcial
+          - paragraph: A listagem ja recebe projeoes seguras com produto, preset, schema e processamento, mas ainda precisa evoluir para um read model mais rico e independente dos documentos brutos.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Falta fechar filtros paginaveis, colunas operacionais completas e acao de monitoramento por fonte.
+          - generic:
+            - generic: functions/domain/v2ClientProjectionBuilder.cjs
+            - generic: functions/domain/v2Core.cjs
+        - article:
+          - generic:
+            - strong: Progresso por fonte
+            - generic: Proximo refactor
+          - paragraph: A UX nova pede monitoramento por fonte, percentual real, retries e reprocessamento. A base operacional existe, mas ainda nao virou um contrato cliente coeso.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Transformar providerRequests e moduleRuns em sourceRows com status, tentativas, ultima execucao e erro tecnico.
+          - generic:
+            - generic: functions/domain/v2OperationalArtifactBuilder.cjs
+            - generic: functions/index.js
+        - article:
+          - generic:
+            - strong: Revisao humana saiu do produto principal
+            - generic: Fora do produto base
+          - paragraph: O pipeline central do dossie agora opera em modo automation_only. Revisao humana fica fora do fluxo padrao e pode voltar apenas como produto/plugin separado.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Nao reacoplar review gate, senior queue ou aprovacao manual ao dossie base.
+          - generic:
+            - generic: functions/domain/v2CaseStatus.cjs
+            - generic: functions/index.js
+            - generic: functions/domain/v2ReviewGate.cjs

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildProviderDivergenceResolution } from './v2ProviderDivergences.cjs';
+import { buildProviderDivergenceResolution } from './v2ProviderDivergences.js';
 
 describe('v2ProviderDivergences', () => {
     it('resolve divergencia aberta e remove bloqueio de publicacao com auditoria minima', () => {

@@ -1,0 +1,35 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "LawsuitsDistributionData": {
+        "TotalLawsuits": 0,
+        "TypeDistribution": {},
+        "CourtNameDistribution": {},
+        "StatusDistribution": {},
+        "StateDistribution": {},
+        "PartyTypeDistribution": {},
+        "CourtTypeDistribution": {},
+        "CourtLevelDistribution": {},
+        "CnjProcedureTypeDistribution": {},
+        "CnjProcedureTypeNumberDistribution": {},
+        "CnjSubjectDistribution": {},
+        "CnjSubjectNumberDistribution": {},
+        "CnjBroadSubjectDistribution": {},
+        "CnjBroadSubjectNumberDistribution": {}
+      }
+    }
+  ],
+  "QueryId": "1cbf6d86-26f6-478d-8f82-0f395b7a4bee",
+  "ElapsedMilliseconds": 125,
+  "QueryDate": "2026-04-25T12:32:23.6018664Z",
+  "Status": {
+    "lawsuits_distribution_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

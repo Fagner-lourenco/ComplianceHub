@@ -1,0 +1,11 @@
+{
+  "query": {
+    "search_type": "cpf",
+    "search_key": "050.232.903-36",
+    "response_type": "execution"
+  },
+  "request_id": "374b07a8-073b-4740-9f51-7a35c624ccc6",
+  "status": "completed",
+  "all_count": 0,
+  "page_data": []
+}

@@ -1,0 +1,120 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "⌘ ComplianceHub®" [ref=e7] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e8]: ⌘
+        - generic [ref=e9]: ComplianceHub®
+      - generic [ref=e10]:
+        - button "Dicionário de fontes" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+        - button "Academia" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Envios" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Notificações" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - button "Perfil" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]
+    - generic [ref=e35]:
+      - navigation "Categorias de produtos" [ref=e36]:
+        - button "Background Check" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Due Diligence" [ref=e39] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e40] [cursor=pointer]
+        - button "Jurídico" [ref=e41] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e42] [cursor=pointer]
+      - button "Aplicativos" [ref=e43] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e44]
+  - main [ref=e46]:
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - button [ref=e50] [cursor=pointer]:
+            - img [ref=e51]
+          - generic [ref=e53]:
+            - text: Surface ativa
+            - heading "Análise qurTsbgGlss6XGFOslZp" [level=1] [ref=e54]
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - button "Analítico" [ref=e57] [cursor=pointer]:
+              - img [ref=e58]
+              - text: Analítico
+            - button "Detalhado" [ref=e60] [cursor=pointer]:
+              - img [ref=e61]
+              - text: Detalhado
+          - button "Aprovar" [ref=e62] [cursor=pointer]:
+            - img [ref=e63]
+            - text: Aprovar
+          - button "Reprovar" [ref=e66] [cursor=pointer]:
+            - img [ref=e67]
+            - text: Reprovar
+      - navigation [ref=e71]:
+        - button "Jurídico" [ref=e72] [cursor=pointer]:
+          - img [ref=e73]
+          - text: Jurídico
+        - button "Mídia/Internet" [ref=e79] [cursor=pointer]:
+          - img [ref=e80]
+          - text: Mídia/Internet
+        - button "Financeiro" [ref=e83] [cursor=pointer]:
+          - img [ref=e84]
+          - text: Financeiro
+        - button "Cadastro" [ref=e86] [cursor=pointer]:
+          - img [ref=e87]
+          - text: Cadastro
+        - button "Reguladores" [ref=e91] [cursor=pointer]:
+          - img [ref=e92]
+          - text: Reguladores
+        - button "Bens e Imóveis" [ref=e94] [cursor=pointer]:
+          - img [ref=e95]
+          - text: Bens e Imóveis
+        - button "Listas Restritivas" [ref=e98] [cursor=pointer]:
+          - img [ref=e99]
+          - text: Listas Restritivas
+        - button "Profissional" [ref=e102] [cursor=pointer]:
+          - img [ref=e103]
+          - text: Profissional
+        - button "Socioambiental" [ref=e108] [cursor=pointer]:
+          - img [ref=e109]
+          - text: Socioambiental
+      - generic [ref=e112]:
+        - generic [ref=e113]:
+          - img [ref=e115]
+          - generic [ref=e120]:
+            - heading "—" [level=2] [ref=e121]
+            - paragraph [ref=e122]: —
+            - generic [ref=e124]: PENDING
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]: Score
+            - generic [ref=e128]: —
+          - generic [ref=e129]:
+            - generic [ref=e130]: Risco
+            - generic [ref=e131]: —
+          - generic [ref=e132]:
+            - generic [ref=e133]: Veredito
+            - generic [ref=e134]: —
+      - generic [ref=e135]:
+        - heading "Análise conclusiva" [level=3] [ref=e136]:
+          - img [ref=e137]
+          - text: Análise conclusiva
+        - textbox "Escreva sua análise aqui..." [ref=e140]
+        - generic [ref=e141]:
+          - button "Salvar conclusão" [ref=e142] [cursor=pointer]
+          - generic [ref=e143]:
+            - button "Aprovar" [ref=e144] [cursor=pointer]:
+              - img [ref=e145]
+              - text: Aprovar
+            - button "Reprovar" [ref=e148] [cursor=pointer]:
+              - img [ref=e149]
+              - text: Reprovar
+      - generic [ref=e153]:
+        - heading "Comentários" [level=3] [ref=e154]:
+          - img [ref=e155]
+          - text: Comentários
+        - paragraph [ref=e158]: Sem comentários ainda.
+        - textbox "Adicione um comentário..." [ref=e160]

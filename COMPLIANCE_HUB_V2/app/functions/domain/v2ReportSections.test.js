@@ -3,7 +3,7 @@ import {
     resolveReportModuleKeys,
     resolveReportSections,
     buildReportSnapshotFromV2,
-} from './v2ReportSections.cjs';
+} from './v2ReportSections.js';
 
 describe('v2ReportSections', () => {
     it('caso PF basico inclui criminal e labor quando ha evidencias', () => {

@@ -1,0 +1,20 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "Memberships": {}
+    }
+  ],
+  "QueryId": "ffc81082-fec4-4839-94c0-184d229957f2",
+  "ElapsedMilliseconds": 47,
+  "QueryDate": "2026-04-25T10:59:54.3953229Z",
+  "Status": {
+    "class_organization": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

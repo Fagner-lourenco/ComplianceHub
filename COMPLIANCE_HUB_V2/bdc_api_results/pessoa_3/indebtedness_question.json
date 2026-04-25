@@ -1,0 +1,22 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "IndebtednessQuestion": {
+        "LikelyInDebt": true
+      }
+    }
+  ],
+  "QueryId": "bfd8352b-c0e2-4afb-91ed-fd70911f12ab",
+  "ElapsedMilliseconds": 202,
+  "QueryDate": "2026-04-25T12:32:54.4168543Z",
+  "Status": {
+    "indebtedness_question": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

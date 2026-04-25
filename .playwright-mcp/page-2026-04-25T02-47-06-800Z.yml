@@ -1,0 +1,128 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - heading "Criação de dossiês" [level=1] [ref=e56]
+        - generic [ref=e57]:
+          - generic [ref=e58]:
+            - generic [ref=e59]: Perfil de consulta
+            - generic [ref=e60]: /
+          - generic [ref=e61]:
+            - generic [ref=e62]: Critérios
+            - generic [ref=e63]: /
+          - generic [ref=e64]:
+            - generic [ref=e65]: Tag
+            - generic [ref=e66]: /
+          - generic [ref=e68]: Parâmetros
+      - button "Voltar para histórico de Dossiês ›" [ref=e69] [cursor=pointer]
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - button "Pessoa Física" [ref=e72] [cursor=pointer]
+        - button "Pessoa Jurídica" [ref=e73] [cursor=pointer]
+      - generic [ref=e75]:
+        - text: Perfis de Consulta Personalizados
+        - img [ref=e76]
+      - generic [ref=e78]:
+        - button "ⓘ Ver Detalhes" [ref=e79] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e83]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e84] [cursor=pointer]:
+          - img [ref=e85]
+          - generic [ref=e88]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e89] [cursor=pointer]:
+          - img [ref=e90]
+          - generic [ref=e93]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e94] [cursor=pointer]:
+          - img [ref=e95]
+          - generic [ref=e98]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e99] [cursor=pointer]:
+          - img [ref=e100]
+          - generic [ref=e103]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e104] [cursor=pointer]:
+          - img [ref=e105]
+          - generic [ref=e108]: ⓘ Ver Detalhes
+        - button "ⓘ Ver Detalhes" [ref=e109] [cursor=pointer]:
+          - img [ref=e110]
+          - generic [ref=e113]: ⓘ Ver Detalhes
+      - generic [ref=e114]:
+        - text: Perfis de Consulta Padronizados
+        - img [ref=e115]
+      - generic [ref=e117]:
+        - button "Compliance Ver Detalhes" [ref=e118] [cursor=pointer]:
+          - img [ref=e119]
+          - generic [ref=e121]: Compliance
+          - generic [ref=e122]:
+            - img [ref=e123]
+            - text: Ver Detalhes
+        - button "Compliance Internacional Ver Detalhes" [ref=e125] [cursor=pointer]:
+          - img [ref=e126]
+          - generic [ref=e129]: Compliance Internacional
+          - generic [ref=e130]:
+            - img [ref=e131]
+            - text: Ver Detalhes
+        - button "Financeiro Ver Detalhes" [ref=e133] [cursor=pointer]:
+          - img [ref=e134]
+          - generic [ref=e136]: Financeiro
+          - generic [ref=e137]:
+            - img [ref=e138]
+            - text: Ver Detalhes
+        - button "Investigativo Ver Detalhes" [ref=e140] [cursor=pointer]:
+          - img [ref=e141]
+          - generic [ref=e144]: Investigativo
+          - generic [ref=e145]:
+            - img [ref=e146]
+            - text: Ver Detalhes
+        - button "Jurídico Ver Detalhes" [ref=e148] [cursor=pointer]:
+          - img [ref=e149]
+          - generic [ref=e155]: Jurídico
+          - generic [ref=e156]:
+            - img [ref=e157]
+            - text: Ver Detalhes
+        - button "PLD Ver Detalhes" [ref=e159] [cursor=pointer]:
+          - img [ref=e160]
+          - generic [ref=e164]: PLD
+          - generic [ref=e165]:
+            - img [ref=e166]
+            - text: Ver Detalhes
+        - button "Recursos Humanos Ver Detalhes" [ref=e168] [cursor=pointer]:
+          - img [ref=e169]
+          - generic [ref=e172]: Recursos Humanos
+          - generic [ref=e173]:
+            - img [ref=e174]
+            - text: Ver Detalhes
+    - generic [ref=e176]:
+      - button "Voltar" [ref=e177] [cursor=pointer]
+      - button "Próximo passo" [ref=e178] [cursor=pointer]
+      - generic [ref=e179]: Nenhum dos perfis atende sua necessidade?
+      - button "Clique aqui para criar um novo!" [ref=e180] [cursor=pointer]

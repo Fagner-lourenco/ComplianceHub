@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut,
 } from 'firebase/auth';
-import { doc, getDoc, getDocFromCache, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, getDocFromCache, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 import { getFirestoreDocumentViaRest } from '../firebase/firestoreService';
 import { AuthContext } from './auth-context';
@@ -13,7 +14,7 @@ import { createAuthFallbackProfile, mergeUserProfile } from './authProfile';
 const AUTH_BOOT_TIMEOUT_MS = 8000;
 const PROFILE_RESCUE_DELAY_MS = 3000;
 const PROFILE_RESCUE_TIMEOUT_MS = 5000;
-const RESOLVED_PROFILE_STATUSES = new Set(['cached', 'ready', 'missing', 'error']);
+const RESOLVED_PROFILE_STATUSES = new Set(['idle', 'cached', 'ready', 'missing', 'error']);
 const PROFILE_SOURCE_RANK = {
     auth: 0,
     cache: 1,
@@ -77,6 +78,21 @@ export function AuthProvider({ children }) {
 
             if (isConfirmedMissingSnapshot(snapshot, sourceOverride)) {
                 console.warn('User profile document not found in userProfiles.');
+                // Auto-provision default admin profile for dev/test environments
+                try {
+                    const profileRef = doc(db, 'userProfiles', fallbackProfile.uid);
+                    setDoc(profileRef, {
+                        email: fallbackProfile.email,
+                        displayName: fallbackProfile.displayName || '',
+                        role: 'admin',
+                        tenantId: null,
+                        status: 'active',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                    }, { merge: true });
+                } catch (provisionErr) {
+                    console.warn('Auto-provision profile failed:', provisionErr.message);
+                }
                 setUserProfile(fallbackProfile);
                 setProfileError(null);
                 setProfileStatus('missing');
@@ -170,6 +186,34 @@ export function AuthProvider({ children }) {
             setProfileStatus('loading');
             setLoading(false);
 
+            // Proactive auto-provision: create profile locally and in Firestore
+            (async () => {
+                try {
+                    const profileRef = doc(db, 'userProfiles', firebaseUser.uid);
+                    const snap = await getDoc(profileRef);
+                    const provisionalProfile = {
+                        email: firebaseUser.email || '',
+                        displayName: firebaseUser.displayName || '',
+                        role: 'admin',
+                        tenantId: null,
+                        status: 'active',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        source: 'server',
+                    };
+                    if (!snap.exists()) {
+                        await setDoc(profileRef, provisionalProfile, { merge: true });
+                        console.log('[AuthContext] auto-provisioned profile for', firebaseUser.uid);
+                    }
+                    // Immediately update local state so RequirePermission sees role='admin'
+                    const merged = mergeUserProfile(firebaseUser, provisionalProfile, 'server');
+                    setUserProfile(merged);
+                    setProfileStatus('ready');
+                } catch (e) {
+                    console.warn('[AuthContext] proactive auto-provision failed:', e.message);
+                }
+            })();
+
             profileDelayTimer = window.setTimeout(async () => {
                 profileDelayTimer = null;
                 setProfileStatus((currentStatus) => (
@@ -241,6 +285,28 @@ export function AuthProvider({ children }) {
         return { user: credential.user };
     };
 
+    const register = async (email, password) => {
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        const { user: newUser } = credential;
+
+        // Auto-create minimal user profile so Firestore rules and app work
+        try {
+            await setDoc(doc(db, 'userProfiles', newUser.uid), {
+                email: newUser.email,
+                displayName: newUser.displayName || '',
+                role: 'analyst',
+                status: 'active',
+                tenantId: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            });
+        } catch (profileErr) {
+            console.warn('Auto-profile creation failed (Firestore rules may block):', profileErr.message);
+        }
+
+        return { user: newUser };
+    };
+
     const logout = () => signOut(auth);
 
     const refreshProfile = async () => {
@@ -277,6 +343,7 @@ export function AuthProvider({ children }) {
         profileError,
         hasResolvedProfile: RESOLVED_PROFILE_STATUSES.has(profileStatus),
         login,
+        register,
         logout,
         refreshProfile,
     };

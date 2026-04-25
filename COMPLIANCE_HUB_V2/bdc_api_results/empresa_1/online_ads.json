@@ -1,0 +1,51 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "OnlineAds": [
+        {
+          "Phone": "4130459943",
+          "FirstAdDate": "2016-11-04T15:32:00Z",
+          "LastAdDate": "2017-01-09T18:02:00Z",
+          "TotalAds": 6,
+          "ActiveAds": 5,
+          "MaxActiveAds": 5,
+          "AdsLast30Days": 6,
+          "AdsLast90Days": 6,
+          "AdsLast180Days": 6,
+          "AdsLast365Days": 6,
+          "AdsInMainAdPortal": 6,
+          "AdsInMainAdCategory": 2,
+          "AdMaxValue": 149000,
+          "AdMinValue": 479,
+          "AdAvgValue": 27146.16666667,
+          "MainAdPortal": "olx",
+          "MainAdCategory": "varios_Computadores e acessórios_Impressoras e suplementos",
+          "AdPortals": [
+            "olx"
+          ],
+          "AdCategories": [
+            "veiculos-comerciais",
+            "veiculos",
+            "varios_Móveis_Mesas e cadeiras",
+            "varios_Computadores e acessórios_Impressoras e suplementos",
+            "varios_Áudio, TV, vídeo e fotografia_Matriz"
+          ],
+          "CreationDate": "2016-11-04T15:49:59.014Z"
+        }
+      ]
+    }
+  ],
+  "QueryId": "4b46d96e-b22b-4fdc-8a9d-9f87a496ffe7",
+  "ElapsedMilliseconds": 120,
+  "QueryDate": "2026-04-25T12:53:04.1199847Z",
+  "Status": {
+    "online_ads": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

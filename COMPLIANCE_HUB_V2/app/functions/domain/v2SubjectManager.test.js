@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyTaxId } from './v2SubjectManager.cjs';
+import { classifyTaxId } from './v2SubjectManager.js';
 
 describe('classifyTaxId', () => {
     it('classifies 11-digit string as CPF', () => {

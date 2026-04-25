@@ -1,0 +1,61 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "LawsuitsDistributionData": {
+        "TotalLawsuits": 1,
+        "TypeDistribution": {
+          "CUMPRIMENTO DE SENTENCA": 1
+        },
+        "CourtNameDistribution": {
+          "TJBA": 1
+        },
+        "StatusDistribution": {
+          "ARQUIVADO": 1
+        },
+        "StateDistribution": {
+          "BA": 1
+        },
+        "PartyTypeDistribution": {
+          "CLAIMED": 1
+        },
+        "CourtTypeDistribution": {
+          "CIVEL": 1
+        },
+        "CourtLevelDistribution": {
+          "1": 1
+        },
+        "CnjProcedureTypeDistribution": {
+          "PROCEDIMENTO DO JUIZADO ESPECIAL CIVEL": 1
+        },
+        "CnjProcedureTypeNumberDistribution": {
+          "436": 1
+        },
+        "CnjSubjectDistribution": {
+          "CLAUSULAS ABUSIVAS": 1
+        },
+        "CnjSubjectNumberDistribution": {
+          "11974": 1
+        },
+        "CnjBroadSubjectDistribution": {
+          "DIREITO DO CONSUMIDOR": 1
+        },
+        "CnjBroadSubjectNumberDistribution": {
+          "1156": 1
+        }
+      }
+    }
+  ],
+  "QueryId": "ec01c3b6-a57c-4f6c-9b54-fac54ea290b5",
+  "ElapsedMilliseconds": 186,
+  "QueryDate": "2026-04-25T12:53:08.4896227Z",
+  "Status": {
+    "lawsuits_distribution_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

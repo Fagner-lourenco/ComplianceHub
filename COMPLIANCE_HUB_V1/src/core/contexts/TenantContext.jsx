@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { subscribeToTenantDirectory } from '../firebase/firestoreService';
 import { TenantContext } from './tenant-context';
@@ -13,15 +13,19 @@ import {
 
 function getStoredTenantId() {
     if (typeof window === 'undefined') {
-        return ALL_TENANTS_ID;
+        return null;
     }
 
-    return window.localStorage.getItem(SELECTED_TENANT_STORAGE_KEY) || ALL_TENANTS_ID;
+    return window.localStorage.getItem(SELECTED_TENANT_STORAGE_KEY) || null;
 }
 
 export function TenantProvider({ children }) {
     const { user, userProfile } = useAuth();
-    const [selectedTenantId, setSelectedTenantId] = useState(getStoredTenantId);
+    const [selectedTenantId, setSelectedTenantId] = useState(() => {
+        // Initialize from localStorage only if we can validate later; null = not yet resolved
+        const stored = getStoredTenantId();
+        return stored;
+    });
     const [tenantDirectoryState, setTenantDirectoryState] = useState({
         scopeKey: null,
         tenants: [],
@@ -93,9 +97,8 @@ export function TenantProvider({ children }) {
 
     const tenants = useMemo(() => resolveTenantOptions(userProfile, tenantDirectory), [tenantDirectory, userProfile]);
 
-    const storedTenantId = typeof window === 'undefined'
-        ? null
-        : window.localStorage.getItem(SELECTED_TENANT_STORAGE_KEY);
+    // Use a ref to track storedTenantId without re-rendering on every localStorage read
+    const [storedTenantId] = useState(getStoredTenantId);
 
     const expectedSelectedTenantId = useMemo(() => resolveSelectedTenantId({
         role: userProfile?.role,
@@ -104,19 +107,19 @@ export function TenantProvider({ children }) {
         storedTenantId,
     }), [selectedTenantId, storedTenantId, tenants, userProfile?.role]);
 
-    const syncSelectedTenantId = useEffectEvent((tenantId) => {
-        setSelectedTenantId((currentTenantId) => (
-            currentTenantId === tenantId ? currentTenantId : tenantId
-        ));
-    });
-
     useEffect(() => {
         if (expectedSelectedTenantId !== selectedTenantId) {
-            syncSelectedTenantId(expectedSelectedTenantId);
+            // Tenant selection must be corrected before children render actions for
+            // the wrong tenant. This is a controlled context normalization step.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedTenantId((currentTenantId) => (
+                currentTenantId === expectedSelectedTenantId ? currentTenantId : expectedSelectedTenantId
+            ));
         }
+        return undefined;
     }, [expectedSelectedTenantId, selectedTenantId]);
 
-    const persistSelectedTenant = useEffectEvent((tenantId) => {
+    const persistSelectedTenant = useCallback((tenantId) => {
         if (typeof window === 'undefined') {
             return;
         }
@@ -127,11 +130,11 @@ export function TenantProvider({ children }) {
         }
 
         window.localStorage.setItem(SELECTED_TENANT_STORAGE_KEY, tenantId);
-    });
+    }, [userProfile?.role]);
 
     useEffect(() => {
         persistSelectedTenant(selectedTenantId);
-    }, [selectedTenantId]);
+    }, [selectedTenantId, persistSelectedTenant]);
 
     const selectedTenant = useMemo(() => (
         selectedTenantId === ALL_TENANTS_ID

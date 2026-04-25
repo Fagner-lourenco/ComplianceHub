@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 import {
     initializeFirestore,
     memoryLocalCache,
@@ -16,6 +17,8 @@ const firebaseConfig = {
   appId: (import.meta.env.VITE_FIREBASE_APP_ID || '1:000:web:000').trim(),
 };
 
+const DATABASE_ID = 'compliance-hub-v2';
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
@@ -24,7 +27,7 @@ const createFirestore = () => {
         return initializeFirestore(app, {
             localCache: memoryLocalCache(),
             experimentalForceLongPolling: true,
-        });
+        }, DATABASE_ID);
     }
 
     try {
@@ -33,16 +36,17 @@ const createFirestore = () => {
                 tabManager: persistentMultipleTabManager(),
             }),
             experimentalForceLongPolling: true,
-        });
+        }, DATABASE_ID);
     } catch (error) {
         console.warn('Firestore persistent cache unavailable, falling back to memory cache.', error);
         return initializeFirestore(app, {
             localCache: memoryLocalCache(),
             experimentalForceLongPolling: true,
-        });
+        }, DATABASE_ID);
     }
 };
 
 export const db = createFirestore();
+export const functions = getFunctions(app);
 
 export default app;

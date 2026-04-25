@@ -1,0 +1,32 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "FinancialRisk": {
+        "TotalAssets": "ABAIXO DE 100K",
+        "EstimatedIncomeRange": "5 A 7 SM",
+        "IsCurrentlyEmployed": true,
+        "IsCurrentlyOwner": false,
+        "LastOccupationStartDate": "2018-11-23T00:00:00Z",
+        "IsCurrentlyOnCollection": false,
+        "Last365DaysCollectionOccurrences": 1,
+        "CurrentConsecutiveCollectionMonths": 0,
+        "IsCurrentlyReceivingAssistance": false,
+        "FinancialRiskScore": 1000,
+        "FinancialRiskLevel": "A"
+      }
+    }
+  ],
+  "QueryId": "fb1d67a5-61df-4e0a-ba15-7cda6b95d46a",
+  "ElapsedMilliseconds": 238,
+  "QueryDate": "2026-04-25T12:32:52.8139518Z",
+  "Status": {
+    "financial_risk": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

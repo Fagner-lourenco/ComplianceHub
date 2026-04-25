@@ -170,7 +170,7 @@ concludeCaseByAnalyst()
 
 ### 5.1 — Helpers de Derivação no Backend
 
-**Arquivo:** `functions/index.js` — inserir antes de `exports.concludeCaseByAnalyst`
+**Arquivo:** `functions/index.js` — inserir antes de `exports.v2ConcludeCaseByAnalyst`
 
 ```js
 function buildProcessHighlights(caseData) {

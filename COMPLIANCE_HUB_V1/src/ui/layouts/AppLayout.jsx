@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
@@ -8,12 +8,9 @@ export default function AppLayout({ title = 'ComplianceHub' }) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
     const topbarRef = useRef(null);
-    const closeSidebarOnRouteChange = useEffectEvent(() => {
-        setIsSidebarOpen(false);
-    });
-
     useEffect(() => {
-        closeSidebarOnRouteChange();
+        const syncTimer = window.setTimeout(() => setIsSidebarOpen(false), 0);
+        return () => window.clearTimeout(syncTimer);
     }, [location.pathname]);
 
     useEffect(() => {

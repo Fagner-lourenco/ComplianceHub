@@ -26,9 +26,9 @@
  * cache_ttl_in_days: reuse cached extraction if within X days (default: 7).
  */
 
-const SYNC_BASE_URL = 'https://lawsuits.production.judit.io';
-const ASYNC_BASE_URL = 'https://requests.prod.judit.io';
-const ENTITY_BASE_URL = 'https://lawsuits.prod.judit.io';
+const SYNC_BASE_URL = process.env.JUDIT_SYNC_BASE_URL || 'https://lawsuits.production.judit.io';
+const ASYNC_BASE_URL = process.env.JUDIT_ASYNC_BASE_URL || 'https://requests.prod.judit.io';
+const ENTITY_BASE_URL = process.env.JUDIT_ENTITY_BASE_URL || 'https://lawsuits.prod.judit.io';
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
@@ -237,9 +237,9 @@ async function pollRequest(requestId, apiKey, options = {}) {
     }
 
     throw new JuditError(
-        `Judit request ${requestId} ainda em processamento apos ${Math.round(maxWaitMs / 1000)}s`,
+        `Judit request ${requestId} ainda em processamento apos ${Math.round(maxWaitMs / 1000)}s (${attempts} tentativas)`,
         408,
-        false,
+        true,
     );
 }
 

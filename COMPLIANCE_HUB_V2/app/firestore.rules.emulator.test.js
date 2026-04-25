@@ -14,7 +14,7 @@ import {
     updateDoc,
 } from 'firebase/firestore';
 
-const PROJECT_ID = 'compliance-hub-br';
+const PROJECT_ID = 'compliance-hub-v2';
 
 let testEnv;
 
@@ -56,6 +56,8 @@ describe('firestore.rules emulator - tenant isolation e V2 contracts', () => {
 
     it.each([
         ['clientProjections/proj-a', { tenantId: 'tenant-a', status: 'DONE' }],
+        ['clientCases/case-a', { tenantId: 'tenant-a', status: 'DONE' }],
+        ['tenantAuditLogs/log-a', { tenantId: 'tenant-a', action: 'VIEWED' }],
         ['alerts/alert-a', { tenantId: 'tenant-a', state: 'unread' }],
         ['quoteRequests/quote-a', { tenantId: 'tenant-a', status: 'REQUESTED' }],
     ])('client tenant A reads own client-safe document %s and not tenant B', async (path, payload) => {
@@ -84,7 +86,9 @@ describe('firestore.rules emulator - tenant isolation e V2 contracts', () => {
         'riskSignals/signal-a',
         'usageMeters/meter-a',
         'billingSettlements/settlement-a',
+        'exports/export-a',
         'watchlists/watchlist-a',
+        'monitoringSubscriptions/subscription-a',
         'seniorReviewRequests/senior-a',
     ])('analyst tenant A reads own internal document but not tenant B: %s', async (path) => {
         const otherPath = path.replace('-a', '-b');
@@ -119,7 +123,9 @@ describe('firestore.rules emulator - tenant isolation e V2 contracts', () => {
         await assertFails(setDoc(doc(analystDb, 'tenantEntitlements/tenant-a'), { tier: 'premium' }));
         await assertFails(setDoc(doc(analystDb, 'exports/export-a'), { tenantId: 'tenant-a' }));
         await assertFails(setDoc(doc(clientDb, 'quoteRequests/quote-direct'), { tenantId: 'tenant-a' }));
+        await assertFails(setDoc(doc(analystDb, 'alerts/alert-direct'), { tenantId: 'tenant-a' }));
         await assertFails(setDoc(doc(analystDb, 'watchlists/watch-direct'), { tenantId: 'tenant-a' }));
+        await assertFails(setDoc(doc(analystDb, 'monitoringSubscriptions/sub-direct'), { tenantId: 'tenant-a' }));
         await assertFails(setDoc(doc(analystDb, 'seniorReviewRequests/senior-direct'), { tenantId: 'tenant-a' }));
     });
 

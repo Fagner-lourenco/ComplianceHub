@@ -1,0 +1,75 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "⌘ ComplianceHub®" [ref=e7] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e8]: ⌘
+        - generic [ref=e9]: ComplianceHub®
+      - generic [ref=e10]:
+        - button "Dicionário de fontes" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+        - button "Academia" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Envios" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Notificações" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - button "Perfil" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]
+    - generic [ref=e35]:
+      - navigation "Categorias de produtos" [ref=e36]:
+        - button "Background Check" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Due Diligence" [ref=e39] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e40] [cursor=pointer]
+        - button "Jurídico" [ref=e41] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e42] [cursor=pointer]
+      - button "Aplicativos" [ref=e43] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e44]
+  - main [ref=e46]:
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - generic [ref=e49]:
+          - text: Surface ativa
+          - heading "Dossiês" [level=1] [ref=e50]
+          - paragraph [ref=e51]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+        - button "Criar novo dossiê" [ref=e52] [cursor=pointer]:
+          - img [ref=e53]
+          - text: Criar novo dossiê
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: Período
+          - generic [ref=e58]:
+            - generic [ref=e59]:
+              - img [ref=e60]
+              - textbox [ref=e62]
+            - generic [ref=e63]: até
+            - generic [ref=e64]:
+              - img [ref=e65]
+              - textbox [ref=e67]
+        - generic [ref=e68]:
+          - generic [ref=e69]: Responsável
+          - generic [ref=e70]:
+            - img [ref=e71]
+            - textbox "Nome do analista" [ref=e74]
+        - generic [ref=e75]:
+          - generic [ref=e76]: Status
+          - generic [ref=e77]:
+            - img [ref=e78]
+            - combobox [ref=e80]:
+              - option "Todos" [selected]
+              - option "Pronto"
+              - option "Publicado"
+              - option "Processando"
+              - option "Na fila"
+              - option "Erro"
+              - option "Falhou"
+            - img
+        - button "Buscar" [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Buscar
+      - status "Carregando" [ref=e86]

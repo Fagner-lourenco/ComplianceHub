@@ -1,0 +1,63 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "Scholarship": {
+        "ScholarshipHistory": [
+          {
+            "Source": "MTE DATA INFERENCE",
+            "Institution": "MTE DATA INFERENCE",
+            "InstitutionState": "SEM INFORMACAO",
+            "InstitutionCounty": "SEM INFORMACAO",
+            "InstitutionCampus": "SEM INFORMACAO",
+            "SpecializationArea": "SEM INFORMACAO",
+            "CourseType": "SEM INFORMACAO",
+            "CourseShift": "SEM INFORMACAO",
+            "ScholarshipType": "SEM INFORMACAO",
+            "Level": "06 - MEDIO INCOMP",
+            "EducationalLevel": "INCOMPLETE HIGH SCHOOL",
+            "AcademicTrainingType": "SEM INFORMACAO",
+            "AdditionalDetails": {}
+          },
+          {
+            "Source": "IBGE DATA INFERENCE",
+            "Institution": "IBGE DATA INFERENCE",
+            "InstitutionState": "SEM INFORMACAO",
+            "InstitutionCounty": "SEM INFORMACAO",
+            "InstitutionCampus": "SEM INFORMACAO",
+            "SpecializationArea": "SEM INFORMACAO",
+            "CourseType": "SEM INFORMACAO",
+            "CourseShift": "SEM INFORMACAO",
+            "ScholarshipType": "SEM INFORMACAO",
+            "Level": "07 - REGULAR DO ENSINO FUNDAMENTAL OU 1 GRAU (DA 5AA 8A SERIE/ DO 6 AO 9 ANO)",
+            "EducationalLevel": "MIDDLE SCHOOL",
+            "AcademicTrainingType": "SEM INFORMACAO",
+            "AdditionalDetails": {}
+          }
+        ],
+        "AcademicPrograms": [],
+        "PublicationHistory": [],
+        "ScholarshipLevel": "06 - MEDIO INCOMP",
+        "EducationalLevel": "INCOMPLETE HIGH SCHOOL",
+        "NumberOfUndergraduateCourses": 0,
+        "IsUniversityStudent": false,
+        "IsCurrentlyOnAcademicField": false,
+        "HasAcademicProgramApplication": false,
+        "CreationDate": "2016-01-09T00:00:00Z",
+        "LastUpdateDate": "2026-04-16T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "45c98f63-6a7d-4fc9-b2fc-30d632a4c46c",
+  "ElapsedMilliseconds": 115,
+  "QueryDate": "2026-04-25T12:32:55.9677777Z",
+  "Status": {
+    "university_student_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

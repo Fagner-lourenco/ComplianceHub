@@ -8,6 +8,8 @@ export default defineConfig([
   globalIgnores([
     'dist',
     'node_modules',
+    'functions/services',
+    'functions/ai',
   ]),
   {
     files: ['**/*.{js,jsx}'],

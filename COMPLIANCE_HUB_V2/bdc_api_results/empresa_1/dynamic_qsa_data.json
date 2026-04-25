@@ -1,0 +1,338 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "DynamicQSAData": {
+        "BasicData": {
+          "TaxIdNumber": "42975374000172",
+          "TaxIdCountry": "Brazil",
+          "AlternativeIdNumbers": {},
+          "OfficialName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+          "TradeName": "NOVAX INTELIGENCIABR",
+          "Aliases": {
+            "UnstandardizedRFOfficialName": "NOVAX INTELIGENCIA SOLUCOES INTEGRADAS LTDA",
+            "UnstandardizedRFTradeName": "NOVAX INTELIGENCIABR"
+          },
+          "NameUniquenessScore": 1,
+          "OfficialNameUniquenessScore": 1,
+          "TradeNameUniquenessScore": 1,
+          "FoundedDate": "2021-08-03T00:00:00Z",
+          "Age": 4,
+          "IsHeadquarter": true,
+          "HeadquarterState": "PR",
+          "IsConglomerate": false,
+          "TaxIdStatus": "ATIVA",
+          "TaxIdStatusReason": "",
+          "TaxIdOrigin": "Receita Federal",
+          "TaxIdStatusDate": "2026-04-11T00:00:00Z",
+          "TaxIdStatusRegistrationDate": "2024-07-24T00:00:00Z",
+          "TaxRegime": "SIMPLES",
+          "CompanyType_ReceitaFederal": "ME",
+          "TaxRegimes": {
+            "Simples": true
+          },
+          "Activities": [
+            {
+              "IsMain": true,
+              "Code": "6319400",
+              "Activity": "PORTAIS, PROVEDORES DE CONTEUDO E OUTROS SERVICOS DE INFORMACAO NA INTERNET",
+              "ActivityDivision": "ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+              "ActivityGroup": "TRATAMENTO DE DADOS, HOSPEDAGEM NA INTERNET E OUTRAS ATIVIDADES RELACIONADAS",
+              "ActivityClass": "PORTAIS, PROVEDORES DE CONTEUDO E OUTROS SERVICOS DE INFORMACAO NA INTERNET"
+            },
+            {
+              "IsMain": false,
+              "Code": "4930201",
+              "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, MUNICIPAL",
+              "ActivityDivision": "TRANSPORTE TERRESTRE",
+              "ActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+              "ActivityClass": "TRANSPORTE RODOVIARIO DE CARGA"
+            },
+            {
+              "IsMain": false,
+              "Code": "4930202",
+              "Activity": "TRANSPORTE RODOVIARIO DE CARGA, EXCETO PRODUTOS PERIGOSOS E MUDANCAS, INTERMUNICIPAL, INTERESTADUAL E INTERNACIONAL",
+              "ActivityDivision": "TRANSPORTE TERRESTRE",
+              "ActivityGroup": "TRANSPORTE RODOVIARIO DE CARGA",
+              "ActivityClass": "TRANSPORTE RODOVIARIO DE CARGA"
+            },
+            {
+              "IsMain": false,
+              "Code": "5229099",
+              "Activity": "OUTRAS ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES NAO ESPECIFICADAS ANTERIORMENTE",
+              "ActivityDivision": "ARMAZENAMENTO E ATIVIDADES AUXILIARES DOS TRANSPORTES",
+              "ActivityGroup": "ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES",
+              "ActivityClass": "ATIVIDADES AUXILIARES DOS TRANSPORTES TERRESTRES NAO ESPECIFICADAS ANTERIORMENTE"
+            },
+            {
+              "IsMain": false,
+              "Code": "5320201",
+              "Activity": "SERVICOS DE MALOTE NAO REALIZADOS PELO CORREIO NACIONAL",
+              "ActivityDivision": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+              "ActivityGroup": "ATIVIDADES DE MALOTE E DE ENTREGA",
+              "ActivityClass": "ATIVIDADES DE MALOTE E DE ENTREGA"
+            },
+            {
+              "IsMain": false,
+              "Code": "5320202",
+              "Activity": "SERVICOS DE ENTREGA RAPIDA",
+              "ActivityDivision": "CORREIO E OUTRAS ATIVIDADES DE ENTREGA",
+              "ActivityGroup": "ATIVIDADES DE MALOTE E DE ENTREGA",
+              "ActivityClass": "ATIVIDADES DE MALOTE E DE ENTREGA"
+            },
+            {
+              "IsMain": false,
+              "Code": "6201501",
+              "Activity": "DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA",
+              "ActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityClass": "DESENVOLVIMENTO DE PROGRAMAS DE COMPUTADOR SOB ENCOMENDA"
+            },
+            {
+              "IsMain": false,
+              "Code": "6202300",
+              "Activity": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR CUSTOMIZAVEIS",
+              "ActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityClass": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR CUSTOMIZAVEIS"
+            },
+            {
+              "IsMain": false,
+              "Code": "6203100",
+              "Activity": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR NAO CUSTOMIZAVEIS",
+              "ActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityClass": "DESENVOLVIMENTO E LICENCIAMENTO DE PROGRAMAS DE COMPUTADOR NAO CUSTOMIZAVEIS"
+            },
+            {
+              "IsMain": false,
+              "Code": "6204000",
+              "Activity": "CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+              "ActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityClass": "CONSULTORIA EM TECNOLOGIA DA INFORMACAO"
+            },
+            {
+              "IsMain": false,
+              "Code": "6209100",
+              "Activity": "SUPORTE TECNICO, MANUTENCAO E OUTROS SERVICOS EM TECNOLOGIA DA INFORMACAO",
+              "ActivityDivision": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityGroup": "ATIVIDADES DOS SERVICOS DE TECNOLOGIA DA INFORMACAO",
+              "ActivityClass": "SUPORTE TECNICO, MANUTENCAO E OUTROS SERVICOS EM TECNOLOGIA DA INFORMACAO"
+            },
+            {
+              "IsMain": false,
+              "Code": "6399200",
+              "Activity": "OUTRAS ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO NAO ESPECIFICADAS ANTERIORMENTE",
+              "ActivityDivision": "ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+              "ActivityGroup": "OUTRAS ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO",
+              "ActivityClass": "OUTRAS ATIVIDADES DE PRESTACAO DE SERVICOS DE INFORMACAO NAO ESPECIFICADAS ANTERIORMENTE"
+            },
+            {
+              "IsMain": false,
+              "Code": "7020400",
+              "Activity": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL, EXCETO CONSULTORIA TECNICA ESPECIFICA",
+              "ActivityDivision": "ATIVIDADES DE SEDES DE EMPRESAS E DE CONSULTORIA EM GESTAO EMPRESARIAL",
+              "ActivityGroup": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL",
+              "ActivityClass": "ATIVIDADES DE CONSULTORIA EM GESTAO EMPRESARIAL"
+            },
+            {
+              "IsMain": false,
+              "Code": "7490199",
+              "Activity": "OUTRAS ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS NAO ESPECIFICADAS ANTERIORMENTE",
+              "ActivityDivision": "OUTRAS ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS",
+              "ActivityGroup": "ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS NAO ESPECIFICADAS ANTERIORMENTE",
+              "ActivityClass": "ATIVIDADES PROFISSIONAIS, CIENTIFICAS E TECNICAS NAO ESPECIFICADAS ANTERIORMENTE"
+            },
+            {
+              "IsMain": false,
+              "Code": "8030700",
+              "Activity": "ATIVIDADES DE INVESTIGACAO PARTICULAR",
+              "ActivityDivision": "ATIVIDADES DE VIGILANCIA, SEGURANCA E INVESTIGACAO",
+              "ActivityGroup": "ATIVIDADES DE INVESTIGACAO PARTICULAR",
+              "ActivityClass": "ATIVIDADES DE INVESTIGACAO PARTICULAR"
+            },
+            {
+              "IsMain": false,
+              "Code": "8299799",
+              "Activity": "OUTRAS ATIVIDADES DE SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS NAO ESPECIFICADAS ANTERIORMENTE",
+              "ActivityDivision": "SERVICOS DE ESCRITORIO, DE APOIO ADMINISTRATIVO E OUTROS SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS",
+              "ActivityGroup": "OUTRAS ATIVIDADES DE SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS",
+              "ActivityClass": "ATIVIDADES DE SERVICOS PRESTADOS PRINCIPALMENTE AS EMPRESAS NAO ESPECIFICADAS ANTERIORMENTE"
+            },
+            {
+              "IsMain": false,
+              "Code": "8599604",
+              "Activity": "TREINAMENTO EM DESENVOLVIMENTO PROFISSIONAL E GERENCIAL",
+              "ActivityDivision": "EDUCACAO",
+              "ActivityGroup": "OUTRAS ATIVIDADES DE ENSINO",
+              "ActivityClass": "ATIVIDADES DE ENSINO NAO ESPECIFICADAS ANTERIORMENTE"
+            }
+          ],
+          "LegalNature": {
+            "Code": "2062",
+            "Activity": "SOCIEDADE EMPRESARIA LIMITADA"
+          },
+          "SpecialSituation": "",
+          "CreationDate": "2021-08-04T00:00:00Z",
+          "LastUpdateDate": "2026-04-11T00:00:00Z",
+          "AdditionalOutputData": {
+            "Capital": "CINCO MIL REAIS",
+            "CapitalRS": "5000.00",
+            "NIRE": "",
+            "NIRECompanySize": "",
+            "NIREHeadquartersType": "",
+            "NIREHeadquartersCapital": "0",
+            "NIRELastCaptureDate": "0001-01-01T12:00:00Z",
+            "COMEX": "",
+            "COMEXLastUpdate": "0001-01-01T12:00:00Z"
+          },
+          "HistoricalData": {
+            "HasChangedTradeName": true,
+            "HasChangedTaxRegime": true,
+            "HistoricalDataEvolution": {
+              "TradeName": [
+                {
+                  "Value": "NOVAX INTELIGENCIABR",
+                  "StartDate": "2025-08-01T00:00:00Z"
+                },
+                {
+                  "Value": "CORUJAGPT",
+                  "StartDate": "2023-07-01T00:00:00Z",
+                  "EndDate": "2025-08-01T00:00:00Z"
+                },
+                {
+                  "Value": "INTELLEKT COMPANIES",
+                  "StartDate": "2021-08-04T00:00:00Z",
+                  "EndDate": "2023-07-01T00:00:00Z"
+                }
+              ],
+              "TaxRegime": [
+                {
+                  "Value": "SIMPLES",
+                  "StartDate": "2025-01-01T00:00:00Z"
+                },
+                {
+                  "Value": "LTDA",
+                  "StartDate": "2021-08-04T00:00:00Z",
+                  "EndDate": "2025-01-01T00:00:00Z"
+                }
+              ]
+            }
+          }
+        },
+        "Relationships": {
+          "Relationships": [
+            {
+              "RelatedEntityTaxIdNumber": "05118465923",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "MICHELLE DOS SANTOS",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2021-08-04T00:00:00Z",
+              "LastUpdateDate": "2026-04-11T00:00:00Z",
+              "RelationshipStartDate": "2021-08-03T00:00:00Z",
+              "RelationshipEndDate": "9999-12-31T23:59:59.9999999"
+            },
+            {
+              "RelatedEntityTaxIdNumber": "08097660946",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "RENAN ANTONIO RICHTER",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2023-08-13T00:00:00Z",
+              "LastUpdateDate": "2024-06-08T00:00:00Z",
+              "RelationshipStartDate": "2023-07-20T00:00:00Z",
+              "RelationshipEndDate": "2024-06-08T00:00:00Z"
+            },
+            {
+              "RelatedEntityTaxIdNumber": "08523197974",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2021-08-04T00:00:00Z",
+              "LastUpdateDate": "2023-07-10T00:00:00Z",
+              "RelationshipStartDate": "2021-08-03T00:00:00Z",
+              "RelationshipEndDate": "2023-07-10T00:00:00Z"
+            }
+          ],
+          "CurrentRelationships": [
+            {
+              "RelatedEntityTaxIdNumber": "05118465923",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "MICHELLE DOS SANTOS",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2021-08-04T00:00:00Z",
+              "LastUpdateDate": "2026-04-11T00:00:00Z",
+              "RelationshipStartDate": "2021-08-03T00:00:00Z",
+              "RelationshipEndDate": "9999-12-31T23:59:59.9999999"
+            }
+          ],
+          "HistoricalRelationships": [
+            {
+              "RelatedEntityTaxIdNumber": "08097660946",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "RENAN ANTONIO RICHTER",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2023-08-13T00:00:00Z",
+              "LastUpdateDate": "2024-06-08T00:00:00Z",
+              "RelationshipStartDate": "2023-07-20T00:00:00Z",
+              "RelationshipEndDate": "2024-06-08T00:00:00Z"
+            },
+            {
+              "RelatedEntityTaxIdNumber": "08523197974",
+              "RelatedEntityTaxIdType": "CPF",
+              "RelatedEntityTaxIdCountry": "Brazil",
+              "RelatedEntityName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+              "RelationshipType": "QSA",
+              "RelationshipName": "SOCIO-ADMINISTRADOR",
+              "RelationshipLevel": "Direct",
+              "RelationshipDataOrigin": "RECEITA FEDERAL",
+              "CreationDate": "2021-08-04T00:00:00Z",
+              "LastUpdateDate": "2023-07-10T00:00:00Z",
+              "RelationshipStartDate": "2021-08-03T00:00:00Z",
+              "RelationshipEndDate": "2023-07-10T00:00:00Z"
+            }
+          ],
+          "IsFamilyCompany": false,
+          "IsFamilyOperated": false,
+          "TotalRelationships": 3,
+          "TotalOwners": 3,
+          "TotalEmployees": 0,
+          "TotalOwned": 0,
+          "IsFromHeadQuartersData": false
+        }
+      }
+    }
+  ],
+  "QueryId": "dc08f9b1-f36b-488c-86c9-37f14d5d486d",
+  "ElapsedMilliseconds": 808,
+  "QueryDate": "2026-04-25T12:52:48.9203763Z",
+  "Status": {
+    "dynamic_qsa_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

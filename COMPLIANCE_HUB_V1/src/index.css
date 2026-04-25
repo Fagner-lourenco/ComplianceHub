@@ -94,6 +94,7 @@ ol {
 
   --yellow-50: #fffbeb;
   --yellow-100: #fef3c7;
+  --yellow-400: #fbbf24;
   --yellow-500: #f59e0b;
   --yellow-600: #d97706;
   --yellow-700: #b45309;
@@ -106,6 +107,7 @@ ol {
 
   --blue-50: #eff6ff;
   --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
   --blue-500: #3b82f6;
   --blue-600: #2563eb;
   --blue-700: #1d4ed8;
@@ -187,6 +189,97 @@ ol {
   --z-modal: 65;
   --z-toast: 75;
   --z-tooltip: 85;
+
+  /* Semantic surfaces */
+  --bg-blocked: #fef3c7;
+  --text-blocked: #92400e;
+  --border-blocked: #fbbf24;
+  --bg-purple: #ede9fe;
+  --text-purple: #6d28d9;
+  --border-purple: #ddd6fe;
+  --bg-orange: #fff7ed;
+  --text-orange: #c2410c;
+  --dot-orange: #f97316;
+}
+
+/* --- Dark Mode (controlled via data-theme attribute set by useTheme hook) --- */
+[data-theme="dark"] {
+    --bg-app: #0f172a;
+    --bg-card: #1e293b;
+    --bg-sidebar: #020617;
+    --bg-sidebar-hover: #0f172a;
+    --bg-sidebar-active: #1e293b;
+    --bg-topbar: #1e293b;
+    --bg-drawer: #1e293b;
+    --bg-modal: #1e293b;
+    --bg-input: #334155;
+    --bg-input-disabled: var(--gray-800);
+    --bg-skeleton: linear-gradient(90deg, var(--gray-800) 25%, var(--gray-700) 50%, var(--gray-800) 75%);
+
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+    --text-inverse: #0f172a;
+    --text-brand: var(--brand-300);
+    --text-on-sidebar: #94a3b8;
+    --text-on-sidebar-active: #f1f5f9;
+
+    --border-default: #334155;
+    --border-light: #1e293b;
+    --border-strong: #475569;
+    --border-focus: var(--brand-400);
+    --border-error: var(--red-500);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .4), 0 1px 2px rgba(0, 0, 0, .3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .4), 0 2px 4px rgba(0, 0, 0, .3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, .4), 0 4px 6px rgba(0, 0, 0, .3);
+    --shadow-drawer: -4px 0 24px rgba(0, 0, 0, .5);
+
+    --gray-25: #1a2332;
+    --gray-50: #1e293b;
+    --gray-100: #334155;
+    --gray-200: #475569;
+    --gray-300: #64748b;
+
+    --green-50: #052e16;
+    --green-100: #064e3b;
+    --red-50: #450a0a;
+    --red-100: #7f1d1d;
+    --yellow-50: #451a03;
+    --yellow-100: #78350f;
+    --yellow-400: #b45309;
+    --blue-50: #172554;
+    --blue-100: #1e3a5f;
+    --blue-200: #1e40af;
+
+    /* Semantic surfaces — dark */
+    --bg-blocked: #78350f;
+    --text-blocked: #fde68a;
+    --border-blocked: #b45309;
+    --bg-purple: #2e1065;
+    --text-purple: #c4b5fd;
+    --border-purple: #5b21b6;
+    --bg-orange: #431407;
+    --text-orange: #fdba74;
+    --dot-orange: #f97316;
+
+    --green-500: #34d399;
+    --green-600: #10b981;
+    --green-700: #059669;
+    --red-500: #f87171;
+    --red-600: #ef4444;
+    --red-700: #dc2626;
+    --yellow-500: #fbbf24;
+    --yellow-600: #f59e0b;
+    --yellow-700: #d97706;
+    --blue-500: #60a5fa;
+    --blue-600: #3b82f6;
+    --blue-700: #2563eb;
+    --brand-50: #1e1b4b;
+    --brand-600: #818cf8;
+    --brand-700: #6366f1;
+    --gray-900: #f1f5f9;
 }
 
 /* --- Typography --- */
@@ -482,6 +575,24 @@ textarea:focus-visible {
   }
 
   .kpi-card__value { font-size: 1.25rem; }
+
+  /* MOB-003 — Minimum touch target for interactive controls */
+  .btn-primary,
+  .btn-secondary,
+  button[class*="btn"],
+  .fila-btn {
+    min-height: 44px;
+  }
+
+  select,
+  .filter-bar__select {
+    min-height: 44px;
+  }
+
+  input[type="checkbox"] {
+    min-width: 20px;
+    min-height: 20px;
+  }
 }
 
 /* ============================================

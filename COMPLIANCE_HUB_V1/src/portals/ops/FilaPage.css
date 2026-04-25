@@ -76,6 +76,26 @@
     border-left: 3px solid var(--red-500);
 }
 
+.fila-table__row--selected {
+    background: var(--brand-50);
+}
+
+.fila-bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--brand-50);
+    border: 1px solid var(--brand-200);
+    border-radius: var(--radius-md);
+    font-size: .8125rem;
+}
+
+.fila-bulk-bar__count {
+    font-weight: 600;
+    color: var(--brand-700);
+}
+
 .fila-table__td--name {
     font-weight: 600;
     white-space: nowrap;

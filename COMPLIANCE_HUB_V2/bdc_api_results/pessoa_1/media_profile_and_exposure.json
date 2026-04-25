@@ -1,0 +1,43 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "MediaProfileAndExposure": {
+        "MediaExposureLevel": "H",
+        "CelebrityLevel": "H",
+        "UnpopularityLevel": "H",
+        "NewsItems": [],
+        "SearchLabels": {
+          "FullName": "ANDRE LUIZ CRUZ DOS SANTOS",
+          "FullNameUniquenessScore": 0.125,
+          "ShortName": "ANDRE SANTOS",
+          "ShortNameUniquenessScore": 0.001
+        },
+        "Next": "",
+        "TotalPages": 0,
+        "EntityStatistics": {
+          "NewsByRangeDate": {
+            "TotalNews": 0,
+            "TotalNewsOnLast7Days": -1,
+            "TotalNewsOnLast30Days": -1,
+            "TotalNewsOnLast90Days": -1,
+            "TotalNewsOnLast180Days": -1,
+            "TotalNewsOnLast365Days": -1
+          }
+        }
+      }
+    }
+  ],
+  "QueryId": "a22592f0-385e-4221-9a1c-e078c2e11ace",
+  "ElapsedMilliseconds": 292,
+  "QueryDate": "2026-04-25T12:32:21.9481828Z",
+  "Status": {
+    "media_profile_and_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

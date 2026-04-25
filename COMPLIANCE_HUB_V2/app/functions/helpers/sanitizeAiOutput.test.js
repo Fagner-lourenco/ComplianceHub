@@ -1,8 +1,10 @@
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
+process.env.FUNCTIONS_EMULATOR = 'true';
+
 const require = createRequire(import.meta.url);
-const { __test } = require('../index');
+const { __test } = require('../__test-helpers');
 const { sanitizeAiOutput } = __test;
 
 describe('sanitizeAiOutput', () => {

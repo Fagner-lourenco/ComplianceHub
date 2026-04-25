@@ -6,7 +6,7 @@ import {
     hasPermission,
     isClientRole,
     isOpsRole,
-} from './v2Rbac.cjs';
+} from './v2Rbac.js';
 
 describe('v2Rbac backend catalog', () => {
     it('inclui senior_analyst como role operacional', () => {

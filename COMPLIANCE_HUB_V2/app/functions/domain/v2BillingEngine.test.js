@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { closeBillingPeriod, _setDb } from './v2BillingEngine.cjs';
+import { closeBillingPeriod, _setDb } from './v2BillingEngine.js';
 
 function makeDb(meters = []) {
     const set = vi.fn().mockResolvedValue(undefined);
@@ -51,5 +51,42 @@ describe('v2BillingEngine.closeBillingPeriod', () => {
         }), { merge: true });
         expect(result.summary.source).toBe('usageMeters');
         expect(result.summary.totalQuantity).toBe(2);
+    });
+
+    it('retorna entryCount 0 quando nao ha meters', async () => {
+        const { db, set } = makeDb([]);
+        _setDb(db);
+
+        const result = await closeBillingPeriod('tenant-1', '2026-04');
+
+        expect(result.summary.entryCount).toBe(0);
+        expect(result.summary.totalQuantity).toBe(0);
+        expect(set).toHaveBeenCalledWith(expect.objectContaining({
+            itemCount: 0,
+            summary: expect.objectContaining({ entryCount: 0, totalQuantity: 0 }),
+        }), { merge: true });
+    });
+
+    it('soma quantities de multiplos meters', async () => {
+        const { db } = makeDb([
+            { id: 'm1', tenantId: 't1', monthKey: '2026-04', moduleKey: 'criminal', unit: 'module_execution', quantity: 2, commercialBillable: true, internalCost: true },
+            { id: 'm2', tenantId: 't1', monthKey: '2026-04', moduleKey: 'labor', unit: 'module_execution', quantity: 3, commercialBillable: true, internalCost: true },
+        ]);
+        _setDb(db);
+
+        const result = await closeBillingPeriod('t1', '2026-04');
+        expect(result.summary.totalQuantity).toBe(5);
+        expect(result.summary.entryCount).toBe(2);
+    });
+
+    it('ignora custo interno quando internalCost nao esta ativo', async () => {
+        const { db } = makeDb([
+            { id: 'm1', tenantId: 't1', monthKey: '2026-04', moduleKey: 'criminal', unit: 'module_execution', quantity: 2, commercialBillable: true, internalCost: false },
+        ]);
+        _setDb(db);
+
+        const result = await closeBillingPeriod('t1', '2026-04');
+        expect(result.summary.totalQuantity).toBe(2);
+        expect(result.summary.totalInternalCostBrl).toBe(0);
     });
 });

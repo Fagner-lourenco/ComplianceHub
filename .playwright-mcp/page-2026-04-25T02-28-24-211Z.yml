@@ -1,0 +1,81 @@
+- generic [ref=e47]:
+  - banner [ref=e48]:
+    - generic [ref=e50]:
+      - link "⌘ ComplianceHub®" [ref=e51] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e52]: ⌘
+        - generic [ref=e53]: ComplianceHub®
+      - generic [ref=e54]:
+        - button "Dicionário de fontes" [ref=e55] [cursor=pointer]:
+          - img [ref=e56]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e58] [cursor=pointer]:
+          - img [ref=e59]
+        - button "Academia" [ref=e61] [cursor=pointer]:
+          - img [ref=e62]
+        - button "Envios" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+        - button "Notificações" [ref=e69] [cursor=pointer]:
+          - img [ref=e70]
+        - button "Perfil" [ref=e73] [cursor=pointer]:
+          - img [ref=e74]
+    - generic [ref=e79]:
+      - navigation "Categorias de produtos" [ref=e80]:
+        - button "Background Check" [ref=e81] [cursor=pointer]
+        - button "Cibersegurança" [ref=e82] [cursor=pointer]
+        - button "Due Diligence" [ref=e83] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e84] [cursor=pointer]
+        - button "Jurídico" [ref=e85] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e86] [cursor=pointer]
+      - button "Aplicativos" [ref=e87] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e88]
+  - main [ref=e90]:
+    - generic [ref=e91]:
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - text: Surface ativa
+          - heading "Dossiês" [level=1] [ref=e94]
+          - paragraph [ref=e95]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+        - button "Criar novo dossiê" [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Criar novo dossiê
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: Período
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - img [ref=e104]
+              - textbox [ref=e106]
+            - generic [ref=e107]: até
+            - generic [ref=e108]:
+              - img [ref=e109]
+              - textbox [ref=e111]
+        - generic [ref=e112]:
+          - generic [ref=e113]: Responsável
+          - generic [ref=e114]:
+            - img [ref=e115]
+            - textbox "Nome do analista" [ref=e118]
+        - generic [ref=e119]:
+          - generic [ref=e120]: Status
+          - generic [ref=e121]:
+            - img [ref=e122]
+            - combobox [ref=e124]:
+              - option "Todos" [selected]
+              - option "Pronto"
+              - option "Publicado"
+              - option "Processando"
+              - option "Na fila"
+              - option "Erro"
+              - option "Falhou"
+            - img
+        - button "Buscar" [ref=e126] [cursor=pointer]:
+          - img [ref=e127]
+          - text: Buscar
+      - alert [ref=e130]:
+        - img [ref=e131]
+        - strong [ref=e133]: Erro ao carregar análises
+        - paragraph [ref=e134]: Perfil não encontrado.
+        - button "Tentar novamente" [ref=e135] [cursor=pointer]:
+          - img [ref=e136]
+          - text: Tentar novamente

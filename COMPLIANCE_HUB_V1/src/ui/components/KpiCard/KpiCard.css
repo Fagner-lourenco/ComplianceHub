@@ -40,7 +40,7 @@
 
 .kpi-card--green {
     border-color: var(--green-100);
-    background: linear-gradient(135deg, #fff, var(--green-50));
+    background: linear-gradient(135deg, var(--bg-card), var(--green-50));
 }
 
 .kpi-card--yellow .kpi-card__value {
@@ -49,7 +49,7 @@
 
 .kpi-card--yellow {
     border-color: var(--yellow-100);
-    background: linear-gradient(135deg, #fff, var(--yellow-50));
+    background: linear-gradient(135deg, var(--bg-card), var(--yellow-50));
 }
 
 .kpi-card--red .kpi-card__value {
@@ -58,7 +58,7 @@
 
 .kpi-card--red {
     border-color: var(--red-100);
-    background: linear-gradient(135deg, #fff, var(--red-50));
+    background: linear-gradient(135deg, var(--bg-card), var(--red-50));
 }
 
 .kpi-card--blue .kpi-card__value {
@@ -67,5 +67,5 @@
 
 .kpi-card--blue {
     border-color: var(--blue-100);
-    background: linear-gradient(135deg, #fff, var(--blue-50));
-}
+    background: linear-gradient(135deg, var(--bg-card), var(--blue-50));
+}

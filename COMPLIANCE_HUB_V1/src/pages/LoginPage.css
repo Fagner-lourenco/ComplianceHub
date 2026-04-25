@@ -73,7 +73,7 @@
 .login-card__title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: var(--gray-900);
+    color: var(--text-primary);
     letter-spacing: -.03em;
 }
 
@@ -114,7 +114,7 @@
 .login-form__input:focus {
     border-color: var(--brand-500);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
-    background: #fff;
+    background: var(--bg-input);
 }
 
 .login-form__error {
@@ -170,52 +170,122 @@
     font-size: .8125rem;
 }
 
+.login-card__security {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: rgba(15, 23, 42, .04);
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: var(--radius-md);
+}
+
+.login-card__security-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.login-card__security-icon {
+    flex-shrink: 0;
+    opacity: .7;
+}
+
+.login-card__security-text {
+    font-size: .8125rem;
+    line-height: 1.55;
+    color: var(--text-tertiary);
+}
+
+/* ── IP tracker card ── */
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, .5); }
+    50% { opacity: .85; box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+}
+
+.login-card__tracker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, .06);
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: var(--radius-md);
+}
+
+.login-card__tracker-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #10b981;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.login-card__tracker-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.login-card__tracker-ip {
+    font-size: .8125rem;
+    font-weight: 700;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    color: var(--text-primary);
+    letter-spacing: .02em;
+}
+
+.login-card__tracker-location {
+    font-size: .6875rem;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+
+.login-card__tracker-label {
+    flex-shrink: 0;
+    font-size: .625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #10b981;
+    padding: 3px 8px;
+    background: rgba(16, 185, 129, .1);
+    border-radius: 99px;
+    white-space: nowrap;
+}
+
 .login-card__demo {
-    margin-top: var(--space-6);
-    padding-top: var(--space-5);
-    border-top: 1px solid var(--border-default);
+    margin-top: var(--space-4);
     text-align: center;
 }
 
-.login-card__demo-label {
-    font-size: .75rem;
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-3);
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    font-weight: 600;
-}
-
-.login-card__demo-buttons {
-    display: flex;
-    gap: var(--space-3);
-}
-
 .login-demo-btn {
-    flex: 1;
-    padding: 10px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
     border-radius: var(--radius-md);
-    font-size: .8125rem;
+    font-size: .75rem;
     font-weight: 600;
-    transition: all var(--transition-fast);
+    color: var(--text-tertiary);
     border: 1px solid var(--border-default);
+    background: transparent;
+    transition: all var(--transition-fast);
+    cursor: pointer;
 }
 
 .login-demo-btn:hover {
+    color: var(--brand-600);
+    border-color: var(--brand-200);
+    background: var(--brand-50);
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
-}
-
-.login-demo-btn--client {
-    background: var(--blue-50);
-    color: var(--blue-600);
-    border-color: var(--blue-100);
-}
-
-.login-demo-btn--ops {
-    background: var(--green-50);
-    color: var(--green-600);
-    border-color: var(--green-100);
 }
 
 @media (max-width: 480px) {
@@ -226,8 +296,24 @@
     .login-card__title {
         font-size: 1.25rem;
     }
-    
-    .login-card__demo-buttons {
-        flex-direction: column;
+
+    .login-demo-btn {
+        width: 100%;
+        justify-content: center;
     }
+}
+
+[data-theme="dark"] .login-card {
+    background: rgba(30, 41, 59, .95);
+    border-color: rgba(100, 116, 139, .3);
+}
+
+[data-theme="dark"] .login-card__security {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .08);
+}
+
+[data-theme="dark"] .login-card__tracker {
+    background: rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .08);
 }

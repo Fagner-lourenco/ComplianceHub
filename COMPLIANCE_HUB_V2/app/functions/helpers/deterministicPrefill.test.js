@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
+process.env.FUNCTIONS_EMULATOR = 'true';
+
 const require = createRequire(import.meta.url);
 const { normalizeEscavadorProcessos } = require('../normalizers/escavador');
 const {
@@ -11,7 +13,7 @@ const {
     normalizeJuditLawsuits,
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
-const { __test } = require('../index');
+const { __test } = require('../__test-helpers');
 
 const {
     computeAutoClassification,
@@ -929,8 +931,8 @@ describe('Deterministic Prefill', () => {
         it('DEFAULT_JUDIT_CONFIG has entity OFF by default', () => {
             // Judit cadastro must be disabled by default — BDC is primary
             // This test validates the config is correct at code level
-            const indexSrc = fs.readFileSync(path.resolve(__dirname, '../index.js'), 'utf-8');
-            expect(indexSrc).toContain("entity: false,");
+            const configSrc = fs.readFileSync(path.resolve(__dirname, '../services/configLoader.js'), 'utf-8');
+            expect(configSrc).toContain("entity: false,");
         });
     });
 

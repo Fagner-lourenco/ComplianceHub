@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { diffRiskSignals, severityRank, signalKey } from './v2MonitoringDiff.cjs';
+import { diffRiskSignals, severityRank, signalKey } from './v2MonitoringDiff.js';
 
 describe('v2MonitoringDiff', () => {
     describe('severityRank', () => {

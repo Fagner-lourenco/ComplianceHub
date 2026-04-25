@@ -1,0 +1,66 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "FinantialData": {
+        "TotalAssets": "ABAIXO DE 100K",
+        "TaxReturns": [
+          {
+            "Year": "2015",
+            "Status": "SUA DECLARACAO NAO CONSTA NA BASE DE DADOS DA RECEITA FEDERAL",
+            "Bank": "",
+            "Branch": "",
+            "Batch": "",
+            "IsVipBranch": false,
+            "CaptureDate": "2016-01-01T00:00:00",
+            "CreationDate": "2016-01-01T00:00:00",
+            "LastUpdateDate": "2021-01-01T00:00:00"
+          },
+          {
+            "Year": "2016",
+            "Status": "SUA DECLARACAO NAO CONSTA NA BASE DE DADOS DA RECEITA FEDERAL",
+            "Bank": "",
+            "Branch": "",
+            "Batch": "",
+            "IsVipBranch": false,
+            "CaptureDate": "2016-01-01T00:00:00",
+            "CreationDate": "2016-01-01T00:00:00",
+            "LastUpdateDate": "2021-01-01T00:00:00"
+          },
+          {
+            "Year": "2021",
+            "Status": "SUA DECLARACAO NAO CONSTA NA BASE DE DADOS DA RECEITA FEDERAL",
+            "Bank": "",
+            "Branch": "0000",
+            "Batch": "",
+            "IsVipBranch": false,
+            "CaptureDate": "2016-01-01T00:00:00",
+            "CreationDate": "2016-01-01T00:00:00",
+            "LastUpdateDate": "2021-12-29T10:32:00Z"
+          }
+        ],
+        "IncomeEstimates": {
+          "COMPANY OWNERSHIP": "SEM INFORMACAO",
+          "MTE": "2 A 4 SM",
+          "IBGE": "SEM INFORMACAO",
+          "BIGDATA": "ATE 2 SM",
+          "BIGDATA_V2": "3 A 5 SM"
+        },
+        "CreationDate": "2017-02-18T00:00:00Z",
+        "LastUpdateDate": "2026-04-16T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "b68edbc3-738c-4c00-bf78-e733bb12d3e7",
+  "ElapsedMilliseconds": 90,
+  "QueryDate": "2026-04-25T11:00:07.7790572Z",
+  "Status": {
+    "financial_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

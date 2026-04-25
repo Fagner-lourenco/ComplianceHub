@@ -1,0 +1,30 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "ExtendedPhones": {
+        "TotalPhones": 0,
+        "TotalActivePhones": 0,
+        "TotalWorkPhones": 0,
+        "TotalPersonalPhones": 0,
+        "TotalUniquePhones": 0,
+        "TotalPhonePassages": 0,
+        "TotalBadPhonePassages": 0,
+        "OldestPhonePassageDate": "0001-01-01T00:00:00",
+        "NewestPhonePassageDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "33114b87-646b-4581-9e98-e0fc7a29c4c3",
+  "ElapsedMilliseconds": 53,
+  "QueryDate": "2026-04-25T10:59:16.8835321Z",
+  "Status": {
+    "phones_extended": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

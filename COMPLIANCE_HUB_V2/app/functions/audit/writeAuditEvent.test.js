@@ -1,8 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createRequire } from 'module';
 
+process.env.FUNCTIONS_EMULATOR = 'true';
+
 const require = createRequire(import.meta.url);
 const { writeAuditEvent, __test } = require('./writeAuditEvent');
+if (!__test) throw new Error('writeAuditEvent.js must export __test when FUNCTIONS_EMULATOR=true');
 const { interpolateTemplate, buildSearchText, stripUndefined, _setDb } = __test;
 
 // ── Mock Firestore db ────────────────────────────────────────────────────────

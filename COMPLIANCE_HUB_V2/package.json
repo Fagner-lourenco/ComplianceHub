@@ -1,0 +1,22 @@
+{
+  "name": "compliance-hub-v2",
+  "private": true,
+  "version": "2.0.0",
+  "description": "ComplianceHub V2 workspace wrapper.",
+  "scripts": {
+    "guard:firebase": "node guard-v2-project.cjs",
+    "dev": "npm --prefix app run dev -- --host 127.0.0.1",
+    "build": "npm --prefix app run build",
+    "lint": "npm --prefix app run lint",
+    "preview": "npm --prefix app run preview",
+    "test": "npm --prefix app run test",
+    "test:rules": "npm --prefix app run test:rules",
+    "check:functions": "node --check app/functions/index.js",
+    "emulators:functions": "npm run guard:firebase && npm --prefix app exec firebase -- --project compliance-hub-v2 emulators:start --only functions,firestore",
+    "deploy:functions": "npm run guard:firebase && npm --prefix app exec firebase -- --project compliance-hub-v2 deploy --only functions",
+    "deploy:firestore": "npm run guard:firebase && npm --prefix app exec firebase -- --project compliance-hub-v2 deploy --only firestore:rules,firestore:indexes",
+    "install:app": "npm --prefix app install",
+    "install:functions": "npm --prefix app/functions install",
+    "install:all": "npm --prefix app install && npm --prefix app/functions install"
+  }
+}

@@ -1,0 +1,1594 @@
+[
+  {
+    "num": 1,
+    "title": "Boas-vindas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/boas-vindas",
+    "cat": "Visão geral",
+    "slug": "boas-vindas",
+    "desc": "Comece a integração com a BigDataCorp; a página apresenta instruções iniciais, exemplos e boas práticas para conectar produtos e APIs."
+  },
+  {
+    "num": 2,
+    "title": "Autenticação e segurança",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/autenticação-e-segurança",
+    "cat": "Visão geral",
+    "slug": "autenticação-e-segurança",
+    "desc": "Guia introdutório sobre integrações seguras, escaláveis e rastreáveis, com foco em preservar integridade dos dados e confiabilidade das aplicações."
+  },
+  {
+    "num": 3,
+    "title": "Códigos e descrições de status",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/códigos-e-descrições-de-status",
+    "cat": "Visão geral",
+    "slug": "códigos-e-descrições-de-status",
+    "desc": "Página de referência para interpretar os códigos de status e suas descrições nos retornos da plataforma."
+  },
+  {
+    "num": 4,
+    "title": "Primeiros passos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/primeiros-passos",
+    "cat": "Primeiros passos",
+    "slug": "primeiros-passos",
+    "desc": "Página de onboarding técnico para orientar a primeira integração e a primeira chamada à API com segurança."
+  },
+  {
+    "num": 5,
+    "title": "Pré-requisitos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pré-requisitos",
+    "cat": "Primeiros passos",
+    "slug": "pré-requisitos",
+    "desc": "Lista o que é necessário antes de iniciar a integração, incluindo credenciais, tokens e acesso ao BDC Center."
+  },
+  {
+    "num": 6,
+    "title": "Primeira consulta",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/primeira-consulta",
+    "cat": "Primeiros passos",
+    "slug": "primeira-consulta",
+    "desc": "Mostra o início da primeira chamada após a obtenção de credenciais e tokens válidos."
+  },
+  {
+    "num": 7,
+    "title": "Estrutura da consulta",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/estrutura-da-consulta",
+    "cat": "Primeiros passos",
+    "slug": "estrutura-da-consulta",
+    "desc": "Explica a estrutura padrão das requisições enviadas à Plataforma de Dados."
+  },
+  {
+    "num": 8,
+    "title": "Parâmetros de consulta",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/parametros-de-consulta",
+    "cat": "Primeiros passos",
+    "slug": "parametros-de-consulta",
+    "desc": "Guia específico dos parâmetros que estruturam uma consulta na plataforma."
+  },
+  {
+    "num": 9,
+    "title": "Personalizar retorno",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/personalizar-retorno",
+    "cat": "Primeiros passos",
+    "slug": "personalizar-retorno",
+    "desc": "Explica como selecionar campos, aplicar filtros, controlar ordenação, paginar, limitar resultados e usar data de referência."
+  },
+  {
+    "num": 10,
+    "title": "Recursos adicionais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/recustos-adicionais",
+    "cat": "Primeiros passos",
+    "slug": "recustos-adicionais",
+    "desc": "Apresenta funcionalidades complementares para tornar consultas mais seguras, rastreáveis e flexíveis."
+  },
+  {
+    "num": 11,
+    "title": "Dicas e boas práticas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/dicas-e-boas-praticas",
+    "cat": "Primeiros passos",
+    "slug": "dicas-e-boas-praticas",
+    "desc": "Tema principal explicitado pelo título da página: “Dicas e boas práticas”. Categoria no consolidado anterior: Primeiros passos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 12,
+    "title": "KYC e Compliance",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-kyc-e-compliance",
+    "cat": "Compliance Regulatório",
+    "slug": "pessoas-kyc-e-compliance",
+    "desc": "Dataset da API de Pessoas com endpoint POST https://plataforma.bigdatacorp.com.br/pessoas. Retorna informações de KYC e Compliance, incluindo PEP, sanções e restrições em escopo nacional e internacional. Nome técnico: kyc. Também documenta tabela de preços, chaves complementares como minmatch, considerexpandedpep e name, filtros por nível/cargo/motivo de PEP e por tipo/fonte de sanção, além de observações sobre consulta por nome e interpretação das flags de sanção."
+  },
+  {
+    "num": 13,
+    "title": "KYC e Compliance dos Familiares de Primeiro Nível",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-kyc-e-compliance-dos-familiares",
+    "cat": "Compliance Regulatório",
+    "slug": "pessoas-kyc-e-compliance-dos-familiares",
+    "desc": "Tema principal explicitado pelo título da página: “KYC e Compliance dos Familiares de Primeiro Nível”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 14,
+    "title": "Compliance de Casas de Apostas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-compliance-de-casas-de-apostas",
+    "cat": "Compliance Regulatório",
+    "slug": "pessoas-compliance-de-casas-de-apostas",
+    "desc": "Tema principal explicitado pelo título da página: “Compliance de Casas de Apostas”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 15,
+    "title": "Presença Online",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-online",
+    "cat": "Comportamento",
+    "slug": "pessoas-presenca-online",
+    "desc": "Dataset da API de Pessoas que retorna indicadores e classificações relacionadas à presença online, intensidade de atividade digital e uso geral da internet. Nome técnico: online_presence."
+  },
+  {
+    "num": 16,
+    "title": "Presença Online Familiar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-online-familiar",
+    "cat": "Comportamento",
+    "slug": "pessoas-presenca-online-familiar",
+    "desc": "Tema principal explicitado pelo título da página: “Presença Online Familiar”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 17,
+    "title": "Passagens pela Web",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-passagens-pela-web",
+    "cat": "Comportamento",
+    "slug": "pessoas-passagens-pela-web",
+    "desc": "Tema principal explicitado pelo título da página: “Passagens pela Web”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 18,
+    "title": "Propensão à Aposta Online",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-propensao-a-aposta-online",
+    "cat": "Comportamento",
+    "slug": "pessoas-propensao-a-aposta-online",
+    "desc": "Tema principal explicitado pelo título da página: “Propensão à Aposta Online”. Categoria no consolidado anterior: Comportamento. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 19,
+    "title": "E-mails",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-e-mails",
+    "cat": "Contatos",
+    "slug": "pessoas-e-mails",
+    "desc": "Tema principal explicitado pelo título da página: “E-mails”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 20,
+    "title": "E-mails de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-emails-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "pessoas-emails-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “E-mails de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 21,
+    "title": "Telefones",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-telefones",
+    "cat": "Contatos",
+    "slug": "pessoas-telefones",
+    "desc": "Tema principal explicitado pelo título da página: “Telefones”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 22,
+    "title": "Telefones de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-telefones-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "pessoas-telefones-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “Telefones de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 23,
+    "title": "Endereços",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-enderecos",
+    "cat": "Contatos",
+    "slug": "pessoas-enderecos",
+    "desc": "Tema principal explicitado pelo título da página: “Endereços”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 24,
+    "title": "Endereços de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-enderecos-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "pessoas-enderecos-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “Endereços de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 25,
+    "title": "Dados de Registro",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-registro",
+    "cat": "Contatos",
+    "slug": "pessoas-dados-de-registro",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Registro”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 26,
+    "title": "Dados Cadastrais Básicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-cadastrais-basicos",
+    "cat": "Dados Básicos",
+    "slug": "pessoas-dados-cadastrais-basicos",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Cadastrais Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 27,
+    "title": "Dados Cadastrais de Recência Configurável",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-cadastrais-de-recencia-configuravel",
+    "cat": "Dados Básicos",
+    "slug": "pessoas-dados-cadastrais-de-recencia-configuravel",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Cadastrais de Recência Configurável”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 28,
+    "title": "Histórico de Dados Básicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-de-dados-basicos",
+    "cat": "Dados Básicos",
+    "slug": "pessoas-historico-de-dados-basicos",
+    "desc": "Tema principal explicitado pelo título da página: “Histórico de Dados Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 29,
+    "title": "Informações Financeiras",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-financeiras",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-informacoes-financeiras",
+    "desc": "Tema principal explicitado pelo título da página: “Informações Financeiras”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 30,
+    "title": "Informações Financeiras de Familiares",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-financeiras-de-familiares",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-informacoes-financeiras-de-familiares",
+    "desc": "Tema principal explicitado pelo título da página: “Informações Financeiras de Familiares”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 31,
+    "title": "Programas de Benefícios e Assistência Social",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-programas-de-beneficios",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-programas-de-beneficios",
+    "desc": "Tema principal explicitado pelo título da página: “Programas de Benefícios e Assistência Social”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 32,
+    "title": "Programas de Benefícios e Assistência Social de Familiares",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-programas-de-beneficios-de-familiares",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-programas-de-beneficios-de-familiares",
+    "desc": "Tema principal explicitado pelo título da página: “Programas de Benefícios e Assistência Social de Familiares”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 33,
+    "title": "Propriedades Industriais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-propriedades-industriais",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-propriedades-industriais",
+    "desc": "Tema principal explicitado pelo título da página: “Propriedades Industriais”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 34,
+    "title": "Devedores do Governo",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-devedores-do-governo",
+    "cat": "Econômicos e Financeiros",
+    "slug": "pessoas-devedores-do-governo",
+    "desc": "Tema principal explicitado pelo título da página: “Devedores do Governo”. Categoria no consolidado anterior: Econômicos e Financeiros. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 35,
+    "title": "Nível de Envolvimento Político",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-nivel-de-envolvimento-politico",
+    "cat": "Envolvimento Político",
+    "slug": "pessoas-nivel-de-envolvimento-politico",
+    "desc": "Tema principal explicitado pelo título da página: “Nível de Envolvimento Político”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 36,
+    "title": "Candidatos Eleitorais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-candidatos-eleitorais",
+    "cat": "Envolvimento Político",
+    "slug": "pessoas-candidatos-eleitorais",
+    "desc": "Tema principal explicitado pelo título da página: “Candidatos Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 37,
+    "title": "Doações Eleitorais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-doacoes-eleitorais",
+    "cat": "Envolvimento Político",
+    "slug": "pessoas-doacoes-eleitorais",
+    "desc": "Tema principal explicitado pelo título da página: “Doações Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 38,
+    "title": "Histórico Político Familiar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-politico-familiar",
+    "cat": "Envolvimento Político",
+    "slug": "pessoas-historico-politico-familiar",
+    "desc": "Tema principal explicitado pelo título da página: “Histórico Político Familiar”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 39,
+    "title": "Prestadores de Serviços Eleitorais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-prestadores-de-servicos-eleitorais",
+    "cat": "Envolvimento Político",
+    "slug": "pessoas-prestadores-de-servicos-eleitorais",
+    "desc": "Tema principal explicitado pelo título da página: “Prestadores de Serviços Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 40,
+    "title": "Dados de Popularidade",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-popularidade",
+    "cat": "Exposição Pública",
+    "slug": "pessoas-dados-de-popularidade",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Popularidade”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 41,
+    "title": "Exposição e Perfil na Mídia",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-exposicao-e-perfil-na-midia",
+    "cat": "Exposição Pública",
+    "slug": "pessoas-exposicao-e-perfil-na-midia",
+    "desc": "Tema principal explicitado pelo título da página: “Exposição e Perfil na Mídia”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 42,
+    "title": "Anúncios Online",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-anuncios-online",
+    "cat": "Presença Digital",
+    "slug": "pessoas-anuncios-online",
+    "desc": "Tema principal explicitado pelo título da página: “Anúncios Online”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 43,
+    "title": "Dados de Sites",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-sites",
+    "cat": "Presença Digital",
+    "slug": "pessoas-dados-de-sites",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Sites”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 44,
+    "title": "Processos Judiciais e Administrativos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-processos-judiciais-e-administrativos",
+    "cat": "Processos Judiciais",
+    "slug": "pessoas-processos-judiciais-e-administrativos",
+    "desc": "Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 45,
+    "title": "Processos Judiciais e Administrativos de Familiares de Primeiro Nível",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-processos-judiciais-familiares",
+    "cat": "Processos Judiciais",
+    "slug": "pessoas-processos-judiciais-familiares",
+    "desc": "Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos de Familiares de Primeiro Nível”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 46,
+    "title": "Dados de Distribuição de Processos Judiciais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-distribuicao-de-processos-judiciais",
+    "cat": "Processos Judiciais",
+    "slug": "pessoas-dados-de-distribuicao-de-processos-judiciais",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 47,
+    "title": "Dados de Distribuição de Processos Judiciais Familiares",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-de-distribuicao-de-processos-judiciais-familiares",
+    "cat": "Processos Judiciais",
+    "slug": "pessoas-dados-de-distribuicao-de-processos-judiciais-familiares",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais Familiares”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 48,
+    "title": "Conselhos de Classe",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-conselhos-de-classe",
+    "cat": "Profissionais",
+    "slug": "pessoas-conselhos-de-classe",
+    "desc": "Tema principal explicitado pelo título da página: “Conselhos de Classe”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 49,
+    "title": "Dados Profissionais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-dados-profissionais",
+    "cat": "Profissionais",
+    "slug": "pessoas-dados-profissionais",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Profissionais”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 50,
+    "title": "Histórico Escolar e Acadêmico",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-historico-escolar-e-academico",
+    "cat": "Profissionais",
+    "slug": "pessoas-historico-escolar-e-academico",
+    "desc": "Tema principal explicitado pelo título da página: “Histórico Escolar e Acadêmico”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 51,
+    "title": "Licenças e Autorizações",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-licencas-e-autorizacoes",
+    "cat": "Profissionais",
+    "slug": "pessoas-licencas-e-autorizacoes",
+    "desc": "Tema principal explicitado pelo título da página: “Licenças e Autorizações”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 52,
+    "title": "Prêmios e Certificações",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-premios-e-certificacoes",
+    "cat": "Profissionais",
+    "slug": "pessoas-premios-e-certificacoes",
+    "desc": "Tema principal explicitado pelo título da página: “Prêmios e Certificações”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 53,
+    "title": "Servidores Públicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-servidores-publicos",
+    "cat": "Profissionais",
+    "slug": "pessoas-servidores-publicos",
+    "desc": "Tema principal explicitado pelo título da página: “Servidores Públicos”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 54,
+    "title": "Turnover Profissional",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-turnover-profissional",
+    "cat": "Profissionais",
+    "slug": "pessoas-turnover-profissional",
+    "desc": "Tema principal explicitado pelo título da página: “Turnover Profissional”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 55,
+    "title": "Exposição Esportiva",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-exposicao-esportiva",
+    "cat": "Profissionais",
+    "slug": "pessoas-exposicao-esportiva",
+    "desc": "Tema principal explicitado pelo título da página: “Exposição Esportiva”. Categoria no consolidado anterior: Profissionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 56,
+    "title": "Risco Financeiro",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-risco-financeiro",
+    "cat": "Risco",
+    "slug": "pessoas-risco-financeiro",
+    "desc": "Tema principal explicitado pelo título da página: “Risco Financeiro”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 57,
+    "title": "Risco Financeiro Familiar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-risco-financeiro-familiar",
+    "cat": "Risco",
+    "slug": "pessoas-risco-financeiro-familiar",
+    "desc": "Tema principal explicitado pelo título da página: “Risco Financeiro Familiar”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 58,
+    "title": "Presença em Cobrança",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-presenca-em-cobranca",
+    "cat": "Risco",
+    "slug": "pessoas-presenca-em-cobranca",
+    "desc": "Tema principal explicitado pelo título da página: “Presença em Cobrança”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 59,
+    "title": "Probabilidade de Negativação",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-probabilidade-de-negativacao",
+    "cat": "Risco",
+    "slug": "pessoas-probabilidade-de-negativacao",
+    "desc": "Tema principal explicitado pelo título da página: “Probabilidade de Negativação”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 60,
+    "title": "Informações Sócio-Demográficas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-informacoes-socio-demograficas",
+    "cat": "Sócio-Demográficos",
+    "slug": "pessoas-informacoes-socio-demograficas",
+    "desc": "Tema principal explicitado pelo título da página: “Informações Sócio-Demográficas”. Categoria no consolidado anterior: Sócio-Demográficos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 61,
+    "title": "Veículos Associados à Pessoa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/pessoas-veiculos-associados-a-pessoa",
+    "cat": "Veículos",
+    "slug": "pessoas-veiculos-associados-a-pessoa",
+    "desc": "Tema principal explicitado pelo título da página: “Veículos Associados à Pessoa”. Categoria no consolidado anterior: Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 62,
+    "title": "Propriedades Industriais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais",
+    "cat": "Ativos",
+    "slug": "empresas-propriedades-industriais",
+    "desc": "Tema principal explicitado pelo título da página: “Propriedades Industriais”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 63,
+    "title": "Propriedades Industriais de Funcionários",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais-de-funcionarios",
+    "cat": "Ativos",
+    "slug": "empresas-propriedades-industriais-de-funcionarios",
+    "desc": "Tema principal explicitado pelo título da página: “Propriedades Industriais de Funcionários”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 64,
+    "title": "Propriedades Industriais de Sócios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-propriedades-industriais-de-socios",
+    "cat": "Ativos",
+    "slug": "empresas-propriedades-industriais-de-socios",
+    "desc": "Tema principal explicitado pelo título da página: “Propriedades Industriais de Sócios”. Categoria no consolidado anterior: Ativos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 65,
+    "title": "KYC e Compliance",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance",
+    "cat": "Compliance Regulatório",
+    "slug": "empresas-kyc-e-compliance",
+    "desc": "Tema principal explicitado pelo título da página: “KYC e Compliance”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 66,
+    "title": "KYC e Compliance dos Sócios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-dos-socios",
+    "cat": "Compliance Regulatório",
+    "slug": "empresas-kyc-e-compliance-dos-socios",
+    "desc": "Tema principal explicitado pelo título da página: “KYC e Compliance dos Sócios”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 67,
+    "title": "KYC e Compliance dos Funcionários",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-dos-funcionarios",
+    "cat": "Compliance Regulatório",
+    "slug": "empresas-kyc-e-compliance-dos-funcionarios",
+    "desc": "Tema principal explicitado pelo título da página: “KYC e Compliance dos Funcionários”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 68,
+    "title": "KYC e Compliance do Grupo Econômico",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-kyc-e-compliance-do-grupo-economico",
+    "cat": "Compliance Regulatório",
+    "slug": "empresas-kyc-e-compliance-do-grupo-economico",
+    "desc": "Tema principal explicitado pelo título da página: “KYC e Compliance do Grupo Econômico”. Categoria no consolidado anterior: Compliance Regulatório. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 69,
+    "title": "Dados de Registro",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-registro",
+    "cat": "Contatos",
+    "slug": "empresas-dados-de-registro",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Registro”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 70,
+    "title": "E-mails",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-e-mails",
+    "cat": "Contatos",
+    "slug": "empresas-e-mails",
+    "desc": "Tema principal explicitado pelo título da página: “E-mails”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 71,
+    "title": "E-mails de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-e-mails-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "empresas-e-mails-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “E-mails de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 72,
+    "title": "Telefones",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-telefones",
+    "cat": "Contatos",
+    "slug": "empresas-telefones",
+    "desc": "Tema principal explicitado pelo título da página: “Telefones”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 73,
+    "title": "Telefones de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-telefones-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "empresas-telefones-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “Telefones de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 74,
+    "title": "Endereços",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-enderecos",
+    "cat": "Contatos",
+    "slug": "empresas-enderecos",
+    "desc": "Tema principal explicitado pelo título da página: “Endereços”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 75,
+    "title": "Endereços de Pessoas Relacionadas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-enderecos-de-pessoas-relacionadas",
+    "cat": "Contatos",
+    "slug": "empresas-enderecos-de-pessoas-relacionadas",
+    "desc": "Tema principal explicitado pelo título da página: “Endereços de Pessoas Relacionadas”. Categoria no consolidado anterior: Contatos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 76,
+    "title": "Dados Cadastrais Básicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-cadastrais-basicos",
+    "cat": "Dados Básicos",
+    "slug": "empresas-dados-cadastrais-basicos",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Cadastrais Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 77,
+    "title": "Histórico de Dados Básicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-historico-de-dados-basicos",
+    "cat": "Dados Básicos",
+    "slug": "empresas-historico-de-dados-basicos",
+    "desc": "Tema principal explicitado pelo título da página: “Histórico de Dados Básicos”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 78,
+    "title": "Dados de Categoria Comercial - MCC",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-categoria-comercial-mcc",
+    "cat": "Dados Básicos",
+    "slug": "empresas-dados-de-categoria-comercial-mcc",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Categoria Comercial - MCC”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 79,
+    "title": "Evolução da Empresa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-evolucao-da-empresa",
+    "cat": "Econômicos",
+    "slug": "empresas-evolucao-da-empresa",
+    "desc": "Dataset da API de Empresas com histórico temporal de capital social, funcionários e número de sócios. Nome técnico: company_evolution. A página também traz tabela de preços."
+  },
+  {
+    "num": 80,
+    "title": "Indicadores de Atividade",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-indicadores-de-atividade",
+    "cat": "Econômicos",
+    "slug": "empresas-indicadores-de-atividade",
+    "desc": "Tema principal explicitado pelo título da página: “Indicadores de Atividade”. Categoria no consolidado anterior: Econômicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 81,
+    "title": "Envolvimento Político",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-envolvimento-politico",
+    "cat": "Envolvimento Político",
+    "slug": "empresas-envolvimento-politico",
+    "desc": "Tema principal explicitado pelo título da página: “Envolvimento Político”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 82,
+    "title": "Doações Eleitorais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-doacoes-eleitorais",
+    "cat": "Envolvimento Político",
+    "slug": "empresas-doacoes-eleitorais",
+    "desc": "Tema principal explicitado pelo título da página: “Doações Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 83,
+    "title": "Doações Eleitorais de Sócios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-doacoes-eleitorais-de-socios",
+    "cat": "Envolvimento Político",
+    "slug": "empresas-doacoes-eleitorais-de-socios",
+    "desc": "Tema principal explicitado pelo título da página: “Doações Eleitorais de Sócios”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 84,
+    "title": "Prestadores de Serviços Eleitorais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-prestadores-de-servicos-eleitorais",
+    "cat": "Envolvimento Político",
+    "slug": "empresas-prestadores-de-servicos-eleitorais",
+    "desc": "Tema principal explicitado pelo título da página: “Prestadores de Serviços Eleitorais”. Categoria no consolidado anterior: Envolvimento Político. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 85,
+    "title": "Acordos Sindicais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-acordos-sindicais",
+    "cat": "ESG",
+    "slug": "empresas-acordos-sindicais",
+    "desc": "Tema principal explicitado pelo título da página: “Acordos Sindicais”. Categoria no consolidado anterior: ESG. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 86,
+    "title": "Consciência Social",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-consciencia-social",
+    "cat": "ESG",
+    "slug": "empresas-consciencia-social",
+    "desc": "Tema principal explicitado pelo título da página: “Consciência Social”. Categoria no consolidado anterior: ESG. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 87,
+    "title": "Exposição e Perfil na Mídia",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-exposicao-e-perfil-na-midia",
+    "cat": "Exposição Pública",
+    "slug": "empresas-exposicao-e-perfil-na-midia",
+    "desc": "Tema principal explicitado pelo título da página: “Exposição e Perfil na Mídia”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 88,
+    "title": "Influência do Quadro Societário",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-influencia-do-quadro-societario",
+    "cat": "Exposição Pública",
+    "slug": "empresas-influencia-do-quadro-societario",
+    "desc": "Tema principal explicitado pelo título da página: “Influência do Quadro Societário”. Categoria no consolidado anterior: Exposição Pública. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 89,
+    "title": "Anúncios Online",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-anuncios-online",
+    "cat": "Presença Digital",
+    "slug": "empresas-anuncios-online",
+    "desc": "Tema principal explicitado pelo título da página: “Anúncios Online”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 90,
+    "title": "Dados de Sites",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-sites",
+    "cat": "Presença Digital",
+    "slug": "empresas-dados-de-sites",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Sites”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 91,
+    "title": "Marketplaces",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-marketplaces",
+    "cat": "Presença Digital",
+    "slug": "empresas-marketplaces",
+    "desc": "Tema principal explicitado pelo título da página: “Marketplaces”. Categoria no consolidado anterior: Presença Digital. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 92,
+    "title": "Processos Judiciais e Administrativos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-processos-judiciais-e-administrativos",
+    "cat": "Processos Judiciais",
+    "slug": "empresas-processos-judiciais-e-administrativos",
+    "desc": "Tema principal explicitado pelo título da página: “Processos Judiciais e Administrativos”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 93,
+    "title": "Processos Judiciais dos Sócios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-processos-judiciais-dos-socios",
+    "cat": "Processos Judiciais",
+    "slug": "empresas-processos-judiciais-dos-socios",
+    "desc": "Tema principal explicitado pelo título da página: “Processos Judiciais dos Sócios”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 94,
+    "title": "Dados de Distribuição de Processos Judiciais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-distribuicao-de-processos-judiciais",
+    "cat": "Processos Judiciais",
+    "slug": "empresas-dados-de-distribuicao-de-processos-judiciais",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos Judiciais”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 95,
+    "title": "Dados de Distribuição de Processos dos Sócios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-distribuicao-de-processos-dos-socios",
+    "cat": "Processos Judiciais",
+    "slug": "empresas-dados-de-distribuicao-de-processos-dos-socios",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Distribuição de Processos dos Sócios”. Categoria no consolidado anterior: Processos Judiciais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 96,
+    "title": "Relacionamentos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-relacionamentos",
+    "cat": "Relacionamentos",
+    "slug": "empresas-relacionamentos",
+    "desc": "Tema principal explicitado pelo título da página: “Relacionamentos”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 97,
+    "title": "Relacionamentos do Grupo Econômico",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-relacionamentos-do-grupo-economico",
+    "cat": "Relacionamentos",
+    "slug": "empresas-relacionamentos-do-grupo-economico",
+    "desc": "Tema principal explicitado pelo título da página: “Relacionamentos do Grupo Econômico”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 98,
+    "title": "QSA de Recência Configurável",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-qsa-de-recencia-configuravel",
+    "cat": "Relacionamentos",
+    "slug": "empresas-qsa-de-recencia-configuravel",
+    "desc": "Tema principal explicitado pelo título da página: “QSA de Recência Configurável”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 99,
+    "title": "Avaliações e Reputação",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-avaliacoes-e-reputacao",
+    "cat": "Reputação",
+    "slug": "empresas-avaliacoes-e-reputacao",
+    "desc": "Tema principal explicitado pelo título da página: “Avaliações e Reputação”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 100,
+    "title": "Prêmios e Certificações",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-premios-e-certificacoes",
+    "cat": "Reputação",
+    "slug": "empresas-premios-e-certificacoes",
+    "desc": "Tema principal explicitado pelo título da página: “Prêmios e Certificações”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 101,
+    "title": "Presença em Cobrança",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-presenca-em-cobranca",
+    "cat": "Risco",
+    "slug": "empresas-presenca-em-cobranca",
+    "desc": "Tema principal explicitado pelo título da página: “Presença em Cobrança”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 102,
+    "title": "Devedores do Governo",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-devedores-do-governo",
+    "cat": "Risco",
+    "slug": "empresas-devedores-do-governo",
+    "desc": "Tema principal explicitado pelo título da página: “Devedores do Governo”. Categoria no consolidado anterior: Risco. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 103,
+    "title": "Dados de Fundos de Investimento",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-fundos-de-investimento",
+    "cat": "Setoriais",
+    "slug": "empresas-dados-de-fundos-de-investimento",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Fundos de Investimento”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 104,
+    "title": "Dados de Obras Civis",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-dados-de-obras-civis",
+    "cat": "Setoriais",
+    "slug": "empresas-dados-de-obras-civis",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Obras Civis”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 105,
+    "title": "Mercado Financeiro",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/empresas-mercado-financeiro",
+    "cat": "Setoriais",
+    "slug": "empresas-mercado-financeiro",
+    "desc": "Tema principal explicitado pelo título da página: “Mercado Financeiro”. Categoria no consolidado anterior: Setoriais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 106,
+    "title": "Ficha Técnica",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/produtos-ficha-tecnica",
+    "cat": "Dados Básicos",
+    "slug": "produtos-ficha-tecnica",
+    "desc": "Tema principal explicitado pelo título da página: “Ficha Técnica”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 107,
+    "title": "Imagens do Produto",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/produtos-imagens-do-produto",
+    "cat": "Dados Básicos",
+    "slug": "produtos-imagens-do-produto",
+    "desc": "Tema principal explicitado pelo título da página: “Imagens do Produto”. Categoria no consolidado anterior: Dados Básicos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 108,
+    "title": "Produtos Relacionados",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/produtos-produtos-relacionados",
+    "cat": "Relacionamentos",
+    "slug": "produtos-produtos-relacionados",
+    "desc": "Tema principal explicitado pelo título da página: “Produtos Relacionados”. Categoria no consolidado anterior: Relacionamentos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 109,
+    "title": "Notas e avaliações",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/produtos-notas-e-avaliacoes",
+    "cat": "Reputação",
+    "slug": "produtos-notas-e-avaliacoes",
+    "desc": "Tema principal explicitado pelo título da página: “Notas e avaliações”. Categoria no consolidado anterior: Reputação. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 110,
+    "title": "Estatísticas de Empresas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-estatisticas-de-empresas",
+    "cat": "API de Endereços",
+    "slug": "enderecos-estatisticas-de-empresas",
+    "desc": "Tema principal explicitado pelo título da página: “Estatísticas de Empresas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 111,
+    "title": "Dados de Empresas nas Proximidades",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-dados-de-empresas-nas-proximidades",
+    "cat": "API de Endereços",
+    "slug": "enderecos-dados-de-empresas-nas-proximidades",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Empresas nas Proximidades”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 112,
+    "title": "Municípios",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-municipios",
+    "cat": "API de Endereços",
+    "slug": "enderecos-municipios",
+    "desc": "Tema principal explicitado pelo título da página: “Municípios”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 113,
+    "title": "Dados de Propriedades Rurais SICAR",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-dados-de-propriedades-rurais-sicar",
+    "cat": "API de Endereços",
+    "slug": "enderecos-dados-de-propriedades-rurais-sicar",
+    "desc": "Tema principal explicitado pelo título da página: “Dados de Propriedades Rurais SICAR”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 114,
+    "title": "Amazônia Legal",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-amazonia-legal",
+    "cat": "API de Endereços",
+    "slug": "enderecos-amazonia-legal",
+    "desc": "Tema principal explicitado pelo título da página: “Amazônia Legal”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 115,
+    "title": "Áreas de Proteção Ambiental",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-areas-de-protecao-ambiental",
+    "cat": "API de Endereços",
+    "slug": "enderecos-areas-de-protecao-ambiental",
+    "desc": "Tema principal explicitado pelo título da página: “Áreas de Proteção Ambiental”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 116,
+    "title": "Biomas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-biomas",
+    "cat": "API de Endereços",
+    "slug": "enderecos-biomas",
+    "desc": "Tema principal explicitado pelo título da página: “Biomas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 117,
+    "title": "Consulta de Áreas Embargadas ICMBio",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-consulta-de-areas-embargadas-icmbio",
+    "cat": "API de Endereços",
+    "slug": "enderecos-consulta-de-areas-embargadas-icmbio",
+    "desc": "Tema principal explicitado pelo título da página: “Consulta de Áreas Embargadas ICMBio”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 118,
+    "title": "Consulta de Reservas Legais SICAR",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-consulta-de-reservas-legais-sicar",
+    "cat": "API de Endereços",
+    "slug": "enderecos-consulta-de-reservas-legais-sicar",
+    "desc": "Tema principal explicitado pelo título da página: “Consulta de Reservas Legais SICAR”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 119,
+    "title": "Sítios Arqueológicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-sitios-arqueologicos",
+    "cat": "API de Endereços",
+    "slug": "enderecos-sitios-arqueologicos",
+    "desc": "Tema principal explicitado pelo título da página: “Sítios Arqueológicos”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 120,
+    "title": "Terras Indígenas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-terras-indigenas",
+    "cat": "API de Endereços",
+    "slug": "enderecos-terras-indigenas",
+    "desc": "Tema principal explicitado pelo título da página: “Terras Indígenas”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 121,
+    "title": "Unidades de Conservação",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-unidades-de-conservacao",
+    "cat": "API de Endereços",
+    "slug": "enderecos-unidades-de-conservacao",
+    "desc": "Tema principal explicitado pelo título da página: “Unidades de Conservação”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 122,
+    "title": "Zoneamento Agroecológico",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-zoneamento-agroecologico",
+    "cat": "API de Endereços",
+    "slug": "enderecos-zoneamento-agroecologico",
+    "desc": "Tema principal explicitado pelo título da página: “Zoneamento Agroecológico”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 123,
+    "title": "Endereços em Área de Risco",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-enderecos-em-area-de-risco",
+    "cat": "API de Endereços",
+    "slug": "enderecos-enderecos-em-area-de-risco",
+    "desc": "Tema principal explicitado pelo título da página: “Endereços em Área de Risco”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 124,
+    "title": "Estatísticas Criminais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/enderecos-estatisticas-criminais",
+    "cat": "API de Endereços",
+    "slug": "enderecos-estatisticas-criminais",
+    "desc": "Tema principal explicitado pelo título da página: “Estatísticas Criminais”. Categoria no consolidado anterior: API de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 125,
+    "title": "Processos do CADE",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/processos-processos-do-cade",
+    "cat": "API de Processos",
+    "slug": "processos-processos-do-cade",
+    "desc": "Tema principal explicitado pelo título da página: “Processos do CADE”. Categoria no consolidado anterior: API de Processos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 126,
+    "title": "Dados Históricos de Placa de Veículo",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/veiculos-dados-historicos-de-placa-de-veiculo",
+    "cat": "API de Veículos",
+    "slug": "veiculos-dados-historicos-de-placa-de-veiculo",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Históricos de Placa de Veículo”. Categoria no consolidado anterior: API de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 127,
+    "title": "Ações Trabalhistas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-acoes-trabalhistas",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-acoes-trabalhistas",
+    "desc": "Tema principal explicitado pelo título da página: “Ações Trabalhistas”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 128,
+    "title": "Contratação de Pessoas com Deficiência e Beneficiários Reabilitados da Previdência Social",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-contratacao-de-pcd",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-contratacao-de-pcd",
+    "desc": "Tema principal explicitado pelo título da página: “Contratação de Pessoas com Deficiência e Beneficiários Reabilitados da Previdência Social”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 129,
+    "title": "CGU - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-cgu-negativa",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-cgu-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “CGU - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 130,
+    "title": "CNJ - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-cnj-negativa",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-cnj-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “CNJ - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 131,
+    "title": "Débitos Estaduais - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-debitos-estaduais-negativa",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-debitos-estaduais-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “Débitos Estaduais - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 132,
+    "title": "Débitos Trabalhistas - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-debitos-trabalhistas-negativa",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-debitos-trabalhistas-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “Débitos Trabalhistas - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 133,
+    "title": "FGTS",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-fgts",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-fgts",
+    "desc": "Tema principal explicitado pelo título da página: “FGTS”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 134,
+    "title": "Habilitação COMEX",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-habilitacao-comex",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-habilitacao-comex",
+    "desc": "Tema principal explicitado pelo título da página: “Habilitação COMEX”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 135,
+    "title": "IBAMA - Embargos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-embargos",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-ibama-embargos",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Embargos”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 136,
+    "title": "IBAMA - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-negativa",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-ibama-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Negativa”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 137,
+    "title": "IBAMA - Regulatória",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-ibama-regulatoria",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-ibama-regulatoria",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Regulatória”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 138,
+    "title": "IRT",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-irt",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-irt",
+    "desc": "Tema principal explicitado pelo título da página: “IRT”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 139,
+    "title": "Licenças Sanitárias",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-licencas-sanitarias",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-licencas-sanitarias",
+    "desc": "Tema principal explicitado pelo título da página: “Licenças Sanitárias”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 140,
+    "title": "PGFN",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-pgfn",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-pgfn",
+    "desc": "Tema principal explicitado pelo título da página: “PGFN”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 141,
+    "title": "SIPROQUIM",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-empresas-siproquim",
+    "cat": "Certidões de Empresas",
+    "slug": "ondemand-empresas-siproquim",
+    "desc": "Tema principal explicitado pelo título da página: “SIPROQUIM”. Categoria no consolidado anterior: Certidões de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 142,
+    "title": "SICAR",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-enderecos-sicar",
+    "cat": "Certidões de Endereços",
+    "slug": "ondemand-enderecos-sicar",
+    "desc": "Tema principal explicitado pelo título da página: “SICAR”. Categoria no consolidado anterior: Certidões de Endereços. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 143,
+    "title": "Ações Judiciais - Nada Consta",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-acoes-judiciais-nada-consta",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-acoes-judiciais-nada-consta",
+    "desc": "Tema principal explicitado pelo título da página: “Ações Judiciais - Nada Consta”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 144,
+    "title": "Ações Trabalhistas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-acoes-trabalhistas",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-acoes-trabalhistas",
+    "desc": "Tema principal explicitado pelo título da página: “Ações Trabalhistas”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 145,
+    "title": "CGU - Correcional Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-cgu-correcional-negativa",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-cgu-correcional-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “CGU - Correcional Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 146,
+    "title": "CNJ - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-cnj-negativa",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-cnj-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “CNJ - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 147,
+    "title": "Débitos Estaduais - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-debitos-estaduais-negativa",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-debitos-estaduais-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “Débitos Estaduais - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 148,
+    "title": "Débitos Trabalhistas - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-debitos-trabalhistas-negativa",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-debitos-trabalhistas-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “Débitos Trabalhistas - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 149,
+    "title": "IBAMA - Embargos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-embargos",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-ibama-embargos",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Embargos”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 150,
+    "title": "IBAMA - Negativa",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-negativa",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-ibama-negativa",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Negativa”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 151,
+    "title": "IBAMA - Regularidade",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-ibama-regularidade",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-ibama-regularidade",
+    "desc": "Tema principal explicitado pelo título da página: “IBAMA - Regularidade”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 152,
+    "title": "IRT",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-irt",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-irt",
+    "desc": "Tema principal explicitado pelo título da página: “IRT”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 153,
+    "title": "Licenças Sanitárias",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-licencas-sanitarias",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-licencas-sanitarias",
+    "desc": "Tema principal explicitado pelo título da página: “Licenças Sanitárias”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 154,
+    "title": "PGFN",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-pgfn",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-pgfn",
+    "desc": "Tema principal explicitado pelo título da página: “PGFN”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 155,
+    "title": "Polícia Civil - Antecedentes Criminais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-policia-civil-antecedentes-criminais",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-policia-civil-antecedentes-criminais",
+    "desc": "Tema principal explicitado pelo título da página: “Polícia Civil - Antecedentes Criminais”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 156,
+    "title": "Polícia Federal - Antecedentes Criminais",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-policia-federal-antecedentes-criminais",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-policia-federal-antecedentes-criminais",
+    "desc": "Tema principal explicitado pelo título da página: “Polícia Federal - Antecedentes Criminais”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 157,
+    "title": "TSE - Quitação Eleitoral",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-pessoas-tse-quitacao-eleitoral",
+    "cat": "Certidões de Pessoas",
+    "slug": "ondemand-pessoas-tse-quitacao-eleitoral",
+    "desc": "Tema principal explicitado pelo título da página: “TSE - Quitação Eleitoral”. Categoria no consolidado anterior: Certidões de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 158,
+    "title": "Arrecadação Simples Nacional - MEI",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-arrecadacao-simples-nacional-mei",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-arrecadacao-simples-nacional-mei",
+    "desc": "Tema principal explicitado pelo título da página: “Arrecadação Simples Nacional - MEI”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 159,
+    "title": "COMPROT - Processos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-comprot-processos",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-comprot-processos",
+    "desc": "Tema principal explicitado pelo título da página: “COMPROT - Processos”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 160,
+    "title": "Escrituração Contábil Digital",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-escrituracao-contabil-digital",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-escrituracao-contabil-digital",
+    "desc": "Tema principal explicitado pelo título da página: “Escrituração Contábil Digital”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 161,
+    "title": "Inscrição Municipal",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-inscricao-municipal",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-inscricao-municipal",
+    "desc": "Tema principal explicitado pelo título da página: “Inscrição Municipal”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 162,
+    "title": "Optante Simples",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-optante-simples",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-optante-simples",
+    "desc": "Tema principal explicitado pelo título da página: “Optante Simples”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 163,
+    "title": "Projetos Públicos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-projetos-publicos",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-projetos-publicos",
+    "desc": "Tema principal explicitado pelo título da página: “Projetos Públicos”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 164,
+    "title": "Receita Federal - QSA",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-qsa",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-receita-federal-qsa",
+    "desc": "Tema principal explicitado pelo título da página: “Receita Federal - QSA”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 165,
+    "title": "Receita Federal - Representante Legal",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-representante-legal",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-receita-federal-representante-legal",
+    "desc": "Tema principal explicitado pelo título da página: “Receita Federal - Representante Legal”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 166,
+    "title": "Receita Federal - Situação CNPJ",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-receita-federal-situacao-cnpj",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-receita-federal-situacao-cnpj",
+    "desc": "Tema principal explicitado pelo título da página: “Receita Federal - Situação CNPJ”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 167,
+    "title": "SINTEGRA",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-empresas-sintegra",
+    "cat": "Consultas de Empresas",
+    "slug": "ondemand-consultas-de-empresas-sintegra",
+    "desc": "Tema principal explicitado pelo título da página: “SINTEGRA”. Categoria no consolidado anterior: Consultas de Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 168,
+    "title": "CTe",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-notas-fiscais-cte",
+    "cat": "Consultas de Notas Fiscais",
+    "slug": "ondemand-consultas-de-notas-fiscais-cte",
+    "desc": "Tema principal explicitado pelo título da página: “CTe”. Categoria no consolidado anterior: Consultas de Notas Fiscais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 169,
+    "title": "NFe",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-notas-fiscais-nfe",
+    "cat": "Consultas de Notas Fiscais",
+    "slug": "ondemand-consultas-de-notas-fiscais-nfe",
+    "desc": "Tema principal explicitado pelo título da página: “NFe”. Categoria no consolidado anterior: Consultas de Notas Fiscais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 170,
+    "title": "BACEN - Sanções Administrativas",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-bacen-sancoes-administrativas",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-bacen-sancoes-administrativas",
+    "desc": "Tema principal explicitado pelo título da página: “BACEN - Sanções Administrativas”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 171,
+    "title": "COMPROT - Processos",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-comprot-processos",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-comprot-processos",
+    "desc": "Tema principal explicitado pelo título da página: “COMPROT - Processos”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 172,
+    "title": "DETRAN - Multas de Trânsito",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-detran-multas-de-transito",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-detran-multas-de-transito",
+    "desc": "Tema principal explicitado pelo título da página: “DETRAN - Multas de Trânsito”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 173,
+    "title": "Polícia Civil - Boletim de Ocorrência",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-policia-civil-boletim-de-ocorrencia",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-policia-civil-boletim-de-ocorrencia",
+    "desc": "Tema principal explicitado pelo título da página: “Polícia Civil - Boletim de Ocorrência”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 174,
+    "title": "Receita Federal - Restituição do Imposto de Renda",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-receita-federal-restituicao-do-imposto-de-renda",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-receita-federal-restituicao-do-imposto-de-renda",
+    "desc": "Tema principal explicitado pelo título da página: “Receita Federal - Restituição do Imposto de Renda”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 175,
+    "title": "Receita Federal - Status do CPF",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-receita-federal-status-do-cpf",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-receita-federal-status-do-cpf",
+    "desc": "Tema principal explicitado pelo título da página: “Receita Federal - Status do CPF”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 176,
+    "title": "SINTEGRA",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-sintegra",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-sintegra",
+    "desc": "Tema principal explicitado pelo título da página: “SINTEGRA”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 177,
+    "title": "SUS - Cartão",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-sus-cartao",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-sus-cartao",
+    "desc": "Tema principal explicitado pelo título da página: “SUS - Cartão”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 178,
+    "title": "TSE - Local de Votação",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-pessoas-tse-local-de-votacao",
+    "cat": "Consultas de Pessoas",
+    "slug": "ondemand-consultas-de-pessoas-tse-local-de-votacao",
+    "desc": "Tema principal explicitado pelo título da página: “TSE - Local de Votação”. Categoria no consolidado anterior: Consultas de Pessoas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 179,
+    "title": "DETRAN - Chassi e RENAVAM",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-veiculos-detran-chassi-e-renavam",
+    "cat": "Consultas de Veículos",
+    "slug": "ondemand-consultas-de-veiculos-detran-chassi-e-renavam",
+    "desc": "Tema principal explicitado pelo título da página: “DETRAN - Chassi e RENAVAM”. Categoria no consolidado anterior: Consultas de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 180,
+    "title": "RNTRC - Transportadores",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/ondemand-consultas-de-veiculos-rntrc-transportadores",
+    "cat": "Consultas de Veículos",
+    "slug": "ondemand-consultas-de-veiculos-rntrc-transportadores",
+    "desc": "Tema principal explicitado pelo título da página: “RNTRC - Transportadores”. Categoria no consolidado anterior: Consultas de Veículos. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 181,
+    "title": "Consulta SCR | Score Positivo",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-consulta-scr-score-positivo",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-consulta-scr-score-positivo",
+    "desc": "Tema principal explicitado pelo título da página: “Consulta SCR | Score Positivo”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 182,
+    "title": "Dados Restritivos | Birô de Crédito",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-dados-restritivos-biro-de-credito",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-dados-restritivos-biro-de-credito",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Restritivos | Birô de Crédito”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 183,
+    "title": "Dados Restritivos | Quod",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-dados-restritivos-quod",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-dados-restritivos-quod",
+    "desc": "Tema principal explicitado pelo título da página: “Dados Restritivos | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 184,
+    "title": "Flags Negativos | Quod",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-flags-negativos-quod",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-flags-negativos-quod",
+    "desc": "Tema principal explicitado pelo título da página: “Flags Negativos | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 185,
+    "title": "Score de Crédito Multidados | Birô de Crédito",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-multidados-biro-de-credito",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-score-de-credito-multidados-biro-de-credito",
+    "desc": "Tema principal explicitado pelo título da página: “Score de Crédito Multidados | Birô de Crédito”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 186,
+    "title": "Score de Crédito | Murabei",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-murabei",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-score-de-credito-murabei",
+    "desc": "Tema principal explicitado pelo título da página: “Score de Crédito | Murabei”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 187,
+    "title": "Score de Crédito | Quantum",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-quantum",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-score-de-credito-quantum",
+    "desc": "Tema principal explicitado pelo título da página: “Score de Crédito | Quantum”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 188,
+    "title": "Score de Crédito | Quod",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/marketplace-score-de-credito-quod",
+    "cat": "Crédito | Empresas",
+    "slug": "marketplace-score-de-credito-quod",
+    "desc": "Tema principal explicitado pelo título da página: “Score de Crédito | Quod”. Categoria no consolidado anterior: Crédito | Empresas. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 189,
+    "title": "Reference",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "reference",
+    "desc": "Tema principal explicitado pelo título da página: “Reference”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 190,
+    "title": "Api Tokens Gerar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-tokens-gerar",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-tokens-gerar",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/tokens/gerar. Gera tokens de acesso a partir de usuário, senha e expires em horas. O retorno inclui token e tokenID para rotação/desabilitação posterior."
+  },
+  {
+    "num": 191,
+    "title": "Api Tokens Desabilitar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-tokens-desabilitar",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-tokens-desabilitar",
+    "desc": "Tema principal explicitado pelo título da página: “Api Tokens Desabilitar”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 192,
+    "title": "Api De Preços Requisicao",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-preços-requisicao",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-preços-requisicao",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/precos/. Suporta duas modalidades: tabela completa de preços do cliente e estimativa de preço por API/datasets/locale. Não possui custo por consulta."
+  },
+  {
+    "num": 193,
+    "title": "Api Eventos Requisicao",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-eventos-requisicao",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-eventos-requisicao",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/log/. Recupera registros de log e auditoria de consultas executadas, incluindo tempo de execução, IP, parâmetros e resultado. Exige QueryId, q ou Tags no corpo; QueryDate e DateFormat são opcionais. A documentação recomenda armazenar QueryIds."
+  },
+  {
+    "num": 194,
+    "title": "Api De Estatísticas De Uso Requisicao",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-estatísticas-de-uso-requisicao",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-estatísticas-de-uso-requisicao",
+    "desc": "Tema principal explicitado pelo título da página: “Api De Estatísticas De Uso Requisicao”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 195,
+    "title": "Api De Batch Salvar Definicao",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-batch-salvar-definicao",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-batch-salvar-definicao",
+    "desc": "Tema principal explicitado pelo título da página: “Api De Batch Salvar Definicao”. Categoria no consolidado anterior: Serviços auxiliares e operacionais. Esta entrada foi mantida para consulta direta pela URL, mas o conteúdo completo não pôde ser expandido automaticamente nesta passada."
+  },
+  {
+    "num": 196,
+    "title": "Api De Batch Listar",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-batch-listar",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-batch-listar",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/lote/listar. Lista jobs batch do usuário, inclusive históricos quando ShowHistoricalJobs=true, com paginação e detalhes de cada processo."
+  },
+  {
+    "num": 197,
+    "title": "Api De Monitoramento Configurar Usuario",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-monitoramento-configurar-usuario",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-monitoramento-configurar-usuario",
+    "desc": "Permite configurar informações relevantes para o funcionamento da API de Monitoramento, como chaves e tokens de autenticação (SFTP, Authorization, OAuth etc.), sem sobrescrever campos omitidos."
+  },
+  {
+    "num": 198,
+    "title": "Api De Monitoramento Listar Inscricoes",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-de-monitoramento-listar-inscricoes",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-de-monitoramento-listar-inscricoes",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/monitoramento/listar. Lista monitoramentos ativos do domínio, com paginação e filtros. O retorno traz SubscriptionId, OriginalQueryId, API, locale, parâmetros, datasets e TargetHook."
+  },
+  {
+    "num": 199,
+    "title": "Api Views Obter Detalhes",
+    "url": "https://docs.bigdatacorp.com.br/plataforma/reference/api-views-obter-detalhes",
+    "cat": "Serviços auxiliares e operacionais",
+    "slug": "api-views-obter-detalhes",
+    "desc": "Endpoint POST https://plataforma.bigdatacorp.com.br/views/obterDetalhes. Lista ou filtra consultas personalizadas (views) por escopo, nome, API e datasets; retorna itens globais ou de domínio."
+  }
+]

@@ -5,7 +5,7 @@ import {
     buildReportSnapshotContract,
     resolvePublicReportAvailability,
     validatePublicationGates,
-} from './v2Core.cjs';
+} from './v2Core.js';
 
 describe('v2Core contracts', () => {
     const caseData = {
@@ -134,5 +134,50 @@ describe('v2Core contracts', () => {
         expect(moduleKeys).toEqual(['criminal', 'warrants']);
         expect(moduleKeys).not.toContain('decision');
         expect(moduleKeys).not.toContain('report_secure');
+    });
+
+    it('resolvePublicReportAvailability retorna revoked quando token expirado', () => {
+        const decision = { id: 'dec-1', status: 'approved' };
+        const reportSnapshot = { id: 'snap-1', status: 'ready' };
+        const publicReport = {
+            id: 'token-1',
+            token: 'token-1',
+            active: true,
+            status: 'ready',
+            reportSnapshotId: 'snap-1',
+            expiresAt: new Date(Date.now() - 3600_000),
+        };
+
+        const availability = resolvePublicReportAvailability({ decision, reportSnapshot, publicReport });
+        expect(availability.status).toBe('revoked');
+        expect(availability.isActionable).toBe(false);
+    });
+
+    it('validatePublicationGates rejeita quando decision nao e approved', () => {
+        const gates = validatePublicationGates({
+            decision: { status: 'rejected' },
+            reportSnapshot: { status: 'ready' },
+            html: '<html>ok</html>',
+        });
+        expect(gates.ok).toBe(false);
+    });
+
+    it('validatePublicationGates rejeita quando html vazio', () => {
+        const gates = validatePublicationGates({
+            decision: { status: 'approved' },
+            reportSnapshot: { status: 'ready' },
+            html: '',
+        });
+        expect(gates.ok).toBe(false);
+    });
+
+    it('buildDecisionContract reflete verdict do publicResult no decisionBasis', () => {
+        const decision = buildDecisionContract({
+            caseId: 'case-1',
+            caseData: { ...caseData, finalVerdict: 'NOT_RECOMMENDED' },
+            publicResult: { ...publicResult, finalVerdict: 'NOT_RECOMMENDED' },
+            reviewer: { uid: 'analyst-1' },
+        });
+        expect(decision.verdict).toBe('NOT_RECOMMENDED');
     });
 });

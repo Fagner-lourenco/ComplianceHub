@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveReportSections, buildReportSnapshotFromV2 } from './v2ReportSections.cjs';
+import { resolveReportSections, buildReportSnapshotFromV2 } from './v2ReportSections.js';
 
 // Golden fixture: deterministic input representing a "typical" PF dossier with findings.
 // The hashes below are frozen against a specific algorithm version. If `stableHash`, section

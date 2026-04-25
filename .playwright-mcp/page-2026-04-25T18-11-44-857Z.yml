@@ -1,0 +1,273 @@
+- generic [ref=e10]:
+  - complementary [ref=e11]:
+    - link "⌘ ComplianceHub" [ref=e13] [cursor=pointer]:
+      - /url: /dossie
+      - generic [ref=e14]: ⌘
+      - generic [ref=e15]: ComplianceHub
+    - navigation [ref=e16]:
+      - link "Nova Análise" [ref=e18] [cursor=pointer]:
+        - /url: /dossie/create
+        - img [ref=e19]
+        - text: Nova Análise
+      - generic [ref=e22]:
+        - heading "Análises" [level=3] [ref=e23]
+        - generic [ref=e24]:
+          - link "Nova Análise" [ref=e25] [cursor=pointer]:
+            - /url: /dossie/create
+            - img [ref=e26]
+            - generic [ref=e29]: Nova Análise
+          - link "Meus Dossiês" [ref=e30] [cursor=pointer]:
+            - /url: /dossie
+            - img [ref=e31]
+            - generic [ref=e33]: Meus Dossiês
+          - link "Perfis Customizados" [ref=e35] [cursor=pointer]:
+            - /url: /dossie/custom-profile
+            - img [ref=e36]
+            - generic [ref=e39]: Perfis Customizados
+      - generic [ref=e40]:
+        - heading "Exploração" [level=3] [ref=e41]
+        - generic [ref=e42]:
+          - link "LinkMap" [ref=e43] [cursor=pointer]:
+            - /url: /explore
+            - img [ref=e44]
+            - generic [ref=e47]: LinkMap
+          - link "Hub de Produtos" [ref=e48] [cursor=pointer]:
+            - /url: /hub
+            - img [ref=e49]
+            - generic [ref=e54]: Hub de Produtos
+      - generic [ref=e55]:
+        - heading "Monitoramento" [level=3] [ref=e56]
+        - link "Watchlists" [ref=e58] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e59]
+          - generic [ref=e61]: Watchlists
+      - generic [ref=e62]:
+        - heading "Relatórios" [level=3] [ref=e63]
+        - link "Relatórios" [ref=e65] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e66]
+          - generic [ref=e69]: Relatórios
+      - generic [ref=e70]:
+        - heading "Administração" [level=3] [ref=e71]
+        - generic [ref=e72]:
+          - link "Usuários" [ref=e73] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e74]
+            - generic [ref=e79]: Usuários
+          - link "Configurações" [ref=e80] [cursor=pointer]:
+            - /url: /settings/tenant
+            - img [ref=e81]
+            - generic [ref=e84]: Configurações
+          - link "Billing" [ref=e85] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e86]
+            - generic [ref=e88]: Billing
+    - generic [ref=e89]:
+      - button "Recolher menu" [ref=e90] [cursor=pointer]:
+        - img [ref=e91]
+        - text: Recolher menu
+      - generic [ref=e93]:
+        - generic [ref=e94]: T
+        - generic [ref=e95]:
+          - paragraph [ref=e96]: teste
+          - paragraph [ref=e97]: teste@compliancehub.com
+  - generic [ref=e98]:
+    - banner [ref=e99]:
+      - generic [ref=e100]:
+        - heading "ComplianceHub" [level=1] [ref=e103]
+        - generic [ref=e104]:
+          - button "Ajuda" [disabled] [ref=e105] [cursor=pointer]:
+            - img [ref=e106]
+          - button "Importar em Lote" [disabled] [ref=e109] [cursor=pointer]:
+            - img [ref=e110]
+          - button "Notificações" [disabled] [ref=e113] [cursor=pointer]:
+            - img [ref=e114]
+          - button "Perfil" [ref=e118] [cursor=pointer]:
+            - generic [ref=e119]: T
+            - generic [ref=e120]: teste
+    - main [ref=e122]:
+      - generic [ref=e123]:
+        - generic [ref=e124]:
+          - generic [ref=e125]:
+            - text: Análises
+            - heading "Dossiês" [level=1] [ref=e126]
+            - paragraph [ref=e127]: 9 análises
+          - button "Nova Consulta" [ref=e128] [cursor=pointer]:
+            - img [ref=e129]
+            - text: Nova Consulta
+        - generic [ref=e130]:
+          - generic [ref=e131]:
+            - paragraph [ref=e132]: Total
+            - paragraph [ref=e133]: "9"
+          - generic [ref=e134]:
+            - paragraph [ref=e135]: Processando
+            - paragraph [ref=e136]: "0"
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Concluídos
+            - paragraph [ref=e139]: "0"
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Com erro
+            - paragraph [ref=e142]: "0"
+        - generic [ref=e144]:
+          - img [ref=e145]
+          - textbox "Buscar por CPF, CNPJ ou nome..." [ref=e148]
+        - generic [ref=e150]:
+          - generic [ref=e151]:
+            - generic [ref=e152]: Período
+            - generic [ref=e153]:
+              - generic [ref=e154]:
+                - img [ref=e155]
+                - textbox [ref=e157]
+              - generic [ref=e158]: até
+              - generic [ref=e159]:
+                - img [ref=e160]
+                - textbox [ref=e162]
+          - generic [ref=e163]:
+            - generic [ref=e164]: Responsável
+            - generic [ref=e165]:
+              - img [ref=e166]
+              - textbox "Nome do analista" [ref=e169]
+          - generic [ref=e170]:
+            - generic [ref=e171]: Status
+            - generic [ref=e172]:
+              - img [ref=e173]
+              - combobox [ref=e175]:
+                - option "Todos" [selected]
+                - option "Pronto"
+                - option "Publicado"
+                - option "Processando"
+                - option "Na fila"
+                - option "Erro"
+                - option "Falhou"
+              - img
+          - button "Atualizar" [ref=e177] [cursor=pointer]:
+            - img [ref=e178]
+            - text: Atualizar
+        - table [ref=e185]:
+          - rowgroup [ref=e186]:
+            - row "Nº dossiê Criação Tag Critério Progresso Status Ações" [ref=e187]:
+              - columnheader "Nº dossiê" [ref=e188]
+              - columnheader "Criação" [ref=e189]
+              - columnheader "Tag" [ref=e190]
+              - columnheader "Critério" [ref=e191]
+              - columnheader "Progresso" [ref=e192]
+              - columnheader "Status" [ref=e193]
+              - columnheader "Ações" [ref=e194]
+          - rowgroup [ref=e195]:
+            - row "9AVhQEoH0stuhuRQfybg 25/04/2026, 17:29:34 — 084.052.419-65 19% Concluído Abrir" [ref=e196] [cursor=pointer]:
+              - cell "9AVhQEoH0stuhuRQfybg" [ref=e197]
+              - cell "25/04/2026, 17:29:34" [ref=e198]
+              - cell "—" [ref=e199]
+              - cell "084.052.419-65" [ref=e200]
+              - cell "19%" [ref=e201]:
+                - generic [ref=e205]: 19%
+              - cell "Concluído" [ref=e206]:
+                - generic [ref=e207]: Concluído
+              - cell "Abrir" [ref=e208]:
+                - generic [ref=e209]:
+                  - text: Abrir
+                  - img [ref=e210]
+            - row "pNdArfG2NzVHd8Y7yksO 25/04/2026, 16:42:04 — 051.184.659-23 100% Concluído Abrir" [ref=e212] [cursor=pointer]:
+              - cell "pNdArfG2NzVHd8Y7yksO" [ref=e213]
+              - cell "25/04/2026, 16:42:04" [ref=e214]
+              - cell "—" [ref=e215]
+              - cell "051.184.659-23" [ref=e216]
+              - cell "100%" [ref=e217]:
+                - generic [ref=e221]: 100%
+              - cell "Concluído" [ref=e222]:
+                - generic [ref=e223]: Concluído
+              - cell "Abrir" [ref=e224]:
+                - generic [ref=e225]:
+                  - text: Abrir
+                  - img [ref=e226]
+            - row "TQmNZ2yTLPU16kaMeUb3 25/04/2026, 11:18:04 — Teste API 0% Iniciar Abrir" [ref=e228] [cursor=pointer]:
+              - cell "TQmNZ2yTLPU16kaMeUb3" [ref=e229]
+              - cell "25/04/2026, 11:18:04" [ref=e230]
+              - cell "—" [ref=e231]
+              - cell "Teste API" [ref=e232]
+              - cell "0%" [ref=e233]:
+                - generic [ref=e236]: 0%
+              - cell "Iniciar" [ref=e237]:
+                - generic [ref=e238]: Iniciar
+              - cell "Abrir" [ref=e239]:
+                - generic [ref=e240]:
+                  - text: Abrir
+                  - img [ref=e241]
+            - row "qurTsbgGlss6XGFOslZp 06/04/2026, 14:12:32 — — 0% PENDING Abrir" [ref=e243] [cursor=pointer]:
+              - cell "qurTsbgGlss6XGFOslZp" [ref=e244]
+              - cell "06/04/2026, 14:12:32" [ref=e245]
+              - cell "—" [ref=e246]
+              - cell "—" [ref=e247]
+              - cell "0%" [ref=e248]:
+                - generic [ref=e251]: 0%
+              - cell "PENDING" [ref=e252]:
+                - generic [ref=e253]: PENDING
+              - cell "Abrir" [ref=e254]:
+                - generic [ref=e255]:
+                  - text: Abrir
+                  - img [ref=e256]
+            - row "s3lT7jAvzooRxJGGyTk2 26/03/2026, 13:02:24 — — 0% PENDING Abrir" [ref=e258] [cursor=pointer]:
+              - cell "s3lT7jAvzooRxJGGyTk2" [ref=e259]
+              - cell "26/03/2026, 13:02:24" [ref=e260]
+              - cell "—" [ref=e261]
+              - cell "—" [ref=e262]
+              - cell "0%" [ref=e263]:
+                - generic [ref=e266]: 0%
+              - cell "PENDING" [ref=e267]:
+                - generic [ref=e268]: PENDING
+              - cell "Abrir" [ref=e269]:
+                - generic [ref=e270]:
+                  - text: Abrir
+                  - img [ref=e271]
+            - row "70KYcYKZYP255vwJ0fVk 26/03/2026, 13:01:33 — — 0% PENDING Abrir" [ref=e273] [cursor=pointer]:
+              - cell "70KYcYKZYP255vwJ0fVk" [ref=e274]
+              - cell "26/03/2026, 13:01:33" [ref=e275]
+              - cell "—" [ref=e276]
+              - cell "—" [ref=e277]
+              - cell "0%" [ref=e278]:
+                - generic [ref=e281]: 0%
+              - cell "PENDING" [ref=e282]:
+                - generic [ref=e283]: PENDING
+              - cell "Abrir" [ref=e284]:
+                - generic [ref=e285]:
+                  - text: Abrir
+                  - img [ref=e286]
+            - row "RNNJO5BC2nhgjXu7nQTe 26/03/2026, 13:00:51 — — 0% PENDING Abrir" [ref=e288] [cursor=pointer]:
+              - cell "RNNJO5BC2nhgjXu7nQTe" [ref=e289]
+              - cell "26/03/2026, 13:00:51" [ref=e290]
+              - cell "—" [ref=e291]
+              - cell "—" [ref=e292]
+              - cell "0%" [ref=e293]:
+                - generic [ref=e296]: 0%
+              - cell "PENDING" [ref=e297]:
+                - generic [ref=e298]: PENDING
+              - cell "Abrir" [ref=e299]:
+                - generic [ref=e300]:
+                  - text: Abrir
+                  - img [ref=e301]
+            - row "90LHMip0ewLm7c6qFX0c 26/03/2026, 13:00:34 — — 0% PENDING Abrir" [ref=e303] [cursor=pointer]:
+              - cell "90LHMip0ewLm7c6qFX0c" [ref=e304]
+              - cell "26/03/2026, 13:00:34" [ref=e305]
+              - cell "—" [ref=e306]
+              - cell "—" [ref=e307]
+              - cell "0%" [ref=e308]:
+                - generic [ref=e311]: 0%
+              - cell "PENDING" [ref=e312]:
+                - generic [ref=e313]: PENDING
+              - cell "Abrir" [ref=e314]:
+                - generic [ref=e315]:
+                  - text: Abrir
+                  - img [ref=e316]
+            - row "D2t01zp1Z7jufd5JjzA6 26/03/2026, 12:58:42 — — 0% PENDING Abrir" [ref=e318] [cursor=pointer]:
+              - cell "D2t01zp1Z7jufd5JjzA6" [ref=e319]
+              - cell "26/03/2026, 12:58:42" [ref=e320]
+              - cell "—" [ref=e321]
+              - cell "—" [ref=e322]
+              - cell "0%" [ref=e323]:
+                - generic [ref=e326]: 0%
+              - cell "PENDING" [ref=e327]:
+                - generic [ref=e328]: PENDING
+              - cell "Abrir" [ref=e329]:
+                - generic [ref=e330]:
+                  - text: Abrir
+                  - img [ref=e331]

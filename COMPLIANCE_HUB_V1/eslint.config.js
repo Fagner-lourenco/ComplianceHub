@@ -14,10 +14,9 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 'latest',
       globals: globals.browser,
       parserOptions: {
-        ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
         sourceType: 'module',
       },
@@ -27,12 +26,32 @@ export default defineConfig([
     },
   },
   {
+    files: ['functions/**/*.{js,cjs}'],
+    languageOptions: {
+      globals: globals.node,
+      sourceType: 'commonjs',
+    },
+  },
+  {
     files: ['**/*.test.{js,jsx}'],
     languageOptions: {
       globals: {
         ...globals.browser,
         ...globals.node,
         ...globals.vitest,
+      },
+    },
+  },
+  {
+    files: ['functions/**/*.test.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.vitest,
+      },
+      sourceType: 'module',
+      parserOptions: {
+        sourceType: 'module',
       },
     },
   },

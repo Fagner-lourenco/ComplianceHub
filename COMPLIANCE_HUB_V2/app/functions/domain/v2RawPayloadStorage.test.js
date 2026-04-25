@@ -8,7 +8,7 @@ const {
     normalizeRawSnapshotMetadata,
     persistRawPayloadObject,
     persistRawSnapshotPayloads,
-} = require('./v2RawPayloadStorage.cjs');
+} = require('./v2RawPayloadStorage.js');
 
 function createFakeBucket() {
     const save = vi.fn().mockResolvedValue(undefined);

@@ -7,7 +7,7 @@ const UF_REGION_MAP = {
     SE: 'NORTHEAST', TO: 'NORTH',
 };
 
-const LOW_RISK_ROLE_REGEX = /testemunha|informante/i;
+const LOW_RISK_ROLE_REGEX = /testemunha|informante|outro|desconhecido/i;
 
 // BUG-10 fix: Use the best available cpfsComNome signal from all providers.
 // When Escavador didn't run, escavadorCpfsComEsseNome is 0, but Judit gate
@@ -28,12 +28,8 @@ function uniqStrings(values = []) {
 }
 
 function normalizeText(value) {
-    return String(value || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toUpperCase();
+    const { normalizeText: normalize } = require('./textNormalize.js');
+    return normalize(value, { toCase: 'upper' });
 }
 
 function getRegionByUf(uf) {
@@ -98,7 +94,8 @@ function buildCandidateProfile(caseData = {}) {
         birthDateAvailable: Boolean(contact.birthDate || juditIdentity.birthDate),
         cpfConfirmedInProvider: Boolean(
             (caseData.juditRoleSummary || []).some((item) => item?.hasExactCpfMatch)
-            || (caseData.escavadorProcessos || []).some((item) => item?.hasExactCpfMatch),
+            || (caseData.escavadorProcessos || []).some((item) => item?.hasExactCpfMatch)
+            || (caseData.bigdatacorpProcessos || []).some((item) => item?.isDirectCpfMatch),
         ),
     };
 }
@@ -281,9 +278,64 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
     });
 }
 
+function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
+    if (!['DONE', 'PARTIAL'].includes(caseData.bigdatacorpEnrichmentStatus)) return [];
+    const processes = Array.isArray(caseData.bigdatacorpProcessos) ? caseData.bigdatacorpProcessos : [];
+
+    return processes.map((processo) => {
+        const hasExactCpfMatch = processo.isDirectCpfMatch === true;
+        const viaNameOnly = !hasExactCpfMatch;
+        const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.estado, null);
+        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo);
+        const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
+        const evidenceOrigin = resolveEvidenceOrigin('BigDataCorp', hasExactCpfMatch, viaNameOnly, matchStrength);
+        const evidenceStrength = resolveEvidenceStrength({
+            hasExactCpfMatch,
+            hasDivergentCpf: false,
+            lowRiskRole,
+            geoConsistency,
+            matchStrength,
+            cpfsComEsseNome: getCpfsComNome(caseData),
+        });
+        const analysisScope = resolveAnalysisScope(evidenceStrength);
+        const homonymRiskSignals = [];
+
+        if (viaNameOnly) homonymRiskSignals.push('NO_EXACT_CPF_MATCH');
+        if (geoConsistency === 'DISTANT_REGION') homonymRiskSignals.push('DISTANT_GEOGRAPHY');
+        if (lowRiskRole) homonymRiskSignals.push('LOW_RISK_ROLE');
+
+        return {
+            source: 'BigDataCorp',
+            sourceKey: 'bigdatacorp',
+            cnj: processo.numero || null,
+            area: processo.cnjBroadSubject || processo.courtType || null,
+            courtType: processo.courtType || null,
+            isCriminal: processo.isCriminal === true,
+            tribunal: null,
+            processUf: processo.estado || null,
+            processCity: null,
+            hasExactCpfMatch,
+            hasDivergentCpf: false,
+            matchedRole: processo.specificRole || processo.partyType || processo.polo || null,
+            lowRiskRole,
+            matchStrength,
+            evidenceOrigin,
+            evidenceStrength,
+            analysisScope,
+            geoConsistency,
+            identityConsistency: hasExactCpfMatch ? 'HIGH' : 'LOW',
+            viaNameOnly,
+            homonymRiskSignals,
+        };
+    });
+}
+
 function buildHardFacts(caseData, processCandidates) {
     const hardFacts = [];
-    if ((caseData.juditActiveWarrantCount || 0) > 0) hardFacts.push('ACTIVE_WARRANT');
+    if ((caseData.juditActiveWarrantCount || 0) > 0
+        || (Array.isArray(caseData.bigdatacorpActiveWarrants) && caseData.bigdatacorpActiveWarrants.length > 0)) {
+        hardFacts.push('ACTIVE_WARRANT');
+    }
     if (caseData.juditExecutionFlag === 'POSITIVE') hardFacts.push('PENAL_EXECUTION');
     if (processCandidates.some((item) => item.source === 'Judit' && item.hasExactCpfMatch && !item.lowRiskRole)) {
         hardFacts.push('JUDIT_EXACT_CPF_MATCH');
@@ -291,14 +343,36 @@ function buildHardFacts(caseData, processCandidates) {
     if (processCandidates.some((item) => item.source === 'Escavador' && item.hasExactCpfMatch && !item.lowRiskRole)) {
         hardFacts.push('ESCAVADOR_EXACT_CPF_MATCH');
     }
+    if (processCandidates.some((item) => item.source === 'BigDataCorp' && item.hasExactCpfMatch && !item.lowRiskRole)) {
+        hardFacts.push('BIGDATACORP_EXACT_CPF_MATCH');
+    }
     if (
         processCandidates.some((item) => item.hasExactCpfMatch && item.lowRiskRole)
         && !hardFacts.includes('JUDIT_EXACT_CPF_MATCH')
         && !hardFacts.includes('ESCAVADOR_EXACT_CPF_MATCH')
+        && !hardFacts.includes('BIGDATACORP_EXACT_CPF_MATCH')
     ) {
         hardFacts.push('LOW_RISK_EXACT_ROLE');
     }
     return hardFacts;
+}
+
+const EVIDENCE_STRENGTH_ORDER = ['HARD_FACT', 'EXACT_CPF_LOW_RISK_ROLE', 'PARTIAL_MATCH', 'WEAK_MATCH', 'DISCARDED_DIFFERENT_CPF'];
+
+function dedupCandidatesByCnj(candidates) {
+    const byCnj = new Map();
+    for (const candidate of candidates) {
+        const cnj = candidate.cnj;
+        if (!cnj) { byCnj.set(`__no_cnj_${byCnj.size}`, candidate); continue; }
+        const existing = byCnj.get(cnj);
+        if (!existing) { byCnj.set(cnj, candidate); continue; }
+        const existingRank = EVIDENCE_STRENGTH_ORDER.indexOf(existing.evidenceStrength);
+        const newRank = EVIDENCE_STRENGTH_ORDER.indexOf(candidate.evidenceStrength);
+        if (newRank >= 0 && (existingRank < 0 || newRank < existingRank)) {
+            byCnj.set(cnj, candidate);
+        }
+    }
+    return [...byCnj.values()];
 }
 
 function scoreProcessCandidate(candidate) {
@@ -334,6 +408,7 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
         .filter((item) => item.hasExactCpfMatch && !item.lowRiskRole)
         .map((item) => item.source.toUpperCase()));
 
+    const bigdatacorpTotal = caseData.bigdatacorpProcessTotal || 0;
     const reasons = [];
     let providerDivergence = 'NONE';
 
@@ -341,8 +416,13 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
         providerDivergence = 'HIGH';
         reasons.push('JUDIT_ZERO_ESCAVADOR_FOUND');
     } else if (juditTotal > 0 && escavadorTotal === 0) {
-        providerDivergence = 'HIGH';
-        reasons.push('ESCAVADOR_ZERO_JUDIT_FOUND');
+        if (bigdatacorpTotal > 0) {
+            providerDivergence = 'MEDIUM';
+            reasons.push('ESCAVADOR_ZERO_BDC_COMPENSATES');
+        } else {
+            providerDivergence = 'HIGH';
+            reasons.push('ESCAVADOR_ZERO_JUDIT_FOUND');
+        }
     } else if (juditTotal > 0 && escavadorTotal > 0 && Math.abs(juditTotal - escavadorTotal) >= 5) {
         providerDivergence = 'MEDIUM';
         reasons.push('PROCESS_COUNT_DIVERGENCE');
@@ -357,7 +437,7 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
     if (caseData.juditEnrichmentStatus === 'FAILED' || caseData.escavadorEnrichmentStatus === 'FAILED') {
         reasons.push('PROVIDER_FAILURE_REDUCES_COVERAGE');
     }
-    if (juditTotal === 0 && escavadorTotal === 0 && exactMatchSources.length === 0) {
+    if (juditTotal === 0 && escavadorTotal === 0 && bigdatacorpTotal === 0 && exactMatchSources.length === 0) {
         reasons.push('NO_PROCESS_EVIDENCE_RETURNED');
     }
 
@@ -373,7 +453,7 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
         overallLevel = 'PARTIAL_COVERAGE';
     } else if (weakCandidates.length > 0) {
         overallLevel = 'LOW_COVERAGE';
-    } else if (juditTotal > 0 || escavadorTotal > 0) {
+    } else if (juditTotal > 0 || escavadorTotal > 0 || bigdatacorpTotal > 0) {
         overallLevel = 'PARTIAL_COVERAGE';
     }
 
@@ -397,6 +477,15 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
         ? 'PARTIAL_COVERAGE'
         : 'LOW_COVERAGE';
 
+    const bigdatacorpExact = processCandidates.filter((item) => item.source === 'BigDataCorp' && item.hasExactCpfMatch && !item.lowRiskRole);
+    const bigdatacorpConfidence = bigdatacorpExact.length > 0
+        ? 'HIGH_COVERAGE'
+        : (caseData.bigdatacorpProcessTotal || 0) > 0
+            ? 'PARTIAL_COVERAGE'
+            : ['DONE', 'PARTIAL'].includes(caseData.bigdatacorpEnrichmentStatus)
+                ? 'LOW_COVERAGE'
+                : 'NOT_AVAILABLE';
+
     return {
         judit: {
             total: juditTotal,
@@ -410,6 +499,12 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
             criminal: caseData.escavadorCriminalCount || 0,
             cpfsComEsseNome: caseData.escavadorCpfsComEsseNome || 0,
             confidence: escavadorConfidence,
+        },
+        bigdatacorp: {
+            total: caseData.bigdatacorpProcessTotal || 0,
+            criminal: caseData.bigdatacorpCriminalCount || 0,
+            warrants: (Array.isArray(caseData.bigdatacorpActiveWarrants) ? caseData.bigdatacorpActiveWarrants : []).length,
+            confidence: bigdatacorpConfidence,
         },
         fontedata: {
             active: Boolean(caseData.enrichmentStatus),
@@ -430,10 +525,12 @@ function buildCoverageAssessment(caseData, processCandidates, hardFacts) {
 
 function buildHomonymAnalysisInput(caseData = {}) {
     const candidateProfile = buildCandidateProfile(caseData);
-    const processCandidates = prioritizeProcessCandidates([
+    const rawCandidates = prioritizeProcessCandidates([
         ...buildJuditProcessCandidates(caseData, candidateProfile),
         ...buildEscavadorProcessCandidates(caseData, candidateProfile),
+        ...buildBigDataCorpProcessCandidates(caseData, candidateProfile),
     ]);
+    const processCandidates = dedupCandidatesByCnj(rawCandidates);
 
     const hardFacts = buildHardFacts(caseData, processCandidates);
     const providerCoverage = buildCoverageAssessment(caseData, processCandidates, hardFacts);
@@ -476,9 +573,11 @@ function buildHomonymAnalysisInput(caseData = {}) {
 
 module.exports = {
     buildCandidateProfile,
+    dedupCandidatesByCnj,
     getGeoConsistencyBucket,
     buildCoverageAssessment,
     buildHomonymAnalysisInput,
     getRegionByUf,
+    hasLowRiskRole,
     prioritizeProcessCandidates,
 };

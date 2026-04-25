@@ -1,0 +1,24 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "SocialConsciousness": {
+        "OwnershipDiversityScore": "G",
+        "EmployeesDiversityScore": "G",
+        "OnlineAccessibilityScore": "B"
+      }
+    }
+  ],
+  "QueryId": "e868ce1c-a531-47cb-bd98-88d0ae9b2963",
+  "ElapsedMilliseconds": 3230,
+  "QueryDate": "2026-04-25T12:54:03.4975262Z",
+  "Status": {
+    "social_conscience": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

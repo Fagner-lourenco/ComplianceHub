@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
+process.env.FUNCTIONS_EMULATOR = 'true';
+
 const require = createRequire(import.meta.url);
 const { normalizeEscavadorProcessos } = require('../normalizers/escavador');
 const {
@@ -12,7 +14,7 @@ const {
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
 const { buildHomonymAnalysisInput } = require('./aiHomonym');
-const { __test } = require('../index');
+const { __test } = require('../__test-helpers');
 
 const {
     computeAutoClassification,

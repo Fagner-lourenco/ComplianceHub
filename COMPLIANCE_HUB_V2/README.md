@@ -9,16 +9,50 @@ Diretorio limpo da V2 do ComplianceHub.
 
 ## Comandos
 
-Execute a partir de `app/`:
+Execute a partir da raiz da V2:
 
 ```powershell
-cd COMPLIANCE_HUB_V2/app
+cd D:\ComplianceHub\COMPLIANCE_HUB_V2
+npm run dev
 npm test
 npm run test:rules
 npm run lint
-node --check functions/index.js
+npm run check:functions
 npm run build
 ```
+
+Os scripts da raiz encaminham para `app/`, onde o runtime React/Vite/Firebase esta instalado.
+
+## Functions V2
+
+Use somente os scripts da raiz para emulador/deploy de Functions:
+
+```powershell
+cd D:\ComplianceHub\COMPLIANCE_HUB_V2
+npm run guard:firebase
+npm run emulators:functions
+npm run deploy:functions
+```
+
+Esses scripts sempre passam `--project compliance-hub-v2` para o Firebase CLI e executam um guard antes de operacoes sensiveis.
+
+As Functions tambem usam `codebase: compliance-hub-v2` em `app/firebase.json`, evitando mistura logica com qualquer codebase legado.
+
+As exports das Cloud Functions V2 tambem sao prefixadas com `v2`, por exemplo:
+
+- `v2CreateClientSolicitation`
+- `v2ConcludeCaseByAnalyst`
+- `v2JuditWebhook`
+- `v2ScheduledMonitoringJob`
+
+Nao publique aliases sem prefixo na V2. Nomes sem `v2` pertencem ao legado/V1 ou a historico antigo.
+
+## Firebase V2
+
+- Projeto Firebase default: `compliance-hub-v2`.
+- Config local: `app/.firebaserc` e `app/.env.local`.
+- Nunca usar credenciais, Web App config ou service account do V1 nesta pasta.
+- Antes de usar o banco real V2, preencha em `app/.env.local` a Web API Key, Messaging Sender ID e App ID do projeto Firebase `compliance-hub-v2`.
 
 ## Politica de limpeza
 

@@ -1,0 +1,84 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: CH
+        - generic [ref=e15]:
+          - strong [ref=e16]: ComplianceHub
+          - generic [ref=e17]: Plataforma de Análise de Risco
+      - navigation "Produtos" [ref=e18]:
+        - link "Análises" [ref=e19] [cursor=pointer]:
+          - /url: /dossie
+          - img [ref=e20]
+          - text: Análises
+        - link "LinkHub" [ref=e24] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e25]
+          - text: LinkHub
+        - link "FlagHub" [ref=e28] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e29]
+          - text: FlagHub
+        - link "SearchHub" [ref=e31] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e32]
+          - text: SearchHub
+      - generic [ref=e35]:
+        - button "Ativar modo escuro" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+        - button "Sair" [ref=e39] [cursor=pointer]
+    - navigation "Operações" [ref=e41]:
+      - link "Watchlists" [ref=e42] [cursor=pointer]:
+        - /url: /watchlists
+        - img [ref=e43]
+        - text: Watchlists
+      - link "Billing" [ref=e45] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e46]
+        - text: Billing
+      - link "Senior Review" [ref=e49] [cursor=pointer]:
+        - /url: /senior-review
+        - img [ref=e50]
+        - text: Senior Review
+      - link "Relatórios" [ref=e52] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e53]
+        - text: Relatórios
+  - main [ref=e57]:
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - generic [ref=e60]: Aprovação
+        - heading "Fila de Revisão Senior" [level=1] [ref=e61]
+        - paragraph [ref=e62]: Fila de análises pendentes de aprovação. Revise, aprove ou solicite correções.
+      - generic [ref=e64]: 2 pendentes
+    - table "Fila de revisão senior" [ref=e66]:
+      - row "Análise Analista Motivo Data Ações" [ref=e67]:
+        - columnheader "Análise" [ref=e68]
+        - columnheader "Analista" [ref=e69]
+        - columnheader "Motivo" [ref=e70]
+        - columnheader "Data" [ref=e71]
+        - columnheader "Ações" [ref=e72]
+      - row "DOS-2026-0003 Maria Oliveira Risco alto detectado — necessita revisão senior 22/04/2026, 11:30:00 Aprovar Reprovar" [ref=e73]:
+        - cell "DOS-2026-0003" [ref=e74]
+        - cell "Maria Oliveira" [ref=e75]
+        - cell "Risco alto detectado — necessita revisão senior" [ref=e76]
+        - cell "22/04/2026, 11:30:00" [ref=e77]
+        - cell "Aprovar Reprovar" [ref=e78]:
+          - button "Aprovar" [ref=e79] [cursor=pointer]:
+            - img [ref=e80]
+            - text: Aprovar
+          - button "Reprovar" [ref=e83] [cursor=pointer]:
+            - img [ref=e84]
+            - text: Reprovar
+      - row "DOS-2026-0005 Pedro Santos Score crítico — verificação manual necessária 23/04/2026, 06:15:00 Aprovar Reprovar" [ref=e88]:
+        - cell "DOS-2026-0005" [ref=e89]
+        - cell "Pedro Santos" [ref=e90]
+        - cell "Score crítico — verificação manual necessária" [ref=e91]
+        - cell "23/04/2026, 06:15:00" [ref=e92]
+        - cell "Aprovar Reprovar" [ref=e93]:
+          - button "Aprovar" [ref=e94] [cursor=pointer]:
+            - img [ref=e95]
+            - text: Aprovar
+          - button "Reprovar" [ref=e98] [cursor=pointer]:
+            - img [ref=e99]
+            - text: Reprovar

@@ -1,0 +1,28 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "PoliticalInvolvement": {
+        "ElectionsCount": 0,
+        "IsCurrentlyInOffice": false,
+        "WasFormerlyElected": false,
+        "IsPep": false,
+        "AmountDonated": 0,
+        "AmountReceived": 0,
+        "PoliticalInvolvementScore": 0
+      }
+    }
+  ],
+  "QueryId": "e10bb63d-e741-4826-b529-400ea6db39fa",
+  "ElapsedMilliseconds": 59,
+  "QueryDate": "2026-04-25T12:32:39.7382786Z",
+  "Status": {
+    "political_involvement": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

@@ -1,0 +1,44 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "FinantialData": {
+        "TotalAssets": "ABAIXO DE 100K",
+        "TaxReturns": [
+          {
+            "Year": "2021",
+            "Status": "SUA DECLARACAO NAO CONSTA NA BASE DE DADOS DA RECEITA FEDERAL",
+            "Bank": "",
+            "Branch": "0000",
+            "Batch": "",
+            "IsVipBranch": false,
+            "CaptureDate": "2021-01-01T00:00:00",
+            "CreationDate": "2021-01-01T00:00:00",
+            "LastUpdateDate": "2021-12-02T22:47:00Z"
+          }
+        ],
+        "IncomeEstimates": {
+          "COMPANY OWNERSHIP": "SEM INFORMACAO",
+          "MTE": "2 A 4 SM",
+          "IBGE": "SEM INFORMACAO",
+          "BIGDATA": "ATE 2 SM",
+          "BIGDATA_V2": "2 A 3 SM"
+        },
+        "CreationDate": "2016-08-23T00:00:00Z",
+        "LastUpdateDate": "2026-03-28T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "51f2d3c2-df89-4591-ac90-b0170546a54c",
+  "ElapsedMilliseconds": 64,
+  "QueryDate": "2026-04-25T10:59:52.9470737Z",
+  "Status": {
+    "financial_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

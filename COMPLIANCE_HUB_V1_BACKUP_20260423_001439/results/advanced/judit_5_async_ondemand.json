@@ -1,0 +1,255 @@
+{
+  "requestId": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+  "create": {
+    "request_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+    "search": {
+      "on_demand": true,
+      "search_type": "cpf",
+      "search_key": "462.472.438-04",
+      "response_type": "lawsuits",
+      "search_params": {
+        "public_search": false,
+        "filter": {
+          "tribunals": {
+            "keys": [
+              "TJSP",
+              "TRT1SP",
+              "TRT2SP"
+            ],
+            "not_equal": false,
+            "_id": "69cefb16099d381f6c06f3c0"
+          },
+          "party_names": [],
+          "party_documents": []
+        },
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T23:26:14.718Z",
+    "updated_at": "2026-04-02T23:26:14.718Z",
+    "tags": {
+      "potential_homonym": false
+    }
+  },
+  "responses": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 1,
+    "all_pages_count": 1,
+    "all_count": 1,
+    "page_data": [
+      {
+        "request_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+        "response_id": "29ee8c0c-270d-4d9e-8d53-678a5f04dbbc",
+        "origin": "api",
+        "origin_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+        "response_type": "lawsuit",
+        "response_data": {
+          "code": "1505327-09.2024.8.26.0001",
+          "instance": 1,
+          "name": "JUSTIÇA PÚBLICA X MATHEUS SANTOS GONÇALVES",
+          "free_justice": false,
+          "secrecy_level": 0,
+          "courts": [],
+          "tribunal_acronym": "TJSP",
+          "county": "02 CIVEL DE SANTANA",
+          "state": "SP",
+          "city": "SAO PAULO",
+          "distribution_date": "2024-07-22T00:16:48.000Z",
+          "last_step": {
+            "step_id": "wU8WWRgkCaE9/M492d1IyC4KXt0rjiO/dr1L+xltIw8=",
+            "step_date": "2024-07-26T23:22:12.000Z",
+            "content": "---",
+            "step_type": "60",
+            "steps_count": 1
+          },
+          "tags": {
+            "datalake_id": "15053270920248260001",
+            "datalake_segment": "JUSTICA_ESTADUAL",
+            "dictionary_updated_at": "2026-04-02T23:26:23.590Z"
+          },
+          "justice": "8",
+          "tribunal": "26",
+          "crawler": {
+            "source_name": "JTJ - BR - Document / Lawsuit - Auth",
+            "crawl_id": "589de8ff-f5b8-4f40-91df-06ef4675fa28",
+            "updated_at": "2024-09-24T22:26:12.452Z",
+            "weight": 0
+          },
+          "area": "NÃO INFORMADO",
+          "justice_description": "JUSTIÇA ESTADUAL",
+          "created_at": "2024-09-24T22:29:10.137Z",
+          "updated_at": "2024-09-24T22:29:10.137Z",
+          "amount": 0,
+          "classifications": [],
+          "subjects": [],
+          "parties": [
+            {
+              "main_document": "51174001000193",
+              "name": "Justiça Pública",
+              "side": "Active",
+              "person_type": "AUTOR",
+              "documents": [
+                {
+                  "document": "51174001000193",
+                  "document_type": "CNPJ"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "46247243804",
+              "name": "Matheus Santos Gonçalves",
+              "side": "Passive",
+              "person_type": "AVERIGUADO",
+              "documents": [
+                {
+                  "document": "46247243804",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "52387210808",
+              "name": "Rebeca Arcadi Amaral",
+              "side": "Interested",
+              "person_type": "VÍTIMA",
+              "documents": [
+                {
+                  "document": "52387210808",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            }
+          ],
+          "attachments": [],
+          "related_lawsuits": [],
+          "steps": []
+        },
+        "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+        "created_at": "2026-04-02T23:26:23.591Z",
+        "request_created_at": "2026-04-02T23:26:14.718Z",
+        "tags": {
+          "dashboard_id": null,
+          "cached_response": true
+        }
+      }
+    ]
+  },
+  "criminalOnly": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 0,
+    "all_pages_count": 0,
+    "all_count": 0,
+    "page_data": []
+  },
+  "pageData": [
+    {
+      "request_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+      "response_id": "29ee8c0c-270d-4d9e-8d53-678a5f04dbbc",
+      "origin": "api",
+      "origin_id": "469e4d11-02a7-4344-bf8f-4f1766d5f51a",
+      "response_type": "lawsuit",
+      "response_data": {
+        "code": "1505327-09.2024.8.26.0001",
+        "instance": 1,
+        "name": "JUSTIÇA PÚBLICA X MATHEUS SANTOS GONÇALVES",
+        "free_justice": false,
+        "secrecy_level": 0,
+        "courts": [],
+        "tribunal_acronym": "TJSP",
+        "county": "02 CIVEL DE SANTANA",
+        "state": "SP",
+        "city": "SAO PAULO",
+        "distribution_date": "2024-07-22T00:16:48.000Z",
+        "last_step": {
+          "step_id": "wU8WWRgkCaE9/M492d1IyC4KXt0rjiO/dr1L+xltIw8=",
+          "step_date": "2024-07-26T23:22:12.000Z",
+          "content": "---",
+          "step_type": "60",
+          "steps_count": 1
+        },
+        "tags": {
+          "datalake_id": "15053270920248260001",
+          "datalake_segment": "JUSTICA_ESTADUAL",
+          "dictionary_updated_at": "2026-04-02T23:26:23.590Z"
+        },
+        "justice": "8",
+        "tribunal": "26",
+        "crawler": {
+          "source_name": "JTJ - BR - Document / Lawsuit - Auth",
+          "crawl_id": "589de8ff-f5b8-4f40-91df-06ef4675fa28",
+          "updated_at": "2024-09-24T22:26:12.452Z",
+          "weight": 0
+        },
+        "area": "NÃO INFORMADO",
+        "justice_description": "JUSTIÇA ESTADUAL",
+        "created_at": "2024-09-24T22:29:10.137Z",
+        "updated_at": "2024-09-24T22:29:10.137Z",
+        "amount": 0,
+        "classifications": [],
+        "subjects": [],
+        "parties": [
+          {
+            "main_document": "51174001000193",
+            "name": "Justiça Pública",
+            "side": "Active",
+            "person_type": "AUTOR",
+            "documents": [
+              {
+                "document": "51174001000193",
+                "document_type": "CNPJ"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "46247243804",
+            "name": "Matheus Santos Gonçalves",
+            "side": "Passive",
+            "person_type": "AVERIGUADO",
+            "documents": [
+              {
+                "document": "46247243804",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "52387210808",
+            "name": "Rebeca Arcadi Amaral",
+            "side": "Interested",
+            "person_type": "VÍTIMA",
+            "documents": [
+              {
+                "document": "52387210808",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          }
+        ],
+        "attachments": [],
+        "related_lawsuits": [],
+        "steps": []
+      },
+      "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+      "created_at": "2026-04-02T23:26:23.591Z",
+      "request_created_at": "2026-04-02T23:26:14.718Z",
+      "tags": {
+        "dashboard_id": null,
+        "cached_response": true
+      }
+    }
+  ],
+  "totalCount": 1
+}

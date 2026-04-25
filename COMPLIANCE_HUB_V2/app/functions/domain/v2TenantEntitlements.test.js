@@ -3,7 +3,7 @@ import {
     V2_TENANT_ENTITLEMENTS_VERSION,
     buildTenantEntitlementAuditDiff,
     sanitizeTenantEntitlementPayload,
-} from './v2TenantEntitlements.cjs';
+} from './v2TenantEntitlements.js';
 
 describe('v2TenantEntitlements', () => {
     it('exporta versao do contrato', () => {

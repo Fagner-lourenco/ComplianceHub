@@ -1,0 +1,31 @@
+{
+  "create": {
+    "request_id": "f408e128-ab82-4e1f-8f1d-acf7d994e9fb",
+    "search": {
+      "on_demand": false,
+      "search_type": "cpf",
+      "search_key": "480.520.538-54",
+      "response_type": "warrant",
+      "search_params": {
+        "public_search": false,
+        "filter": {},
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "f408e128-ab82-4e1f-8f1d-acf7d994e9fb",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T21:35:25.436Z",
+    "updated_at": "2026-04-02T21:35:25.436Z",
+    "tags": {
+      "potential_homonym": false
+    }
+  },
+  "poll": {
+    "_timeout": true
+  },
+  "responses": null,
+  "error": "Poll timeout"
+}

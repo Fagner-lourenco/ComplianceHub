@@ -1,0 +1,74 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "KycData": {
+        "PEPHistory": [],
+        "IsCurrentlyPEP": false,
+        "SanctionsHistory": [
+          {
+            "Source": "interpol",
+            "Type": "Law Enforcement",
+            "StandardizedSanctionType": "ARREST WARRANTS",
+            "MatchRate": 50,
+            "NameUniquenessScore": 1,
+            "Details": {
+              "OriginalName": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+              "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+              "BirthDate": "2000/08/01",
+              "StandardizedBirthDate": "2000-08-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0",
+              "Nationalities": "BRAZIL",
+              "image": "https://ws-public.interpol.int/notices/v1/red/2024-57878/images/63186547",
+              "language_spoken": "portuguese",
+              "charges": "organización criminal; posesión ilegal de arma de fuego de uso restringido"
+            },
+            "NormalizedDetails": {
+              "OriginalName": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+              "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+              "Nationalities": "BRAZIL",
+              "BirthDate": "2000/08/01",
+              "StandardizedBirthDate": "2000-08-01T00:00:00",
+              "SourcePossibleDateOfBirthScore": "0"
+            },
+            "StartDate": "0001-01-01T00:00:00",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2026-04-24T03:06:46.101",
+            "LastUpdateDate": "2026-04-24T03:06:46.101",
+            "IsCurrentlyPresentOnSource": true,
+            "WasRecentlyPresentOnSource": true
+          }
+        ],
+        "IsCurrentlySanctioned": false,
+        "WasPreviouslySanctioned": false,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 0,
+        "FirstSanctionDate": "0001-01-01T00:00:00",
+        "LastSanctionDate": "0001-01-01T00:00:00",
+        "IsCurrentlyElectoralDonor": false,
+        "IsHistoricalElectoralDonor": false,
+        "TotalElectoralDonations": 0,
+        "TotalElectoralDonationAmount": 0,
+        "ElectoralDonations": {}
+      }
+    }
+  ],
+  "QueryId": "ce5a16a6-489e-4e81-96e8-60ca4c7e2cea",
+  "ElapsedMilliseconds": 69,
+  "QueryDate": "2026-04-25T10:59:26.9339349Z",
+  "Status": {
+    "kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

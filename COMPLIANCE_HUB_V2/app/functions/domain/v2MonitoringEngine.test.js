@@ -8,7 +8,7 @@ import {
     buildPhantomCaseId,
     normalizeWatchlistData,
     CIRCUIT_BREAKER_FAILURE_THRESHOLD,
-} from './v2MonitoringEngine.cjs';
+} from './v2MonitoringEngine.js';
 
 function makeRef({ existsInitially = false, initialData = null } = {}) {
     const state = { exists: existsInitially, data: initialData };

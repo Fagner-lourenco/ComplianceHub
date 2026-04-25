@@ -1,0 +1,18 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}"
+    }
+  ],
+  "QueryId": "12adc1bc-e672-4a1b-99d1-048cb6be41d0",
+  "ElapsedMilliseconds": 39,
+  "QueryDate": "2026-04-25T12:33:54.9888229Z",
+  "Status": {
+    "property_data": [
+      {
+        "Code": -109,
+        "Message": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+      }
+    ]
+  }
+}

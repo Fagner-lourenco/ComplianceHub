@@ -1,0 +1,45 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "ProfessionData": {
+        "Professions": [
+          {
+            "Source": "RECEITA FEDERAL",
+            "Sector": "PRIVATE - 7739099 - ALUGUEL DE OUTRAS MAQUINAS E EQUIPAMENTOS COMERCIAIS E INDUSTRIAIS NAO ESPECIFICADOS ANTERIORMENTE, SEM OPERADOR",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "61480951000108",
+            "CompanyName": "61.480.951 ANDRE LUIZ CRUZ DOS SANTOS",
+            "Area": "UNKNOWN",
+            "Level": "ENTREPRENEUR | BUSINESS OWNER",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2025-06-27T00:00:00Z",
+            "EndDate": "2025-09-13T00:00:00Z",
+            "CreationDate": "2025-06-27T00:00:00Z",
+            "LastUpdateDate": "2025-09-13T00:00:00Z"
+          }
+        ],
+        "TotalProfessions": 1,
+        "TotalActiveProfessions": 0,
+        "TotalIncome": 0,
+        "TotalIncomeRange": "SEM INFORMACAO",
+        "TotalDiscounts": 0,
+        "IsEmployed": false
+      }
+    }
+  ],
+  "QueryId": "a2312cbc-9665-402f-a9d6-9aa2c66f7df3",
+  "ElapsedMilliseconds": 72,
+  "QueryDate": "2026-04-25T10:59:00.9900499Z",
+  "Status": {
+    "occupation_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

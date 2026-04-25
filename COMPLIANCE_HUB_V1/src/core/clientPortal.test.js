@@ -30,4 +30,20 @@ describe('clientPortal helpers', () => {
         expect(getReportAvailability(getMockCaseById('CASE-003'), null).available).toBe(false);
         expect(getReportAvailability(getMockCaseById('CASE-001'), null).available).toBe(true);
     });
+
+    it('preserva keyFindings do publicResult quando o espelho do clientCases ainda nao sincronizou', () => {
+        const caseData = {
+            id: 'CASE-777',
+            status: 'DONE',
+            candidateName: 'Caso de teste',
+            keyFindings: [],
+        };
+        const publicResult = {
+            keyFindings: ['Mandado ativo pendente de cumprimento.'],
+        };
+
+        const resolved = resolveClientCaseView(caseData, publicResult);
+
+        expect(resolved.keyFindings).toEqual(['Mandado ativo pendente de cumprimento.']);
+    });
 });

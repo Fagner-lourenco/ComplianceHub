@@ -1,0 +1,219 @@
+{
+  "statuses": {
+    "_global": {
+      "basic_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "kyc": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "occupation_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "processes": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ]
+    },
+    "matchKeys": "doc{48052053854}"
+  },
+  "basicData": {
+    "found": true,
+    "name": "ANDRE LUIZ CRUZ DOS SANTOS",
+    "alternativeName": null,
+    "taxIdStatus": "REGULAR",
+    "gender": "M",
+    "birthDate": "1997-07-24T00:00:00Z",
+    "motherName": "VALDINEIDE PINTO DA CRUZ",
+    "fatherName": "JOSE LUIZ DOS SANTOS FILHO",
+    "age": 28,
+    "namesakeCount": 8,
+    "nameWordCount": 5,
+    "_bdKeys": [
+      "TaxIdNumber",
+      "TaxIdCountry",
+      "AlternativeIdNumbers",
+      "Name",
+      "Aliases",
+      "Gender",
+      "NameWordCount",
+      "NumberOfFullNameNamesakes",
+      "NameUniquenessScore",
+      "FirstNameUniquenessScore",
+      "FirstAndLastNameUniquenessScore",
+      "BirthDate",
+      "CapturedBirthDateFromRFSource",
+      "IsValidBirthDateInRFSource",
+      "Age",
+      "ZodiacSign",
+      "ChineseSign",
+      "BirthCountry",
+      "MotherName",
+      "FatherName",
+      "MaritalStatusData",
+      "TaxIdStatus",
+      "TaxIdOrigin",
+      "TaxIdFiscalRegion",
+      "HasObitIndication",
+      "TaxIdStatusDate",
+      "TaxIdStatusRegistrationDate",
+      "CreationDate",
+      "LastUpdateDate"
+    ]
+  },
+  "processes": {
+    "total": 0,
+    "criminal": 0,
+    "labor": 0,
+    "civil": 0,
+    "active": 0,
+    "byCourt": {},
+    "byState": {},
+    "cpfMatchCount": 0,
+    "cpfMatches": [],
+    "lawsuitSummary": []
+  },
+  "kyc": {
+    "found": true,
+    "isPep": false,
+    "pepCount": 0,
+    "pepDetails": [],
+    "isCurrentlySanctioned": false,
+    "wasPreviouslySanctioned": true,
+    "sanctionCount": 9,
+    "sanctionSources": [
+      "Conselho Nacional de Justiça",
+      "fbi",
+      "ofac",
+      "interpol",
+      "uk"
+    ],
+    "sanctionTypes": [
+      "ARREST WARRANTS",
+      "FINANCIAL CRIMES"
+    ],
+    "sanctionDetails": [
+      {
+        "source": "Conselho Nacional de Justiça",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": false,
+        "wasRecently": false
+      },
+      {
+        "source": "fbi",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "uk",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      }
+    ],
+    "_kycKeys": [
+      "PEPHistory",
+      "IsCurrentlyPEP",
+      "SanctionsHistory",
+      "IsCurrentlySanctioned",
+      "WasPreviouslySanctioned",
+      "Last30DaysSanctions",
+      "Last90DaysSanctions",
+      "Last180DaysSanctions",
+      "Last365DaysSanctions",
+      "LastYearPEPOccurence",
+      "Last3YearsPEPOccurence",
+      "Last5YearsPEPOccurence",
+      "Last5PlusYearsPEPOccurence",
+      "FirstSanctionDate",
+      "LastSanctionDate",
+      "IsCurrentlyElectoralDonor",
+      "IsHistoricalElectoralDonor",
+      "TotalElectoralDonations",
+      "TotalElectoralDonationAmount",
+      "ElectoralDonations"
+    ]
+  },
+  "profession": {
+    "found": true,
+    "count": 1,
+    "professions": [
+      {
+        "source": "RECEITA FEDERAL",
+        "sector": "PRIVATE - 7739099 - ALUGUEL DE OUTRAS MAQUINAS E EQUIPAMENTOS COMERCIAIS E INDUSTRIAIS NAO ESPECIFICADOS ANTERIORMENTE, SEM OPERADOR",
+        "companyName": "61.480.951 ANDRE LUIZ CRUZ DOS SANTOS",
+        "level": "ENTREPRENEUR | BUSINESS OWNER",
+        "status": "INACTIVE",
+        "income": 0,
+        "startDate": "2025-06-27T00:00:00Z",
+        "endDate": "2025-09-13T00:00:00Z"
+      }
+    ],
+    "_profKeys": [
+      "Professions",
+      "TotalProfessions",
+      "TotalActiveProfessions",
+      "TotalIncome",
+      "TotalIncomeRange",
+      "TotalDiscounts",
+      "IsEmployed"
+    ]
+  }
+}

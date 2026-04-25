@@ -1,0 +1,1774 @@
+[
+  {
+    "id": 1,
+    "nome": "ANDRE LUIZ CRUZ DOS SANTOS",
+    "cpf": "48052053854",
+    "uf": "SP",
+    "riscoEsperado": "ALTO",
+    "comparação": {
+      "escavadorCpf": 0,
+      "escavadorHomonimos": 14,
+      "juditCpf": 0,
+      "juditWarrant": 0
+    },
+    "bigdatacorp": {
+      "combined": {
+        "httpStatus": 200,
+        "basicData": {
+          "found": true,
+          "name": "ANDRE LUIZ CRUZ DOS SANTOS",
+          "alternativeName": null,
+          "taxIdStatus": "REGULAR",
+          "gender": "M",
+          "birthDate": "1997-07-24T00:00:00Z",
+          "motherName": "VALDINEIDE PINTO DA CRUZ",
+          "fatherName": "JOSE LUIZ DOS SANTOS FILHO",
+          "age": 28,
+          "namesakeCount": 8,
+          "nameWordCount": 5,
+          "_bdKeys": [
+            "TaxIdNumber",
+            "TaxIdCountry",
+            "AlternativeIdNumbers",
+            "Name",
+            "Aliases",
+            "Gender",
+            "NameWordCount",
+            "NumberOfFullNameNamesakes",
+            "NameUniquenessScore",
+            "FirstNameUniquenessScore",
+            "FirstAndLastNameUniquenessScore",
+            "BirthDate",
+            "CapturedBirthDateFromRFSource",
+            "IsValidBirthDateInRFSource",
+            "Age",
+            "ZodiacSign",
+            "ChineseSign",
+            "BirthCountry",
+            "MotherName",
+            "FatherName",
+            "MaritalStatusData",
+            "TaxIdStatus",
+            "TaxIdOrigin",
+            "TaxIdFiscalRegion",
+            "HasObitIndication",
+            "TaxIdStatusDate",
+            "TaxIdStatusRegistrationDate",
+            "CreationDate",
+            "LastUpdateDate"
+          ]
+        },
+        "processes": {
+          "total": 0,
+          "criminal": 0,
+          "labor": 0,
+          "civil": 0,
+          "active": 0,
+          "byCourt": {},
+          "byState": {},
+          "cpfMatchCount": 0,
+          "cpfMatches": [],
+          "lawsuitSummary": []
+        },
+        "kyc": {
+          "found": true,
+          "isPep": false,
+          "pepCount": 0,
+          "pepDetails": [],
+          "isCurrentlySanctioned": false,
+          "wasPreviouslySanctioned": true,
+          "sanctionCount": 9,
+          "sanctionSources": [
+            "Conselho Nacional de Justiça",
+            "fbi",
+            "ofac",
+            "interpol",
+            "uk"
+          ],
+          "sanctionTypes": [
+            "ARREST WARRANTS",
+            "FINANCIAL CRIMES"
+          ],
+          "sanctionDetails": [
+            {
+              "source": "Conselho Nacional de Justiça",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": false,
+              "wasRecently": false
+            },
+            {
+              "source": "fbi",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "uk",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            }
+          ],
+          "_kycKeys": [
+            "PEPHistory",
+            "IsCurrentlyPEP",
+            "SanctionsHistory",
+            "IsCurrentlySanctioned",
+            "WasPreviouslySanctioned",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "IsCurrentlyElectoralDonor",
+            "IsHistoricalElectoralDonor",
+            "TotalElectoralDonations",
+            "TotalElectoralDonationAmount",
+            "ElectoralDonations"
+          ]
+        },
+        "profession": {
+          "found": true,
+          "count": 1,
+          "professions": [
+            {
+              "source": "RECEITA FEDERAL",
+              "sector": "PRIVATE - 7739099 - ALUGUEL DE OUTRAS MAQUINAS E EQUIPAMENTOS COMERCIAIS E INDUSTRIAIS NAO ESPECIFICADOS ANTERIORMENTE, SEM OPERADOR",
+              "companyName": "61.480.951 ANDRE LUIZ CRUZ DOS SANTOS",
+              "level": "ENTREPRENEUR | BUSINESS OWNER",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2025-06-27T00:00:00Z",
+              "endDate": "2025-09-13T00:00:00Z"
+            }
+          ],
+          "_profKeys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ]
+        }
+      },
+      "criminal": {
+        "total": 0,
+        "cpfMatches": 0,
+        "active": 0
+      },
+      "trabalhista": {
+        "total": 0,
+        "cpfMatches": 0
+      },
+      "ativo": {
+        "total": 0,
+        "criminal": 0,
+        "cpfMatches": 0
+      },
+      "porUf": {
+        "uf": "SP",
+        "total": 0,
+        "criminal": 0
+      },
+      "kyc": {
+        "found": true,
+        "isPep": false,
+        "pepCount": 0,
+        "pepDetails": [],
+        "isCurrentlySanctioned": false,
+        "wasPreviouslySanctioned": true,
+        "sanctionCount": 9,
+        "sanctionSources": [
+          "Conselho Nacional de Justiça",
+          "fbi",
+          "ofac",
+          "interpol",
+          "uk"
+        ],
+        "sanctionTypes": [
+          "ARREST WARRANTS",
+          "FINANCIAL CRIMES"
+        ],
+        "sanctionDetails": [
+          {
+            "source": "Conselho Nacional de Justiça",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": false,
+            "wasRecently": false
+          },
+          {
+            "source": "fbi",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "uk",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          }
+        ],
+        "_kycKeys": [
+          "PEPHistory",
+          "IsCurrentlyPEP",
+          "SanctionsHistory",
+          "IsCurrentlySanctioned",
+          "WasPreviouslySanctioned",
+          "Last30DaysSanctions",
+          "Last90DaysSanctions",
+          "Last180DaysSanctions",
+          "Last365DaysSanctions",
+          "LastYearPEPOccurence",
+          "Last3YearsPEPOccurence",
+          "Last5YearsPEPOccurence",
+          "Last5PlusYearsPEPOccurence",
+          "FirstSanctionDate",
+          "LastSanctionDate",
+          "IsCurrentlyElectoralDonor",
+          "IsHistoricalElectoralDonor",
+          "TotalElectoralDonations",
+          "TotalElectoralDonationAmount",
+          "ElectoralDonations"
+        ]
+      }
+    }
+  },
+  {
+    "id": 2,
+    "nome": "DIEGO EMANUEL ALVES DE SOUZA",
+    "cpf": "10794180329",
+    "uf": "CE",
+    "riscoEsperado": "BAIXO",
+    "comparação": {
+      "escavadorCpf": 1,
+      "escavadorHomonimos": 0,
+      "juditCpf": 0,
+      "juditWarrant": 0
+    },
+    "bigdatacorp": {
+      "combined": {
+        "httpStatus": 200,
+        "basicData": {
+          "found": true,
+          "name": "DIEGO EMANUEL ALVES DE SOUZA",
+          "alternativeName": null,
+          "taxIdStatus": "REGULAR",
+          "gender": "M",
+          "birthDate": "2002-04-20T00:00:00Z",
+          "motherName": "",
+          "fatherName": "",
+          "age": 23,
+          "namesakeCount": 1,
+          "nameWordCount": 5,
+          "_bdKeys": [
+            "TaxIdNumber",
+            "TaxIdCountry",
+            "AlternativeIdNumbers",
+            "Name",
+            "Aliases",
+            "Gender",
+            "NameWordCount",
+            "NumberOfFullNameNamesakes",
+            "NameUniquenessScore",
+            "FirstNameUniquenessScore",
+            "FirstAndLastNameUniquenessScore",
+            "BirthDate",
+            "CapturedBirthDateFromRFSource",
+            "IsValidBirthDateInRFSource",
+            "Age",
+            "ZodiacSign",
+            "ChineseSign",
+            "BirthCountry",
+            "MotherName",
+            "FatherName",
+            "MaritalStatusData",
+            "TaxIdStatus",
+            "TaxIdOrigin",
+            "TaxIdFiscalRegion",
+            "HasObitIndication",
+            "TaxIdStatusDate",
+            "TaxIdStatusRegistrationDate",
+            "CreationDate",
+            "LastUpdateDate"
+          ]
+        },
+        "processes": {
+          "total": 1,
+          "criminal": 0,
+          "labor": 0,
+          "civil": 1,
+          "active": 0,
+          "byCourt": {
+            "N/A": 1
+          },
+          "byState": {
+            "N/A": 1
+          },
+          "cpfMatchCount": 0,
+          "cpfMatches": [],
+          "lawsuitSummary": [
+            {
+              "number": "01149452820188060001",
+              "status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+              "parties": 0,
+              "partiesWithDoc": 0
+            }
+          ]
+        },
+        "kyc": {
+          "found": true,
+          "isPep": false,
+          "pepCount": 0,
+          "pepDetails": [],
+          "isCurrentlySanctioned": false,
+          "wasPreviouslySanctioned": false,
+          "sanctionCount": 16,
+          "sanctionSources": [
+            "ofac",
+            "interpol",
+            "fbi"
+          ],
+          "sanctionTypes": [
+            "FINANCIAL CRIMES",
+            "ARREST WARRANTS"
+          ],
+          "sanctionDetails": [
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            }
+          ],
+          "_kycKeys": [
+            "PEPHistory",
+            "IsCurrentlyPEP",
+            "SanctionsHistory",
+            "IsCurrentlySanctioned",
+            "WasPreviouslySanctioned",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "IsCurrentlyElectoralDonor",
+            "IsHistoricalElectoralDonor",
+            "TotalElectoralDonations",
+            "TotalElectoralDonationAmount",
+            "ElectoralDonations"
+          ]
+        },
+        "profession": {
+          "found": false,
+          "count": 0,
+          "professions": [],
+          "_profKeys": [
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "IsEmployed"
+          ]
+        }
+      },
+      "criminal": {
+        "total": 0,
+        "cpfMatches": 0,
+        "active": 0
+      },
+      "trabalhista": {
+        "total": 0,
+        "cpfMatches": 0
+      },
+      "ativo": {
+        "total": 0,
+        "criminal": 0,
+        "cpfMatches": 0
+      },
+      "porUf": {
+        "uf": "CE",
+        "total": 1,
+        "criminal": 0
+      },
+      "kyc": {
+        "found": true,
+        "isPep": false,
+        "pepCount": 0,
+        "pepDetails": [],
+        "isCurrentlySanctioned": false,
+        "wasPreviouslySanctioned": false,
+        "sanctionCount": 16,
+        "sanctionSources": [
+          "ofac",
+          "interpol",
+          "fbi"
+        ],
+        "sanctionTypes": [
+          "FINANCIAL CRIMES",
+          "ARREST WARRANTS"
+        ],
+        "sanctionDetails": [
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          }
+        ],
+        "_kycKeys": [
+          "PEPHistory",
+          "IsCurrentlyPEP",
+          "SanctionsHistory",
+          "IsCurrentlySanctioned",
+          "WasPreviouslySanctioned",
+          "Last30DaysSanctions",
+          "Last90DaysSanctions",
+          "Last180DaysSanctions",
+          "Last365DaysSanctions",
+          "LastYearPEPOccurence",
+          "Last3YearsPEPOccurence",
+          "Last5YearsPEPOccurence",
+          "Last5PlusYearsPEPOccurence",
+          "FirstSanctionDate",
+          "LastSanctionDate",
+          "IsCurrentlyElectoralDonor",
+          "IsHistoricalElectoralDonor",
+          "TotalElectoralDonations",
+          "TotalElectoralDonationAmount",
+          "ElectoralDonations"
+        ]
+      }
+    }
+  },
+  {
+    "id": 3,
+    "nome": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+    "cpf": "11819916766",
+    "uf": "RJ",
+    "riscoEsperado": "BAIXO",
+    "comparação": {
+      "escavadorCpf": 1,
+      "escavadorHomonimos": 0,
+      "juditCpf": 1,
+      "juditWarrant": 0
+    },
+    "bigdatacorp": {
+      "combined": {
+        "httpStatus": 200,
+        "basicData": {
+          "found": true,
+          "name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+          "alternativeName": null,
+          "taxIdStatus": "REGULAR",
+          "gender": "M",
+          "birthDate": "1987-07-27T00:00:00Z",
+          "motherName": "RITA DE CASSIA GUIMARAES RAMOS",
+          "fatherName": "",
+          "age": 38,
+          "namesakeCount": 1,
+          "nameWordCount": 5,
+          "_bdKeys": [
+            "TaxIdNumber",
+            "TaxIdCountry",
+            "AlternativeIdNumbers",
+            "Name",
+            "Aliases",
+            "Gender",
+            "NameWordCount",
+            "NumberOfFullNameNamesakes",
+            "NameUniquenessScore",
+            "FirstNameUniquenessScore",
+            "FirstAndLastNameUniquenessScore",
+            "BirthDate",
+            "CapturedBirthDateFromRFSource",
+            "IsValidBirthDateInRFSource",
+            "Age",
+            "ZodiacSign",
+            "ChineseSign",
+            "BirthCountry",
+            "MotherName",
+            "FatherName",
+            "MaritalStatusData",
+            "TaxIdStatus",
+            "TaxIdOrigin",
+            "TaxIdFiscalRegion",
+            "HasObitIndication",
+            "TaxIdStatusDate",
+            "TaxIdStatusRegistrationDate",
+            "CreationDate",
+            "LastUpdateDate"
+          ]
+        },
+        "processes": {
+          "total": 1,
+          "criminal": 0,
+          "labor": 1,
+          "civil": 0,
+          "active": 0,
+          "byCourt": {
+            "TRT1": 1
+          },
+          "byState": {
+            "RJ": 1
+          },
+          "cpfMatchCount": 10,
+          "cpfMatches": [
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "05271247708",
+              "partyName": "FLAVIO JORGE SANTOS DE ARAUJO",
+              "polarity": "ACTIVE"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "29628920782",
+              "partyName": "CARLOS ALBERTO PATRICIO DE SOUZA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "71821839000139",
+              "partyName": "T F C A S A",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "15824046824",
+              "partyName": "ANA KEILA MARCHIORI",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "29458664802",
+              "partyName": "ANNA MARIA DA SILVEIRA MUNOZ AVZARADEL",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "14314892714",
+              "partyName": "CARLOS VINICIUS SILVA LIMA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "11819916766",
+              "partyName": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "13154002782",
+              "partyName": "WASHINGTON LUIZ DE SOUZA PESENTI",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "03635346365",
+              "partyName": "E S P N",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "01019762120165010007",
+              "partyCpf": "10126231737",
+              "partyName": "V M N",
+              "polarity": "NEUTRAL"
+            }
+          ],
+          "lawsuitSummary": [
+            {
+              "number": "01019762120165010007",
+              "type": "RITO ORDINARIO",
+              "subject": "SALARIO/DIFERENCA SALARIAL",
+              "courtType": "TRABALHISTA",
+              "courtName": "TRT1",
+              "state": "RJ",
+              "status": "ARQUIVADO",
+              "parties": 10,
+              "partiesWithDoc": 10
+            }
+          ]
+        },
+        "kyc": {
+          "found": true,
+          "isPep": false,
+          "pepCount": 0,
+          "pepDetails": [],
+          "isCurrentlySanctioned": false,
+          "wasPreviouslySanctioned": false,
+          "sanctionCount": 1,
+          "sanctionSources": [
+            "interpol"
+          ],
+          "sanctionTypes": [
+            "ARREST WARRANTS"
+          ],
+          "sanctionDetails": [
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            }
+          ],
+          "_kycKeys": [
+            "PEPHistory",
+            "IsCurrentlyPEP",
+            "SanctionsHistory",
+            "IsCurrentlySanctioned",
+            "WasPreviouslySanctioned",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "IsCurrentlyElectoralDonor",
+            "IsHistoricalElectoralDonor",
+            "TotalElectoralDonations",
+            "TotalElectoralDonationAmount",
+            "ElectoralDonations"
+          ]
+        },
+        "profession": {
+          "found": true,
+          "count": 2,
+          "professions": [
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 5611203 - LANCHONETES, CASAS DE CHA, DE SUCOS E SIMILARES",
+              "companyName": "THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2014-05-21T00:00:00Z",
+              "endDate": "2018-02-24T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 8111700 - SERVICOS COMBINADOS PARA APOIO A EDIFICIOS, EXCETO CONDOMINIOS PREDIAIS",
+              "companyName": "ACF FACILITIES LTDA",
+              "level": "EMPLOYEE",
+              "status": "ACTIVE",
+              "income": 7000,
+              "startDate": "2018-11-23T00:00:00Z",
+              "endDate": "9999-12-31T23:59:59.9999999"
+            }
+          ],
+          "_profKeys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ]
+        }
+      },
+      "criminal": {
+        "total": 0,
+        "cpfMatches": 0,
+        "active": 0
+      },
+      "trabalhista": {
+        "total": 1,
+        "cpfMatches": 10
+      },
+      "ativo": {
+        "total": 0,
+        "criminal": 0,
+        "cpfMatches": 0
+      },
+      "porUf": {
+        "uf": "RJ",
+        "total": 1,
+        "criminal": 0
+      },
+      "kyc": {
+        "found": true,
+        "isPep": false,
+        "pepCount": 0,
+        "pepDetails": [],
+        "isCurrentlySanctioned": false,
+        "wasPreviouslySanctioned": false,
+        "sanctionCount": 1,
+        "sanctionSources": [
+          "interpol"
+        ],
+        "sanctionTypes": [
+          "ARREST WARRANTS"
+        ],
+        "sanctionDetails": [
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          }
+        ],
+        "_kycKeys": [
+          "PEPHistory",
+          "IsCurrentlyPEP",
+          "SanctionsHistory",
+          "IsCurrentlySanctioned",
+          "WasPreviouslySanctioned",
+          "Last30DaysSanctions",
+          "Last90DaysSanctions",
+          "Last180DaysSanctions",
+          "Last365DaysSanctions",
+          "LastYearPEPOccurence",
+          "Last3YearsPEPOccurence",
+          "Last5YearsPEPOccurence",
+          "Last5PlusYearsPEPOccurence",
+          "FirstSanctionDate",
+          "LastSanctionDate",
+          "IsCurrentlyElectoralDonor",
+          "IsHistoricalElectoralDonor",
+          "TotalElectoralDonations",
+          "TotalElectoralDonationAmount",
+          "ElectoralDonations"
+        ]
+      }
+    }
+  },
+  {
+    "id": 4,
+    "nome": "FRANCISCO TACIANO DE SOUSA",
+    "cpf": "05023290336",
+    "uf": "CE",
+    "riscoEsperado": "CRITICO",
+    "comparação": {
+      "escavadorCpf": 7,
+      "escavadorHomonimos": 0,
+      "juditCpf": 1,
+      "juditWarrant": 1
+    },
+    "bigdatacorp": {
+      "combined": {
+        "httpStatus": 200,
+        "basicData": {
+          "found": true,
+          "name": "FRANCISCO TACIANO DE SOUSA",
+          "alternativeName": null,
+          "taxIdStatus": "REGULAR",
+          "gender": "M",
+          "birthDate": "1991-08-16T00:00:00Z",
+          "motherName": "FRANCISCA CAETANA DE SOUSA",
+          "fatherName": "",
+          "age": 34,
+          "namesakeCount": 1,
+          "nameWordCount": 4,
+          "_bdKeys": [
+            "TaxIdNumber",
+            "TaxIdCountry",
+            "AlternativeIdNumbers",
+            "Name",
+            "Aliases",
+            "Gender",
+            "NameWordCount",
+            "NumberOfFullNameNamesakes",
+            "NameUniquenessScore",
+            "FirstNameUniquenessScore",
+            "FirstAndLastNameUniquenessScore",
+            "BirthDate",
+            "CapturedBirthDateFromRFSource",
+            "IsValidBirthDateInRFSource",
+            "Age",
+            "ZodiacSign",
+            "ChineseSign",
+            "BirthCountry",
+            "MotherName",
+            "FatherName",
+            "MaritalStatusData",
+            "TaxIdStatus",
+            "TaxIdOrigin",
+            "TaxIdFiscalRegion",
+            "HasObitIndication",
+            "TaxIdStatusDate",
+            "TaxIdStatusRegistrationDate",
+            "CreationDate",
+            "LastUpdateDate"
+          ]
+        },
+        "processes": {
+          "total": 8,
+          "criminal": 5,
+          "labor": 0,
+          "civil": 3,
+          "active": 1,
+          "byCourt": {
+            "N/A": 1,
+            "TJCE": 7
+          },
+          "byState": {
+            "N/A": 1,
+            "CE": 7
+          },
+          "cpfMatchCount": 29,
+          "cpfMatches": [
+            {
+              "processo": "00134174020218060293",
+              "partyCpf": "05023290336",
+              "partyName": "FRANCISCO TACIANO DE SOUSA",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "00134174020218060293",
+              "partyCpf": "06663403311",
+              "partyName": "JOSIANE DE LIMA MONTEIRO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "00134174020218060293",
+              "partyCpf": "06928790000156",
+              "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02056591120248060167",
+              "partyCpf": "06928790000156",
+              "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02056591120248060167",
+              "partyCpf": "02014521000123",
+              "partyName": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02056591120248060167",
+              "partyCpf": "10416980384",
+              "partyName": "JOSE LEVY LIMA DE SOUSA",
+              "polarity": "ACTIVE"
+            },
+            {
+              "processo": "02056591120248060167",
+              "partyCpf": "06663403311",
+              "partyName": "JOSIANE DE LIMA MONTEIRO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02056591120248060167",
+              "partyCpf": "05023290336",
+              "partyName": "FRANCISCO TACIANO DE SOUSA",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "00407130820138060167",
+              "partyCpf": "05023290336",
+              "partyName": "FRANCISCO TACIANO DE SOUSA",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "30015750220218060167",
+              "partyCpf": "05023290336",
+              "partyName": "FRANCISCO TACIANO DE SOUSA",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "30015750220218060167",
+              "partyCpf": "06928790000156",
+              "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "30015750220218060167",
+              "partyCpf": "00466900341",
+              "partyName": "JOAO PAULO ARAGAO NASCIMENTO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "30015750220218060167",
+              "partyCpf": "05113070394",
+              "partyName": "GERMANO HERBERT PEREIRA ARAGAO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "30015750220218060167",
+              "partyCpf": "06663403311",
+              "partyName": "JOSIANE DE LIMA MONTEIRO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "06663403311",
+              "partyName": "JOSIANE DE LIMA MONTEIRO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "03532276330",
+              "partyName": "JOSE WILLIAM DOMINGUES RIPARDO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "02815697386",
+              "partyName": "CRISTIANE DE LIMA MONTEIRO",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "05023290336",
+              "partyName": "FRANCISCO TACIANO DE SOUSA",
+              "polarity": "PASSIVE"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "06928790000156",
+              "partyName": "MINISTERIO PUBLICO DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            },
+            {
+              "processo": "02027437220228060167",
+              "partyCpf": "02014521000123",
+              "partyName": "DEFENSORIA PUBLICA DO ESTADO DO CEARA",
+              "polarity": "NEUTRAL"
+            }
+          ],
+          "lawsuitSummary": [
+            {
+              "number": "00530230220208060167",
+              "status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+              "parties": 0,
+              "partiesWithDoc": 0
+            },
+            {
+              "number": "00134174020218060293",
+              "type": "MEDIDAS PROTETIVAS DE URGENCIA",
+              "subject": "CONTRAVENCOES PENAIS",
+              "courtType": "CRIMINAL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ARQUIVADO",
+              "parties": 4,
+              "partiesWithDoc": 3
+            },
+            {
+              "number": "02056591120248060167",
+              "type": "CUMPRIMENTO DE SENTENCA",
+              "subject": "ALIMENTOS",
+              "courtType": "CIVEL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ATIVO",
+              "parties": 5,
+              "partiesWithDoc": 5
+            },
+            {
+              "number": "00407130820138060167",
+              "type": "TERMO CIRCUNSTANCIADO",
+              "subject": "CONTRAVENCOES PENAIS",
+              "courtType": "",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ARQUIVADO",
+              "parties": 2,
+              "partiesWithDoc": 1
+            },
+            {
+              "number": "30015750220218060167",
+              "type": "TERMO CIRCUNSTANCIADO",
+              "subject": "PORTE DE ARMA (BRANCA)",
+              "courtType": "ESPECIAL CRIMINAL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ENCERRADO",
+              "parties": 5,
+              "partiesWithDoc": 5
+            },
+            {
+              "number": "02027437220228060167",
+              "type": "ACAO PENAL",
+              "subject": "AMEACA",
+              "courtType": "CRIMINAL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "JULGADO",
+              "parties": 8,
+              "partiesWithDoc": 6
+            },
+            {
+              "number": "00121984520228060167",
+              "type": "ACAO PENAL",
+              "subject": "CONTRAVENCOES PENAIS",
+              "courtType": "CRIMINAL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ARQUIVADO",
+              "parties": 6,
+              "partiesWithDoc": 6
+            },
+            {
+              "number": "00407130820138060167",
+              "type": "APELACAO CRIMINAL",
+              "subject": "CONTRAVENCOES PENAIS",
+              "courtType": "CRIMINAL",
+              "courtName": "TJCE",
+              "state": "CE",
+              "status": "ENCERRADO",
+              "parties": 4,
+              "partiesWithDoc": 3
+            }
+          ]
+        },
+        "kyc": {
+          "found": true,
+          "isPep": false,
+          "pepCount": 0,
+          "pepDetails": [],
+          "isCurrentlySanctioned": true,
+          "wasPreviouslySanctioned": true,
+          "sanctionCount": 49,
+          "sanctionSources": [
+            "Conselho Nacional de Justiça",
+            "ofac",
+            "interpol",
+            "fbi",
+            "ca-sanctions",
+            "ddtc",
+            "uk"
+          ],
+          "sanctionTypes": [
+            "ARREST WARRANTS",
+            "FINANCIAL CRIMES"
+          ],
+          "sanctionDetails": [
+            {
+              "source": "Conselho Nacional de Justiça",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "Conselho Nacional de Justiça",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": false,
+              "wasRecently": false
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "fbi",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "interpol",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "ofac",
+              "type": "Money Laundering",
+              "standardizedType": "FINANCIAL CRIMES",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "fbi",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            },
+            {
+              "source": "fbi",
+              "type": "Law Enforcement",
+              "standardizedType": "ARREST WARRANTS",
+              "isCurrently": true,
+              "wasRecently": true
+            }
+          ],
+          "_kycKeys": [
+            "PEPHistory",
+            "IsCurrentlyPEP",
+            "SanctionsHistory",
+            "IsCurrentlySanctioned",
+            "WasPreviouslySanctioned",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "FirstSanctionDate",
+            "LastSanctionDate",
+            "IsCurrentlyElectoralDonor",
+            "IsHistoricalElectoralDonor",
+            "TotalElectoralDonations",
+            "TotalElectoralDonationAmount",
+            "ElectoralDonations"
+          ]
+        },
+        "profession": {
+          "found": true,
+          "count": 1,
+          "professions": [
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+              "companyName": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+              "level": "EMPLOYEE",
+              "status": "ACTIVE",
+              "income": 3000,
+              "startDate": "2014-02-03T00:00:00Z",
+              "endDate": "9999-12-31T23:59:59.9999999"
+            }
+          ],
+          "_profKeys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ]
+        }
+      },
+      "criminal": {
+        "total": 4,
+        "cpfMatches": 18,
+        "active": 0
+      },
+      "trabalhista": {
+        "total": 0,
+        "cpfMatches": 0
+      },
+      "ativo": {
+        "total": 2,
+        "criminal": 0,
+        "cpfMatches": 5
+      },
+      "porUf": {
+        "uf": "CE",
+        "total": 8,
+        "criminal": 5
+      },
+      "kyc": {
+        "found": true,
+        "isPep": false,
+        "pepCount": 0,
+        "pepDetails": [],
+        "isCurrentlySanctioned": true,
+        "wasPreviouslySanctioned": true,
+        "sanctionCount": 49,
+        "sanctionSources": [
+          "Conselho Nacional de Justiça",
+          "ofac",
+          "interpol",
+          "fbi",
+          "ca-sanctions",
+          "ddtc",
+          "uk"
+        ],
+        "sanctionTypes": [
+          "ARREST WARRANTS",
+          "FINANCIAL CRIMES"
+        ],
+        "sanctionDetails": [
+          {
+            "source": "Conselho Nacional de Justiça",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "Conselho Nacional de Justiça",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": false,
+            "wasRecently": false
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "fbi",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "interpol",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "ofac",
+            "type": "Money Laundering",
+            "standardizedType": "FINANCIAL CRIMES",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "fbi",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          },
+          {
+            "source": "fbi",
+            "type": "Law Enforcement",
+            "standardizedType": "ARREST WARRANTS",
+            "isCurrently": true,
+            "wasRecently": true
+          }
+        ],
+        "_kycKeys": [
+          "PEPHistory",
+          "IsCurrentlyPEP",
+          "SanctionsHistory",
+          "IsCurrentlySanctioned",
+          "WasPreviouslySanctioned",
+          "Last30DaysSanctions",
+          "Last90DaysSanctions",
+          "Last180DaysSanctions",
+          "Last365DaysSanctions",
+          "LastYearPEPOccurence",
+          "Last3YearsPEPOccurence",
+          "Last5YearsPEPOccurence",
+          "Last5PlusYearsPEPOccurence",
+          "FirstSanctionDate",
+          "LastSanctionDate",
+          "IsCurrentlyElectoralDonor",
+          "IsHistoricalElectoralDonor",
+          "TotalElectoralDonations",
+          "TotalElectoralDonationAmount",
+          "ElectoralDonations"
+        ]
+      }
+    }
+  },
+  {
+    "id": 5,
+    "nome": "MATHEUS GONCALVES DOS SANTOS",
+    "cpf": "46247243804",
+    "uf": "SP",
+    "riscoEsperado": "MEDIO",
+    "comparação": {
+      "escavadorCpf": 0,
+      "escavadorHomonimos": 164,
+      "juditCpf": 1,
+      "juditWarrant": 0
+    },
+    "bigdatacorp": {
+      "combined": {
+        "httpStatus": 200,
+        "basicData": {
+          "found": true,
+          "name": "MATHEUS GONCALVES DOS SANTOS",
+          "alternativeName": null,
+          "taxIdStatus": "REGULAR",
+          "gender": "M",
+          "birthDate": "1997-10-30T00:00:00Z",
+          "motherName": "CRISTINA GONCALVES",
+          "fatherName": "",
+          "age": 28,
+          "namesakeCount": 304,
+          "nameWordCount": 4,
+          "_bdKeys": [
+            "TaxIdNumber",
+            "TaxIdCountry",
+            "AlternativeIdNumbers",
+            "Name",
+            "Aliases",
+            "Gender",
+            "NameWordCount",
+            "NumberOfFullNameNamesakes",
+            "NameUniquenessScore",
+            "FirstNameUniquenessScore",
+            "FirstAndLastNameUniquenessScore",
+            "BirthDate",
+            "CapturedBirthDateFromRFSource",
+            "IsValidBirthDateInRFSource",
+            "Age",
+            "ZodiacSign",
+            "ChineseSign",
+            "BirthCountry",
+            "MotherName",
+            "FatherName",
+            "MaritalStatusData",
+            "TaxIdStatus",
+            "TaxIdOrigin",
+            "TaxIdFiscalRegion",
+            "HasObitIndication",
+            "TaxIdStatusDate",
+            "TaxIdStatusRegistrationDate",
+            "CreationDate",
+            "LastUpdateDate"
+          ]
+        },
+        "processes": {
+          "total": 0,
+          "criminal": 0,
+          "labor": 0,
+          "civil": 0,
+          "active": 0,
+          "byCourt": {},
+          "byState": {},
+          "cpfMatchCount": 0,
+          "cpfMatches": [],
+          "lawsuitSummary": []
+        },
+        "kyc": {
+          "found": true,
+          "isPep": false,
+          "pepCount": 0,
+          "pepDetails": [],
+          "isCurrentlySanctioned": false,
+          "wasPreviouslySanctioned": false,
+          "sanctionCount": 0,
+          "sanctionSources": [],
+          "sanctionTypes": [],
+          "sanctionDetails": [],
+          "_kycKeys": [
+            "PEPHistory",
+            "IsCurrentlyPEP",
+            "SanctionsHistory",
+            "IsCurrentlySanctioned",
+            "WasPreviouslySanctioned",
+            "Last30DaysSanctions",
+            "Last90DaysSanctions",
+            "Last180DaysSanctions",
+            "Last365DaysSanctions",
+            "LastYearPEPOccurence",
+            "Last3YearsPEPOccurence",
+            "Last5YearsPEPOccurence",
+            "Last5PlusYearsPEPOccurence",
+            "IsCurrentlyElectoralDonor",
+            "IsHistoricalElectoralDonor",
+            "TotalElectoralDonations",
+            "TotalElectoralDonationAmount",
+            "ElectoralDonations"
+          ]
+        },
+        "profession": {
+          "found": true,
+          "count": 7,
+          "professions": [
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+              "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2021-01-01T00:00:00Z",
+              "endDate": "2021-08-23T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+              "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2021-08-23T00:00:00Z",
+              "endDate": "2021-09-01T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+              "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2019-11-20T00:00:00Z",
+              "endDate": "2020-05-01T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+              "companyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2019-12-01T00:00:00Z",
+              "endDate": "2020-05-01T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 1012101 - ABATE DE AVES",
+              "companyName": "GONCALVES & TORTOLA S/A",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2015-11-23T00:00:00Z",
+              "endDate": "2016-07-15T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 2330301 - FABRICACAO DE ESTRUTURAS PRE-MOLDADAS DE CONCRETO ARMADO, EM SERIE E SOB ENCOMENDA",
+              "companyName": "MATRA INDUSTRIA E COMERCIO LTDA",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2018-11-05T00:00:00Z",
+              "endDate": "2019-06-30T00:00:00Z"
+            },
+            {
+              "source": "RAIS",
+              "sector": "PRIVATE - 4711302 - COMERCIO VAREJISTA DE MERCADORIAS EM GERAL, COM PREDOMINANCIA DE PRODUTOS ALIMENTICIOS - SUPERMERCADOS",
+              "companyName": "SAVEGNAGO-SUPERMERCADOS LTDA",
+              "level": "EMPLOYEE",
+              "status": "INACTIVE",
+              "income": 0,
+              "startDate": "2016-09-14T00:00:00Z",
+              "endDate": "2018-01-09T00:00:00Z"
+            }
+          ],
+          "_profKeys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ]
+        }
+      },
+      "criminal": {
+        "total": 0,
+        "cpfMatches": 0,
+        "active": 0
+      },
+      "trabalhista": {
+        "total": 0,
+        "cpfMatches": 0
+      },
+      "ativo": {
+        "total": 0,
+        "criminal": 0,
+        "cpfMatches": 0
+      },
+      "porUf": {
+        "uf": "SP",
+        "total": 0,
+        "criminal": 0
+      },
+      "kyc": {
+        "found": true,
+        "isPep": false,
+        "pepCount": 0,
+        "pepDetails": [],
+        "isCurrentlySanctioned": false,
+        "wasPreviouslySanctioned": false,
+        "sanctionCount": 0,
+        "sanctionSources": [],
+        "sanctionTypes": [],
+        "sanctionDetails": [],
+        "_kycKeys": [
+          "PEPHistory",
+          "IsCurrentlyPEP",
+          "SanctionsHistory",
+          "IsCurrentlySanctioned",
+          "WasPreviouslySanctioned",
+          "Last30DaysSanctions",
+          "Last90DaysSanctions",
+          "Last180DaysSanctions",
+          "Last365DaysSanctions",
+          "LastYearPEPOccurence",
+          "Last3YearsPEPOccurence",
+          "Last5YearsPEPOccurence",
+          "Last5PlusYearsPEPOccurence",
+          "IsCurrentlyElectoralDonor",
+          "IsHistoricalElectoralDonor",
+          "TotalElectoralDonations",
+          "TotalElectoralDonationAmount",
+          "ElectoralDonations"
+        ]
+      }
+    }
+  }
+]

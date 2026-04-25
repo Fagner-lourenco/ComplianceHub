@@ -1,0 +1,109 @@
+- generic [ref=e7]:
+  - complementary [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]: CH
+      - generic [ref=e11]: ComplianceHub
+    - navigation [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: Acompanhamento
+        - link "DB Painel" [ref=e15] [cursor=pointer]:
+          - /url: /demo/client/dashboard
+          - generic [ref=e16]: DB
+          - generic [ref=e17]: Painel
+        - link "SL Solicitacoes" [ref=e18] [cursor=pointer]:
+          - /url: /demo/client/solicitacoes
+          - generic [ref=e19]: SL
+          - generic [ref=e20]: Solicitacoes
+        - link "AL Alertas" [ref=e21] [cursor=pointer]:
+          - /url: /demo/client/alertas
+          - generic [ref=e22]: AL
+          - generic [ref=e23]: Alertas
+      - generic [ref=e24]:
+        - generic [ref=e25]: Produto
+        - link "AN Analise rapida" [ref=e26] [cursor=pointer]:
+          - /url: /demo/client/analise
+          - generic [ref=e27]: AN
+          - generic [ref=e28]: Analise rapida
+        - link "HB Centro de produtos" [active] [ref=e29] [cursor=pointer]:
+          - /url: /demo/client/hub
+          - generic [ref=e30]: HB
+          - generic [ref=e31]: Centro de produtos
+        - link "PR Catalogo de produtos" [ref=e32] [cursor=pointer]:
+          - /url: /demo/client/produtos
+          - generic [ref=e33]: PR
+          - generic [ref=e34]: Catalogo de produtos
+        - link "NV Nova solicitacao" [ref=e35] [cursor=pointer]:
+          - /url: /demo/client/nova-solicitacao
+          - generic [ref=e36]: NV
+          - generic [ref=e37]: Nova solicitacao
+      - generic [ref=e38]:
+        - generic [ref=e39]: Relatorios
+        - link "RL Relatorios" [ref=e40] [cursor=pointer]:
+          - /url: /demo/client/relatorios
+          - generic [ref=e41]: RL
+          - generic [ref=e42]: Relatorios
+        - link "EX Exportacoes" [ref=e43] [cursor=pointer]:
+          - /url: /demo/client/exportacoes
+          - generic [ref=e44]: EX
+          - generic [ref=e45]: Exportacoes
+      - generic [ref=e46]:
+        - generic [ref=e47]: Franquia
+        - link "EQ Equipe" [ref=e48] [cursor=pointer]:
+          - /url: /demo/client/equipe
+          - generic [ref=e49]: EQ
+          - generic [ref=e50]: Equipe
+        - link "LG Auditoria" [ref=e51] [cursor=pointer]:
+          - /url: /demo/client/auditoria
+          - generic [ref=e52]: LG
+          - generic [ref=e53]: Auditoria
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]: Franquia vinculada
+        - generic "TechCorp Inc." [ref=e57]
+      - generic [ref=e58]:
+        - link "J Joao Demo cliente.demo@techcorp.com Gestor" [ref=e59] [cursor=pointer]:
+          - /url: /demo/client/perfil
+          - generic [ref=e60]: J
+          - generic [ref=e61]:
+            - generic "Joao Demo" [ref=e62]
+            - generic "cliente.demo@techcorp.com" [ref=e63]
+            - generic [ref=e64]: Gestor
+        - button "SAIR" [ref=e65] [cursor=pointer]
+  - generic [ref=e66]:
+    - banner [ref=e67]:
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - heading "Portal Cliente Demo" [level=1] [ref=e70]
+          - generic [ref=e71]: Portal do cliente com identidade confirmada
+        - generic [ref=e72]:
+          - button "Alternar tema" [ref=e73] [cursor=pointer]: 🌙
+          - link "J Joao Demo cliente.demo@techcorp.com Gestor" [ref=e74] [cursor=pointer]:
+            - /url: /demo/client/perfil
+            - generic [ref=e75]: J
+            - generic [ref=e76]:
+              - generic [ref=e77]: Joao Demo
+              - generic [ref=e78]: cliente.demo@techcorp.com
+              - generic [ref=e79]: Gestor
+      - generic [ref=e81]:
+        - generic [ref=e82]: Franquia atual
+        - generic "TechCorp Inc." [ref=e83]
+        - generic [ref=e84]: Dados do painel respeitam esse contexto
+    - main "Conteudo principal" [ref=e85]:
+      - main [ref=e123]:
+        - generic [ref=e124]:
+          - generic [ref=e125]:
+            - generic [ref=e126]:
+              - generic [ref=e127]: Centro de Produtos
+              - heading "Escolha o tipo de analise" [level=1] [ref=e128]
+              - paragraph [ref=e129]: Cada produto e uma esteira analitica diferente. Selecione conforme seu objetivo de compliance.
+            - generic [ref=e130]:
+              - generic [ref=e131]:
+                - term [ref=e132]: Plano
+                - definition [ref=e133]: Start
+              - generic [ref=e134]:
+                - term [ref=e135]: Ativos
+                - definition [ref=e136]: "0"
+              - generic [ref=e137]:
+                - term [ref=e138]: Disponiveis
+                - definition [ref=e139]: "0"
+          - alert [ref=e140]: Nao foi possivel carregar o catalogo de produtos.

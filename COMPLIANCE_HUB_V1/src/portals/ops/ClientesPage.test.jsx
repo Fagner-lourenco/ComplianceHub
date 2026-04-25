@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
 const clientesPageMocks = vi.hoisted(() => ({
@@ -10,7 +11,6 @@ const clientesPageMocks = vi.hoisted(() => ({
     },
     fetchClients: vi.fn(),
     callCreateOpsClientUser: vi.fn(),
-    callUpdateTenantSettingsByAnalyst: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -24,7 +24,6 @@ vi.mock('../../core/contexts/useTenant', () => ({
 vi.mock('../../core/firebase/firestoreService', () => ({
     fetchClients: (...args) => clientesPageMocks.fetchClients(...args),
     callCreateOpsClientUser: (...args) => clientesPageMocks.callCreateOpsClientUser(...args),
-    callUpdateTenantSettingsByAnalyst: (...args) => clientesPageMocks.callUpdateTenantSettingsByAnalyst(...args),
     DEFAULT_ANALYSIS_CONFIG: {
         criminal: { enabled: true }, labor: { enabled: true }, warrant: { enabled: true },
         osint: { enabled: true }, social: { enabled: true }, digital: { enabled: true },
@@ -41,7 +40,6 @@ vi.mock('../../core/firebase/firestoreService', () => ({
             conflictInterest: { enabled: true },
         },
     }),
-    updateTenantSettings: vi.fn().mockResolvedValue(),
     getEnabledPhases: (config) => Object.keys(config).filter((k) => config[k]?.enabled),
 }));
 
@@ -51,7 +49,6 @@ describe('ClientesPage', () => {
     beforeEach(() => {
         clientesPageMocks.fetchClients.mockReset();
         clientesPageMocks.callCreateOpsClientUser.mockReset();
-        clientesPageMocks.callUpdateTenantSettingsByAnalyst.mockReset();
     });
 
     it('carrega e exibe a lista real de clientes', async () => {
@@ -66,7 +63,7 @@ describe('ClientesPage', () => {
             },
         ]);
 
-        render(<ClientesPage />);
+        render(<MemoryRouter><ClientesPage /></MemoryRouter>);
 
         expect(screen.getByText('Carregando...')).toBeInTheDocument();
 
@@ -78,7 +75,7 @@ describe('ClientesPage', () => {
     it('mostra mensagem clara quando a consulta de clientes falha', async () => {
         clientesPageMocks.fetchClients.mockRejectedValue(new Error('timeout'));
 
-        render(<ClientesPage />);
+        render(<MemoryRouter><ClientesPage /></MemoryRouter>);
 
         await act(async () => {
             await Promise.resolve();

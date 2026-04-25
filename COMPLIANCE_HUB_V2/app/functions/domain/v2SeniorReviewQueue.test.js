@@ -8,7 +8,7 @@ const {
     isSeniorReviewApproved,
     resolveSeniorReviewDecision,
     summarizeSeniorReviewQueue,
-} = require('./v2SeniorReviewQueue.cjs');
+} = require('./v2SeniorReviewQueue.js');
 
 describe('v2SeniorReviewQueue', () => {
     it('gera id estavel por caso', () => {

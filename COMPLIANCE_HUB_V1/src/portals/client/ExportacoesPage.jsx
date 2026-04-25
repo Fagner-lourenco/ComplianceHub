@@ -9,6 +9,7 @@ import { useCases } from '../../hooks/useCases';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
+import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import './ExportacoesPage.css';
 
 const DEMO_EXPORTS = [
@@ -300,7 +301,7 @@ export default function ExportacoesPage() {
         if (exportScope === 'DONE') result = result.filter((c) => c.status === 'DONE');
         if (exportScope === 'PENDING') result = result.filter((c) => c.status === 'PENDING');
         if (exportScope === 'RED') result = result.filter((c) => c.riskLevel === 'RED');
-        if (dateFrom) result = result.filter((c) => (c.createdAt || '') >= dateFrom);
+        if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
         if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
         return result;
     }, [cases, exportScope, dateFrom, dateTo]);
@@ -445,64 +446,101 @@ export default function ExportacoesPage() {
 
             <div className="export-history">
                 <h3>Historico</h3>
-                <div className="export-table-wrapper">
-                    <table className="data-table" aria-label="Historico de exportacoes">
-                        <thead>
-                            <tr>
-                                <th className="data-table__th" scope="col">ID</th>
-                                <th className="data-table__th" scope="col">Formato</th>
-                                <th className="data-table__th" scope="col">Escopo</th>
-                                <th className="data-table__th" scope="col">Registros</th>
-                                <th className="data-table__th" scope="col">Data</th>
-                                <th className="data-table__th" scope="col">Status</th>
-                                <th className="data-table__th" scope="col">Acao</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {exportsState.loading && !isDemoMode && (
+                <MobileDataCardList
+                    items={history}
+                    loading={exportsState.loading && !isDemoMode}
+                    emptyMessage={exportsState.error ? extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.') : 'Nenhuma exportacao registrada.'}
+                    renderCard={(item) => (
+                        <>
+                            <div className="mobile-card__header">
+                                <div className="mobile-card__title">{item.type}</div>
+                                <StatusBadge status={item.status || 'DONE'} />
+                            </div>
+                            <div className="mobile-card__meta">
+                                <span className="mobile-card__meta-item">{item.scope}</span>
+                                <span className="mobile-card__meta-item">{item.records} registro(s)</span>
+                                <span className="mobile-card__meta-item">{item.createdAt}</span>
+                            </div>
+                            <div className="mobile-card__actions">
+                                {isDemoMode && item.artifactCaseId ? (
+                                    <button
+                                        type="button"
+                                        className="export-btn"
+                                        style={{ padding: '8px 14px', fontSize: '.8125rem', minHeight: 44 }}
+                                        onClick={() => openHistoryArtifact(item)}
+                                    >
+                                        Abrir
+                                    </button>
+                                ) : (
+                                    <span style={{ color: 'var(--text-tertiary)', fontSize: '.8125rem' }}>
+                                        {item.artifactMode === 'download' ? '⬇ Baixado' : '↗ Aberto'}
+                                    </span>
+                                )}
+                            </div>
+                        </>
+                    )}
+                >
+                    <div className="export-table-wrapper">
+                        <table className="data-table" aria-label="Historico de exportacoes">
+                            <thead>
                                 <tr>
-                                    <td colSpan={7} className="data-table__empty">Carregando exportacoes...</td>
+                                    <th className="data-table__th" scope="col">ID</th>
+                                    <th className="data-table__th" scope="col">Formato</th>
+                                    <th className="data-table__th" scope="col">Escopo</th>
+                                    <th className="data-table__th" scope="col">Registros</th>
+                                    <th className="data-table__th" scope="col">Data</th>
+                                    <th className="data-table__th" scope="col">Status</th>
+                                    <th className="data-table__th" scope="col">Acao</th>
                                 </tr>
-                            )}
-                            {!isDemoMode && !exportsState.loading && exportsState.error && (
-                                <tr>
-                                    <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
-                                        {extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.')}
-                                    </td>
-                                </tr>
-                            )}
-                            {(!exportsState.loading || isDemoMode) && !exportsState.error && history.map((item) => (
-                                <tr key={item.id} className="data-table__row">
-                                    <td className="data-table__td data-table__td--mono">{item.id}</td>
-                                    <td className="data-table__td">{item.type}</td>
-                                    <td className="data-table__td">{item.scope}</td>
-                                    <td className="data-table__td">{item.records}</td>
-                                    <td className="data-table__td">{item.createdAt}</td>
-                                    <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
-                                    <td className="data-table__td">
-                                        {isDemoMode && item.artifactCaseId ? (
-                                            <button
-                                                type="button"
-                                                className="export-btn"
-                                                style={{ padding: '6px 10px', fontSize: '.75rem' }}
-                                                onClick={() => openHistoryArtifact(item)}
-                                            >
-                                                Abrir
-                                            </button>
-                                        ) : (
-                                            <span style={{ color: 'var(--text-tertiary)' }}>—</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                            {(!exportsState.loading || isDemoMode) && !exportsState.error && history.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="data-table__empty">Nenhuma exportacao registrada.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {exportsState.loading && !isDemoMode && (
+                                    <tr>
+                                        <td colSpan={7} className="data-table__empty">Carregando exportacoes...</td>
+                                    </tr>
+                                )}
+                                {!isDemoMode && !exportsState.loading && exportsState.error && (
+                                    <tr>
+                                        <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
+                                            {extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.')}
+                                        </td>
+                                    </tr>
+                                )}
+                                {(!exportsState.loading || isDemoMode) && !exportsState.error && history.map((item) => (
+                                    <tr key={item.id} className="data-table__row">
+                                        <td className="data-table__td data-table__td--mono">{item.id}</td>
+                                        <td className="data-table__td">{item.type}</td>
+                                        <td className="data-table__td">{item.scope}</td>
+                                        <td className="data-table__td">{item.records}</td>
+                                        <td className="data-table__td">{item.createdAt}</td>
+                                        <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
+                                        <td className="data-table__td">
+                                            {isDemoMode && item.artifactCaseId ? (
+                                                <button
+                                                    type="button"
+                                                    className="export-btn"
+                                                    style={{ padding: '6px 10px', fontSize: '.75rem' }}
+                                                    onClick={() => openHistoryArtifact(item)}
+                                                >
+                                                    Abrir
+                                                </button>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>
+                                                    {item.artifactMode === 'download' ? '⬇ Baixado' : '↗ Aberto'}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {(!exportsState.loading || isDemoMode) && !exportsState.error && history.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="data-table__empty">Nenhuma exportacao registrada.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </MobileDataCardList>
             </div>
         </div>
     );

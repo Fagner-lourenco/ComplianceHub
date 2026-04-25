@@ -3,6 +3,9 @@ export function getOverallEnrichmentStatus(caseData) {
         caseData?.juditEnrichmentStatus,
         caseData?.escavadorEnrichmentStatus,
         caseData?.enrichmentStatus,
+        caseData?.bigdatacorpEnrichmentStatus,
+        caseData?.djenEnrichmentStatus,
+        caseData?.aiStatus,
     ].filter(Boolean);
 
     if (statuses.includes('RUNNING')) return 'RUNNING';

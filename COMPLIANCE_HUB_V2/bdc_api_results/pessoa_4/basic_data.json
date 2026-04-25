@@ -1,0 +1,55 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "BasicData": {
+        "TaxIdNumber": "05023290336",
+        "TaxIdCountry": "BRAZIL",
+        "AlternativeIdNumbers": {
+          "SocialSecurityNumber": "20107442609"
+        },
+        "Name": "FRANCISCO TACIANO DE SOUSA",
+        "Aliases": {
+          "CommonName": "FRANCISCO SOUSA",
+          "StandardizedName": "FRANSICO TASIANO SOUSA"
+        },
+        "Gender": "M",
+        "NameWordCount": 4,
+        "NumberOfFullNameNamesakes": 1,
+        "NameUniquenessScore": 1,
+        "FirstNameUniquenessScore": 0.001,
+        "FirstAndLastNameUniquenessScore": 0.001,
+        "BirthDate": "1991-08-16T00:00:00Z",
+        "CapturedBirthDateFromRFSource": "1991-08-16",
+        "IsValidBirthDateInRFSource": true,
+        "Age": 34,
+        "ZodiacSign": "LEAO",
+        "ChineseSign": "Goat",
+        "BirthCountry": "BRASILEIRA",
+        "MotherName": "FRANCISCA CAETANA DE SOUSA",
+        "FatherName": "",
+        "MaritalStatusData": {},
+        "TaxIdStatus": "REGULAR",
+        "TaxIdOrigin": "RECEITA FEDERAL",
+        "TaxIdFiscalRegion": "CE-MA-PI",
+        "HasObitIndication": false,
+        "TaxIdStatusDate": "2016-08-23T00:00:00Z",
+        "TaxIdStatusRegistrationDate": "2008-09-09T00:00:00Z",
+        "CreationDate": "2016-08-23T00:00:00Z",
+        "LastUpdateDate": "2026-03-28T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "e39757c3-95ca-42a3-b177-ff0d94853a64",
+  "ElapsedMilliseconds": 71,
+  "QueryDate": "2026-04-25T10:59:40.1824498Z",
+  "Status": {
+    "basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

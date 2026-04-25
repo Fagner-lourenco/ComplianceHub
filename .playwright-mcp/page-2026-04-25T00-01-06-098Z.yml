@@ -1,0 +1,111 @@
+- generic [ref=e40]:
+  - banner [ref=e41]:
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]: CH
+        - generic [ref=e45]:
+          - strong [ref=e46]: ComplianceHub
+          - generic [ref=e47]: Plataforma de Análise de Risco
+      - navigation "Produtos" [ref=e48]:
+        - link "Análises" [ref=e49] [cursor=pointer]:
+          - /url: /dossie
+          - img [ref=e50]
+          - text: Análises
+        - link "LinkHub" [ref=e54] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e55]
+          - text: LinkHub
+        - link "FlagHub" [ref=e58] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e59]
+          - text: FlagHub
+        - link "SearchHub" [ref=e61] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e62]
+          - text: SearchHub
+      - generic [ref=e65]:
+        - button "Ativar modo escuro" [ref=e66] [cursor=pointer]:
+          - img [ref=e67]
+        - button "Sair" [ref=e69] [cursor=pointer]
+    - navigation "Operações" [ref=e71]:
+      - link "Watchlists" [ref=e72] [cursor=pointer]:
+        - /url: /watchlists
+        - img [ref=e73]
+        - text: Watchlists
+      - link "Billing" [ref=e75] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e76]
+        - text: Billing
+      - link "Senior Review" [ref=e79] [cursor=pointer]:
+        - /url: /senior-review
+        - img [ref=e80]
+        - text: Senior Review
+      - link "Relatórios" [ref=e82] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e83]
+        - text: Relatórios
+  - main [ref=e87]:
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - generic [ref=e90]: Surface ativa
+        - heading "Análises" [level=1] [ref=e91]
+        - paragraph [ref=e92]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+      - generic [ref=e94]:
+        - button "Ver contratos backend" [ref=e95] [cursor=pointer]
+        - button "Criar nova análise" [ref=e96] [cursor=pointer]
+    - status "Carregando" [ref=e97]
+  - generic:
+    - complementary:
+      - generic:
+        - generic:
+          - generic: Mapa funcional
+          - heading [level=2]: Camadas de backend
+          - paragraph: Historico de dossies esta ligada aos contratos abaixo.
+        - button: Fechar
+      - generic:
+        - article:
+          - generic:
+            - strong: Schema e preset de dossie
+            - generic: Implementado
+          - paragraph: O backend principal ja resolve preset, schema, macroareas e configuracao canonica do dossie para PF, PJ e composicao custom.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Continuar usando dossierSchema como fonte unica de verdade para navegacao, visoes e cobertura funcional.
+          - generic:
+            - generic: functions/domain/dossierSchema.cjs
+            - generic: functions/domain/v2Modules.cjs
+            - generic: functions/domain/v2ProductCatalog.cjs
+        - article:
+          - generic:
+            - strong: Listagem e historico
+            - generic: Parcial
+          - paragraph: A listagem ja recebe projeoes seguras com produto, preset, schema e processamento, mas ainda precisa evoluir para um read model mais rico e independente dos documentos brutos.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Falta fechar filtros paginaveis, colunas operacionais completas e acao de monitoramento por fonte.
+          - generic:
+            - generic: functions/domain/v2ClientProjectionBuilder.cjs
+            - generic: functions/domain/v2Core.cjs
+        - article:
+          - generic:
+            - strong: Progresso por fonte
+            - generic: Proximo refactor
+          - paragraph: A UX nova pede monitoramento por fonte, percentual real, retries e reprocessamento. A base operacional existe, mas ainda nao virou um contrato cliente coeso.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Transformar providerRequests e moduleRuns em sourceRows com status, tentativas, ultima execucao e erro tecnico.
+          - generic:
+            - generic: functions/domain/v2OperationalArtifactBuilder.cjs
+            - generic: functions/index.js
+        - article:
+          - generic:
+            - strong: Revisao humana saiu do produto principal
+            - generic: Fora do produto base
+          - paragraph: O pipeline central do dossie agora opera em modo automation_only. Revisao humana fica fora do fluxo padrao e pode voltar apenas como produto/plugin separado.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Nao reacoplar review gate, senior queue ou aprovacao manual ao dossie base.
+          - generic:
+            - generic: functions/domain/v2CaseStatus.cjs
+            - generic: functions/index.js
+            - generic: functions/domain/v2ReviewGate.cjs

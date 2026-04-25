@@ -1,0 +1,98 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "LawsuitsDistributionData": {
+        "TotalLawsuits": 8,
+        "TypeDistribution": {
+          "PROCEDIMENTO COMUM": 1,
+          "MEDIDAS PROTETIVAS DE URGENCIA": 1,
+          "CUMPRIMENTO DE SENTENCA": 1,
+          "TERMO CIRCUNSTANCIADO": 2,
+          "ACAO PENAL": 2,
+          "APELACAO CRIMINAL": 1
+        },
+        "CourtNameDistribution": {
+          "TJCE": 8
+        },
+        "StatusDistribution": {
+          "ATIVO": 2,
+          "ARQUIVADO": 3,
+          "ENCERRADO": 2,
+          "JULGADO": 1
+        },
+        "StateDistribution": {
+          "CE": 8
+        },
+        "PartyTypeDistribution": {
+          "CLAIMED": 4,
+          "DEFENDANT": 4
+        },
+        "CourtTypeDistribution": {
+          "CIVEL": 2,
+          "CRIMINAL": 4,
+          "ESPECIAL CRIMINAL": 1
+        },
+        "CourtLevelDistribution": {
+          "1": 7,
+          "2": 1
+        },
+        "CnjProcedureTypeDistribution": {
+          "PROCEDIMENTO COMUM CIVEL": 1,
+          "MEDIDAS PROTETIVAS DE URGENCIA (LEI MARIA DA PENHA) - CRIMINAL": 1,
+          "CUMPRIMENTO DE SENTENCA DE OBRIGACAO DE PRESTAR ALIMENTOS": 1,
+          "TERMO CIRCUNSTANCIADO": 2,
+          "ACAO PENAL - PROCEDIMENTO ORDINARIO": 2,
+          "APELACAO CRIMINAL": 1
+        },
+        "CnjProcedureTypeNumberDistribution": {
+          "7": 1,
+          "278": 2,
+          "283": 2,
+          "417": 1,
+          "1268": 1,
+          "12246": 1
+        },
+        "CnjSubjectDistribution": {
+          "FIXACAO": 1,
+          "CONTRAVENCOES PENAIS": 4,
+          "ALIMENTOS": 1,
+          "PORTE DE ARMA (BRANCA)": 1,
+          "AMEACA": 1
+        },
+        "CnjSubjectNumberDistribution": {
+          "3402": 1,
+          "3692": 2,
+          "6239": 1,
+          "9914": 2,
+          "10859": 1,
+          "12344": 1
+        },
+        "CnjBroadSubjectDistribution": {
+          "DIREITO CIVIL": 1,
+          "DIREITO PENAL": 4,
+          "DIREITO PROCESSUAL CIVIL E DO TRABALHO": 1,
+          "DIREITO DA CRIANCA E DO ADOLESCENTE": 2
+        },
+        "CnjBroadSubjectNumberDistribution": {
+          "287": 4,
+          "899": 1,
+          "8826": 1,
+          "9633": 2
+        }
+      }
+    }
+  ],
+  "QueryId": "8ff7ba0e-949b-45dd-b178-75ff06a3acd1",
+  "ElapsedMilliseconds": 195,
+  "QueryDate": "2026-04-25T12:33:29.6967394Z",
+  "Status": {
+    "lawsuits_distribution_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

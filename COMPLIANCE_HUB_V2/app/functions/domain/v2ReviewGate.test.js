@@ -5,8 +5,8 @@ const require = createRequire(import.meta.url);
 const {
     isSeniorReviewerRole,
     resolveReviewGate,
-} = require('./v2ReviewGate.cjs');
-const { ROLES } = require('./v2Rbac.cjs');
+} = require('./v2ReviewGate.js');
+const { ROLES } = require('./v2Rbac.js');
 
 describe('v2ReviewGate', () => {
     it('permite analyst aprovar caso operacional sem exigencia senior', () => {

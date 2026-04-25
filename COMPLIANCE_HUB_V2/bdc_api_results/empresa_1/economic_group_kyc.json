@@ -1,0 +1,657 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "EconomicGroupKycData": {
+        "TotalCurrentlyPEP": 0,
+        "TotalHistoricallyPEP": 0,
+        "TotalCurrentlySanctioned": 0,
+        "TotalHistoricallySanctioned": 3,
+        "AverageSanctionsPerCompany": 0,
+        "PEPPercentage": 0,
+        "EconomicGroupMaxSanctions": 0,
+        "EconomicGroupMinSanctions": 0,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 0,
+        "FirstPEPOccurenceDate": "9999-12-31T23:59:59.9999999",
+        "LastPEPOccurenceDate": "0001-01-01T00:00:00",
+        "FirstSanctionDate": "0001-01-01T00:00:00",
+        "LastSanctionDate": "0001-01-01T00:00:00",
+        "EconomicGroupCompaniesKycData": [
+          {
+            "DocNumber": "42975374000172",
+            "DocType": "CNPJ",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [],
+              "IsCurrentlySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0
+            }
+          }
+        ],
+        "EconomicGroupPeopleKycData": [
+          {
+            "DocNumber": "08097660946",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "interpol",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 48,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "RENAN ANTONIO RICHTER",
+                    "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+                    "BirthDate": "2000/08/01",
+                    "StandardizedBirthDate": "2000-08-01T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "Nationalities": "BRAZIL",
+                    "image": "https://ws-public.interpol.int/notices/v1/red/2024-57878/images/63186547",
+                    "language_spoken": "portuguese",
+                    "charges": "organización criminal; posesión ilegal de arma de fuego de uso restringido"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "RENAN ANTONIO RICHTER",
+                    "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+                    "Nationalities": "BRAZIL",
+                    "BirthDate": "2000/08/01",
+                    "StandardizedBirthDate": "2000-08-01T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-24T03:06:46.101",
+                  "LastUpdateDate": "2026-04-24T03:06:46.101",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          },
+          {
+            "DocNumber": "05118465923",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 54,
+                  "NameUniquenessScore": 0.00431034,
+                  "Details": {
+                    "OriginalName": "MICHELLE DOS SANTOS",
+                    "SanctionName": "MICHELLE REISHANE WANG",
+                    "BirthDate": "05 Mar 1994",
+                    "StandardizedBirthDate": "1994-03-05T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "remarks": "(linked to: grand legend international asset management group co. ltd.)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "MICHELLE DOS SANTOS",
+                    "SanctionName": "MICHELLE REISHANE WANG",
+                    "BirthDate": "05 Mar 1994",
+                    "StandardizedBirthDate": "1994-03-05T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2025-10-15T00:00:00",
+                  "LastUpdateDate": "2026-04-25T00:00:00",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          },
+          {
+            "DocNumber": "08523197974",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 49,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA IMEX GROUP ITHALAT IHRACAT VE DIS TICARET LIMITED SIRKETI",
+                    "SanctionAliases|MatchRate": "DENIZ CAPITAL HOLDING AS|4;FREIGHTEX LOJISTIK DIS TICARET LTD. STI.|24;VANESSA IMEX SARL|29",
+                    "remarks": "(linked to: deniz, fadi)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA IMEX GROUP ITHALAT IHRACAT VE DIS TICARET LIMITED SIRKETI",
+                    "SanctionAliasesAndMatchRate": "DENIZ CAPITAL HOLDING AS|4;FREIGHTEX LOJISTIK DIS TICARET LTD. STI.|24;VANESSA IMEX SARL|29"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-25T03:05:10.262",
+                  "LastUpdateDate": "2026-04-25T03:05:10.262",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 48,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA VALENZUELA VALENZUELA",
+                    "BirthDate": "16 Nov 1985",
+                    "StandardizedBirthDate": "1985-11-16T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "SanctionAliases|MatchRate": "Vanessa DE CORTEZ|31",
+                    "remarks": "(linked to: buenos aires servicios, s.a. de c.v.; linked to: estaciones de servicios canarias, s.a. de c.v.; linked to: gasodiesel y servicios ancona, s.a. de c.v.; linked to: gasolinera alamos country, s.a. de c.v.; linked to: gasolinera y servicios villabonita, s.a. de c.v.; linked to: petrobarrancos, s.a. de c.v.)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA VALENZUELA VALENZUELA",
+                    "SanctionAliasesAndMatchRate": "Vanessa DE CORTEZ|31",
+                    "BirthDate": "16 Nov 1985",
+                    "StandardizedBirthDate": "1985-11-16T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2019-11-07T00:00:00",
+                  "LastUpdateDate": "2026-04-25T00:00:00",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "fbi",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 30,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA MORALES",
+                    "SanctionAliases|MatchRate": "",
+                    "Nationalities": "",
+                    "status": "kidnapper",
+                    "details": "law enforcement authorities are searching for vanessa morales&nbsp;from ansonia, connecticut, after finding her mother deceased in their home on december 2, 2019.&nbsp; vanessa was last seen by family members on friday, november 29, 2019.",
+                    "description": "december 2, 2019ansonia, connecticut",
+                    "wanted_person_poster": "https://www.fbi.gov/wanted/kidnap/vanessa-morales/@@download.pdf",
+                    "image": "https://www.fbi.gov/wanted/kidnap/vanessa-morales/@@images/image/thumb;https://www.fbi.gov/wanted/kidnap/vanessa-morales/morales1.jpg/@@images/image/thumb;https://www.fbi.gov/wanted/kidnap/vanessa-morales/moralesage.jpg/@@images/image/thumb",
+                    "hair": "brown",
+                    "eyes": "brown",
+                    "height": "2'2",
+                    "weight": "17 pounds",
+                    "race": "white hispanic"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA MORALES",
+                    "SanctionAliasesAndMatchRate": "",
+                    "Nationalities": ""
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-16T04:33:39.053",
+                  "LastUpdateDate": "2026-04-16T04:33:39.053",
+                  "IsCurrentlyPresentOnSource": false,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 30,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA GROUP LIMITED",
+                    "remarks": "(linked to: deniz, fadi)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA GROUP LIMITED"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-25T03:05:10.253",
+                  "LastUpdateDate": "2026-04-25T03:05:10.253",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "fbi",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 29,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA O'ROURKE",
+                    "SanctionAliases|MatchRate": "VANESSA GULINELLO|30;CECILIA VINCENT GAETA LAZARO|4",
+                    "Nationalities": "",
+                    "status": "fugitive",
+                    "caution": "vanessa o’rourke is wanted for allegedly fraudulently representing to her family and friends that she had been diagnosed with a terminal form of brain cancer known as a glioblastoma, and told them she needed money to aid in her medical treatment and to support her while she was ill.&nbsp; between october of 2015 and july of 2016, o'rourke further represented to family and friends that she needed to travel to australia to participate in an experimental treatment for her purported cancer.&nbsp; through her false and fraudulent pretenses, her family and others provided money and support.&nbsp; in or around&nbsp;april of 2016, o'rourke traveled to australia, where she engaged in a variety of leisure activities and did not receive any medical treatment.&nbsp; upon her return to the united states, o'rourke enlisted her friends and family to organize two fundraisers on her behalf.&nbsp; a webpage was established and a benefit event held at a local restaurant in pennsylvania, both resulting in numerous people providing donations for her purported cancer treatment.&nbsp; o'rourke utilized those funds to travel to australia again in or around 2016, where she again engaged in various leisure activities and received no medical treatment for her nonexistent illness.&nbsp; o'rourke&nbsp;was indicted on 15 counts of wire fraud in the united states district court for the eastern district of pennsylvania on may 3, 2018, and a federal warrant was issued for her arrest.&nbsp;",
+                    "description": "wire fraud fifteen counts",
+                    "wanted_person_poster": "https://www.fbi.gov/wanted/wcc/vanessa-orourke/@@download.pdf",
+                    "image": "https://www.fbi.gov/wanted/wcc/vanessa-orourke/@@images/image/thumb;https://www.fbi.gov/wanted/wcc/vanessa-orourke/orourke2.jpg/@@images/image/thumb;https://www.fbi.gov/wanted/wcc/vanessa-orourke/orourke3.png/@@images/image/thumb",
+                    "hair": "brown",
+                    "eyes": "brown",
+                    "height": "5'7",
+                    "weight": "170 pounds",
+                    "race": "white"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA O'ROURKE",
+                    "SanctionAliasesAndMatchRate": "VANESSA GULINELLO|30;CECILIA VINCENT GAETA LAZARO|4",
+                    "Nationalities": ""
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-16T04:20:54.47",
+                  "LastUpdateDate": "2026-04-16T04:20:54.47",
+                  "IsCurrentlyPresentOnSource": false,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          }
+        ],
+        "EconomicGroupKycData": [
+          {
+            "DocNumber": "42975374000172",
+            "DocType": "CNPJ",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [],
+              "IsCurrentlySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0
+            }
+          },
+          {
+            "DocNumber": "08097660946",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "interpol",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 48,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "RENAN ANTONIO RICHTER",
+                    "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+                    "BirthDate": "2000/08/01",
+                    "StandardizedBirthDate": "2000-08-01T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "Nationalities": "BRAZIL",
+                    "image": "https://ws-public.interpol.int/notices/v1/red/2024-57878/images/63186547",
+                    "language_spoken": "portuguese",
+                    "charges": "organización criminal; posesión ilegal de arma de fuego de uso restringido"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "RENAN ANTONIO RICHTER",
+                    "SanctionName": "RENAN BRAIAN GARCIA PRESOTTO",
+                    "Nationalities": "BRAZIL",
+                    "BirthDate": "2000/08/01",
+                    "StandardizedBirthDate": "2000-08-01T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-24T03:06:46.101",
+                  "LastUpdateDate": "2026-04-24T03:06:46.101",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          },
+          {
+            "DocNumber": "05118465923",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 54,
+                  "NameUniquenessScore": 0.00431034,
+                  "Details": {
+                    "OriginalName": "MICHELLE DOS SANTOS",
+                    "SanctionName": "MICHELLE REISHANE WANG",
+                    "BirthDate": "05 Mar 1994",
+                    "StandardizedBirthDate": "1994-03-05T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "remarks": "(linked to: grand legend international asset management group co. ltd.)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "MICHELLE DOS SANTOS",
+                    "SanctionName": "MICHELLE REISHANE WANG",
+                    "BirthDate": "05 Mar 1994",
+                    "StandardizedBirthDate": "1994-03-05T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2025-10-15T00:00:00",
+                  "LastUpdateDate": "2026-04-25T00:00:00",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          },
+          {
+            "DocNumber": "08523197974",
+            "DocType": "CPF",
+            "KycData": {
+              "PEPHistory": [],
+              "IsCurrentlyPEP": false,
+              "SanctionsHistory": [
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 49,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA IMEX GROUP ITHALAT IHRACAT VE DIS TICARET LIMITED SIRKETI",
+                    "SanctionAliases|MatchRate": "DENIZ CAPITAL HOLDING AS|4;FREIGHTEX LOJISTIK DIS TICARET LTD. STI.|24;VANESSA IMEX SARL|29",
+                    "remarks": "(linked to: deniz, fadi)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA IMEX GROUP ITHALAT IHRACAT VE DIS TICARET LIMITED SIRKETI",
+                    "SanctionAliasesAndMatchRate": "DENIZ CAPITAL HOLDING AS|4;FREIGHTEX LOJISTIK DIS TICARET LTD. STI.|24;VANESSA IMEX SARL|29"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-25T03:05:10.262",
+                  "LastUpdateDate": "2026-04-25T03:05:10.262",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 48,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA VALENZUELA VALENZUELA",
+                    "BirthDate": "16 Nov 1985",
+                    "StandardizedBirthDate": "1985-11-16T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0",
+                    "SanctionAliases|MatchRate": "Vanessa DE CORTEZ|31",
+                    "remarks": "(linked to: buenos aires servicios, s.a. de c.v.; linked to: estaciones de servicios canarias, s.a. de c.v.; linked to: gasodiesel y servicios ancona, s.a. de c.v.; linked to: gasolinera alamos country, s.a. de c.v.; linked to: gasolinera y servicios villabonita, s.a. de c.v.; linked to: petrobarrancos, s.a. de c.v.)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA VALENZUELA VALENZUELA",
+                    "SanctionAliasesAndMatchRate": "Vanessa DE CORTEZ|31",
+                    "BirthDate": "16 Nov 1985",
+                    "StandardizedBirthDate": "1985-11-16T00:00:00",
+                    "SourcePossibleDateOfBirthScore": "0"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2019-11-07T00:00:00",
+                  "LastUpdateDate": "2026-04-25T00:00:00",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "fbi",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 30,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA MORALES",
+                    "SanctionAliases|MatchRate": "",
+                    "Nationalities": "",
+                    "status": "kidnapper",
+                    "details": "law enforcement authorities are searching for vanessa morales&nbsp;from ansonia, connecticut, after finding her mother deceased in their home on december 2, 2019.&nbsp; vanessa was last seen by family members on friday, november 29, 2019.",
+                    "description": "december 2, 2019ansonia, connecticut",
+                    "wanted_person_poster": "https://www.fbi.gov/wanted/kidnap/vanessa-morales/@@download.pdf",
+                    "image": "https://www.fbi.gov/wanted/kidnap/vanessa-morales/@@images/image/thumb;https://www.fbi.gov/wanted/kidnap/vanessa-morales/morales1.jpg/@@images/image/thumb;https://www.fbi.gov/wanted/kidnap/vanessa-morales/moralesage.jpg/@@images/image/thumb",
+                    "hair": "brown",
+                    "eyes": "brown",
+                    "height": "2'2",
+                    "weight": "17 pounds",
+                    "race": "white hispanic"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA MORALES",
+                    "SanctionAliasesAndMatchRate": "",
+                    "Nationalities": ""
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-16T04:33:39.053",
+                  "LastUpdateDate": "2026-04-16T04:33:39.053",
+                  "IsCurrentlyPresentOnSource": false,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "ofac",
+                  "Type": "Money Laundering",
+                  "StandardizedSanctionType": "FINANCIAL CRIMES",
+                  "MatchRate": 30,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA GROUP LIMITED",
+                    "remarks": "(linked to: deniz, fadi)"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA GROUP LIMITED"
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-25T03:05:10.253",
+                  "LastUpdateDate": "2026-04-25T03:05:10.253",
+                  "IsCurrentlyPresentOnSource": true,
+                  "WasRecentlyPresentOnSource": true
+                },
+                {
+                  "Source": "fbi",
+                  "Type": "Law Enforcement",
+                  "StandardizedSanctionType": "ARREST WARRANTS",
+                  "MatchRate": 29,
+                  "NameUniquenessScore": 1,
+                  "Details": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA O'ROURKE",
+                    "SanctionAliases|MatchRate": "VANESSA GULINELLO|30;CECILIA VINCENT GAETA LAZARO|4",
+                    "Nationalities": "",
+                    "status": "fugitive",
+                    "caution": "vanessa o’rourke is wanted for allegedly fraudulently representing to her family and friends that she had been diagnosed with a terminal form of brain cancer known as a glioblastoma, and told them she needed money to aid in her medical treatment and to support her while she was ill.&nbsp; between october of 2015 and july of 2016, o'rourke further represented to family and friends that she needed to travel to australia to participate in an experimental treatment for her purported cancer.&nbsp; through her false and fraudulent pretenses, her family and others provided money and support.&nbsp; in or around&nbsp;april of 2016, o'rourke traveled to australia, where she engaged in a variety of leisure activities and did not receive any medical treatment.&nbsp; upon her return to the united states, o'rourke enlisted her friends and family to organize two fundraisers on her behalf.&nbsp; a webpage was established and a benefit event held at a local restaurant in pennsylvania, both resulting in numerous people providing donations for her purported cancer treatment.&nbsp; o'rourke utilized those funds to travel to australia again in or around 2016, where she again engaged in various leisure activities and received no medical treatment for her nonexistent illness.&nbsp; o'rourke&nbsp;was indicted on 15 counts of wire fraud in the united states district court for the eastern district of pennsylvania on may 3, 2018, and a federal warrant was issued for her arrest.&nbsp;",
+                    "description": "wire fraud fifteen counts",
+                    "wanted_person_poster": "https://www.fbi.gov/wanted/wcc/vanessa-orourke/@@download.pdf",
+                    "image": "https://www.fbi.gov/wanted/wcc/vanessa-orourke/@@images/image/thumb;https://www.fbi.gov/wanted/wcc/vanessa-orourke/orourke2.jpg/@@images/image/thumb;https://www.fbi.gov/wanted/wcc/vanessa-orourke/orourke3.png/@@images/image/thumb",
+                    "hair": "brown",
+                    "eyes": "brown",
+                    "height": "5'7",
+                    "weight": "170 pounds",
+                    "race": "white"
+                  },
+                  "NormalizedDetails": {
+                    "OriginalName": "VANESSA CAMILLA CAMARGO GONCALVES RICHTER",
+                    "SanctionName": "VANESSA O'ROURKE",
+                    "SanctionAliasesAndMatchRate": "VANESSA GULINELLO|30;CECILIA VINCENT GAETA LAZARO|4",
+                    "Nationalities": ""
+                  },
+                  "StartDate": "0001-01-01T00:00:00",
+                  "EndDate": "9999-12-31T23:59:59.9999999",
+                  "CreationDate": "2026-04-16T04:20:54.47",
+                  "LastUpdateDate": "2026-04-16T04:20:54.47",
+                  "IsCurrentlyPresentOnSource": false,
+                  "WasRecentlyPresentOnSource": true
+                }
+              ],
+              "IsCurrentlySanctioned": false,
+              "WasPreviouslySanctioned": false,
+              "Last30DaysSanctions": 0,
+              "Last90DaysSanctions": 0,
+              "Last180DaysSanctions": 0,
+              "Last365DaysSanctions": 0,
+              "LastYearPEPOccurence": 0,
+              "Last3YearsPEPOccurence": 0,
+              "Last5YearsPEPOccurence": 0,
+              "Last5PlusYearsPEPOccurence": 0,
+              "FirstSanctionDate": "0001-01-01T00:00:00",
+              "LastSanctionDate": "0001-01-01T00:00:00",
+              "IsCurrentlyElectoralDonor": false,
+              "IsHistoricalElectoralDonor": false,
+              "TotalElectoralDonations": 0,
+              "TotalElectoralDonationAmount": 0,
+              "ElectoralDonations": {}
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "b65cf600-dd9b-46c0-a3da-9e8113cef4e3",
+  "ElapsedMilliseconds": 493,
+  "QueryDate": "2026-04-25T12:52:54.7286482Z",
+  "Status": {
+    "economic_group_kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

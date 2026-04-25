@@ -17,6 +17,8 @@ const PROVIDERS = [
     { key: 'judit', label: 'Judit', field: 'juditEnrichmentStatus' },
     { key: 'escavador', label: 'Escavador', field: 'escavadorEnrichmentStatus' },
     { key: 'fontedata', label: 'FonteData', field: 'enrichmentStatus' },
+    { key: 'bigdatacorp', label: 'BigDataCorp', field: 'bigdatacorpEnrichmentStatus' },
+    { key: 'djen', label: 'DJEN', field: 'djenEnrichmentStatus' },
 ];
 
 const PERIOD_OPTIONS = [
@@ -47,10 +49,10 @@ export default function MetricasIAPage() {
     const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
     const { cases, loading, error } = useCases(tenantOverride);
     const [periodDays, setPeriodDays] = useState(30);
+    const [now] = useState(() => Date.now());
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
 
     const m = useMemo(() => {
-        const now = Date.now();
         const cutoff = periodDays > 0
             ? new Date(now - periodDays * 86400000).toISOString().slice(0, 10)
             : '0000';
@@ -136,7 +138,7 @@ export default function MetricasIAPage() {
             reviewRate: pct(decisions.ADJUSTED + decisions.IGNORED, aiCases.length),
             byTenant: Object.entries(byTenant).sort((a, b) => (b[1].fdCost + b[1].aiCost) - (a[1].fdCost + a[1].aiCost)),
         };
-    }, [cases, periodDays, showAllTenants]);
+    }, [cases, now, periodDays, showAllTenants]);
 
     if (loading) return (
         <div className="ops-dash"><h2 className="ops-dash__title">Dashboard Operacional</h2>

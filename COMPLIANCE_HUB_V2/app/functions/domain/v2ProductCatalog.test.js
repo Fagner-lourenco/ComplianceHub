@@ -6,7 +6,7 @@ import {
     normalizeEnabledProducts,
     tierIndex,
     buildClientProductCatalog,
-} from './v2ProductCatalog.cjs';
+} from './v2ProductCatalog.js';
 
 describe('v2ProductCatalog — registry', () => {
     it('has all expected product keys', () => {

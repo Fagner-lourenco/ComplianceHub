@@ -1,0 +1,59 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "BasicData": {
+        "TaxIdNumber": "11819916766",
+        "TaxIdCountry": "BRAZIL",
+        "AlternativeIdNumbers": {
+          "SocialSecurityNumber": "13003075569"
+        },
+        "Name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+        "Aliases": {
+          "CommonName": "RENAN AUGUSTO",
+          "StandardizedName": "RENAM GUIMARAE SOUSA AUGUSTO"
+        },
+        "Gender": "M",
+        "NameWordCount": 5,
+        "NumberOfFullNameNamesakes": 1,
+        "NameUniquenessScore": 1,
+        "FirstNameUniquenessScore": 0.001,
+        "FirstAndLastNameUniquenessScore": 0.01298701,
+        "BirthDate": "1987-07-27T00:00:00Z",
+        "CapturedBirthDateFromRFSource": "1987-07-27",
+        "IsValidBirthDateInRFSource": true,
+        "Age": 38,
+        "ZodiacSign": "LEAO",
+        "ChineseSign": "Rabbit",
+        "BirthCountry": "BRASILEIRA",
+        "MotherName": "RITA DE CASSIA GUIMARAES RAMOS",
+        "FatherName": "",
+        "MaritalStatusData": {
+          "MaritalStatus": "CASADO(A)",
+          "MaritalStatusSource": "BDC - TJRJ",
+          "MaritalStatusLastUpdateDate": "2021-06-10T00:00:00Z"
+        },
+        "TaxIdStatus": "REGULAR",
+        "TaxIdOrigin": "RECEITA FEDERAL",
+        "TaxIdFiscalRegion": "ES-RJ",
+        "HasObitIndication": false,
+        "TaxIdStatusDate": "2016-01-09T00:00:00Z",
+        "TaxIdStatusRegistrationDate": "2004-04-14T00:00:00Z",
+        "CreationDate": "2016-01-09T00:00:00Z",
+        "LastUpdateDate": "2026-04-16T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "7fcd551e-ad4f-4511-a6b8-7c3d38fc86c0",
+  "ElapsedMilliseconds": 58,
+  "QueryDate": "2026-04-25T10:59:25.5155184Z",
+  "Status": {
+    "basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

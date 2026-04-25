@@ -211,10 +211,12 @@ async function writeAuditEvent({
 module.exports = { writeAuditEvent };
 
 // ── Test-only exports ────────────────────────────────────────────────────────
-module.exports.__test = {
-    interpolateTemplate,
-    buildSearchText,
-    stripUndefined,
-    /** Override the lazy db() getter for testing. */
-    _setDb(mockDb) { _db = mockDb; },
-};
+if (process.env.FUNCTIONS_EMULATOR === 'true') {
+    module.exports.__test = {
+        interpolateTemplate,
+        buildSearchText,
+        stripUndefined,
+        /** Override the lazy db() getter for testing. */
+        _setDb(mockDb) { _db = mockDb; },
+    };
+}

@@ -1,0 +1,5 @@
+- generic [ref=e4]:
+  - generic [ref=e5]: "!"
+  - heading "Algo deu errado" [level=2] [ref=e6]
+  - paragraph [ref=e7]: Ocorreu um erro inesperado na aplicacao. Tente recarregar a pagina.
+  - button "Recarregar pagina" [ref=e8] [cursor=pointer]

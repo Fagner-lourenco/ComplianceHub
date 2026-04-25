@@ -24,6 +24,9 @@ export const DEFAULT_ANALYSIS_CONFIG = {
     social:           { enabled: true },
     digital:          { enabled: true },
     conflictInterest: { enabled: true },
+    kyc:              { enabled: true },
+    judicial:         { enabled: true },
+    relationship:     { enabled: true },
 };
 
 export const ANALYSIS_PHASE_LABELS = {
@@ -34,6 +37,14 @@ export const ANALYSIS_PHASE_LABELS = {
     social:           'Social',
     digital:          'Perfil Digital',
     conflictInterest: 'Conflito de Interesse',
+    kyc:              'KYC e Listas',
+    judicial:         'Judicial',
+    relationship:     'Relacionamentos',
+    identity_pf:      'Identificacao PF',
+    identity_pj:      'Identificacao PJ',
+    ongoing_monitoring: 'Monitoramento',
+    decision:         'Decisao',
+    report_secure:    'Relatorio',
 };
 
 function mapProfilesToTenantDirectory(profiles) {
@@ -209,7 +220,7 @@ async function runFirestoreRestQuery(structuredQuery, errorMessage) {
 
     const idToken = await currentUser.getIdToken();
     const response = await fetch(
-        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`,
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/compliance-hub-v2/documents:runQuery`,
         {
             method: 'POST',
             headers: {
@@ -237,7 +248,7 @@ export async function getFirestoreDocumentViaRest(collectionId, documentId, erro
 
     const idToken = await currentUser.getIdToken();
     const response = await fetch(
-        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionId}/${encodeURIComponent(documentId)}`,
+        `https://firestore.googleapis.com/v1/projects/${projectId}/databases/compliance-hub-v2/documents/${collectionId}/${encodeURIComponent(documentId)}`,
         {
             headers: {
                 Authorization: `Bearer ${idToken}`,
@@ -806,15 +817,13 @@ export function subscribeToProviderDivergencesForCase(caseId, callback, limitCou
 }
 
 // Fetches previous cases for same subject (excludes currentCaseId), ordered by createdAt desc.
-export async function fetchSubjectHistory(subjectId, currentCaseId, limit_ = 5) {
+export async function fetchSubjectHistory(subjectId, currentCaseId, limit_ = 5, tenantId = null) {
     if (!subjectId) return [];
     try {
-        const q = query(
-            collection(db, 'cases'),
-            where('subjectId', '==', subjectId),
-            orderBy('createdAt', 'desc'),
-            limit(limit_ + 1),
-        );
+        const constraints = [where('subjectId', '==', subjectId)];
+        if (tenantId) constraints.push(where('tenantId', '==', tenantId));
+        constraints.push(orderBy('createdAt', 'desc'), limit(limit_ + 1));
+        const q = query(collection(db, 'cases'), ...constraints);
         const snap = await getDocs(q);
         return snap.docs
             .map((d) => ({ id: d.id, ...d.data() }))
@@ -1007,15 +1016,13 @@ export async function getClientProjection(caseId) {
     }
 }
 
-export async function fetchSubjectDecisionHistory(subjectId, currentCaseId, limit_ = 8) {
+export async function fetchSubjectDecisionHistory(subjectId, currentCaseId, limit_ = 8, tenantId = null) {
     if (!subjectId) return [];
     try {
-        const decisionsQuery = query(
-            collection(db, 'decisions'),
-            where('subjectId', '==', subjectId),
-            orderBy('approvedAt', 'desc'),
-            limit(limit_ + 1),
-        );
+        const decisionConstraints = [where('subjectId', '==', subjectId)];
+        if (tenantId) decisionConstraints.push(where('tenantId', '==', tenantId));
+        decisionConstraints.push(orderBy('approvedAt', 'desc'), limit(limit_ + 1));
+        const decisionsQuery = query(collection(db, 'decisions'), ...decisionConstraints);
         const decisionsSnap = await getDocs(decisionsQuery);
         const decisions = decisionsSnap.docs
             .map((d) => ({ id: d.id, ...d.data() }))
@@ -1026,11 +1033,10 @@ export async function fetchSubjectDecisionHistory(subjectId, currentCaseId, limi
 
         const snapshotQueries = decisions.map(async (decision) => {
             if (!decision.caseId) return { decision, reportSnapshot: null };
-            const snapshotsQuery = query(
-                collection(db, 'reportSnapshots'),
-                where('caseId', '==', decision.caseId),
-                limit(1),
-            );
+            const snapshotConstraints = [where('caseId', '==', decision.caseId)];
+            if (tenantId) snapshotConstraints.push(where('tenantId', '==', tenantId));
+            snapshotConstraints.push(limit(1));
+            const snapshotsQuery = query(collection(db, 'reportSnapshots'), ...snapshotConstraints);
             const snapshotsSnap = await getDocs(snapshotsQuery);
             const reportSnapshot = snapshotsSnap.docs[0]
                 ? { id: snapshotsSnap.docs[0].id, ...snapshotsSnap.docs[0].data() }
@@ -1095,7 +1101,7 @@ export async function getCasePublicResult(caseId) {
 export async function callRerunEnrichmentPhase(caseId, phase) {
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const functions = getFunctions(undefined, 'southamerica-east1');
-    const fn = httpsCallable(functions, 'rerunEnrichmentPhase');
+    const fn = httpsCallable(functions, resolveV2FunctionName('rerunEnrichmentPhase'));
     const result = await fn({ caseId, phase });
     return result.data;
 }
@@ -1107,13 +1113,24 @@ export async function callRerunAiAnalysis(caseId) {
 async function callBackendFunction(name, payload) {
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const functions = getFunctions(undefined, 'southamerica-east1');
-    const fn = httpsCallable(functions, name);
+    const fn = httpsCallable(functions, resolveV2FunctionName(name));
     const result = await fn(payload);
     return result.data;
 }
 
+function resolveV2FunctionName(name) {
+    // Functions are deployed without the v2 prefix in bootstrap.js exports.
+    // Only functions already prefixed with v2 remain unchanged.
+    if (String(name || '').startsWith('v2')) return name;
+    return name;
+}
+
 export async function callCreateClientSolicitation(payload) {
     return callBackendFunction('createClientSolicitation', payload);
+}
+
+export async function callMarkProductIntroSeen(payload) {
+    return callBackendFunction('markProductIntroSeen', payload);
 }
 
 export async function callSubmitClientCorrection(payload) {
@@ -1347,14 +1364,6 @@ export async function callExportTenantBillingDrilldown(payload) {
 
 export async function callGetOpsV2Metrics(payload = {}) {
     return callBackendFunction('getOpsV2Metrics', payload);
-}
-
-export async function callGetSeniorReviewQueue(payload = {}) {
-    return callBackendFunction('getSeniorReviewQueue', payload);
-}
-
-export async function callResolveSeniorReviewRequest(payload) {
-    return callBackendFunction('resolveSeniorReviewRequest', payload);
 }
 
 export async function callResolveProviderDivergenceByAnalyst(payload) {

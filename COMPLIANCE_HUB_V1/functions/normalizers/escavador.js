@@ -41,12 +41,12 @@ function findPersonRole(envolvidos, cpf) {
 
 /**
  * Normalize Escavador processos response.
- * @param {{ envolvido: object|null, items: object[], totalPages: number }} result
+ * @param {{ envolvido: object|null, items: object[], totalPages: number, truncated?: boolean }} result
  * @param {string} cpf  For role detection
  * @returns {object}
  */
 function normalizeEscavadorProcessos(result, cpf) {
-    const { envolvido, items, totalPages } = result;
+    const { envolvido, items, totalPages, truncated } = result;
     const totalFromApi = envolvido?.quantidade_processos || items.length;
     const cpfsComEsseNome = envolvido?.cpfs_com_esse_nome || 0;
 
@@ -100,6 +100,7 @@ function normalizeEscavadorProcessos(result, cpf) {
     // Build notes
     let notes = `Escavador: ${totalFromApi} processo(s) encontrado(s)`;
     if (processos.length < totalFromApi) notes += ` (${processos.length} carregados)`;
+    if (truncated) notes += ' [TRUNCADO: mais páginas disponíveis na API]';
     notes += '.';
     if (hasCriminal) notes += ` ${criminalCount} na esfera criminal/penal.`;
     if (activeCount > 0) notes += ` ${activeCount} processo(s) ativo(s).`;
@@ -125,6 +126,7 @@ function normalizeEscavadorProcessos(result, cpf) {
         escavadorCpfsComEsseNome: cpfsComEsseNome,
         escavadorHomonymFlag: cpfsComEsseNome > 1,
         escavadorProcessos: processos,
+        escavadorTruncated: Boolean(truncated),
         escavadorNotes: notes,
         _source: {
             provider: 'escavador',

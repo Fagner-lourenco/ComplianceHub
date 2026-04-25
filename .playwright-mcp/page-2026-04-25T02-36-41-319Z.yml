@@ -1,0 +1,34 @@
+- generic [ref=e196]:
+  - banner [ref=e197]:
+    - generic [ref=e199]:
+      - link "⌘ ComplianceHub®" [ref=e200] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e201]: ⌘
+        - generic [ref=e202]: ComplianceHub®
+      - generic [ref=e203]:
+        - button "Dicionário de fontes" [ref=e204] [cursor=pointer]:
+          - img [ref=e205]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e207] [cursor=pointer]:
+          - img [ref=e208]
+        - button "Academia" [ref=e210] [cursor=pointer]:
+          - img [ref=e211]
+        - button "Envios" [ref=e214] [cursor=pointer]:
+          - img [ref=e215]
+        - button "Notificações" [ref=e218] [cursor=pointer]:
+          - img [ref=e219]
+        - button "Perfil" [ref=e222] [cursor=pointer]:
+          - img [ref=e223]
+    - generic [ref=e228]:
+      - navigation "Categorias de produtos" [ref=e229]:
+        - button "Background Check" [ref=e230] [cursor=pointer]
+        - button "Cibersegurança" [ref=e231] [cursor=pointer]
+        - button "Due Diligence" [ref=e232] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e233] [cursor=pointer]
+        - button "Jurídico" [ref=e234] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e235] [cursor=pointer]
+      - button "Aplicativos" [ref=e236] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e237]
+  - main [ref=e239]:
+    - status "Carregando" [ref=e240]

@@ -1,0 +1,32 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "Scholarship": {
+        "ScholarshipHistory": [],
+        "AcademicPrograms": [],
+        "PublicationHistory": [],
+        "ScholarshipLevel": "UNKNOWN",
+        "EducationalLevel": "UNKNOWN",
+        "NumberOfUndergraduateCourses": 0,
+        "IsUniversityStudent": false,
+        "IsCurrentlyOnAcademicField": false,
+        "HasAcademicProgramApplication": false,
+        "CreationDate": "2021-11-28T00:00:00Z",
+        "LastUpdateDate": "2026-03-07T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "3289d2af-c620-4feb-b443-1137f348dcd6",
+  "ElapsedMilliseconds": 83,
+  "QueryDate": "2026-04-25T12:32:34.0010348Z",
+  "Status": {
+    "university_student_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

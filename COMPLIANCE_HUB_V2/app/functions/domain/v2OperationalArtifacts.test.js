@@ -3,7 +3,7 @@ import {
     buildOperationalArtifactsForCase,
     buildProviderRequestsForCase,
     buildRawSnapshotsForCase,
-} from './v2OperationalArtifacts.cjs';
+} from './v2OperationalArtifacts.js';
 
 describe('v2OperationalArtifacts', () => {
     it('materializa providerRequests idempotentes a partir das fontes reais legadas', () => {

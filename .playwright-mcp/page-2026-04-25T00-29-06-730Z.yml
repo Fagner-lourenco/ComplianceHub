@@ -1,0 +1,64 @@
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - text: ComplianceHub®
+      - generic [ref=e16]:
+        - button "▣ Dicionário de fontes" [ref=e17] [cursor=pointer]
+        - button [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - button [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - button "Background Check" [ref=e34] [cursor=pointer]
+        - button "Due Diligence" [ref=e35] [cursor=pointer]
+        - button "Jurídico" [ref=e36] [cursor=pointer]
+        - button "Monitoramento" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e39] [cursor=pointer]
+      - button "Aplicativos ▦" [ref=e40] [cursor=pointer]
+  - main [ref=e41]:
+    - generic [ref=e43]:
+      - generic [ref=e44]: Relatórios
+      - heading "Relatórios Públicos" [level=1] [ref=e45]
+      - paragraph [ref=e46]: Gere e gerencie relatórios públicos de compliance e due diligence.
+    - table "Relatórios públicos" [ref=e48]:
+      - row "Título Análise Status Criado em Ações" [ref=e49]:
+        - columnheader "Título" [ref=e50]
+        - columnheader "Análise" [ref=e51]
+        - columnheader "Status" [ref=e52]
+        - columnheader "Criado em" [ref=e53]
+        - columnheader "Ações" [ref=e54]
+      - row "Relatório Due Diligence — João da Silva DOS-2026-0001 Publicado 21/04/2026, 07:00:00 Abrir Revogar" [ref=e55]:
+        - cell "Relatório Due Diligence — João da Silva" [ref=e56]
+        - cell "DOS-2026-0001" [ref=e57]
+        - cell "Publicado" [ref=e58]:
+          - generic [ref=e59]: Publicado
+        - cell "21/04/2026, 07:00:00" [ref=e60]
+        - cell "Abrir Revogar" [ref=e61]:
+          - link "Abrir" [ref=e62] [cursor=pointer]:
+            - /url: https://example.com/report/REP-2026-0001
+            - img [ref=e63]
+            - text: Abrir
+          - button "Revogar" [ref=e67] [cursor=pointer]:
+            - img [ref=e68]
+            - text: Revogar
+      - row "Relatório KYB — Acme Tecnologia Ltda DOS-2026-0002 Publicado 22/04/2026, 13:45:00 Abrir Revogar" [ref=e71]:
+        - cell "Relatório KYB — Acme Tecnologia Ltda" [ref=e72]
+        - cell "DOS-2026-0002" [ref=e73]
+        - cell "Publicado" [ref=e74]:
+          - generic [ref=e75]: Publicado
+        - cell "22/04/2026, 13:45:00" [ref=e76]
+        - cell "Abrir Revogar" [ref=e77]:
+          - link "Abrir" [ref=e78] [cursor=pointer]:
+            - /url: https://example.com/report/REP-2026-0002
+            - img [ref=e79]
+            - text: Abrir
+          - button "Revogar" [ref=e83] [cursor=pointer]:
+            - img [ref=e84]
+            - text: Revogar

@@ -61,7 +61,9 @@ const {
     subscribeToRelationshipsForCase,
     subscribeToTimelineEventsForCase,
     subscribeToProviderDivergencesForCase,
+    fetchSubjectHistory,
     fetchSubjectDecisionHistory,
+    callMarkProductIntroSeen,
     callResolveProviderDivergenceByAnalyst,
     callGetTenantBillingOverview,
     callCloseTenantBillingPeriod,
@@ -69,8 +71,6 @@ const {
     callGetTenantBillingDrilldown,
     callExportTenantBillingDrilldown,
     callGetOpsV2Metrics,
-    callGetSeniorReviewQueue,
-    callResolveSeniorReviewRequest,
     callCreateWatchlist,
     callRunWatchlistNow,
 } = await import('./firestoreService');
@@ -204,7 +204,7 @@ describe('firestoreService public report callables', () => {
         const reports = await fetchClientPublicReports();
 
         expect(firestoreServiceMocks.getFunctions).toHaveBeenCalledWith(undefined, 'southamerica-east1');
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'listClientPublicReports');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2ListClientPublicReports');
         expect(callableMock).toHaveBeenCalledWith({});
         expect(reports).toEqual([
             { token: 'rep-123', candidateName: 'Francisco Taciano de Sousa', status: 'ACTIVE' },
@@ -217,8 +217,28 @@ describe('firestoreService public report callables', () => {
 
         await revokeClientPublicReport('rep-321');
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'revokeClientPublicReport');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2RevokeClientPublicReport');
         expect(callableMock).toHaveBeenCalledWith({ token: 'rep-321' });
+    });
+});
+
+describe('firestoreService product onboarding callables', () => {
+    beforeEach(() => {
+        firestoreServiceMocks.httpsCallable.mockReset();
+    });
+
+    it('chama callable backend V2 para marcar intro de produto como vista', async () => {
+        const callableMock = vi.fn().mockResolvedValue({
+            data: { success: true, productKey: 'dossier_pf_full' },
+        });
+        firestoreServiceMocks.httpsCallable.mockReturnValue(callableMock);
+
+        const payload = { productKey: 'dossier_pf_full' };
+        const result = await callMarkProductIntroSeen(payload);
+
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2MarkProductIntroSeen');
+        expect(callableMock).toHaveBeenCalledWith(payload);
+        expect(result.success).toBe(true);
     });
 });
 
@@ -421,7 +441,7 @@ describe('firestoreService.callResolveProviderDivergenceByAnalyst', () => {
         };
         const result = await callResolveProviderDivergenceByAnalyst(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'resolveProviderDivergenceByAnalyst');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2ResolveProviderDivergenceByAnalyst');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result).toEqual({ success: true });
     });
@@ -441,7 +461,7 @@ describe('firestoreService.callGetTenantBillingOverview', () => {
         const payload = { tenantId: 'tenant-1', monthKey: '2026-04' };
         const result = await callGetTenantBillingOverview(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'getTenantBillingOverview');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2GetTenantBillingOverview');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.source).toBe('usageMeters');
     });
@@ -461,7 +481,7 @@ describe('firestoreService billing V2 callables', () => {
         const payload = { tenantId: 'tenant-1', monthKey: '2026-04' };
         const result = await callCloseTenantBillingPeriod(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'closeTenantBillingPeriodByAnalyst');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2CloseTenantBillingPeriodByAnalyst');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.success).toBe(true);
     });
@@ -475,7 +495,7 @@ describe('firestoreService billing V2 callables', () => {
         const payload = { tenantId: 'tenant-1', monthKey: '2026-04' };
         const result = await callGetTenantBillingSettlement(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'getTenantBillingSettlement');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2GetTenantBillingSettlement');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.settlement.status).toBe('PENDING_REVIEW');
     });
@@ -489,7 +509,7 @@ describe('firestoreService billing V2 callables', () => {
         const payload = { tenantId: 'tenant-1', monthKey: '2026-04' };
         const result = await callGetTenantBillingDrilldown(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'getTenantBillingDrilldown');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2GetTenantBillingDrilldown');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.drilldown.totals.meters).toBe(2);
     });
@@ -503,7 +523,7 @@ describe('firestoreService billing V2 callables', () => {
         const payload = { tenantId: 'tenant-1', monthKey: '2026-04', format: 'csv' };
         const result = await callExportTenantBillingDrilldown(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'exportTenantBillingDrilldown');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2ExportTenantBillingDrilldown');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.format).toBe('csv');
     });
@@ -517,43 +537,9 @@ describe('firestoreService billing V2 callables', () => {
         const payload = { monthKey: '2026-04' };
         const result = await callGetOpsV2Metrics(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'getOpsV2Metrics');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2GetOpsV2Metrics');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.source).toBe('v2Collections');
-    });
-});
-
-describe('firestoreService senior review callables', () => {
-    beforeEach(() => {
-        firestoreServiceMocks.httpsCallable.mockReset();
-    });
-
-    it('chama callable backend para fila senior', async () => {
-        const callableMock = vi.fn().mockResolvedValue({
-            data: { items: [{ id: 'senior-case-1' }], summary: { pending: 1 } },
-        });
-        firestoreServiceMocks.httpsCallable.mockReturnValue(callableMock);
-
-        const payload = { tenantId: 'tenant-1', status: 'pending' };
-        const result = await callGetSeniorReviewQueue(payload);
-
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'getSeniorReviewQueue');
-        expect(callableMock).toHaveBeenCalledWith(payload);
-        expect(result.summary.pending).toBe(1);
-    });
-
-    it('chama callable backend para resolver revisao senior', async () => {
-        const callableMock = vi.fn().mockResolvedValue({
-            data: { success: true, requestId: 'senior-case-1', status: 'approved' },
-        });
-        firestoreServiceMocks.httpsCallable.mockReturnValue(callableMock);
-
-        const payload = { requestId: 'senior-case-1', status: 'approved', resolution: 'Aprovado.' };
-        const result = await callResolveSeniorReviewRequest(payload);
-
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'resolveSeniorReviewRequest');
-        expect(callableMock).toHaveBeenCalledWith(payload);
-        expect(result.status).toBe('approved');
     });
 });
 
@@ -571,7 +557,7 @@ describe('firestoreService watchlist callables', () => {
         const payload = { subjectId: 'subj-1', tenantId: 'tenant-1', modules: ['criminal'], intervalDays: 30 };
         const result = await callCreateWatchlist(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'createWatchlist');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2CreateWatchlist');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.watchlistId).toBe('wl_subj-1');
     });
@@ -585,9 +571,36 @@ describe('firestoreService watchlist callables', () => {
         const payload = { watchlistId: 'wl_subj-1' };
         const result = await callRunWatchlistNow(payload);
 
-        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'runWatchlistNow');
+        expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'v2RunWatchlistNow');
         expect(callableMock).toHaveBeenCalledWith(payload);
         expect(result.alertsCreated).toBe(1);
+    });
+});
+
+describe('firestoreService.fetchSubjectHistory', () => {
+    beforeEach(() => {
+        firestoreServiceMocks.getDocs.mockReset();
+    });
+
+    it('monta historico de casos por subject respeitando tenant quando informado', async () => {
+        firestoreServiceMocks.getDocs.mockResolvedValue({
+            docs: [
+                { id: 'case-current', data: () => ({ subjectId: 'subj-1', tenantId: 'tenant-1' }) },
+                { id: 'case-old', data: () => ({ subjectId: 'subj-1', tenantId: 'tenant-1' }) },
+            ],
+        });
+
+        const history = await fetchSubjectHistory('subj-1', 'case-current', 5, 'tenant-1');
+
+        expect(history).toEqual([
+            expect.objectContaining({ id: 'case-old', tenantId: 'tenant-1' }),
+        ]);
+        expect(firestoreServiceMocks.getDocs).toHaveBeenCalledTimes(1);
+    });
+
+    it('retorna vazio sem subjectId no historico de casos', async () => {
+        await expect(fetchSubjectHistory('', 'case-current', 5, 'tenant-1')).resolves.toEqual([]);
+        expect(firestoreServiceMocks.getDocs).not.toHaveBeenCalled();
     });
 });
 
@@ -625,7 +638,7 @@ describe('firestoreService.fetchSubjectDecisionHistory', () => {
                 ],
             });
 
-        const history = await fetchSubjectDecisionHistory('subj-1', 'case-current', 5);
+        const history = await fetchSubjectDecisionHistory('subj-1', 'case-current', 5, 'tenant-1');
 
         expect(history).toHaveLength(2);
         expect(history[0]).toEqual(expect.objectContaining({

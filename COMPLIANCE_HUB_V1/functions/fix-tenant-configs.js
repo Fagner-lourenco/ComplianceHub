@@ -51,6 +51,15 @@ function setupCredentials() {
 }
 
 const tmpAdcFile = setupCredentials();
+function cleanupTmpAdcFile() {
+    if (!tmpAdcFile) return;
+    try {
+        fs.unlinkSync(tmpAdcFile);
+    } catch (err) {
+        console.warn('Nao foi possivel remover arquivo ADC temporario:', err.message || err);
+    }
+}
+
 admin.initializeApp({ projectId: 'compliance-hub-br' });
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
@@ -84,10 +93,11 @@ async function fixTenantConfigs() {
             notes.push(`judit.enabled: ${ec.judit?.enabled} → true`);
         }
 
-        // 2. judit.phases.entity (gate — always on when Judit enabled)
-        if (ec.judit?.phases?.entity !== true) {
-            fixes['enrichmentConfig.judit.phases.entity'] = true;
-            notes.push(`judit.phases.entity: ${ec.judit?.phases?.entity} → true`);
+        // 2. judit.phases.entity — OFF by default (BDC is primary cadastro).
+        //    Only fix if explicitly undefined (never set). Do NOT force true.
+        if (ec.judit?.phases?.entity === undefined) {
+            fixes['enrichmentConfig.judit.phases.entity'] = false;
+            notes.push(`judit.phases.entity: undefined → false (BDC primary)`);
         }
 
         // 3. judit.phases.execution
@@ -144,11 +154,11 @@ async function fixTenantConfigs() {
 
 fixTenantConfigs()
     .then(() => {
-        if (tmpAdcFile) try { require('fs').unlinkSync(tmpAdcFile); } catch {}
+        cleanupTmpAdcFile();
         process.exit(0);
     })
     .catch((err) => {
-        if (tmpAdcFile) try { require('fs').unlinkSync(tmpAdcFile); } catch {}
+        cleanupTmpAdcFile();
         console.error('\n❌ Script failed:', err.message || err);
         process.exit(1);
     });

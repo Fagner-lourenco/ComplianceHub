@@ -1,0 +1,163 @@
+- generic [ref=e40]:
+  - banner [ref=e41]:
+    - generic [ref=e43]:
+      - link "⌘ ComplianceHub®" [ref=e44] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e45]: ⌘
+        - generic [ref=e46]: ComplianceHub®
+      - generic [ref=e47]:
+        - button "Dicionário de fontes" [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e51] [cursor=pointer]:
+          - img [ref=e52]
+        - button "Academia" [ref=e54] [cursor=pointer]:
+          - img [ref=e55]
+        - button "Envios" [ref=e58] [cursor=pointer]:
+          - img [ref=e59]
+        - button "Notificações" [ref=e62] [cursor=pointer]:
+          - img [ref=e63]
+        - button "Perfil" [ref=e66] [cursor=pointer]:
+          - img [ref=e67]
+    - generic [ref=e72]:
+      - navigation "Categorias de produtos" [ref=e73]:
+        - button "Background Check" [ref=e74] [cursor=pointer]
+        - button "Cibersegurança" [ref=e75] [cursor=pointer]
+        - button "Due Diligence" [ref=e76] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e77] [cursor=pointer]
+        - button "Jurídico" [ref=e78] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e79] [cursor=pointer]
+      - button "Aplicativos" [ref=e80] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e81]
+  - main [ref=e83]:
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - generic [ref=e86]:
+          - text: Surface ativa
+          - heading "Dossiês" [level=1] [ref=e87]
+          - paragraph [ref=e88]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+        - button "Criar novo dossiê" [ref=e89] [cursor=pointer]:
+          - img [ref=e90]
+          - text: Criar novo dossiê
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: Período
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - img [ref=e97]
+              - textbox [ref=e99]
+            - generic [ref=e100]: até
+            - generic [ref=e101]:
+              - img [ref=e102]
+              - textbox [ref=e104]
+        - generic [ref=e105]:
+          - generic [ref=e106]: Responsável
+          - generic [ref=e107]:
+            - img [ref=e108]
+            - textbox "Nome do analista" [ref=e111]
+        - generic [ref=e112]:
+          - generic [ref=e113]: Status
+          - generic [ref=e114]:
+            - img [ref=e115]
+            - combobox [ref=e117]:
+              - option "Todos" [selected]
+              - option "Pronto"
+              - option "Publicado"
+              - option "Processando"
+              - option "Na fila"
+              - option "Erro"
+              - option "Falhou"
+            - img
+        - button "Buscar" [ref=e119] [cursor=pointer]:
+          - img [ref=e120]
+          - text: Buscar
+      - table [ref=e125]:
+        - rowgroup [ref=e126]:
+          - row "Nº dossiê Criação Tag Critério Progresso Status Ações" [ref=e127]:
+            - columnheader "Nº dossiê" [ref=e128]
+            - columnheader "Criação" [ref=e129]
+            - columnheader "Tag" [ref=e130]
+            - columnheader "Critério" [ref=e131]
+            - columnheader "Progresso" [ref=e132]
+            - columnheader "Status" [ref=e133]
+            - columnheader "Ações" [ref=e134]
+        - rowgroup [ref=e135]:
+          - row "qurTsbgGlss6XGFOslZp — — 0% PENDING Abrir" [ref=e136] [cursor=pointer]:
+            - cell "qurTsbgGlss6XGFOslZp" [ref=e137]
+            - cell [ref=e138]
+            - cell "—" [ref=e139]
+            - cell "—" [ref=e140]
+            - cell "0%" [ref=e141]:
+              - generic [ref=e144]: 0%
+            - cell "PENDING" [ref=e145]:
+              - generic [ref=e146]: PENDING
+            - cell "Abrir" [ref=e147]:
+              - generic [ref=e148]:
+                - text: Abrir
+                - img [ref=e149]
+          - row "s3lT7jAvzooRxJGGyTk2 — — 0% PENDING Abrir" [ref=e151] [cursor=pointer]:
+            - cell "s3lT7jAvzooRxJGGyTk2" [ref=e152]
+            - cell [ref=e153]
+            - cell "—" [ref=e154]
+            - cell "—" [ref=e155]
+            - cell "0%" [ref=e156]:
+              - generic [ref=e159]: 0%
+            - cell "PENDING" [ref=e160]:
+              - generic [ref=e161]: PENDING
+            - cell "Abrir" [ref=e162]:
+              - generic [ref=e163]:
+                - text: Abrir
+                - img [ref=e164]
+          - row "70KYcYKZYP255vwJ0fVk — — 0% PENDING Abrir" [ref=e166] [cursor=pointer]:
+            - cell "70KYcYKZYP255vwJ0fVk" [ref=e167]
+            - cell [ref=e168]
+            - cell "—" [ref=e169]
+            - cell "—" [ref=e170]
+            - cell "0%" [ref=e171]:
+              - generic [ref=e174]: 0%
+            - cell "PENDING" [ref=e175]:
+              - generic [ref=e176]: PENDING
+            - cell "Abrir" [ref=e177]:
+              - generic [ref=e178]:
+                - text: Abrir
+                - img [ref=e179]
+          - row "RNNJO5BC2nhgjXu7nQTe — — 0% PENDING Abrir" [ref=e181] [cursor=pointer]:
+            - cell "RNNJO5BC2nhgjXu7nQTe" [ref=e182]
+            - cell [ref=e183]
+            - cell "—" [ref=e184]
+            - cell "—" [ref=e185]
+            - cell "0%" [ref=e186]:
+              - generic [ref=e189]: 0%
+            - cell "PENDING" [ref=e190]:
+              - generic [ref=e191]: PENDING
+            - cell "Abrir" [ref=e192]:
+              - generic [ref=e193]:
+                - text: Abrir
+                - img [ref=e194]
+          - row "90LHMip0ewLm7c6qFX0c — — 0% PENDING Abrir" [ref=e196] [cursor=pointer]:
+            - cell "90LHMip0ewLm7c6qFX0c" [ref=e197]
+            - cell [ref=e198]
+            - cell "—" [ref=e199]
+            - cell "—" [ref=e200]
+            - cell "0%" [ref=e201]:
+              - generic [ref=e204]: 0%
+            - cell "PENDING" [ref=e205]:
+              - generic [ref=e206]: PENDING
+            - cell "Abrir" [ref=e207]:
+              - generic [ref=e208]:
+                - text: Abrir
+                - img [ref=e209]
+          - row "D2t01zp1Z7jufd5JjzA6 — — 0% PENDING Abrir" [ref=e211] [cursor=pointer]:
+            - cell "D2t01zp1Z7jufd5JjzA6" [ref=e212]
+            - cell [ref=e213]
+            - cell "—" [ref=e214]
+            - cell "—" [ref=e215]
+            - cell "0%" [ref=e216]:
+              - generic [ref=e219]: 0%
+            - cell "PENDING" [ref=e220]:
+              - generic [ref=e221]: PENDING
+            - cell "Abrir" [ref=e222]:
+              - generic [ref=e223]:
+                - text: Abrir
+                - img [ref=e224]

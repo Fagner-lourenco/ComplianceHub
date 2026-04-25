@@ -1,0 +1,134 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - generic [ref=e53]:
+    - img
+    - generic [ref=e55]:
+      - button "LinkMap" [ref=e56] [cursor=pointer]:
+        - img [ref=e57]
+      - button "Novo Mapa" [ref=e63] [cursor=pointer]:
+        - img [ref=e64]
+      - button "Localizar" [ref=e65] [cursor=pointer]:
+        - img [ref=e66]
+      - button "Adicionar" [ref=e69] [cursor=pointer]:
+        - img [ref=e70]
+      - button "Destacar" [ref=e73] [cursor=pointer]:
+        - img [ref=e74]
+      - button "Restaurar" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+      - button "Salvar" [ref=e84] [cursor=pointer]:
+        - img [ref=e85]
+      - button "Mapas" [ref=e89] [cursor=pointer]:
+        - img [ref=e90]
+      - button "Download" [ref=e92] [cursor=pointer]:
+        - img [ref=e93]
+      - button "Legendas" [ref=e96] [cursor=pointer]:
+        - img [ref=e97]
+      - button "FAQ" [ref=e99] [cursor=pointer]:
+        - img [ref=e100]
+    - application [ref=e104]:
+      - generic [ref=e106]:
+        - generic:
+          - generic:
+            - img:
+              - group "Edge from root-pf to comp-1" [ref=e107] [cursor=pointer]
+            - img:
+              - group "Edge from root-pf to comp-2"
+            - img:
+              - group "Edge from root-pf to proc-1" [ref=e110] [cursor=pointer]
+            - img:
+              - group "Edge from root-pf to addr-1" [ref=e113] [cursor=pointer]
+            - img:
+              - group "Edge from comp-2 to person-2" [ref=e116] [cursor=pointer]
+            - img:
+              - group "Edge from comp-1 to addr-1" [ref=e119] [cursor=pointer]
+          - generic:
+            - generic [ref=e122]: Sócio
+            - generic [ref=e123]: Sócio
+            - generic [ref=e124]: Réu
+            - generic [ref=e125]: Reside
+            - generic [ref=e126]: Sócia
+            - generic [ref=e127]: Sede
+          - generic:
+            - group [ref=e128]:
+              - generic [ref=e131]:
+                - generic [ref=e132]:
+                  - img [ref=e133]
+                  - generic [ref=e136]: Pessoa Física
+                - generic [ref=e137]: Carlos Eduardo Silva
+                - generic [ref=e138]: 123.456.789-00
+            - group [ref=e143]:
+              - generic [ref=e146]:
+                - generic [ref=e147]:
+                  - img [ref=e148]
+                  - generic [ref=e152]: Pessoa Jurídica
+                - generic [ref=e153]: Silva Consultoria Ltda
+                - generic [ref=e154]: 12.345.678/0001-90
+            - group [ref=e159]:
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - img [ref=e164]
+                  - generic [ref=e168]: Pessoa Jurídica
+                - generic [ref=e169]: Omega Holdings S.A.
+                - generic [ref=e170]: 98.765.432/0001-10
+            - group [ref=e175]:
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - img [ref=e180]
+                  - generic [ref=e186]: Processo Judicial
+                - generic [ref=e187]: Reclamação Trabalhista
+                - generic [ref=e188]: 0001234-12.2023.5.02.0001
+            - group [ref=e193]:
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - img [ref=e198]
+                  - generic [ref=e201]: Endereço
+                - generic [ref=e202]: Residencial
+                - generic [ref=e203]: 04538-132
+                - generic [ref=e204]: Rua Funchal, 538 — Apto 1201
+            - group [ref=e209]:
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - img [ref=e214]
+                  - generic [ref=e217]: Pessoa Física
+                - generic [ref=e218]: Ana Paula Mendes
+                - generic [ref=e219]: 987.654.321-00
+      - img
+    - generic [ref=e225]:
+      - button "+" [ref=e226] [cursor=pointer]:
+        - generic [ref=e227]: +
+      - generic [ref=e228]: 100%
+      - button "−" [ref=e229] [cursor=pointer]:
+        - generic [ref=e230]: −
+    - generic [ref=e231]:
+      - heading "Mapa de Vínculos" [level=1] [ref=e232]
+      - paragraph [ref=e233]: Clique para detalhes · Clique direito para ações

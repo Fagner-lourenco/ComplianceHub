@@ -1,0 +1,57 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "ActivityIndicators": {
+        "EmployeesRange": ">= 500",
+        "IncomeRange": "ACIMA DE 500MM",
+        "HasActivity": true,
+        "ActivityLevel": 0.52,
+        "FirstLevelEconomicGroupAverageActivityLevel": 0.01066117,
+        "FirstLevelEconomicGroupMaxActivityLevel": 0.52,
+        "FirstLevelEconomicGroupMinActivityLevel": 0,
+        "ShellCompanyLikelyhood": 0,
+        "HasRecentAddress": true,
+        "HasRecentPhone": false,
+        "HasRecentEmail": false,
+        "HasRecentPassages": true,
+        "HasActiveDomain": true,
+        "HasActiveSSL": false,
+        "HasCorporateEmail": true,
+        "NumberOfBranches": 303
+      }
+    }
+  ],
+  "QueryId": "413ca548-fc59-4c6c-a8e2-cf44c697b3b8",
+  "ElapsedMilliseconds": 714,
+  "QueryDate": "2026-04-25T11:00:41.2600256Z",
+  "Status": {
+    "activity_indicators": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

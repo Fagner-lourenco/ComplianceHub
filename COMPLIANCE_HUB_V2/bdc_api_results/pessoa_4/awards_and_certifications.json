@@ -1,0 +1,23 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "AwardsAndCertifications": {
+        "TotalAwards": 0,
+        "TotalCertifications": 0
+      }
+    }
+  ],
+  "QueryId": "545def57-c759-4dd7-946d-08430ac963e1",
+  "ElapsedMilliseconds": 57,
+  "QueryDate": "2026-04-25T12:33:21.029288Z",
+  "Status": {
+    "awards_and_certifications": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

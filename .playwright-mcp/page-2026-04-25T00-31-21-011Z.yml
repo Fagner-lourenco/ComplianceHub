@@ -1,0 +1,32 @@
+- generic [ref=e10]:
+  - generic [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - text: ComplianceHub®
+      - generic [ref=e16]:
+        - button "▣ Dicionário de fontes" [ref=e17] [cursor=pointer]
+        - button [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+        - button [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - button "Background Check" [ref=e34] [cursor=pointer]
+        - button "Due Diligence" [ref=e35] [cursor=pointer]
+        - button "Jurídico" [ref=e36] [cursor=pointer]
+        - button "Monitoramento" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e39] [cursor=pointer]
+      - button "Aplicativos ▦" [ref=e40] [cursor=pointer]
+  - main [ref=e41]:
+    - alert [ref=e42]:
+      - img [ref=e43]
+      - strong [ref=e45]: Erro ao carregar configurações
+      - paragraph [ref=e46]: Missing or insufficient permissions.
+      - button "Tentar novamente" [ref=e47] [cursor=pointer]:
+        - img [ref=e48]
+        - text: Tentar novamente

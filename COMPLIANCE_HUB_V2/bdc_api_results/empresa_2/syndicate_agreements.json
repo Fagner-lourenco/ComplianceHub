@@ -1,0 +1,310 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{13783221000478}",
+      "SyndicateAgreements": {
+        "TotalAgreements": 7,
+        "TotalActiveAgreements": 1,
+        "TotalAgreementsWithLifeInsuranceClause": 5,
+        "NumberOfStatesWithAgreementsPresent": 2,
+        "CurrentConsecutiveYearsWithSomeAgreementActive": 8,
+        "NumberOfMonthsSinceLastAgreementExpired": -1,
+        "NumberOfMonthsUntilActiveAgreementsExpire": 8,
+        "Agreements": [
+          {
+            "RegistryNumber": "PR000931/2025",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR016992/2025",
+            "State": "PR",
+            "Categories": "PROFISSIONAL INTEGRANTES DO 2º GRUPO - TRABALHADORES EM TRANSPORTES RODOVIÁRIOS, DO PLANO DA CNTTT. EXCETO A CATEGORIA PROFISSIONAL DOS MOTORISTAS; COBRADORES, E OS TRABALHADORES EM EMPRESAS DE TRANSPORTES COLETIVOS DE VEÍCULOS RODOVIÁRIOS DE PASSAGEIROS URBANOS, MUNICIPAIS, METROPOLITANOS, INTERMUNICIPAIS, INTERESTADUAIS, INTERNACIONAIS E DE FRETAMENTO, NOS MUNICÍPIOS DE CARAMBEÍ, CASTRO, GUAMIRANGA, IMBITUVA, IPIRANGA, IRATI, IVAÍ, JAGUARIAÍVA, PALMEIRA, PIRAÍ DO SUL, PONTA GROSSA, PORTO AMAZONAS, REBOUÇAS, SÃO JOÃO DO TRIUNFO, SENGÉS E FERNANDES PINHEIRO, TEIXEIRA SOARES –PR",
+            "TerritorialScope": "PONTA GROSSA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR016992/2025",
+            "IsCurrentlyActive": true,
+            "HasLifeInsuranceClause": true,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2025-01-01T03:00:00Z",
+            "AgreementEndDate": "2026-12-31T03:00:00Z",
+            "AgreementDurationInMonths": 23,
+            "FirstCaptureDate": "2025-05-01T17:06:15.227Z",
+            "LastCaptureDate": "2025-10-01T17:06:13.758Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "80251929000122",
+                "Name": "SINDICATO DOS MOTORISTAS",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "PR002304/2023",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR003108/2023",
+            "State": "PR",
+            "Categories": "PROFISSIONAL INTEGRANTES DO 2º GRUPO - TRABALHADORES EM TRANSPORTES RODOVIÁRIOS, DO PLANO DA CNTTT",
+            "TerritorialScope": "PONTA GROSSA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR003108/2023",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": true,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2023-01-01T03:00:00Z",
+            "AgreementEndDate": "2024-12-31T03:00:00Z",
+            "AgreementDurationInMonths": 23,
+            "FirstCaptureDate": "2024-10-15T14:30:18.235Z",
+            "LastCaptureDate": "2024-12-01T17:06:13.257Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "80251929000122",
+                "Name": "SINDICATO DOS MOTORISTAS",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "RJ000124/2022",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR048277/2021",
+            "State": "RJ",
+            "Categories": "PROFISSIONAL DOS TRABALHADORES NAS EMPRESAS DE REFEIÇÕES COLETIVAS, DE FORNECIMENTO DE REFEIÇÕES PRONTAS OU CONGELADAS, QUE SEJAM CONFECCIONADAS DENTRO DA EMPRESA CONTRATANTE OU EM UNIDADE FORA PARA SEREM TRANSPORTADAS, TRABALHADORES EM EMPRESAS DE FORNECIMENTO DE TICKET'S, VALES REFEIÇÕES, REFEIÇÕES A QUILO, CESTAS BÁSICAS OU SIMILARES, TRABALHADORES EM EMPRESAS DE REFEIÇÕES PARA SEREM SERVIDAS À BORDO DAS AERONAVES, EMPRESAS DE REFEIÇÕES RÁPIDAS (FAST FOOD), LANCHONETES E TRABALHADORES EM COZINHAS INDUSTRIAS E AFINS",
+            "TerritorialScope": "RJ",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR048277/2021",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": false,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2021-01-01T03:00:00Z",
+            "AgreementEndDate": "2022-12-31T03:00:00Z",
+            "AgreementDurationInMonths": 23,
+            "FirstCaptureDate": "2022-02-01T17:06:35.537Z",
+            "LastCaptureDate": "2024-10-15T20:55:38.257Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221000710",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221001105",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221003140",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221013375",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221013456",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221013537",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221013618",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221014509",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221017605",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221018687",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221020231",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221021041",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221021556",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "13783221022102",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "32316366000160",
+                "Name": "SINDICATO DOS TRABALHADORES NAS EMPRESAS DE REFEICOES COLETIVAS REFEICOES RAPIDAS(FAST FOOD) E AFINS DO ESTADO DO RIO DE JANEIRO - SINDIREFEICOES-RJ",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "PR002877/2021",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR053748/2021",
+            "State": "PR",
+            "Categories": "PROFISSIONAL INTEGRANTES DO 2º GRUPO - TRABALHADORES EM TRANSPORTES RODOVIÁRIOS, DO PLANO DA CNTTT. EXCETO A CATEGORIA PROFISSIONAL DOS MOTORISTAS; COBRADORES, E OS TRABALHADORES EM EMPRESAS DE TRANSPORTES COLETIVOS DE VEÍCULOS RODOVIÁRIOS DE PASSAGEIROS URBANOS, MUNICIPAIS, METROPOLITANOS, INTERMUNICIPAIS, INTERESTADUAIS, INTERNACIONAIS E DE FRETAMENTO, NOS MUNICÍPIOS DE CARAMBEÍ, CASTRO, GUAMIRANGA, IMBITUVA, IPIRANGA, IRATI, IVAÍ, JAGUARIAÍVA, PALMEIRA, PIRAÍ DO SUL, PONTA GROSSA, PORTO AMAZONAS, REBOUÇAS, SÃO JOÃO DO TRIUNFO, SENGÉS E FERNANDES PINHEIRO, TEIXEIRA SOARES –PR",
+            "TerritorialScope": "PONTA GROSSA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR053748/2021",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": true,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2021-01-01T03:00:00Z",
+            "AgreementEndDate": "2022-12-31T03:00:00Z",
+            "AgreementDurationInMonths": 23,
+            "FirstCaptureDate": "2022-02-01T17:07:24.334Z",
+            "LastCaptureDate": "2024-10-16T02:54:58.618Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "80251929000122",
+                "Name": "SINDICATO DOS MOTORISTAS",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "PR000808/2020",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR006850/2020",
+            "State": "PR",
+            "Categories": "PROFISSIONAL INTEGRANTES DO 2° GRUPO - TRABALHADORES EM TRANSPORTES RODOVIÁRIOS DO PLANO DA CNTTT",
+            "TerritorialScope": "PONTA GROSSA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR006850/2020",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": true,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2019-10-01T03:00:00Z",
+            "AgreementEndDate": "2020-12-31T03:00:00Z",
+            "AgreementDurationInMonths": 14,
+            "FirstCaptureDate": "2020-05-01T17:06:52.018Z",
+            "LastCaptureDate": "2024-10-15T22:39:09.371Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "80251929000122",
+                "Name": "SINDICATO DOS MOTORISTAS",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "PR000830/2019",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR004524/2019",
+            "State": "PR",
+            "Categories": "PROFISSIONAL INTEGRANTES DO 2° GRUPO - TRABALHADORES EM TRANSPORTES RODOVIÁRIOS DO PLANO DA CNTTT",
+            "TerritorialScope": "PONTA GROSSA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR004524/2019",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": true,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2018-10-01T03:00:00Z",
+            "AgreementEndDate": "2019-09-30T03:00:00Z",
+            "AgreementDurationInMonths": 11,
+            "FirstCaptureDate": "2019-05-01T17:52:00.796Z",
+            "LastCaptureDate": "2024-10-15T22:43:00.348Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "DURSKI INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "80251929000122",
+                "Name": "SINDICATO DOS MOTORISTAS",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          },
+          {
+            "RegistryNumber": "PR002214/2017",
+            "Role": "EMPREGADOR",
+            "TypeOfInstrument": "ACORDO COLETIVO",
+            "SolicitationNumber": "MR034804/2017",
+            "State": "PR",
+            "Categories": "TRABALHADORES EM: HOTÉIS, HOTÉIS FAZENDA, FLATS, APART-HOTEL, HOSPEDARIAS, PENSÕES, CASAS DE CÔMODOS, MOTÉIS, POUSADAS, RESTAURANTES, BARES, CHURRASCARIAS, LANCHONETES, PIZZARIAS, ROTISSERIES, SALSICHARIAS, SORVETERIAS, FAST-FOOD, CAFÉS, CASAS DE CHÁ, BOTEQUINS, BOMBONIERES, CANTINAS, CASAS DE LANCHES, CONFEITARIAS, DOCERIAS, DRIVE-IN, LEITERIAS, SALSICHARIAS, E DE EMPRESAS QUE COMERCIALIZAM ALIMENTAÇÃO PREPARADA E BEBIDA ALCOÓLICAS, NO VAREJO",
+            "TerritorialScope": "CURITIBA/PR",
+            "InfoURL": "http://www3.mte.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR034804/2017",
+            "IsCurrentlyActive": false,
+            "HasLifeInsuranceClause": false,
+            "HasMandatoryHealthCare": false,
+            "AgreementStartDate": "2017-01-01T03:00:00Z",
+            "AgreementEndDate": "2018-01-01T03:00:00Z",
+            "AgreementDurationInMonths": 12,
+            "FirstCaptureDate": "2018-09-06T17:01:21.252Z",
+            "LastCaptureDate": "2024-10-16T01:50:43.185Z",
+            "Parts": [
+              {
+                "DocNumber": "13783221000478",
+                "Name": "MADERO INDUSTRIA E COMERCIO S.A.",
+                "Role": "EMPREGADOR"
+              },
+              {
+                "DocNumber": "76690353000122",
+                "Name": "SINDICATO DOS TRABALHADORES NO COMERCIO HOTELEIRO",
+                "Role": "REPRESENTANTE DOS TRABALHADORES"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "07a21396-8da5-4430-9aa2-2f69ff8b012f",
+  "ElapsedMilliseconds": 656,
+  "QueryDate": "2026-04-25T12:54:01.4794166Z",
+  "Status": {
+    "syndicate_agreements": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

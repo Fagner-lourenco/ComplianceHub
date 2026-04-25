@@ -1,0 +1,403 @@
+{
+  "requestId": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+  "create": {
+    "request_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+    "search": {
+      "on_demand": false,
+      "search_type": "cpf",
+      "search_key": "118.199.167-66",
+      "response_type": "lawsuits",
+      "search_params": {
+        "public_search": false,
+        "filter": {},
+        "pagination": {}
+      }
+    },
+    "origin": "api",
+    "origin_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+    "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+    "company_id": "a5347208-c4bd-4e36-b6a7-e2199cb0b1a4",
+    "status": "pending",
+    "created_at": "2026-04-02T23:24:40.403Z",
+    "updated_at": "2026-04-02T23:24:40.403Z",
+    "tags": {
+      "potential_homonym": false
+    }
+  },
+  "responses": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 1,
+    "all_pages_count": 1,
+    "all_count": 1,
+    "page_data": [
+      {
+        "request_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+        "response_id": "28c127c9-7e40-44fd-84ba-4c626bf43a72",
+        "origin": "api",
+        "origin_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+        "response_type": "lawsuit",
+        "response_data": {
+          "code": "0101976-21.2016.5.01.0007",
+          "instance": 1,
+          "name": "FLAVIO JORGE SANTOS DE ARAUJO X THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+          "free_justice": true,
+          "secrecy_level": 0,
+          "courts": [],
+          "tribunal_acronym": "TRT1",
+          "county": "RIO DE JANEIRO - 7ª VARA DO TRABALHO",
+          "state": "RJ",
+          "city": "RIO DE JANEIRO",
+          "distribution_date": "2016-12-19T16:44:47.027Z",
+          "last_step": {
+            "step_id": "C2aREcXCi/w17V2OEfgSgrdRBkI/Gtzcewgh1IKMzPI=",
+            "step_date": "2019-06-09T20:15:15.992Z",
+            "content": "Arquivados os autos definitivamente",
+            "step_type": "246",
+            "steps_count": 1
+          },
+          "tags": {
+            "datalake_id": "01019762120165010007",
+            "datalake_segment": "JUSTICA_TRABALHO",
+            "dictionary_updated_at": "2026-04-02T23:24:40.681Z"
+          },
+          "justice": "5",
+          "tribunal": "01",
+          "crawler": {
+            "source_name": "JTJ - BR - Document / Lawsuit - Auth",
+            "crawl_id": "346c3a18-ac36-4980-ab13-a296f04884f0",
+            "updated_at": "2024-10-14T23:59:09.014Z",
+            "weight": 0
+          },
+          "area": "NÃO INFORMADO",
+          "justice_description": "JUSTIÇA DO TRABALHO",
+          "created_at": "2024-10-14T23:59:32.098Z",
+          "updated_at": "2024-10-14T23:59:32.098Z",
+          "amount": 40000,
+          "classifications": [],
+          "subjects": [],
+          "parties": [
+            {
+              "main_document": "05271247708",
+              "name": "FLAVIO JORGE SANTOS DE ARAUJO",
+              "side": "Active",
+              "person_type": "RECLAMANTE",
+              "documents": [
+                {
+                  "document": "05271247708",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "71821839003820",
+              "name": "THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+              "side": "Passive",
+              "person_type": "RECLAMADO",
+              "documents": [
+                {
+                  "document": "71821839003820",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839002930",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839001372",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839001534",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839000724",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839003154",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839003073",
+                  "document_type": "CNPJ"
+                },
+                {
+                  "document": "71821839000139",
+                  "document_type": "CNPJ"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "14314892714",
+              "name": "CARLOS VINICIUS SILVA LIMA",
+              "side": "Unknown",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "14314892714",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "11819916766",
+              "name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+              "side": "Unknown",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "11819916766",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "13154002782",
+              "name": "WASHINGTON LUIZ DE SOUZA PESENTI",
+              "side": "Unknown",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "13154002782",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "03635346365",
+              "name": "ELIAS SOARES PONTES NETO",
+              "side": "Unknown",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "03635346365",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            },
+            {
+              "main_document": "10126231737",
+              "name": "VITOR MARTINO NOGUEIRA",
+              "side": "Unknown",
+              "person_type": "TESTEMUNHA",
+              "documents": [
+                {
+                  "document": "10126231737",
+                  "document_type": "CPF"
+                }
+              ],
+              "lawyers": []
+            }
+          ],
+          "attachments": [],
+          "related_lawsuits": [],
+          "steps": []
+        },
+        "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+        "created_at": "2026-04-02T23:24:40.683Z",
+        "request_created_at": "2026-04-02T23:24:40.403Z",
+        "tags": {
+          "dashboard_id": null,
+          "cached_response": true
+        }
+      }
+    ]
+  },
+  "criminalOnly": {
+    "request_status": "completed",
+    "page": 1,
+    "page_count": 0,
+    "all_pages_count": 0,
+    "all_count": 0,
+    "page_data": []
+  },
+  "pageData": [
+    {
+      "request_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+      "response_id": "28c127c9-7e40-44fd-84ba-4c626bf43a72",
+      "origin": "api",
+      "origin_id": "42075cbb-44f3-47ba-a92a-3c2bac2843cd",
+      "response_type": "lawsuit",
+      "response_data": {
+        "code": "0101976-21.2016.5.01.0007",
+        "instance": 1,
+        "name": "FLAVIO JORGE SANTOS DE ARAUJO X THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+        "free_justice": true,
+        "secrecy_level": 0,
+        "courts": [],
+        "tribunal_acronym": "TRT1",
+        "county": "RIO DE JANEIRO - 7ª VARA DO TRABALHO",
+        "state": "RJ",
+        "city": "RIO DE JANEIRO",
+        "distribution_date": "2016-12-19T16:44:47.027Z",
+        "last_step": {
+          "step_id": "C2aREcXCi/w17V2OEfgSgrdRBkI/Gtzcewgh1IKMzPI=",
+          "step_date": "2019-06-09T20:15:15.992Z",
+          "content": "Arquivados os autos definitivamente",
+          "step_type": "246",
+          "steps_count": 1
+        },
+        "tags": {
+          "datalake_id": "01019762120165010007",
+          "datalake_segment": "JUSTICA_TRABALHO",
+          "dictionary_updated_at": "2026-04-02T23:24:40.681Z"
+        },
+        "justice": "5",
+        "tribunal": "01",
+        "crawler": {
+          "source_name": "JTJ - BR - Document / Lawsuit - Auth",
+          "crawl_id": "346c3a18-ac36-4980-ab13-a296f04884f0",
+          "updated_at": "2024-10-14T23:59:09.014Z",
+          "weight": 0
+        },
+        "area": "NÃO INFORMADO",
+        "justice_description": "JUSTIÇA DO TRABALHO",
+        "created_at": "2024-10-14T23:59:32.098Z",
+        "updated_at": "2024-10-14T23:59:32.098Z",
+        "amount": 40000,
+        "classifications": [],
+        "subjects": [],
+        "parties": [
+          {
+            "main_document": "05271247708",
+            "name": "FLAVIO JORGE SANTOS DE ARAUJO",
+            "side": "Active",
+            "person_type": "RECLAMANTE",
+            "documents": [
+              {
+                "document": "05271247708",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "71821839003820",
+            "name": "THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+            "side": "Passive",
+            "person_type": "RECLAMADO",
+            "documents": [
+              {
+                "document": "71821839003820",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839002930",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839001372",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839001534",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839000724",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839003154",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839003073",
+                "document_type": "CNPJ"
+              },
+              {
+                "document": "71821839000139",
+                "document_type": "CNPJ"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "14314892714",
+            "name": "CARLOS VINICIUS SILVA LIMA",
+            "side": "Unknown",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "14314892714",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "11819916766",
+            "name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+            "side": "Unknown",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "11819916766",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "13154002782",
+            "name": "WASHINGTON LUIZ DE SOUZA PESENTI",
+            "side": "Unknown",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "13154002782",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "03635346365",
+            "name": "ELIAS SOARES PONTES NETO",
+            "side": "Unknown",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "03635346365",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          },
+          {
+            "main_document": "10126231737",
+            "name": "VITOR MARTINO NOGUEIRA",
+            "side": "Unknown",
+            "person_type": "TESTEMUNHA",
+            "documents": [
+              {
+                "document": "10126231737",
+                "document_type": "CPF"
+              }
+            ],
+            "lawyers": []
+          }
+        ],
+        "attachments": [],
+        "related_lawsuits": [],
+        "steps": []
+      },
+      "user_id": "3e903fe4-48be-43d2-b599-66c2b9f63f54",
+      "created_at": "2026-04-02T23:24:40.683Z",
+      "request_created_at": "2026-04-02T23:24:40.403Z",
+      "tags": {
+        "dashboard_id": null,
+        "cached_response": true
+      }
+    }
+  ],
+  "totalCount": 1
+}

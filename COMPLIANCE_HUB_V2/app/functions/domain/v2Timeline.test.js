@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTimelineEventsForCase, buildProviderDivergencesForCase } from './v2Timeline.cjs';
+import { buildTimelineEventsForCase, buildProviderDivergencesForCase } from './v2Timeline.js';
 
 describe('v2Timeline — buildTimelineEventsForCase', () => {
     it('gera eventos para modulos executados', () => {

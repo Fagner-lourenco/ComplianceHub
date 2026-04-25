@@ -1,0 +1,45 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "ProfessionData": {
+        "Professions": [
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "05531239000101",
+            "CompanyName": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "ACTIVE",
+            "IncomeRange": "2 A 4 SM",
+            "Income": 3000,
+            "StartDate": "2014-02-03T00:00:00Z",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2019-07-01T00:00:00Z",
+            "LastUpdateDate": "2022-08-19T00:00:00Z"
+          }
+        ],
+        "TotalProfessions": 1,
+        "TotalActiveProfessions": 1,
+        "TotalIncome": 3000,
+        "TotalIncomeRange": "2 A 4 SM",
+        "TotalDiscounts": 0,
+        "IsEmployed": true
+      }
+    }
+  ],
+  "QueryId": "a2731f0c-30a1-4ab8-99db-2ece1e71af93",
+  "ElapsedMilliseconds": 76,
+  "QueryDate": "2026-04-25T10:59:45.6825235Z",
+  "Status": {
+    "occupation_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

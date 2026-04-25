@@ -1,0 +1,61 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "ProfessionData": {
+        "Professions": [
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 5611203 - LANCHONETES, CASAS DE CHA, DE SUCOS E SIMILARES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "71821839001372",
+            "CompanyName": "THE FIFTIES COMERCIO DE ALIMENTOS S.A",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2014-05-21T00:00:00Z",
+            "EndDate": "2018-02-24T00:00:00Z",
+            "CreationDate": "2018-02-06T00:00:00Z",
+            "LastUpdateDate": "2020-03-24T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 8111700 - SERVICOS COMBINADOS PARA APOIO A EDIFICIOS, EXCETO CONDOMINIOS PREDIAIS",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "26082295000186",
+            "CompanyName": "ACF FACILITIES LTDA",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "ACTIVE",
+            "IncomeRange": "4 A 10 SM",
+            "Income": 7000,
+            "StartDate": "2018-11-23T00:00:00Z",
+            "EndDate": "9999-12-31T23:59:59.9999999",
+            "CreationDate": "2021-12-16T00:00:00Z",
+            "LastUpdateDate": "2022-08-21T00:00:00Z"
+          }
+        ],
+        "TotalProfessions": 2,
+        "TotalActiveProfessions": 1,
+        "TotalIncome": 7000,
+        "TotalIncomeRange": "4 A 10 SM",
+        "TotalDiscounts": 0,
+        "IsEmployed": true
+      }
+    }
+  ],
+  "QueryId": "c6ba3ea3-3d35-4e1f-b12f-e9bc1d71ec1b",
+  "ElapsedMilliseconds": 78,
+  "QueryDate": "2026-04-25T10:59:29.960987Z",
+  "Status": {
+    "occupation_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

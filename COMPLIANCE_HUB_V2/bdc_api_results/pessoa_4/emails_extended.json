@@ -1,0 +1,30 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{05023290336}",
+      "ExtendedEmails": {
+        "TotalEmails": 0,
+        "TotalActiveEmails": 0,
+        "TotalWorkEmails": 0,
+        "TotalPersonalEmails": 0,
+        "TotalUniqueEmails": 0,
+        "TotalEmailPassages": 0,
+        "TotalBadEmailPassages": 0,
+        "OldestEmailPassageDate": "0001-01-01T00:00:00",
+        "NewestEmailPassageDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "a420bd17-8ceb-4bfe-a365-5151314bb4be",
+  "ElapsedMilliseconds": 64,
+  "QueryDate": "2026-04-25T10:59:49.9948684Z",
+  "Status": {
+    "emails_extended": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

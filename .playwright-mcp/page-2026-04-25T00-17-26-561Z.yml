@@ -1,0 +1,206 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]: CH
+        - generic [ref=e8]:
+          - strong [ref=e9]: ComplianceHub
+          - generic [ref=e10]: Plataforma de Análise de Risco
+      - navigation "Produtos" [ref=e11]:
+        - link "Análises" [ref=e12] [cursor=pointer]:
+          - /url: /dossie
+          - img [ref=e13]
+          - text: Análises
+        - link "LinkHub" [ref=e17] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e18]
+          - text: LinkHub
+        - link "FlagHub" [ref=e21] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e22]
+          - text: FlagHub
+        - link "SearchHub" [ref=e24] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e25]
+          - text: SearchHub
+      - generic [ref=e28]:
+        - button "Ativar modo escuro" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]
+        - button "Sair" [ref=e32] [cursor=pointer]
+    - navigation "Operações" [ref=e34]:
+      - link "Watchlists" [ref=e35] [cursor=pointer]:
+        - /url: /watchlists
+        - img [ref=e36]
+        - text: Watchlists
+      - link "Billing" [ref=e38] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e39]
+        - text: Billing
+      - link "Senior Review" [ref=e42] [cursor=pointer]:
+        - /url: /senior-review
+        - img [ref=e43]
+        - text: Senior Review
+      - link "Relatórios" [ref=e45] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e46]
+        - text: Relatórios
+  - main [ref=e50]:
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: Surface ativa
+        - heading "Análises" [level=1] [ref=e54]
+        - paragraph [ref=e55]: Listagem de análises e dossiês. Acompanhe progresso, preset, critério e estado operacional de cada caso.
+      - generic [ref=e57]:
+        - button "Ver contratos backend" [ref=e58] [cursor=pointer]
+        - button "Criar nova análise" [ref=e59] [cursor=pointer]
+    - search "Filtros da listagem" [ref=e60]:
+      - generic [ref=e61]:
+        - generic [ref=e62]: Período
+        - textbox "Período" [ref=e63]:
+          - /placeholder: Data inicial
+      - generic [ref=e65]:
+        - generic [ref=e66]: Responsável
+        - textbox "Responsável" [ref=e67]:
+          - /placeholder: Nome do analista
+      - generic [ref=e69]:
+        - generic [ref=e70]: Status
+        - combobox "Status" [ref=e71]:
+          - option "Todos" [selected]
+          - option "Pronto"
+          - option "Publicado"
+          - option "Processando"
+          - option "Na fila"
+          - option "Erro"
+          - option "Falhou"
+    - table "Listagem de análises" [ref=e73]:
+      - row "Nº análise Criação Tag Critério Progresso Status Monitoramento Workflow Risco Ações" [ref=e74]:
+        - columnheader "Nº análise" [ref=e75]
+        - columnheader "Criação" [ref=e76]
+        - columnheader "Tag" [ref=e77]
+        - columnheader "Critério" [ref=e78]
+        - columnheader "Progresso" [ref=e79]
+        - columnheader "Status" [ref=e80]
+        - columnheader "Monitoramento" [ref=e81]
+        - columnheader "Workflow" [ref=e82]
+        - columnheader "Risco" [ref=e83]
+        - columnheader "Ações" [ref=e84]
+      - row "Abrir análise DOS-2026-0001" [ref=e85] [cursor=pointer]:
+        - cell "DOS-2026-0001" [ref=e86]
+        - cell "2026-04-20" [ref=e87]
+        - cell "PF-Alta" [ref=e88]
+        - cell "João da Silva" [ref=e89]
+        - cell "100%" [ref=e90]:
+          - generic [ref=e94]: 100%
+        - cell "completed" [ref=e95]:
+          - generic [ref=e96]: completed
+        - cell "On" [ref=e97]
+        - cell "Automático" [ref=e98]
+        - cell "Baixo" [ref=e99]
+        - cell "Abrir" [ref=e100]
+      - row "Abrir análise DOS-2026-0002" [ref=e101] [cursor=pointer]:
+        - cell "DOS-2026-0002" [ref=e102]
+        - cell "2026-04-21" [ref=e103]
+        - cell "PJ-Critico" [ref=e104]
+        - cell "Acme Tecnologia Ltda" [ref=e105]
+        - cell "65%" [ref=e106]:
+          - generic [ref=e110]: 65%
+        - cell "processing" [ref=e111]:
+          - generic [ref=e112]: processing
+        - cell "Off" [ref=e113]
+        - cell "Automático" [ref=e114]
+        - cell "Médio" [ref=e115]
+        - cell "Abrir" [ref=e116]
+      - row "Abrir análise DOS-2026-0003" [ref=e117] [cursor=pointer]:
+        - cell "DOS-2026-0003" [ref=e118]
+        - cell "2026-04-22" [ref=e119]
+        - cell "PF-Media" [ref=e120]
+        - cell "Maria Oliveira" [ref=e121]
+        - cell "30%" [ref=e122]:
+          - generic [ref=e126]: 30%
+        - cell "pending" [ref=e127]:
+          - generic [ref=e128]: pending
+        - cell "On" [ref=e129]
+        - cell "Manual" [ref=e130]
+        - cell "Alto" [ref=e131]
+        - cell "Abrir" [ref=e132]
+      - row "Abrir análise DOS-2026-0004" [ref=e133] [cursor=pointer]:
+        - cell "DOS-2026-0004" [ref=e134]
+        - cell "2026-04-22" [ref=e135]
+        - cell "PF-Baixa" [ref=e136]
+        - cell "Pedro Santos" [ref=e137]
+        - cell "100%" [ref=e138]:
+          - generic [ref=e142]: 100%
+        - cell "completed" [ref=e143]:
+          - generic [ref=e144]: completed
+        - cell "Off" [ref=e145]
+        - cell "Automático" [ref=e146]
+        - cell "Baixo" [ref=e147]
+        - cell "Abrir" [ref=e148]
+      - row "Abrir análise DOS-2026-0005" [ref=e149] [cursor=pointer]:
+        - cell "DOS-2026-0005" [ref=e150]
+        - cell "2026-04-23" [ref=e151]
+        - cell "PJ-Alta" [ref=e152]
+        - cell "Global Consulting S.A." [ref=e153]
+        - cell "10%" [ref=e154]:
+          - generic [ref=e158]: 10%
+        - cell "pending" [ref=e159]:
+          - generic [ref=e160]: pending
+        - cell "On" [ref=e161]
+        - cell "Automático" [ref=e162]
+        - cell "Crítico" [ref=e163]
+        - cell "Abrir" [ref=e164]
+  - generic:
+    - complementary:
+      - generic:
+        - generic:
+          - generic: Mapa funcional
+          - heading [level=2]: Camadas de backend
+          - paragraph: Historico de dossies esta ligada aos contratos abaixo.
+        - button: Fechar
+      - generic:
+        - article:
+          - generic:
+            - strong: Schema e preset de dossie
+            - generic: Implementado
+          - paragraph: O backend principal ja resolve preset, schema, macroareas e configuracao canonica do dossie para PF, PJ e composicao custom.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Continuar usando dossierSchema como fonte unica de verdade para navegacao, visoes e cobertura funcional.
+          - generic:
+            - generic: functions/domain/dossierSchema.cjs
+            - generic: functions/domain/v2Modules.cjs
+            - generic: functions/domain/v2ProductCatalog.cjs
+        - article:
+          - generic:
+            - strong: Listagem e historico
+            - generic: Parcial
+          - paragraph: A listagem ja recebe projeoes seguras com produto, preset, schema e processamento, mas ainda precisa evoluir para um read model mais rico e independente dos documentos brutos.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Falta fechar filtros paginaveis, colunas operacionais completas e acao de monitoramento por fonte.
+          - generic:
+            - generic: functions/domain/v2ClientProjectionBuilder.cjs
+            - generic: functions/domain/v2Core.cjs
+        - article:
+          - generic:
+            - strong: Progresso por fonte
+            - generic: Proximo refactor
+          - paragraph: A UX nova pede monitoramento por fonte, percentual real, retries e reprocessamento. A base operacional existe, mas ainda nao virou um contrato cliente coeso.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Transformar providerRequests e moduleRuns em sourceRows com status, tentativas, ultima execucao e erro tecnico.
+          - generic:
+            - generic: functions/domain/v2OperationalArtifactBuilder.cjs
+            - generic: functions/index.js
+        - article:
+          - generic:
+            - strong: Revisao humana saiu do produto principal
+            - generic: Fora do produto base
+          - paragraph: O pipeline central do dossie agora opera em modo automation_only. Revisao humana fica fora do fluxo padrao e pode voltar apenas como produto/plugin separado.
+          - generic:
+            - strong: "Lembrar:"
+            - text: Nao reacoplar review gate, senior queue ou aprovacao manual ao dossie base.
+          - generic:
+            - generic: functions/domain/v2CaseStatus.cjs
+            - generic: functions/index.js
+            - generic: functions/domain/v2ReviewGate.cjs

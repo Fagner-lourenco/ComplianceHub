@@ -1,0 +1,222 @@
+{
+  "statuses": {
+    "_global": {
+      "basic_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "occupation_data": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "kyc": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ],
+      "processes": [
+        {
+          "Code": 0,
+          "Message": "OK"
+        }
+      ]
+    },
+    "matchKeys": "doc{10794180329}"
+  },
+  "basicData": {
+    "found": true,
+    "name": "DIEGO EMANUEL ALVES DE SOUZA",
+    "alternativeName": null,
+    "taxIdStatus": "REGULAR",
+    "gender": "M",
+    "birthDate": "2002-04-20T00:00:00Z",
+    "motherName": "",
+    "fatherName": "",
+    "age": 23,
+    "namesakeCount": 1,
+    "nameWordCount": 5,
+    "_bdKeys": [
+      "TaxIdNumber",
+      "TaxIdCountry",
+      "AlternativeIdNumbers",
+      "Name",
+      "Aliases",
+      "Gender",
+      "NameWordCount",
+      "NumberOfFullNameNamesakes",
+      "NameUniquenessScore",
+      "FirstNameUniquenessScore",
+      "FirstAndLastNameUniquenessScore",
+      "BirthDate",
+      "CapturedBirthDateFromRFSource",
+      "IsValidBirthDateInRFSource",
+      "Age",
+      "ZodiacSign",
+      "ChineseSign",
+      "BirthCountry",
+      "MotherName",
+      "FatherName",
+      "MaritalStatusData",
+      "TaxIdStatus",
+      "TaxIdOrigin",
+      "TaxIdFiscalRegion",
+      "HasObitIndication",
+      "TaxIdStatusDate",
+      "TaxIdStatusRegistrationDate",
+      "CreationDate",
+      "LastUpdateDate"
+    ]
+  },
+  "processes": {
+    "total": 1,
+    "criminal": 0,
+    "labor": 0,
+    "civil": 1,
+    "active": 0,
+    "byCourt": {
+      "N/A": 1
+    },
+    "byState": {
+      "N/A": 1
+    },
+    "cpfMatchCount": 0,
+    "cpfMatches": [],
+    "lawsuitSummary": [
+      {
+        "number": "01149452820188060001",
+        "status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+        "parties": 0,
+        "partiesWithDoc": 0
+      }
+    ]
+  },
+  "kyc": {
+    "found": true,
+    "isPep": false,
+    "pepCount": 0,
+    "pepDetails": [],
+    "isCurrentlySanctioned": false,
+    "wasPreviouslySanctioned": false,
+    "sanctionCount": 16,
+    "sanctionSources": [
+      "ofac",
+      "interpol",
+      "fbi"
+    ],
+    "sanctionTypes": [
+      "FINANCIAL CRIMES",
+      "ARREST WARRANTS"
+    ],
+    "sanctionDetails": [
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "ofac",
+        "type": "Money Laundering",
+        "standardizedType": "FINANCIAL CRIMES",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      },
+      {
+        "source": "interpol",
+        "type": "Law Enforcement",
+        "standardizedType": "ARREST WARRANTS",
+        "isCurrently": true,
+        "wasRecently": true
+      }
+    ],
+    "_kycKeys": [
+      "PEPHistory",
+      "IsCurrentlyPEP",
+      "SanctionsHistory",
+      "IsCurrentlySanctioned",
+      "WasPreviouslySanctioned",
+      "Last30DaysSanctions",
+      "Last90DaysSanctions",
+      "Last180DaysSanctions",
+      "Last365DaysSanctions",
+      "LastYearPEPOccurence",
+      "Last3YearsPEPOccurence",
+      "Last5YearsPEPOccurence",
+      "Last5PlusYearsPEPOccurence",
+      "FirstSanctionDate",
+      "LastSanctionDate",
+      "IsCurrentlyElectoralDonor",
+      "IsHistoricalElectoralDonor",
+      "TotalElectoralDonations",
+      "TotalElectoralDonationAmount",
+      "ElectoralDonations"
+    ]
+  },
+  "profession": {
+    "found": false,
+    "count": 0,
+    "professions": [],
+    "_profKeys": [
+      "TotalProfessions",
+      "TotalActiveProfessions",
+      "TotalIncome",
+      "TotalIncomeRange",
+      "IsEmployed"
+    ]
+  }
+}

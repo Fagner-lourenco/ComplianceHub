@@ -26,8 +26,10 @@ export default function Drawer({ open, onClose, title, subtitle, headerExtra, ta
 
     useEffect(() => {
         if (open) {
-            setActiveTab(0);
+            const syncTimer = window.setTimeout(() => setActiveTab(0), 0);
+            return () => window.clearTimeout(syncTimer);
         }
+        return undefined;
     }, [open]);
 
     useEffect(() => {

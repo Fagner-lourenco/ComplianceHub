@@ -3,6 +3,9 @@
  * Re-triggers the enrichment pipeline for a case by delete + recreate
  * using the Firestore REST API and Firebase CLI stored credentials.
  * No service account key needed — uses the firebase-tools refresh token.
+ * Usage: node scripts/rerun-case-rest.cjs <caseId> [--confirm]
+ *   Without --confirm: dry-run (shows what would be changed)
+ *   With --confirm: actually strips and re-creates
  */
 
 const fs = require('fs');
@@ -11,8 +14,10 @@ const https = require('https');
 
 const PROJECT_ID = 'compliance-hub-br';
 const CASE_ID = process.argv[2];
-if (!CASE_ID) {
-    console.error('Usage: node rerun-case-rest.cjs <caseId>');
+const CONFIRM = process.argv.includes('--confirm');
+if (!CASE_ID || CASE_ID.startsWith('--')) {
+    console.error('Usage: node scripts/rerun-case-rest.cjs <caseId> [--confirm]');
+    console.error('  Without --confirm: dry-run only (mostra o que seria alterado)');
     process.exit(1);
 }
 
@@ -139,9 +144,12 @@ const PRESERVE_FIELDS = new Set([
 ]);
 
 // Fields to strip (enrichment results)
-const STRIP_PREFIXES = ['enrichment', 'escavador', 'judit', 'ai', 'gate', 'identity',
-    'criminal', 'warrant', 'labor', 'escalat', 'risk', 'finalVerdict', 'analyst',
-    'osint', 'social', 'digital', 'conflict'];
+const STRIP_PREFIXES = ['enrichment', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai', 'gate', 'identity',
+    'criminal', 'warrant', 'labor', 'escalat', 'risk', 'finalverdict', 'analyst',
+    'osint', 'social', 'digital', 'conflict',
+    'pep', 'sanction', 'coverage', 'review', 'prefill', 'negative', 'deterministic',
+    'autoclass', 'report', 'conclud', 'turnaround', 'timeline', 'status', 'source',
+    'nextsteps', 'process', 'key'];
 
 function shouldStrip(field) {
     if (PRESERVE_FIELDS.has(field)) return false;
@@ -152,6 +160,7 @@ function shouldStrip(field) {
 
 async function main() {
     console.log(`\nRe-triggering enrichment for case: ${CASE_ID}`);
+    console.log(`Mode: ${CONFIRM ? '⚠️  EXECUTANDO (--confirm)' : '🔍 DRY-RUN (sem --confirm)'}`);
     console.log('Getting access token from Firebase CLI credentials...');
 
     const token = await getAccessToken();
@@ -177,6 +186,14 @@ async function main() {
     console.log(`  Escav:  ${plain.escavadorEnrichmentStatus || 'none'}`);
     console.log(`  Judit:  ${plain.juditEnrichmentStatus || 'none'}`);
 
+    // 1b. Validate CPF before proceeding (prevent rerun with null/invalid CPF)
+    const rawCpf = plain.cpf ? String(plain.cpf).replace(/\D/g, '').padStart(11, '0') : '';
+    if (rawCpf.length !== 11) {
+        console.error(`\n❌ ABORTADO: CPF inválido ou ausente (cpf=${JSON.stringify(plain.cpf)}).`);
+        console.error('   Corrija o campo cpf no Firestore antes de reexecutar.');
+        process.exit(1);
+    }
+
     // 2. Build clean document (only identity fields)
     const cleanFields = {};
     for (const [k, v] of Object.entries(fields)) {
@@ -184,12 +201,21 @@ async function main() {
             cleanFields[k] = v;
         }
     }
+    // Ensure CPF is always stored as zero-padded 11-digit string
+    cleanFields.cpf = toFirestoreValue(rawCpf);
     // Set status to PENDING
     cleanFields.status = toFirestoreValue('PENDING');
     cleanFields.updatedAt = { timestampValue: new Date().toISOString() };
 
     const strippedCount = Object.keys(fields).length - Object.keys(cleanFields).length;
     console.log(`\nWill strip ${strippedCount} enrichment fields, keeping ${Object.keys(cleanFields).length} identity fields.`);
+
+    if (!CONFIRM) {
+        console.log(`\n🔍 [DRY-RUN] Nenhuma alteração feita.`);
+        console.log(`Para executar de verdade, rode:`);
+        console.log(`  node scripts/rerun-case-rest.cjs ${CASE_ID} --confirm`);
+        return;
+    }
 
     // 3. Delete subcollections (publicResult, aiCache)
     for (const subcol of ['publicResult', 'aiCache']) {

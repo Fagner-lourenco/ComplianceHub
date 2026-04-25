@@ -123,3 +123,30 @@ export function getMockExports(tenantId) {
     return MOCK_EXPORTS.filter((item) => item.tenantId === tenantId);
 }
 
+export function getMockPublicReports(tenantId) {
+    const filteredCases = tenantId
+        ? MOCK_CASES.filter((caseData) => caseData.tenantId === tenantId)
+        : MOCK_CASES;
+
+    return filteredCases
+        .filter((caseData) => caseData.status === 'DONE')
+        .map((caseData, index) => {
+            const createdAt = new Date(Date.now() - (index + 2) * 24 * 60 * 60 * 1000);
+            const expiresAt = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+            const revoked = index % 5 === 3;
+            const expired = index % 5 === 4;
+            return {
+                id: caseData.publicReportToken || `mock-report-${caseData.id.toLowerCase()}`,
+                token: caseData.publicReportToken || `mock-report-${caseData.id.toLowerCase()}`,
+                caseId: caseData.id,
+                tenantId: caseData.tenantId,
+                candidateName: caseData.candidateName,
+                active: !revoked,
+                status: revoked ? 'REVOKED' : expired ? 'EXPIRED' : 'ACTIVE',
+                createdAt: createdAt.toISOString(),
+                expiresAt: expired
+                    ? new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
+                    : expiresAt.toISOString(),
+            };
+        });
+}

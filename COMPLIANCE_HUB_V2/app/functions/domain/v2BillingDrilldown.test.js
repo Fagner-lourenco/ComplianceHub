@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url);
 const {
     buildBillingDrilldown,
     buildBillingDrilldownExport,
-} = require('./v2BillingDrilldown.cjs');
+} = require('./v2BillingDrilldown.js');
 
 const meters = [
     {

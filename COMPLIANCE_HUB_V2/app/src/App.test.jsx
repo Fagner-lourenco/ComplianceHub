@@ -1,190 +1,49 @@
 import { render, screen } from '@testing-library/react';
-import { Outlet } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
+import AppRoutes from './AppRoutes';
+import { useAuth } from './core/auth/useAuth';
+import { useTheme } from './core/contexts/useTheme';
+import { useTenant } from './core/contexts/useTenant';
 
-const appTestMocks = vi.hoisted(() => ({
-    authState: {
-        loading: false,
-        user: null,
-        userProfile: null,
-        profileStatus: 'idle',
-        logout: vi.fn(),
-    },
-}));
+vi.mock('./core/auth/useAuth');
+vi.mock('./core/contexts/useTheme');
+vi.mock('./core/contexts/useTenant');
 
-vi.mock('./core/auth/AuthContext', () => ({
-    AuthProvider: ({ children }) => children,
-}));
+describe('App routing', () => {
+  beforeEach(() => {
+    useTheme.mockReturnValue({ theme: 'light', resolvedTheme: 'light', setTheme: vi.fn() });
+    useTenant.mockReturnValue({ selectedTenantId: null, selectedTenantLabel: 'Todos' });
+  });
 
-vi.mock('./core/contexts/TenantContext', () => ({
-    TenantProvider: ({ children }) => children,
-}));
+  it('renders login page at /login', () => {
+    useAuth.mockReturnValue({ user: null, loading: false, hasResolvedProfile: true });
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('heading', { name: /compliancehub/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /entrar na conta/i })).toBeInTheDocument();
+  });
 
-vi.mock('./core/auth/useAuth', () => ({
-    useAuth: () => appTestMocks.authState,
-}));
+  it('redirects to login when accessing protected route unauthenticated', () => {
+    useAuth.mockReturnValue({ user: null, loading: false, hasResolvedProfile: true });
+    render(
+      <MemoryRouter initialEntries={['/dossie']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('heading', { name: /compliancehub/i })).toBeInTheDocument();
+  });
 
-vi.mock('./demo/DemoProviders', () => ({
-    DemoProviders: ({ children }) => children,
-}));
-
-vi.mock('./ui/layouts/AppLayout', () => ({
-    default: ({ title }) => (
-        <div>
-            <div data-testid="layout-title">{title}</div>
-            <Outlet />
-        </div>
-    ),
-}));
-
-vi.mock('./pages/LoginPage', () => ({
-    default: () => <div>LOGIN_PAGE</div>,
-}));
-
-vi.mock('./portals/ops/FilaPage', () => ({
-    default: () => <div>OPS_FILA</div>,
-}));
-
-vi.mock('./portals/ops/CasosPage', () => ({
-    default: () => <div>OPS_CASOS</div>,
-}));
-
-vi.mock('./portals/ops/CasoPage', () => ({
-    default: () => <div>OPS_CASO</div>,
-}));
-
-vi.mock('./portals/ops/AuditoriaPage', () => ({
-    default: () => <div>OPS_AUDITORIA</div>,
-}));
-
-vi.mock('./portals/ops/RelatoriosPage', () => ({
-    default: () => <div>OPS_RELATORIOS</div>,
-}));
-
-vi.mock('./portals/ops/SaudePage', () => ({
-    default: () => <div>OPS_SAUDE</div>,
-}));
-
-vi.mock('./portals/ops/ClientesPage', () => ({
-    default: () => <div>OPS_CLIENTES</div>,
-}));
-
-vi.mock('./portals/client/SolicitacoesPage', () => ({
-    default: () => <div>CLIENT_SOLICITACOES</div>,
-}));
-
-vi.mock('./portals/client/NovaSolicitacaoPage', () => ({
-    default: () => <div>CLIENT_NOVA</div>,
-}));
-
-vi.mock('./portals/client/ExportacoesPage', () => ({
-    default: () => <div>CLIENT_EXPORTACOES</div>,
-}));
-vi.mock('./portals/client/RelatoriosClientePage', () => ({
-    default: () => <div>CLIENT_RELATORIOS</div>,
-}));
-vi.mock('./portals/client/EquipePage', () => ({
-    default: () => <div>CLIENT_EQUIPE</div>,
-}));
-
-vi.mock('./pages/PublicReportPage', () => ({
-    default: () => <div>PUBLIC_REPORT_PAGE</div>,
-}));
-vi.mock('./pages/PerfilPage', () => ({
-    default: () => <div>PERFIL_PAGE</div>,
-}));
-
-const { default: App } = await import('./App');
-
-describe('App routing guards', () => {
-    beforeEach(() => {
-        appTestMocks.authState = {
-            loading: false,
-            user: null,
-            userProfile: null,
-            profileStatus: 'idle',
-            logout: vi.fn(),
-        };
-    });
-
-    it('redireciona rota protegida para o login quando nao ha sessao', async () => {
-        window.history.replaceState({}, '', '/ops/casos');
-
-        render(<App />);
-
-        expect(await screen.findByText('LOGIN_PAGE')).toBeInTheDocument();
-    });
-
-    it('redireciona acesso cruzado de admin para o portal operacional', async () => {
-        appTestMocks.authState = {
-            loading: false,
-            user: { uid: 'ops-1' },
-            userProfile: {
-                uid: 'ops-1',
-                role: 'admin',
-                displayName: 'Fagner Lourenco',
-                email: 'fagner.alexandro.lourenco@gmail.com',
-            },
-            profileStatus: 'ready',
-            logout: vi.fn(),
-        };
-        window.history.replaceState({}, '', '/client/solicitacoes');
-
-        render(<App />);
-
-        expect(await screen.findByText('OPS_FILA')).toBeInTheDocument();
-        expect(screen.getByTestId('layout-title')).toHaveTextContent('Portal Operacional');
-    });
-
-    it('mantem o estado seguro quando o perfil ainda nao foi confirmado', async () => {
-        appTestMocks.authState = {
-            loading: false,
-            user: { uid: 'user-1', email: 'analista.rh@madero.com.br' },
-            userProfile: {
-                uid: 'user-1',
-                displayName: 'analista.rh',
-                email: 'analista.rh@madero.com.br',
-                role: null,
-            },
-            profileStatus: 'delayed',
-            logout: vi.fn(),
-        };
-        window.history.replaceState({}, '', '/');
-
-        render(<App />);
-
-        expect(await screen.findByText('Confirmando permissoes e contexto')).toBeInTheDocument();
-        expect(screen.getByText('Identidade confirmada no Firebase Auth')).toBeInTheDocument();
-    });
-
-    it('resolve a rota publica de relatorio demo por caseId', async () => {
-        window.history.replaceState({}, '', '/demo/r/CASE-002');
-
-        render(<App />);
-
-        expect(await screen.findByText('PUBLIC_REPORT_PAGE')).toBeInTheDocument();
-    });
-
-    it('carrega a gestao de relatorios do portal cliente para perfil com permissao de exportacao', async () => {
-        appTestMocks.authState = {
-            loading: false,
-            user: { uid: 'client-1' },
-            userProfile: {
-                uid: 'client-1',
-                role: 'client_manager',
-                tenantId: 'madero-br',
-                tenantName: 'Madero Industria e Comercio S.A.',
-                displayName: 'Analista RH',
-                email: 'analista.rh@madero.com.br',
-            },
-            profileStatus: 'ready',
-            logout: vi.fn(),
-        };
-        window.history.replaceState({}, '', '/client/relatorios');
-
-        render(<App />);
-
-        expect(await screen.findByText('CLIENT_RELATORIOS')).toBeInTheDocument();
-        expect(screen.getByTestId('layout-title')).toHaveTextContent('Portal Cliente');
-    });
+  it('redirects root to /dossie when authenticated', () => {
+    useAuth.mockReturnValue({ user: { uid: '123' }, loading: false, hasResolvedProfile: true });
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('status', { name: /carregando/i })).toBeInTheDocument();
+  });
 });

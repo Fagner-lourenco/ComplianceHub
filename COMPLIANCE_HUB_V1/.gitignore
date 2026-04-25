@@ -13,8 +13,11 @@ dist-ssr
 *.local
 
 # Secrets
+.env
+.env.*
 service_account*.json
-.env.production
+functions/.env
+functions/service-account*.json
 
 # Editor directories and files
 .vscode/*

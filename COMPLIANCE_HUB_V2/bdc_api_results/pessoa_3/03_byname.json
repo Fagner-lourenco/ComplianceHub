@@ -1,0 +1,460 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "name{renan guimaraes de sousa augusto}",
+      "Processes": {
+        "Lawsuits": [
+          {
+            "Number": "01019762120165010007",
+            "Type": "RITO ORDINARIO",
+            "MainSubject": "SALARIO/DIFERENCA SALARIAL",
+            "CourtName": "TRT1",
+            "CourtLevel": "1",
+            "CourtType": "TRABALHISTA",
+            "CourtDistrict": "RIO DE JANEIRO",
+            "JudgingBody": "7 VARA DO TRABALHO DO RIO DE JANEIRO",
+            "State": "RJ",
+            "Status": "ARQUIVADO",
+            "LawsuitHostService": "PJE",
+            "InferredCNJSubjectName": "SALÁRIO/DIFERENÇA SALARIAL",
+            "InferredCNJSubjectNumber": 13858,
+            "InferredCNJProcedureTypeNumber": 0,
+            "InferredBroadCNJSubjectName": "DIREITO DO TRABALHO",
+            "InferredBroadCNJSubjectNumber": 864,
+            "OtherSubjects": [
+              "SALARIO/DIFERENCA SALARIAL",
+              "ADICIONAL DE HORA EXTRA",
+              "APLICABILIDADE",
+              "AVISO PREVIO",
+              "DEPOSITO/DIFERENCAS",
+              "DECIMO TERCEIRO SALARIO",
+              "DECIMO TERCEIRO SALARIO PROPORCIONAL",
+              "FGTS",
+              "FERIAS PROPORCIONAIS",
+              "GORJETA",
+              "GORJETA",
+              "HORAS EXTRAS",
+              "INDENIZACAO",
+              "INDENIZACAO POR DANO MORAL",
+              "INDENIZACAO/DOBRA/TERCO CONSTITUCIONAL",
+              "INTERVALO INTRAJORNADA",
+              "LEVANTAMENTO/LIBERACAO",
+              "LIBERACAO/ENTREGA DAS GUIAS",
+              "MULTA DE 40% DO FGTS",
+              "MULTA DO ARTIGO 477 DA CLT",
+              "MULTA DO ARTIGO 467 DA CLT",
+              "REFLEXOS",
+              "REPOUSO SEMANAL REMUNERADO E FERIADO",
+              "SALARIO VENCIDO/RETIDO",
+              "SALARIO POR FORA - INTEGRACAO",
+              "SEGURO DESEMPREGO",
+              "TRABALHO AOS DOMINGOS",
+              "INTERVALO INTERJONADAS"
+            ],
+            "NumberOfVolumes": 0,
+            "NumberOfPages": 0,
+            "Value": 40000,
+            "ResJudicataDate": "0001-01-01T00:00:00",
+            "CloseDate": "2019-06-09T17:15:16",
+            "RedistributionDate": "0001-01-01T00:00:00",
+            "PublicationDate": "0001-01-01T00:00:00",
+            "NoticeDate": "2016-12-19T14:44:47",
+            "LastMovementDate": "2019-06-09T17:15:16",
+            "CaptureDate": "2024-07-21T09:12:08",
+            "LastUpdate": "2024-07-21T09:12:08",
+            "NumberOfParties": 10,
+            "NumberOfUpdates": 45,
+            "LawSuitAge": 902,
+            "AverageNumberOfUpdatesPerMonth": 0,
+            "ReasonForConcealedData": 0,
+            "LawsuitMatchType": "DOC",
+            "Parties": [
+              {
+                "Doc": "05271247708",
+                "IsPartyActive": true,
+                "Name": "FLAVIO JORGE SANTOS DE ARAUJO",
+                "Polarity": "ACTIVE",
+                "Type": "CLAIMANT",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "RECLAMANTE"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "29628920782",
+                "IsPartyActive": true,
+                "Name": "CARLOS ALBERTO PATRICIO DE SOUZA",
+                "Polarity": "NEUTRAL",
+                "Type": "LAWYER",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "ADVOGADO"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "71821839000139",
+                "IsPartyActive": true,
+                "Name": "T F C A S A",
+                "Polarity": "PASSIVE",
+                "Type": "CLAIMED",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "RECLAMADO"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "15824046824",
+                "IsPartyActive": true,
+                "Name": "ANA KEILA MARCHIORI",
+                "Polarity": "NEUTRAL",
+                "Type": "LAWYER",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "ADVOGADO"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "29458664802",
+                "IsPartyActive": true,
+                "Name": "ANNA MARIA DA SILVEIRA MUNOZ AVZARADEL",
+                "Polarity": "NEUTRAL",
+                "Type": "LAWYER",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "ADVOGADO"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "14314892714",
+                "IsPartyActive": true,
+                "Name": "CARLOS VINICIUS SILVA LIMA",
+                "Polarity": "NEUTRAL",
+                "Type": "WITNESS",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "TESTEMUNHA"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "11819916766",
+                "IsPartyActive": true,
+                "Name": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+                "Polarity": "NEUTRAL",
+                "Type": "WITNESS",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "TESTEMUNHA"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "13154002782",
+                "IsPartyActive": true,
+                "Name": "WASHINGTON LUIZ DE SOUZA PESENTI",
+                "Polarity": "NEUTRAL",
+                "Type": "WITNESS",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "TESTEMUNHA"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "03635346365",
+                "IsPartyActive": true,
+                "Name": "E S P N",
+                "Polarity": "NEUTRAL",
+                "Type": "WITNESS",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "TESTEMUNHA"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Doc": "10126231737",
+                "IsPartyActive": true,
+                "Name": "V M N",
+                "Polarity": "NEUTRAL",
+                "Type": "WITNESS",
+                "IsInference": false,
+                "PartyDetails": {
+                  "SpecificType": "TESTEMUNHA"
+                },
+                "LastCaptureDate": "2024-07-21T09:12:08"
+              }
+            ],
+            "Updates": [
+              {
+                "Content": "ARQUIVADOS OS AUTOS DEFINITIVAMENTE",
+                "PublishDate": "2019-06-09T17:15:16",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO (PAGAMENTO DE CUSTAS)",
+                "PublishDate": "2019-06-06T18:08:35",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DECORRIDO O PRAZO DE THE FIFTIES COMERCIO DE ALIMENTOS LTDA EM 25/01/2019 23:59:59",
+                "PublishDate": "2019-01-26T01:08:58",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DECORRIDO O PRAZO DE FLAVIO JORGE SANTOS DE ARAUJO EM 25/01/2019 23:59:59",
+                "PublishDate": "2019-01-26T01:08:57",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "ATA DA AUDIENCIA|7 VARA DO TRABALHO DO RIO DE JANEIRO TERMO DE AUDIENCIA RELATIVO AO PROCESSO 0101976-21.2016.5.01.0007 EM 14 DE DEZEMBRO DE 2018, NA SALA DE SESSOES DA 7 VARA DO TRABALHO DO RIO DE JANEIRO/RJ, SOB A DIRECAO DA EXMO(A). JUIZA ASTRID SILVA BRITTO, REALIZOU-SE AUDIENCIA RELATIVA A ACAO TRABALHISTA - RITO ORDINARIO NUMERO 0101976-21.2016.5.01.0007 AJUIZADA POR FLAVIO JORGE SANTOS DE ARAUJO EM FACE DE THE FIFTIES COMERCIO DE ALIMENTOS LTDA. AS 09H13MIN, ABERTA A AUDIENCIA, FORAM, DE ORDEM DA EXMO(A). JUIZA DO TRABALHO, APREGOADAS AS PARTES. PRESENTE O RECLAMANTE, ACOMPANHADO DO(A) ADVOGADO(A), DR(A). ARMANDO LIMA SANTANA JUNIOR, OAB N 174014D/RJ. PRESENTE O PREPOSTO DO RECLAMADO, SR(A). ANDERSON GALIASSO BARBOZA, CPF 019.453.797-82, ACOMPANHADO(A) DO(A) ADVOGADO(A), DR(A). KHADINE BUENO BAGUEIRA LEAL, OAB N 168551/RJ. CONCILIACAO: O RECLAMADO PAGARA AO RECLAMANTE A IMPORTANCIA LIQUIDA E TOTAL DE R$ 12.000,00, SENDO R$ 2.000,00, REFERENTE A PRIMEIRA PARCELA DO ACORDO, ATE O DIA 20/12/2018, E O RESTANTE CONFORME DISCRIMINADO A SEGUIR: 2 PARCELA, NO VALOR DE R$ 2.000,00, ATE 21/01/2019. 3 PARCELA, NO VALOR DE R$ 2.000,00, ATE 20/02/2019. 4 PARCELA, NO VALOR DE R$ 2.000,00, ATE 20/03/2019. 5 PARCELA, NO VALOR DE R$ 2.000,00, ATE 22/04/2019. 6 PARCELA, NO VALOR DE R$ 2.000,00, ATE 20/05/2019. O RECLAMANTE DA GERAL E PLENA QUITACAO PELO OBJETO DA INICIAL E EXTINTO CONTRATO DE TRABALHO, FICANDO ESTIPULADA MULTA DE 50% EM CASO DE INADIMPLENCIA OU MORA. AS PARTES DECLARAM QUE A TRANSACAO E COMPOSTA DE 100% DE PARCELAS DE NATUREZA INDENIZATORIA, CORRESPONDENTES A DIF DE AVISO PREVIO (R$ 2.000,00), DIF DE FGTS 40% FGTS (R$ 5.000,00), INDENIZACAO POR DANOS MORAIS (R$ 2.000,00) E MULTA DO 8 DO ART. 477 DA CLT (R$ 3.000,00), SOBRE AS QUAIS NAO HA INCIDENCIA DE CONTRIBUICAO PREVIDENCIARIA. O PAGAMENTO SERA EFETUADO POR MEIO DE DEPOSITO NA CONTA CORRENTE DO(A) ESCRITORIO QUE PATROCINA O(A) AUTOR(A), CARLOS PATRICIO ADVOGADOS ASSOCIADOS, CNPJ: 27.776.680/0001-96, BANCO ITAU, AGENCIA 0576, C/C N 08552-6. O PRESENTE DOCUMENTO CONSTITUI-SE EM ORDEM JUDICIAL, PERANTE A CAIXA ECONOMICA FEDERAL, PARA FINS DE LIBERACAO DOS VALORES EXISTENTES NA CONTA VINCULADA AO FGTS DO RECLAMANTE, NOME: FLAVIO JORGE SANTOS DE ARAUJO, CPF: 052.712.477-08, PIS:13021589544, CTPS: 7054225, SERIE: 0050RJ, NOME DO EMPREGADOR: THE FIFTIES COMERCIO DE ALIMENTOS LTDA, CNPJ: 71.821.839/0031-54, DATA DA ADMISSAO:06/05/2013, E DISPENSADO SEM JUSTA CAUSA EM: 05/01/2015. O PRESENTE DOCUMENTO CONSTITUI-SE EM ORDEM JUDICIAL PERANTE AS SUPERINTENDENCIAS REGIONAIS DO TRABALHO E EMPREGO, SISTEMA NACIONAL DE EMPREGO, AGENCIAS CREDENCIADAS DA CAIXA ECONOMICA FEDERAL E OUTROS POSTOS CREDENCIADOS PELO MINISTERIO DO TRABALHO E EMPREGO PARA HABILITACAO DO RECLAMANTE, NOME: FLAVIO JORGE SANTOS DE ARAUJO, CPF: 052.712.477-08, PIS:13021589544, CTPS: 7054225, SERIE: 0050RJ, NOME DO EMPREGADOR: THE FIFTIES COMERCIO DE ALIMENTOS LTDA, CNPJ: 71.821.839/0031-54, DATA DA ADMISSAO:06/05/2013, E DISPENSADO SEM JUSTA CAUSA EM: 05/01/2015, NO SEGURO-DESEMPREGO, SUPRINDO, INCLUSIVE, A INEXISTENCIA DO TERMO DE RESCISAO DO CONTRATO DE TRABALHO OU TERMO DE QUITACAO DE RESCISAO DO CONTRATO DE TRABALHO E AS GUIAS SD/CD, DESDE QUE PREENCHIDOS OS REQUISITOS LEGAIS. ACORDO HOMOLOGADO. CUSTAS PELO RECLAMADO NO IMPORTE DE R$ 240,00, CALCULADAS SOBRE R$ 12.000,00, QUE DEVERAO SER RECOLHIDAS NO PRAZO DE 30 DIAS, APOS O CUMPRIMENTO DO ACORDO. NAO CABEM HONORARIOS SUCUMBENCIAIS (ART.791-A DA CLT) EM CASO DE CONCILIACAO JUDICIAL, POIS NAO HOUVE SUCUMBENCIA. APOS O VENCIMENTO DE CADA PARCELA, NO SILENCIO DO RECLAMANTE, PRESUME A QUITACAO DA MESMA. EM CASO DE DESCUMPRIMENTO, AS PARCELAS REMANESCENTES SERAO ANTECIPADAS, SENDO QUE A CLAUSULA PENAL INCIDIRA SOBRE A PARCELA INADIMPLIDA. CUMPRIDO. DE-SE BAIXA E ARQUIVE-SE. AUDIENCIA ENCERRADA AS 09H16MIN. ASTRID SILVA BRITTO JUIZA DO TRABALHO ATA REDIGIDA POR KEITH XIMENES SANTOS, SECRETARIO(A) DE AUDIENCIA.",
+                "PublishDate": "2018-12-14T11:11:31",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "ARBITRADAS E NAO DISPENSADAS AS CUSTAS PROCESSUAIS NO VALOR DE 240.00",
+                "PublishDate": "2018-12-14T11:11:30",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "CONCEDIDA A ASSISTENCIA JUDICIARIA GRATUITA A FLAVIO JORGE SANTOS DE ARAUJO",
+                "PublishDate": "2018-12-14T11:11:30",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "HOMOLOGADA A TRANSACAO",
+                "PublishDate": "2018-12-14T11:11:30",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA CONCILIACAO EM CONHECIMENTO REALIZADA (14/12/2018 08:42 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-12-14T11:11:30",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA CONCILIACAO EM CONHECIMENTO DESIGNADA (14/12/2018 08:42 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-12-14T08:39:12",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO CANCELADA (02/04/2019 11:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-12-14T08:36:17",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-12-12T17:59:22",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-12-12T11:07:58",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-11-19T16:09:24",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-11-19T16:01:47",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DEVOLVIDO O MANDADO PELO OFICIAL DE JUSTICA (CUMPRIDO COM FINALIDADE NAO ATINGIDA)",
+                "PublishDate": "2018-11-19T14:37:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DEVOLVIDO O MANDADO PELO OFICIAL DE JUSTICA (CUMPRIDO COM FINALIDADE ATINGIDA)",
+                "PublishDate": "2018-11-17T19:15:37",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "RECEBIDO O MANDADO PELO OFICIAL DE JUSTICA PARA CUMPRIMENTO",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "REMETIDO(A) O(A) DOCUMENTO PARA ORGAO JURISDICIONAL COMPETENTE PARA CUMPRIR DETERMINACAO JUDICIAL",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "EXPEDIDO(A) MANDADO A(O) TERCEIRO INTERESSADO",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "RECEBIDO O MANDADO PELO OFICIAL DE JUSTICA PARA CUMPRIMENTO",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "REMETIDO(A) O(A) DOCUMENTO PARA ORGAO JURISDICIONAL COMPETENTE PARA CUMPRIR DETERMINACAO JUDICIAL",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "EXPEDIDO(A) MANDADO A(O) TERCEIRO INTERESSADO",
+                "PublishDate": "2018-11-16T09:14:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO DESIGNADA (02/04/2019 11:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-11-16T08:55:53",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "ATA DA AUDIENCIA|7 VARA DO TRABALHO DO RIO DE JANEIRO TERMO DE AUDIENCIA RELATIVO AO PROCESSO 0101976-21.2016.5.01.0007 EM 14 DE NOVEMBRO DE 2018, NA SALA DE SESSOES DA 7 VARA DO TRABALHO DO RIO DE JANEIRO/RJ, SOB A DIRECAO DO EXMO(A). JUIZ NIKOLAI NOWOSH, REALIZOU-SE AUDIENCIA RELATIVA A ACAO TRABALHISTA - RITO ORDINARIO NUMERO 0101976-21.2016.5.01.0007 AJUIZADA POR FLAVIO JORGE SANTOS DE ARAUJO EM FACE DE THE FIFTIES COMERCIO DE ALIMENTOS LTDA. AS 16H27MIN, ABERTA A AUDIENCIA, FORAM, DE ORDEM DO EXMO(A). JUIZ DO TRABALHO, APREGOADAS AS PARTES. PRESENTE O RECLAMANTE, ACOMPANHADO DO(A) ADVOGADO(A), DR(A). ARMANDO LIMA SANTANA JUNIOR, OAB N 174014D/RJ. PRESENTE O PREPOSTO DO RECLAMADO, SR(A). ANDERSON GALIASSO BARBOZA, CPF 019.453.797-82, ACOMPANHADO(A) DO(A) ADVOGADO(A), DR(A). REGINA CARLA SILVA LOPES, OAB N 69323/RJ. CONCILIACAO RECUSADA. FACE A AUSENCIA DE SUA TESTEMUNHA, SR(A). ELIAS E RENAN (RECLAMANTE E RECLAMADA), CIENTES DA DATA POR MEIO DA CERTIDAO 7CCBDC5 E 8A296DC, REQUEREU A PARTE AUTORA O ADIAMENTO DO FEITO COMPROMETENDO-SE A TRAZE-LA A PROXIMA AUDIENCIA INDEPENDENTE DE INTIMACAO, SOB PENA DE PERDA DE PROVA. ESPECA-SE MANDADO PARA INTIMACAO DA TESTEMUNHA VITOR CUJO ENDERECO CONSTA NA PETICAO DE ID 89B05DC. PARA REALIZACAO DE AUDIENCIA INSTRUCAO DESIGNA-SE A DATA DE 02/04/2019, AS 11H15. AS PARTES PRESENTES DECLARAM QUE TRARAO DEMAIS TESTEMUNHAS INDEPENDENTE DE INTIMACAO, SOB PENA DE PERDA DA PROVA FICAM MANTIDAS AS DEMAIS COMINACOES ANTERIORES. PARTES PRESENTES CIENTES DO INTEIRO TEOR DESTA ATA. AUDIENCIA ENCERRADA AS 16H29 NIKOLAI NOWOSH JUIZ DO TRABALHO ATA REDIGIDA POR RAFEL LYRA, SECRETARIO(A) DE AUDIENCIA.",
+                "PublishDate": "2018-11-14T17:33:00",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO REALIZADA (14/11/2018 16:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-11-14T17:33:00",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-11-13T13:33:29",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-11-13T13:06:18",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-11-13T13:00:03",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO REDESIGNADA (14/11/2018 15:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-10-15T11:00:22",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DECORRIDO O PRAZO DE WASHINGTON LUIZ DE SOUZA PESENTI EM 29/06/2018 23:59:59",
+                "PublishDate": "2018-07-04T01:26:09",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DECORRIDO O PRAZO DE RENAN GUIMARAES DE SOUSA AUGUSTO EM 29/06/2018 23:59:59",
+                "PublishDate": "2018-07-04T01:25:44",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DECORRIDO O PRAZO DE CARLOS VINICIUS SILVA LIMA EM 29/06/2018 23:59:59",
+                "PublishDate": "2018-07-04T01:15:15",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO DESIGNADA (19/10/2018 11:20 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-05-10T09:02:19",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "ATA DA AUDIENCIA|7 VARA DO TRABALHO DO RIO DE JANEIRO TERMO DE AUDIENCIA RELATIVO AO PROCESSO 0101976-21.2016.5.01.0007 EM 09 DE MAIO DE 2018, NA SALA DE SESSOES DA MM. 7 VARA DO TRABALHO DO RIO DE JANEIRO/RJ, SOB A DIRECAO DA EXMO(A). JUIZA ADRIANA LEANDRO DE SOUSA FREITAS, REALIZOU-SE AUDIENCIA RELATIVA A ACAO TRABALHISTA - RITO ORDINARIO NUMERO 0101976-21.2016.5.01.0007 AJUIZADA POR FLAVIO JORGE SANTOS DE ARAUJO EM FACE DE THE FIFTIES COMERCIO DE ALIMENTOS LTDA. AS 12H20MIN, ABERTA A AUDIENCIA, FORAM, DE ORDEM DA EXMO(A). JUIZA DO TRABALHO, APREGOADAS AS PARTES. PRESENTE O RECLAMANTE, ACOMPANHADO DO(A) ADVOGADO(A), DR(A). RAPHAEL BENEVENUTO DE SOUZA, OAB N 183585/RJ. PRESENTE O PREPOSTO DO RECLAMADO, SR(A). MARIA FERNANDA DE CASTRO, CPF 219.060.748-52, ACOMPANHADO(A) DO(A) ADVOGADO(A), DR(A). KHADINE BUENO BAGUEIRA LEAL, OAB N 168551/RJ. CONCILIACAO RECUSADA. FACE A AUSENCIA DAS TESTEMUNHAS CARLOS VINICIUS, RENAM E WASHINGTON, DEVIDAMENTE CONVIDADAS PELA PARTE RE, DETERMINO O ADIAMENTO DO FEITO PARA O DIA 19/10/2018 AS 11H20MIN. INTIMEM-SE AS TESTEMUNHAS AUSENTES NOS ENDERECOS FORNECIDOS NOS CONVITES JUNTADOS AOS AUTOS, COM COMINACAO DE MULTA DE QUINHENTOS REAIS, NA HIPOTESE DE DESCUMPRIMENTO DA DETERMINACAO JUDICIAL, DEVENDO A PARTE DILIGENCIAR POSSIVEL DEVOLUCAO DE NOTIFICACAO, SOB PENA DE PRECLUSAO. TOMOU CIENCIA DA NOVA DATA DESIGNADA A(S) TESTEMUNHA(S) ELIAS CONVIDADA PELO AUTOR E JA ARROLADA, FICANDO ADVERTIDA(S) DE QUE O DESCUMPRIMENTO A ORDEM JUDICIAL IMPLICARA EM MULTA DE QUINHENTOS REAIS. AS DEMAIS TESTEMUNHAS SERAO TRAZIDAS INDEPENDENTEMENTE DE INTIMACAO SOB PENA DE PERDA DA PROVA. PARTES INTIMADAS AOS DEPOIMENTOS PESSOAIS, SOB PENA DE CONFISSAO. AS PARTES ACOMPANHARAM A EDICAO DA PRESENTE ATA E NAO APRESENTARAM IMPUGNACAO. AUDIENCIA ENCERRADA AS 12:24. ADRIANA LEANDRO DE SOUSA FREITAS JUIZA DO TRABALHO ATA REDIGIDA POR KEITH XIMENES SANTOS, SECRETARIO(A) DE AUDIENCIA.",
+                "PublishDate": "2018-05-09T13:24:52",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO REALIZADA (09/05/2018 10:30 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2018-05-09T13:24:52",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "JUNTADA A PETICAO DE MANIFESTACAO",
+                "PublishDate": "2018-05-09T10:12:25",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INSTRUCAO DESIGNADA (09/05/2018 10:30 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2017-08-09T14:50:54",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "ATA DA AUDIENCIA|7 VARA DO TRABALHO DO RIO DE JANEIRO TERMO DE AUDIENCIA RELATIVO AO PROCESSO 0101976-21.2016.5.01.0007 EM 09 DE AGOSTO DE 2017, NA SALA DE SESSOES DA MM. 7 VARA DO TRABALHO DO RIO DE JANEIRO/RJ, SOB A DIRECAO DO EXMO(A). JUIZ LUCIANO MORAES SILVA, REALIZOU-SE AUDIENCIA RELATIVA A ACAO TRABALHISTA - RITO ORDINARIO NUMERO 0101976-21.2016.5.01.0007 AJUIZADA POR FLAVIO JORGE SANTOS DE ARAUJO EM FACE DE THE FIFTIES COMERCIO DE ALIMENTOS LTDA. AS 10H15MIN, ABERTA A AUDIENCIA, FORAM, DE ORDEM DO EXMO(A). JUIZ DO TRABALHO, APREGOADAS AS PARTES. PRESENTE O AUTOR, ACOMPANHADO DO(A) ADVOGADO(A), DR(A). RAPHAEL BENEVENUTO DE SOUZA, OAB N 183585/RJ. PRESENTE O PREPOSTO DO REU, SR(A). MARIA FERNANDA DE CASTRO, CPF 219.060.748-52, ACOMPANHADO(A) DO(A) ADVOGADO(A), DR(A). DANIELA OLIVEIRA BAHIA DA LUZ, OAB N 144271/RJ. PROPOE A PARTE AUTORA, PARA FINS DE ACORDO, O VALOR DE R$25.000,00, RECUSADO PELA RE. CONCILIACAO RECUSADA. CONTESTACAO COM DOCUMENTOS, ARGUINDO A RE INEPCIA QUANTO AO PEDIDO DE GORJETAS, NO QUE TANGE A RETENCAO E PERCENTUAIS INFORMADOS NA INICIAL, ESCLARECENDO O PATRONO DO AUTOR QUE NAO HA O QUE SER ESCLARECIDO, CONSIDERANDO-SE OS TERMOS EXPRESSAMENTE CONSIGNADOS NA INICIAL QUANTO A SUCESSIVIDADE DAS PRETENSOES MENCIONADAS. A PRELIMINAR SERA APRECIADA EM SENTENCA. ALCADA FIXADA NO VALOR DA INICIAL. DECLARO PRECLUSA A PRODUCAO DE PROVAS DOCUMENTAIS. DEFERE-SE A PARTE AUTORA O PRAZO DE 10 DIAS PARA MANIFESTACOES SOBRE DEFESA E DOCUMENTOS, A PARTIR DO DIA 14/08/2017 CIENTES AS PARTES, INCLUSIVE DE QUE DEVERAO PRESTAR DEPOIMENTOS PESSOAIS, SOB PENA DOS EFEITOS DA CONFISSAO. NO PRAZO ACIMA, PODERAO AS PARTES APRESENTAR ROL DE TESTEMUNHAS, SOB PENA DE NAO O FAZENDO SER CONSIDERADO QUE ESTAS COMPARECERAO INDEPENDENTEMENTE DE INTIMACAO, NA FORMA DO ART.455, 2 DO CPC, CIENTES DE QUE CABE AO ADVOGADO INFORMAR OU INTIMAR SUAS TESTEMUNHAS, POR CARTA COM AVISO DE RECEBIMENTO, OBSERVADOS OS DITAMES CONSTANTES DO ARTIGO 455 E SEUS PARAGRAFOS DO CPC. PARA REALIZACAO DA INSTRUCAO DESIGNA-SE A DATA DE 09/05/2018, AS 10H30MIN. AUDIENCIA ENCERRADA AS 10H19MIN. LUCIANO MORAES SILVA JUIZ DO TRABALHO ATA REDIGIDA POR KEITH XIMENES SANTOS, SECRETARIO(A) DE AUDIENCIA.",
+                "PublishDate": "2017-08-09T12:17:50",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INICIAL REALIZADA (09/08/2017 09:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2017-08-09T12:17:50",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "PUBLICADO(A) O(A) NOTIFICACAO EM 07/07/2017",
+                "PublishDate": "2017-07-07T00:36:47",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DISPONIBILIZADO (A) O(A) NOTIFICACAO NO DIARIO DA JUSTICA ELETRONICO",
+                "PublishDate": "2017-07-07T00:36:47",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "EXPEDIDO(A) NOTIFICACAO A(O) DESTINATARIO",
+                "PublishDate": "2017-07-05T12:15:35",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "AUDIENCIA INICIAL DESIGNADA (09/08/2017 09:15 - 7 VARA DO TRABALHO DO RIO DE JANEIRO)",
+                "PublishDate": "2017-01-10T15:08:55",
+                "CaptureDate": "2024-07-21T09:12:08"
+              },
+              {
+                "Content": "DISTRIBUIDO POR SORTEIO",
+                "PublishDate": "2016-12-19T14:44:47",
+                "CaptureDate": "2024-07-21T09:12:08"
+              }
+            ],
+            "Petitions": [],
+            "Decisions": [
+              {
+                "DecisionContent": "DECLARO PRECLUSA A PRODUCAO DE PROVAS DOCUMENTAIS.",
+                "DecisionDate": "2017-08-09T12:17:50"
+              }
+            ]
+          }
+        ],
+        "TotalLawsuits": 1,
+        "TotalLawsuitsAsAuthor": 0,
+        "TotalLawsuitsAsDefendant": 0,
+        "TotalLawsuitsAsOther": 1,
+        "FirstLawsuitDate": "2016-12-19T14:44:47",
+        "LastLawsuitDate": "2016-12-19T14:44:47",
+        "Last30DaysLawsuits": 0,
+        "Last90DaysLawsuits": 0,
+        "Last180DaysLawsuits": 0,
+        "Last365DaysLawsuits": 0
+      }
+    }
+  ],
+  "QueryId": "a6e7fb91-9bf5-410e-a376-2e203707b31f",
+  "ElapsedMilliseconds": 425,
+  "QueryDate": "2026-04-11T15:30:14.5200878Z",
+  "Status": {
+    "doc_finder": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ],
+    "processes": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

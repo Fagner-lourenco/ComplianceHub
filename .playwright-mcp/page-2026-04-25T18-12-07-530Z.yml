@@ -1,0 +1,227 @@
+- generic [ref=e333]:
+  - complementary [ref=e334]:
+    - link "⌘ ComplianceHub" [ref=e336] [cursor=pointer]:
+      - /url: /dossie
+      - generic [ref=e337]: ⌘
+      - generic [ref=e338]: ComplianceHub
+    - navigation [ref=e339]:
+      - link "Nova Análise" [ref=e341] [cursor=pointer]:
+        - /url: /dossie/create
+        - img [ref=e342]
+        - text: Nova Análise
+      - generic [ref=e345]:
+        - heading "Análises" [level=3] [ref=e346]
+        - generic [ref=e347]:
+          - link "Nova Análise" [ref=e348] [cursor=pointer]:
+            - /url: /dossie/create
+            - img [ref=e349]
+            - generic [ref=e352]: Nova Análise
+          - link "Meus Dossiês" [ref=e353] [cursor=pointer]:
+            - /url: /dossie
+            - img [ref=e354]
+            - generic [ref=e356]: Meus Dossiês
+          - link "Perfis Customizados" [ref=e358] [cursor=pointer]:
+            - /url: /dossie/custom-profile
+            - img [ref=e359]
+            - generic [ref=e362]: Perfis Customizados
+      - generic [ref=e363]:
+        - heading "Exploração" [level=3] [ref=e364]
+        - generic [ref=e365]:
+          - link "LinkMap" [ref=e366] [cursor=pointer]:
+            - /url: /explore
+            - img [ref=e367]
+            - generic [ref=e370]: LinkMap
+          - link "Hub de Produtos" [ref=e371] [cursor=pointer]:
+            - /url: /hub
+            - img [ref=e372]
+            - generic [ref=e377]: Hub de Produtos
+      - generic [ref=e378]:
+        - heading "Monitoramento" [level=3] [ref=e379]
+        - link "Watchlists" [ref=e381] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e382]
+          - generic [ref=e384]: Watchlists
+      - generic [ref=e385]:
+        - heading "Relatórios" [level=3] [ref=e386]
+        - link "Relatórios" [ref=e388] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e389]
+          - generic [ref=e392]: Relatórios
+      - generic [ref=e393]:
+        - heading "Administração" [level=3] [ref=e394]
+        - generic [ref=e395]:
+          - link "Usuários" [ref=e396] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e397]
+            - generic [ref=e402]: Usuários
+          - link "Configurações" [ref=e403] [cursor=pointer]:
+            - /url: /settings/tenant
+            - img [ref=e404]
+            - generic [ref=e407]: Configurações
+          - link "Billing" [ref=e408] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e409]
+            - generic [ref=e411]: Billing
+    - generic [ref=e412]:
+      - button "Recolher menu" [ref=e413] [cursor=pointer]:
+        - img [ref=e414]
+        - text: Recolher menu
+      - generic [ref=e416]:
+        - generic [ref=e417]: T
+        - generic [ref=e418]:
+          - paragraph [ref=e419]: teste
+          - paragraph [ref=e420]: teste@compliancehub.com
+  - generic [ref=e421]:
+    - banner [ref=e422]:
+      - generic [ref=e423]:
+        - generic [ref=e424]:
+          - button "Voltar" [ref=e425] [cursor=pointer]:
+            - img [ref=e426]
+          - generic [ref=e428]:
+            - heading "Dossiê" [level=1] [ref=e429]
+            - paragraph [ref=e430]: Visualização detalhada da análise
+        - generic [ref=e431]:
+          - button "Ajuda" [disabled] [ref=e432] [cursor=pointer]:
+            - img [ref=e433]
+          - button "Importar em Lote" [disabled] [ref=e436] [cursor=pointer]:
+            - img [ref=e437]
+          - button "Notificações" [disabled] [ref=e440] [cursor=pointer]:
+            - img [ref=e441]
+          - button "Perfil" [ref=e445] [cursor=pointer]:
+            - generic [ref=e446]: T
+            - generic [ref=e447]: teste
+    - main [ref=e449]:
+      - generic [ref=e450]:
+        - generic [ref=e451]:
+          - generic [ref=e452]:
+            - button [ref=e453] [cursor=pointer]:
+              - img [ref=e454]
+            - generic [ref=e457]:
+              - heading "Dossiê pNdArfG2NzVHd8Y7yksO" [level=1] [ref=e458]
+              - generic [ref=e459]:
+                - button "Analítico" [ref=e460] [cursor=pointer]:
+                  - img [ref=e461]
+                  - text: Analítico
+                - button "Detalhado" [ref=e463] [cursor=pointer]:
+                  - img [ref=e464]
+                  - text: Detalhado
+          - generic [ref=e465]:
+            - button "Fontes" [ref=e466] [cursor=pointer]:
+              - img [ref=e467]
+              - text: Fontes
+            - button "Aprovar" [ref=e471] [cursor=pointer]:
+              - img [ref=e472]
+              - text: Aprovar
+            - button "Reprovar" [ref=e475] [cursor=pointer]:
+              - img [ref=e476]
+              - text: Reprovar
+        - generic [ref=e481]:
+          - generic [ref=e482]:
+            - img [ref=e484]
+            - generic [ref=e489]:
+              - paragraph [ref=e490]: 051.184.659-23
+              - paragraph [ref=e491]: —
+          - generic [ref=e492]:
+            - generic [ref=e493]:
+              - paragraph [ref=e494]: Número do Dossiê
+              - paragraph [ref=e495]: pNdArfG2NzVHd8Y7yksO
+            - generic [ref=e496]:
+              - paragraph [ref=e497]: Perfil de Consulta
+              - paragraph [ref=e498]: compliance
+            - generic [ref=e499]:
+              - paragraph [ref=e500]: Data de Criação
+              - paragraph [ref=e501]: 25/04/2026, 16:42:04
+            - generic [ref=e502]:
+              - paragraph [ref=e503]: Usuário
+              - paragraph [ref=e504]: —
+            - generic [ref=e505]:
+              - paragraph [ref=e506]: Homônimos
+              - paragraph [ref=e507]: Único
+          - generic [ref=e508]:
+            - generic [ref=e509]:
+              - generic [ref=e510]:
+                - generic [ref=e511]:
+                  - img [ref=e512]
+                  - generic [ref=e516]: "0"
+                - generic [ref=e517]: Com resultado
+              - generic [ref=e518]:
+                - generic [ref=e519]:
+                  - img [ref=e520]
+                  - generic [ref=e525]: "0"
+                - generic [ref=e526]: Sem resultado
+            - generic [ref=e527]:
+              - generic [ref=e528]:
+                - img [ref=e529]
+                - generic [ref=e531]: upFlag
+                - generic [ref=e532]: Não habil.
+              - generic [ref=e533]:
+                - img [ref=e534]
+                - generic [ref=e538]: Workflow
+                - generic [ref=e539]: Manual
+              - generic [ref=e540]:
+                - img [ref=e541]
+                - generic [ref=e544]: Score
+                - generic [ref=e545]: Não habil.
+        - navigation [ref=e546]:
+          - button "Todos" [ref=e547] [cursor=pointer]
+          - button "Jurídico" [ref=e548] [cursor=pointer]
+          - button "Cadastro" [ref=e549] [cursor=pointer]
+          - button "Reguladores 1" [ref=e550] [cursor=pointer]:
+            - text: Reguladores
+            - generic [ref=e551]: "1"
+          - button "Mídia/Internet" [ref=e552] [cursor=pointer]
+          - button "Profissional" [ref=e553] [cursor=pointer]
+          - button "Conflito de Interesse" [ref=e554] [cursor=pointer]
+        - generic [ref=e558]:
+          - button "Reguladores 1 fontes com resultados 1 fontes" [ref=e559] [cursor=pointer]:
+            - generic [ref=e560]:
+              - generic [ref=e561]: Reguladores
+              - generic [ref=e562]: 1 fontes com resultados
+            - generic [ref=e563]:
+              - generic [ref=e564]: 1 fontes
+              - img [ref=e566]
+          - generic [ref=e570]:
+            - generic [ref=e571]:
+              - generic [ref=e572]:
+                - paragraph [ref=e573]: "1"
+                - paragraph [ref=e574]: Com resultado
+              - generic [ref=e575]:
+                - paragraph [ref=e576]: "0"
+                - paragraph [ref=e577]: Sem resultado
+              - generic [ref=e578]:
+                - paragraph [ref=e579]: "0"
+                - paragraph [ref=e580]: Indisponível
+              - generic [ref=e581]:
+                - paragraph [ref=e582]: "1"
+                - paragraph [ref=e583]: Total de fontes
+            - generic [ref=e585]:
+              - generic [ref=e586]: KYC, PEP e Sanções
+              - generic [ref=e587]:
+                - generic [ref=e588]:
+                  - img [ref=e589]
+                  - text: Com resultado
+                - img [ref=e593]
+        - generic [ref=e596]:
+          - heading "Análise conclusiva do dossié" [level=3] [ref=e597]:
+            - img [ref=e598]
+            - text: Análise conclusiva do dossié
+          - textbox "Escreva sua análise aqui..." [ref=e601]
+          - generic [ref=e602]:
+            - button "Salvar conclusão" [ref=e603] [cursor=pointer]
+            - generic [ref=e604]:
+              - button "Aprovar" [ref=e605] [cursor=pointer]:
+                - img [ref=e606]
+                - text: Aprovar
+              - button "Reprovar" [ref=e609] [cursor=pointer]:
+                - img [ref=e610]
+                - text: Reprovar
+        - generic [ref=e614]:
+          - heading "Comentários finais" [level=3] [ref=e615]:
+            - img [ref=e616]
+            - text: Comentários finais
+          - paragraph [ref=e619]: Sem comentários ainda.
+          - generic [ref=e620]:
+            - textbox "Escreva um comentário... (Enter para enviar, Shift+Enter para quebrar linha)" [ref=e621]
+            - button "Enviar comentário" [disabled] [ref=e622] [cursor=pointer]:
+              - img [ref=e623]
+              - text: Enviar

@@ -7,7 +7,7 @@ const LIVE_QUERY_TIMEOUT_MS = 10_000;
 
 const MOCK_AUDIT_LOGS = [
     { id: 'AUD-001', tenantId: 'TEN-001', timestamp: '2026-02-28 14:32:10', user: 'admin@compliancehub.com', action: 'CASE_CONCLUDED', target: 'CASE-001', detail: 'Caso concluido com veredito FIT', ip: '192.168.1.10' },
-    { id: 'AUD-002', tenantId: 'TEN-001', timestamp: '2026-02-27 11:15:33', user: 'analyst@compliancehub.com', action: 'CASE_UPDATED', target: 'CASE-002', detail: 'Flag criminal atualizada para POSITIVE', ip: '192.168.1.22' },
+    { id: 'AUD-002', tenantId: 'TEN-001', timestamp: '2026-02-27 11:15:33', user: 'analyst@compliancehub.com', action: 'CASE_DRAFT_SAVED', target: 'CASE-002', detail: 'Flag criminal atualizada para POSITIVE', ip: '192.168.1.22' },
     { id: 'AUD-003', tenantId: 'TEN-001', timestamp: '2026-02-27 10:20:45', user: 'admin@compliancehub.com', action: 'EXPORT_CREATED', target: 'EXP-002', detail: 'Exportacao PDF do caso CASE-002', ip: '192.168.1.10' },
     { id: 'AUD-004', tenantId: 'TEN-001', timestamp: '2026-02-26 09:05:12', user: 'analyst@compliancehub.com', action: 'CASE_ASSIGNED', target: 'CASE-003', detail: 'Caso atribuido ao analyst1', ip: '192.168.1.22' },
     { id: 'AUD-005', tenantId: 'TEN-001', timestamp: '2026-02-25 16:44:58', user: 'cliente@techcorp.com', action: 'SOLICITATION_CREATED', target: 'CASE-005', detail: 'Nova solicitacao criada para Beatriz Rodrigues Lima', ip: '200.150.10.5' },

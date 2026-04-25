@@ -1,0 +1,48 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: CH
+        - generic [ref=e15]:
+          - strong [ref=e16]: ComplianceHub
+          - generic [ref=e17]: Plataforma de Análise de Risco
+      - navigation "Produtos" [ref=e18]:
+        - link "Análises" [ref=e19] [cursor=pointer]:
+          - /url: /dossie
+          - img [ref=e20]
+          - text: Análises
+        - link "LinkHub" [ref=e24] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e25]
+          - text: LinkHub
+        - link "FlagHub" [ref=e28] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e29]
+          - text: FlagHub
+        - link "SearchHub" [ref=e31] [cursor=pointer]:
+          - /url: /client/hub
+          - img [ref=e32]
+          - text: SearchHub
+      - generic [ref=e35]:
+        - button "Ativar modo escuro" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+        - button "Sair" [ref=e39] [cursor=pointer]
+    - navigation "Operações" [ref=e41]:
+      - link "Watchlists" [ref=e42] [cursor=pointer]:
+        - /url: /watchlists
+        - img [ref=e43]
+        - text: Watchlists
+      - link "Billing" [ref=e45] [cursor=pointer]:
+        - /url: /billing
+        - img [ref=e46]
+        - text: Billing
+      - link "Senior Review" [ref=e49] [cursor=pointer]:
+        - /url: /senior-review
+        - img [ref=e50]
+        - text: Senior Review
+      - link "Relatórios" [ref=e52] [cursor=pointer]:
+        - /url: /reports
+        - img [ref=e53]
+        - text: Relatórios
+  - main [ref=e57]:
+    - status "Carregando" [ref=e58]

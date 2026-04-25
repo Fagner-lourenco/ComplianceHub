@@ -1,0 +1,245 @@
+- generic [ref=e316]:
+  - complementary [ref=e317]:
+    - link "⌘ ComplianceHub" [ref=e319] [cursor=pointer]:
+      - /url: /dossie
+      - generic [ref=e320]: ⌘
+      - generic [ref=e321]: ComplianceHub
+    - navigation [ref=e322]:
+      - link "Nova Análise" [ref=e324] [cursor=pointer]:
+        - /url: /dossie/create
+        - img [ref=e325]
+        - text: Nova Análise
+      - generic [ref=e328]:
+        - heading "Análises" [level=3] [ref=e329]
+        - generic [ref=e330]:
+          - link "Nova Análise" [ref=e331] [cursor=pointer]:
+            - /url: /dossie/create
+            - img [ref=e332]
+            - generic [ref=e335]: Nova Análise
+          - link "Meus Dossiês" [ref=e337] [cursor=pointer]:
+            - /url: /dossie
+            - img [ref=e338]
+            - generic [ref=e340]: Meus Dossiês
+          - link "Perfis Customizados" [ref=e342] [cursor=pointer]:
+            - /url: /dossie/custom-profile
+            - img [ref=e343]
+            - generic [ref=e346]: Perfis Customizados
+      - generic [ref=e347]:
+        - heading "Exploração" [level=3] [ref=e348]
+        - generic [ref=e349]:
+          - link "LinkMap" [ref=e350] [cursor=pointer]:
+            - /url: /explore
+            - img [ref=e351]
+            - generic [ref=e354]: LinkMap
+          - link "Hub de Produtos" [ref=e355] [cursor=pointer]:
+            - /url: /hub
+            - img [ref=e356]
+            - generic [ref=e361]: Hub de Produtos
+      - generic [ref=e362]:
+        - heading "Monitoramento" [level=3] [ref=e363]
+        - link "Watchlists" [ref=e365] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e366]
+          - generic [ref=e368]: Watchlists
+      - generic [ref=e369]:
+        - heading "Relatórios" [level=3] [ref=e370]
+        - link "Relatórios" [ref=e372] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e373]
+          - generic [ref=e376]: Relatórios
+      - generic [ref=e377]:
+        - heading "Administração" [level=3] [ref=e378]
+        - generic [ref=e379]:
+          - link "Usuários" [ref=e380] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e381]
+            - generic [ref=e386]: Usuários
+          - link "Configurações" [ref=e387] [cursor=pointer]:
+            - /url: /settings/tenant
+            - img [ref=e388]
+            - generic [ref=e391]: Configurações
+          - link "Billing" [ref=e392] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e393]
+            - generic [ref=e395]: Billing
+    - generic [ref=e396]:
+      - button "Recolher menu" [ref=e397] [cursor=pointer]:
+        - img [ref=e398]
+        - text: Recolher menu
+      - generic [ref=e400]:
+        - generic [ref=e401]: T
+        - generic [ref=e402]:
+          - paragraph [ref=e403]: teste
+          - paragraph [ref=e404]: teste@compliancehub.com
+  - generic [ref=e405]:
+    - banner [ref=e406]:
+      - generic [ref=e407]:
+        - generic [ref=e408]:
+          - button "Voltar" [ref=e409] [cursor=pointer]:
+            - img [ref=e410]
+          - generic [ref=e412]:
+            - heading "Nova Consulta" [level=1] [ref=e413]
+            - paragraph [ref=e414]: Crie uma análise rápida por CPF ou CNPJ
+        - generic [ref=e415]:
+          - button "Ajuda" [disabled] [ref=e416] [cursor=pointer]:
+            - img [ref=e417]
+          - button "Importar em Lote" [disabled] [ref=e420] [cursor=pointer]:
+            - img [ref=e421]
+          - button "Notificações" [disabled] [ref=e424] [cursor=pointer]:
+            - img [ref=e425]
+          - button "Perfil" [ref=e429] [cursor=pointer]:
+            - generic [ref=e430]: T
+            - generic [ref=e431]: teste
+    - main [ref=e433]:
+      - generic [ref=e434]:
+        - generic [ref=e435]:
+          - generic [ref=e436]:
+            - button "Voltar para histórico" [ref=e437] [cursor=pointer]:
+              - img [ref=e438]
+              - text: Voltar para histórico
+            - heading "Nova Consulta" [level=1] [ref=e440]
+            - paragraph [ref=e441]: Informe o documento, escolha o perfil de consulta e inicie a análise.
+          - generic [ref=e442]:
+            - img [ref=e443]
+            - generic [ref=e446]:
+              - text: "Tempo estimado:"
+              - strong [ref=e447]: 2–4 min
+        - generic [ref=e448]:
+          - generic [ref=e449]:
+            - generic [ref=e450]:
+              - heading "Dados do Consultado" [level=2] [ref=e451]:
+                - img [ref=e452]
+                - text: Dados do Consultado
+              - generic [ref=e461]:
+                - button "Pessoa Física" [ref=e462] [cursor=pointer]:
+                  - img [ref=e463]
+                  - text: Pessoa Física
+                - button "Pessoa Jurídica" [ref=e466] [cursor=pointer]:
+                  - img [ref=e467]
+                  - text: Pessoa Jurídica
+              - generic [ref=e471]:
+                - generic [ref=e472]:
+                  - generic [ref=e473]:
+                    - img [ref=e474]
+                    - text: CPF
+                    - generic [ref=e483]: "*"
+                  - generic [ref=e484]:
+                    - img [ref=e485]
+                    - textbox "000.000.000-00" [ref=e488]
+                - generic [ref=e489]:
+                  - generic [ref=e490]:
+                    - img [ref=e491]
+                    - text: Nome completo
+                    - generic [ref=e494]: opcional
+                  - generic [ref=e495]:
+                    - img [ref=e496]
+                    - textbox "Nome completo do consultado" [ref=e499]
+                  - paragraph [ref=e500]: Se não informado, o sistema buscará automaticamente na Receita Federal.
+                - generic [ref=e501]:
+                  - generic [ref=e502]:
+                    - img [ref=e503]
+                    - text: Tag
+                    - generic [ref=e506]: opcional
+                  - combobox [ref=e507]:
+                    - option "Selecione uma tag..." [selected]
+                    - option "Urgente"
+                    - option "RH Prioritário"
+                    - option "Compliance"
+                    - option "Fornecedor"
+                    - option "Parceiro"
+            - generic [ref=e508]:
+              - generic [ref=e509]:
+                - heading "Perfil de Consulta" [level=2] [ref=e510]:
+                  - img [ref=e511]
+                  - text: Perfil de Consulta
+                - generic [ref=e514]: 7 perfis disponíveis
+              - generic [ref=e515]:
+                - button "Compliance Fontes essenciais para riscos regulatórios e normas do setor." [ref=e516] [cursor=pointer]:
+                  - img [ref=e518]
+                  - generic [ref=e520]:
+                    - generic [ref=e521]:
+                      - paragraph [ref=e522]: Compliance
+                      - img [ref=e523]
+                    - paragraph [ref=e526]: Fontes essenciais para riscos regulatórios e normas do setor.
+                  - button "Ver fontes consultadas" [ref=e527]:
+                    - img [ref=e528]
+                - button "Jurídico Processos, certidões e bases judiciais e administrativas." [ref=e530] [cursor=pointer]:
+                  - img [ref=e532]
+                  - generic [ref=e538]:
+                    - paragraph [ref=e540]: Jurídico
+                    - paragraph [ref=e541]: Processos, certidões e bases judiciais e administrativas.
+                  - button "Ver fontes consultadas" [ref=e542]:
+                    - img [ref=e543]
+                - button "Financeiro Inadimplência, regularidade fiscal e histórico cadastral." [ref=e545] [cursor=pointer]:
+                  - img [ref=e547]
+                  - generic [ref=e549]:
+                    - paragraph [ref=e551]: Financeiro
+                    - paragraph [ref=e552]: Inadimplência, regularidade fiscal e histórico cadastral.
+                  - button "Ver fontes consultadas" [ref=e553]:
+                    - img [ref=e554]
+                - button "PLD Prevenção à lavagem de dinheiro, listas restritivas e PEP." [ref=e556] [cursor=pointer]:
+                  - img [ref=e558]
+                  - generic [ref=e562]:
+                    - paragraph [ref=e564]: PLD
+                    - paragraph [ref=e565]: Prevenção à lavagem de dinheiro, listas restritivas e PEP.
+                  - button "Ver fontes consultadas" [ref=e566]:
+                    - img [ref=e567]
+                - button "Recursos Humanos Seleção de talentos com checagem completa de candidatos." [ref=e569] [cursor=pointer]:
+                  - img [ref=e571]
+                  - generic [ref=e574]:
+                    - paragraph [ref=e576]: Recursos Humanos
+                    - paragraph [ref=e577]: Seleção de talentos com checagem completa de candidatos.
+                  - button "Ver fontes consultadas" [ref=e578]:
+                    - img [ref=e579]
+                - button "Investigativo Busca ampliada de vínculos, registros e indícios." [ref=e581] [cursor=pointer]:
+                  - img [ref=e583]
+                  - generic [ref=e586]:
+                    - paragraph [ref=e588]: Investigativo
+                    - paragraph [ref=e589]: Busca ampliada de vínculos, registros e indícios.
+                  - button "Ver fontes consultadas" [ref=e590]:
+                    - img [ref=e591]
+                - button "Internacional Listas restritivas, offshore e fontes globais." [ref=e593] [cursor=pointer]:
+                  - img [ref=e595]
+                  - generic [ref=e598]:
+                    - paragraph [ref=e600]: Internacional
+                    - paragraph [ref=e601]: Listas restritivas, offshore e fontes globais.
+                  - button "Ver fontes consultadas" [ref=e602]:
+                    - img [ref=e603]
+              - generic [ref=e605]:
+                - img [ref=e606]
+                - text: Nenhum perfil atende sua necessidade?
+                - button "Crie um perfil customizado" [ref=e608] [cursor=pointer]
+            - button "Consultar em 6 fontes" [disabled] [ref=e609] [cursor=pointer]:
+              - img [ref=e610]
+              - text: Consultar em 6 fontes
+              - img [ref=e615]
+          - generic [ref=e618]:
+            - generic [ref=e619]:
+              - heading "Resumo da Consulta" [level=3] [ref=e620]
+              - generic [ref=e621]:
+                - generic [ref=e622]:
+                  - img [ref=e624]
+                  - generic [ref=e626]:
+                    - paragraph [ref=e627]: Compliance
+                    - paragraph [ref=e628]: Fontes essenciais para riscos regulatórios e normas do setor.
+                - generic [ref=e629]:
+                  - paragraph [ref=e630]: Fontes consultadas (6)
+                  - generic [ref=e631]:
+                    - generic [ref=e632]: Reclame Aqui
+                    - generic [ref=e634]: PROCON SP
+                    - generic [ref=e636]: Certidão Negativa MPF
+                    - generic [ref=e638]: Certidão TST
+                    - generic [ref=e640]: Regularidade FGTS
+                    - generic [ref=e642]: Processos Judiciais
+                - generic [ref=e644]:
+                  - generic [ref=e645]:
+                    - generic [ref=e646]: Tipo de pessoa
+                    - generic [ref=e647]: Pessoa Física
+                  - generic [ref=e648]:
+                    - generic [ref=e649]: Documento
+                    - generic [ref=e650]: —
+            - generic [ref=e652]:
+              - img [ref=e654]
+              - generic [ref=e656]:
+                - paragraph [ref=e657]: Consulta segura e automatizada
+                - paragraph [ref=e658]: Os dados são coletados em tempo real de fontes oficiais. Todo o processo é auditável e em conformidade com a LGPD.

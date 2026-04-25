@@ -1,0 +1,48 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "Scholarship": {
+        "ScholarshipHistory": [
+          {
+            "Source": "MTE DATA INFERENCE",
+            "Institution": "MTE DATA INFERENCE",
+            "InstitutionState": "SEM INFORMACAO",
+            "InstitutionCounty": "SEM INFORMACAO",
+            "InstitutionCampus": "SEM INFORMACAO",
+            "SpecializationArea": "SEM INFORMACAO",
+            "CourseType": "SEM INFORMACAO",
+            "CourseShift": "SEM INFORMACAO",
+            "ScholarshipType": "SEM INFORMACAO",
+            "Level": "06 - MEDIO INCOMP",
+            "EducationalLevel": "INCOMPLETE HIGH SCHOOL",
+            "AcademicTrainingType": "SEM INFORMACAO",
+            "AdditionalDetails": {}
+          }
+        ],
+        "AcademicPrograms": [],
+        "PublicationHistory": [],
+        "ScholarshipLevel": "06 - MEDIO INCOMP",
+        "EducationalLevel": "INCOMPLETE HIGH SCHOOL",
+        "NumberOfUndergraduateCourses": 0,
+        "IsUniversityStudent": false,
+        "IsCurrentlyOnAcademicField": false,
+        "HasAcademicProgramApplication": false,
+        "CreationDate": "2017-02-18T00:00:00Z",
+        "LastUpdateDate": "2026-04-16T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "04951495-0be7-470e-8f4c-1e99e8e9aae6",
+  "ElapsedMilliseconds": 129,
+  "QueryDate": "2026-04-25T12:33:40.0622422Z",
+  "Status": {
+    "university_student_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

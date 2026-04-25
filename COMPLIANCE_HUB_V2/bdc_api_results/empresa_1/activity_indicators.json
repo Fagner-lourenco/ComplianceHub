@@ -1,0 +1,57 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "ActivityIndicators": {
+        "EmployeesRange": "SEM VINCULOS",
+        "IncomeRange": "ATE 50K",
+        "HasActivity": false,
+        "ActivityLevel": 0.24691358,
+        "FirstLevelEconomicGroupAverageActivityLevel": 0.24691358,
+        "FirstLevelEconomicGroupMaxActivityLevel": 0.24691358,
+        "FirstLevelEconomicGroupMinActivityLevel": 0.24691358,
+        "ShellCompanyLikelyhood": 0.75,
+        "HasRecentAddress": true,
+        "HasRecentPhone": false,
+        "HasRecentEmail": false,
+        "HasRecentPassages": false,
+        "HasActiveDomain": false,
+        "HasActiveSSL": false,
+        "HasCorporateEmail": true,
+        "NumberOfBranches": 0
+      }
+    }
+  ],
+  "QueryId": "fd922a30-16c0-436c-acb5-01807fb62066",
+  "ElapsedMilliseconds": 112,
+  "QueryDate": "2026-04-25T11:00:16.683716Z",
+  "Status": {
+    "activity_indicators": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      },
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

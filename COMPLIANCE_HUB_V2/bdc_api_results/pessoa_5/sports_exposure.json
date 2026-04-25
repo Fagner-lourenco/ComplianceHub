@@ -1,0 +1,22 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "SportsExposure": {
+        "Sports": []
+      }
+    }
+  ],
+  "QueryId": "ce0ca5e6-ed4a-467b-a600-077313a586e5",
+  "ElapsedMilliseconds": 87,
+  "QueryDate": "2026-04-25T12:33:44.4186125Z",
+  "Status": {
+    "sports_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

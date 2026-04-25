@@ -1,0 +1,40 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "OnlinePresence": {
+        "Eshopper": "E",
+        "Eseller": "H",
+        "InternetUsageLevel": "E",
+        "WebPassages": -1,
+        "Eshopper_v2": "E",
+        "Eseller_v2": "D",
+        "InternetUsageLevel_v2": "E",
+        "Eshopper_v3": "E",
+        "Eseller_v3": "G",
+        "InternetUsageLevel_v3": "E",
+        "TotalWebPassages": 4,
+        "Last30DaysWebPassages": 0,
+        "Last90DaysWebPassages": 0,
+        "Last180DaysWebPassages": 0,
+        "Last365DaysWebPassages": 3,
+        "FirstWebPassageDate": "2022-11-03T16:57:34Z",
+        "LastWebPassageDate": "2025-08-19T22:33:19Z",
+        "CreationDate": "2017-06-10T00:00:00Z",
+        "LastUpdateDate": "2026-04-08T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "21fc2a10-578d-4c7f-a1ec-b8a46861f316",
+  "ElapsedMilliseconds": 131,
+  "QueryDate": "2026-04-25T10:59:06.7511553Z",
+  "Status": {
+    "online_presence": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

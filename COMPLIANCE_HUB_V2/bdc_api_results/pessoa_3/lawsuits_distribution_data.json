@@ -1,0 +1,57 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "LawsuitsDistributionData": {
+        "TotalLawsuits": 1,
+        "TypeDistribution": {
+          "RITO ORDINARIO": 1
+        },
+        "CourtNameDistribution": {
+          "TRT1": 1
+        },
+        "StatusDistribution": {
+          "ARQUIVADO": 1
+        },
+        "StateDistribution": {
+          "RJ": 1
+        },
+        "PartyTypeDistribution": {
+          "WITNESS": 1
+        },
+        "CourtTypeDistribution": {
+          "TRABALHISTA": 1
+        },
+        "CourtLevelDistribution": {
+          "1": 1
+        },
+        "CnjProcedureTypeDistribution": {},
+        "CnjProcedureTypeNumberDistribution": {},
+        "CnjSubjectDistribution": {
+          "SALARIO/DIFERENCA SALARIAL": 1
+        },
+        "CnjSubjectNumberDistribution": {
+          "13858": 1
+        },
+        "CnjBroadSubjectDistribution": {
+          "DIREITO DO TRABALHO": 1
+        },
+        "CnjBroadSubjectNumberDistribution": {
+          "864": 1
+        }
+      }
+    }
+  ],
+  "QueryId": "4b2f99a3-2f91-4a3d-b864-97e1d70fe80c",
+  "ElapsedMilliseconds": 240,
+  "QueryDate": "2026-04-25T12:33:07.8643961Z",
+  "Status": {
+    "lawsuits_distribution_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

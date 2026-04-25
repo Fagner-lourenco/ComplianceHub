@@ -78,10 +78,20 @@
     font-family: var(--font-mono, monospace);
 }
 
-.enrichment-pipeline__error {
+.enrichment-pipeline__detail {
+    font-size: .625rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.enrichment-pipeline__error-msg {
     color: var(--red-600);
     cursor: help;
-    font-size: .875rem;
+    font-size: .6875rem;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .enrichment-pipeline__retry {

@@ -1,0 +1,65 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "⌘ ComplianceHub®" [ref=e7] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e8]: ⌘
+        - generic [ref=e9]: ComplianceHub®
+      - generic [ref=e10]:
+        - button "Dicionário de fontes" [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e14] [cursor=pointer]:
+          - img [ref=e15]
+        - button "Academia" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Envios" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Notificações" [ref=e25] [cursor=pointer]:
+          - img [ref=e26]
+        - button "Perfil" [ref=e29] [cursor=pointer]:
+          - img [ref=e30]
+    - generic [ref=e35]:
+      - navigation "Categorias de produtos" [ref=e36]:
+        - button "Background Check" [ref=e37] [cursor=pointer]
+        - button "Cibersegurança" [ref=e38] [cursor=pointer]
+        - button "Due Diligence" [ref=e39] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e40] [cursor=pointer]
+        - button "Jurídico" [ref=e41] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e42] [cursor=pointer]
+      - button "Aplicativos" [ref=e43] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e44]
+  - main [ref=e46]:
+    - generic [ref=e47]:
+      - generic [ref=e48]:
+        - heading "Criação de dossiês" [level=1] [ref=e49]
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]: Perfil de consulta
+            - generic [ref=e53]: /
+          - generic [ref=e54]:
+            - generic [ref=e55]: Critérios
+            - generic [ref=e56]: /
+          - generic [ref=e57]:
+            - generic [ref=e58]: Tag
+            - generic [ref=e59]: /
+          - generic [ref=e61]: Parâmetros
+      - button "Voltar para histórico de Dossiês ›" [ref=e62] [cursor=pointer]
+    - generic [ref=e183]:
+      - heading "Descrição da Tag" [level=2] [ref=e184]
+      - paragraph [ref=e185]: Selecione uma Tag existente
+      - generic [ref=e186]:
+        - generic [ref=e187]: Tags Criadas
+        - combobox "Tags Criadas" [ref=e188]:
+          - option "Selecione" [selected]
+          - option "Urgente"
+          - option "RH Prioritário"
+          - option "Compliance"
+          - option "Fornecedor"
+      - generic [ref=e189]:
+        - checkbox "Não atribuir tag a esse dossiê" [ref=e190]
+        - text: Não atribuir tag a esse dossiê
+    - generic [ref=e169]:
+      - button "Voltar" [ref=e170] [cursor=pointer]
+      - button "Próximo passo" [active] [ref=e171] [cursor=pointer]

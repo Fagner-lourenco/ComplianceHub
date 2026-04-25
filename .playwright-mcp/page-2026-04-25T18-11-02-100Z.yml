@@ -1,0 +1,492 @@
+- generic [ref=e10]:
+  - complementary [ref=e11]:
+    - link "⌘ ComplianceHub" [ref=e13] [cursor=pointer]:
+      - /url: /dossie
+      - generic [ref=e14]: ⌘
+      - generic [ref=e15]: ComplianceHub
+    - navigation [ref=e16]:
+      - link "Nova Análise" [ref=e18] [cursor=pointer]:
+        - /url: /dossie/create
+        - img [ref=e19]
+        - text: Nova Análise
+      - generic [ref=e22]:
+        - heading "Análises" [level=3] [ref=e23]
+        - generic [ref=e24]:
+          - link "Nova Análise" [ref=e25] [cursor=pointer]:
+            - /url: /dossie/create
+            - img [ref=e26]
+            - generic [ref=e29]: Nova Análise
+          - link "Meus Dossiês" [ref=e30] [cursor=pointer]:
+            - /url: /dossie
+            - img [ref=e31]
+            - generic [ref=e33]: Meus Dossiês
+          - link "Perfis Customizados" [ref=e35] [cursor=pointer]:
+            - /url: /dossie/custom-profile
+            - img [ref=e36]
+            - generic [ref=e39]: Perfis Customizados
+      - generic [ref=e40]:
+        - heading "Exploração" [level=3] [ref=e41]
+        - generic [ref=e42]:
+          - link "LinkMap" [ref=e43] [cursor=pointer]:
+            - /url: /explore
+            - img [ref=e44]
+            - generic [ref=e47]: LinkMap
+          - link "Hub de Produtos" [ref=e48] [cursor=pointer]:
+            - /url: /hub
+            - img [ref=e49]
+            - generic [ref=e54]: Hub de Produtos
+      - generic [ref=e55]:
+        - heading "Monitoramento" [level=3] [ref=e56]
+        - link "Watchlists" [ref=e58] [cursor=pointer]:
+          - /url: /watchlists
+          - img [ref=e59]
+          - generic [ref=e61]: Watchlists
+      - generic [ref=e62]:
+        - heading "Relatórios" [level=3] [ref=e63]
+        - link "Relatórios" [ref=e65] [cursor=pointer]:
+          - /url: /reports
+          - img [ref=e66]
+          - generic [ref=e69]: Relatórios
+      - generic [ref=e70]:
+        - heading "Administração" [level=3] [ref=e71]
+        - generic [ref=e72]:
+          - link "Usuários" [ref=e73] [cursor=pointer]:
+            - /url: /settings/users
+            - img [ref=e74]
+            - generic [ref=e79]: Usuários
+          - link "Configurações" [ref=e80] [cursor=pointer]:
+            - /url: /settings/tenant
+            - img [ref=e81]
+            - generic [ref=e84]: Configurações
+          - link "Billing" [ref=e85] [cursor=pointer]:
+            - /url: /billing
+            - img [ref=e86]
+            - generic [ref=e88]: Billing
+    - generic [ref=e89]:
+      - button "Recolher menu" [ref=e90] [cursor=pointer]:
+        - img [ref=e91]
+        - text: Recolher menu
+      - generic [ref=e93]:
+        - generic [ref=e94]: T
+        - generic [ref=e95]:
+          - paragraph [ref=e96]: teste
+          - paragraph [ref=e97]: teste@compliancehub.com
+  - generic [ref=e98]:
+    - banner [ref=e99]:
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - button "Voltar" [ref=e102] [cursor=pointer]:
+            - img [ref=e103]
+          - generic [ref=e105]:
+            - heading "Dossiê" [level=1] [ref=e106]
+            - paragraph [ref=e107]: Visualização detalhada da análise
+        - generic [ref=e108]:
+          - button "Ajuda" [disabled] [ref=e109] [cursor=pointer]:
+            - img [ref=e110]
+          - button "Importar em Lote" [disabled] [ref=e113] [cursor=pointer]:
+            - img [ref=e114]
+          - button "Notificações" [disabled] [ref=e117] [cursor=pointer]:
+            - img [ref=e118]
+          - button "Perfil" [ref=e122] [cursor=pointer]:
+            - generic [ref=e123]: T
+            - generic [ref=e124]: teste
+    - main [ref=e126]:
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - button [ref=e130] [cursor=pointer]:
+              - img [ref=e131]
+            - generic [ref=e134]:
+              - heading "Dossiê 9AVhQEoH0stuhuRQfybg" [level=1] [ref=e135]
+              - generic [ref=e136]:
+                - button "Analítico" [ref=e137] [cursor=pointer]:
+                  - img [ref=e138]
+                  - text: Analítico
+                - button "Detalhado" [ref=e140] [cursor=pointer]:
+                  - img [ref=e141]
+                  - text: Detalhado
+          - generic [ref=e142]:
+            - button "Fontes" [ref=e143] [cursor=pointer]:
+              - img [ref=e144]
+              - text: Fontes
+            - button "Aprovar" [ref=e148] [cursor=pointer]:
+              - img [ref=e149]
+              - text: Aprovar
+            - button "Reprovar" [ref=e152] [cursor=pointer]:
+              - img [ref=e153]
+              - text: Reprovar
+        - generic [ref=e158]:
+          - generic [ref=e159]:
+            - img [ref=e161]
+            - generic [ref=e166]:
+              - paragraph [ref=e167]: 084.052.419-65
+              - paragraph [ref=e168]: —
+          - generic [ref=e169]:
+            - generic [ref=e170]:
+              - paragraph [ref=e171]: Número do Dossiê
+              - paragraph [ref=e172]: 9AVhQEoH0stuhuRQfybg
+            - generic [ref=e173]:
+              - paragraph [ref=e174]: Perfil de Consulta
+              - paragraph [ref=e175]: compliance
+            - generic [ref=e176]:
+              - paragraph [ref=e177]: Data de Criação
+              - paragraph [ref=e178]: 25/04/2026, 17:29:34
+            - generic [ref=e179]:
+              - paragraph [ref=e180]: Usuário
+              - paragraph [ref=e181]: —
+            - generic [ref=e182]:
+              - paragraph [ref=e183]: Homônimos
+              - paragraph [ref=e184]: Único
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - generic [ref=e187]:
+                - generic [ref=e188]:
+                  - img [ref=e189]
+                  - generic [ref=e193]: "0"
+                - generic [ref=e194]: Com resultado
+              - generic [ref=e195]:
+                - generic [ref=e196]:
+                  - img [ref=e197]
+                  - generic [ref=e202]: "0"
+                - generic [ref=e203]: Sem resultado
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - img [ref=e206]
+                - generic [ref=e208]: upFlag
+                - generic [ref=e209]: Não habil.
+              - generic [ref=e210]:
+                - img [ref=e211]
+                - generic [ref=e215]: Workflow
+                - generic [ref=e216]: Manual
+              - generic [ref=e217]:
+                - img [ref=e218]
+                - generic [ref=e221]: Score
+                - generic [ref=e222]: Não habil.
+        - navigation [ref=e223]:
+          - button "Todos" [ref=e224] [cursor=pointer]
+          - button "Jurídico" [ref=e225] [cursor=pointer]
+          - button "Cadastro" [ref=e226] [cursor=pointer]
+          - button "Reguladores 1" [ref=e227] [cursor=pointer]:
+            - text: Reguladores
+            - generic [ref=e228]: "1"
+          - button "Mídia/Internet" [ref=e229] [cursor=pointer]
+          - button "Profissional" [ref=e230] [cursor=pointer]
+          - button "Conflito de Interesse" [ref=e231] [cursor=pointer]
+        - generic [ref=e232]:
+          - generic [ref=e234]:
+            - generic [ref=e236]:
+              - img [ref=e237]
+              - generic [ref=e239]: Filtros
+            - generic [ref=e240]:
+              - button "Tribunais" [ref=e241] [cursor=pointer]:
+                - text: Tribunais
+                - img [ref=e242]
+              - generic [ref=e245]:
+                - generic [ref=e246] [cursor=pointer]:
+                  - checkbox "Tribunais Superiores e Conselhos" [ref=e247]
+                  - text: Tribunais Superiores e Conselhos
+                - generic [ref=e248] [cursor=pointer]:
+                  - checkbox "Tribunais Regionais Federais" [ref=e249]
+                  - text: Tribunais Regionais Federais
+                - generic [ref=e250] [cursor=pointer]:
+                  - checkbox "Tribunais de Justiça" [ref=e251]
+                  - text: Tribunais de Justiça
+                - generic [ref=e252] [cursor=pointer]:
+                  - checkbox "Tribunais Regionais Eleitorais" [ref=e253]
+                  - text: Tribunais Regionais Eleitorais
+                - generic [ref=e254] [cursor=pointer]:
+                  - checkbox "Tribunais Regionais do Trabalho" [ref=e255]
+                  - text: Tribunais Regionais do Trabalho
+                - generic [ref=e256] [cursor=pointer]:
+                  - checkbox "Tribunais de Justiça Militar" [ref=e257]
+                  - text: Tribunais de Justiça Militar
+                - generic [ref=e258] [cursor=pointer]:
+                  - checkbox "Tribunais de Justiça Federal" [ref=e259]
+                  - text: Tribunais de Justiça Federal
+            - generic [ref=e260]:
+              - button "Status de processos" [ref=e261] [cursor=pointer]:
+                - text: Status de processos
+                - img [ref=e262]
+              - generic [ref=e265]:
+                - generic [ref=e266] [cursor=pointer]:
+                  - checkbox "Em tramitação" [ref=e267]
+                  - text: Em tramitação
+                - generic [ref=e268] [cursor=pointer]:
+                  - checkbox "Em grau de recurso" [ref=e269]
+                  - text: Em grau de recurso
+                - generic [ref=e270] [cursor=pointer]:
+                  - checkbox "Suspenso" [ref=e271]
+                  - text: Suspenso
+                - generic [ref=e272] [cursor=pointer]:
+                  - checkbox "Arquivamento definitivo" [ref=e273]
+                  - text: Arquivamento definitivo
+                - generic [ref=e274] [cursor=pointer]:
+                  - checkbox "Arquivamento provisório" [ref=e275]
+                  - text: Arquivamento provisório
+                - generic [ref=e276] [cursor=pointer]:
+                  - checkbox "Arquivado administrativamente" [ref=e277]
+                  - text: Arquivado administrativamente
+                - generic [ref=e278] [cursor=pointer]:
+                  - checkbox "Arquivamento" [ref=e279]
+                  - text: Arquivamento
+                - generic [ref=e280] [cursor=pointer]:
+                  - checkbox "Julgado" [ref=e281]
+                  - text: Julgado
+                - generic [ref=e282] [cursor=pointer]:
+                  - checkbox "Extinto" [ref=e283]
+                  - text: Extinto
+            - generic [ref=e284]:
+              - button "Participação no processos" [ref=e285] [cursor=pointer]:
+                - text: Participação no processos
+                - img [ref=e286]
+              - generic [ref=e289]:
+                - generic [ref=e290] [cursor=pointer]:
+                  - checkbox "Autor" [ref=e291]
+                  - text: Autor
+                - generic [ref=e292] [cursor=pointer]:
+                  - checkbox "Réu" [ref=e293]
+                  - text: Réu
+                - generic [ref=e294] [cursor=pointer]:
+                  - checkbox "Envolvido" [ref=e295]
+                  - text: Envolvido
+                - generic [ref=e296] [cursor=pointer]:
+                  - checkbox "Sem Polo" [ref=e297]
+                  - text: Sem Polo
+            - generic [ref=e298]:
+              - generic [ref=e299]: UF dos processos
+              - combobox [ref=e300]:
+                - option "Selecione a UF" [selected]
+                - option "AC"
+                - option "AL"
+                - option "AP"
+                - option "AM"
+                - option "BA"
+                - option "CE"
+                - option "DF"
+                - option "ES"
+                - option "GO"
+                - option "MA"
+                - option "MT"
+                - option "MS"
+                - option "MG"
+                - option "PA"
+                - option "PB"
+                - option "PR"
+                - option "PE"
+                - option "PI"
+                - option "RJ"
+                - option "RN"
+                - option "RS"
+                - option "RO"
+                - option "RR"
+                - option "SC"
+                - option "SP"
+                - option "SE"
+                - option "TO"
+            - button "Filtrar" [ref=e301] [cursor=pointer]
+          - generic [ref=e303]:
+            - generic [ref=e304]:
+              - button "Jurídico 4 fontes" [ref=e305] [cursor=pointer]:
+                - generic [ref=e307]: Jurídico
+                - generic [ref=e308]:
+                  - generic [ref=e309]: 4 fontes
+                  - img [ref=e311]
+              - generic [ref=e315]:
+                - generic [ref=e316]:
+                  - generic [ref=e317]:
+                    - paragraph [ref=e318]: "0"
+                    - paragraph [ref=e319]: Com resultado
+                  - generic [ref=e320]:
+                    - paragraph [ref=e321]: "4"
+                    - paragraph [ref=e322]: Sem resultado
+                  - generic [ref=e323]:
+                    - paragraph [ref=e324]: "0"
+                    - paragraph [ref=e325]: Indisponível
+                  - generic [ref=e326]:
+                    - paragraph [ref=e327]: "4"
+                    - paragraph [ref=e328]: Total de fontes
+                - generic [ref=e329]:
+                  - generic [ref=e330]:
+                    - generic [ref=e331]: Análise Criminal
+                    - generic [ref=e332]:
+                      - generic [ref=e333]: Sem resultado
+                      - img [ref=e334]
+                  - generic [ref=e337]:
+                    - generic [ref=e338]: Análise Trabalhista
+                    - generic [ref=e339]:
+                      - generic [ref=e340]: Sem resultado
+                      - img [ref=e341]
+                  - generic [ref=e344]:
+                    - generic [ref=e345]: Mandados e Alertas
+                    - generic [ref=e346]:
+                      - generic [ref=e347]: Sem resultado
+                      - img [ref=e348]
+                  - generic [ref=e351]:
+                    - generic [ref=e352]: Processos Judiciais
+                    - generic [ref=e353]:
+                      - generic [ref=e354]: Sem resultado
+                      - img [ref=e355]
+            - generic [ref=e358]:
+              - button "Cadastro 1 fontes" [ref=e359] [cursor=pointer]:
+                - generic [ref=e361]: Cadastro
+                - generic [ref=e362]:
+                  - generic [ref=e363]: 1 fontes
+                  - img [ref=e365]
+              - generic [ref=e369]:
+                - generic [ref=e370]:
+                  - generic [ref=e371]:
+                    - paragraph [ref=e372]: "0"
+                    - paragraph [ref=e373]: Com resultado
+                  - generic [ref=e374]:
+                    - paragraph [ref=e375]: "1"
+                    - paragraph [ref=e376]: Sem resultado
+                  - generic [ref=e377]:
+                    - paragraph [ref=e378]: "0"
+                    - paragraph [ref=e379]: Indisponível
+                  - generic [ref=e380]:
+                    - paragraph [ref=e381]: "1"
+                    - paragraph [ref=e382]: Total de fontes
+                - generic [ref=e384]:
+                  - generic [ref=e385]: Identificação PF
+                  - generic [ref=e386]:
+                    - generic [ref=e387]: Sem resultado
+                    - img [ref=e388]
+            - generic [ref=e391]:
+              - button "Reguladores 1 fontes com resultados 1 fontes" [ref=e392] [cursor=pointer]:
+                - generic [ref=e393]:
+                  - generic [ref=e394]: Reguladores
+                  - generic [ref=e395]: 1 fontes com resultados
+                - generic [ref=e396]:
+                  - generic [ref=e397]: 1 fontes
+                  - img [ref=e399]
+              - generic [ref=e403]:
+                - generic [ref=e404]:
+                  - generic [ref=e405]:
+                    - paragraph [ref=e406]: "1"
+                    - paragraph [ref=e407]: Com resultado
+                  - generic [ref=e408]:
+                    - paragraph [ref=e409]: "0"
+                    - paragraph [ref=e410]: Sem resultado
+                  - generic [ref=e411]:
+                    - paragraph [ref=e412]: "0"
+                    - paragraph [ref=e413]: Indisponível
+                  - generic [ref=e414]:
+                    - paragraph [ref=e415]: "1"
+                    - paragraph [ref=e416]: Total de fontes
+                - generic [ref=e418]:
+                  - generic [ref=e419]: KYC, PEP e Sanções
+                  - generic [ref=e420]:
+                    - generic [ref=e421]:
+                      - img [ref=e422]
+                      - text: Com resultado
+                    - img [ref=e426]
+            - generic [ref=e429]:
+              - button "Mídia/Internet 3 fontes" [ref=e430] [cursor=pointer]:
+                - generic [ref=e432]: Mídia/Internet
+                - generic [ref=e433]:
+                  - generic [ref=e434]: 3 fontes
+                  - img [ref=e436]
+              - generic [ref=e440]:
+                - generic [ref=e441]:
+                  - generic [ref=e442]:
+                    - paragraph [ref=e443]: "0"
+                    - paragraph [ref=e444]: Com resultado
+                  - generic [ref=e445]:
+                    - paragraph [ref=e446]: "3"
+                    - paragraph [ref=e447]: Sem resultado
+                  - generic [ref=e448]:
+                    - paragraph [ref=e449]: "0"
+                    - paragraph [ref=e450]: Indisponível
+                  - generic [ref=e451]:
+                    - paragraph [ref=e452]: "3"
+                    - paragraph [ref=e453]: Total de fontes
+                - generic [ref=e454]:
+                  - generic [ref=e455]:
+                    - generic [ref=e456]: Perfil Digital
+                    - generic [ref=e457]:
+                      - generic [ref=e458]: Sem resultado
+                      - img [ref=e459]
+                  - generic [ref=e462]:
+                    - generic [ref=e463]: Redes Sociais
+                    - generic [ref=e464]:
+                      - generic [ref=e465]: Sem resultado
+                      - img [ref=e466]
+                  - generic [ref=e469]:
+                    - generic [ref=e470]: Risco Reputacional
+                    - generic [ref=e471]:
+                      - generic [ref=e472]: Sem resultado
+                      - img [ref=e473]
+            - generic [ref=e476]:
+              - button "Profissional 1 fontes" [ref=e477] [cursor=pointer]:
+                - generic [ref=e479]: Profissional
+                - generic [ref=e480]:
+                  - generic [ref=e481]: 1 fontes
+                  - img [ref=e483]
+              - generic [ref=e487]:
+                - generic [ref=e488]:
+                  - generic [ref=e489]:
+                    - paragraph [ref=e490]: "0"
+                    - paragraph [ref=e491]: Com resultado
+                  - generic [ref=e492]:
+                    - paragraph [ref=e493]: "1"
+                    - paragraph [ref=e494]: Sem resultado
+                  - generic [ref=e495]:
+                    - paragraph [ref=e496]: "0"
+                    - paragraph [ref=e497]: Indisponível
+                  - generic [ref=e498]:
+                    - paragraph [ref=e499]: "1"
+                    - paragraph [ref=e500]: Total de fontes
+                - generic [ref=e502]:
+                  - generic [ref=e503]: Ocupação e Emprego
+                  - generic [ref=e504]:
+                    - generic [ref=e505]: Sem resultado
+                    - img [ref=e506]
+            - generic [ref=e509]:
+              - button "Conflito de Interesse 1 fontes" [ref=e510] [cursor=pointer]:
+                - generic [ref=e512]: Conflito de Interesse
+                - generic [ref=e513]:
+                  - generic [ref=e514]: 1 fontes
+                  - img [ref=e516]
+              - generic [ref=e520]:
+                - generic [ref=e521]:
+                  - generic [ref=e522]:
+                    - paragraph [ref=e523]: "0"
+                    - paragraph [ref=e524]: Com resultado
+                  - generic [ref=e525]:
+                    - paragraph [ref=e526]: "1"
+                    - paragraph [ref=e527]: Sem resultado
+                  - generic [ref=e528]:
+                    - paragraph [ref=e529]: "0"
+                    - paragraph [ref=e530]: Indisponível
+                  - generic [ref=e531]:
+                    - paragraph [ref=e532]: "1"
+                    - paragraph [ref=e533]: Total de fontes
+                - generic [ref=e535]:
+                  - generic [ref=e536]: Conflito de Interesse
+                  - generic [ref=e537]:
+                    - generic [ref=e538]: Sem resultado
+                    - img [ref=e539]
+        - generic [ref=e542]:
+          - heading "Análise conclusiva do dossié" [level=3] [ref=e543]:
+            - img [ref=e544]
+            - text: Análise conclusiva do dossié
+          - textbox "Escreva sua análise aqui..." [ref=e547]
+          - generic [ref=e548]:
+            - button "Salvar conclusão" [ref=e549] [cursor=pointer]
+            - generic [ref=e550]:
+              - button "Aprovar" [ref=e551] [cursor=pointer]:
+                - img [ref=e552]
+                - text: Aprovar
+              - button "Reprovar" [ref=e555] [cursor=pointer]:
+                - img [ref=e556]
+                - text: Reprovar
+        - generic [ref=e560]:
+          - heading "Comentários finais" [level=3] [ref=e561]:
+            - img [ref=e562]
+            - text: Comentários finais
+          - paragraph [ref=e565]: Sem comentários ainda.
+          - generic [ref=e566]:
+            - textbox "Escreva um comentário... (Enter para enviar, Shift+Enter para quebrar linha)" [ref=e567]
+            - button "Enviar comentário" [disabled] [ref=e568] [cursor=pointer]:
+              - img [ref=e569]
+              - text: Enviar

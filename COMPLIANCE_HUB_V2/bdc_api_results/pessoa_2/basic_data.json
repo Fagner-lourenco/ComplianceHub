@@ -1,0 +1,53 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "BasicData": {
+        "TaxIdNumber": "10794180329",
+        "TaxIdCountry": "BRAZIL",
+        "AlternativeIdNumbers": {},
+        "Name": "DIEGO EMANUEL ALVES DE SOUZA",
+        "Aliases": {
+          "CommonName": "DIEGO SOUZA",
+          "StandardizedName": "DIEGO EMANUEL ALVE SOUSA"
+        },
+        "Gender": "M",
+        "NameWordCount": 5,
+        "NumberOfFullNameNamesakes": 1,
+        "NameUniquenessScore": 1,
+        "FirstNameUniquenessScore": 0.001,
+        "FirstAndLastNameUniquenessScore": 0.001,
+        "BirthDate": "2002-04-20T00:00:00Z",
+        "CapturedBirthDateFromRFSource": "2002-04-20",
+        "IsValidBirthDateInRFSource": true,
+        "Age": 24,
+        "ZodiacSign": "TOURO",
+        "ChineseSign": "Horse",
+        "BirthCountry": "BRASILEIRA",
+        "MotherName": "",
+        "FatherName": "",
+        "MaritalStatusData": {},
+        "TaxIdStatus": "REGULAR",
+        "TaxIdOrigin": "RECEITA FEDERAL",
+        "TaxIdFiscalRegion": "CE-MA-PI",
+        "HasObitIndication": false,
+        "TaxIdStatusDate": "2021-11-28T00:00:00Z",
+        "TaxIdStatusRegistrationDate": "2019-09-25T00:00:00Z",
+        "CreationDate": "2021-11-28T00:00:00Z",
+        "LastUpdateDate": "2026-03-07T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "b5669c20-94da-4589-8129-dd5ee79a278c",
+  "ElapsedMilliseconds": 58,
+  "QueryDate": "2026-04-25T10:59:11.0638795Z",
+  "Status": {
+    "basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

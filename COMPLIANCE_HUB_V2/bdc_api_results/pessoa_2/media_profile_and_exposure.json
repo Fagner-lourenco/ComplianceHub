@@ -1,0 +1,43 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "MediaProfileAndExposure": {
+        "MediaExposureLevel": "H",
+        "CelebrityLevel": "H",
+        "UnpopularityLevel": "H",
+        "NewsItems": [],
+        "SearchLabels": {
+          "FullName": "DIEGO EMANUEL ALVES DE SOUZA",
+          "FullNameUniquenessScore": 1,
+          "ShortName": "DIEGO SOUZA",
+          "ShortNameUniquenessScore": 0.001
+        },
+        "Next": "",
+        "TotalPages": 0,
+        "EntityStatistics": {
+          "NewsByRangeDate": {
+            "TotalNews": 0,
+            "TotalNewsOnLast7Days": -1,
+            "TotalNewsOnLast30Days": -1,
+            "TotalNewsOnLast90Days": -1,
+            "TotalNewsOnLast180Days": -1,
+            "TotalNewsOnLast365Days": -1
+          }
+        }
+      }
+    }
+  ],
+  "QueryId": "b23f7670-433f-43e0-873d-d5066f4f4775",
+  "ElapsedMilliseconds": 202,
+  "QueryDate": "2026-04-25T12:32:43.9732991Z",
+  "Status": {
+    "media_profile_and_exposure": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

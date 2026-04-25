@@ -1,0 +1,61 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "LawsuitsDistributionData": {
+        "TotalLawsuits": 1,
+        "TypeDistribution": {
+          "ACAO DE ALIMENTOS": 1
+        },
+        "CourtNameDistribution": {
+          "TJCE": 1
+        },
+        "StatusDistribution": {
+          "ARQUIVADO": 1
+        },
+        "StateDistribution": {
+          "CE": 1
+        },
+        "PartyTypeDistribution": {
+          "OTHER": 1
+        },
+        "CourtTypeDistribution": {
+          "CIVEL": 1
+        },
+        "CourtLevelDistribution": {
+          "1": 1
+        },
+        "CnjProcedureTypeDistribution": {
+          "ALIMENTOS - LEI ESPECIAL N 5.478/68": 1
+        },
+        "CnjProcedureTypeNumberDistribution": {
+          "69": 1
+        },
+        "CnjSubjectDistribution": {
+          "ALIMENTOS": 1
+        },
+        "CnjSubjectNumberDistribution": {
+          "10859": 1
+        },
+        "CnjBroadSubjectDistribution": {
+          "DIREITO PROCESSUAL CIVIL E DO TRABALHO": 1
+        },
+        "CnjBroadSubjectNumberDistribution": {
+          "8826": 1
+        }
+      }
+    }
+  ],
+  "QueryId": "9c178c61-1813-4a06-9435-cb3d55520091",
+  "ElapsedMilliseconds": 172,
+  "QueryDate": "2026-04-25T12:32:45.5780396Z",
+  "Status": {
+    "lawsuits_distribution_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

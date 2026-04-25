@@ -1,0 +1,39 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "KycData": {
+        "PEPHistory": [],
+        "IsCurrentlyPEP": false,
+        "SanctionsHistory": [],
+        "IsCurrentlySanctioned": false,
+        "WasPreviouslySanctioned": false,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 0,
+        "IsCurrentlyElectoralDonor": false,
+        "IsHistoricalElectoralDonor": false,
+        "TotalElectoralDonations": 0,
+        "TotalElectoralDonationAmount": 0,
+        "ElectoralDonations": {}
+      }
+    }
+  ],
+  "QueryId": "9498b062-e9df-4e26-b2e0-cb3cc527abd1",
+  "ElapsedMilliseconds": 156,
+  "QueryDate": "2026-04-25T10:59:57.1968437Z",
+  "Status": {
+    "kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

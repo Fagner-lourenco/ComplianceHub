@@ -1,0 +1,32 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "FinantialData": {
+        "TotalAssets": "ABAIXO DE 100K",
+        "TaxReturns": [],
+        "IncomeEstimates": {
+          "COMPANY OWNERSHIP": "SEM INFORMACAO",
+          "MTE": "SEM INFORMACAO",
+          "IBGE": "SEM INFORMACAO",
+          "BIGDATA": "SEM INFORMACAO",
+          "BIGDATA_V2": "0 A 1 SM"
+        },
+        "CreationDate": "2021-11-28T00:00:00Z",
+        "LastUpdateDate": "2026-03-07T00:00:00Z"
+      }
+    }
+  ],
+  "QueryId": "389ce785-05cd-4c00-b442-018bcf033938",
+  "ElapsedMilliseconds": 67,
+  "QueryDate": "2026-04-25T10:59:22.6336483Z",
+  "Status": {
+    "financial_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

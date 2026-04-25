@@ -1,0 +1,23 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "AwardsAndCertifications": {
+        "TotalAwards": 0,
+        "TotalCertifications": 0
+      }
+    }
+  ],
+  "QueryId": "ff8b442d-5352-4683-858f-8e77e72b3bdb",
+  "ElapsedMilliseconds": 60,
+  "QueryDate": "2026-04-25T12:32:58.8678288Z",
+  "Status": {
+    "awards_and_certifications": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

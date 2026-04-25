@@ -1,0 +1,28 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "ProfessionData": {
+        "Professions": [],
+        "TotalProfessions": 0,
+        "TotalActiveProfessions": 0,
+        "TotalIncome": 0,
+        "TotalIncomeRange": "SEM INFORMACAO",
+        "TotalDiscounts": 0,
+        "IsEmployed": false
+      }
+    }
+  ],
+  "QueryId": "0a7a6619-957d-4a6a-91d7-5aa92f167e1a",
+  "ElapsedMilliseconds": 53,
+  "QueryDate": "2026-04-25T12:32:35.4502083Z",
+  "Status": {
+    "profession_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

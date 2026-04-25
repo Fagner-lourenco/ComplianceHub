@@ -1,0 +1,20 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "OnlineAds": []
+    }
+  ],
+  "QueryId": "13ea86f2-0d75-4549-b443-424f8153419d",
+  "ElapsedMilliseconds": 91,
+  "QueryDate": "2026-04-25T12:32:20.471953Z",
+  "Status": {
+    "online_ads": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

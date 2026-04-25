@@ -1,0 +1,38 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{10794180329}",
+      "Processes": {
+        "Lawsuits": [
+          {
+            "Number": "01149452820188060001",
+            "Status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+            "LawsuitMatchType": "DOC"
+          }
+        ],
+        "TotalLawsuits": 1,
+        "TotalLawsuitsAsAuthor": 0,
+        "TotalLawsuitsAsDefendant": 0,
+        "TotalLawsuitsAsOther": 1,
+        "FirstLawsuitDate": "0001-01-01T00:00:00",
+        "LastLawsuitDate": "0001-01-01T00:00:00",
+        "Last30DaysLawsuits": 0,
+        "Last90DaysLawsuits": 0,
+        "Last180DaysLawsuits": 0,
+        "Last365DaysLawsuits": 0
+      }
+    }
+  ],
+  "QueryId": "1f43b151-c463-48c4-8d32-e12c74689327",
+  "ElapsedMilliseconds": 183,
+  "QueryDate": "2026-04-25T10:59:13.9413697Z",
+  "Status": {
+    "processes": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

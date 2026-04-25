@@ -1,0 +1,1409 @@
+{
+  "generatedAt": "2026-04-25T12:36:57.678Z",
+  "totalCpfs": 5,
+  "totalDatasets": 15,
+  "results": {
+    "pessoa_1": {
+      "doc": "48052053854",
+      "nome": "ANDRE LUIZ CRUZ DOS SANTOS",
+      "uf": "SP",
+      "risco": "ALTO",
+      "datasets": {
+        "government_debtors": {
+          "status": "error",
+          "error": "fetch failed"
+        },
+        "collections": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ]
+        },
+        "historical_basic_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "HasObitIndication",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent",
+            "NameChangesTotal",
+            "StatusChangesTotal",
+            "LastNameChangeDate",
+            "LastStatusChangeDate",
+            "FirstNameChangeDate",
+            "FirstStatusChangeDate"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent"
+          ],
+          "samples": [
+            "CurrentName: ANDRE LUIZ CRUZ DOS SANTOS",
+            "CurrentStatus: REGULAR",
+            "CurrentGender: M"
+          ],
+          "sizeBytes": 727
+        },
+        "financial_risk": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "IsCurrentlyOwner",
+            "LastOccupationStartDate",
+            "IsCurrentlyOnCollection",
+            "Last365DaysCollectionOccurrences",
+            "CurrentConsecutiveCollectionMonths",
+            "IsCurrentlyReceivingAssistance",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "nonEmptyKeys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "samples": [
+            "TotalAssets: ABAIXO DE 100K",
+            "EstimatedIncomeRange: 3 A 5 SM",
+            "FinancialRiskScore: 650"
+          ],
+          "sizeBytes": 364
+        },
+        "indebtedness_question": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "LikelyInDebt"
+          ]
+        },
+        "university_student_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "profession_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ],
+          "nonEmptyKeys": [
+            "TotalIncomeRange"
+          ],
+          "samples": [
+            "TotalIncomeRange: SEM INFORMACAO"
+          ],
+          "sizeBytes": 139
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications"
+          ]
+        },
+        "sports_exposure": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "Sports"
+          ]
+        },
+        "political_involvement": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "ElectionsCount",
+            "IsCurrentlyInOffice",
+            "WasFormerlyElected",
+            "IsPep",
+            "AmountDonated",
+            "AmountReceived",
+            "PoliticalInvolvementScore"
+          ]
+        },
+        "election_candidate_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "online_ads": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "SearchLabels",
+            "EntityStatistics"
+          ],
+          "samples": [
+            "MediaExposureLevel: H",
+            "CelebrityLevel: H",
+            "UnpopularityLevel: H"
+          ],
+          "sizeBytes": 451
+        },
+        "lawsuits_distribution_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ]
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109,
+          "statusMsg": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+        }
+      }
+    },
+    "pessoa_2": {
+      "doc": "10794180329",
+      "nome": "DIEGO EMANUEL ALVES DE SOUZA",
+      "uf": "CE",
+      "risco": "BAIXO",
+      "datasets": {
+        "government_debtors": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ]
+        },
+        "collections": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ]
+        },
+        "historical_basic_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "HasObitIndication",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent",
+            "NameChangesTotal",
+            "StatusChangesTotal",
+            "LastNameChangeDate",
+            "LastStatusChangeDate",
+            "FirstNameChangeDate",
+            "FirstStatusChangeDate"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent"
+          ],
+          "samples": [
+            "CurrentName: DIEGO EMANUEL ALVES DE SOUZA",
+            "CurrentStatus: REGULAR",
+            "CurrentGender: M"
+          ],
+          "sizeBytes": 733
+        },
+        "financial_risk": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "IsCurrentlyOwner",
+            "LastOccupationStartDate",
+            "IsCurrentlyOnCollection",
+            "Last365DaysCollectionOccurrences",
+            "CurrentConsecutiveCollectionMonths",
+            "IsCurrentlyReceivingAssistance",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "nonEmptyKeys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "samples": [
+            "TotalAssets: ABAIXO DE 100K",
+            "EstimatedIncomeRange: 0 A 1 SM",
+            "FinancialRiskScore: 300"
+          ],
+          "sizeBytes": 364
+        },
+        "indebtedness_question": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "LikelyInDebt"
+          ]
+        },
+        "university_student_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "profession_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ],
+          "nonEmptyKeys": [
+            "TotalIncomeRange"
+          ],
+          "samples": [
+            "TotalIncomeRange: SEM INFORMACAO"
+          ],
+          "sizeBytes": 156
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications"
+          ]
+        },
+        "sports_exposure": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "Sports"
+          ]
+        },
+        "political_involvement": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "ElectionsCount",
+            "IsCurrentlyInOffice",
+            "WasFormerlyElected",
+            "IsPep",
+            "AmountDonated",
+            "AmountReceived",
+            "PoliticalInvolvementScore"
+          ]
+        },
+        "election_candidate_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "online_ads": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "SearchLabels",
+            "EntityStatistics"
+          ],
+          "samples": [
+            "MediaExposureLevel: H",
+            "CelebrityLevel: H",
+            "UnpopularityLevel: H"
+          ],
+          "sizeBytes": 448
+        },
+        "lawsuits_distribution_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "samples": [
+            "TotalLawsuits: 1",
+            "TypeDistribution: {\"ACAO DE ALIMENTOS\":1}",
+            "CourtNameDistribution: {\"TJCE\":1}"
+          ],
+          "sizeBytes": 593
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109,
+          "statusMsg": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+        }
+      }
+    },
+    "pessoa_3": {
+      "doc": "11819916766",
+      "nome": "RENAN GUIMARAES DE SOUSA AUGUSTO",
+      "uf": "RJ",
+      "risco": "BAIXO",
+      "datasets": {
+        "government_debtors": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ]
+        },
+        "collections": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "nonEmptyKeys": [
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "samples": [
+            "Last30DaysCollectionOccurrences: 1",
+            "Last90DaysCollectionOccurrences: 1",
+            "Last180DaysCollectionOccurrences: 1"
+          ],
+          "sizeBytes": 546
+        },
+        "historical_basic_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "HasObitIndication",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent",
+            "NameChangesTotal",
+            "StatusChangesTotal",
+            "LastNameChangeDate",
+            "LastStatusChangeDate",
+            "FirstNameChangeDate",
+            "FirstStatusChangeDate"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent"
+          ],
+          "samples": [
+            "CurrentName: RENAN GUIMARAES DE SOUSA AUGUSTO",
+            "CurrentStatus: REGULAR",
+            "CurrentGender: M"
+          ],
+          "sizeBytes": 745
+        },
+        "financial_risk": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "IsCurrentlyOwner",
+            "LastOccupationStartDate",
+            "IsCurrentlyOnCollection",
+            "Last365DaysCollectionOccurrences",
+            "CurrentConsecutiveCollectionMonths",
+            "IsCurrentlyReceivingAssistance",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "nonEmptyKeys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "LastOccupationStartDate",
+            "Last365DaysCollectionOccurrences",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "samples": [
+            "TotalAssets: ABAIXO DE 100K",
+            "EstimatedIncomeRange: 5 A 7 SM",
+            "IsCurrentlyEmployed: true"
+          ],
+          "sizeBytes": 365
+        },
+        "indebtedness_question": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "LikelyInDebt"
+          ],
+          "nonEmptyKeys": [
+            "LikelyInDebt"
+          ],
+          "samples": [
+            "LikelyInDebt: true"
+          ],
+          "sizeBytes": 21
+        },
+        "university_student_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "profession_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ],
+          "nonEmptyKeys": [
+            "TotalIncomeRange"
+          ],
+          "samples": [
+            "TotalIncomeRange: SEM INFORMACAO"
+          ],
+          "sizeBytes": 156
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications"
+          ]
+        },
+        "sports_exposure": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "Sports"
+          ]
+        },
+        "political_involvement": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "ElectionsCount",
+            "IsCurrentlyInOffice",
+            "WasFormerlyElected",
+            "IsPep",
+            "AmountDonated",
+            "AmountReceived",
+            "PoliticalInvolvementScore"
+          ]
+        },
+        "election_candidate_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "online_ads": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "SearchLabels",
+            "EntityStatistics"
+          ],
+          "samples": [
+            "MediaExposureLevel: H",
+            "CelebrityLevel: H",
+            "UnpopularityLevel: H"
+          ],
+          "sizeBytes": 459
+        },
+        "lawsuits_distribution_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "samples": [
+            "TotalLawsuits: 1",
+            "TypeDistribution: {\"RITO ORDINARIO\":1}",
+            "CourtNameDistribution: {\"TRT1\":1}"
+          ],
+          "sizeBytes": 550
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109,
+          "statusMsg": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+        }
+      }
+    },
+    "pessoa_4": {
+      "doc": "05023290336",
+      "nome": "FRANCISCO TACIANO DE SOUSA",
+      "uf": "CE",
+      "risco": "CRITICO",
+      "datasets": {
+        "government_debtors": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ]
+        },
+        "collections": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "nonEmptyKeys": [
+            "TotalCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "samples": [
+            "TotalCollectionMonths: 2",
+            "FirstCollectionDate: 2024-12-29T10:13:05Z",
+            "LastCollectionDate: 2025-01-13T17:53:43Z"
+          ],
+          "sizeBytes": 546
+        },
+        "historical_basic_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "HasObitIndication",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent",
+            "NameChangesTotal",
+            "StatusChangesTotal",
+            "LastNameChangeDate",
+            "LastStatusChangeDate",
+            "FirstNameChangeDate",
+            "FirstStatusChangeDate"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent"
+          ],
+          "samples": [
+            "CurrentName: FRANCISCO TACIANO DE SOUSA",
+            "CurrentStatus: REGULAR",
+            "CurrentGender: M"
+          ],
+          "sizeBytes": 727
+        },
+        "financial_risk": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "IsCurrentlyOwner",
+            "LastOccupationStartDate",
+            "IsCurrentlyOnCollection",
+            "Last365DaysCollectionOccurrences",
+            "CurrentConsecutiveCollectionMonths",
+            "IsCurrentlyReceivingAssistance",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "nonEmptyKeys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "LastOccupationStartDate",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "samples": [
+            "TotalAssets: ABAIXO DE 100K",
+            "EstimatedIncomeRange: 2 A 3 SM",
+            "IsCurrentlyEmployed: true"
+          ],
+          "sizeBytes": 364
+        },
+        "indebtedness_question": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "LikelyInDebt"
+          ]
+        },
+        "university_student_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "profession_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "Professions",
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ],
+          "nonEmptyKeys": [
+            "TotalIncomeRange"
+          ],
+          "samples": [
+            "TotalIncomeRange: SEM INFORMACAO"
+          ],
+          "sizeBytes": 156
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications"
+          ]
+        },
+        "sports_exposure": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "Sports"
+          ]
+        },
+        "political_involvement": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "ElectionsCount",
+            "IsCurrentlyInOffice",
+            "WasFormerlyElected",
+            "IsPep",
+            "AmountDonated",
+            "AmountReceived",
+            "PoliticalInvolvementScore"
+          ]
+        },
+        "election_candidate_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "online_ads": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "SearchLabels",
+            "EntityStatistics"
+          ],
+          "samples": [
+            "MediaExposureLevel: H",
+            "CelebrityLevel: H",
+            "UnpopularityLevel: H"
+          ],
+          "sizeBytes": 450
+        },
+        "lawsuits_distribution_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "nonEmptyKeys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ],
+          "samples": [
+            "TotalLawsuits: 8",
+            "TypeDistribution: {\"PROCEDIMENTO COMUM\":1,\"MEDIDAS PROTETIVAS DE URGENCIA\":1,\"",
+            "CourtNameDistribution: {\"TJCE\":8}"
+          ],
+          "sizeBytes": 1283
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109,
+          "statusMsg": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+        }
+      }
+    },
+    "pessoa_5": {
+      "doc": "46247243804",
+      "nome": "MATHEUS GONCALVES DOS SANTOS",
+      "uf": "SP",
+      "risco": "MEDIO",
+      "datasets": {
+        "government_debtors": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalDebtValue",
+            "TotalDebtValuePerOrigin",
+            "TotalDebts",
+            "TotalDebtsPerOrigin",
+            "Debts"
+          ]
+        },
+        "collections": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "IsCurrentlyOnCollection",
+            "Last30DaysCollectionOccurrences",
+            "Last90DaysCollectionOccurrences",
+            "Last180DaysCollectionOccurrences",
+            "Last365DaysCollectionOccurrences",
+            "Last30DaysCollectionOrigins",
+            "Last90DaysCollectionOrigins",
+            "Last180DaysCollectionOrigins",
+            "Last365DaysCollectionOrigins",
+            "TotalCollectionMonths",
+            "CurrentConsecutiveCollectionMonths",
+            "MaxConsecutiveCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "nonEmptyKeys": [
+            "TotalCollectionMonths",
+            "FirstCollectionDate",
+            "LastCollectionDate",
+            "CollectionOccurrences",
+            "CollectionOrigins"
+          ],
+          "samples": [
+            "TotalCollectionMonths: 2",
+            "FirstCollectionDate: 2019-07-09T03:03:10Z",
+            "LastCollectionDate: 2021-01-07T22:34:44Z"
+          ],
+          "sizeBytes": 546
+        },
+        "historical_basic_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "HasObitIndication",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent",
+            "NameChangesTotal",
+            "StatusChangesTotal",
+            "LastNameChangeDate",
+            "LastStatusChangeDate",
+            "FirstNameChangeDate",
+            "FirstStatusChangeDate"
+          ],
+          "nonEmptyKeys": [
+            "CurrentName",
+            "CurrentStatus",
+            "CurrentGender",
+            "BirthDate",
+            "Age",
+            "TaxIdNumber",
+            "NameChangeHistory",
+            "StatusChangeHistory",
+            "NameLifetimePercent",
+            "GenderLifetimePercent",
+            "StatusLifetimePercent"
+          ],
+          "samples": [
+            "CurrentName: MATHEUS GONCALVES DOS SANTOS",
+            "CurrentStatus: REGULAR",
+            "CurrentGender: M"
+          ],
+          "sizeBytes": 733
+        },
+        "financial_risk": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "IsCurrentlyEmployed",
+            "IsCurrentlyOwner",
+            "LastOccupationStartDate",
+            "IsCurrentlyOnCollection",
+            "Last365DaysCollectionOccurrences",
+            "CurrentConsecutiveCollectionMonths",
+            "IsCurrentlyReceivingAssistance",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "nonEmptyKeys": [
+            "TotalAssets",
+            "EstimatedIncomeRange",
+            "FinancialRiskScore",
+            "FinancialRiskLevel"
+          ],
+          "samples": [
+            "TotalAssets: ABAIXO DE 100K",
+            "EstimatedIncomeRange: 3 A 5 SM",
+            "FinancialRiskScore: 650"
+          ],
+          "sizeBytes": 364
+        },
+        "indebtedness_question": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "LikelyInDebt"
+          ]
+        },
+        "university_student_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "profession_data": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "TotalProfessions",
+            "TotalActiveProfessions",
+            "TotalIncome",
+            "TotalIncomeRange",
+            "TotalDiscounts",
+            "IsEmployed"
+          ],
+          "nonEmptyKeys": [
+            "TotalIncomeRange"
+          ],
+          "samples": [
+            "TotalIncomeRange: SEM INFORMACAO"
+          ],
+          "sizeBytes": 139
+        },
+        "awards_and_certifications": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalAwards",
+            "TotalCertifications"
+          ]
+        },
+        "sports_exposure": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "Sports"
+          ]
+        },
+        "political_involvement": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "ElectionsCount",
+            "IsCurrentlyInOffice",
+            "WasFormerlyElected",
+            "IsPep",
+            "AmountDonated",
+            "AmountReceived",
+            "PoliticalInvolvementScore"
+          ]
+        },
+        "election_candidate_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "online_ads": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": []
+        },
+        "media_profile_and_exposure": {
+          "status": "ok",
+          "statusCode": 0,
+          "keys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "CreationDate",
+            "LastUpdateDate",
+            "SearchLabels",
+            "Next",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "nonEmptyKeys": [
+            "MediaExposureLevel",
+            "CelebrityLevel",
+            "UnpopularityLevel",
+            "NewsItems",
+            "CreationDate",
+            "LastUpdateDate",
+            "SearchLabels",
+            "TotalPages",
+            "EntityStatistics"
+          ],
+          "samples": [
+            "MediaExposureLevel: H",
+            "CelebrityLevel: H",
+            "UnpopularityLevel: H"
+          ],
+          "sizeBytes": 33474
+        },
+        "lawsuits_distribution_data": {
+          "status": "empty",
+          "statusCode": 0,
+          "keys": [
+            "TotalLawsuits",
+            "TypeDistribution",
+            "CourtNameDistribution",
+            "StatusDistribution",
+            "StateDistribution",
+            "PartyTypeDistribution",
+            "CourtTypeDistribution",
+            "CourtLevelDistribution",
+            "CnjProcedureTypeDistribution",
+            "CnjProcedureTypeNumberDistribution",
+            "CnjSubjectDistribution",
+            "CnjSubjectNumberDistribution",
+            "CnjBroadSubjectDistribution",
+            "CnjBroadSubjectNumberDistribution"
+          ]
+        },
+        "property_data": {
+          "status": "api_error",
+          "statusCode": -109,
+          "statusMsg": "DATASET NOT AVAILABLE. CHECK THAT THE DATASET NAME IS CORRECT AND REQUEST THE DOMAIN ADMINISTRATOR TO ENABLE IT IN BDC CENTER"
+        }
+      }
+    }
+  },
+  "datasetSummary": {
+    "government_debtors": {
+      "okCount": 0,
+      "emptyCount": 4,
+      "errorCount": 1,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "collections": {
+      "okCount": 3,
+      "emptyCount": 2,
+      "errorCount": 0,
+      "meaningfulDataCount": 3,
+      "classification": "A"
+    },
+    "historical_basic_data": {
+      "okCount": 5,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 5,
+      "classification": "A"
+    },
+    "financial_risk": {
+      "okCount": 5,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 5,
+      "classification": "A"
+    },
+    "indebtedness_question": {
+      "okCount": 1,
+      "emptyCount": 4,
+      "errorCount": 0,
+      "meaningfulDataCount": 1,
+      "classification": "A"
+    },
+    "university_student_data": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "profession_data": {
+      "okCount": 5,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 5,
+      "classification": "A"
+    },
+    "awards_and_certifications": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "sports_exposure": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "political_involvement": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "election_candidate_data": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "online_ads": {
+      "okCount": 0,
+      "emptyCount": 5,
+      "errorCount": 0,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    },
+    "media_profile_and_exposure": {
+      "okCount": 5,
+      "emptyCount": 0,
+      "errorCount": 0,
+      "meaningfulDataCount": 5,
+      "classification": "A"
+    },
+    "lawsuits_distribution_data": {
+      "okCount": 3,
+      "emptyCount": 2,
+      "errorCount": 0,
+      "meaningfulDataCount": 3,
+      "classification": "A"
+    },
+    "property_data": {
+      "okCount": 0,
+      "emptyCount": 0,
+      "errorCount": 5,
+      "meaningfulDataCount": 0,
+      "classification": "D"
+    }
+  }
+}

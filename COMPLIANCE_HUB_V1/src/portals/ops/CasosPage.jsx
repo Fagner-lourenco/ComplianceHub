@@ -4,6 +4,8 @@ import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
+import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatDate } from '../../core/formatDate';
@@ -48,6 +50,9 @@ export default function CasosPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [riskFilter, setRiskFilter] = useState('ALL');
+    const [enrichmentFilter, setEnrichmentFilter] = useState('ALL');
+    const [verdictFilter, setVerdictFilter] = useState('ALL');
 
     const stats = useMemo(() => getCaseStats(cases), [cases]);
 
@@ -58,7 +63,19 @@ export default function CasosPage() {
             result = result.filter((currentCase) => currentCase.status === statusFilter);
         }
 
-        if (dateFrom) result = result.filter((c) => (c.createdAt || '') >= dateFrom);
+        if (riskFilter !== 'ALL') {
+            result = result.filter((c) => c.riskLevel === riskFilter);
+        }
+
+        if (verdictFilter !== 'ALL') {
+            result = result.filter((c) => c.finalVerdict === verdictFilter);
+        }
+
+        if (enrichmentFilter !== 'ALL') {
+            result = result.filter((c) => getOverallEnrichmentStatus(c) === enrichmentFilter);
+        }
+
+        if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
         if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
 
         if (searchTerm) {
@@ -74,7 +91,7 @@ export default function CasosPage() {
         }
 
         return result;
-    }, [cases, dateFrom, dateTo, searchTerm, statusFilter]);
+    }, [cases, dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, statusFilter, verdictFilter]);
 
     return (
         <div className="casos-page">
@@ -85,98 +102,176 @@ export default function CasosPage() {
                 <KpiCard label="Alertas" value={stats.red} color="red" />
             </div>
 
-            <div className="casos-page__filters">
-                <div className="filter-bar__search" style={{ flex: 1, minWidth: 200 }}>
-                    <span className="filter-bar__search-icon" aria-hidden="true">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    </span>
-                    <input
-                        type="text"
-                        className="filter-bar__search-input"
-                        placeholder="Buscar por nome, CPF ou ID..."
-                        aria-label="Buscar casos"
-                        value={searchTerm}
-                        onChange={(event) => setSearchTerm(event.target.value)}
-                    />
+            <FilterPanelMobile
+                activeFilterCount={[statusFilter !== 'ALL' ? 1 : 0, riskFilter !== 'ALL' ? 1 : 0, verdictFilter !== 'ALL' ? 1 : 0, enrichmentFilter !== 'ALL' ? 1 : 0, dateFrom ? 1 : 0, dateTo ? 1 : 0].reduce((a, b) => a + b, 0)}
+                searchElement={
+                    <div className="filter-bar__search" style={{ flex: 1, minWidth: 0 }}>
+                        <span className="filter-bar__search-icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </span>
+                        <input
+                            type="text"
+                            className="filter-bar__search-input"
+                            placeholder="Buscar por nome, CPF ou ID..."
+                            aria-label="Buscar casos"
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                        />
+                    </div>
+                }
+            >
+                <div className="casos-page__filters">
+                    <div className="filter-bar__search" style={{ flex: 1, minWidth: 200 }}>
+                        <span className="filter-bar__search-icon" aria-hidden="true">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </span>
+                        <input
+                            type="text"
+                            className="filter-bar__search-input"
+                            placeholder="Buscar por nome, CPF ou ID..."
+                            aria-label="Buscar casos"
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                        />
+                    </div>
+                    <select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                        <option value="ALL">Todos os status</option>
+                        <option value="PENDING">Pendente</option>
+                        <option value="IN_PROGRESS">Em Analise</option>
+                        <option value="WAITING_INFO">Aguardando Info</option>
+                        <option value="DONE">Concluido</option>
+                        <option value="CORRECTION_NEEDED">Correcao Pendente</option>
+                    </select>
+                    <select className="filter-bar__select" value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)}>
+                        <option value="ALL">Todos os riscos</option>
+                        <option value="HIGH">Alto</option>
+                        <option value="MEDIUM">Médio</option>
+                        <option value="LOW">Baixo</option>
+                    </select>
+                    <select className="filter-bar__select" value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)}>
+                        <option value="ALL">Todos os vereditos</option>
+                        <option value="FIT">FIT</option>
+                        <option value="ATTENTION">ATTENTION</option>
+                        <option value="NOT_RECOMMENDED">NOT RECOMMENDED</option>
+                    </select>
+                    <select className="filter-bar__select" value={enrichmentFilter} onChange={(e) => setEnrichmentFilter(e.target.value)}>
+                        <option value="ALL">Enriquecimento</option>
+                        <option value="DONE">Concluído</option>
+                        <option value="RUNNING">Em andamento</option>
+                        <option value="PARTIAL">Parcial</option>
+                        <option value="FAILED">Falhou</option>
+                        <option value="BLOCKED">Bloqueado</option>
+                    </select>
+                    <input type="date" className="filter-bar__select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" />
+                    <input type="date" className="filter-bar__select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" />
                 </div>
-                <select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                    <option value="ALL">Todos os status</option>
-                    <option value="PENDING">Pendente</option>
-                    <option value="IN_PROGRESS">Em Analise</option>
-                    <option value="WAITING_INFO">Aguardando Info</option>
-                    <option value="DONE">Concluido</option>
-                    <option value="CORRECTION_NEEDED">Correcao Pendente</option>
-                </select>
-                <input type="date" className="filter-bar__select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" />
-                <input type="date" className="filter-bar__select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" />
-            </div>
+            </FilterPanelMobile>
 
-            <div className="casos-page__table-wrapper">
-                <table className="data-table" aria-label="Lista de casos">
-                    <thead>
-                        <tr>
-                            <th className="data-table__th" scope="col">ID</th>
-                            <th className="data-table__th" scope="col">Empresa</th>
-                            <th className="data-table__th" scope="col">Candidato</th>
-                            <th className="data-table__th" scope="col">CPF</th>
-                            <th className="data-table__th" scope="col">Cargo</th>
-                            <th className="data-table__th" scope="col">Data</th>
-                            <th className="data-table__th" scope="col">Status</th>
-                            <th className="data-table__th" scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
-                            <th className="data-table__th" scope="col">Criminal</th>
-                            <th className="data-table__th" scope="col">Score</th>
-                            <th className="data-table__th" scope="col">Veredito</th>
-                            <th className="data-table__th" scope="col">Acoes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading && (
+            <MobileDataCardList
+                items={filtered}
+                loading={loading}
+                emptyMessage="Nenhum caso encontrado."
+                renderCard={(currentCase) => (
+                    <>
+                        <div className="mobile-card__header">
+                            <div>
+                                <div className="mobile-card__title">{currentCase.candidateName}</div>
+                                <div className="mobile-card__subtitle">{currentCase.tenantName}</div>
+                            </div>
+                            <StatusBadge status={currentCase.status} />
+                        </div>
+                        <div className="mobile-card__meta">
+                            {currentCase.candidatePosition && (
+                                <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
+                            )}
+                            <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
+                        </div>
+                        <div className="mobile-card__badges">
+                            <RiskChip value={currentCase.riskLevel} />
+                            <RiskChip value={currentCase.finalVerdict} bold />
+                            <ScoreBar score={currentCase.riskScore} />
+                            <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
+                        </div>
+                        <div className="mobile-card__divider" />
+                        <div className="mobile-card__actions">
+                            <button
+                                className="btn-secondary"
+                                onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
+                            >
+                                Abrir
+                            </button>
+                        </div>
+                    </>
+                )}
+            >
+                {/* Desktop table — unchanged */}
+                <div className="casos-page__table-wrapper">
+                    <table className="data-table" aria-label="Lista de casos">
+                        <thead>
                             <tr>
-                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
-                                    Carregando casos...
-                                </td>
+                                <th className="data-table__th" scope="col">ID</th>
+                                <th className="data-table__th" scope="col">Empresa</th>
+                                <th className="data-table__th" scope="col">Candidato</th>
+                                <th className="data-table__th" scope="col">CPF</th>
+                                <th className="data-table__th" scope="col">Cargo</th>
+                                <th className="data-table__th" scope="col">Data</th>
+                                <th className="data-table__th" scope="col">Status</th>
+                                <th className="data-table__th" scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
+                                <th className="data-table__th" scope="col">Criminal</th>
+                                <th className="data-table__th" scope="col">Score</th>
+                                <th className="data-table__th" scope="col">Veredito</th>
+                                <th className="data-table__th" scope="col">Acoes</th>
                             </tr>
-                        )}
-                        {!loading && error && (
-                            <tr>
-                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
-                                    {extractErrorMessage(error, 'Nao foi possivel carregar os casos agora.')}
-                                </td>
-                            </tr>
-                        )}
-                        {!loading && !error && filtered.map((currentCase) => (
-                            <tr key={currentCase.id} className="data-table__row">
-                                <td className="data-table__td data-table__td--mono">{currentCase.id}</td>
-                                <td className="data-table__td" style={{ fontSize: '.75rem' }}>{currentCase.tenantName}</td>
-                                <td className="data-table__td data-table__td--name">{currentCase.candidateName}</td>
-                                <td className="data-table__td data-table__td--mono">{formatFullCpf(currentCase.cpf) || currentCase.cpfMasked}</td>
-                                <td className="data-table__td">{currentCase.candidatePosition}</td>
-                                <td className="data-table__td">{formatDate(currentCase.createdAt)}</td>
-                                <td className="data-table__td"><StatusBadge status={currentCase.status} /></td>
-                                <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
-                                <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
-                                <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
-                                <td className="data-table__td"><RiskChip value={currentCase.finalVerdict} bold /></td>
-                                <td className="data-table__td">
-                                    <button
-                                        className="fila-btn fila-btn--open"
-                                        onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
-                                    >
-                                        Abrir
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        {!loading && !error && filtered.length === 0 && (
-                            <tr>
-                                <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
-                                    Nenhum caso encontrado.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {loading && (
+                                <tr>
+                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                        Carregando casos...
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && error && (
+                                <tr>
+                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
+                                        {extractErrorMessage(error, 'Nao foi possivel carregar os casos agora.')}
+                                    </td>
+                                </tr>
+                            )}
+                            {!loading && !error && filtered.map((currentCase) => (
+                                <tr key={currentCase.id} className="data-table__row">
+                                    <td className="data-table__td data-table__td--mono">{currentCase.id}</td>
+                                    <td className="data-table__td" style={{ fontSize: '.75rem' }}>{currentCase.tenantName}</td>
+                                    <td className="data-table__td data-table__td--name">{currentCase.candidateName}</td>
+                                    <td className="data-table__td data-table__td--mono">{formatFullCpf(currentCase.cpf) || currentCase.cpfMasked}</td>
+                                    <td className="data-table__td">{currentCase.candidatePosition}</td>
+                                    <td className="data-table__td">{formatDate(currentCase.createdAt)}</td>
+                                    <td className="data-table__td"><StatusBadge status={currentCase.status} /></td>
+                                    <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
+                                    <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
+                                    <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
+                                    <td className="data-table__td"><RiskChip value={currentCase.finalVerdict} bold /></td>
+                                    <td className="data-table__td">
+                                        <button
+                                            className="fila-btn fila-btn--open"
+                                            onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
+                                        >
+                                            Abrir
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {!loading && !error && filtered.length === 0 && (
+                                <tr>
+                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                        Nenhum caso encontrado.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </MobileDataCardList>
 
             <div style={{ textAlign: 'right', fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
                 Mostrando {filtered.length} de {cases.length} casos

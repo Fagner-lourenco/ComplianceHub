@@ -8,7 +8,7 @@ import {
     buildRelationshipsForCase,
     summarizeRelationships,
     V2_MINI_RELATIONSHIPS_VERSION,
-} from './v2MiniRelationships.cjs';
+} from './v2MiniRelationships.js';
 
 describe('buildRelationshipId', () => {
     it('produces stable id regardless of arg order', () => {

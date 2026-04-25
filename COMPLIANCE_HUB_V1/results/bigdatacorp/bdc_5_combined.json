@@ -1,0 +1,226 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "BasicData": {
+        "TaxIdNumber": "46247243804",
+        "TaxIdCountry": "BRAZIL",
+        "AlternativeIdNumbers": {
+          "SocialSecurityNumber": "20215626634"
+        },
+        "Name": "MATHEUS GONCALVES DOS SANTOS",
+        "Aliases": {
+          "CommonName": "MATHEUS SANTOS",
+          "StandardizedName": "MATEU GONCALVE SANTO"
+        },
+        "Gender": "M",
+        "NameWordCount": 4,
+        "NumberOfFullNameNamesakes": 304,
+        "NameUniquenessScore": 0.392,
+        "FirstNameUniquenessScore": 0.001,
+        "FirstAndLastNameUniquenessScore": 0.001,
+        "BirthDate": "1997-10-30T00:00:00Z",
+        "CapturedBirthDateFromRFSource": "1997-10-30",
+        "IsValidBirthDateInRFSource": true,
+        "Age": 28,
+        "ZodiacSign": "ESCORPIAO",
+        "ChineseSign": "Ox",
+        "BirthCountry": "BRASILEIRA",
+        "MotherName": "CRISTINA GONCALVES",
+        "FatherName": "",
+        "MaritalStatusData": {},
+        "TaxIdStatus": "REGULAR",
+        "TaxIdOrigin": "RECEITA FEDERAL",
+        "TaxIdFiscalRegion": "SP",
+        "HasObitIndication": false,
+        "TaxIdStatusDate": "2017-05-30T00:00:00Z",
+        "TaxIdStatusRegistrationDate": "2012-11-26T00:00:00Z",
+        "CreationDate": "2017-02-18T00:00:00Z",
+        "LastUpdateDate": "2026-02-24T00:00:00Z"
+      },
+      "ProfessionData": {
+        "Professions": [
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "13783221009858",
+            "CompanyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2021-01-01T00:00:00Z",
+            "EndDate": "2021-08-23T00:00:00Z",
+            "CreationDate": "2022-08-17T00:00:00Z",
+            "LastUpdateDate": "2022-08-17T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "13783221007308",
+            "CompanyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2021-08-23T00:00:00Z",
+            "EndDate": "2021-09-01T00:00:00Z",
+            "CreationDate": "2022-08-23T00:00:00Z",
+            "LastUpdateDate": "2022-08-23T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "13783221018415",
+            "CompanyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2019-11-20T00:00:00Z",
+            "EndDate": "2020-05-01T00:00:00Z",
+            "CreationDate": "2021-01-25T00:00:00Z",
+            "LastUpdateDate": "2022-02-07T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 5611201 - RESTAURANTES E SIMILARES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "13783221018415",
+            "CompanyName": "MADERO INDUSTRIA E COMERCIO S.A.",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2019-12-01T00:00:00Z",
+            "EndDate": "2020-05-01T00:00:00Z",
+            "CreationDate": "2022-02-07T00:00:00Z",
+            "LastUpdateDate": "2022-02-07T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 1012101 - ABATE DE AVES",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "85070068001929",
+            "CompanyName": "GONCALVES & TORTOLA S/A",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2015-11-23T00:00:00Z",
+            "EndDate": "2016-07-15T00:00:00Z",
+            "CreationDate": "2018-02-18T00:00:00Z",
+            "LastUpdateDate": "2018-02-18T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 2330301 - FABRICACAO DE ESTRUTURAS PRE-MOLDADAS DE CONCRETO ARMADO, EM SERIE E SOB ENCOMENDA",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "48524730000118",
+            "CompanyName": "MATRA INDUSTRIA E COMERCIO LTDA",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2018-11-05T00:00:00Z",
+            "EndDate": "2019-06-30T00:00:00Z",
+            "CreationDate": "2020-05-29T00:00:00Z",
+            "LastUpdateDate": "2021-01-25T00:00:00Z"
+          },
+          {
+            "Source": "RAIS",
+            "Sector": "PRIVATE - 4711302 - COMERCIO VAREJISTA DE MERCADORIAS EM GERAL, COM PREDOMINANCIA DE PRODUTOS ALIMENTICIOS - SUPERMERCADOS",
+            "Country": "BRAZIL",
+            "CompanyIdNumber": "71322150003185",
+            "CompanyName": "SAVEGNAGO-SUPERMERCADOS LTDA",
+            "Area": "UNKNOWN",
+            "Level": "EMPLOYEE",
+            "Status": "INACTIVE",
+            "IncomeRange": "SEM INFORMACAO",
+            "Income": 0,
+            "StartDate": "2016-09-14T00:00:00Z",
+            "EndDate": "2018-01-09T00:00:00Z",
+            "CreationDate": "2018-02-05T00:00:00Z",
+            "LastUpdateDate": "2020-05-29T00:00:00Z"
+          }
+        ],
+        "TotalProfessions": 7,
+        "TotalActiveProfessions": 0,
+        "TotalIncome": 0,
+        "TotalIncomeRange": "SEM INFORMACAO",
+        "TotalDiscounts": 0,
+        "IsEmployed": false
+      },
+      "KycData": {
+        "PEPHistory": [],
+        "IsCurrentlyPEP": false,
+        "SanctionsHistory": [],
+        "IsCurrentlySanctioned": false,
+        "WasPreviouslySanctioned": false,
+        "Last30DaysSanctions": 0,
+        "Last90DaysSanctions": 0,
+        "Last180DaysSanctions": 0,
+        "Last365DaysSanctions": 0,
+        "LastYearPEPOccurence": 0,
+        "Last3YearsPEPOccurence": 0,
+        "Last5YearsPEPOccurence": 0,
+        "Last5PlusYearsPEPOccurence": 0,
+        "IsCurrentlyElectoralDonor": false,
+        "IsHistoricalElectoralDonor": false,
+        "TotalElectoralDonations": 0,
+        "TotalElectoralDonationAmount": 0,
+        "ElectoralDonations": {}
+      },
+      "Processes": {
+        "Lawsuits": [],
+        "TotalLawsuits": 0,
+        "TotalLawsuitsAsAuthor": 0,
+        "TotalLawsuitsAsDefendant": 0,
+        "TotalLawsuitsAsOther": 0,
+        "Last30DaysLawsuits": 0,
+        "Last90DaysLawsuits": 0,
+        "Last180DaysLawsuits": 0,
+        "Last365DaysLawsuits": 0
+      }
+    }
+  ],
+  "QueryId": "164e0f26-8e72-4e85-88fd-8778f5d9f7bb",
+  "ElapsedMilliseconds": 144,
+  "QueryDate": "2026-04-10T18:34:15.3968053Z",
+  "Status": {
+    "basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ],
+    "kyc": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ],
+    "occupation_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ],
+    "processes": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

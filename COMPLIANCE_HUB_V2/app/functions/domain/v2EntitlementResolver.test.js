@@ -6,7 +6,7 @@ import {
     isTenantFeatureEnabled,
     resolveAllFeatureFlags,
     resolveTenantEntitlements,
-} from './v2EntitlementResolver.cjs';
+} from './v2EntitlementResolver.js';
 
 describe('v2EntitlementResolver - resolveTenantEntitlements', () => {
     it('retorna defaults seguros para documento nulo ou vazio', () => {

@@ -1,0 +1,56 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{46247243804}",
+      "HistoricalBasicData": {
+        "CurrentName": "MATHEUS GONCALVES DOS SANTOS",
+        "CurrentStatus": "REGULAR",
+        "CurrentGender": "M",
+        "BirthDate": "1997-10-30T00:00:00Z",
+        "Age": 28,
+        "TaxIdNumber": "46247243804",
+        "HasObitIndication": false,
+        "NameChangeHistory": [
+          {
+            "ChangedDate": "2015-10-30T00:00:00Z",
+            "Name": "MATHEUS GONCALVES DOS SANTOS",
+            "Gender": "M"
+          }
+        ],
+        "StatusChangeHistory": [
+          {
+            "ChangedDate": "2015-10-30T00:00:00Z",
+            "Status": "REGULAR"
+          }
+        ],
+        "NameLifetimePercent": {
+          "MATHEUS GONCALVES DOS SANTOS": 1
+        },
+        "GenderLifetimePercent": {
+          "M": 1
+        },
+        "StatusLifetimePercent": {
+          "REGULAR": 1
+        },
+        "NameChangesTotal": 0,
+        "StatusChangesTotal": 0,
+        "LastNameChangeDate": "0001-01-01T00:00:00",
+        "LastStatusChangeDate": "0001-01-01T00:00:00",
+        "FirstNameChangeDate": "0001-01-01T00:00:00",
+        "FirstStatusChangeDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "e6845aa3-9345-42c9-b889-12135f719a67",
+  "ElapsedMilliseconds": 55,
+  "QueryDate": "2026-04-25T12:33:35.5616941Z",
+  "Status": {
+    "historical_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

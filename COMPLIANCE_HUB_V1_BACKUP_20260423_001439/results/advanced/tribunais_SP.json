@@ -1,0 +1,64 @@
+{
+  "items": [
+    {
+      "id": 13,
+      "nome": "Tribunal Regional do Trabalho da 2ª Região",
+      "sigla": "TRT-2",
+      "categoria": null,
+      "estados": [
+        {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "nome": "Tribunal Regional do Trabalho da 15ª Região",
+      "sigla": "TRT-15",
+      "categoria": null,
+      "estados": [
+        {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        }
+      ]
+    },
+    {
+      "id": 62,
+      "nome": "Tribunal Regional Eleitoral de São Paulo",
+      "sigla": "TRE-SP",
+      "categoria": null,
+      "estados": [
+        {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        }
+      ]
+    },
+    {
+      "id": 102,
+      "nome": "Tribunal de Justiça de São Paulo",
+      "sigla": "TJSP",
+      "categoria": null,
+      "estados": [
+        {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        }
+      ]
+    },
+    {
+      "id": 106,
+      "nome": "Tribunal de Justiça Militar do Estado de São Paulo",
+      "sigla": "TJME-SP",
+      "categoria": null,
+      "estados": [
+        {
+          "nome": "São Paulo",
+          "sigla": "SP"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{42975374000172}",
+      "ExtendedAddresses": {
+        "TotalAddresses": 1,
+        "TotalActiveAddresses": 1,
+        "TotalWorkAddresses": 0,
+        "TotalPersonalAddresses": 1,
+        "TotalUniqueAddresses": 0,
+        "TotalAddressPassages": 2,
+        "TotalBadAddressPassages": 0,
+        "OldestAddressPassageDate": "2021-08-04T00:00:00Z",
+        "NewestAddressPassageDate": "2026-04-11T00:00:00Z",
+        "Addresses": [
+          {
+            "OwnHeadquarters": false,
+            "Typology": "AV",
+            "Title": "",
+            "AddressMain": "CANDIDO DE ABREU",
+            "Number": "526",
+            "Complement": "CJ 1012 ANDAR 10 COND CENTRO CMR CANDIDO DBL CANDIDO DE ABREU BL",
+            "Neighborhood": "CENTRO CIVICO",
+            "ZipCode": "80530905",
+            "City": "CURITIBA",
+            "State": "PR",
+            "Country": "BRASIL",
+            "Type": "OFFICIAL REGISTRATION",
+            "AddressCurrentlyInRFSite": true,
+            "ComplementType": "APARTAMENT",
+            "BuildCode": "59C4EAC950BC84D7A105625204370F478F85AE4C672B2CDEF33FD67D95B3D6D8",
+            "BuildingCode": "59C4EAC950BC84D7A105625204370F478F85AE4C672B2CDEF33FD67D95B3D6D8",
+            "HouseholdCode": "B96A32E04A4077E67FF67218965F093F22CB863FE433E1F4E074E59D9F7C9AC7",
+            "AddressEntityAge": 1711,
+            "AddressEntityTotalPassages": 2,
+            "AddressEntityBadPassages": 0,
+            "AddressEntityCrawlingPassages": 2,
+            "AddressEntityValidationPassages": 0,
+            "AddressEntityQueryPassages": -1,
+            "AddressEntityMonthAveragePassages": 0.04,
+            "AddressGlobalAge": 2516,
+            "AddressGlobalTotalPassages": 10,
+            "AddressGlobalBadPassages": 0,
+            "AddressGlobalCrawlingPassages": 10,
+            "AddressGlobalValidationPassages": 0,
+            "AddressGlobalQueryPassages": -1,
+            "AddressGlobalMonthAveragePassages": 0.12,
+            "AddressNumberOfEntities": 5,
+            "Priority": 1,
+            "IsMainForEntity": true,
+            "IsIndirectAssociation": false,
+            "IsRecentForEntity": true,
+            "IsMainForOtherEntity": true,
+            "IsRecentForOtherEntity": true,
+            "IsActive": true,
+            "IsRatified": true,
+            "IsLikelyFromAccountant": false,
+            "LastValidationDate": "0001-01-01T00:00:00",
+            "EntityFirstPassageDate": "2021-08-04T00:00:00Z",
+            "EntityLastPassageDate": "2026-04-11T00:00:00Z",
+            "GlobalFirstPassageDate": "2019-05-22T00:00:00Z",
+            "GlobalLastPassageDate": "2026-04-11T00:00:00Z",
+            "CreationDate": "2021-08-04T00:00:00Z",
+            "LastUpdateDate": "2026-04-11T00:00:00Z",
+            "HasOptIn": false,
+            "Latitude": -25.41975,
+            "Longitude": -49.2687
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "0452b8d4-7222-48ce-a24e-3e8534eceb0c",
+  "ElapsedMilliseconds": 87,
+  "QueryDate": "2026-04-25T12:52:40.7782584Z",
+  "Status": {
+    "addresses_extended": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

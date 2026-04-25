@@ -6,7 +6,7 @@ import {
     resolveSignalReviewLevel,
     maxPolicyLevel,
     V2_REVIEW_POLICY_VERSION,
-} from './v2ReviewPolicy.cjs';
+} from './v2ReviewPolicy.js';
 
 describe('v2ReviewPolicy — maxPolicyLevel', () => {
     it('retorna none para array vazio', () => {

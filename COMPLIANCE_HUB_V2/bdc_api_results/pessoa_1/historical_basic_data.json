@@ -1,0 +1,56 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{48052053854}",
+      "HistoricalBasicData": {
+        "CurrentName": "ANDRE LUIZ CRUZ DOS SANTOS",
+        "CurrentStatus": "REGULAR",
+        "CurrentGender": "M",
+        "BirthDate": "1997-07-24T00:00:00Z",
+        "Age": 28,
+        "TaxIdNumber": "48052053854",
+        "HasObitIndication": false,
+        "NameChangeHistory": [
+          {
+            "ChangedDate": "2015-07-24T00:00:00Z",
+            "Name": "ANDRE LUIZ CRUZ DOS SANTOS",
+            "Gender": "M"
+          }
+        ],
+        "StatusChangeHistory": [
+          {
+            "ChangedDate": "2015-07-24T00:00:00Z",
+            "Status": "REGULAR"
+          }
+        ],
+        "NameLifetimePercent": {
+          "ANDRE LUIZ CRUZ DOS SANTOS": 1
+        },
+        "GenderLifetimePercent": {
+          "M": 1
+        },
+        "StatusLifetimePercent": {
+          "REGULAR": 1
+        },
+        "NameChangesTotal": 0,
+        "StatusChangesTotal": 0,
+        "LastNameChangeDate": "0001-01-01T00:00:00",
+        "LastStatusChangeDate": "0001-01-01T00:00:00",
+        "FirstNameChangeDate": "0001-01-01T00:00:00",
+        "FirstStatusChangeDate": "0001-01-01T00:00:00"
+      }
+    }
+  ],
+  "QueryId": "30ce7db9-3295-4611-83db-d1a26e824e1b",
+  "ElapsedMilliseconds": 70,
+  "QueryDate": "2026-04-25T12:32:07.5193876Z",
+  "Status": {
+    "historical_basic_data": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

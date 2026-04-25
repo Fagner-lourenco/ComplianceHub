@@ -1,0 +1,84 @@
+{
+  "Result": [
+    {
+      "MatchKeys": "doc{11819916766}",
+      "ExtendedPhones": {
+        "TotalPhones": 1,
+        "TotalActivePhones": 0,
+        "TotalWorkPhones": 0,
+        "TotalPersonalPhones": 1,
+        "TotalUniquePhones": 1,
+        "TotalPhonePassages": 1,
+        "TotalBadPhonePassages": 0,
+        "TotalLast3MonthsPassages": 0,
+        "TotalLast6MonthsPassages": 0,
+        "TotalLast12MonthsPassages": 1,
+        "TotalLast18MonthsPassages": 1,
+        "OldestPhonePassageDate": "2025-08-19T19:33:47",
+        "NewestPhonePassageDate": "2025-08-19T19:33:47",
+        "Phones": [
+          {
+            "Number": "982343791",
+            "AreaCode": "21",
+            "CountryCode": "55",
+            "Complement": "",
+            "Type": "MOBILE",
+            "PhoneCurrentlyInRFSite": false,
+            "PhoneEntityAge": 1,
+            "PhoneEntityTotalPassages": 1,
+            "PhoneEntityBadPassages": 0,
+            "PhoneEntityCrawlingPassages": 0,
+            "PhoneEntityValidationPassages": 0,
+            "PhoneEntityQueryPassages": 1,
+            "PhoneEntityMonthAveragePassages": 1,
+            "PhoneGlobalAge": 1,
+            "PhoneGlobalTotalPassages": 1,
+            "PhoneGlobalBadPassages": 0,
+            "PhoneGlobalCrawlingPassages": 0,
+            "PhoneGlobalValidationPassages": 0,
+            "PhoneGlobalQueryPassages": 1,
+            "PhoneGlobalMonthAveragePassages": 1,
+            "Last3MonthsPassages": 0,
+            "Last6MonthsPassages": 0,
+            "Last12MonthsPassages": 1,
+            "Last18MonthsPassages": 1,
+            "PhoneNumberOfEntities": 1,
+            "PhoneNumberOfFamilyRelatedEntities": 0,
+            "PhoneNumberOfRelatedEntities": 0,
+            "Priority": 1,
+            "IsMainForEntity": true,
+            "IsRecentForEntity": false,
+            "IsMainForOtherEntity": false,
+            "IsRecentForOtherEntity": false,
+            "IsActive": false,
+            "IsLikelyFromAccountant": false,
+            "IsInDoNotCallList": false,
+            "CurrentCarrier": "TIM",
+            "PlanType": "",
+            "LastValidationDate": "0001-01-01T00:00:00",
+            "EntityFirstPassageDate": "2025-08-19T19:33:47",
+            "EntityLastPassageDate": "2025-08-19T19:33:47",
+            "GlobalFirstPassageDate": "2025-08-19T19:33:47",
+            "GlobalLastPassageDate": "2025-08-19T19:33:47",
+            "CreationDate": "2025-08-30T00:00:00Z",
+            "LastUpdateDate": "2025-08-19T19:33:47",
+            "PortabilityHistory": [],
+            "HasOptIn": false
+          }
+        ]
+      }
+    }
+  ],
+  "QueryId": "56877e6c-8c7a-477e-9bd2-073caeac746b",
+  "ElapsedMilliseconds": 152,
+  "QueryDate": "2026-04-25T10:59:31.3973082Z",
+  "Status": {
+    "phones_extended": [
+      {
+        "Code": 0,
+        "Message": "OK"
+      }
+    ]
+  },
+  "Evidences": {}
+}

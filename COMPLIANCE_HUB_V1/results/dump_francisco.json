@@ -1,0 +1,874 @@
+{
+  "pepFlag": "NEGATIVE",
+  "bigdatacorpIsSanctioned": false,
+  "djenFilteredOutCount": 0,
+  "aiHomonymConfidence": "LOW",
+  "hiringUf": "",
+  "juditWarrantCount": 1,
+  "bigdatacorpProcessNotes": "BigDataCorp: 8 processo(s) encontrado(s). 5 criminal(is) com CPF confirmado. 1 processo(s) ativo(s). 7 com CPF exato confirmado.\n1. 00530230220208060167 | DADOS OCULTADOS: SEGREDO DE JUSTIÇA\n2. 00134174020218060293 | CRIMINAL | CONTRAVENÇÕES PENAIS | REQUERIDO | ARQUIVADO | CPF EXATO\n3. 02056591120248060167 | CIVEL | ALIMENTOS | EXECUTADO | ATIVO | CPF EXATO\n4. 00407130820138060167 | CONTRAVENÇÕES PENAIS | AUTOR DO FATO | ARQUIVADO | CPF EXATO\n5. 30015750220218060167 | ESPECIAL CRIMINAL | PORTE DE ARMA (BRANCA) | AUTOR DO FATO | ENCERRADO | CPF EXATO\n6. 02027437220228060167 | CRIMINAL | AMEAÇA | REU | JULGADO | CPF EXATO | 3 decisao(oes)\n7. 00121984520228060167 | CRIMINAL | CONTRAVENÇÕES PENAIS | AUTOR DO FATO | ARQUIVADO | CPF EXATO\n8. 00407130820138060167 | CRIMINAL | CONTRAVENÇÕES PENAIS | APELADO | ENCERRADO | CPF EXATO",
+  "criminalEvidenceQuality": "HARD_FACT",
+  "juditRawPayloads": {
+    "lawsuits": {
+      "request": {
+        "url": "https://lawsuits.production.judit.io/lawsuits",
+        "body": {
+          "search": {
+            "search_key": "050.232.903-36",
+            "search_type": "cpf"
+          },
+          "process_status": true
+        }
+      },
+      "responseCount": 1,
+      "method": "sync",
+      "requestId": "4eeace3b-0f28-4234-b751-8bd9090570d8",
+      "consultedAt": "2026-04-14T02:29:41.811Z"
+    },
+    "execution": {
+      "method": "async-callback",
+      "callbackUrl": "https://juditwebhook-dowqa75f4a-rj.a.run.app",
+      "responseCount": 0,
+      "webhookPending": true,
+      "requestId": "cef1b975-2190-4fe4-8cad-845dca0b3579",
+      "consultedAt": "2026-04-14T02:29:42.828Z",
+      "webhookCompletedAt": "2026-04-14T02:29:59.475Z",
+      "request": {
+        "url": "https://requests.prod.judit.io/requests",
+        "body": {
+          "search": {
+            "search_key": "050.232.903-36",
+            "search_type": "cpf",
+            "response_type": "execution"
+          },
+          "callback_url": "https://juditwebhook-dowqa75f4a-rj.a.run.app"
+        }
+      }
+    },
+    "warrant": {
+      "request": {
+        "body": {
+          "search": {
+            "search_key": "050.232.903-36",
+            "search_type": "cpf",
+            "response_type": "warrant"
+          },
+          "callback_url": "https://juditwebhook-dowqa75f4a-rj.a.run.app"
+        },
+        "url": "https://requests.prod.judit.io/requests"
+      },
+      "webhookCompletedAt": "2026-04-14T02:30:32.275Z",
+      "responseCount": 1,
+      "callbackUrl": "https://juditwebhook-dowqa75f4a-rj.a.run.app",
+      "method": "async-callback",
+      "consultedAt": "2026-04-14T02:29:42.828Z",
+      "requestId": "e7f62c9d-0a88-4474-ab9d-63e52d221f11",
+      "webhookPending": true
+    }
+  },
+  "aiHomonymStructured": {
+    "evidenceAgainst": [
+      "AmbiguousCandidate não possui hasExactCpfMatch (NO_EXACT_CPF_MATCH) e evidenceOrigin=NAME_ONLY.",
+      "ReferenceCandidates mostram múltiplos CNJs com hasExactCpfMatch=true, sugerindo possibilidade de homônimos/associações por nome em outros processos."
+    ],
+    "justification": "Há evidência ambígua por nome (BigDataCorp CNJ 00530230220208060167), mas não há match exato de CPF nesse achado. Como existem múltiplos referenciais com CPF exato, não dá para confirmar o mesmo processo/indivíduo.",
+    "decision": "UNCERTAIN",
+    "unknowns": [
+      "CPF exato não confirmado para o AmbiguousCandidate (CNJ 00530230220208060167).",
+      "Consistência de identidade/geo do AmbiguousCandidate: identityConsistency=LOW e geoConsistency=UNKNOWN.",
+      "Não informado se o AmbiguousCandidate compartilha o mesmo CPF hard-confirmado (Judit/BigDataCorp) do reference."
+    ],
+    "processAssessments": [
+      {
+        "decision": "UNCERTAIN",
+        "cnj": "00530230220208060167",
+        "reason": "Match apenas por nome (NAME_ONLY) e sem confirmação de CPF exato no próprio achado; identidadeConsistency baixa e múltiplos referenciais com CPF exato aumentam risco de homônimo."
+      }
+    ],
+    "homonymRisk": "MEDIUM",
+    "confidence": "LOW",
+    "recommendedAction": "MANUAL_REVIEW",
+    "evidenceFor": [
+      "AmbiguousCandidate (BigDataCorp) CNJ 00530230220208060167 com matchStrength NAME_ONLY (viaNameOnly=true).",
+      "ProviderCoverage indica mistura de evidência forte e fraca (MIXED_STRONG_AND_WEAK_EVIDENCE)."
+    ]
+  },
+  "correctionRequestedAt": "2026-04-07T17:43:48.768Z",
+  "aiError": null,
+  "clientSubmissionNotes": "",
+  "aiModel": "gpt-5.4-nano",
+  "djenCriminalFlag": "NEGATIVE",
+  "correctionReason": "Outro",
+  "otherSocialUrls": [],
+  "bigdatacorpActiveWarrants": [
+    {
+      "agency": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+      "status": "Pendente de Cumprimento",
+      "source": "Conselho Nacional de Justiça",
+      "processNumber": "02047235420228060167",
+      "matchRate": 100,
+      "decision": null,
+      "county": "Sobral",
+      "isDomestic": true,
+      "imprisonmentKind": "Civil",
+      "arrestWarrantNumber": "0204723542022806016701000326",
+      "magistrate": "DANIEL GONÇALVES GONDIM",
+      "expirationDate": "2027-11-17T00:00:00",
+      "penaltyTime": "60 (contados a partir da data da prisão)"
+    },
+    {
+      "source": "Conselho Nacional de Justiça",
+      "status": "Pendente de Cumprimento",
+      "agency": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+      "expirationDate": "2027-01-15T00:00:00",
+      "magistrate": "WYRLLENSON FLáVIO BARBOSA SOARES",
+      "penaltyTime": null,
+      "imprisonmentKind": "Civil",
+      "arrestWarrantNumber": "0204723542022806016701000122",
+      "county": "Sobral",
+      "isDomestic": true,
+      "decision": "Em face do exposto, decreto a custódia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituição Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias, ou até que seja pago o valor devido, no qual devem ser incluídas as parcelas que se vencerem até o dia do pagamento, como constou expressamente do mandado de intimação. Expeça-se o mandado de prisão a ser cumprida no regime fechado (prazo de dois anos) e consigne-se nele o valor atualizado da dívid",
+      "matchRate": 100,
+      "processNumber": "02047235420228060167"
+    }
+  ],
+  "bigdatacorpProfessionHistory": [
+    {
+      "income": 3000,
+      "companyName": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+      "sector": "PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+      "source": "RAIS",
+      "status": "ACTIVE",
+      "startDate": "2014-02-03T00:00:00Z",
+      "level": "EMPLOYEE",
+      "companyCnpj": "05531239000101",
+      "incomeRange": "2 A 4 SM",
+      "endDate": "9999-12-31T23:59:59.9999999"
+    }
+  ],
+  "criminalFlag": "POSITIVE",
+  "warrantFlag": "POSITIVE",
+  "email": "",
+  "negativePartialSafetyNetTriggered": false,
+  "djenEnrichedAt": "2026-04-14T02:29:47.417Z",
+  "escavadorEnrichmentStatus": "SKIPPED",
+  "djenConfirmedTotal": 0,
+  "tenantName": "TechCorp Inc.",
+  "aiTokens": {
+    "output": 1030,
+    "input": 2872
+  },
+  "bigdatacorpLastLawsuitDate": "2024-10-03T11:50:09",
+  "bigdatacorpTotalAsAuthor": 0,
+  "bigdatacorpEmployerCnpj": "05531239000101",
+  "juditCostBRL": 2,
+  "bigdatacorpNamesakeCount": 1,
+  "juditEnrichmentStatus": "DONE",
+  "bigdatacorpActiveCount": 1,
+  "aiHomonymTriggered": true,
+  "providerDivergence": "MEDIUM",
+  "criminalSeverity": "HIGH",
+  "assigneeId": null,
+  "bigdatacorpEnrichmentStatus": "DONE",
+  "bigdatacorpFiscalRegion": "CE-MA-PI",
+  "priority": "NORMAL",
+  "negativePartialSafetyNetReasons": [],
+  "juditHomonymCount": 0,
+  "sanctionNotes": "BigDataCorp KYC: Nao e PEP. SANCIONADO ATUALMENTE: . (47 sancao(oes) descartada(s) por MatchRate < 90%) (2 entrada(s) de fonte domestica/CNJ tratada(s) como dados judiciais, nao como sancao internacional)",
+  "bigdatacorpElectoralDonationTotal": 0,
+  "aiHomonymContextVersion": "v1-derived-geo",
+  "coverageNotes": [
+    "Escavador sem retorno, porem BigDataCorp confirmou processos — divergencia reduzida.",
+    "Ha mistura de evidencia forte com ruido por nome/homonimo."
+  ],
+  "aiHomonymStructuredOk": true,
+  "bigdatacorpIsEmployed": true,
+  "bigdatacorpCurrentJob": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+  "aiProvidersIncluded": [
+    "Judit",
+    "BigDataCorp"
+  ],
+  "draftSavedAt": "2026-04-07T13:19:36.512Z",
+  "bigdatacorpFatherName": null,
+  "juditError": null,
+  "bigdatacorpCriminalFlag": "POSITIVE",
+  "djenLaborCount": 0,
+  "juditExecutions": [],
+  "bigdatacorpEmployer": "SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA",
+  "bigdatacorpGateResult": {
+    "source": "bigdatacorp-basicdata",
+    "nameFound": "FRANCISCO TACIANO DE SOUSA",
+    "reason": "OK",
+    "hasDeathRecord": false,
+    "cpfStatus": "REGULAR",
+    "nameSimilarity": 1,
+    "consultedAt": "2026-04-14T02:29:42.723Z",
+    "passed": true,
+    "nameProvided": "FRANCISCO TACIANO DE SOUSA"
+  },
+  "bigdatacorpSanctionDetails": [
+    {
+      "magistrate": "DANIEL GONÇALVES GONDIM",
+      "expirationDate": "2027-11-17T00:00:00",
+      "penaltyTime": "60 (contados a partir da data da prisão)",
+      "imprisonmentKind": "Civil",
+      "arrestWarrantNumber": "0204723542022806016701000326",
+      "isCurrentlyPresent": true,
+      "processNumber": "02047235420228060167",
+      "type": "Law Enforcement",
+      "county": "Sobral",
+      "matchRate": 100,
+      "decisionSummary": null,
+      "source": "Conselho Nacional de Justiça",
+      "standardizedType": "ARREST WARRANTS",
+      "wasRecentlyPresent": true,
+      "status": "Pendente de Cumprimento",
+      "agency": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL"
+    },
+    {
+      "isCurrentlyPresent": false,
+      "magistrate": "WYRLLENSON FLáVIO BARBOSA SOARES",
+      "penaltyTime": null,
+      "expirationDate": "2027-01-15T00:00:00",
+      "arrestWarrantNumber": "0204723542022806016701000122",
+      "imprisonmentKind": "Civil",
+      "county": "Sobral",
+      "matchRate": 100,
+      "decisionSummary": "Em face do exposto, decreto a custódia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituição Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias, ou até que seja pago o valor devido, no qual devem ser incluídas as parcelas que se vencerem até o dia do pagamento, como constou expressamente do mandado de intimação. Expeça-se o mandado de prisão a ser cumprida no regime fechado (prazo de dois anos) e consigne-se nele o valor atualizado da dívid",
+      "processNumber": "02047235420228060167",
+      "type": "Law Enforcement",
+      "standardizedType": "ARREST WARRANTS",
+      "source": "Conselho Nacional de Justiça",
+      "status": "Pendente de Cumprimento",
+      "agency": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+      "wasRecentlyPresent": false
+    }
+  ],
+  "juditExecutionFlag": "NEGATIVE",
+  "aiHomonymRecommendedAction": "MANUAL_REVIEW",
+  "bigdatacorpCostBRL": 0.2,
+  "bigdatacorpCriminalCount": 5,
+  "laborNotes": "Nenhum processo trabalhista relevante detectado.",
+  "department": "",
+  "createdDateKey": "2026-04-06",
+  "juditActiveWarrantCount": 1,
+  "bigdatacorpProcessTotal": 8,
+  "aiHomonymTokens": {
+    "output": 410,
+    "input": 2759
+  },
+  "juditWarrantNotes": "ALERTA JUDIT: 1 mandado(s) encontrado(s), 1 PENDENTE(S) DE CUMPRIMENTO.\n1. warrant_of_arrest | provisional | Pendente de Cumprimento | TJCE | Emitido: 2025-11-17T00:00:00.000Z | 0204723-54.2022.8.06.0167",
+  "aiPromptVersion": "v3-evidence-based",
+  "deterministicPrefill": {
+    "executiveSummary": "Analise criminal: POSITIVO (severidade HIGH). 4 processo(s) criminal(is) unico(s). Principais: 0202743-72.2022.8.06.0167 — REAL, VIOLÊNCIA DOMÉSTICA CONTRA A MULHER; 0013417-40.2021.8.06.0293 — CONTRAVENCOES PENAIS; 3001575-02.2021.8.06.0167 — PORTE DE ARMA (BRANCA). Analise trabalhista: sem apontamentos relevantes. Mandados: POSITIVO — 3 mandado(s) ativo(s) identificado(s). Cobertura: SATISFATORIA — fontes consultadas retornaram dados consistentes. Divergencia: MEDIA — diferenca parcial entre fontes detectada. Risco consolidado: ALTO (score 90).",
+    "criminalNotes": "Criminal POSITIVO (severidade HIGH, evidencia HARD_FACT): 4 processo(s) criminal(is) unico(s) identificado(s).\n\nProcessos criminais/penais (4 unico(s)):\n- 0202743-72.2022.8.06.0167 | Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO | Assunto: REAL, VIOLÊNCIA DOMÉSTICA CONTRA A MULHER | Status: Finalizado | Polo: Passive | Tribunal: TJCE | Vara: 3ª VARA CIVEL DA COMARCA DE SOBRAL | Comarca: SOBRAL | Data: 2022-05-03T15:51:03.000Z | Match: CPF confirmado | Papel: REU | Decisao: JULGO PROCEDENTE A PRETENSAO PUNITIVA ESTATAL, DEDUZIDA NA DENUNCIA, PARA CONDENAR O REU FRANCISCO TACIANO DE SOUSA, COMO INCURSO NA PENA DO ARTIGOS 147 DO CODIGO PENAL E 24-A DA LEI N 11.340/06 C/C O\n- 0013417-40.2021.8.06.0293 | Classe: MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA) - CRIMINAL | Assunto: CONTRAVENCOES PENAIS | Status: ARQUIVADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2022-11-16T12:50:51 | Match: CPF confirmado | Papel: REQUERIDO\n- 3001575-02.2021.8.06.0167 | Classe: TERMO CIRCUNSTANCIADO | Assunto: PORTE DE ARMA (BRANCA) | Status: ENCERRADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2024-08-26T16:26:46 | Match: CPF confirmado | Papel: AUTOR DO FATO\n- 0012198-45.2022.8.06.0167 | Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO | Assunto: CONTRAVENCOES PENAIS | Status: ARQUIVADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2024-01-24T18:42:05 | Match: CPF confirmado | Papel: AUTOR DO FATO\n\nMandados de prisao ativos (1):\n- 0204723-54.2022.8.06.0167 | warrant_of_arrest | provisional | Pendente de Cumprimento | 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Emitido: 2025-11-17T00:00:00.000Z\n2 mandado(s) complementar(es) ativo(s) detectado(s).\nDivergencia entre fontes: MEDIUM.",
+    "metadata": {
+      "isComplex": true,
+      "triggersActive": [
+        "HOMONYM_AMBIGUITY"
+      ],
+      "generatedAt": "2026-04-14T02:31:12.159Z",
+      "version": "v4-deterministic-prefill",
+      "source": "deterministic"
+    },
+    "keyFindings": [
+      "1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento.",
+      "4 processo(s) criminal(is) inativo(s).",
+      "Homonimia ou ambiguidade detectada em parte dos achados."
+    ],
+    "laborNotes": "Nenhum processo trabalhista relevante identificado nas fontes consultadas.",
+    "warrantNotes": "Mandado POSITIVO: 1 mandado(s) identificado(s) (3 ativo(s)).\n\nMandados identificados (3):\n- 0204723-54.2022.8.06.0167 | warrant_of_arrest / provisional | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Emitido: 2025-11-17T00:00:00.000Z\n- 0204723-54.2022.8.06.0167 | Tipo: Civil | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Comarca: Sobral | Magistrado: DANIEL GONÇALVES GONDIM | Pena: 60 (contados a partir da data da prisão) | Validade: 2027-11-17\n- 0204723-54.2022.8.06.0167 | Tipo: Civil | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Comarca: Sobral | Magistrado: WYRLLENSON FLáVIO BARBOSA SOARES | Validade: 2027-01-15 | Decisao: Em face do exposto, decreto a custódia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituição Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias,\nATENCAO: 2 mandado(s) referenciam o mesmo processo — provavel sobreposicao (contagem pode estar inflada).",
+    "finalJustification": "Veredito: NAO RECOMENDADO.\n(veredito derivado automaticamente das flags — analista ainda nao concluiu.)\nSeveridade criminal: HIGH.\n\nEvidencias materiais:\n- 4 processo(s) criminal(is) unico(s): 0202743-72.2022.8.06.0167 / REAL, VIOLÊNCIA DOMÉSTICA CONTRA A MULHER / Finalizado / TJCE / Match: CPF confirmado; 0013417-40.2021.8.06.0293 / CONTRAVENCOES PENAIS / ARQUIVADO / TJCE / Match: CPF confirmado; 3001575-02.2021.8.06.0167 / PORTE DE ARMA (BRANCA) / ENCERRADO / TJCE / Match: CPF confirmado; 0012198-45.2022.8.06.0167 / CONTRAVENCOES PENAIS / ARQUIVADO / TJCE / Match: CPF confirmado.\n- 3 mandado(s): 0204723-54.2022.8.06.0167 / warrant_of_arrest / provisional / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL; 0204723-54.2022.8.06.0167 / Tipo: Civil / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL; 0204723-54.2022.8.06.0167 / Tipo: Civil / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL.\n\nAchados-chave:\n- 1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento.\n- 4 processo(s) criminal(is) inativo(s).\n- Homonimia ou ambiguidade detectada em parte dos achados.\nDivergencia entre fontes: MEDIUM.\n\nJustificativa: diante dos apontamentos materiais identificados (criminal, mandados ou sancoes), a continuidade do processo nao e recomendada sem avaliacao complementar."
+  },
+  "bigdatacorpTotalAsDefendant": 8,
+  "bigdatacorpEnrichedAt": "2026-04-14T02:29:42.786Z",
+  "juditExecutionCount": 0,
+  "juditWarrants": [
+    {
+      "status": "Pendente de Cumprimento",
+      "arrestType": "provisional",
+      "judgementSummary": "Em face do exposto, decreto a custodia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituicao Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias ou ate que seja pago o valor devido, no qual devem ser incluidas as parcelas que se vencerem ate o dia do pagamento, como constou expressamente do mandado de intimacao. Inclua-se no BNMP 3.0. DETERMINO QUE O MANDADO DE PRISAO CIVIL SEJA ENCAMINHADO PARA A CEMAN PARA FINS DE CUMPRIMENTO.",
+      "code": "0204723-54.2022.8.06.0167",
+      "duration": null,
+      "warrantType": "warrant_of_arrest",
+      "entityBirthDate": "1991-08-16T00:00:00.000Z",
+      "durationYears": null,
+      "issueDate": "2025-11-17T00:00:00.000Z",
+      "entityName": "FRANCISCO TACIANO DE SOUSA",
+      "regime": null,
+      "court": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+      "durationMonths": null,
+      "entityDocument": "050.232.903-36",
+      "lawType": [],
+      "tribunalAcronym": "TJCE",
+      "expirationDate": "2026-04-14T02:30:21.245Z",
+      "entityGender": "male"
+    }
+  ],
+  "bigdatacorpIncomeRange": "2 A 4 SM",
+  "criminalNotes": "Criminal POSITIVO: evidencia forte confirmada por BigDataCorp, Judit, Judit/Warrant.\nMandado ativo confirmado (1 via Judit, 2 via BigDataCorp).",
+  "createdAt": "2026-04-06T14:12:32.972Z",
+  "hasNotes": false,
+  "aiHomonymFromCache": false,
+  "enrichedAt": null,
+  "djenEnrichmentStatus": "DONE",
+  "bigdatacorpQueryDate": "2026-04-14T02:29:42.753Z",
+  "aiHomonymDecision": "UNCERTAIN",
+  "aiHomonymHardFacts": [
+    "ACTIVE_WARRANT",
+    "JUDIT_EXACT_CPF_MATCH",
+    "BIGDATACORP_EXACT_CPF_MATCH"
+  ],
+  "hasEvidence": false,
+  "bigdatacorpNameUniqueness": 1,
+  "bigdatacorpLaborCount": 0,
+  "bigdatacorpAge": 34,
+  "bigdatacorpWasSanctioned": false,
+  "bigdatacorpNationality": "BRASILEIRA",
+  "tenantId": "techcorp-inc",
+  "bigdatacorpSanctionTypes": [],
+  "negativePartialSafetyNetEligible": false,
+  "bigdatacorpKycNotes": "BigDataCorp KYC: Nao e PEP. Sem sancoes detectadas. ALERTA: 2 mandado(s) de prisao. (47 sancao(oes) descartada(s) por MatchRate < 90%) (2 entrada(s) de fonte domestica/CNJ tratada(s) como dados judiciais, nao como sancao internacional)",
+  "bigdatacorpHasTerrorism": false,
+  "correctedAt": "2026-04-07T17:44:43.739Z",
+  "candidateName": "FRANCISCO TACIANO DE SOUSA",
+  "corrections": [
+    {
+      "submittedBy": "teste@TechCorp.com",
+      "submittedAt": "2026-04-07T17:44:43.706Z"
+    }
+  ],
+  "escavadorError": null,
+  "djenError": null,
+  "correctionNotes": "teste",
+  "aiHomonymCostUsd": 0.001064,
+  "bigdatacorpError": null,
+  "reviewRecommended": false,
+  "bigdatacorpHasArrestWarrant": true,
+  "updatedAt": "2026-04-14T02:31:12.171Z",
+  "bigdatacorpLaborFlag": "NEGATIVE",
+  "djenComunicacoes": [],
+  "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0202743-72.2022.8.06.0167 | DIREITO PENAL | Fase: Arquivado | REU | polo Passive | Finalizado",
+  "juditProcessTotal": 1,
+  "status": "PENDING",
+  "bigdatacorpPepLevel": null,
+  "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s).",
+  "requestedBy": "teste@TechCorp.com",
+  "bigdatacorpName": "FRANCISCO TACIANO DE SOUSA",
+  "bigdatacorpIsElectoralDonor": false,
+  "aiFromCache": false,
+  "bigdatacorpPepDetails": [],
+  "candidatePosition": "",
+  "bigdatacorpCpfStatus": "REGULAR",
+  "juditRiskProcessCount": 1,
+  "bigdatacorpHasEnvironmentalInfraction": false,
+  "juditCriminalCount": 1,
+  "bigdatacorpTotalIncome": 3000,
+  "bigdatacorpSanctionSources": [],
+  "juditEnrichmentStrategy": "datalake",
+  "bigdatacorpHasSlaveryCrime": false,
+  "laborFlag": "NEGATIVE",
+  "enabledPhases": [
+    "criminal",
+    "labor",
+    "warrant"
+  ],
+  "djenCivelCount": 0,
+  "coverageLevel": "HIGH_COVERAGE",
+  "juditSources": {
+    "warrant": {
+      "provider": "judit",
+      "activeWarrants": 1,
+      "endpoint": "warrants",
+      "requestId": null,
+      "consultedAt": "2026-04-14T02:30:32.175Z",
+      "totalWarrants": 1
+    },
+    "execution": {
+      "totalExecutions": 0,
+      "endpoint": "executions",
+      "provider": "judit",
+      "requestId": null,
+      "consultedAt": "2026-04-14T02:29:59.475Z"
+    },
+    "lawsuits": {
+      "provider": "judit",
+      "endpoint": "lawsuits",
+      "requestId": "4eeace3b-0f28-4234-b751-8bd9090570d8",
+      "consultedAt": "2026-04-14T02:29:41.810Z",
+      "hasCriminal": true,
+      "totalProcessos": 1,
+      "hasHomonyms": false
+    }
+  },
+  "juditCriminalFlag": "POSITIVE",
+  "createdMonthKey": "2026-04",
+  "bigdatacorpProfessionNotes": "BigDataCorp Profissao: 1 registro(s). Registro de vinculo ativo (ref. 2014). Ultimo registro: SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA (PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO). CNPJ: 05531239000101. Renda: R$ 3.000 (2 A 4 SM).\n1. SOLUCAO SERVICOS COMERCIO E CONSTRUCAO LTDA | PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO | EMPLOYEE | ACTIVE | R$ 3000",
+  "bigdatacorpProcessos": [
+    {
+      "specificRole": null,
+      "numero": "00530230220208060167",
+      "estado": null,
+      "cnjSubject": null,
+      "decisions": null,
+      "lastMovementDate": null,
+      "courtDistrict": null,
+      "isLabor": false,
+      "isCriminal": false,
+      "matchType": "DOC",
+      "tipo": null,
+      "assunto": null,
+      "lawsuitAgeDays": null,
+      "isDirectCpfMatch": false,
+      "courtType": null,
+      "status": "DADOS OCULTADOS: SEGREDO DE JUSTIÇA",
+      "cnjBroadSubject": null,
+      "value": null,
+      "courtLevel": null,
+      "cnjProcedure": null,
+      "polo": null,
+      "partyType": null,
+      "judgingBody": null,
+      "courtName": null
+    },
+    {
+      "judgingBody": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL - SOBRAL CRIME",
+      "courtName": "TJCE",
+      "status": "ARQUIVADO",
+      "cnjBroadSubject": "DIREITO PENAL",
+      "value": null,
+      "courtType": "CRIMINAL",
+      "polo": "PASSIVE",
+      "partyType": null,
+      "courtLevel": "1",
+      "cnjProcedure": "MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA) - CRIMINAL",
+      "isCriminal": true,
+      "courtDistrict": "SOBRAL",
+      "isLabor": false,
+      "assunto": "CONTRAVENCOES PENAIS",
+      "isDirectCpfMatch": true,
+      "lawsuitAgeDays": 408,
+      "tipo": "MEDIDAS PROTETIVAS DE URGENCIA",
+      "matchType": "DOC",
+      "estado": "CE",
+      "specificRole": "REQUERIDO",
+      "numero": "00134174020218060293",
+      "decisions": null,
+      "lastMovementDate": "2022-11-16T12:50:51",
+      "cnjSubject": "CONTRAVENÇÕES PENAIS"
+    },
+    {
+      "courtName": "TJCE",
+      "judgingBody": "2 VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL - SOBRAL CIVEL",
+      "cnjProcedure": "CUMPRIMENTO DE SENTENÇA DE OBRIGAÇÃO DE PRESTAR ALIMENTOS",
+      "courtLevel": "1",
+      "polo": "PASSIVE",
+      "partyType": null,
+      "courtType": "CIVEL",
+      "status": "ATIVO",
+      "value": null,
+      "cnjBroadSubject": "DIREITO PROCESSUAL CIVIL E DO TRABALHO",
+      "matchType": "DOC",
+      "tipo": "CUMPRIMENTO DE SENTENCA",
+      "assunto": "ALIMENTOS",
+      "isDirectCpfMatch": true,
+      "lawsuitAgeDays": 557,
+      "courtDistrict": "SOBRAL",
+      "isLabor": false,
+      "isCriminal": false,
+      "cnjSubject": "ALIMENTOS",
+      "decisions": null,
+      "lastMovementDate": "2024-12-06T15:07:09",
+      "numero": "02056591120248060167",
+      "specificRole": "EXECUTADO",
+      "estado": "CE"
+    },
+    {
+      "isCriminal": false,
+      "isLabor": false,
+      "courtDistrict": "SOBRAL",
+      "lawsuitAgeDays": 4752,
+      "isDirectCpfMatch": true,
+      "assunto": "CONTRAVENCOES PENAIS",
+      "matchType": "DOC",
+      "tipo": "TERMO CIRCUNSTANCIADO",
+      "estado": "CE",
+      "numero": "00407130820138060167",
+      "specificRole": "AUTOR DO FATO",
+      "lastMovementDate": "2017-10-11T15:17:00",
+      "decisions": null,
+      "cnjSubject": "CONTRAVENÇÕES PENAIS",
+      "judgingBody": "JECC. DA COMARCA DE SOBRAL - SOBRAL",
+      "courtName": "TJCE",
+      "cnjBroadSubject": "DIREITO DA CRIANÇA E DO ADOLESCENTE",
+      "value": null,
+      "status": "ARQUIVADO",
+      "courtType": null,
+      "partyType": null,
+      "polo": "PASSIVE",
+      "courtLevel": "1",
+      "cnjProcedure": "TERMO CIRCUNSTANCIADO"
+    },
+    {
+      "courtName": "TJCE",
+      "judgingBody": "2 UNIDADE DO JUIZADO ESPECIAL CIVEL E CRIMINAL DA COMARCA DE SOBRAL CRIME",
+      "courtLevel": "1",
+      "cnjProcedure": "TERMO CIRCUNSTANCIADO",
+      "polo": "PASSIVE",
+      "partyType": null,
+      "courtType": "ESPECIAL CRIMINAL",
+      "status": "ENCERRADO",
+      "value": null,
+      "cnjBroadSubject": "DIREITO PENAL",
+      "tipo": "TERMO CIRCUNSTANCIADO",
+      "matchType": "DOC",
+      "assunto": "PORTE DE ARMA (BRANCA)",
+      "lawsuitAgeDays": 704,
+      "isDirectCpfMatch": true,
+      "courtDistrict": "SOBRAL",
+      "isLabor": false,
+      "isCriminal": true,
+      "cnjSubject": "PORTE DE ARMA (BRANCA)",
+      "decisions": null,
+      "lastMovementDate": "2024-08-26T16:26:46",
+      "specificRole": "AUTOR DO FATO",
+      "numero": "30015750220218060167",
+      "estado": "CE"
+    },
+    {
+      "isLabor": false,
+      "courtDistrict": "SOBRAL",
+      "isCriminal": true,
+      "matchType": "DOC",
+      "tipo": "ACAO PENAL",
+      "isDirectCpfMatch": true,
+      "lawsuitAgeDays": 1441,
+      "assunto": "AMEACA",
+      "specificRole": "REU",
+      "numero": "02027437220228060167",
+      "estado": "CE",
+      "cnjSubject": "AMEAÇA",
+      "lastMovementDate": "2024-10-23T14:33:17",
+      "decisions": [
+        {
+          "content": "JULGO PROCEDENTE A PRETENSAO PUNITIVA ESTATAL, DEDUZIDA NA DENUNCIA, PARA CONDENAR O REU FRANCISCO TACIANO DE SOUSA, COMO INCURSO NA PENA DO ARTIGOS 147 DO CODIGO PENAL E 24-A DA LEI N 11.340/06 C/C OS ARTS. 61, II, ALINEA \"F\", E 69 DO CP E C/C O ART. 7, II, DA LEI N 11.340/06.",
+          "date": "2024-04-26T02:16:16"
+        },
+        {
+          "content": "SENTENCA CONDENATORIA",
+          "date": "2024-04-25T03:00:00"
+        },
+        {
+          "date": "2024-04-25T03:00:00",
+          "content": "ART. 24-A \"CAPUT\" DO(A) DL 11340/2006 C/C ART. 61 \"CAPUT\", II, \"F\" E ART. 69 \"CAPUT\" AMBOS DO(A) CP C/C ART. 7 \"CAPUT\", II DO(A) DL 11340/2006 E ART. 147 \"CAPUT\" DO(A) CP; DETENCAO: SETE MESES E VINTE E OITO DIAS; REGIME PARA DETENCAO: ABERTO; SITUACAO: REU PRIMARIO;"
+        }
+      ],
+      "judgingBody": "JUIZADO DA VIOLENCIA DOMESTICA E FAMILIAR CONTRA A MULHER DA COMARCA DE SOBRAL - SOBRAL CRIME",
+      "courtName": "TJCE",
+      "courtType": "CRIMINAL",
+      "value": null,
+      "cnjBroadSubject": "DIREITO PENAL",
+      "status": "JULGADO",
+      "courtLevel": "1",
+      "cnjProcedure": "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO",
+      "partyType": null,
+      "polo": "PASSIVE"
+    },
+    {
+      "cnjSubject": "CONTRAVENÇÕES PENAIS",
+      "decisions": null,
+      "lastMovementDate": "2024-01-24T18:42:05",
+      "numero": "00121984520228060167",
+      "specificRole": "AUTOR DO FATO",
+      "estado": "CE",
+      "tipo": "ACAO PENAL",
+      "matchType": "DOC",
+      "assunto": "CONTRAVENCOES PENAIS",
+      "isDirectCpfMatch": true,
+      "lawsuitAgeDays": 1236,
+      "courtDistrict": "SOBRAL",
+      "isLabor": false,
+      "isCriminal": true,
+      "courtLevel": "1",
+      "cnjProcedure": "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO",
+      "polo": "PASSIVE",
+      "partyType": null,
+      "courtType": "CRIMINAL",
+      "status": "ARQUIVADO",
+      "value": null,
+      "cnjBroadSubject": "DIREITO PENAL",
+      "courtName": "TJCE",
+      "judgingBody": "4 VARA CRIMINAL DA COMARCA DE SOBRAL - SOBRAL CRIME"
+    },
+    {
+      "assunto": "CONTRAVENCOES PENAIS",
+      "isDirectCpfMatch": true,
+      "lawsuitAgeDays": 3905,
+      "matchType": "DOC",
+      "tipo": "APELACAO CRIMINAL",
+      "isCriminal": true,
+      "courtDistrict": "FORTALEZA",
+      "isLabor": false,
+      "decisions": null,
+      "lastMovementDate": "2017-10-02T00:00:00",
+      "cnjSubject": "CONTRAVENÇÕES PENAIS",
+      "estado": "CE",
+      "numero": "00407130820138060167",
+      "specificRole": "APELADO",
+      "courtName": "TJCE",
+      "judgingBody": "2 TURMA RECURSAL DOS JUIZADOS ESPECIAIS CIVEIS E CRIMINAIS - FORTALEZA",
+      "polo": "PASSIVE",
+      "partyType": null,
+      "courtLevel": "2",
+      "cnjProcedure": "APELAÇÃO CRIMINAL",
+      "status": "ENCERRADO",
+      "value": null,
+      "cnjBroadSubject": "DIREITO DA CRIANÇA E DO ADOLESCENTE",
+      "courtType": "CRIMINAL"
+    }
+  ],
+  "cpf": "05023290336",
+  "bigdatacorpCivilCount": 3,
+  "djenSources": {
+    "laborCount": 0,
+    "filteredOutComunicacoes": 0,
+    "endpoint": "/comunicacao",
+    "civelCount": 0,
+    "provider": "djen",
+    "totalComunicacoes": 0,
+    "normalizedComunicacoes": 0,
+    "confirmedComunicacoes": 0,
+    "consultedAt": "2026-04-14T02:29:47.399Z",
+    "criminalCount": 0,
+    "confirmationStats": {
+      "cpf": 0,
+      "process": 0,
+      "nameSimilar": 0,
+      "nameExact": 0
+    }
+  },
+  "bigdatacorpSanctionCount": 0,
+  "aiCostUsd": 0.001862,
+  "bigdatacorpHasCorruption": false,
+  "aiHomonymExecutedAt": "2026-04-14T02:31:12.171Z",
+  "cpfMasked": "***.***.***-36",
+  "ambiguityNotes": [
+    "Parte dos achados veio apenas por nome.",
+    "O perfil geografico do candidato e insuficiente para validar os achados."
+  ],
+  "aiHomonymRisk": "MEDIUM",
+  "aiHomonymError": null,
+  "juditRequestIds": {
+    "warrant": "e7f62c9d-0a88-4474-ab9d-63e52d221f11",
+    "execution": "cef1b975-2190-4fe4-8cad-845dca0b3579",
+    "lawsuits": "4eeace3b-0f28-4234-b751-8bd9090570d8"
+  },
+  "juditExecutionNotes": "Judit: Nenhuma execucao penal encontrada.",
+  "sanctionFlag": "NEGATIVE",
+  "bigdatacorpBirthDate": "1991-08-16T00:00:00Z",
+  "autoClassifiedAt": "2026-04-14T02:31:12.171Z",
+  "djenComunicacaoTotal": 0,
+  "bigdatacorpMotherName": "FRANCISCA CAETANA DE SOUSA",
+  "aiHomonymRawResponse": "{\n  \"decision\": \"UNCERTAIN\",\n  \"confidence\": \"LOW\",\n  \"homonymRisk\": \"MEDIUM\",\n  \"justification\": \"Há evidência ambígua por nome (BigDataCorp CNJ 00530230220208060167), mas não há match exato de CPF nesse achado. Como existem múltiplos referenciais com CPF exato, não dá para confirmar o mesmo processo/indivíduo.\",\n  \"evidenceFor\": [\n    \"AmbiguousCandidate (BigDataCorp) CNJ 00530230220208060167 com matchStrength NAME_ONLY (viaNameOnly=true).\",\n    \"ProviderCoverage indica mistura de evidência forte e fraca (MIXED_STRONG_AND_WEAK_EVIDENCE).\"\n  ],\n  \"evidenceAgainst\": [\n    \"AmbiguousCandidate não possui hasExactCpfMatch (NO_EXACT_CPF_MATCH) e evidenceOrigin=NAME_ONLY.\",\n    \"ReferenceCandidates mostram múltiplos CNJs com hasExactCpfMatch=true, sugerindo possibilidade de homônimos/associações por nome em outros processos.\"\n  ],\n  \"unknowns\": [\n    \"CPF exato não confirmado para o AmbiguousCandidate (CNJ 00530230220208060167).\",\n    \"Consistência de identidade/geo do AmbiguousCandidate: identityConsistency=LOW e geoConsistency=UNKNOWN.\",\n    \"Não informado se o AmbiguousCandidate compartilha o mesmo CPF hard-confirmado (Judit/BigDataCorp) do reference.\"\n  ],\n  \"recommendedAction\": \"MANUAL_REVIEW\",\n  \"processAssessments\": [\n    {\n      \"cnj\": \"00530230220208060167\",\n      \"decision\": \"UNCERTAIN\",\n      \"reason\": \"Match apenas por nome (NAME_ONLY) e sem confirmação de CPF exato no próprio achado; identidadeConsistency baixa e múltiplos referenciais com CPF exato aumentam risco de homônimo.\"\n    }\n  ]\n}",
+  "aiStructured": {
+    "evidenciasAmbiguas": [
+      "BigDataCorp: CNJ 00530230220208060167 com 'DADOS OCULTADOS: SEGREDO DE JUSTIÇA' e 'match por nome' (reference: AmbiguousCandidate), sem confirmação de CPF exato nesse achado.",
+      "BigDataCorp: 'Resumo processos' menciona mistura de evidência forte e fraca e que parte dos achados veio apenas por nome, sugerindo possível ruído/homonímia."
+    ],
+    "sugestaoScore": 78,
+    "riscoHomonimo": "MEDIO",
+    "incertezas": [
+      "Não há confirmação de CPF exato para o achado BigDataCorp CNJ 00530230220208060167 (evidenceOrigin=NAME_ONLY / hasExactCpfMatch não confirmado nesse item).",
+      "Possível sobreposição entre mandados listados por Judit e BigDataCorp (mesmo mandado pode aparecer em ambas as fontes), mas a correspondência exata não foi explicitada.",
+      "Cobertura geográfica/consistência de identidade: 'perfil geográfico insuficiente' e 'identityConsistency=LOW' no módulo consultivo de homônimos; geoConsistency=UNKNOWN.",
+      "Cargo pretendido e UF de contrata��ão não informados (não afeta diretamente os achados, mas limita contextualização do risco)."
+    ],
+    "confianca": "BAIXO",
+    "evidencias": [
+      "Judit: Criminal POSITIVE (1) e Mandado POSITIVE (ativos: 1); Execução penal NEGATIVE (0).",
+      "BigDataCorp: Mandados ativos (2) e decisão de custódia civil (art. 5º, LXVII CF e art. 528, §3º CPC) para FRANCISCO TACIANO DE SOUSA.",
+      "BigDataCorp/TJCE (CPF confirmado): Processo 0202743-72.2022.8.06.0167 com condenação por art. 147 CP e art. 24-A da Lei 11.340/06 (decisão em 2024-04-26).",
+      "BigDataCorp/TJCE (CPF confirmado): Processo 0202743-72.2022.8.06.0167 com sentença condenatória (2024-04-25).",
+      "Mandado de prisão (TJCE): 0204723-54.2022.8.06.0167 com status Pendente de Cumprimento (provisional) e data 2025-11-17 (fonte: Judit+BigDataCorp).",
+      "BigDataCorp: KYC indica PEP: Não e sem sanções detectadas (conforme dados fornecidos)."
+    ],
+    "revisaoManualSugerida": true,
+    "cobertura": "HIGH_COVERAGE",
+    "alertas": [
+      "Mandado(s) de prisão com status 'Pendente de Cumprimento' (TJCE) — risco alto de impacto imediato.",
+      "Condenação criminal por ameaça (art. 147 CP) e Lei Maria da Penha (24-A) com decisão em 2024-04-26.",
+      "Parte dos achados pode estar associada por nome (sem CPF exato em pelo menos um CNJ), com risco de homonímia/associação indevida."
+    ],
+    "inconsistencias": [
+      "Judit: Execução penal NEGATIVE (0), enquanto BigDataCorp indica processos criminais positivos (sem detalhar execução penal).",
+      "Mandados: Judit aponta 1 mandado ativo; BigDataCorp aponta 2 mandados ativos, com possível sobreposição (mesmo número de processo em ambas as fontes).",
+      "Homonímia/identidade: há pelo menos um achado em BigDataCorp com match por nome (sem CPF exato confirmado), apesar de existirem múltiplos registros com CPF exato confirmado."
+    ],
+    "resumo": "Candidato FRANCISCO TACIANO DE SOUSA (CPF 050.***.***-36) tem achados criminais POSITIVOS e mandado(s) de prisão com status pendente de cumprimento. Há evidência forte (CPF confirmado) para condenação por ameaça (art. 147 CP) e Lei Maria da Penha (24-A). Execução penal não consta. Risco relevante por mandados ativos e possível sobreposição/ruído por homonímia em parte dos registros.",
+    "justificativa": "Há evidência forte com CPF confirmado para condenação criminal e mandado(s) pendente(s) de cumprimento. Porém existe achado por nome sem CPF exato e divergência entre providers nos mandados, exigindo revisão manual.",
+    "sugestaoVeredito": "ATTENTION"
+  },
+  "juditRoleSummary": [
+    {
+      "state": "CE",
+      "lastStepDate": null,
+      "isCriminal": true,
+      "isWitness": false,
+      "county": "3ª VARA CIVEL DA COMARCA DE SOBRAL",
+      "subjects": [
+        "REAL",
+        "VIOLÊNCIA DOMÉSTICA CONTRA A MULHER",
+        "AMEAÇA"
+      ],
+      "hasExactCpfMatch": true,
+      "hasDivergentCpf": false,
+      "personType": "REU",
+      "side": "Passive",
+      "stepsCount": 0,
+      "area": "DIREITO PENAL",
+      "situation": null,
+      "instance": 1,
+      "code": "0202743-72.2022.8.06.0167",
+      "distributionDate": "2022-05-03T15:51:03.000Z",
+      "isPossibleHomonym": false,
+      "status": "Finalizado",
+      "tribunalAcronym": "TJCE",
+      "secrecyLevel": 0,
+      "lastStep": "PROFERIDO DESPACHO DE MERO EXPEDIENTE | VISTOS E ETC. CUMPRA-SE O DETERMINADO PELO EGREGIO TRIBUNAL DE JUSTICA DO CEARA, COM A EXPEDICAO DA CARTA DE GUIA DEFINITIVA E A RESPECTIVA REMESSA AO JUIZO DAS EXECUCOES PENAIS (2 VARA CRIMINAL DA COMARCA DE SOBRAL-CE). EXPEDIENTES NECESSARIOS.",
+      "name": "JOSE WILLIAM DOMINGUES RIPARDO X FRANCISCO TACIANO DE SOUSA",
+      "phase": "Arquivado",
+      "classifications": [
+        "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+      ],
+      "amount": 0.01,
+      "city": "SOBRAL",
+      "justice": "8"
+    }
+  ],
+  "bigdatacorpHasFinancialCrime": false,
+  "sanctionSources": [],
+  "bigdatacorpElapsedMs": 1300,
+  "aiRawResponse": "{\n  \"resumo\": \"Candidato FRANCISCO TACIANO DE SOUSA (CPF 050.***.***-36) tem achados criminais POSITIVOS e mandado(s) de prisão com status pendente de cumprimento. Há evidência forte (CPF confirmado) para condenação por ameaça (art. 147 CP) e Lei Maria da Penha (24-A). Execução penal não consta. Risco relevante por mandados ativos e possível sobreposição/ruído por homonímia em parte dos registros.\",\n  \"inconsistencias\": [\n    \"Judit: Execução penal NEGATIVE (0), enquanto BigDataCorp indica processos criminais positivos (sem detalhar execução penal).\",\n    \"Mandados: Judit aponta 1 mandado ativo; BigDataCorp aponta 2 mandados ativos, com possível sobreposição (mesmo número de processo em ambas as fontes).\",\n    \"Homonímia/identidade: há pelo menos um achado em BigDataCorp com match por nome (sem CPF exato confirmado), apesar de existirem múltiplos registros com CPF exato confirmado.\"\n  ],\n  \"evidencias\": [\n    \"Judit: Criminal POSITIVE (1) e Mandado POSITIVE (ativos: 1); Execução penal NEGATIVE (0).\",\n    \"BigDataCorp: Mandados ativos (2) e decisão de custódia civil (art. 5º, LXVII CF e art. 528, §3º CPC) para FRANCISCO TACIANO DE SOUSA.\",\n    \"BigDataCorp/TJCE (CPF confirmado): Processo 0202743-72.2022.8.06.0167 com condenação por art. 147 CP e art. 24-A da Lei 11.340/06 (decisão em 2024-04-26).\",\n    \"BigDataCorp/TJCE (CPF confirmado): Processo 0202743-72.2022.8.06.0167 com sentença condenatória (2024-04-25).\",\n    \"Mandado de prisão (TJCE): 0204723-54.2022.8.06.0167 com status Pendente de Cumprimento (provisional) e data 2025-11-17 (fonte: Judit+BigDataCorp).\",\n    \"BigDataCorp: KYC indica PEP: Não e sem sanções detectadas (conforme dados fornecidos).\"\n  ],\n  \"evidenciasAmbiguas\": [\n    \"BigDataCorp: CNJ 00530230220208060167 com 'DADOS OCULTADOS: SEGREDO DE JUSTIÇA' e 'match por nome' (reference: AmbiguousCandidate), sem confirmação de CPF exato nesse achado.\",\n    \"BigDataCorp: 'Resumo processos' menciona mistura de evidência forte e fraca e que parte dos achados veio apenas por nome, sugerindo possível ruído/homonímia.\"\n  ],\n  \"incertezas\": [\n    \"Não há confirmação de CPF exato para o achado BigDataCorp CNJ 00530230220208060167 (evidenceOrigin=NAME_ONLY / hasExactCpfMatch não confirmado nesse item).\",\n    \"Possível sobreposição entre mandados listados por Judit e BigDataCorp (mesmo mandado pode aparecer em ambas as fontes), mas a correspondência exata não foi explicitada.\",\n    \"Cobertura geográfica/consistência de identidade: 'perfil geográfico insuficiente' e 'identityConsistency=LOW' no módulo consultivo de homônimos; geoConsistency=UNKNOWN.\",\n    \"Cargo pretendido e UF de contratação não informados (não afeta diretamente os achados, mas limita contextualização do risco).\"\n  ],\n  \"cobertura\": \"HIGH_COVERAGE\",\n  \"riscoHomonimo\": \"MEDIO\",\n  \"confianca\": \"BAIXO\",\n  \"revisaoManualSugerida\": true,\n  \"sugestaoScore\": 78,\n  \"sugestaoVeredito\": \"ATTENTION\",\n  \"justificativa\": \"Há evidência forte com CPF confirmado para condenação criminal e mandado(s) pendente(s) de cumprimento. Porém existe achado por nome sem CPF exato e divergência entre providers nos mandados, exigindo revisão manual.\",\n  \"alertas\": [\n    \"Mandado(s) de prisão com status 'Pendente de Cumprimento' (TJCE) — risco alto de impacto imediato.\",\n    \"Condenação criminal por ameaça (art. 147 CP) e Lei Maria da Penha (24-A) com decisão em 2024-04-26.\",\n    \"Parte dos achados pode estar associada por nome (sem CPF exato em pelo menos um CNJ), com risco de homonímia/associação indevida.\"\n  ]\n}",
+  "juditNeedsEscavador": true,
+  "dateOfBirth": "",
+  "bigdatacorpSector": "PRIVATE - 6204000 - CONSULTORIA EM TECNOLOGIA DA INFORMACAO",
+  "phone": "",
+  "aiExecutedAt": "2026-04-14T02:31:12.171Z",
+  "prefillNarratives": {
+    "metadata": {
+      "error": null,
+      "promptVersion": "v1-report-prefill",
+      "source": "hybrid",
+      "fromCache": false,
+      "ok": true,
+      "executedAt": "2026-04-14T02:31:12.159Z",
+      "mergedAt": "2026-04-14T02:31:12.160Z",
+      "model": "gpt-5.4-nano",
+      "deterministicVersion": "v4-deterministic-prefill"
+    },
+    "keyFindings": [
+      "1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento.",
+      "4 processo(s) criminal(is) inativo(s).",
+      "Homonimia ou ambiguidade detectada em parte dos achados."
+    ],
+    "criminalNotes": "Criminal POSITIVO (severidade HIGH, evidencia HARD_FACT): 4 processo(s) criminal(is) unico(s) identificado(s).\n\nProcessos criminais/penais (4 unico(s)):\n- 0202743-72.2022.8.06.0167 | Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO | Assunto: REAL, VIOLÊNCIA DOMÉSTICA CONTRA A MULHER | Status: Finalizado | Polo: Passive | Tribunal: TJCE | Vara: 3ª VARA CIVEL DA COMARCA DE SOBRAL | Comarca: SOBRAL | Data: 2022-05-03T15:51:03.000Z | Match: CPF confirmado | Papel: REU | Decisao: JULGO PROCEDENTE A PRETENSAO PUNITIVA ESTATAL, DEDUZIDA NA DENUNCIA, PARA CONDENAR O REU FRANCISCO TACIANO DE SOUSA, COMO INCURSO NA PENA DO ARTIGOS 147 DO CODIGO PENAL E 24-A DA LEI N 11.340/06 C/C O\n- 0013417-40.2021.8.06.0293 | Classe: MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA) - CRIMINAL | Assunto: CONTRAVENCOES PENAIS | Status: ARQUIVADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2022-11-16T12:50:51 | Match: CPF confirmado | Papel: REQUERIDO\n- 3001575-02.2021.8.06.0167 | Classe: TERMO CIRCUNSTANCIADO | Assunto: PORTE DE ARMA (BRANCA) | Status: ENCERRADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2024-08-26T16:26:46 | Match: CPF confirmado | Papel: AUTOR DO FATO\n- 0012198-45.2022.8.06.0167 | Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO | Assunto: CONTRAVENCOES PENAIS | Status: ARQUIVADO | Polo: PASSIVE | Tribunal: TJCE | Comarca: SOBRAL | Data: 2024-01-24T18:42:05 | Match: CPF confirmado | Papel: AUTOR DO FATO\n\nMandados de prisao ativos (1):\n- 0204723-54.2022.8.06.0167 | warrant_of_arrest | provisional | Pendente de Cumprimento | 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Emitido: 2025-11-17T00:00:00.000Z\n2 mandado(s) complementar(es) ativo(s) detectado(s).\nDivergencia entre fontes: MEDIUM.",
+    "executiveSummary": "Candidato FRANCISCO TACIANO DE SOUSA (CPF 050.***.***-36) apresenta achados criminais POSITIVOS (criminalSeverity HIGH) e mandado(s) de prisão POSITIVOS, com status pendente(s) de cumprimento. Há evidência forte com correspondência por CPF em pelo menos um processo criminal no TJCE (condenação por ameaça art. 147 CP e Lei Maria da Penha art. 24-A, com sentença/decisão em 2024-04-25/26). Também há registros de mandados vinculados ao TJCE (2ª Vara de Família e Sucessões de Sobral) com custódia civil e mandado de prisão provisional. Cobertura: HIGH_COVERAGE, porém com divergência entre providers nos mandados (1 vs 2 ativos) e parte dos achados por nome/sem CPF exato em item com segredo de justiça, elevando risco de homonímia/associação indevida.\",",
+    "finalJustification": "Veredito: NAO RECOMENDADO.\n(veredito derivado automaticamente das flags — analista ainda nao concluiu.)\nSeveridade criminal: HIGH.\n\nEvidencias materiais:\n- 4 processo(s) criminal(is) unico(s): 0202743-72.2022.8.06.0167 / REAL, VIOLÊNCIA DOMÉSTICA CONTRA A MULHER / Finalizado / TJCE / Match: CPF confirmado; 0013417-40.2021.8.06.0293 / CONTRAVENCOES PENAIS / ARQUIVADO / TJCE / Match: CPF confirmado; 3001575-02.2021.8.06.0167 / PORTE DE ARMA (BRANCA) / ENCERRADO / TJCE / Match: CPF confirmado; 0012198-45.2022.8.06.0167 / CONTRAVENCOES PENAIS / ARQUIVADO / TJCE / Match: CPF confirmado.\n- 3 mandado(s): 0204723-54.2022.8.06.0167 / warrant_of_arrest / provisional / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL; 0204723-54.2022.8.06.0167 / Tipo: Civil / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL; 0204723-54.2022.8.06.0167 / Tipo: Civil / Pendente de Cumprimento / 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL.\n\nAchados-chave:\n- 1 mandado(s) de prisao ativo(s) pendente(s) de cumprimento.\n- 4 processo(s) criminal(is) inativo(s).\n- Homonimia ou ambiguidade detectada em parte dos achados.\nDivergencia entre fontes: MEDIUM.\n\nJustificativa: diante dos apontamentos materiais identificados (criminal, mandados ou sancoes), a continuidade do processo nao e recomendada sem avaliacao complementar.",
+    "warrantNotes": "Mandado POSITIVO: 1 mandado(s) identificado(s) (3 ativo(s)).\n\nMandados identificados (3):\n- 0204723-54.2022.8.06.0167 | warrant_of_arrest / provisional | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Emitido: 2025-11-17T00:00:00.000Z\n- 0204723-54.2022.8.06.0167 | Tipo: Civil | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Comarca: Sobral | Magistrado: DANIEL GONÇALVES GONDIM | Pena: 60 (contados a partir da data da prisão) | Validade: 2027-11-17\n- 0204723-54.2022.8.06.0167 | Tipo: Civil | Status: Pendente de Cumprimento | Vara: 2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL | Comarca: Sobral | Magistrado: WYRLLENSON FLáVIO BARBOSA SOARES | Validade: 2027-01-15 | Decisao: Em face do exposto, decreto a custódia civil de FRANCISCO TACIANO DE SOUSA em conformidade com o art. 5º, inc. LXVII da Constituição Federal e art. 528, § 3º, do CPC, pelo prazo de 60 (sessenta) dias,\nATENCAO: 2 mandado(s) referenciam o mesmo processo — provavel sobreposicao (contagem pode estar inflada).",
+    "laborNotes": "Nenhum processo trabalhista relevante identificado nas fontes consultadas."
+  },
+  "candidateId": "JI1BBhz2jAkmh4Hs5rlJ",
+  "sanctionTypes": [],
+  "negativePartialSafetyNetAction": "NONE",
+  "bigdatacorpSources": {
+    "basicData": {
+      "dataset": "basic_data",
+      "provider": "bigdatacorp",
+      "found": true,
+      "cpfStatus": "REGULAR",
+      "consultedAt": "2026-04-14T02:29:42.723Z",
+      "name": "FRANCISCO TACIANO DE SOUSA"
+    },
+    "kyc": {
+      "consultedAt": "2026-04-14T02:29:42.726Z",
+      "isPep": false,
+      "wasSanctioned": false,
+      "isSanctioned": false,
+      "sanctionCount": 0,
+      "matchRateThreshold": 90,
+      "sanctionSources": [],
+      "domesticEntryCount": 2,
+      "provider": "bigdatacorp",
+      "rawSanctionCount": 49,
+      "dataset": "kyc",
+      "filteredOutCount": 47,
+      "pepLevel": null,
+      "found": true
+    },
+    "processes": {
+      "criminalCount": 5,
+      "provider": "bigdatacorp",
+      "directCpfMatches": 7,
+      "consultedAt": "2026-04-14T02:29:42.725Z",
+      "dataset": "processes",
+      "laborCount": 0,
+      "totalProcessos": 8,
+      "hasCriminal": true
+    },
+    "occupation": {
+      "dataset": "occupation_data",
+      "found": true,
+      "provider": "bigdatacorp",
+      "totalProfessions": 1,
+      "consultedAt": "2026-04-14T02:29:42.753Z",
+      "isPublicServant": false
+    }
+  },
+  "requestedByName": "Josão Silva (RH)",
+  "correctionRequestedBy": "Fagner.alexandro.lourenco@gmail.com",
+  "bigdatacorpHasDeathRecord": false,
+  "juditEnrichedAt": "2026-04-14T02:30:41.687Z",
+  "djenCriminalCount": 0,
+  "bigdatacorpGender": "M",
+  "bigdatacorpIsPublicServant": false,
+  "aiStructuredOk": true,
+  "bigdatacorpFirstLawsuitDate": "0001-01-01T00:00:00",
+  "correctedBy": {
+    "displayName": "Jos��o Silva (RH)",
+    "uid": "4gPEhERnXcdtvSnBsCGhOfW5lT02",
+    "email": "teste@TechCorp.com"
+  },
+  "djenLaborFlag": false,
+  "juditHomonymFlag": false,
+  "requestedByEmail": "teste@TechCorp.com",
+  "enrichmentOriginalValues": {
+    "laborFlag": "NEGATIVE",
+    "pepFlag": "NEGATIVE",
+    "coverageLevel": "HIGH_COVERAGE",
+    "criminalNotes": "Criminal POSITIVO: evidencia forte confirmada por BigDataCorp, Judit, Judit/Warrant.\nMandado ativo confirmado (1 via Judit, 2 via BigDataCorp).",
+    "reviewRecommended": false,
+    "laborNotes": "Nenhum processo trabalhista relevante detectado.",
+    "ambiguityNotes": [
+      "Parte dos achados veio apenas por nome.",
+      "O perfil geografico do candidato e insuficiente para validar os achados."
+    ],
+    "warrantFlag": "POSITIVE",
+    "criminalFlag": "POSITIVE",
+    "sanctionFlag": "NEGATIVE",
+    "criminalEvidenceQuality": "HARD_FACT",
+    "warrantNotes": "Mandado POSITIVO: 1 mandado(s) ativo(s) via Judit, 2 mandado(s) via BigDataCorp.\nNota: mandados Judit e BigDataCorp podem ter sobreposicao (mesmo mandado em ambas as fontes).\nALERTA JUDIT: 1 mandado(s) encontrado(s), 1 PENDENTE(S) DE CUMPRIMENTO.\n1. warrant_of_arrest | provisional | Pendente de Cumprimento | TJCE | Emitido: 2025-11-17T00:00:00.000Z | 0204723-54.2022.8.06.0167",
+    "providerDivergence": "MEDIUM",
+    "coverageNotes": [
+      "Escavador sem retorno, porem BigDataCorp confirmou processos — divergencia reduzida.",
+      "Ha mistura de evidencia forte com ruido por nome/homonimo."
+    ],
+    "criminalSeverity": "HIGH"
+  },
+  "warrantNotes": "Mandado POSITIVO: 1 mandado(s) ativo(s) via Judit, 2 mandado(s) via BigDataCorp.\nNota: mandados Judit e BigDataCorp podem ter sobreposicao (mesmo mandado em ambas as fontes).\nALERTA JUDIT: 1 mandado(s) encontrado(s), 1 PENDENTE(S) DE CUMPRIMENTO.\n1. warrant_of_arrest | provisional | Pendente de Cumprimento | TJCE | Emitido: 2025-11-17T00:00:00.000Z | 0204723-54.2022.8.06.0167",
+  "aiHomonymAmbiguityReasons": [
+    "NAME_BASED_MATCH_PRESENT",
+    "LIMITED_GEO_PROFILE"
+  ],
+  "juditActiveCount": 0,
+  "juditWarrantFlag": "POSITIVE",
+  "bigdatacorpIsPep": false
+}

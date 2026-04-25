@@ -327,3 +327,85 @@ describe('offline calibration with the 5 reference CPFs', () => {
         expect(matheusHomonymPrompt).toMatch(/ambiguousCandidates/);
     });
 });
+
+describe('DJEN integration in computeAutoClassification', () => {
+    it('djenCriminalFlag POSITIVE contributes to criminalFlag POSITIVE', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'DONE',
+            djenCriminalFlag: 'POSITIVE',
+            djenCriminalCount: 3,
+            djenLaborFlag: false,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.criminalFlag).toBe('POSITIVE');
+        expect(classification.criminalNotes).toContain('DJEN');
+    });
+
+    it('djenCriminalFlag NEGATIVE does not turn criminal positive alone', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'DONE',
+            djenCriminalFlag: 'NEGATIVE',
+            djenCriminalCount: 0,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.criminalFlag).not.toBe('POSITIVE');
+    });
+
+    it('djenLaborFlag true contributes to laborFlag POSITIVE', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'DONE',
+            djenCriminalFlag: 'NEGATIVE',
+            djenLaborFlag: true,
+            djenLaborCount: 2,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.laborFlag).toBe('POSITIVE');
+        expect(classification.laborNotes).toContain('DJEN');
+    });
+
+    it('DJEN not done does not contribute to classification', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'PENDING',
+            djenCriminalFlag: 'POSITIVE',
+            djenCriminalCount: 5,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        // djenCriminal should be false because djenDone is false
+        expect(classification.criminalNotes || '').not.toContain('DJEN');
+    });
+
+    it('DJEN POSITIVE with high namesake count is downgraded to weak evidence', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'DONE',
+            djenCriminalFlag: 'POSITIVE',
+            djenCriminalCount: 47,
+            djenLaborFlag: false,
+            bigdatacorpNamesakeCount: 304,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        // DJEN alone with 304 namesakes should NOT produce POSITIVE
+        expect(classification.criminalFlag).not.toBe('POSITIVE');
+        expect(classification.criminalFlag).toBe('INCONCLUSIVE_HOMONYM');
+        expect(classification.criminalNotes).toContain('homonimo');
+    });
+
+    it('DJEN POSITIVE with low namesake count remains strong evidence', () => {
+        const caseData = {
+            djenEnrichmentStatus: 'DONE',
+            djenCriminalFlag: 'POSITIVE',
+            djenCriminalCount: 3,
+            djenLaborFlag: false,
+            bigdatacorpNamesakeCount: 5,
+        };
+        const classification = computeAutoClassification(caseData);
+
+        // 5 namesakes is within threshold — DJEN stays strong
+        expect(classification.criminalFlag).toBe('POSITIVE');
+        expect(classification.criminalNotes).toContain('DJEN');
+    });
+});

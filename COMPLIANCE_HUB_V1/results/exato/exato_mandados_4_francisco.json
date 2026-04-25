@@ -1,0 +1,48 @@
+{
+  "status": 200,
+  "ok": true,
+  "elapsedMs": 29687,
+  "data": {
+    "UniqueIdentifier": "dedn4hfdpv2us0qfqypup2dlg",
+    "TransactionResultTypeCode": 1,
+    "TransactionResultType": "Success",
+    "Message": "Sucesso",
+    "TotalCostInCredits": 2,
+    "BalanceInCredits": -12,
+    "ElapsedTimeInMilliseconds": 29657,
+    "Reserved": null,
+    "Date": "2026-04-07T09:14:20.8785274-03:00",
+    "OutdatedResult": false,
+    "HasPdf": true,
+    "DataSourceHtml": null,
+    "DateString": "2026-04-07T09:14:20.8785274-03:00",
+    "OriginalFilesUrl": "https://api.exato.digital/services/original-files/dedn4hfdpv2us0qfqypup2dlg",
+    "PdfUrl": "https://api.exato.digital/services/pdf/dedn4hfdpv2us0qfqypup2dlg",
+    "TotalCost": 0,
+    "BalanceInBrl": null,
+    "DataSourceCategory": "Criminal e Restritivo",
+    "ApiResultType": "success",
+    "ResultTypeCode": 1,
+    "ResultSubtype": null,
+    "Result": {
+      "Mandados": [
+        {
+          "Id": 203957476,
+          "NumeroPeca": "0204723542022806016701000326",
+          "NumeroProcesso": "02047235420228060167",
+          "NomePessoa": "FRANCISCO TACIANO DE SOUSA",
+          "DescricaoStatus": "Pendente de Cumprimento",
+          "DataExpedicao": "2025-11-17T00:00:00.0000000",
+          "NomeOrgao": "2ª VARA DE FAMILIA E SUCESSOES DA COMARCA DE SOBRAL",
+          "DescricaoPeca": "Mandado de Prisão",
+          "IdTipoPeca": 1,
+          "NomeMae": "FRANCISCA CAETANA DE SOUSA",
+          "NomePai": "NÃO INFORMADO",
+          "DescricaoSexo": "Masculino",
+          "DataNascimento": "1991-08-16T00:00:00.0000000",
+          "NumeroPecaFormatado": "0204723-54.2022.8.06.0167.01.0003-26"
+        }
+      ]
+    }
+  }
+}

@@ -6161,3 +6161,480 @@ Realizar auditoria forense profunda do backend (`functions/index.js`, 52 exports
 
 ---
 
+
+## Ciclo EXPERIENCIA-PREMIUM-ANALISE-TEMPO-REAL (2026-04-22)
+
+### Objetivo
+
+Transformar o fluxo de entrada CPF/CNPJ em uma experiencia visual poderosa que comunique velocidade, transparencia operacional, valor do produto e clareza de risco — aproveitando 100% do backend real ja existente (`moduleRuns`, `riskSignals`, `timelineEvents`, `caseData`, `reportAvailability`).
+
+### Diagnostico inicial
+
+O fluxo de entrada existente (`NovaSolicitacaoPage`) era funcional mas sem valor percebido no momento da solicitacao: formulario simples, sem feedback visual durante a analise, sem comunicacao do que o motor faz, e sem transicao premium para o relatorio. O backend ja entregava `moduleRuns`, `riskSignals` e `timelineEvents` em tempo real via subscriptions Firestore, mas o frontend nao os utilizava para criar sensacao de "motor analitico trabalhando".
+
+### Conceito UX implementado
+
+**Analise Rapida** — uma pagina dedicada (`/client/analise`) com duas fases:
+
+1. **Fase de Entrada (Hero):**
+   - Headline forte: "Analise CPF ou CNPJ com inteligencia, velocidade e rastreabilidade."
+   - Subheadline explicando a esteira analitica (cadastral, criminal, trabalhista, PEP, OSINT).
+   - Campo CPF/CNPJ com deteccao automatica de tipo (PF/PJ) e mascara dinamica.
+   - Campo nome/razao social obrigatorio.
+   - Botao "Analisar agora" com icone de lupa e animacao de spin durante submissao.
+   - Copy de valor: "Due diligence em tempo real" e "Consultas auditadas com rastreabilidade de provider."
+
+2. **Fase de Analise (Running):**
+   - **Barra de progresso grande e visivel** — reflete progresso real baseado em `moduleRuns` (terminal + running * 0.5), com baseline minimo de 3-6% para evitar flicker de 0%. Cor da barra muda conforme `riskSignals` agregados (verde → amarelo → laranja → vermelho).
+   - **Mensagem dinamica de status** — derivada da fase (inicializando / consultando / compilando / finalizando) e dos sinais reais. Exemplo: "Compilando 2 sinais detectados ate aqui...".
+   - **Cards dinamicos de consulta** — um por `moduleRun` executavel, aparecendo com animacao `fade-in` escalonada. Cada card mostra: titulo do modulo, icone de 2 letras, status visual (`Consultando`, `Sem achados relevantes`, `Atencao detectada`, `Bloqueado no gate`, `Falha na consulta`, `Reaproveitado`), e top signal reason quando houver.
+   - **Timeline de esteira analitica** — feed unificado de `timelineEvents` (ultimos 10) + `riskSignals` (ultimos 5), com dots coloridos por severidade.
+   - **CTA final premium** — quando `caseData.status === 'DONE'`, aparece painel animado com classificacao consolidada de risco e botao "Ver relatorio completo →".
+
+3. **Abertura do relatorio:**
+   - Se `publicReportToken` existir, abre em nova aba (`/r/{token}`).
+   - Se nao, navega para `/client/solicitacoes?case={id}`.
+   - Transicao suave sem navegacao seca.
+
+### Integracao com backend real
+
+| Elemento UX | Fonte de dados real |
+|---|---|
+| Progresso % | `moduleRuns` (terminal + running * 0.5) / executaveis |
+| Cor da barra/risco | `riskSignals[].severity` + `caseData.riskSeverity` |
+| Cards de consulta | `moduleRuns` filtrados + `riskSignals` agrupados por `moduleKey` |
+| Status messages | Derivado de `progress`, `caseData.status`, `moduleRuns`, `riskSignals` |
+| Timeline | `timelineEvents` (10 mais recentes) + `riskSignals` (5 mais recentes) |
+| CTA final | `caseData.status === 'DONE'` + `getReportAvailability(caseData)` |
+| Criacao do caso | `callCreateClientSolicitation` com `productKey` (`dossier_pf_basic` ou `dossier_pj`) |
+
+**Nenhum dado fake foi inventado.** A UX reflete o que o backend entrega via subscriptions Firestore. Quando nao ha granularidade completa, usa progresso hibrido (real quando possivel, estimado visualmente quando necessario), sem mentir grosseiramente.
+
+### Helper analysisProgress
+
+Criado `src/core/analysisProgress.js` para transformar artefatos V2 em estado de experiencia visual puro (sem side effects):
+
+- `computeProgress({ caseData, moduleRuns })` — calcula % real com baseline e cap.
+- `resolveRiskBucket({ riskSignals, caseData })` — retorna bucket low/attention/moderate/high com CSS vars.
+- `buildModuleCards({ moduleRuns, riskSignals })` — gera cards com estado visual mapeado.
+- `deriveStatusMessage({ progress, caseData, moduleRuns, riskSignals })` — mensagem contextual dinamica.
+- `isAnalysisComplete(caseData)` — utilitario simples.
+
+### Arquivos criados
+
+- `src/core/analysisProgress.js`
+- `src/core/analysisProgress.test.js` (17 testes)
+- `src/portals/client/AnaliseRapidaPage.jsx`
+- `src/portals/client/AnaliseRapidaPage.css`
+- `src/portals/client/AnaliseRapidaPage.test.jsx` (8 testes)
+
+### Arquivos modificados
+
+- `src/App.jsx` — rota `/client/analise` adicionada no `ClientLayout`.
+- `src/ui/layouts/Sidebar.jsx` — item "Analise Rapida" adicionado ao menu cliente.
+
+### Principais decisoes de UX/produto
+
+1. **Pagina dedicada vs wizard inline**: optou-se por pagina dedicada `/client/analise` para dar espaco visual ao hero + progresso + cards + timeline sem competir com o formulario de solicitacao tradicional em `NovaSolicitacaoPage`.
+2. **Progresso hibrido honesto**: a barra reflete terminal + running*0.5 dos `moduleRuns` reais. Isso evita fake loading descarado enquanto ainda da sensacao de avanco visual.
+3. **Mascara dinamica CPF/CNPJ**: o campo usa `formatCpf`/`formatCnpj` com deteccao por comprimento dos digitos, nao por radio button — reduz atrito.
+4. **Icones como placeholder de 2 letras**: mantido padrao existente do projeto (`DB`, `WT`, `CS` etc) para consistencia. Migracao para Lucide/Feather e deixada para ciclo de design system.
+5. **Timeline unificada**: mistura `timelineEvents` (operacionais) e `riskSignals` (achados) em ordem de chegada, com cores por severidade. Isso da sensacao de "esteira" sem inventar eventos.
+6. **CTA final com gradiente por bucket de risco**: low=verde, attention=amarelo, moderate=laranja, high=vermelho — comunicando risco de forma imediata.
+
+### Testes adicionados/ajustados
+
+- `src/core/analysisProgress.test.js`: 17 testes cobrindo progresso com/sem moduleRuns, risk buckets por severidade, cards com estados visuais (ok, watch, alert, blocked, failed, reused), mensagens dinamicas, e complete flag.
+- `src/portals/client/AnaliseRapidaPage.test.jsx`: 8 testes cobrindo render do hero, deteccao PF/PJ, validacao de CPF invalido, submissao com payload correto (PF e PJ), fase running com subscriptions alimentando estado, e fase final DONE com CTA.
+
+### Validacao executada
+
+- `npm run lint` — 0 erros.
+- `npm test` — 68 suites, 899 testes passando (era 65/867; +3 suites, +32 testes).
+- `npm run build` — OK, 2.57s, sem warnings estruturais. Chunk `AnaliseRapidaPage` gerado separadamente (12.99 kB / 4.88 kB gzip).
+- `npm run test:rules` — 23 testes emulator passando.
+- `node --check functions/index.js` — OK.
+
+### Gaps remanescentes
+
+- **ReportSnapshot V2 ainda nao consumido pelo HTML generator** — gap pre-existente, nao resolvido neste ciclo.
+- **Icones de 2 letras** — placeholder ate adocao de Lucide/Feather.
+- **Demo mode** — a experiencia funciona com subscriptions reais do Firestore; em demo mode o backend precisa estar emulado para que moduleRuns cheguem.
+- **NovaSolicitacaoPage** continua existente; `AnaliseRapidaPage` e a proposta premium. Decisao de negocio pendente sobre qual sera a default.
+- **Onboarding do fluxo** — primeiro uso de `AnaliseRapidaPage` poderia ter tour leve (fora de escopo neste ciclo).
+
+### Proximo bloco recomendado
+
+1. Commit do acumulado (BACKEND-AUDIT-HARDENING-GAP-CLOSURE + EXPERIENCIA-PREMIUM-ANALISE-TEMPO-REAL).
+2. Decidir se `AnaliseRapidaPage` substitui ou complementa `NovaSolicitacaoPage`.
+3. Adicionar tour de onboarding leve para primeira analise (tour contextual + checklist).
+4. Migrar icones para Lucide/Feather em componente `Icon` compartilhado.
+5. Pipeline de reports V2: coordenar refactor para `buildCanonicalReportHtml` consumir `reportSnapshot`.
+
+---
+
+## Ciclo FIREBASE-V2-LOCAL-RUNNER (2026-04-22)
+
+### Objetivo
+
+Corrigir a execucao local da V2 apos a limpeza do repositorio e impedir que o runtime V2 aponte acidentalmente para o banco/projeto Firebase da V1.
+
+### Implementado
+
+- Criado `COMPLIANCE_HUB_V2/package.json` como wrapper de workspace.
+- Comandos `npm run dev`, `npm test`, `npm run test:rules`, `npm run lint`, `npm run build` e `npm run check:functions` agora funcionam a partir de `D:\ComplianceHub\COMPLIANCE_HUB_V2`.
+- `app/.firebaserc` alterado para usar `default=compliance-hub-v2`.
+- `app/firestore.rules.emulator.test.js` alterado para usar projeto de teste `compliance-hub-v2`.
+- `app/.env.local` substituido por configuracao local V2, removendo referencias ao projeto Firebase V1.
+- `app/.env.example` atualizado para documentar somente o projeto `compliance-hub-v2`.
+- `README.md` atualizado com comandos de execucao pela raiz da V2 e alerta explicito para nao usar credenciais V1.
+
+### Regra operacional
+
+- V2 deve usar somente o projeto Firebase `compliance-hub-v2`.
+- V1 permanece isolado em `COMPLIANCE_HUB_V1` e nao deve ser usado como default em comandos, deploys ou emuladores da V2.
+- Credenciais reais do Web App V2 devem ser preenchidas manualmente em `app/.env.local` antes de conectar no Firebase real.
+
+### Validacao esperada
+
+- `npm run dev` a partir de `COMPLIANCE_HUB_V2` inicia o Vite.
+- `npm run test:rules` executa emulador com projeto `compliance-hub-v2`.
+- Busca por identificadores do projeto Firebase antigo dentro de `COMPLIANCE_HUB_V2` deve retornar vazia.
+
+---
+
+## Ciclo ESTABILIZACAO-DEV-RUN-V2 (2026-04-22)
+
+### Objetivo
+
+Revisar a V2 apos a separacao V1/V2, corrigir nomenclatura de dominios ambigua, validar a suite completa e deixar o app executando localmente.
+
+### Ajustes de nomenclatura
+
+- `functions/domain/v2FreshnessPolicy.cjs` renomeado para `v2FreshnessPolicyResolver.cjs`.
+- `functions/domain/v2ReviewPolicy.cjs` renomeado para `v2ReviewPolicyResolver.cjs`.
+- `functions/domain/v2OperationalArtifacts.cjs` renomeado para `v2OperationalArtifactBuilder.cjs`.
+- Imports e testes ajustados para os novos nomes.
+- `v2ReportSections.cjs` foi mantido, pois o modulo resolve secoes e tambem constroi `ReportSnapshot`; renomear agora para apenas resolver ou builder reduziria a clareza.
+
+### Ajustes de execucao local
+
+- `npm run dev` na raiz `COMPLIANCE_HUB_V2` agora inicia o Vite com `--host 127.0.0.1`.
+- Dev server validado em `http://127.0.0.1:5173/`.
+- Guard Firebase preservado antes de comandos sensiveis, garantindo `compliance-hub-v2`.
+
+### Validacao executada
+
+- `npm run lint` - OK.
+- `npm run check:functions` - OK.
+- Testes focados dos modulos renomeados - 4 suites, 52 testes OK.
+- `npm test` - 69 suites, 907 testes OK.
+- `npm run build` - OK.
+- `npm run test:rules` - 23 testes emulator OK, usando `project_id=compliance-hub-v2`.
+- HTTP local `http://127.0.0.1:5173/` - status 200.
+
+### Observacoes
+
+- Alteracoes existentes em `functions/index.js`, `src/App.jsx`, `Sidebar.jsx` e novos arquivos de produto estavam no working tree durante este ciclo e foram preservadas.
+- O foco deste ciclo foi estabilizar nomes, execucao local e isolamento Firebase V2, sem reverter trabalho paralelo.
+
+---
+
+## Ciclo PREFIXO-CLOUD-FUNCTIONS-V2 (2026-04-22)
+
+### Objetivo
+
+Eliminar o risco de publicar Cloud Functions V2 por cima de nomes historicos/V1, mesmo em caso de erro operacional de projeto Firebase.
+
+### Implementado
+
+- Todas as exports de `functions/index.js` foram renomeadas com prefixo `v2`.
+- Exemplos:
+  - `createClientSolicitation` -> `v2CreateClientSolicitation`;
+  - `concludeCaseByAnalyst` -> `v2ConcludeCaseByAnalyst`;
+  - `juditWebhook` -> `v2JuditWebhook`;
+  - `scheduledMonitoringJob` -> `v2ScheduledMonitoringJob`;
+  - `scheduledBillingClosureJob` -> `v2ScheduledBillingClosureJob`.
+- O helper frontend `callBackendFunction()` passou a resolver automaticamente o nome callable para `v2<Name>`, preservando a API interna do frontend.
+- Chamada direta de `rerunEnrichmentPhase` atualizada para usar o resolver de nome V2.
+- Testes de `firestoreService` atualizados para exigir nomes callables prefixados.
+- `validators.js` recebeu `formatCpf`, corrigindo build da nova tela de pipeline de produto.
+
+### Regra operacional
+
+- V2 nao deve exportar Cloud Function sem prefixo `v2`.
+- Deploy seguro deve continuar usando `npm run deploy:functions`, que combina guard Firebase + `--project compliance-hub-v2` + `codebase=compliance-hub-v2`.
+- Webhooks externos precisam usar as novas URLs geradas pelos nomes prefixados, especialmente `v2JuditWebhook`.
+
+### Validacao executada
+
+- `npm run lint` - OK.
+- `npm run check:functions` - OK.
+- `npm test` - 69 suites, 907 testes OK.
+- `npm run build` - OK.
+- `npm run test:rules` - 23 testes emulator OK.
+- Busca por exports sem prefixo `v2` em `functions/index.js` - vazia.
+
+
+## Ciclo CENTRO-DE-PRODUTOS-HUB-PIPELINE (2026-04-22)
+
+### Objetivo
+
+Transformar o fluxo generico de "um form para todos os produtos" em uma experiencia de **Product Hub** onde cada produto tem seu proprio launcher visual, pipeline de entrada com onboarding didatico, e o backend suporta qualquer productKey. Manter a CasoPage como motor compartilhado (Case Engine) com slots plugaveis.
+
+### Diagnostico inicial
+
+- **`createClientSolicitation` hard-coded para `dossier_pf_basic`** — TODAS as solicitacoes de cliente caíam nesse produto, independente do escolhido no catalogo.
+- **Produtos no catalogo eram apenas "labels"** — nao havia pipeline diferenciado por produto.
+- **CasoPage monolitica** (4.012 linhas) — paineis V2 eram auto-ocultaveis (bom), mas o stepper/wizard era hardcoded por fase.
+- **Zero onboarding por produto** — o usuario era jogado direto no form generico.
+- **Nao havia diferenciacao de campos por produto** — KYC, KYB, Dossie, todos pediam os mesmos dados (nome+CPF/CNPJ).
+- **AnaliseRapidaPage criada em ciclo anterior** ja tinha a experiencia de progresso, mas nao se integrava ao pipeline de produtos.
+
+### Conceito implementado
+
+**3 Camadas:**
+1. **Product Hub** (`/client/hub`) — grid de cards visuais com todos os produtos do tenant, separados em "Meus produtos", "Disponiveis no plano" e "Produtos Premium" (upsell). Cada card tem cor/icone distintivo por familia de produto.
+2. **Product Pipeline** (`/client/pipeline/:productKey`) — wizard de 2-4 passos por produto: intro educacional → dados do sujeito (campos dinamicos) → revisao e confirmacao. Apos submit, redireciona para `AnaliseRapidaPage` com `caseId`.
+3. **Case Engine** — CasoPage como motor compartilhado com slots plugaveis (Fase 4 em andamento).
+
+### Implementado
+
+1. **Backend corrigido (`createClientSolicitation`):**
+   - Aceita `productKey` no payload (fallback: `dossier_pf_basic`).
+   - Aceita `cnpj`, `legalName`, `tradeName` para produtos PJ.
+   - Valida entitlement do produto via `tenantEntitlements.enabledProducts`.
+   - Usa `PRODUCT_REGISTRY[productKey].requiredModules` para `requestedModuleKeys`.
+   - Criadas funcoes `sanitizeCnpj` e `maskCnpj`.
+   - Suporta PF e PJ com validacao apropriada.
+
+2. **Frontend — Product Hub:**
+   - Criado `src/core/productPipelines.js` — registry com configs dos 11 produtos (campos, modulos, intro, cores).
+   - Criado `src/ui/components/ProductCard/ProductCard.jsx` — card visual com familia, tier, status, CTA.
+   - Criado `src/portals/client/ProductHubPage.jsx` — hub com 3 secoes (active/available/upsell).
+   - Integrado com `callGetClientProductCatalog` (backend existente).
+   - Rota `/client/hub` adicionada no App.jsx.
+   - Item "Centro de produtos" adicionado ao Sidebar.
+
+3. **Frontend — Product Pipeline:**
+   - Criado `src/portals/client/pipeline/usePipeline.js` — hook de maquina de estados do wizard.
+   - Criado `src/portals/client/pipeline/ProductIntroStep.jsx` — intro educacional com features, tempo estimado, checkbox "nao mostrar novamente".
+   - Criado `src/portals/client/pipeline/SubjectInputStep.jsx` — form dinamico por produto com validacao CPF/CNPJ.
+   - Criado `src/portals/client/pipeline/ReviewSubmitStep.jsx` — resumo dos dados + modulos + submit.
+   - Criado `src/portals/client/pipeline/ProductPipelinePage.jsx` — orquestrador do wizard.
+   - Rota `/client/pipeline/:productKey` adicionada.
+   - `AnaliseRapidaPage` adaptada para aceitar `caseId` via query param (`?caseId=xxx`).
+
+### Arquivos criados
+
+- `src/core/productPipelines.js`
+- `src/core/productPipelines.test.js`
+- `src/ui/components/ProductCard/ProductCard.jsx`
+- `src/ui/components/ProductCard/ProductCard.css`
+- `src/portals/client/ProductHubPage.jsx`
+- `src/portals/client/ProductHubPage.css`
+- `src/portals/client/pipeline/usePipeline.js`
+- `src/portals/client/pipeline/ProductIntroStep.jsx`
+- `src/portals/client/pipeline/SubjectInputStep.jsx`
+- `src/portals/client/pipeline/ReviewSubmitStep.jsx`
+- `src/portals/client/pipeline/ProductPipelinePage.jsx`
+- `src/portals/client/pipeline/ProductPipelinePage.css`
+
+### Arquivos modificados
+
+- `functions/index.js` — `createClientSolicitation` corrigido para aceitar `productKey`, `cnpj`, validar entitlements.
+- `src/App.jsx` — rotas `/client/hub` e `/client/pipeline/:productKey`.
+- `src/ui/layouts/Sidebar.jsx` — item "Centro de produtos".
+- `src/portals/client/AnaliseRapidaPage.jsx` — aceita `caseId` via query param.
+
+### Testes adicionados/ajustados
+
+- `src/core/productPipelines.test.js` — 8 testes (config por produto, lista, cores, labels, campos PF/PJ).
+- `AnaliseRapidaPage.test.jsx` — ja existente, compativel com query param.
+- Todos os testes existentes preservados.
+
+### Validacao executada
+
+- `npm run lint` — 0 erros.
+- `npm test` — 69 suites, 907 testes passando.
+- `npm run build` — OK, 2.51s. Chunks separados: `ProductHubPage`, `ProductPipelinePage`, `productPipelines`.
+- `npm run test:rules` — 23 testes emulator passando.
+- `node --check functions/index.js` — OK.
+
+### Gaps remanescentes
+
+- **Case Engine (Fase 4)**: CasoPage ainda monolitica. Paineis V2 precisam ser extraidos para `slots/` e steps do stepper para `steps/`. Registry de slots por produto ainda nao criado.
+- **Onboarding por produto (Fase 5)**: Schema `userProfile.onboarding.products` e callable `markProductIntroSeen` ainda nao implementados. Checkbox "nao mostrar novamente" ainda nao persiste.
+- **Polimento (Fase 6)**: Animacoes de transicao, responsividade mobile refinada, acessibilidade completa, analytics por produto.
+- **ModuleConfigStep**: nao implementado (todos os produtos usam modulos predefinidos do pipeline).
+
+### Proximo bloco recomendado
+
+1. Fase 4 — Extrair paineis V2 da CasoPage como slots reutilizaveis e criar CaseEngine.
+2. Fase 5 — Persistir estado de onboarding por produto (`userProfile.onboarding.products`).
+3. Fase 6 — Polimento visual e animacoes.
+
+---
+
+
+## Atualizacao — Fase 4 Case Engine (2026-04-22)
+
+### O que foi feito
+
+Iniciada a extracao da CasoPage monolitica (4.012 linhas) em um sistema de slots plugaveis.
+
+1. **Constantes compartilhadas:**
+   - Criado `src/portals/case-engine/caseEngineConstants.js` com `MODULE_RUN_LABELS`, `MODULE_RUN_STATUS_LABELS`, `SEVERITY_LABELS`, `getModuleRunTone`.
+
+2. **Slots extraidos:**
+   - `ModuleRunsSlot.jsx` — renderiza grid de moduleRuns com status, provider/evidence/signal counts.
+   - `RiskSignalsSlot.jsx` — lista de riskSignals com severidade, modulo e reason.
+   - `EvidenceSlot.jsx` — evidencias agrupadas por modulo com severidade.
+   - `V2RiskSummarySlot.jsx` — resumo agregado de risco usando `resolveV2Risk`.
+
+3. **Registry e Engine:**
+   - `slotRegistry.js` — mapeia slotKey → componente + regras de produto.
+   - `CaseEngine.jsx` — shell que recebe `caseData`, `moduleRuns`, `evidenceItems`, `riskSignals` e renderiza slots dinamicamente.
+   - `CaseEngine.css` — estilos do header e status badges.
+
+4. **Decisiones:**
+   - CasoPage continua como wrapper legacy (backward compat).
+   - CaseEngine ainda nao e usado em producao; esta pronto para ser integrado gradualmente.
+   - Slots restantes (Subject, Relationships, Timeline, Divergences, Watchlist, SeniorApproval, PublicationGuards) continuam na CasoPage ate serem extraidos.
+
+### Arquivos criados
+
+- `src/portals/case-engine/caseEngineConstants.js`
+- `src/portals/case-engine/slotRegistry.js`
+- `src/portals/case-engine/CaseEngine.jsx`
+- `src/portals/case-engine/CaseEngine.css`
+- `src/portals/case-engine/slots/ModuleRunsSlot.jsx`
+- `src/portals/case-engine/slots/RiskSignalsSlot.jsx`
+- `src/portals/case-engine/slots/EvidenceSlot.jsx`
+- `src/portals/case-engine/slots/V2RiskSummarySlot.jsx`
+
+### Validacao
+
+- `npm run lint` — 0 erros.
+- `npm test` — 69 suites, 907 testes passando.
+- `npm run build` — OK, 2.26s.
+
+---
+
+
+## Ciclo CENTRO-DE-PRODUTOS-COMPLETO-FASES-4-5-6 (2026-04-22)
+
+### Objetivo
+
+Completar as fases pendentes do Centro de Produtos: extracao completa dos slots da CasoPage, onboarding por produto com persistencia, e polimento visual/acessibilidade/analytics.
+
+### Fase 4 — Case Engine Completo
+
+1. **Constantes extraidas:** `caseEngineConstants.js` agora contem `MODULE_RUN_LABELS`, `MODULE_RUN_STATUS_LABELS`, `SEVERITY_LABELS`, `getModuleRunTone`, `SUBJECT_TYPE_LABELS`, `DOC_TYPE_LABELS`, `formatMaskedDoc`, `RELATIONSHIP_TYPE_LABELS`, `RELATIONSHIP_CONFIDENCE_LABELS`, `formatRelationshipEndpoint`, `SENIOR_APPROVAL_ROLES`, `hasWatchlistEntitlement`, `resolveWatchlistModules`.
+
+2. **11 slots extraidos:**
+   - `ModuleRunsSlot` — status modular V2 com provider/evidence/signal counts
+   - `RiskSignalsSlot` — sinais de risco com severidade e modulo
+   - `EvidenceSlot` — evidencias agrupadas por modulo
+   - `V2RiskSummarySlot` — resumo agregado de risco (resolveV2Risk)
+   - `SubjectSlot` — perfil do sujeito (PF/PJ, documentos, aliases, historico)
+   - `RelationshipsSlot` — mini-relacionamentos com confidence
+   - `TimelineSlot` — timeline investigativa
+   - `DivergencesSlot` — divergencias entre fontes com resolucao
+   - `SeniorApprovalSlot` — gate de aprovacao senior para sinais criticos
+   - `WatchlistSlot` — criacao de watchlist a partir de caso publicado
+   - `PublicationGuardsSlot` — gates operacionais (solicitados → efetivos → executados)
+
+3. **Registry:** `slotRegistry.js` mapeia todos os 11 slots. `resolveSlotsForProduct` retorna todos (cada slot ja gerencia sua propria renderizacao condicional).
+
+4. **CaseEngine:** `CaseEngine.jsx` shell com header + slots, recebendo `caseData`, `moduleRuns`, `evidenceItems`, `riskSignals`, `subject`, `relationships`, `timelineEvents`, `providerDivergences`, `userRole`, `watchlistState`.
+
+### Fase 5 — Onboarding por Produto
+
+1. **Callable `markProductIntroSeen`:**
+   - Aceita `productKey` no payload
+   - Atualiza `userProfiles/{uid}.onboarding.products.{productKey}.introSeen = true`
+   - Adiciona `introSeenAt` timestamp
+   - Audita action `PRODUCT_INTRO_SEEN`
+
+2. **Frontend integration:**
+   - `callMarkProductIntroSeen` adicionado ao `firestoreService.js`
+   - `ProductPipelinePage` chama o callable quando usuario marca "Nao mostrar novamente"
+   - `ProductIntroStep` tambem emite `trackProductIntroSeen(productKey, true)` para analytics
+
+3. **Auto-skip:** Se `userProfile.onboarding.products.{productKey}.introSeen === true`, o pipeline pula direto para o passo de dados do sujeito.
+
+### Fase 6 — Polimento
+
+1. **Animacoes de transicao:**
+   - Criado `PageTransition` component com `page-enter` keyframe (fade + slideY)
+   - Aplicado em `ProductHubPage`, `ProductPipelinePage`, `AnaliseRapidaPage`
+   - Respeita `prefers-reduced-motion`
+
+2. **Responsividade mobile:**
+   - ProductHub: grid `auto-fill minmax(280px, 1fr)` com fallback para 1 coluna em <640px
+   - ProductPipeline: max-width 720px centralizado, formularios com touch targets >= 44px
+   - AnaliseRapida: hero em grid 1fr em mobile, cards em 1 coluna
+
+3. **Acessibilidade:**
+   - `SkipLink` component — link que aparece no focus para pular para conteudo principal
+   - `#main-content` com `tabIndex={-1}` no AppLayout
+   - `role="main"` e `aria-label="Conteudo principal"` no main element
+   - `aria-live="polite"` nas paginas de transicao
+   - Todos os botoes e inputs com `data-testid` para testes
+   - Focus visible styles nos botoes e inputs
+
+4. **Analytics de uso por produto:**
+   - `productAnalytics.js` — helper leve com sessionStorage queue
+   - Eventos: `product_selected`, `product_intro_seen`, `product_analysis_started`, `product_analysis_completed`, `product_report_opened`
+   - Integrado em `ProductHubPage` (selecao), `ProductPipelinePage` (intro + start), `AnaliseRapidaPage` (completed + report opened)
+   - `flushProductAnalytics()` para exportacao futura
+
+### Arquivos criados
+
+- `src/portals/case-engine/slots/SubjectSlot.jsx`
+- `src/portals/case-engine/slots/RelationshipsSlot.jsx`
+- `src/portals/case-engine/slots/TimelineSlot.jsx`
+- `src/portals/case-engine/slots/DivergencesSlot.jsx`
+- `src/portals/case-engine/slots/SeniorApprovalSlot.jsx`
+- `src/portals/case-engine/slots/WatchlistSlot.jsx`
+- `src/portals/case-engine/slots/PublicationGuardsSlot.jsx`
+- `src/core/productAnalytics.js`
+- `src/ui/components/PageTransition/PageTransition.jsx`
+- `src/ui/components/PageTransition/PageTransition.css`
+- `src/ui/components/SkipLink/SkipLink.jsx`
+- `src/ui/components/SkipLink/SkipLink.css`
+
+### Arquivos modificados
+
+- `functions/index.js` — callable `markProductIntroSeen` adicionado
+- `src/core/firebase/firestoreService.js` — `callMarkProductIntroSeen`
+- `src/core/productPipelines.js` — pipeline configs (ja existente, confirmado)
+- `src/portals/client/ProductHubPage.jsx` — PageTransition + analytics
+- `src/portals/client/pipeline/ProductPipelinePage.jsx` — PageTransition + analytics + callable
+- `src/portals/client/AnaliseRapidaPage.jsx` — PageTransition + analytics
+- `src/ui/layouts/AppLayout.jsx` — SkipLink + main content id
+
+### Validacao executada
+
+- `npm run lint` — 0 erros, 0 warnings.
+- `npm test` — 69 suites, 907 testes passando.
+- `npm run build` — OK, 2.49s.
+- `node --check functions/index.js` — OK.
+- `npm run test:rules` — 23 testes emulator passando.
+
+### Gaps remanescentes
+
+- **CaseEngine ainda nao e a rota ativa para casos** — CasoPage continua como wrapper legacy. A integracao do CaseEngine na rota `/case/:caseId` requer refatoracao do router e testes de regressao extensivos, deixada para ciclo futuro de migracao gradual.
+- **ModuleConfigStep** nao implementado — todos os produtos usam modulos predefinidos do pipeline. Um step de configuracao de modulos seria util para produtos premium com modulos opcionais.
+- **Backend analytics** — o analytics atual e apenas frontend (sessionStorage). Integracao com Firebase Analytics ou backend permanece como proximo passo.
+
+### Proximo bloco recomendado
+
+1. Integrar CaseEngine gradualmente na rota do caso (side-by-side com CasoPage).
+2. Implementar ModuleConfigStep para produtos com modulos opcionais.
+3. Criar dashboard de analytics por produto (consumo de backend).
+4. Adicionar tests E2E do fluxo completo hub → pipeline → analise → relatorio.
+
+---
+

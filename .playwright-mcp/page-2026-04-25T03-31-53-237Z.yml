@@ -1,0 +1,61 @@
+- generic [ref=e10]:
+  - banner [ref=e11]:
+    - generic [ref=e13]:
+      - link "⌘ ComplianceHub®" [ref=e14] [cursor=pointer]:
+        - /url: /dossie
+        - generic [ref=e15]: ⌘
+        - generic [ref=e16]: ComplianceHub®
+      - generic [ref=e17]:
+        - button "Dicionário de fontes" [ref=e18] [cursor=pointer]:
+          - img [ref=e19]
+          - text: Dicionário de fontes
+        - button "Mensagens" [ref=e21] [cursor=pointer]:
+          - img [ref=e22]
+        - button "Academia" [ref=e24] [cursor=pointer]:
+          - img [ref=e25]
+        - button "Envios" [ref=e28] [cursor=pointer]:
+          - img [ref=e29]
+        - button "Notificações" [ref=e32] [cursor=pointer]:
+          - img [ref=e33]
+        - button "Perfil" [ref=e36] [cursor=pointer]:
+          - img [ref=e37]
+    - generic [ref=e42]:
+      - navigation "Categorias de produtos" [ref=e43]:
+        - button "Background Check" [ref=e44] [cursor=pointer]
+        - button "Cibersegurança" [ref=e45] [cursor=pointer]
+        - button "Due Diligence" [ref=e46] [cursor=pointer]
+        - button "Estrutura Societária" [ref=e47] [cursor=pointer]
+        - button "Jurídico" [ref=e48] [cursor=pointer]
+        - button "Recuperação de Ativos" [ref=e49] [cursor=pointer]
+      - button "Aplicativos" [ref=e50] [cursor=pointer]:
+        - text: Aplicativos
+        - img [ref=e51]
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e55]:
+        - text: Configurações
+        - heading "Configurações do Tenant" [level=1] [ref=e56]
+        - paragraph [ref=e57]: Gerencie limites, nome do tenant e parâmetros operacionais da plataforma.
+      - generic [ref=e58]:
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]: Nome do tenant
+            - textbox "Nome do tenant" [ref=e62]:
+              - /placeholder: Nome da empresa ou departamento
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - generic [ref=e65]: Limite diário de análises
+              - spinbutton "Limite diário de análises" [ref=e66]
+            - generic [ref=e67]:
+              - generic [ref=e68]: Limite mensal de análises
+              - spinbutton "Limite mensal de análises" [ref=e69]
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - checkbox "Permitir excedente diário (com alerta)" [ref=e72]
+              - generic [ref=e73]: Permitir excedente diário (com alerta)
+            - generic [ref=e74]:
+              - checkbox "Permitir excedente mensal (com alerta)" [ref=e75]
+              - generic [ref=e76]: Permitir excedente mensal (com alerta)
+        - button "Salvar configurações" [ref=e78] [cursor=pointer]:
+          - img [ref=e79]
+          - text: Salvar configurações

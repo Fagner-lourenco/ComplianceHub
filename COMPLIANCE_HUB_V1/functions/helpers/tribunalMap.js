@@ -98,9 +98,60 @@ function getJuditTribunais(ufs) {
     return [...set];
 }
 
+/**
+ * Reverse mapping: DJEN tribunal sigla → UFs it covers.
+ * Used for geo-tagging DJEN comunicações against candidate location.
+ * null = national tribunal (no geographic restriction).
+ */
+const DJEN_TRIBUNAL_TO_UFS = {
+    // Tribunais de Justiça Estaduais
+    TJAC: ['AC'], TJAL: ['AL'], TJAM: ['AM'], TJAP: ['AP'], TJBA: ['BA'],
+    TJCE: ['CE'], TJDFT: ['DF'], TJES: ['ES'], TJGO: ['GO'], TJMA: ['MA'],
+    TJMG: ['MG'], TJMS: ['MS'], TJMT: ['MT'], TJPA: ['PA'], TJPB: ['PB'],
+    TJPE: ['PE'], TJPI: ['PI'], TJPR: ['PR'], TJRJ: ['RJ'], TJRN: ['RN'],
+    TJRO: ['RO'], TJRR: ['RR'], TJRS: ['RS'], TJSC: ['SC'], TJSE: ['SE'],
+    TJSP: ['SP'], TJTO: ['TO'], TJDF: ['DF'],
+    // TRTs (Tribunais Regionais do Trabalho)
+    TRT1: ['RJ'], TRT2: ['SP'], TRT3: ['MG'], TRT4: ['RS'], TRT5: ['BA'],
+    TRT6: ['PE'], TRT7: ['CE'], TRT8: ['PA', 'AP'], TRT9: ['PR'], TRT10: ['DF', 'TO'],
+    TRT11: ['AM', 'RR'], TRT12: ['SC'], TRT13: ['PB'], TRT14: ['RO', 'AC'],
+    TRT15: ['SP'], TRT16: ['MA'], TRT17: ['ES'], TRT18: ['GO'], TRT19: ['AL'],
+    TRT20: ['SE'], TRT21: ['RN'], TRT22: ['PI'], TRT23: ['MT'], TRT24: ['MS'],
+    // TRFs (Tribunais Regionais Federais)
+    TRF1: ['AC', 'AM', 'AP', 'BA', 'DF', 'GO', 'MA', 'MG', 'MT', 'PA', 'PI', 'RO', 'RR', 'TO'],
+    TRF2: ['RJ', 'ES'],
+    TRF3: ['MS', 'SP'],
+    TRF4: ['PR', 'RS', 'SC'],
+    TRF5: ['AL', 'CE', 'PB', 'PE', 'RN', 'SE'],
+    TRF6: ['MG'],
+    // Tribunais Superiores — nacionais (null = sem restrição geográfica)
+    STJ: null, STF: null, TST: null, TSE: null, STM: null,
+};
+
+/**
+ * Determine if a DJEN tribunal matches the candidate's known UFs.
+ * @param {string} siglaTribunal  e.g. 'TJMG', 'TRT8', 'STJ'
+ * @param {string[]} candidateUfs  UFs where the candidate lives/works (e.g. ['MG', 'SP'])
+ * @returns {boolean|null}  true=match, false=no match, null=national tribunal or unknown
+ */
+function getDjenGeoMatch(siglaTribunal, candidateUfs) {
+    if (!siglaTribunal || !candidateUfs || candidateUfs.length === 0) return null;
+
+    const sigla = siglaTribunal.toUpperCase();
+    if (!(sigla in DJEN_TRIBUNAL_TO_UFS)) return null;
+
+    const tribunalUfs = DJEN_TRIBUNAL_TO_UFS[sigla];
+    if (tribunalUfs === null) return null; // National tribunal
+
+    const candidateSet = new Set(candidateUfs.map((u) => u.toUpperCase()));
+    return tribunalUfs.some((uf) => candidateSet.has(uf));
+}
+
 module.exports = {
     ESCAVADOR_TRIBUNAIS,
     JUDIT_TRIBUNAIS,
     getEscavadorTribunais,
     getJuditTribunais,
+    DJEN_TRIBUNAL_TO_UFS,
+    getDjenGeoMatch,
 };

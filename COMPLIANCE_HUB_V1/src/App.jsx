@@ -12,18 +12,40 @@ import {
 import LoginPage from './pages/LoginPage';
 import AppLayout from './ui/layouts/AppLayout';
 import PublicReportPage from './pages/PublicReportPage';
+import ErrorBoundary from './ui/components/ErrorBoundary/ErrorBoundary';
 
-const CandidatosPage = lazy(() => import('./portals/client/CandidatosPage'));
-const DashboardClientePage = lazy(() => import('./portals/client/DashboardClientePage'));
-const ExportacoesPage = lazy(() => import('./portals/client/ExportacoesPage'));
-const NovaSolicitacaoPage = lazy(() => import('./portals/client/NovaSolicitacaoPage'));
-const SolicitacoesPage = lazy(() => import('./portals/client/SolicitacoesPage'));
-const AuditoriaPage = lazy(() => import('./portals/ops/AuditoriaPage'));
-const MetricasIAPage = lazy(() => import('./portals/ops/MetricasIAPage'));
-const CasoPage = lazy(() => import('./portals/ops/CasoPage'));
-const CasosPage = lazy(() => import('./portals/ops/CasosPage'));
-const ClientesPage = lazy(() => import('./portals/ops/ClientesPage'));
-const FilaPage = lazy(() => import('./portals/ops/FilaPage'));
+/** Retry dynamic imports up to 2 times — handles stale chunks after a new deploy. */
+const LAZY_RETRY_KEY = '__ch_lazy_retry_count';
+function lazyRetry(importFn) {
+    return lazy(() => importFn().catch(() => {
+        const retryCount = Number(sessionStorage.getItem(LAZY_RETRY_KEY) || '0');
+        if (retryCount < 2) {
+            sessionStorage.setItem(LAZY_RETRY_KEY, String(retryCount + 1));
+            window.location.reload();
+            return new Promise(() => {});
+        }
+        sessionStorage.removeItem(LAZY_RETRY_KEY);
+        throw new Error('Falha ao carregar modulo apos 2 tentativas.');
+    }));
+}
+
+const DashboardClientePage = lazyRetry(() => import('./portals/client/DashboardClientePage'));
+const EquipePage = lazyRetry(() => import('./portals/client/EquipePage'));
+const ExportacoesPage = lazyRetry(() => import('./portals/client/ExportacoesPage'));
+const NovaSolicitacaoPage = lazyRetry(() => import('./portals/client/NovaSolicitacaoPage'));
+const RelatoriosClientePage = lazyRetry(() => import('./portals/client/RelatoriosClientePage'));
+const SolicitacoesPage = lazyRetry(() => import('./portals/client/SolicitacoesPage'));
+const AuditoriaClientePage = lazyRetry(() => import('./portals/client/AuditoriaClientePage'));
+const AuditoriaPage = lazyRetry(() => import('./portals/ops/AuditoriaPage'));
+const MetricasIAPage = lazyRetry(() => import('./portals/ops/MetricasIAPage'));
+const RelatoriosPage = lazyRetry(() => import('./portals/ops/RelatoriosPage'));
+const SaudePage = lazyRetry(() => import('./portals/ops/SaudePage'));
+const CasoPage = lazyRetry(() => import('./portals/ops/CasoPage'));
+const CasosPage = lazyRetry(() => import('./portals/ops/CasosPage'));
+const ClientesPage = lazyRetry(() => import('./portals/ops/ClientesPage'));
+const TenantSettingsPage = lazyRetry(() => import('./portals/ops/TenantSettingsPage'));
+const FilaPage = lazyRetry(() => import('./portals/ops/FilaPage'));
+const PerfilPage = lazyRetry(() => import('./pages/PerfilPage'));
 
 function SplashScreen() {
     return (
@@ -75,17 +97,17 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#f0f2f5',
+            background: 'var(--bg-app)',
             padding: '24px',
         }}>
             <div style={{
                 width: '100%',
                 maxWidth: '560px',
-                background: 'white',
+                background: 'var(--bg-card)',
                 borderRadius: '20px',
                 padding: '32px',
                 boxShadow: '0 24px 48px rgba(15, 23, 42, 0.12)',
-                border: '1px solid #e5e7eb',
+                border: '1px solid var(--border-default)',
             }}>
                 <div style={{
                     display: 'inline-flex',
@@ -94,8 +116,8 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                     marginBottom: '16px',
                     padding: '6px 12px',
                     borderRadius: '999px',
-                    background: '#eff6ff',
-                    color: '#1d4ed8',
+                    background: 'var(--blue-50)',
+                    color: 'var(--blue-700)',
                     fontSize: '12px',
                     fontWeight: 700,
                     letterSpacing: '0.04em',
@@ -104,27 +126,27 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                     Sessao autenticada
                 </div>
                 <h2 style={{ marginBottom: '12px', fontSize: '1.5rem' }}>{title}</h2>
-                <p style={{ marginBottom: '20px', color: '#4b5563', lineHeight: 1.6 }}>{message}</p>
+                <p style={{ marginBottom: '20px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{message}</p>
 
                 <div style={{
                     marginBottom: '24px',
                     padding: '16px',
                     borderRadius: '14px',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    background: 'var(--gray-50)',
+                    border: '1px solid var(--border-default)',
                 }}>
                     <div style={{
                         fontSize: '0.75rem',
-                        color: '#64748b',
+                        color: 'var(--text-tertiary)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.04em',
                         marginBottom: '6px',
                     }}>
                         Identidade confirmada no Firebase Auth
                     </div>
-                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{identityName}</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{identityName}</div>
                     {identityEmail && (
-                        <div style={{ color: '#475569', marginTop: '4px' }}>{identityEmail}</div>
+                        <div style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>{identityEmail}</div>
                     )}
                 </div>
 
@@ -136,7 +158,7 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                             style={{
                                 padding: '12px 18px',
                                 borderRadius: '12px',
-                                background: '#0f172a',
+                                background: 'var(--gray-900)',
                                 color: 'white',
                                 fontWeight: 600,
                             }}
@@ -151,8 +173,8 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                             style={{
                                 padding: '12px 18px',
                                 borderRadius: '12px',
-                                background: '#e2e8f0',
-                                color: '#0f172a',
+                                background: 'var(--gray-200)',
+                                color: 'var(--text-primary)',
                                 fontWeight: 600,
                             }}
                         >
@@ -313,14 +335,6 @@ function AppRoutes() {
                         )}
                     />
                     <Route
-                        path="candidatos"
-                        element={(
-                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
-                                <CandidatosPage />
-                            </RequirePermission>
-                        )}
-                    />
-                    <Route
                         path="exportacoes"
                         element={(
                             <RequirePermission permission={PERMISSIONS.CASE_EXPORT}>
@@ -328,6 +342,31 @@ function AppRoutes() {
                             </RequirePermission>
                         )}
                     />
+                    <Route
+                        path="relatorios"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_EXPORT}>
+                                <RelatoriosClientePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="equipe"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.USERS_MANAGE}>
+                                <EquipePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="auditoria"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.TENANT_AUDIT_VIEW}>
+                                <AuditoriaClientePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
                 <Route
@@ -366,18 +405,18 @@ function AppRoutes() {
                         )}
                     />
                     <Route
-                        path="candidatos"
-                        element={(
-                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
-                                <CandidatosPage />
-                            </RequirePermission>
-                        )}
-                    />
-                    <Route
                         path="clientes"
                         element={(
                             <RequirePermission permission={PERMISSIONS.USERS_MANAGE}>
                                 <ClientesPage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="tenant-settings/:tenantId"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.SETTINGS_MANAGE}>
+                                <TenantSettingsPage />
                             </RequirePermission>
                         )}
                     />
@@ -397,6 +436,23 @@ function AppRoutes() {
                             </RequirePermission>
                         )}
                     />
+                    <Route
+                        path="relatorios"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.AUDIT_VIEW}>
+                                <RelatoriosPage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="saude"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.AUDIT_VIEW}>
+                                <SaudePage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
                 <Route
@@ -411,8 +467,11 @@ function AppRoutes() {
                     <Route path="dashboard" element={<DashboardClientePage />} />
                     <Route path="solicitacoes" element={<SolicitacoesPage />} />
                     <Route path="nova-solicitacao" element={<NovaSolicitacaoPage />} />
-                    <Route path="candidatos" element={<CandidatosPage />} />
                     <Route path="exportacoes" element={<ExportacoesPage />} />
+                    <Route path="relatorios" element={<RelatoriosClientePage />} />
+                    <Route path="equipe" element={<EquipePage />} />
+                    <Route path="auditoria" element={<AuditoriaClientePage />} />
+                    <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
                 <Route
@@ -427,8 +486,10 @@ function AppRoutes() {
                     <Route path="fila" element={<FilaPage />} />
                     <Route path="caso/:caseId" element={<CasoPage />} />
                     <Route path="casos" element={<CasosPage />} />
-                    <Route path="candidatos" element={<CandidatosPage />} />
                     <Route path="auditoria" element={<AuditoriaPage />} />
+                    <Route path="relatorios" element={<RelatoriosPage />} />
+                    <Route path="saude" element={<SaudePage />} />
+                    <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
                 <Route path="/r/:token" element={<PublicReportPage />} />
@@ -442,11 +503,17 @@ function AppRoutes() {
 
 function App() {
     return (
-        <AuthProvider>
-            <TenantProvider>
-                <AppRoutes />
-            </TenantProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+            <AuthProvider>
+                <ErrorBoundary>
+                    <TenantProvider>
+                        <ErrorBoundary>
+                            <AppRoutes />
+                        </ErrorBoundary>
+                    </TenantProvider>
+                </ErrorBoundary>
+            </AuthProvider>
+        </ErrorBoundary>
     );
 }
 
