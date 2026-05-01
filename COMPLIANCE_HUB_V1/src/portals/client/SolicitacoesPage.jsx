@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import NovaSolicitacaoPanel from './NovaSolicitacaoPanel';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
@@ -8,8 +9,8 @@ import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
-import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings, saveClientPublicReport } from '../../core/firebase/firestoreService';
-import { buildCaseReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
+import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
+import { buildClientInternalReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
 import { getCaseStats } from '../../core/caseUtils';
@@ -20,11 +21,27 @@ import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanel
 import './SolicitacoesPage.css';
 
 function getMacroProgress(caseData) {
-    if (caseData.status === 'DONE') return { label: 'Concluido', step: 3, color: 'var(--green-600)' };
-    if (caseData.status === 'CORRECTION_NEEDED') return { label: 'Correcao solicitada', step: 1, color: 'var(--red-600)' };
-    if (caseData.status === 'WAITING_INFO') return { label: 'Aguardando informacoes', step: 2, color: 'var(--yellow-700)' };
-    if (caseData.status === 'IN_PROGRESS') return { label: 'Em analise', step: 2, color: 'var(--brand-600)' };
-    return { label: 'Aguardando analise', step: 1, color: 'var(--text-tertiary)' };
+    // BUG-R4-001: Show user-friendly error message when enrichment failed.
+    const hasError = caseData.enrichmentError || caseData.bigdatacorpError || caseData.juditError || caseData.escavadorError || caseData.djenError;
+    if (hasError) {
+        return { label: 'Erro no processamento — equipe notificada', step: 1, color: 'var(--red-600)', error: true };
+    }
+    if (caseData.status === 'DONE') return { label: 'Concluído', step: 6, color: 'var(--green-600)' };
+    if (caseData.status === 'CORRECTION_NEEDED') return { label: 'Correção solicitada', step: 1, color: 'var(--red-600)' };
+    // BUG-R4-004: Reflect real pipeline progress with 6 steps.
+    const bdcDone = ['DONE', 'PARTIAL', 'SKIPPED', 'BLOCKED'].includes(caseData.bigdatacorpEnrichmentStatus);
+    const fonteDone = ['DONE', 'PARTIAL', 'SKIPPED', 'BLOCKED'].includes(caseData.enrichmentStatus);
+    const juditDone = ['DONE', 'PARTIAL', 'SKIPPED'].includes(caseData.juditEnrichmentStatus);
+    const escDone = ['DONE', 'PARTIAL', 'SKIPPED'].includes(caseData.escavadorEnrichmentStatus);
+    const classified = !!caseData.autoClassifiedAt;
+    const aiDone = !!caseData.aiStructured;
+    if (aiDone) return { label: 'Análise finalizada', step: 5, color: 'var(--brand-600)' };
+    if (classified) return { label: 'Classificando resultado', step: 4, color: 'var(--brand-600)' };
+    if (escDone) return { label: 'Enriquecendo dados (Escavador)', step: 3, color: 'var(--brand-600)' };
+    if (juditDone) return { label: 'Enriquecendo dados (Judit)', step: 3, color: 'var(--brand-600)' };
+    if (fonteDone) return { label: 'Consultando processos', step: 2, color: 'var(--brand-600)' };
+    if (bdcDone) return { label: 'Verificando identidade', step: 2, color: 'var(--brand-600)' };
+    return { label: 'Aguardando análise', step: 1, color: 'var(--text-tertiary)' };
 }
 
 export default function SolicitacoesPage() {
@@ -46,10 +63,13 @@ export default function SolicitacoesPage() {
     const [heatmapMode, setHeatmapMode] = useState(false);
     const [tenantPhases, setTenantPhases] = useState([]);
     const [quota, setQuota] = useState(null);
+    const [quotaLoading, setQuotaLoading] = useState(false);
+    const [quotaError, setQuotaError] = useState(null);
     const [reportStatus, setReportStatus] = useState({ state: 'idle', message: '' });
     const [correctionForm, setCorrectionForm] = useState(null);
     const [correctionError, setCorrectionError] = useState(null);
     const [correctionSaving, setCorrectionSaving] = useState(false);
+    const [novaPanelOpen, setNovaPanelOpen] = useState(false);
 
     useEffect(() => {
         if (!userProfile?.tenantId || isDemoMode) return;
@@ -60,9 +80,23 @@ export default function SolicitacoesPage() {
 
     useEffect(() => {
         if (!user || isDemoMode) return;
+        let cancelled = false;
+        setQuotaLoading(true);
+        setQuotaError(null);
         callGetClientQuotaStatus()
-            .then((data) => setQuota(data))
-            .catch(() => {});
+            .then((data) => {
+                if (!cancelled) setQuota(data);
+            })
+            .catch((currentError) => {
+                if (!cancelled) {
+                    setQuota(null);
+                    setQuotaError(currentError);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setQuotaLoading(false);
+            });
+        return () => { cancelled = true; };
     }, [user, isDemoMode]);
 
     useEffect(() => {
@@ -106,7 +140,12 @@ export default function SolicitacoesPage() {
         if (verdictFilter !== 'ALL') result = result.filter((caseData) => caseData.finalVerdict === verdictFilter);
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            result = result.filter((caseData) => caseData.candidateName.toLowerCase().includes(term) || caseData.cpfMasked.includes(term) || caseData.id.toLowerCase().includes(term));
+            result = result.filter((caseData) => {
+                const candidateName = String(caseData.candidateName || '').toLowerCase();
+                const cpfMasked = String(caseData.cpfMasked || '').toLowerCase();
+                const caseId = String(caseData.id || '').toLowerCase();
+                return candidateName.includes(term) || cpfMasked.includes(term) || caseId.includes(term);
+            });
         }
         result.sort((left, right) => {
             let leftValue = left[sortField] ?? '';
@@ -132,19 +171,15 @@ export default function SolicitacoesPage() {
             setReportStatus({ state: 'unavailable', message: reportAvailability.message });
             return;
         }
-        setReportStatus({ state: 'loading', message: 'Preparando relatorio...' });
+        setReportStatus({ state: 'loading', message: 'Abrindo dossiê interno...' });
         try {
-            if (isDemoMode) {
-                window.open(buildCaseReportPath(selectedCaseView, true), '_blank', 'noopener,noreferrer');
-            } else {
-                // Always go through backend to ensure report freshness
-                const token = await saveClientPublicReport(selectedCase.id);
-                window.open(`/r/${token}`, '_blank', 'noopener,noreferrer');
-            }
-            setReportStatus({ state: 'success', message: 'Relatorio aberto com sucesso.' });
+            const path = buildClientInternalReportPath(selectedCaseView, location.pathname);
+            if (!path) throw new Error('Nao foi possivel montar a rota do dossie.');
+            navigate(path);
+            setReportStatus({ state: 'success', message: 'Dossiê interno aberto com sucesso.' });
         } catch (currentError) {
             console.error('Error generating report:', currentError);
-            setReportStatus({ state: 'error', message: extractErrorMessage(currentError, 'Nao foi possivel preparar o relatorio agora.') });
+            setReportStatus({ state: 'error', message: extractErrorMessage(currentError, 'Nao foi possivel abrir o dossie agora.') });
         }
     };
 
@@ -184,7 +219,13 @@ export default function SolicitacoesPage() {
             label: 'Resumo',
             content: (
                 <div className="case-detail">
-                    {publicResultLoading && <p style={{ color: 'var(--text-secondary)', fontSize: '.8125rem' }}>Carregando resultado...</p>}
+                    {publicResultLoading && (
+                        <div aria-busy="true" aria-label="Carregando resultado" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div className="skeleton skeleton--text" style={{ width: '60%' }} />
+                            <div className="skeleton skeleton--text" style={{ width: '80%' }} />
+                            <div className="skeleton skeleton--text" style={{ width: '45%' }} />
+                        </div>
+                    )}
                     {!publicResultLoading && selectedCase.status === 'DONE' && !selectedCaseView && (
                         <div className="case-detail__section" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '.875rem' }}>
@@ -331,25 +372,25 @@ export default function SolicitacoesPage() {
             ),
         },
         {
-            label: 'Relatorio',
+            label: 'Dossiê',
             content: (
-                <div className="case-detail"><div className="case-detail__section"><h4>Disponibilidade</h4><p>{reportAvailability.message}</p>{selectedCaseView?.reportSlug && <p><strong>Identificador:</strong> {selectedCaseView.reportSlug}</p>}</div>{reportStatus.message && <p role={reportStatus.state === 'error' ? 'alert' : 'status'} style={{ color: reportStatus.state === 'error' ? 'var(--red-600)' : reportStatus.state === 'success' ? 'var(--green-700)' : 'var(--text-secondary)' }}>{reportStatus.message}</p>}<div className="case-detail__section"><button className="btn-primary" style={{ fontSize: '.8125rem' }} onClick={handleOpenReport} disabled={reportStatus.state === 'loading' || !reportAvailability.available}>{reportStatus.state === 'loading' ? 'Preparando...' : 'Abrir relatorio'}</button></div></div>
+                <div className="case-detail"><div className="case-detail__section"><h4>Disponibilidade</h4><p>{reportAvailability.message}</p>{selectedCaseView?.reportSlug && <p><strong>Identificador:</strong> {selectedCaseView.reportSlug}</p>}</div>{reportStatus.message && <p role={reportStatus.state === 'error' ? 'alert' : 'status'} style={{ color: reportStatus.state === 'error' ? 'var(--red-600)' : reportStatus.state === 'success' ? 'var(--green-700)' : 'var(--text-secondary)' }}>{reportStatus.message}</p>}<div className="case-detail__section"><p>Esta prévia é resumida. Para leitura, impressão ou compartilhamento externo, abra o dossiê autenticado.</p><button className="btn-primary" style={{ fontSize: '.8125rem' }} onClick={handleOpenReport} disabled={reportStatus.state === 'loading' || !reportAvailability.available}>{reportStatus.state === 'loading' ? 'Abrindo...' : 'Abrir dossiê completo'}</button></div></div>
             ),
         },
     ] : [];
 
     return (
         <div className="solicitacoes-page">
-            <div className="solicitacoes-page__header"><h2 className="solicitacoes-page__title">Minhas Solicitacoes</h2><button className="solicitacoes-page__cta" onClick={() => navigate(buildClientPortalPath(location.pathname, 'nova-solicitacao'))}>Nova Solicitacao</button></div>
-            <div className="solicitacoes-page__kpis"><KpiCard label="Casos enviados" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluidos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Correcao solicitada" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Nao recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
-            <QuotaSummaryCard quota={quota} />
+            <div className="solicitacoes-page__header"><div><h2 className="solicitacoes-page__title">Minhas solicitações</h2><p className="solicitacoes-page__subtitle">Acompanhe o andamento e os resultados dos dossiês da sua franquia.</p></div><button className="solicitacoes-page__cta" onClick={() => setNovaPanelOpen(true)}>+ Nova solicitação</button></div>
+            <div className="solicitacoes-page__kpis"><KpiCard label="Casos carregados" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluídos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Correção solicitada" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Não recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
+            <QuotaSummaryCard quota={quota} loading={quotaLoading} error={quotaError} />
             <FilterPanelMobile
                 searchElement={
                     <div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div>
                 }
                 activeFilterCount={(statusFilter !== 'ALL' ? 1 : 0) + (verdictFilter !== 'ALL' ? 1 : 0) + (heatmapMode ? 1 : 0)}
             >
-                <div className="solicitacoes-page__filters"><div className="filter-bar"><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em analise</option><option value="WAITING_INFO">Aguardando info</option><option value="CORRECTION_NEEDED">Correcao necessaria</option><option value="DONE">Concluido</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)}><option value="ALL">Todos os vereditos</option><option value="FIT">Apto</option><option value="ATTENTION">Atencao</option><option value="NOT_RECOMMENDED">Nao recomendado</option><option value="PENDING">Pendente</option></select><button className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)}>Heatmap</button></div></div>
+                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nos casos carregados por nome, CPF ou ID..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status carregados</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por veredito"><option value="ALL">Todos os vereditos carregados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de risco</button></div></div>
             </FilterPanelMobile>
             <MobileDataCardList
                 items={filteredCases}
@@ -382,10 +423,15 @@ export default function SolicitacoesPage() {
                     </div>
                 )}
             >
-                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && <tr><td colSpan={14} className="data-table__empty">Carregando solicitacoes...</td></tr>}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon">📭</span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')} aria-sort={sortField === 'candidateName' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')} aria-sort={sortField === 'createdAt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')} aria-sort={sortField === 'riskScore' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && Array.from({ length: 5 }, (_, i) => (<tr key={`sk-${i}`} aria-hidden="true"><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${55 + (i % 4) * 10}%` }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 90 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td><td className="data-table__td"><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 20 }} /></td><td className="data-table__td" colSpan={9}><div className="skeleton skeleton--text" style={{ width: '40%' }} /></td></tr>))}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 4v4M16 4v4M2 8h20M8 12h8M8 16h4"/></svg></span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
             </MobileDataCardList>
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
+            <NovaSolicitacaoPanel
+                open={novaPanelOpen}
+                onClose={() => setNovaPanelOpen(false)}
+                onSuccess={() => setNovaPanelOpen(false)}
+            />
         </div>
     );
 }
