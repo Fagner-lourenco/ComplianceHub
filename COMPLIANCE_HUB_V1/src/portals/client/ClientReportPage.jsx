@@ -179,7 +179,7 @@ export default function ClientReportPage() {
                     ref={iframeRef}
                     title={`Dossiê — ${caseView?.candidateName || 'Candidato'}`}
                     srcDoc={iframeHtml}
-                    sandbox="allow-modals"
+                    sandbox="allow-scripts allow-modals"
                     className="crp__frame"
                 />
             ) : (
