@@ -64,12 +64,25 @@ export default function ClientReportPage() {
         return buildCaseReportHtml(caseView);
     }, [caseView, reportAvailability.available]);
 
+    // HTML shown in the embedded iframe — strip the internal print button (we have our own)
+    const iframeHtml = useMemo(() => {
+        if (!reportHtml) return '';
+        return reportHtml.replace(/<button[^>]*class="print-btn"[^>]*>[\s\S]*?<\/button>/gi, '');
+    }, [reportHtml]);
+
     const handlePrint = () => {
-        if (iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.focus();
-            iframeRef.current.contentWindow.print();
-        } else {
-            window.print();
+        if (!reportHtml) return;
+        // Open as blob URL in new tab — avoids sandbox restrictions and auto-triggers print
+        const printHtml = iframeHtml.replace(
+            '</body>',
+            '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body>',
+        );
+        const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const opened = window.open(url, '_blank');
+        if (opened) {
+            // Revoke after enough time for the new tab to load
+            window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
         }
     };
 
@@ -165,7 +178,7 @@ export default function ClientReportPage() {
                 <iframe
                     ref={iframeRef}
                     title={`Dossiê — ${caseView?.candidateName || 'Candidato'}`}
-                    srcDoc={reportHtml}
+                    srcDoc={iframeHtml}
                     sandbox="allow-modals"
                     className="crp__frame"
                 />

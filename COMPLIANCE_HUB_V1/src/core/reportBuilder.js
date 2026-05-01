@@ -182,7 +182,7 @@ function buildCaseBody(c, cd, generatedAt) {
         socialLinkHtml(sp.twitter||cd.twitter||c.twitter,'Twitter / X','🐦'),
         socialLinkHtml(sp.tiktok||cd.tiktok||c.tiktok,'TikTok','🎵'),
         socialLinkHtml(sp.youtube||cd.youtube||c.youtube,'YouTube','▶️'),
-        ...(Array.isArray(cd.otherSocialUrls) ? cd.otherSocialUrls.map(u=>socialLinkHtml(u,u,'🔗')) : []),
+        ...(Array.isArray(cd.otherSocialUrls) ? cd.otherSocialUrls.map(u=>socialLinkHtml(u?.url||u,u?.label||u?.url||u,'🔗')) : []),
         ...(Array.isArray(sp.other) ? sp.other.map(u=>socialLinkHtml(u,u,'🔗')) : []),
     ].filter(Boolean);
 
@@ -336,7 +336,28 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .batch-cover__title{font-size:16px;color:#64748b;margin-bottom:32px}
 .batch-cover__meta{font-size:12px;color:#94a3b8;line-height:2}
 .batch-sep{border:none;border-top:2px dashed #e2e8f0;margin:36px 0}
-@media print{body{background:#fff}.page{max-width:100%;padding:24px 28px;box-shadow:none}.print-btn{display:none}.sec{page-break-inside:avoid}.pr{page-break-inside:avoid}}
+@media print{
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{background:#fff}
+.page{max-width:100%;padding:20px 24px;box-shadow:none}
+.print-btn{display:none!important}
+.hdr{page-break-inside:avoid;break-inside:avoid}
+.sec{page-break-inside:avoid;break-inside:avoid}
+.sec__t{page-break-after:avoid;break-after:avoid}
+.pr{page-break-inside:avoid;break-inside:avoid}
+.rbox{page-break-inside:avoid;break-inside:avoid}
+.ebox{page-break-inside:avoid;break-inside:avoid}
+.hcard{page-break-inside:avoid;break-inside:avoid}
+.hcard__item{page-break-inside:avoid;break-inside:avoid}
+.titem{page-break-inside:avoid;break-inside:avoid}
+.cbox{page-break-inside:avoid;break-inside:avoid}
+.blist{page-break-inside:avoid;break-inside:avoid}
+.blist li{page-break-inside:avoid;break-inside:avoid}
+.fgrid{page-break-inside:avoid;break-inside:avoid}
+.ftr{page-break-inside:avoid;break-inside:avoid;margin-top:20px}
+p,li{orphans:3;widows:3}
+.plist{page-break-inside:avoid;break-inside:avoid}
+}
 @page{size:A4;margin:14mm 12mm}
 `;
 
