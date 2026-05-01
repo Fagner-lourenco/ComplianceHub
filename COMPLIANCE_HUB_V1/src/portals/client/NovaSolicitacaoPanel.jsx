@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { callCreateClientSolicitation, callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
@@ -84,6 +85,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     const isMobile = useMediaQuery('(max-width: 768px)');
     const [step, setStep] = useState(0);
     const totalSteps = STEP_LABELS.length;
+    const [openSections, setOpenSections] = useState({ social: false, context: false });
 
     // Reset state each time the panel opens
     useEffect(() => {
@@ -101,6 +103,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
             setDiscardModalOpen(false);
             setPendingNavigationPath(null);
             panelBodyRef.current?.scrollTo?.(0, 0);
+            setOpenSections({ social: false, context: false });
         }
     }, [open]);
 
@@ -180,6 +183,15 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     useEffect(() => {
         return () => { if (redirectTimerRef.current) window.clearTimeout(redirectTimerRef.current); };
     }, []);
+
+    const toggleSection = (key) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
+
+    const SOCIAL_FIELDS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'];
+    const filledSocials = SOCIAL_FIELDS.filter((k) => form[k]).length + form.otherSocialUrls.length;
+    const socialSummary = filledSocials > 0
+        ? `${filledSocials} rede${filledSocials !== 1 ? 's' : ''} informada${filledSocials !== 1 ? 's' : ''}`
+        : 'Opcional — enriquece a análise OSINT';
+    const contextSummary = `Prioridade ${form.priority === 'HIGH' ? 'Alta' : 'Normal'}${form.digitalProfileNotes ? ' · com observações' : ''}`;
 
     const update = (field, value) => {
         setForm((prev) => ({ ...prev, [field]: value }));
@@ -291,7 +303,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const formId = 'ns-panel-form';
 
-    return (
+    return createPortal(
         <>
             {/* Backdrop */}
             <div
@@ -524,15 +536,36 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                             </div>
 
                             {/* Step 2 — Fontes digitais */}
-                            <div className="ns-section" style={isMobile && step !== 1 ? { display: 'none' } : undefined}>
-                                <div className="ns-section__header">
+                            <div
+                                className={`ns-section${!isMobile ? ' ns-section--accordion' : ''}${(!isMobile && openSections.social) ? ' ns-section--expanded' : ''}`}
+                                style={isMobile && step !== 1 ? { display: 'none' } : undefined}
+                            >
+                                <div
+                                    className="ns-section__header"
+                                    onClick={!isMobile ? () => toggleSection('social') : undefined}
+                                    role={!isMobile ? 'button' : undefined}
+                                    tabIndex={!isMobile ? 0 : undefined}
+                                    onKeyDown={!isMobile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection('social'); } } : undefined}
+                                    aria-expanded={!isMobile ? openSections.social : undefined}
+                                >
                                     <span className="ns-section__icon">02</span>
-                                    <div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
                                         <h3>Perfis nas redes sociais</h3>
-                                        <p className="ns-section__desc">Informe ao menos uma rede para alimentar a análise de imagem pública e OSINT. Use a URL completa do perfil ou @usuário.</p>
+                                        {(!isMobile && !openSections.social) ? (
+                                            <p className="ns-section__summary">{socialSummary}</p>
+                                        ) : (
+                                            <p className="ns-section__desc">Informe ao menos uma rede para alimentar a análise de imagem pública e OSINT. Use a URL completa do perfil ou @usuário.</p>
+                                        )}
                                     </div>
+                                    {!isMobile && (
+                                        <span className="ns-section__chevron" aria-hidden="true">
+                                            {openSections.social ? '−' : '+'}
+                                        </span>
+                                    )}
                                 </div>
 
+                                {(isMobile || openSections.social) && (
+                                <div className="ns-section__accordion-body">
                                 <div className="ns-grid ns-grid--2">
                                     {[
                                         { key: 'instagram', icon: 'IG', label: 'Instagram', placeholder: '@usuario ou https://instagram.com/usuario' },
@@ -602,17 +635,41 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         + Adicionar outra rede social
                                     </button>
                                 )}
+                                </div>
+                                )}
                             </div>
 
                             {/* Step 3 — Contexto */}
-                            <div className="ns-section" style={isMobile && step !== 2 ? { display: 'none' } : undefined}>
-                                <div className="ns-section__header">
+                            <div
+                                className={`ns-section${!isMobile ? ' ns-section--accordion' : ''}${(!isMobile && openSections.context) ? ' ns-section--expanded' : ''}`}
+                                style={isMobile && step !== 2 ? { display: 'none' } : undefined}
+                            >
+                                <div
+                                    className="ns-section__header"
+                                    onClick={!isMobile ? () => toggleSection('context') : undefined}
+                                    role={!isMobile ? 'button' : undefined}
+                                    tabIndex={!isMobile ? 0 : undefined}
+                                    onKeyDown={!isMobile ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSection('context'); } } : undefined}
+                                    aria-expanded={!isMobile ? openSections.context : undefined}
+                                >
                                     <span className="ns-section__icon">03</span>
-                                    <div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
                                         <h3>Contexto da solicitação</h3>
-                                        <p className="ns-section__desc">Informações adicionais que ajudam o analista a focar nos pontos mais relevantes da investigação.</p>
+                                        {(!isMobile && !openSections.context) ? (
+                                            <p className="ns-section__summary">{contextSummary}</p>
+                                        ) : (
+                                            <p className="ns-section__desc">Informações adicionais que ajudam o analista a focar nos pontos mais relevantes da investigação.</p>
+                                        )}
                                     </div>
+                                    {!isMobile && (
+                                        <span className="ns-section__chevron" aria-hidden="true">
+                                            {openSections.context ? '−' : '+'}
+                                        </span>
+                                    )}
                                 </div>
+
+                                {(isMobile || openSections.context) && (
+                                <div className="ns-section__accordion-body">
 
                                 <div className="ns-field">
                                     <label className="ns-label">Observações para o analista</label>
@@ -655,6 +712,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         </div>
                                     </div>
                                 </div>
+                                </div>
+                                )}
                             </div>
 
                             {/* Step 4 — Revisão (mobile only) */}
@@ -800,6 +859,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                     </dl>
                 </div>
             </Modal>
-        </>
+        </>,
+        document.body,
     );
 }

@@ -7,7 +7,6 @@ import './Sidebar.css';
 const clientNav = [
     { to: '/client/dashboard', icon: 'DB', label: 'Dashboard', permission: PERMISSIONS.CASE_READ },
     { to: '/client/solicitacoes', icon: '[]', label: 'Solicitacoes', permission: PERMISSIONS.CASE_READ },
-    { to: '/client/nova-solicitacao', icon: '+', label: 'Nova solicitacao', permission: PERMISSIONS.CASE_CREATE_REQUEST },
     { to: '/client/exportacoes', icon: 'EX', label: 'Exportacoes', permission: PERMISSIONS.CASE_EXPORT },
     { to: '/client/relatorios', icon: 'RL', label: 'Relatorios', permission: PERMISSIONS.CASE_EXPORT },
     { to: '/client/equipe', icon: 'EQ', label: 'Equipe', permission: PERMISSIONS.USERS_MANAGE },
@@ -20,7 +19,7 @@ const opsNav = [
     { to: '/ops/clientes', icon: 'CL', label: 'Gestao de clientes', permission: PERMISSIONS.USERS_MANAGE },
     { to: '/ops/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.AUDIT_VIEW },
     { to: '/ops/metricas-ia', icon: 'AI', label: 'Métricas IA', permission: PERMISSIONS.AUDIT_VIEW },
-    { to: '/ops/relatorios', icon: 'RL', label: 'Relatórios', permission: PERMISSIONS.AUDIT_VIEW },
+    { to: '/ops/relatorios', icon: 'RL', label: 'Relatórios', permission: PERMISSIONS.REPORT_PUBLIC_VIEW },
     { to: '/ops/saude', icon: 'HP', label: 'Saúde APIs', permission: PERMISSIONS.AUDIT_VIEW },
 ];
 
