@@ -4,24 +4,20 @@
 
 .perfil-page {
     width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
     min-width: 0;
 }
 
 /* ── Identity hero ── */
-.perfil-hero {
+.perfil-identity {
     display: flex;
     align-items: center;
     gap: var(--space-6);
     padding: var(--space-6);
     border-radius: var(--radius-xl);
     border: 1px solid var(--border-default);
-    background:
-        radial-gradient(circle at top right, rgba(29, 111, 229, .08), transparent 30%),
-        linear-gradient(135deg, var(--bg-card), var(--gray-50));
+    background: radial-gradient(circle at top right, rgba(29, 111, 229, 0.08), transparent 30%),
+                linear-gradient(135deg, var(--bg-card), var(--gray-50));
     box-shadow: var(--shadow-xs);
-    margin-bottom: var(--space-6);
 }
 
 .perfil-hero__avatar {
@@ -301,7 +297,7 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-    .perfil-hero {
+    .perfil-identity {
         flex-direction: column;
         text-align: center;
         padding: var(--space-5);

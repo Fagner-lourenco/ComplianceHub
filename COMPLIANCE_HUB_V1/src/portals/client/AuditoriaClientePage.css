@@ -5,68 +5,6 @@
     min-width: 0;
 }
 
-.auditoria-cliente-header {
-    background:
-        linear-gradient(90deg, rgba(15, 23, 42, .04) 1px, transparent 1px),
-        linear-gradient(180deg, var(--bg-card), var(--gray-50));
-    background-size: 28px 28px, auto;
-    padding: var(--space-6) var(--space-8);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-5);
-    align-items: center;
-    border: 1px solid var(--border-default);
-    border-left: 5px solid var(--brand-600);
-}
-
-.auditoria-cliente-header__eyebrow {
-    display: inline-flex;
-    margin-bottom: 8px;
-    color: var(--text-tertiary);
-    font-size: .72rem;
-    font-weight: 800;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.auditoria-cliente-header__title {
-    font-size: 1.45rem;
-    font-weight: 800;
-    margin: 0 0 6px;
-    line-height: 1.2;
-    color: var(--text-primary);
-}
-
-.auditoria-cliente-header__subtitle {
-    font-size: .9rem;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.5;
-}
-
-.auditoria-cliente-header__badge {
-    display: grid;
-    justify-items: end;
-    gap: 4px;
-    min-width: 150px;
-}
-
-.auditoria-cliente-header__badge-label {
-    font-size: .72rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    font-weight: 700;
-}
-
-.auditoria-cliente-header__badge strong {
-    font-size: 1.8rem;
-    line-height: 1;
-    color: var(--brand-700);
-}
-
 .auditoria-cliente-search {
     flex: 1;
     min-width: 240px;
@@ -215,27 +153,6 @@
 }
 
 @media (max-width: 768px) {
-    .auditoria-cliente-header {
-        padding: var(--space-4);
-        flex-direction: column;
-        gap: var(--space-3);
-        align-items: stretch;
-    }
-
-    .auditoria-cliente-header__title {
-        font-size: 1.15rem;
-    }
-
-    .auditoria-cliente-header__badge {
-        grid-template-columns: 1fr auto;
-        align-items: center;
-        justify-items: start;
-    }
-
-    .auditoria-cliente-header__badge strong {
-        font-size: 1.25rem;
-    }
-
     .auditoria-cliente-search,
     .auditoria-cliente-filter {
         min-width: 0;

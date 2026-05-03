@@ -8,16 +8,6 @@
     min-height: calc(100dvh - var(--app-topbar-current-height, 64px) - var(--space-6) * 2);
 }
 
-/* Action bar */
-.crp__actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
 .crp__actions-right {
     display: flex;
     align-items: center;

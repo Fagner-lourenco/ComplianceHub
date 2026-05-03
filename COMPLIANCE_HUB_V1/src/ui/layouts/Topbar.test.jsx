@@ -12,36 +12,32 @@ const topbarMocks = vi.hoisted(() => ({
             role: 'admin',
         },
     },
-    tenantState: {
-        canSelectTenant: true,
-        selectedTenantId: 'TEN-001',
-        selectedTenantLabel: 'TechCorp',
-        setSelectedTenantId: vi.fn(),
-        tenantStatus: 'ready',
-        tenants: [{ id: 'TEN-001', name: 'TechCorp' }],
-    },
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
     useAuth: () => topbarMocks.authState,
 }));
 
-vi.mock('../../core/contexts/useTenant', () => ({
-    useTenant: () => topbarMocks.tenantState,
-}));
-
 describe('Topbar', () => {
-    it('mostra usuario logado, email, papel e franquia em contexto', () => {
+    it('mostra badge do portal operacional e controles de acao', () => {
         render(
             <MemoryRouter initialEntries={['/ops/fila']}>
-                <Topbar title="Portal Operacional" onMenuClick={() => {}} />
+                <Topbar onMenuClick={() => {}} />
             </MemoryRouter>,
         );
 
-        expect(screen.getByText('Maria Silva')).toBeInTheDocument();
-        expect(screen.getByText('maria@empresa.com')).toBeInTheDocument();
-        expect(screen.getByText('Administrador')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('TechCorp')).toBeInTheDocument();
-        expect(screen.getByText('Franquia em contexto')).toBeInTheDocument();
+        expect(screen.getByText('Painel operacional')).toBeInTheDocument();
+        expect(screen.getByLabelText('Notificações')).toBeInTheDocument();
+        expect(screen.getByLabelText('Alternar tema')).toBeInTheDocument();
+    });
+
+    it('mostra badge do portal do cliente em rota client', () => {
+        render(
+            <MemoryRouter initialEntries={['/client/solicitacoes']}>
+                <Topbar onMenuClick={() => {}} />
+            </MemoryRouter>,
+        );
+
+        expect(screen.getByText('Portal do cliente')).toBeInTheDocument();
     });
 });
