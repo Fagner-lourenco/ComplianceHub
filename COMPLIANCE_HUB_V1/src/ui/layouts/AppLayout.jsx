@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import NotificationToast from '../components/NotificationToast/NotificationToast';
 import './AppLayout.css';
 
-export default function AppLayout({ title = 'ComplianceHub' }) {
+export default function AppLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const location = useLocation();
     const topbarRef = useRef(null);
@@ -63,10 +64,11 @@ export default function AppLayout({ title = 'ComplianceHub' }) {
             )}
 
             <div className="app-layout__main">
-                <Topbar topbarRef={topbarRef} title={title} onMenuClick={() => setIsSidebarOpen(true)} />
+                <Topbar topbarRef={topbarRef} onMenuClick={() => setIsSidebarOpen(true)} />
                 <main className="app-layout__content" aria-label="Conteudo principal">
                     <Outlet />
                 </main>
+                <NotificationToast />
             </div>
         </div>
     );

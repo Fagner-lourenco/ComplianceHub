@@ -2,10 +2,9 @@
     min-height: var(--topbar-height);
     background: var(--bg-topbar);
     border-bottom: 1px solid var(--border-default);
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 1fr);
-    grid-template-areas: 'left center';
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-4);
     padding: var(--space-3) var(--space-6);
     position: sticky;
@@ -13,35 +12,23 @@
     z-index: var(--z-topbar);
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
-}
-
-.topbar__left,
-.topbar__center {
-    min-width: 0;
-    max-width: 100%;
 }
 
 .topbar__left {
-    grid-area: left;
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    overflow: hidden;
-}
-
-.topbar__center {
-    grid-area: center;
+    flex: 1;
     min-width: 0;
+    overflow: hidden;
 }
 
 .topbar__right {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    justify-content: flex-end;
-    margin-left: auto;
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 .topbar__title-group {
@@ -49,12 +36,6 @@
     flex-direction: column;
     gap: 2px;
     min-width: 0;
-}
-
-.topbar__title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--text-primary);
 }
 
 .topbar__subtitle {
@@ -69,61 +50,6 @@
     padding: 0;
     line-height: 1;
 }
-
-.topbar__context {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(135deg, var(--bg-card), var(--brand-50));
-    border: 1px solid var(--border-default);
-    min-width: 0;
-}
-
-.topbar__context-label {
-    font-size: 0.6875rem;
-    font-weight: 700;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.topbar__context-value,
-.topbar__tenant-select {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    min-width: 0;
-}
-
-.topbar__context-value {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.topbar__tenant-select {
-    border: 1px solid var(--border-default);
-    background: var(--bg-input);
-    border-radius: var(--radius-md);
-    padding: 10px 12px;
-    outline: none;
-}
-
-.topbar__tenant-select:focus {
-    border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.topbar__context-meta {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 
 .topbar__theme-toggle {
     display: flex;
@@ -145,99 +71,9 @@
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
-.topbar__user-chip {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-xl);
-    background: var(--bg-card);
-    border: 1px solid var(--border-default);
-    min-width: 0;
-    max-width: 100%;
-    flex: 0 1 auto;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.topbar__user-chip:hover {
-    border-color: var(--brand-400);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-}
-
-.topbar__user-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-full);
-    background: var(--brand-500);
-    color: white;
-    font-size: 0.9375rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.topbar__user-meta {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.topbar__user-name {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.topbar__user-email,
-.topbar__user-role {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.topbar__user-role {
-    color: var(--text-brand);
-    font-weight: 600;
-}
-
-@media (max-width: 1080px) {
-    .topbar {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            'left'
-            'center';
-        align-items: start;
-    }
-}
-
-@media (max-width: 920px) {
-    .topbar__user-chip {
-        flex: 0 1 auto;
-    }
-}
-
-/* ============================================
-   MOB-001 / MOB-003 — Compact mobile topbar
-   Line 1: menu + title + theme + avatar (compact)
-   Line 2: tenant context (compact)
-   All interactive controls ≥ 44×44 touch target
-   ============================================ */
+/* Mobile */
 @media (max-width: 768px) {
     .topbar {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            'left'
-            'center';
         padding: var(--space-2) var(--space-3);
         gap: var(--space-2);
         min-height: auto;
@@ -253,25 +89,16 @@
         border-radius: var(--radius-md);
     }
 
-    /* Row 1: menu + title + theme toggle + compact user avatar */
     .topbar__left {
         display: flex;
         align-items: center;
         gap: var(--space-2);
     }
 
-    .topbar__title {
-        font-size: 1.0625rem;
-        flex: 1;
-        min-width: 0;
-    }
-
-    .topbar__subtitle,
-    .topbar__context-meta {
+    .topbar__subtitle {
         display: none;
     }
 
-    /* Move right actions inline with left row */
     .topbar__right {
         display: contents;
     }
@@ -282,65 +109,10 @@
         width: 44px;
         height: 44px;
     }
-
-    /* Compact user chip: avatar only on mobile, link to profile */
-    .topbar__user-chip {
-        padding: 0;
-        background: none;
-        border: none;
-        gap: 0;
-        flex: 0 0 auto;
-    }
-
-    .topbar__user-chip:hover {
-        border-color: transparent;
-        box-shadow: none;
-    }
-
-    .topbar__user-avatar {
-        width: 36px;
-        height: 36px;
-        font-size: 0.8125rem;
-    }
-
-    .topbar__user-meta {
-        display: none;
-    }
-
-    /* Row 2: tenant context compact */
-    .topbar__center {
-        grid-area: center;
-    }
-
-    .topbar__context {
-        padding: var(--space-1) var(--space-2);
-        gap: 2px;
-        background: var(--bg-card);
-        border-radius: var(--radius-md);
-    }
-
-    .topbar__context-label {
-        font-size: 0.625rem;
-    }
-
-    .topbar__context-value {
-        font-size: 0.8125rem;
-    }
-
-    .topbar__tenant-select {
-        width: 100%;
-        font-size: 0.8125rem;
-        padding: 8px 10px;
-        min-height: 40px;
-    }
 }
 
 @media (max-width: 480px) {
     .topbar {
         padding: var(--space-2);
-    }
-
-    .topbar__title {
-        font-size: 1rem;
     }
 }

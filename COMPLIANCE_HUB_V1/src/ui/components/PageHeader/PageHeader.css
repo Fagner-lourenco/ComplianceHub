@@ -1,0 +1,131 @@
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-default);
+    background:
+        radial-gradient(circle at top right, rgba(29, 111, 229, 0.08), transparent 32%),
+        linear-gradient(135deg, var(--bg-card), var(--gray-50));
+    box-shadow: var(--shadow-xs);
+    min-width: 0;
+}
+
+.page-header--compact {
+    padding: var(--space-4);
+}
+
+.page-header__content {
+    min-width: 0;
+    max-width: 760px;
+}
+
+.page-header__eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: var(--text-tertiary);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.page-header__title-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.page-header__title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.page-header__description {
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.page-header__aside {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.page-header__metric {
+    min-width: 120px;
+    padding: 10px 12px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    background: rgba(255, 255, 255, 0.64);
+    text-align: right;
+}
+
+.page-header__metric strong {
+    display: block;
+    font-size: 1.25rem;
+    line-height: 1.1;
+    color: var(--text-primary);
+}
+
+.page-header__metric span {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+}
+
+.page-header__back {
+    width: fit-content;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand-700);
+    text-decoration: none;
+}
+
+.page-header__back:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: var(--space-4);
+        flex-direction: column;
+    }
+
+    .page-header__aside {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .page-header__actions {
+        width: 100%;
+    }
+
+    .page-header__title {
+        font-size: 1.25rem;
+    }
+
+    .page-header__metric {
+        text-align: left;
+    }
+}

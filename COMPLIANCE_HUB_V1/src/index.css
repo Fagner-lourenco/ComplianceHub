@@ -198,6 +198,13 @@ ol {
   --z-toast: 75;
   --z-tooltip: 85;
 
+  /* Page layout */
+  --page-max-default: 1240px;
+  --page-max-narrow:  1040px;
+  --page-max-form:    960px;
+  --page-max-report:  1440px;
+  --page-gap:         var(--space-5);
+
   /* Semantic surfaces */
   --bg-blocked: #fef3c7;
   --text-blocked: #92400e;
