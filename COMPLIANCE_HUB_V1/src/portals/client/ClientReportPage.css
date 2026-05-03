@@ -35,6 +35,31 @@
     padding: 4px 10px;
 }
 
+.crp__pdf-msg {
+    font-size: .8125rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+}
+
+.crp__pdf-msg--success {
+    color: var(--green-700);
+    background: var(--green-50, #f0fdf4);
+    border: 1px solid var(--green-200, #bbf7d0);
+}
+
+.crp__pdf-msg--error {
+    color: var(--red-700);
+    background: var(--red-50, #fef2f2);
+    border: 1px solid var(--red-200, #fecaca);
+}
+
+.crp__pdf-msg--loading {
+    color: var(--brand-700);
+    background: var(--brand-50);
+    border: 1px solid var(--brand-200);
+}
+
 /* Buttons */
 .crp-btn {
     display: inline-flex;

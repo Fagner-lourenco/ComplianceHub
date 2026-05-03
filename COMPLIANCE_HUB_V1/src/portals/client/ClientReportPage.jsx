@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import Modal from '../../ui/components/Modal/Modal';
 import { useAuth } from '../../core/auth/useAuth';
-import { getCasePublicResult, saveClientPublicReport } from '../../core/firebase/firestoreService';
+import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf } from '../../core/firebase/firestoreService';
 import { getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
@@ -28,6 +30,7 @@ export default function ClientReportPage() {
     const [publicResultError, setPublicResultError] = useState(null);
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareState, setShareState] = useState({ status: 'idle', message: '', token: '' });
+    const [pdfState, setPdfState] = useState({ status: 'idle', message: '' });
     const iframeRef = useRef(null);
 
     const caseData = useMemo(() => cases.find((item) => item.id === caseId) || null, [caseId, cases]);
@@ -75,7 +78,7 @@ export default function ClientReportPage() {
         // Open as blob URL in new tab — avoids sandbox restrictions and auto-triggers print
         const printHtml = iframeHtml.replace(
             '</body>',
-            '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body>',
+            '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});</script></body>',
         );
         const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -83,6 +86,31 @@ export default function ClientReportPage() {
         if (opened) {
             // Revoke after enough time for the new tab to load
             window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+        }
+    };
+
+    const handleDownloadPdf = async () => {
+        if (!caseId || !reportAvailability.available) return;
+        if (isDemoMode) {
+            handlePrint();
+            return;
+        }
+        setPdfState({ status: 'loading', message: 'Gerando PDF...' });
+        try {
+            const { url } = await generateClientCasePdf(caseId);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `relatorio_${caseView?.candidateName || caseId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setPdfState({ status: 'success', message: 'PDF gerado e download iniciado.' });
+            window.setTimeout(() => setPdfState({ status: 'idle', message: '' }), 4000);
+        } catch (err) {
+            setPdfState({
+                status: 'error',
+                message: extractErrorMessage(err, 'Nao foi possivel gerar o PDF. Tente imprimir.'),
+            });
         }
     };
 
@@ -130,7 +158,7 @@ export default function ClientReportPage() {
                     <p>
                         {error
                             ? extractErrorMessage(error, 'Não foi possível carregar o caso.')
-                            : 'Este caso não está disponível para o seu tenant ou não existe nos registros carregados.'}
+                            : 'Esta solicitação não está disponível para a sua empresa ou não existe nos registros carregados.'}
                     </p>
                     <button type="button" className="crp-btn crp-btn--primary" onClick={handleBack}>
                         Voltar para solicitações
@@ -141,37 +169,57 @@ export default function ClientReportPage() {
     }
 
     return (
-        <div className="crp">
-            {/* Action bar */}
-            <div className="crp__actions">
-                <button type="button" className="crp-btn crp-btn--ghost" onClick={handleBack}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                    Voltar
-                </button>
-
-                <div className="crp__actions-right">
-                    {publicResultError && (
-                        <span className="crp__warn" role="alert" title="Conteúdo sanitizado indisponível — exibindo dados locais">
-                            ⚠ Dados parciais
-                        </span>
-                    )}
-                    {reportAvailability.available && (
-                        <button type="button" className="crp-btn crp-btn--secondary" onClick={handlePrint}>
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                            Imprimir / PDF
+        <PageShell size="report" className="crp">
+            <PageHeader
+                compact
+                eyebrow="Relatório"
+                title={`Relatório — ${caseView?.candidateName ?? 'Candidato'}`}
+                description="Visualize, imprima ou gere o PDF desta análise."
+                backAction={{ to: buildClientPortalPath('solicitacoes'), label: '← Solicitações' }}
+                actions={
+                    <div className="crp__actions-right">
+                        {publicResultError && (
+                            <span className="crp__warn" role="alert" title="Conteúdo sanitizado indisponível — exibindo dados locais">
+                                ⚠ Dados parciais
+                            </span>
+                        )}
+                        {pdfState.message && (
+                            <span
+                                role={pdfState.status === 'error' ? 'alert' : 'status'}
+                                className={`crp__pdf-msg crp__pdf-msg--${pdfState.status}`}
+                            >
+                                {pdfState.message}
+                            </span>
+                        )}
+                        {reportAvailability.available && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="crp-btn crp-btn--primary"
+                                    onClick={handleDownloadPdf}
+                                    disabled={pdfState.status === 'loading'}
+                                >
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    {pdfState.status === 'loading' ? 'Gerando PDF...' : 'Baixar PDF'}
+                                </button>
+                                <button type="button" className="crp-btn crp-btn--secondary" onClick={handlePrint}>
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                    Imprimir
+                                </button>
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            className="crp-btn crp-btn--primary"
+                            onClick={() => setShareModalOpen(true)}
+                            disabled={!reportAvailability.available}
+                        >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Gerar link público
                         </button>
-                    )}
-                    <button
-                        type="button"
-                        className="crp-btn crp-btn--primary"
-                        onClick={() => setShareModalOpen(true)}
-                        disabled={!reportAvailability.available}
-                    >
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                        Gerar link público
-                    </button>
-                </div>
-            </div>
+                    </div>
+                }
+            />
 
             {/* Report iframe or pending state */}
             {reportAvailability.available ? (
@@ -219,12 +267,12 @@ export default function ClientReportPage() {
                 )}
             >
                 <div className="crp-share-modal">
-                    <p>Esta ação cria ou reutiliza um link externo para leitura pública do relatório. O evento é registrado na auditoria e o backend valida tenant, permissão e status antes da publicação.</p>
+                    <p>Esta ação cria ou reutiliza um link externo para leitura pública do relatório. O evento é registrado no histórico e o sistema valida empresa, permissão e status antes da publicação.</p>
                     <dl>
                         <div><dt>Candidato</dt><dd>{caseView?.candidateName || 'Não informado'}</dd></div>
                         <div><dt>Caso</dt><dd>{caseData.id}</dd></div>
-                        <div><dt>Franquia</dt><dd>{userProfile?.tenantName || userProfile?.tenantId || caseData.tenantId || 'Franquia atual'}</dd></div>
-                        <div><dt>Token atual</dt><dd>{shortToken(caseData.publicReportToken)}</dd></div>
+                        <div><dt>Empresa</dt><dd>{userProfile?.tenantName || userProfile?.tenantId || caseData.tenantId || 'Franquia atual'}</dd></div>
+                        <div><dt>Link de acesso atual</dt><dd>{shortToken(caseData.publicReportToken)}</dd></div>
                     </dl>
                     {shareState.message && (
                         <p
@@ -236,6 +284,6 @@ export default function ClientReportPage() {
                     )}
                 </div>
             </Modal>
-        </div>
+        </PageShell>
     );
 }

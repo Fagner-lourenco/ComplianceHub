@@ -19,6 +19,8 @@ const solicitationMocks = vi.hoisted(() => ({
 const firestoreMocks = vi.hoisted(() => ({
     callCreateClientSolicitation: vi.fn().mockResolvedValue({ success: true, caseId: 'c-1' }),
     callGetClientQuotaStatus: vi.fn().mockResolvedValue({ hasLimits: false }),
+    getTenantSettings: vi.fn().mockResolvedValue({ analysisConfig: {} }),
+    getEnabledPhases: vi.fn().mockReturnValue([]),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -53,7 +55,7 @@ describe('NovaSolicitacaoPage', () => {
     it('bloqueia o envio quando a franquia ainda nao foi confirmada', () => {
         renderPage();
 
-        expect(screen.getByText(/franquia não confirmada/i)).toBeInTheDocument();
+        expect(screen.getByText(/Empresa ainda não carregada/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Enviar solicitação' })).toBeDisabled();
     });
 
@@ -62,7 +64,7 @@ describe('NovaSolicitacaoPage', () => {
         solicitationMocks.authState.userProfile.tenantName = 'Empresa Teste';
         renderPage();
 
-        expect(screen.getByPlaceholderText('Conforme consta no documento de identidade')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('000.000.000-00')).toBeInTheDocument();
     });
 
@@ -70,7 +72,7 @@ describe('NovaSolicitacaoPage', () => {
         solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
         renderPage();
 
-        const nomeInput = screen.getByPlaceholderText('Conforme consta no documento de identidade');
+        const nomeInput = screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE');
         const cpfInput = screen.getByPlaceholderText('000.000.000-00');
 
         fireEvent.change(nomeInput, { target: { value: 'Joao Silva' } });
@@ -84,8 +86,11 @@ describe('NovaSolicitacaoPage', () => {
         solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
         renderPage();
 
-        fireEvent.change(screen.getByPlaceholderText('Conforme consta no documento de identidade'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
         fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects[0], { target: { value: 'SP' } });
+        fireEvent.change(ufSelects[1], { target: { value: 'MG' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
 
@@ -95,8 +100,10 @@ describe('NovaSolicitacaoPage', () => {
 
         expect(firestoreMocks.callCreateClientSolicitation).toHaveBeenCalledWith(
             expect.objectContaining({
-                fullName: 'Maria Santos',
+                fullName: 'MARIA SANTOS',
                 cpf: '529.982.247-25',
+                hiringUf: 'SP',
+                candidateResidenceUf: 'MG',
             }),
         );
 
@@ -135,8 +142,11 @@ describe('NovaSolicitacaoPage', () => {
 
         renderPage();
 
-        fireEvent.change(screen.getByPlaceholderText('Conforme consta no documento de identidade'), { target: { value: 'Pedro Alves' } });
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Pedro Alves' } });
         fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects2 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects2[0], { target: { value: 'SP' } });
+        fireEvent.change(ufSelects2[1], { target: { value: 'MG' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
 
@@ -172,12 +182,15 @@ describe('NovaSolicitacaoPage', () => {
 
         await screen.findByText(/Atenção/i);
 
-        fireEvent.change(screen.getByPlaceholderText('Conforme consta no documento de identidade'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
         fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects3 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects3[0], { target: { value: 'SP' } });
+        fireEvent.change(ufSelects3[1], { target: { value: 'MG' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
 
-        expect(await screen.findByText('Confirmar envio excedente?')).toBeInTheDocument();
+        expect(await screen.findByText('Confirmar envio acima do limite?')).toBeInTheDocument();
         expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
 
         fireEvent.click(screen.getByRole('button', { name: 'Confirmar envio excedente' }));
@@ -192,7 +205,10 @@ describe('NovaSolicitacaoPage', () => {
 
         renderPage();
 
-        fireEvent.change(screen.getByPlaceholderText('Conforme consta no documento de identidade'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
+        const ufSelects4 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects4[0], { target: { value: 'SP' } });
+        fireEvent.change(ufSelects4[1], { target: { value: 'MG' } });
         fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
 
         expect(screen.getByText('Descartar preenchimento?')).toBeInTheDocument();

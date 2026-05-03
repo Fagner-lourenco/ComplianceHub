@@ -5,8 +5,64 @@
     min-width: 0;
 }
 
-.export-page h2 {
-    font-size: 1.25rem;
+.export-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-6) var(--space-8);
+    border: 1px solid var(--border-default);
+    border-left: 5px solid var(--teal-600, #0f766e);
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(90deg, rgba(15, 118, 110, .05) 1px, transparent 1px),
+        linear-gradient(180deg, var(--bg-card), var(--gray-50));
+    background-size: 30px 30px, auto;
+    box-shadow: var(--shadow-sm);
+}
+
+.export-hero__eyebrow {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: var(--text-tertiary);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.export-hero h2 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin: 0 0 6px;
+}
+
+.export-hero p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 720px;
+}
+
+.export-hero__metric {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    min-width: 140px;
+}
+
+.export-hero__metric span {
+    color: var(--text-secondary);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.export-hero__metric strong {
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--teal-700, #0f766e);
 }
 
 .export-new {
@@ -19,8 +75,15 @@
 }
 
 .export-new h3 {
-    margin-bottom: var(--space-4);
+    margin: 0 0 6px;
     font-size: 1rem;
+}
+
+.export-new__hint {
+    margin: 0 0 var(--space-4);
+    color: var(--text-secondary);
+    font-size: .86rem;
+    line-height: 1.5;
 }
 
 .export-new__form {
@@ -58,6 +121,7 @@
     font-weight: 500;
     transition: all var(--transition-fast);
     background: var(--bg-card);
+    min-height: 38px;
 }
 
 .export-toggle--active {
@@ -84,6 +148,32 @@
     padding: 6px 0;
 }
 
+.export-alert {
+    margin: 0 0 var(--space-3);
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: .84rem;
+    line-height: 1.5;
+}
+
+.export-alert--info {
+    background: var(--blue-50);
+    color: var(--blue-800, #1e3a8a);
+    border-left: 4px solid var(--blue-500);
+}
+
+.export-alert--warning {
+    background: var(--yellow-50);
+    color: var(--yellow-800, #854d0e);
+    border-left: 4px solid var(--yellow-500, #f59e0b);
+}
+
+.export-alert--danger {
+    background: var(--red-50);
+    color: var(--red-700);
+    border-left: 4px solid var(--red-600);
+}
+
 .export-btn {
     padding: 10px 20px;
     background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
@@ -91,19 +181,32 @@
     border-radius: var(--radius-md);
     font-size: .875rem;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, .25);
+    box-shadow: 0 2px 8px rgba(29, 111, 229, .25);
     transition: all var(--transition-fast);
 }
 
 .export-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, .35);
+    box-shadow: 0 4px 12px rgba(29, 111, 229, .35);
 }
 
 .export-btn:disabled {
     opacity: .5;
     cursor: not-allowed;
     transform: none;
+}
+
+.export-btn--compact {
+    padding: 6px 10px;
+    font-size: .75rem;
+    min-height: 36px;
+}
+
+.export-feedback {
+    margin: 12px 0 0;
+    color: var(--text-secondary);
+    font-size: .875rem;
+    line-height: 1.5;
 }
 
 .export-history h3 {
@@ -121,7 +224,7 @@
 }
 
 .export-table-wrapper .data-table {
-    min-width: 760px;
+    min-width: 980px;
 }
 
 .export-btn {
@@ -141,6 +244,15 @@
 
 .export-download-btn:hover {
     background: var(--brand-100);
+}
+
+.export-artifact-note {
+    color: var(--text-tertiary);
+    font-size: .75rem;
+}
+
+.export-error {
+    color: var(--red-700);
 }
 
 /* --- Mobile Responsive --- */
@@ -163,5 +275,21 @@
     
     .export-new {
         padding: var(--space-4);
+    }
+
+    .export-hero {
+        padding: var(--space-4);
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .export-hero__metric {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        justify-items: start;
+    }
+
+    .export-hero__metric strong {
+        font-size: 1.25rem;
     }
 }

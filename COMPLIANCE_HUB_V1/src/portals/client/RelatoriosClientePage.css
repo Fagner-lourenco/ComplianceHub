@@ -14,7 +14,7 @@
     border: 1px solid var(--border-default);
     border-radius: var(--radius-xl);
     background:
-        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
+        radial-gradient(circle at top right, rgba(29, 111, 229, .08), transparent 30%),
         linear-gradient(135deg, var(--bg-card), var(--gray-50));
     box-shadow: var(--shadow-xs);
 }
@@ -312,4 +312,69 @@
     .client-public-reports__actions {
         grid-template-columns: 1fr;
     }
+}
+
+.client-public-reports__load-more {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-4);
+}
+
+.client-public-reports__recorte {
+    margin-top: var(--space-3);
+    font-size: .8125rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.client-public-reports__modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+.client-public-reports__modal {
+    width: 100%;
+    max-width: 520px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-lg);
+}
+
+.client-public-reports__modal-title {
+    margin: 0 0 var(--space-4);
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.client-public-reports__modal-body p {
+    margin: 0 0 var(--space-2);
+    font-size: .875rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.client-public-reports__modal-risk {
+    margin-top: var(--space-3);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--red-200, #fecaca);
+    background: var(--red-50, #fef2f2);
+    color: var(--red-700, #b91c1c);
+    font-size: .8125rem;
+}
+
+.client-public-reports__modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
 }

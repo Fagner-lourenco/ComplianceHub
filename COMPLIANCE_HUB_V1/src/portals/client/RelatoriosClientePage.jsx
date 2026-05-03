@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import { extractErrorMessage } from '../../core/errorUtils';
 import { fetchClientPublicReports, revokeClientPublicReport } from '../../core/firebase/firestoreService';
@@ -19,7 +21,7 @@ function formatTs(value) {
 }
 
 function getReportStatus(report) {
-    if (!report) return { label: 'Indisponivel', tone: 'inactive' };
+    if (!report) return { label: 'Indisponível', tone: 'inactive' };
     if (report.status === 'REVOKED' || report.active === false) {
         return { label: 'Revogado', tone: 'inactive' };
     }
@@ -52,36 +54,46 @@ export default function RelatoriosClientePage() {
     const [busyToken, setBusyToken] = useState(null);
     const [feedback, setFeedback] = useState('');
 
-    useEffect(() => {
-        let cancelled = false;
+    const [hasMore, setHasMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState(null);
+    const [loadingMore, setLoadingMore] = useState(false);
 
-        async function load() {
+    const [confirmRevoke, setConfirmRevoke] = useState(null);
+
+    const load = useCallback(async (cursor = null, append = false) => {
+        if (!append) {
             setLoading(true);
             setError(null);
             setFeedback('');
-            try {
-                const data = isDemoMode
-                    ? getMockPublicReports(tenantId)
-                    : await fetchClientPublicReports();
-                if (!cancelled) {
-                    setReports(data);
-                }
-            } catch (currentError) {
-                if (!cancelled) {
-                    setError(extractErrorMessage(currentError, 'Nao foi possivel carregar os relatorios publicos.'));
-                }
-            } finally {
-                if (!cancelled) {
-                    setLoading(false);
-                }
-            }
+        } else {
+            setLoadingMore(true);
         }
-
-        load();
-        return () => {
-            cancelled = true;
-        };
+        try {
+            const data = isDemoMode
+                ? { reports: getMockPublicReports(tenantId), hasMore: false, nextCursor: null }
+                : await fetchClientPublicReports(cursor, 50);
+            if (!append) {
+                setReports(data.reports);
+            } else {
+                setReports((prev) => [...prev, ...data.reports]);
+            }
+            setHasMore(data.hasMore);
+            setNextCursor(data.nextCursor);
+        } catch (currentError) {
+            if (!append) {
+                setError(extractErrorMessage(currentError, 'Não foi possível carregar os relatórios públicos.'));
+            } else {
+                setFeedback(extractErrorMessage(currentError, 'Não foi possível carregar mais relatórios.'));
+            }
+        } finally {
+            if (!append) setLoading(false);
+            else setLoadingMore(false);
+        }
     }, [isDemoMode, tenantId]);
+
+    useEffect(() => {
+        load();
+    }, [load]);
 
     const filteredReports = useMemo(() => {
         return reports.filter((report) => {
@@ -116,18 +128,20 @@ export default function RelatoriosClientePage() {
     const handleCopy = async (token, caseId) => {
         try {
             await navigator.clipboard.writeText(buildPublicReportUrl(token, isDemoMode, caseId));
-            setFeedback('Link publico copiado com sucesso.');
+            setFeedback('Link público copiado com sucesso.');
         } catch {
-            setFeedback('Nao foi possivel copiar o link agora.');
+            setFeedback('Não foi possível copiar o link agora.');
         }
     };
 
     const handleRevoke = async (report) => {
         if (!report?.token) return;
-        if (!window.confirm('Desativar este relatorio tornara o link publico indisponivel. Confirmar?')) {
-            return;
-        }
+        setConfirmRevoke(report);
+    };
 
+    const confirmRevokeAction = async () => {
+        const report = confirmRevoke;
+        if (!report?.token) return;
         setBusyToken(report.token);
         setFeedback('');
         try {
@@ -139,31 +153,25 @@ export default function RelatoriosClientePage() {
                     ? { ...currentReport, active: false, status: 'REVOKED' }
                     : currentReport
             )));
-            setFeedback('Relatorio publico desativado com sucesso.');
+            setFeedback('Relatório público revogado com sucesso.');
         } catch (currentError) {
-            setFeedback(extractErrorMessage(currentError, 'Nao foi possivel desativar o relatorio.'));
+            setFeedback(extractErrorMessage(currentError, 'Não foi possível revogar o relatório.'));
         } finally {
             setBusyToken(null);
+            setConfirmRevoke(null);
         }
     };
 
     return (
-        <div className="client-public-reports">
-            <section className="client-public-reports__hero">
-                <div className="client-public-reports__hero-copy">
-                    <h2>Relatorios Publicos</h2>
-                    <p>
-                        Gerencie os links publicos gerados para a sua franquia com isolamento por tenant,
-                        acompanhamento de status e controle de compartilhamento.
-                    </p>
-                </div>
-                <div className="client-public-reports__hero-count">
-                    <strong>{summary.total}</strong>
-                    <span>relatorio(s)</span>
-                </div>
-            </section>
+        <PageShell size="default" className="client-public-reports">
+            <PageHeader
+                eyebrow="Compartilhamento"
+                title="Links de relatório"
+                description="Gerencie os links criados para compartilhar resultados com segurança."
+                metric={{ value: summary.total, label: 'relatório(s)' }}
+            />
 
-            <section className="client-public-reports__stats" aria-label="Resumo dos relatorios publicos">
+            <section className="client-public-reports__stats" aria-label="Resumo dos relatórios públicos">
                 <article className="client-public-reports__stat-card">
                     <strong>{summary.total}</strong>
                     <span>Total</span>
@@ -188,8 +196,8 @@ export default function RelatoriosClientePage() {
                     <input
                         type="text"
                         className="filter-bar__search-input"
-                        placeholder="Buscar por candidato, caso ou token..."
-                        aria-label="Buscar relatorios publicos"
+                        placeholder="Buscar por candidato, solicitação ou link..."
+                        aria-label="Buscar relatórios públicos"
                         value={searchTerm}
                         onChange={(event) => setSearchTerm(event.target.value)}
                     />
@@ -213,7 +221,7 @@ export default function RelatoriosClientePage() {
                 </div>
             )}
 
-            <section className="client-public-reports__content" aria-label="Lista de relatorios publicos">
+            <section className="client-public-reports__content" aria-label="Lista de relatórios públicos">
                 <div className="client-public-reports__mobile-list">
                     {!loading && !error && filteredReports.map((report) => {
                         const status = getReportStatus(report);
@@ -222,8 +230,8 @@ export default function RelatoriosClientePage() {
                             <article key={report.token || report.id} className="client-public-reports__card">
                                 <div className="client-public-reports__card-head">
                                     <div>
-                                        <h3>{report.candidateName || 'Relatorio sem candidato'}</h3>
-                                        <p>{report.caseId ? `Caso ${report.caseId}` : `Token ...${(report.token || '').slice(-8)}`}</p>
+                                        <h3>{report.candidateName || 'Relatório sem candidato'}</h3>
+                                        <p>{report.caseId ? `Solicitação ${report.caseId}` : `Token …${(report.token || '').slice(-8)}`}</p>
                                     </div>
                                     <span className={`client-public-reports__status client-public-reports__status--${status.tone}`}>
                                         {status.label}
@@ -240,7 +248,7 @@ export default function RelatoriosClientePage() {
                                     </div>
                                     <div>
                                         <dt>Token</dt>
-                                        <dd>...{(report.token || '').slice(-8)}</dd>
+                                        <dd>…{(report.token || '').slice(-8)}</dd>
                                     </div>
                                 </dl>
                                 <div className="client-public-reports__actions">
@@ -256,7 +264,7 @@ export default function RelatoriosClientePage() {
                                         disabled={!available || busyToken === report.token}
                                         onClick={() => handleRevoke(report)}
                                     >
-                                        {busyToken === report.token ? 'Desativando...' : 'Desativar'}
+                                        {busyToken === report.token ? 'Revogando…' : 'Revogar'}
                                     </button>
                                 </div>
                             </article>
@@ -265,7 +273,7 @@ export default function RelatoriosClientePage() {
                 </div>
 
                 <div className="client-public-reports__table-wrapper">
-                    <table className="data-table" aria-label="Relatorios publicos da franquia">
+                    <table className="data-table" aria-label="Relatórios públicos da empresa">
                         <thead>
                             <tr>
                                 <th className="data-table__th" scope="col">Token</th>
@@ -274,15 +282,21 @@ export default function RelatoriosClientePage() {
                                 <th className="data-table__th" scope="col">Criado em</th>
                                 <th className="data-table__th" scope="col">Expira em</th>
                                 <th className="data-table__th" scope="col">Status</th>
-                                <th className="data-table__th" scope="col">Acoes</th>
+                                <th className="data-table__th" scope="col">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
-                                <tr>
-                                    <td className="data-table__empty" colSpan={7}>Carregando relatorios...</td>
+                            {loading && Array.from({ length: 4 }, (_, i) => (
+                                <tr key={`sk-${i}`} aria-hidden="true">
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${50 + (i % 3) * 15}%` }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 80 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 64 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton" style={{ width: 56, height: 20, borderRadius: 10 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 60 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 50 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 40 }} /></td>
                                 </tr>
-                            )}
+                            ))}
                             {!loading && error && (
                                 <tr>
                                     <td className="data-table__empty" colSpan={7} style={{ color: 'var(--red-700)' }}>{error}</td>
@@ -293,7 +307,7 @@ export default function RelatoriosClientePage() {
                                 const available = isReportAvailable(report);
                                 return (
                                     <tr key={report.token || report.id} className="data-table__row">
-                                        <td className="data-table__td data-table__td--mono">...{(report.token || '').slice(-8)}</td>
+                                        <td className="data-table__td data-table__td--mono">…{(report.token || '').slice(-8)}</td>
                                         <td className="data-table__td">{report.candidateName || '--'}</td>
                                         <td className="data-table__td">{report.caseId || '--'}</td>
                                         <td className="data-table__td">{formatTs(report.createdAt)}</td>
@@ -317,7 +331,7 @@ export default function RelatoriosClientePage() {
                                                     disabled={!available || busyToken === report.token}
                                                     onClick={() => handleRevoke(report)}
                                                 >
-                                                    {busyToken === report.token ? 'Desativando...' : 'Desativar'}
+                                                    {busyToken === report.token ? 'Revogando…' : 'Revogar'}
                                                 </button>
                                             </div>
                                         </td>
@@ -326,13 +340,78 @@ export default function RelatoriosClientePage() {
                             })}
                             {!loading && !error && filteredReports.length === 0 && (
                                 <tr>
-                                    <td className="data-table__empty" colSpan={7}>Nenhum relatorio publico encontrado para a sua franquia.</td>
+                                    <td className="data-table__empty" colSpan={7}>Nenhum relatório público encontrado para a sua empresa.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                {!loading && !error && hasMore && (
+                    <div className="client-public-reports__load-more">
+                        <button
+                            type="button"
+                            className="client-public-reports__btn"
+                            disabled={loadingMore}
+                            onClick={() => load(nextCursor, true)}
+                        >
+                            {loadingMore ? 'Carregando…' : 'Carregar mais relatórios'}
+                        </button>
+                    </div>
+                )}
+
+                {!loading && !error && reports.length > 0 && (
+                    <p className="client-public-reports__recorte" aria-live="polite">
+                        {hasMore
+                            ? `Mostrando ${reports.length} relatórios mais recentes.`
+                            : `${reports.length} relatório(s) carregado(s).`}
+                    </p>
+                )}
             </section>
-        </div>
+
+            {confirmRevoke && (
+                <div
+                    className="client-public-reports__modal-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="revoke-modal-title"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) setConfirmRevoke(null);
+                    }}
+                >
+                    <div className="client-public-reports__modal">
+                        <h3 id="revoke-modal-title" className="client-public-reports__modal-title">
+                            Revogar relatório público?
+                        </h3>
+                        <div className="client-public-reports__modal-body">
+                            <p><strong>Candidato:</strong> {confirmRevoke.candidateName || 'Não informado'}</p>
+                            <p><strong>Caso:</strong> {confirmRevoke.caseId || '--'}</p>
+                            <p><strong>Link:</strong> …{(confirmRevoke.token || '').slice(-8)}</p>
+                            <p className="client-public-reports__modal-risk">
+                                Após a revogação, qualquer pessoa com este link perderá acesso ao relatório.
+                                Esta ação será registrada na auditoria e não poderá ser desfeita.
+                            </p>
+                        </div>
+                        <div className="client-public-reports__modal-actions">
+                            <button
+                                type="button"
+                                className="client-public-reports__btn"
+                                onClick={() => setConfirmRevoke(null)}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="client-public-reports__btn client-public-reports__btn--danger"
+                                disabled={busyToken === confirmRevoke.token}
+                                onClick={confirmRevokeAction}
+                            >
+                                {busyToken === confirmRevoke.token ? 'Revogando…' : 'Revogar relatório'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </PageShell>
     );
 }

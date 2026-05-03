@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import NovaSolicitacaoPanel from './NovaSolicitacaoPanel';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
@@ -11,14 +13,45 @@ import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
 import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildClientInternalReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
-import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
 import { getCaseStats } from '../../core/caseUtils';
 import { formatDate } from '../../core/formatDate';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
+import { VERDICT_LABELS } from '../../core/copy';
 import './SolicitacoesPage.css';
+
+function hasAnySocialProfile(profiles = {}) {
+    if (!profiles || typeof profiles !== 'object') return false;
+    return Object.values(profiles).some((value) => {
+        if (value === null || value === undefined) return false;
+        return String(value).trim().length > 0;
+    });
+}
+
+function hasMeaningfulSocialAnalysis(caseView = {}) {
+    if (!caseView || typeof caseView !== 'object') return false;
+
+    const socialStatus = String(caseView.socialStatus || '').trim();
+    const digitalFlag = String(caseView.digitalFlag || '').trim();
+
+    const hasSocialStatus =
+        socialStatus &&
+        !['NOT_ANALYZED', 'NOT_FOUND', 'NONE', 'NEGATIVE', ''].includes(socialStatus.toUpperCase());
+
+    const hasDigitalFlag =
+        digitalFlag &&
+        !['NOT_ANALYZED', 'NOT_FOUND', 'NONE', 'NEGATIVE', ''].includes(digitalFlag.toUpperCase());
+
+    return Boolean(
+        hasSocialStatus ||
+        hasDigitalFlag ||
+        String(caseView.socialNotes || '').trim() ||
+        String(caseView.digitalNotes || '').trim() ||
+        (Array.isArray(caseView.socialReasons) && caseView.socialReasons.length > 0)
+    );
+}
 
 function getMacroProgress(caseData) {
     // BUG-R4-001: Show user-friendly error message when enrichment failed.
@@ -28,7 +61,7 @@ function getMacroProgress(caseData) {
     }
     if (caseData.status === 'DONE') return { label: 'Concluído', step: 6, color: 'var(--green-600)' };
     if (caseData.status === 'CORRECTION_NEEDED') return { label: 'Correção solicitada', step: 1, color: 'var(--red-600)' };
-    // BUG-R4-004: Reflect real pipeline progress with 6 steps.
+    // BUG-R4-004: Reflect real analysis progress with 6 steps.
     const bdcDone = ['DONE', 'PARTIAL', 'SKIPPED', 'BLOCKED'].includes(caseData.bigdatacorpEnrichmentStatus);
     const fonteDone = ['DONE', 'PARTIAL', 'SKIPPED', 'BLOCKED'].includes(caseData.enrichmentStatus);
     const juditDone = ['DONE', 'PARTIAL', 'SKIPPED'].includes(caseData.juditEnrichmentStatus);
@@ -37,8 +70,8 @@ function getMacroProgress(caseData) {
     const aiDone = !!caseData.aiStructured;
     if (aiDone) return { label: 'Análise finalizada', step: 5, color: 'var(--brand-600)' };
     if (classified) return { label: 'Classificando resultado', step: 4, color: 'var(--brand-600)' };
-    if (escDone) return { label: 'Enriquecendo dados (Escavador)', step: 3, color: 'var(--brand-600)' };
-    if (juditDone) return { label: 'Enriquecendo dados (Judit)', step: 3, color: 'var(--brand-600)' };
+    if (escDone) return { label: 'Consultando registros (Escavador)', step: 3, color: 'var(--brand-600)' };
+    if (juditDone) return { label: 'Consultando registros (Judit)', step: 3, color: 'var(--brand-600)' };
     if (fonteDone) return { label: 'Consultando processos', step: 2, color: 'var(--brand-600)' };
     if (bdcDone) return { label: 'Verificando identidade', step: 2, color: 'var(--brand-600)' };
     return { label: 'Aguardando análise', step: 1, color: 'var(--text-tertiary)' };
@@ -214,6 +247,10 @@ export default function SolicitacoesPage() {
         }
     };
 
+    const hasSocialProfiles = hasAnySocialProfile(selectedCase?.socialProfiles);
+    const hasSocialAnalysis = hasMeaningfulSocialAnalysis(selectedCaseView);
+    const shouldShowSocialTab = has('social') && (hasSocialProfiles || hasSocialAnalysis);
+
     const drawerTabs = selectedCase ? [
         {
             label: 'Resumo',
@@ -239,7 +276,7 @@ export default function SolicitacoesPage() {
                     {selectedCaseView && (
                         <>
                             <div className="case-detail__risk-grid">
-                                {[has('criminal') && { label: 'Criminal', value: selectedCaseView.criminalFlag }, has('labor') && { label: 'Trabalhista', value: selectedCaseView.laborFlag }, has('warrant') && { label: 'Mandado', value: selectedCaseView.warrantFlag }, has('osint') && { label: 'OSINT', value: selectedCaseView.osintLevel }, has('social') && { label: 'Social', value: selectedCaseView.socialStatus }, has('digital') && { label: 'Digital', value: selectedCaseView.digitalFlag }, { label: 'Score', value: null, score: selectedCaseView.riskScore || 0 }].filter(Boolean).map((item) => <div key={item.label} className="case-detail__risk-card"><div className="case-detail__risk-label">{item.label}</div>{item.score !== undefined && item.value === null ? <ScoreBar score={item.score} /> : <RiskChip value={item.value} size="md" />}</div>)}
+                                {[has('criminal') && { label: 'Criminal', value: selectedCaseView.criminalFlag }, has('labor') && { label: 'Trabalhista', value: selectedCaseView.laborFlag }, has('warrant') && { label: 'Mandado', value: selectedCaseView.warrantFlag }, has('osint') && { label: 'Perfis públicos', value: selectedCaseView.osintLevel }, has('social') && { label: 'Social', value: selectedCaseView.socialStatus }, has('digital') && { label: 'Digital', value: selectedCaseView.digitalFlag }, { label: 'Nível de atenção', value: null, score: selectedCaseView.riskScore || 0 }].filter(Boolean).map((item) => <div key={item.label} className="case-detail__risk-card"><div className="case-detail__risk-label">{item.label}</div>{item.score !== undefined && item.value === null ? <ScoreBar score={item.score} /> : <RiskChip value={item.value} size="md" />}</div>)}
                             </div>
                             {selectedCaseView.executiveSummary && <div className="case-detail__section"><h4>Resumo Executivo</h4><p>{selectedCaseView.executiveSummary}</p></div>}
                             {selectedCaseView.keyFindings?.length > 0 && <div className="case-detail__section"><h4>Principais Apontamentos</h4>{selectedCaseView.keyFindings.map((item) => <p key={item} className="case-detail__finding">• {item}</p>)}</div>}
@@ -346,7 +383,7 @@ export default function SolicitacoesPage() {
                                     <div className="correction-form__actions">
                                         <button type="button" className="btn-secondary" onClick={() => setCorrectionForm(null)}>Cancelar</button>
                                         <button type="button" className="btn-primary" onClick={handleResubmit} disabled={correctionSaving || isDemoMode}>
-                                            {correctionSaving ? 'Reenviando...' : isDemoMode ? 'Indisponivel no demo' : 'Reenviar para o Analista'}
+                                            {correctionSaving ? 'Reenviando...' : isDemoMode ? 'Indisponível no demo' : 'Reenviar para análise'}
                                         </button>
                                     </div>
                                 </div>
@@ -356,15 +393,29 @@ export default function SolicitacoesPage() {
                 </div>
             ),
         },
-        {
-            label: 'Redes Sociais',
+        ...(shouldShowSocialTab ? [{
+            label: hasSocialAnalysis ? 'Informações digitais' : 'Perfis informados',
             content: (
                 <div className="case-detail">
-                    <div className="case-detail__section"><h4>Perfis fornecidos</h4><SocialLinks profiles={selectedCase.socialProfiles || {}} size="md" showEmpty /></div>
-                    {(selectedCaseView?.socialNotes || selectedCaseView?.digitalNotes) && <div className="case-detail__section"><h4>Leitura Executiva</h4>{selectedCaseView?.socialStatus && <p><strong>Status social:</strong> <RiskChip value={selectedCaseView.socialStatus} /></p>}{selectedCaseView?.socialReasons?.length > 0 && <p><strong>Motivos:</strong> {selectedCaseView.socialReasons.join(', ')}</p>}{selectedCaseView?.socialNotes && <p>{selectedCaseView.socialNotes}</p>}{selectedCaseView?.digitalFlag && <p><strong>Perfil digital:</strong> <RiskChip value={selectedCaseView.digitalFlag} /></p>}{selectedCaseView?.digitalNotes && <p>{selectedCaseView.digitalNotes}</p>}</div>}
+                    {hasSocialProfiles && (
+                        <div className="case-detail__section">
+                            <h4>Perfis informados</h4>
+                            <SocialLinks profiles={selectedCase.socialProfiles || {}} size="md" showEmpty={false} />
+                        </div>
+                    )}
+                    {hasSocialAnalysis && (
+                        <div className="case-detail__section">
+                            <h4>Leitura Executiva</h4>
+                            {selectedCaseView?.socialStatus && <p><strong>Status social:</strong> <RiskChip value={selectedCaseView.socialStatus} /></p>}
+                            {selectedCaseView?.socialReasons?.length > 0 && <p><strong>Motivos:</strong> {selectedCaseView.socialReasons.join(', ')}</p>}
+                            {selectedCaseView?.socialNotes && <p>{selectedCaseView.socialNotes}</p>}
+                            {selectedCaseView?.digitalFlag && <p><strong>Perfil digital:</strong> <RiskChip value={selectedCaseView.digitalFlag} /></p>}
+                            {selectedCaseView?.digitalNotes && <p>{selectedCaseView.digitalNotes}</p>}
+                        </div>
+                    )}
                 </div>
             ),
-        },
+        }] : []),
         {
             label: 'Timeline',
             content: (
@@ -380,9 +431,18 @@ export default function SolicitacoesPage() {
     ] : [];
 
     return (
-        <div className="solicitacoes-page">
-            <div className="solicitacoes-page__header"><div><h2 className="solicitacoes-page__title">Minhas solicitações</h2><p className="solicitacoes-page__subtitle">Acompanhe o andamento e os resultados dos dossiês da sua franquia.</p></div><button className="solicitacoes-page__cta" onClick={() => setNovaPanelOpen(true)}>+ Nova solicitação</button></div>
-            <div className="solicitacoes-page__kpis"><KpiCard label="Casos carregados" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluídos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Correção solicitada" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Não recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
+        <PageShell size="default" className="solicitacoes-page">
+            <PageHeader
+                eyebrow="Solicitações"
+                title="Minhas solicitações"
+                description="Veja o andamento das análises enviadas e acesse os resultados disponíveis."
+                actions={
+                    <button className="btn-primary" onClick={() => setNovaPanelOpen(true)}>
+                        + Nova solicitação
+                    </button>
+                }
+            />
+            <div className="solicitacoes-page__kpis"><KpiCard label="Solicitações encontradas" value={stats.total} color="neutral" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); }} /><KpiCard label="Concluídas" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} /><KpiCard label="Aguardando início" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />{stats.corrections > 0 && <KpiCard label="Aguardando correção" value={stats.corrections} color="red" onClick={() => setStatusFilter('CORRECTION_NEEDED')} />}<KpiCard label="Não recomendados" value={stats.notRecommended} color="red" onClick={() => setVerdictFilter('NOT_RECOMMENDED')} /></div>
             <QuotaSummaryCard quota={quota} loading={quotaLoading} error={quotaError} />
             <FilterPanelMobile
                 searchElement={
@@ -390,12 +450,12 @@ export default function SolicitacoesPage() {
                 }
                 activeFilterCount={(statusFilter !== 'ALL' ? 1 : 0) + (verdictFilter !== 'ALL' ? 1 : 0) + (heatmapMode ? 1 : 0)}
             >
-                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nos casos carregados por nome, CPF ou ID..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status carregados</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por veredito"><option value="ALL">Todos os vereditos carregados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de risco</button></div></div>
+                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nas solicitações carregadas por nome, CPF ou ID..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
             </FilterPanelMobile>
             <MobileDataCardList
                 items={filteredCases}
                 loading={loading}
-                emptyMessage={error ? extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.') : 'Nenhuma solicitacao encontrada.'}
+                emptyMessage={error ? extractErrorMessage(error, 'Não foi possível carregar suas solicitações agora.') : 'Nenhuma solicitação encontrada.'}
                 renderCard={(caseData) => (
                     <div onClick={() => setSelectedCase(caseData)} style={{ display: 'contents' }}>
                         <div className="mobile-card__header">
@@ -423,7 +483,7 @@ export default function SolicitacoesPage() {
                     </div>
                 )}
             >
-                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitacoes de due diligence"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')} aria-sort={sortField === 'candidateName' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')} aria-sort={sortField === 'createdAt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">OSINT</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')} aria-sort={sortField === 'riskScore' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Veredito</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && Array.from({ length: 5 }, (_, i) => (<tr key={`sk-${i}`} aria-hidden="true"><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${55 + (i % 4) * 10}%` }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 90 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td><td className="data-table__td"><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 20 }} /></td><td className="data-table__td" colSpan={9}><div className="skeleton skeleton--text" style={{ width: '40%' }} /></td></tr>))}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 4v4M16 4v4M2 8h20M8 12h8M8 16h4"/></svg></span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitações de análise cadastral"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')} aria-sort={sortField === 'candidateName' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')} aria-sort={sortField === 'createdAt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">Perfis públicos</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')} aria-sort={sortField === 'riskScore' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Resultado</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && Array.from({ length: 5 }, (_, i) => (<tr key={`sk-${i}`} aria-hidden="true"><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${55 + (i % 4) * 10}%` }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 90 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td><td className="data-table__td"><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 20 }} /></td><td className="data-table__td" colSpan={9}><div className="skeleton skeleton--text" style={{ width: '40%' }} /></td></tr>))}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 4v4M16 4v4M2 8h20M8 12h8M8 16h4"/></svg></span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
             </MobileDataCardList>
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
@@ -432,6 +492,6 @@ export default function SolicitacoesPage() {
                 onClose={() => setNovaPanelOpen(false)}
                 onSuccess={() => setNovaPanelOpen(false)}
             />
-        </div>
+        </PageShell>
     );
 }

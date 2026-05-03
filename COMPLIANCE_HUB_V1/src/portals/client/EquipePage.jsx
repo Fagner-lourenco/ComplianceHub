@@ -1,12 +1,31 @@
 import { useCallback, useEffect, useState } from 'react';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import { callListTenantUsers, callCreateTenantUser, callUpdateTenantUser } from '../../core/firebase/firestoreService';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import Modal from '../../ui/components/Modal/Modal';
 import './EquipePage.css';
 
 const ROLE_LABELS = { client_viewer: 'Visualizador', client_operator: 'Operador', client_manager: 'Gestor' };
 const MANAGEABLE_ROLES = ['client_viewer', 'client_operator', 'client_manager'];
+const ROLE_DESCRIPTIONS = {
+  client_viewer: 'Consulta solicitações, relatórios e exportações autorizadas, sem criar casos ou alterar usuários.',
+  client_operator: 'Cria solicitações e acompanha análises da empresa, sem permissões de gestão de equipe.',
+  client_manager: 'Gerencia solicitações, usuários, configurações, histórico da empresa e permissões da equipe.',
+};
+const STATUS_CONFIG = {
+  active: { label: 'Ativo', className: 'equipe-badge--active', countsAsActive: true },
+  inactive: { label: 'Inativo', className: 'equipe-badge--inactive', countsAsActive: false },
+  pending: { label: 'Pendente', className: 'equipe-badge--pending', countsAsActive: false },
+  suspended: { label: 'Suspenso', className: 'equipe-badge--suspended', countsAsActive: false },
+  unknown: { label: 'Status desconhecido', className: 'equipe-badge--unknown', countsAsActive: false },
+};
+
+function getStatusConfig(status) {
+  return STATUS_CONFIG[status] || STATUS_CONFIG.unknown;
+}
 
 function generatePassword() {
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
@@ -28,11 +47,16 @@ export default function EquipePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ displayName: '', email: '', role: 'client_viewer' });
   const [tempPassword, setTempPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const [formError, setFormError] = useState(null);
   const [formSaving, setFormSaving] = useState(false);
+  const [dirtyCloseOpen, setDirtyCloseOpen] = useState(false);
 
   // Inline update state
   const [updatingUid, setUpdatingUid] = useState(null);
+  const [roleChange, setRoleChange] = useState(null);
+  const [statusChange, setStatusChange] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     if (isDemoMode) {
@@ -70,8 +94,41 @@ export default function EquipePage() {
   const handleOpenModal = () => {
     setForm({ displayName: '', email: '', role: 'client_viewer' });
     setTempPassword(generatePassword());
+    setPasswordVisible(false);
+    setPasswordCopied(false);
     setFormError(null);
     setModalOpen(true);
+  };
+
+  const createFormDirty = Boolean(form.displayName.trim() || form.email.trim() || form.role !== 'client_viewer');
+
+  const requestCloseModal = () => {
+    if (formSaving) return;
+    if (createFormDirty) {
+      setDirtyCloseOpen(true);
+      return;
+    }
+    setModalOpen(false);
+    setTempPassword('');
+  };
+
+  const confirmCloseModal = () => {
+    setDirtyCloseOpen(false);
+    setModalOpen(false);
+    setTempPassword('');
+    setPasswordVisible(false);
+    setPasswordCopied(false);
+    setFormError(null);
+  };
+
+  const copyTempPassword = async () => {
+    try {
+      await navigator.clipboard?.writeText(tempPassword);
+      setPasswordCopied(true);
+      window.setTimeout(() => setPasswordCopied(false), 1800);
+    } catch {
+      setPasswordCopied(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -85,7 +142,8 @@ export default function EquipePage() {
     }
     if (isDemoMode) {
       setModalOpen(false);
-      setSuccessMsg(`(Demo) Usuario criado.\nEmail: ${form.email}\nSenha provisoria: ${tempPassword}`);
+      setTempPassword('');
+      setSuccessMsg(`(Demo) Usuário criado.\nEmail: ${form.email}\nCompartilhe a senha provisória somente por canal seguro.`);
       return;
     }
     try {
@@ -93,13 +151,14 @@ export default function EquipePage() {
       setFormError(null);
       await Promise.race([
         callCreateTenantUser({ email: form.email.trim(), password: tempPassword, displayName: form.displayName.trim(), role: form.role }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout: Firebase nao respondeu em 15 segundos.')), 15000)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout: Firebase não respondeu em 15 segundos.')), 15000)),
       ]);
       setModalOpen(false);
-      setSuccessMsg(`Usuario criado com sucesso.\nEmail: ${form.email}\nSenha provisoria: ${tempPassword}`);
+      setTempPassword('');
+      setSuccessMsg(`Usuário criado com sucesso.\nEmail: ${form.email}\nCompartilhe a senha provisória somente por canal seguro.`);
       fetchUsers();
     } catch (err) {
-      setFormError(getUserFriendlyMessage(err, 'criar usuario'));
+      setFormError(getUserFriendlyMessage(err, 'criar usuário'));
     } finally {
       setFormSaving(false);
     }
@@ -117,31 +176,55 @@ export default function EquipePage() {
       await callUpdateTenantUser({ targetUid, ...payload });
       await fetchUsers();
     } catch (err) {
-      setError(getUserFriendlyMessage(err, 'atualizar usuario'));
+      setError(getUserFriendlyMessage(err, 'atualizar usuário'));
     } finally {
       setUpdatingUid(null);
     }
   };
 
-  const handleRoleChange = (uid, newRole) => handleUpdate(uid, { role: newRole });
-  const handleToggleStatus = (uid, currentStatus) => handleUpdate(uid, { status: currentStatus === 'active' ? 'inactive' : 'active' });
+  const findUser = (uid) => users.find((candidate) => candidate.uid === uid);
+  const handleRoleChange = (uid, newRole) => {
+    const target = findUser(uid);
+    if (!target || target.role === newRole) return;
+    setRoleChange({ user: target, newRole });
+  };
+  const handleToggleStatus = (uid, currentStatus) => {
+    const target = findUser(uid);
+    if (!target) return;
+    const nextStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    setStatusChange({ user: target, nextStatus });
+  };
+
+  const confirmRoleChange = async () => {
+    if (!roleChange) return;
+    const { user: target, newRole } = roleChange;
+    setRoleChange(null);
+    await handleUpdate(target.uid, { role: newRole });
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusChange) return;
+    const { user: target, nextStatus } = statusChange;
+    setStatusChange(null);
+    await handleUpdate(target.uid, { status: nextStatus });
+  };
 
   const isSelf = (uid) => uid === user?.uid || (isDemoMode && uid === 'demo-1');
 
-  const activeCount = users.filter((u) => u.status !== 'inactive').length;
-  const inactiveCount = users.length - activeCount;
+  const activeCount = users.filter((u) => getStatusConfig(u.status).countsAsActive).length;
+  const inactiveCount = users.filter((u) => u.status === 'inactive').length;
+  const attentionCount = users.length - activeCount - inactiveCount;
   const getInitials = (name) => (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   /* ---- Render ---- */
   if (loading) {
     return (
-      <div className="equipe-page">
-        <div className="equipe-hero">
-          <div className="equipe-hero__info">
-            <h2>Equipe</h2>
-            <p className="equipe-hero__sub">Gerencie os usuarios da sua franquia</p>
-          </div>
-        </div>
+      <PageShell size="default" className="equipe-page">
+        <PageHeader
+          eyebrow="Usuários"
+          title="Equipe da empresa"
+          description="Gerencie quem pode acessar o portal da sua empresa."
+        />
         <div className="equipe-card">
           <div className="equipe-card__header">
             <span className="equipe-card__title">Membros</span>
@@ -155,22 +238,20 @@ export default function EquipePage() {
             </div>
           ))}
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="equipe-page">
-      {/* Hero */}
-      <div className="equipe-hero">
-        <div className="equipe-hero__info">
-          <h2>Equipe</h2>
-          <p className="equipe-hero__sub">Gerencie os usuarios da sua franquia</p>
-        </div>
-        <div className="equipe-hero__actions">
-          <button className="equipe-btn equipe-btn--primary" onClick={handleOpenModal}>+ Adicionar usuario</button>
-        </div>
-      </div>
+    <PageShell size="default" className="equipe-page">
+      <PageHeader
+        eyebrow="Usuários"
+        title="Equipe da empresa"
+        description="Gerencie quem pode acessar o portal da sua empresa."
+        actions={
+          <button className="btn-primary" onClick={handleOpenModal}>Adicionar usuário</button>
+        }
+      />
 
       {/* Stats */}
       <div className="equipe-stats">
@@ -186,6 +267,12 @@ export default function EquipePage() {
           <div className="equipe-stat-card__value" style={{ color: inactiveCount > 0 ? 'var(--red-600)' : undefined }}>{inactiveCount}</div>
           <div className="equipe-stat-card__label">Inativos</div>
         </div>
+        {attentionCount > 0 && (
+          <div className="equipe-stat-card">
+            <div className="equipe-stat-card__value" style={{ color: 'var(--yellow-700)' }}>{attentionCount}</div>
+            <div className="equipe-stat-card__label">Atenção</div>
+          </div>
+        )}
       </div>
 
       {/* Alerts */}
@@ -206,22 +293,23 @@ export default function EquipePage() {
       <div className="equipe-card">
         <div className="equipe-card__header">
           <span className="equipe-card__title">Membros da equipe</span>
-          <span className="equipe-card__count">{users.length} {users.length === 1 ? 'usuario' : 'usuarios'}</span>
+          <span className="equipe-card__count">{users.length} {users.length === 1 ? 'usuário' : 'usuários'}</span>
         </div>
 
         {users.length === 0 ? (
           <div className="equipe-empty">
             <div className="equipe-empty__icon">👥</div>
-            <div className="equipe-empty__title">Nenhum usuario cadastrado</div>
+            <div className="equipe-empty__title">Nenhum usuário cadastrado</div>
             <div className="equipe-empty__desc">Adicione membros da sua equipe para que eles possam acessar o portal do cliente.</div>
-            <button className="equipe-btn equipe-btn--primary" onClick={handleOpenModal}>+ Adicionar primeiro usuario</button>
+            <button className="equipe-btn equipe-btn--primary" onClick={handleOpenModal}>Adicionar primeiro usuário</button>
           </div>
         ) : (
           <MobileDataCardList
             items={users}
-            emptyMessage="Nenhum usuario encontrado."
+            emptyMessage="Nenhum usuário encontrado."
             renderCard={(u) => {
-              const isActive = u.status !== 'inactive';
+              const statusInfo = getStatusConfig(u.status);
+              const isActive = statusInfo.countsAsActive;
               const busy = updatingUid === u.uid;
               const self = isSelf(u.uid);
               return (
@@ -232,10 +320,10 @@ export default function EquipePage() {
                         {getInitials(u.displayName)}
                       </div>
                       <span style={{ fontWeight: 700 }}>{u.displayName || '—'}</span>
-                      {self && <span className="equipe-badge equipe-badge--you">voce</span>}
+                      {self && <span className="equipe-badge equipe-badge--you">você</span>}
                     </div>
-                    <span className={`equipe-badge ${isActive ? 'equipe-badge--active' : 'equipe-badge--inactive'}`}>
-                      {isActive ? 'Ativo' : 'Inativo'}
+                    <span className={`equipe-badge ${statusInfo.className}`}>
+                      {statusInfo.label}
                     </span>
                   </div>
                   <div className="mobile-card__meta">
@@ -247,6 +335,7 @@ export default function EquipePage() {
                       value={u.role}
                       disabled={busy || self}
                       onChange={(e) => handleRoleChange(u.uid, e.target.value)}
+                      title={ROLE_DESCRIPTIONS[u.role] || 'Perfil sem descrição cadastrada.'}
                       style={{ minHeight: 44 }}
                     >
                       {MANAGEABLE_ROLES.map((r) => (
@@ -256,7 +345,7 @@ export default function EquipePage() {
                     {!self && (
                       <button
                         className={`equipe-btn equipe-btn--sm ${isActive ? 'equipe-btn--danger-ghost' : 'equipe-btn--success-ghost'}`}
-                        disabled={busy}
+                        disabled={busy || !['active', 'inactive'].includes(u.status)}
                         onClick={() => handleToggleStatus(u.uid, u.status)}
                         style={{ minHeight: 44 }}
                       >
@@ -272,15 +361,16 @@ export default function EquipePage() {
               <table className="equipe-table">
                 <thead>
                   <tr>
-                    <th>Usuario</th>
+                    <th>Usuário</th>
                     <th>Perfil</th>
                     <th>Status</th>
-                    <th>Acoes</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((u) => {
-                    const isActive = u.status !== 'inactive';
+                    const statusInfo = getStatusConfig(u.status);
+                    const isActive = statusInfo.countsAsActive;
                     const busy = updatingUid === u.uid;
                     const self = isSelf(u.uid);
                     return (
@@ -293,7 +383,7 @@ export default function EquipePage() {
                             <div className="equipe-user-info">
                               <div className="equipe-user-name">
                                 {u.displayName || '—'}
-                                {self && <span className="equipe-badge equipe-badge--you">voce</span>}
+                                {self && <span className="equipe-badge equipe-badge--you">você</span>}
                               </div>
                               <div className="equipe-user-email">{u.email}</div>
                             </div>
@@ -305,6 +395,7 @@ export default function EquipePage() {
                             value={u.role}
                             disabled={busy || self}
                             onChange={(e) => handleRoleChange(u.uid, e.target.value)}
+                            title={ROLE_DESCRIPTIONS[u.role] || 'Perfil sem descrição cadastrada.'}
                           >
                             {MANAGEABLE_ROLES.map((r) => (
                               <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>
@@ -312,8 +403,8 @@ export default function EquipePage() {
                           </select>
                         </td>
                         <td>
-                          <span className={`equipe-badge ${isActive ? 'equipe-badge--active' : 'equipe-badge--inactive'}`}>
-                            {isActive ? 'Ativo' : 'Inativo'}
+                          <span className={`equipe-badge ${statusInfo.className}`}>
+                            {statusInfo.label}
                           </span>
                         </td>
                         <td>
@@ -321,7 +412,7 @@ export default function EquipePage() {
                             {!self && (
                               <button
                                 className={`equipe-btn equipe-btn--sm ${isActive ? 'equipe-btn--danger-ghost' : 'equipe-btn--success-ghost'}`}
-                                disabled={busy}
+                                disabled={busy || !['active', 'inactive'].includes(u.status)}
                                 onClick={() => handleToggleStatus(u.uid, u.status)}
                               >
                                 {busy ? '...' : isActive ? 'Desativar' : 'Ativar'}
@@ -344,13 +435,13 @@ export default function EquipePage() {
         <div
           className="equipe-modal-overlay"
           role="presentation"
-          onClick={() => !formSaving && setModalOpen(false)}
-          onKeyDown={(e) => e.key === 'Escape' && !formSaving && setModalOpen(false)}
+          onClick={requestCloseModal}
+          onKeyDown={(e) => e.key === 'Escape' && requestCloseModal()}
         >
           <div className="equipe-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <div className="equipe-modal__header">
-              <h3>Adicionar usuario</h3>
-              <button className="equipe-modal__close" onClick={() => !formSaving && setModalOpen(false)}>×</button>
+              <h3>Adicionar usuário</h3>
+              <button className="equipe-modal__close" onClick={requestCloseModal}>X</button>
             </div>
 
             <div className="equipe-modal__body">
@@ -384,22 +475,105 @@ export default function EquipePage() {
                   ))}
                 </select>
               </div>
+              <div className="equipe-role-matrix" aria-label="Resumo de permissões por perfil">
+                {MANAGEABLE_ROLES.map((role) => (
+                  <div key={role} className={`equipe-role-matrix__item ${form.role === role ? 'equipe-role-matrix__item--active' : ''}`}>
+                    <strong>{ROLE_LABELS[role]}</strong>
+                    <span>{ROLE_DESCRIPTIONS[role]}</span>
+                  </div>
+                ))}
+              </div>
               <div className="equipe-field">
-                <label>Senha provisoria</label>
+                <label>Senha provisória</label>
                 <div className="equipe-password-row">
-                  <input readOnly value={tempPassword} />
+                  <input readOnly value={passwordVisible ? tempPassword : '••••••••••••'} aria-label="Senha provisória" />
+                  <button className="equipe-btn equipe-btn--secondary equipe-btn--sm" type="button" onClick={() => setPasswordVisible((current) => !current)} disabled={formSaving}>{passwordVisible ? 'Ocultar' : 'Ver'}</button>
+                  <button className="equipe-btn equipe-btn--secondary equipe-btn--sm" type="button" onClick={copyTempPassword} disabled={formSaving}>{passwordCopied ? 'Copiada' : 'Copiar'}</button>
                   <button className="equipe-btn equipe-btn--secondary equipe-btn--sm" type="button" onClick={() => setTempPassword(generatePassword())} disabled={formSaving}>Gerar</button>
                 </div>
+                <p className="equipe-field__hint">Copie e compartilhe por canal seguro. A senha não será exibida em alertas e será apagada ao fechar este modal.</p>
               </div>
             </div>
 
             <div className="equipe-modal__footer">
-              <button className="equipe-btn equipe-btn--secondary" onClick={() => setModalOpen(false)} disabled={formSaving}>Cancelar</button>
-              <button className="equipe-btn equipe-btn--primary" onClick={handleCreate} disabled={formSaving}>{formSaving ? 'Criando...' : 'Criar usuario'}</button>
+              <button className="equipe-btn equipe-btn--secondary" onClick={requestCloseModal} disabled={formSaving}>Cancelar</button>
+              <button className="equipe-btn equipe-btn--primary" onClick={handleCreate} disabled={formSaving}>{formSaving ? 'Criando...' : 'Criar usuário'}</button>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      <Modal
+        open={Boolean(roleChange)}
+        onClose={() => setRoleChange(null)}
+        title="Alterar perfil de acesso?"
+        footer={(
+          <>
+            <button type="button" className="equipe-btn equipe-btn--secondary" onClick={() => setRoleChange(null)}>Cancelar</button>
+            <button type="button" className="equipe-btn equipe-btn--primary" onClick={confirmRoleChange}>Confirmar alteração</button>
+          </>
+        )}
+      >
+        {roleChange && (
+          <div className="equipe-critical-modal">
+            <p>Esta alteração modifica permissões efetivas no portal do cliente e será registrada na auditoria.</p>
+            <dl>
+              <div><dt>Usuário</dt><dd>{roleChange.user.displayName || roleChange.user.email}</dd></div>
+              <div><dt>E-mail</dt><dd>{roleChange.user.email}</dd></div>
+              <div><dt>De</dt><dd>{ROLE_LABELS[roleChange.user.role] || roleChange.user.role}</dd></div>
+              <div><dt>Para</dt><dd>{ROLE_LABELS[roleChange.newRole] || roleChange.newRole}</dd></div>
+              <div><dt>Impacto</dt><dd>{ROLE_DESCRIPTIONS[roleChange.newRole]}</dd></div>
+            </dl>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={Boolean(statusChange)}
+        onClose={() => setStatusChange(null)}
+        title={statusChange?.nextStatus === 'inactive' ? 'Desativar usuário?' : 'Ativar usuário?'}
+        footer={(
+          <>
+            <button type="button" className="equipe-btn equipe-btn--secondary" onClick={() => setStatusChange(null)}>Cancelar</button>
+            <button type="button" className={`equipe-btn ${statusChange?.nextStatus === 'inactive' ? 'equipe-btn--danger' : 'equipe-btn--primary'}`} onClick={confirmStatusChange}>
+              {statusChange?.nextStatus === 'inactive' ? 'Desativar usuário' : 'Ativar usuário'}
+            </button>
+          </>
+        )}
+      >
+        {statusChange && (
+          <div className="equipe-critical-modal">
+            <p>
+              {statusChange.nextStatus === 'inactive'
+                ? 'O acesso deste usuário será bloqueado no sistema.'
+                : 'O acesso deste usuário será reativado no sistema.'}
+            </p>
+            <dl>
+              <div><dt>Usuário</dt><dd>{statusChange.user.displayName || statusChange.user.email}</dd></div>
+              <div><dt>E-mail</dt><dd>{statusChange.user.email}</dd></div>
+              <div><dt>Status atual</dt><dd>{getStatusConfig(statusChange.user.status).label}</dd></div>
+              <div><dt>Novo status</dt><dd>{getStatusConfig(statusChange.nextStatus).label}</dd></div>
+            </dl>
+            <p>Esta ação será registrada no histórico da empresa.</p>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={dirtyCloseOpen}
+        onClose={() => setDirtyCloseOpen(false)}
+        title="Descartar usuário em criação?"
+        footer={(
+          <>
+            <button type="button" className="equipe-btn equipe-btn--secondary" onClick={() => setDirtyCloseOpen(false)}>Continuar editando</button>
+            <button type="button" className="equipe-btn equipe-btn--danger" onClick={confirmCloseModal}>Descartar dados</button>
+          </>
+        )}
+      >
+        <div className="equipe-critical-modal">
+          <p>Há dados preenchidos no formulário de novo usuário. Ao fechar, nome, e-mail, perfil e senha provisória serão descartados.</p>
+        </div>
+      </Modal>
+    </PageShell>
   );
 }

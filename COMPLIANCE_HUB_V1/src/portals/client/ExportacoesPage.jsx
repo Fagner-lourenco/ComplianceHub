@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import {
     callRegisterClientExport,
@@ -12,202 +14,857 @@ import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import './ExportacoesPage.css';
 
-const DEMO_EXPORTS = [
-    { id: 'EXP-001', type: 'CSV', scope: 'Todos os casos', createdAt: '2026-04-01 09:15', status: 'DONE', records: 10 },
-    { id: 'EXP-002', type: 'REPORT', scope: 'Casos concluídos', createdAt: '2026-03-28 14:30', status: 'DONE', records: 7 },
-    { id: 'EXP-003', type: 'PDF', scope: 'Caso CASE-002', createdAt: '2026-03-18 16:00', status: 'DONE', records: 1 },
-    { id: 'EXP-004', type: 'CSV', scope: 'Apenas alertas', createdAt: '2026-03-15 10:00', status: 'DONE', records: 2 },
-];
-
 const SCOPE_OPTIONS = [
-    { value: 'ALL', label: 'Todos os casos' },
-    { value: 'DONE', label: 'Apenas concluidos' },
+    { value: 'ALL', label: 'Solicitações exibidas' },
+    { value: 'DONE', label: 'Solicitações concluídas' },
     { value: 'PENDING', label: 'Apenas pendentes' },
     { value: 'RED', label: 'Apenas alertas' },
 ];
+
+const EXPORT_TYPE_OPTIONS = {
+    CSV: { label: 'Planilha .CSV', historyLabel: 'Planilha .CSV', artifactMode: 'download' },
+    PRINT: { label: 'Página para impressão', historyLabel: 'Página para impressão', artifactMode: 'printable_html' },
+    REPORT: { label: 'Relatório em página web', historyLabel: 'Relatório em página web', artifactMode: 'html_blob' },
+};
+
 const LIVE_QUERY_TIMEOUT_MS = 10_000;
 
-function escapeCsvField(value) {
+const STATUS_MAP = {
+    PENDING: 'Pendente',
+    IN_PROGRESS: 'Em análise',
+    WAITING_INFO: 'Aguardando informação',
+    CORRECTION_NEEDED: 'Correção necessária',
+    DONE: 'Concluído',
+};
+
+const RISK_MAP = {
+    GREEN: 'Baixo',
+    YELLOW: 'Médio',
+    RED: 'Alto',
+};
+
+const VERDICT_MAP = {
+    FIT: 'Recomendado',
+    ATTENTION: 'Atenção',
+    NOT_RECOMMENDED: 'Não recomendado',
+};
+
+const PRI_MAP = {
+    NORMAL: 'Normal',
+    HIGH: 'Alta',
+};
+
+const FLAG_MAP = {
+    POSITIVE: 'Positivo',
+    NEGATIVE: 'Negativo',
+    NEGATIVE_PARTIAL: 'Negativo parcial',
+    INCONCLUSIVE: 'Inconclusivo',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homônimo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    NOT_FOUND: 'Não encontrado',
+};
+
+function escapeCsvField(value, delimiter = ';') {
     const str = String(value ?? '');
-    // Prevent CSV injection for formulas
-    const safe = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
-    if (safe.includes(',') || safe.includes('"') || safe.includes('\n')) {
-        return '"' + safe.replace(/"/g, '""') + '"';
+    const normalized = str.replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+    const safe = /^[=+\-@\t\r]/.test(normalized) ? `'${normalized}` : normalized;
+
+    if (
+        safe.includes(delimiter) ||
+        safe.includes('"') ||
+        safe.includes('\n') ||
+        safe.includes('\r')
+    ) {
+        return `"${safe.replace(/"/g, '""')}"`;
     }
+
     return safe;
 }
 
+function getCoverageLabel(c) {
+    if (c.status === 'DONE') return 'Resultado disponível';
+    if (c.status === 'IN_PROGRESS') return 'Em análise — resultado ainda indisponível';
+    if (c.status === 'WAITING_INFO') return 'Aguardando informação complementar';
+    if (c.status === 'CORRECTION_NEEDED') return 'Correção necessária antes da análise';
+    return 'Resultado indisponível — caso ainda não concluído';
+}
+
+function buildMainAlerts(c) {
+    const alerts = [];
+
+    if (c.warrantFlag === 'POSITIVE') {
+        alerts.push('Mandado positivo');
+    }
+
+    if (
+        c.criminalFlag === 'POSITIVE' ||
+        c.criminalFlag === 'INCONCLUSIVE_HOMONYM' ||
+        c.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE'
+    ) {
+        alerts.push(`Criminal: ${FLAG_MAP[c.criminalFlag] || c.criminalFlag}`);
+    }
+
+    if (
+        c.laborFlag === 'POSITIVE' ||
+        c.laborFlag === 'INCONCLUSIVE_HOMONYM' ||
+        c.laborFlag === 'INCONCLUSIVE_LOW_COVERAGE' ||
+        c.laborFlag === 'INCONCLUSIVE'
+    ) {
+        alerts.push(`Trabalhista: ${FLAG_MAP[c.laborFlag] || c.laborFlag}`);
+    }
+
+    if (c.osintLevel === 'HIGH') {
+        alerts.push('Perfis públicos: alto');
+    }
+
+    if (c.socialStatus === 'CONCERN' || c.socialStatus === 'CONTRAINDICATED') {
+        alerts.push(`Social: ${c.socialStatus === 'CONTRAINDICATED' ? 'Contraindicado' : 'Atenção'}`);
+    }
+
+    if (c.digitalFlag === 'CRITICAL' || c.digitalFlag === 'ALERT') {
+        alerts.push(`Digital: ${c.digitalFlag === 'CRITICAL' ? 'Crítico' : 'Alerta'}`);
+    }
+
+    if (c.conflictInterest === 'YES') {
+        alerts.push('Conflito de interesse');
+    }
+
+    if (c.riskLevel === 'RED') {
+        alerts.push('Risco alto');
+    }
+
+    if (c.finalVerdict === 'NOT_RECOMMENDED') {
+        alerts.push('Não recomendado');
+    }
+
+    return alerts.length > 0 ? alerts.join(' | ') : 'Sem alerta crítico no resumo';
+}
+
+function buildOperationalNote(c) {
+    if (c.status !== 'DONE') {
+        return 'Solicitação ainda não concluída. Campos de atenção e resultado podem estar indisponíveis ou incompletos.';
+    }
+
+    if (c.finalVerdict === 'NOT_RECOMMENDED') {
+        return 'Consultar o dossiê completo antes de qualquer decisão operacional.';
+    }
+
+    if (c.finalVerdict === 'ATTENTION') {
+        return 'Revisar apontamentos e evidências no dossiê individual.';
+    }
+
+    if (c.riskLevel === 'RED') {
+        return 'Risco alto identificado. Exige revisão individual.';
+    }
+
+    if (c.riskLevel === 'YELLOW') {
+        return 'Risco intermediário. Recomenda-se revisão do dossiê.';
+    }
+
+    if (c.finalVerdict === 'FIT') {
+        return 'Sem alerta impeditivo no resumo. Consultar dossiê para detalhes.';
+    }
+
+    return 'Consultar dossiê individual para interpretação completa.';
+}
+
 function buildCsvContent(rows) {
+    const delimiter = ';';
+
     const headers = [
-        'ID', 'Nome', 'CPF', 'Cargo', 'Departamento', 'Data Solicitação', 'Status', 'Prioridade',
-        'Criminal', 'Severidade Criminal', 'Trabalhista', 'Severidade Trabalhista',
-        'Mandado', 'OSINT', 'Social', 'Digital', 'Conflito Interesse',
-        'Nível Risco', 'Score Risco', 'Veredito', 'Parecer Analista',
+        'Nº',
+        'Nome',
+        'CPF',
+        'Cargo',
+        'Data da solicitação',
+        'Situação',
+        'Cobertura',
+        'Prioridade',
+        'Risco',
+        'Nível de atenção',
+        'Resultado',
+        'Alertas principais',
+        'Observação operacional',
+        'Parecer do analista',
     ];
-    const lines = [headers.map(escapeCsvField).join(',')];
 
-    const STATUS_MAP = { PENDING: 'Pendente', IN_PROGRESS: 'Em Análise', WAITING_INFO: 'Aguardando Info', CORRECTION_NEEDED: 'Correção Necessária', DONE: 'Concluído' };
-    const RISK_MAP = { GREEN: 'Baixo', YELLOW: 'Médio', RED: 'Alto' };
-    const VERDICT_MAP = { FIT: 'Recomendado', ATTENTION: 'Atenção', NOT_RECOMMENDED: 'Não Recomendado' };
-    const FLAG_MAP = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', INCONCLUSIVE: 'Inconclusivo', NOT_FOUND: 'Não Encontrado' };
-    const OSINT_MAP = { LOW: 'Baixo', MEDIUM: 'Médio', HIGH: 'Alto', UNKNOWN: 'Desconhecido' };
-    const SOCIAL_MAP = { APPROVED: 'Aprovado', NEUTRAL: 'Neutro', CONCERN: 'Atenção', CONTRAINDICATED: 'Contraindicado' };
-    const DIGITAL_MAP = { CLEAN: 'Limpo', ALERT: 'Alerta', CRITICAL: 'Crítico', NOT_CHECKED: 'N/V' };
-    const CONFLICT_MAP = { YES: 'Sim', NO: 'Não', UNKNOWN: 'Desconhecido' };
-    const SEV_MAP = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' };
-    Object.assign(FLAG_MAP, {
-        NEGATIVE_PARTIAL: 'Negativo parcial',
-        INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
-        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
-    });
-    const PRI_MAP = { NORMAL: 'Normal', HIGH: 'Alta' };
+    const lines = [
+        `sep=${delimiter}`,
+        headers.map((header) => escapeCsvField(header, delimiter)).join(delimiter),
+    ];
 
-    for (const c of rows) {
-        lines.push([
-            c.id,
+    rows.forEach((c, index) => {
+        const row = [
+            index + 1,
             c.candidateName || '',
             c.cpfMasked || '',
-            c.candidatePosition || '',
-            c.department || '',
+            c.candidatePosition || 'Cargo não informado',
             c.createdAt || '',
             STATUS_MAP[c.status] || c.status || '',
+            getCoverageLabel(c),
             PRI_MAP[c.priority] || c.priority || '',
-            FLAG_MAP[c.criminalFlag] || c.criminalFlag || '',
-            SEV_MAP[c.criminalSeverity] || c.criminalSeverity || '',
-            FLAG_MAP[c.laborFlag] || c.laborFlag || '',
-            SEV_MAP[c.laborSeverity] || c.laborSeverity || '',
-            FLAG_MAP[c.warrantFlag] || c.warrantFlag || '',
-            OSINT_MAP[c.osintLevel] || c.osintLevel || '',
-            SOCIAL_MAP[c.socialStatus] || c.socialStatus || '',
-            DIGITAL_MAP[c.digitalFlag] || c.digitalFlag || '',
-            CONFLICT_MAP[c.conflictInterest] || c.conflictInterest || '',
             RISK_MAP[c.riskLevel] || c.riskLevel || '',
             c.riskScore ?? '',
             VERDICT_MAP[c.finalVerdict] || c.finalVerdict || '',
+            buildMainAlerts(c),
+            buildOperationalNote(c),
             c.analystComment || '',
-        ].map(escapeCsvField).join(','));
-    }
+        ];
+
+        lines.push(row.map((value) => escapeCsvField(value, delimiter)).join(delimiter));
+    });
+
     return lines.join('\r\n');
 }
 
 function esc(str) {
     if (str == null) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function buildPdfHtml(rows, scopeLabel, tenantName) {
-    const now = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+function buildPrintableHtml(rows, scopeLabel, tenantName) {
+    const now = new Date();
+    const nowLabel = now.toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
 
-    const STATUS_MAP = { PENDING: 'Pendente', IN_PROGRESS: 'Em Análise', WAITING_INFO: 'Aguardando', CORRECTION_NEEDED: 'Correção', DONE: 'Concluído' };
-    const RISK_MAP = { GREEN: 'Baixo', YELLOW: 'Médio', RED: 'Alto' };
-    const VERDICT_MAP = { FIT: 'Recomendado', ATTENTION: 'Atenção', NOT_RECOMMENDED: 'N/Recomendado' };
+    const statusMap = {
+        PENDING: 'Pendente',
+        IN_PROGRESS: 'Em análise',
+        WAITING_INFO: 'Aguardando info',
+        CORRECTION_NEEDED: 'Correção necessária',
+        DONE: 'Concluído',
+    };
 
-    function riskBadge(level) {
-        const c = level === 'RED' ? 'red' : level === 'YELLOW' ? 'yellow' : 'green';
-        return `<span class="b b--${c}">${esc(RISK_MAP[level] || level || '—')}</span>`;
-    }
-    function verdictBadge(v) {
-        const c = v === 'NOT_RECOMMENDED' ? 'red' : v === 'ATTENTION' ? 'yellow' : v === 'FIT' ? 'green' : 'gray';
-        return `<span class="b b--${c}">${esc(VERDICT_MAP[v] || v || '—')}</span>`;
-    }
-    function statusBadge(s) {
-        const c = s === 'DONE' ? 'green' : s === 'PENDING' ? 'gray' : 'yellow';
-        return `<span class="b b--${c}">${esc(STATUS_MAP[s] || s || '—')}</span>`;
-    }
-    function scorePill(score) {
-        if (score == null || score === '') return '<span class="score-na">—</span>';
-        const s = Number(score);
-        const c = s >= 70 ? '#ef4444' : s >= 30 ? '#f59e0b' : '#22c55e';
-        return `<span class="score" style="background:${c}">${s}</span>`;
-    }
+    const riskMap = {
+        GREEN: 'Baixo',
+        YELLOW: 'Médio',
+        RED: 'Alto',
+    };
+
+    const verdictMap = {
+        FIT: 'Recomendado',
+        ATTENTION: 'Atenção',
+        NOT_RECOMMENDED: 'Não recomendado',
+    };
 
     const summary = {
         total: rows.length,
-        done: rows.filter(r => r.status === 'DONE').length,
-        red: rows.filter(r => r.riskLevel === 'RED').length,
-        yellow: rows.filter(r => r.riskLevel === 'YELLOW').length,
-        green: rows.filter(r => r.riskLevel === 'GREEN').length,
+        done: rows.filter((r) => r.status === 'DONE').length,
+        pending: rows.filter((r) => r.status !== 'DONE').length,
+        red: rows.filter((r) => r.riskLevel === 'RED').length,
+        yellow: rows.filter((r) => r.riskLevel === 'YELLOW').length,
+        green: rows.filter((r) => r.riskLevel === 'GREEN').length,
+        attention: rows.filter((r) => r.finalVerdict === 'ATTENTION').length,
+        notRecommended: rows.filter((r) => r.finalVerdict === 'NOT_RECOMMENDED').length,
     };
 
-    const kpis = `<div class="kpis">
-      <div class="kpi"><div class="kpi__v">${summary.total}</div><div class="kpi__l">Total</div></div>
-      <div class="kpi"><div class="kpi__v">${summary.done}</div><div class="kpi__l">Concluídos</div></div>
-      <div class="kpi kpi--red"><div class="kpi__v">${summary.red}</div><div class="kpi__l">Alto Risco</div></div>
-      <div class="kpi kpi--yellow"><div class="kpi__v">${summary.yellow}</div><div class="kpi__l">Médio Risco</div></div>
-      <div class="kpi kpi--green"><div class="kpi__v">${summary.green}</div><div class="kpi__l">Baixo Risco</div></div>
-    </div>`;
+    const badge = (label, tone = 'neutral') => (
+        `<span class="badge badge--${tone}">${esc(label || '-')}</span>`
+    );
 
-    const tableRows = rows.map((c) => {
-        const risk = c.riskLevel || '';
-        const rowCls = risk === 'RED' ? ' class="row-red"' : '';
-        return `<tr${rowCls}>
-            <td class="td-name">${esc(c.candidateName || '—')}</td>
-            <td class="td-cpf">${esc(c.cpfMasked || '—')}</td>
-            <td>${esc(c.candidatePosition || '—')}</td>
-            <td class="td-center">${statusBadge(c.status)}</td>
-            <td class="td-center">${riskBadge(risk)}</td>
-            <td class="td-center">${scorePill(c.riskScore)}</td>
-            <td class="td-center">${verdictBadge(c.finalVerdict)}</td>
-            <td class="td-date">${esc(c.createdAt || '—')}</td>
-        </tr>`;
-    }).join('');
+    const statusBadge = (status) => {
+        const label = statusMap[status] || status || '-';
+        if (status === 'DONE') return badge(label, 'success');
+        if (status === 'PENDING') return badge(label, 'muted');
+        if (status === 'WAITING_INFO' || status === 'CORRECTION_NEEDED') return badge(label, 'warning');
+        if (status === 'IN_PROGRESS') return badge(label, 'info');
+        return badge(label, 'neutral');
+    };
 
-    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    const riskBadge = (risk) => {
+        const label = riskMap[risk] || risk || '-';
+        if (risk === 'RED') return badge(label, 'danger');
+        if (risk === 'YELLOW') return badge(label, 'warning');
+        if (risk === 'GREEN') return badge(label, 'success');
+        return badge(label, 'muted');
+    };
+
+    const verdictBadge = (verdict) => {
+        const label = verdictMap[verdict] || verdict || '-';
+        if (verdict === 'FIT') return badge(label, 'success');
+        if (verdict === 'ATTENTION') return badge(label, 'warning');
+        if (verdict === 'NOT_RECOMMENDED') return badge(label, 'danger');
+        return badge(label, 'muted');
+    };
+
+    const coverageLabel = (item) => (
+        item.status === 'DONE'
+            ? 'Resultado disponível'
+            : 'Resultado indisponível — caso ainda não concluído'
+    );
+
+    const tableRows = rows.map((c, index) => `<tr>
+        <td class="col-index">${index + 1}</td>
+        <td>
+            <div class="person">
+                <strong>${esc(c.candidateName || '-')}</strong>
+                <span>${esc(c.candidatePosition || 'Cargo não informado')}</span>
+            </div>
+        </td>
+        <td>${esc(c.cpfMasked || '-')}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td><span class="coverage">${esc(coverageLabel(c))}</span></td>
+        <td>${riskBadge(c.riskLevel)}</td>
+        <td class="score">${esc(c.riskScore ?? '-')}</td>
+        <td>${verdictBadge(c.finalVerdict)}</td>
+        <td>${esc(c.createdAt || '-')}</td>
+    </tr>`).join('');
+
+    const pendingWarning = summary.pending > 0
+        ? `<section class="notice notice--warning">
+            <strong>Atenção sobre cobertura analítica</strong>
+            <span>Este pacote contém ${summary.pending} caso(s) sem resultado final. Campos vazios ou indisponíveis indicam que a análise ainda não foi concluída, e não ausência de risco.</span>
+        </section>`
+        : '';
+
+    const redWarning = summary.red > 0 || summary.notRecommended > 0
+        ? `<section class="notice notice--danger">
+            <strong>Alerta operacional</strong>
+            <span>O recorte contém ${summary.red} solicitação(ões) com atenção alta e ${summary.notRecommended} solicitação(ões) com resultado não recomendado. Consulte o dossiê individual antes de qualquer decisão final.</span>
+        </section>`
+        : '';
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Exportação — ComplianceHub</title>
+<title>Exportar solicitações - ComplianceHub</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;color:#1e293b;background:#f0f2f5;font-size:13px;line-height:1.6}
-.page{max-width:960px;margin:0 auto;background:#fff;padding:40px 48px;min-height:100vh}
-.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #4f46e5;margin-bottom:28px}
-.hdr__brand{font-size:20px;font-weight:800;color:#4f46e5;letter-spacing:-.4px}
-.hdr__sub{font-size:11px;color:#64748b;margin-top:2px}
-.hdr__right{text-align:right;font-size:11px;color:#64748b;line-height:1.9}
-.hdr__tenant{font-weight:600;color:#1e293b;font-size:12px}
-.meta-row{display:flex;gap:20px;margin-bottom:20px;font-size:11px;color:#64748b;flex-wrap:wrap}
-.meta-row span{background:#f8fafc;border:1px solid #e2e8f0;padding:4px 12px;border-radius:5px}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px}
-.kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center}
-.kpi__v{font-size:22px;font-weight:800;color:#1e293b}
-.kpi__l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-top:2px}
-.kpi--red{border-left:3px solid #ef4444}.kpi--red .kpi__v{color:#b91c1c}
-.kpi--yellow{border-left:3px solid #f59e0b}.kpi--yellow .kpi__v{color:#a16207}
-.kpi--green{border-left:3px solid #22c55e}.kpi--green .kpi__v{color:#15803d}
-.sec__t{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#94a3b8;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #f1f5f9}
-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
-thead th{background:linear-gradient(135deg,#f8fafc 0%,#f0f4ff 100%);text-align:left;padding:10px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#64748b;border-bottom:2px solid #e2e8f0}
-tbody td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-tbody tr:hover{background:#fafbff}
-.row-red{background:#fef2f2}
-.td-name{font-weight:600;color:#1e293b;white-space:nowrap}
-.td-cpf{font-family:'SF Mono',Consolas,monospace;font-size:10px;color:#64748b;white-space:nowrap}
-.td-date{font-size:10px;color:#94a3b8;white-space:nowrap}
-.td-center{text-align:center}
-.b{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:10px;font-weight:600;line-height:1.4;white-space:nowrap}
-.b--green{background:#dcfce7;color:#15803d}.b--yellow{background:#fef9c3;color:#a16207}.b--red{background:#fee2e2;color:#b91c1c}.b--gray{background:#f1f5f9;color:#475569}
-.score{display:inline-flex;align-items:center;justify-content:center;width:28px;height:20px;border-radius:4px;color:#fff;font-size:10px;font-weight:700}
-.score-na{color:#cbd5e1}
-.ftr{margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}
-.print-btn{position:fixed;bottom:20px;right:20px;background:#4f46e5;color:#fff;border:none;padding:10px 22px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(79,70,229,.4);z-index:999}
-.print-btn:hover{background:#4338ca}
-@media print{body{background:#fff}.page{max-width:100%;padding:20px 16px;box-shadow:none}.print-btn{display:none}thead{display:table-header-group}tbody tr{page-break-inside:avoid}}
-@page{size:A4 landscape;margin:10mm}
-</style></head><body>
-<div class="page">
-  <div class="hdr">
-    <div><div class="hdr__brand">ComplianceHub</div><div class="hdr__sub">Exportação de Casos — Documento Confidencial</div></div>
-    <div class="hdr__right"><div class="hdr__tenant">${esc(tenantName)}</div><div>Gerado em ${esc(now)}</div></div>
-  </div>
-  <div class="meta-row"><span>📋 Escopo: <strong>${esc(scopeLabel)}</strong></span><span>📊 ${rows.length} registro${rows.length !== 1 ? 's' : ''}</span></div>
-  ${kpis}
-  <div class="sec__t">Detalhamento por Candidato</div>
-  <table><thead><tr>
-    <th>Nome</th><th>CPF</th><th>Cargo</th><th style="text-align:center">Status</th><th style="text-align:center">Risco</th><th style="text-align:center">Score</th><th style="text-align:center">Veredito</th><th>Data</th>
-  </tr></thead><tbody>${tableRows}</tbody></table>
-  <div class="ftr"><div>ComplianceHub · Documento Confidencial</div><div>${esc(now)}</div></div>
-</div>
-<button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-</body></html>`;
+*{
+    box-sizing:border-box;
+}
+:root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --soft:#f8fafc;
+    --line:#e2e8f0;
+    --brand:#1d6fe5;
+    --brand-dark:#164fb8;
+    --teal:#0f766e;
+    --green:#15803d;
+    --green-bg:#ecfdf5;
+    --yellow:#a16207;
+    --yellow-bg:#fffbeb;
+    --red:#b91c1c;
+    --red-bg:#fef2f2;
+    --blue:#1d4ed8;
+    --blue-bg:#eff6ff;
+    --slate-bg:#f1f5f9;
+}
+html,
+body{
+    margin:0;
+    min-height:100%;
+}
+body{
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    color:var(--ink);
+    background:
+        radial-gradient(circle at top left, rgba(29,111,229,.12), transparent 32%),
+        linear-gradient(180deg,#eef4fb 0%,#f8fafc 100%);
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+}
+body::before{
+    content:"CONFIDENCIAL";
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) rotate(-45deg);
+    transform-origin:center;
+    z-index:0;
+    pointer-events:none;
+    white-space:nowrap;
+    font-size:86px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:.12em;
+    color:rgba(15,23,42,.045);
+    text-transform:uppercase;
+    user-select:none;
+}
+.page{
+    position:relative;
+    z-index:1;
+    width:min(1180px, calc(100% - 48px));
+    margin:24px auto;
+    background:rgba(255,255,255,.96);
+    border:1px solid rgba(148,163,184,.35);
+    border-radius:22px;
+    box-shadow:0 24px 70px rgba(15,23,42,.14);
+    overflow:hidden;
+}
+.report-topbar{
+    height:8px;
+    background:linear-gradient(90deg,var(--brand),var(--teal));
+}
+.header{
+    display:flex;
+    justify-content:space-between;
+    gap:28px;
+    padding:30px 34px 24px;
+    border-bottom:1px solid var(--line);
+    background:
+        linear-gradient(135deg, rgba(29,111,229,.08), rgba(15,118,110,.05)),
+        #ffffff;
+}
+.brand-block{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-width:720px;
+}
+.eyebrow{
+    display:inline-flex;
+    align-items:center;
+    width:max-content;
+    padding:5px 9px;
+    border-radius:999px;
+    background:var(--blue-bg);
+    color:var(--blue);
+    font-size:10px;
+    font-weight:900;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+}
+.brand{
+    font-size:24px;
+    font-weight:900;
+    letter-spacing:-.03em;
+}
+.title{
+    margin:0;
+    font-size:18px;
+    font-weight:850;
+}
+.lead{
+    margin:0;
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.55;
+}
+.header-meta{
+    min-width:230px;
+    padding:14px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:rgba(255,255,255,.72);
+}
+.header-meta__item{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:6px 0;
+    border-bottom:1px dashed #dbe3ef;
+    font-size:11px;
+}
+.header-meta__item:last-child{
+    border-bottom:0;
+}
+.header-meta__item span{
+    color:var(--muted);
+}
+.header-meta__item strong{
+    text-align:right;
+    font-weight:800;
+}
+.content{
+    padding:24px 34px 30px;
+}
+.scope-card{
+    display:grid;
+    grid-template-columns:1.4fr .9fr;
+    gap:14px;
+    margin-bottom:18px;
+}
+.scope-card__main,
+.scope-card__side{
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+    padding:16px;
+}
+.scope-card h2{
+    margin:0 0 8px;
+    font-size:15px;
+}
+.scope-card p{
+    margin:0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.55;
+}
+.scope-list{
+    display:grid;
+    gap:8px;
+}
+.scope-list div{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    font-size:12px;
+}
+.scope-list span{
+    color:var(--muted);
+}
+.scope-list strong{
+    text-align:right;
+}
+.kpis{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:0 0 18px;
+}
+.kpi{
+    position:relative;
+    overflow:hidden;
+    border:1px solid var(--line);
+    border-radius:18px;
+    background:#fff;
+    padding:15px;
+}
+.kpi::after{
+    content:"";
+    position:absolute;
+    right:-24px;
+    top:-24px;
+    width:70px;
+    height:70px;
+    border-radius:999px;
+    background:rgba(29,111,229,.08);
+}
+.kpi strong{
+    display:block;
+    font-size:27px;
+    line-height:1;
+    font-weight:900;
+    letter-spacing:-.04em;
+}
+.kpi span{
+    display:block;
+    margin-top:6px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+.kpi--success strong{color:var(--green)}
+.kpi--warning strong{color:var(--yellow)}
+.kpi--danger strong{color:var(--red)}
+.kpi--info strong{color:var(--blue)}
+.notices{
+    display:grid;
+    gap:10px;
+    margin-bottom:18px;
+}
+.notice{
+    display:grid;
+    gap:3px;
+    padding:12px 14px;
+    border-radius:16px;
+    font-size:12px;
+    line-height:1.5;
+    border:1px solid var(--line);
+}
+.notice strong{
+    font-size:12px;
+}
+.notice span{
+    color:#475569;
+}
+.notice--warning{
+    background:var(--yellow-bg);
+    border-color:#fde68a;
+    color:var(--yellow);
+}
+.notice--danger{
+    background:var(--red-bg);
+    border-color:#fecaca;
+    color:var(--red);
+}
+.notice--info{
+    background:var(--blue-bg);
+    border-color:#bfdbfe;
+    color:var(--blue);
+}
+.table-wrap{
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    background:#fff;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:11.5px;
+}
+thead{
+    display:table-header-group;
+}
+th{
+    background:#f8fafc;
+    color:#475569;
+    text-align:left;
+    font-size:9.5px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.07em;
+    padding:11px 10px;
+    border-bottom:1px solid var(--line);
+}
+td{
+    padding:11px 10px;
+    border-bottom:1px solid #edf2f7;
+    vertical-align:top;
+}
+tr:last-child td{
+    border-bottom:0;
+}
+tr{
+    break-inside:avoid;
+    page-break-inside:avoid;
+}
+.col-index{
+    width:34px;
+    color:#94a3b8;
+    font-weight:800;
+}
+.person{
+    display:grid;
+    gap:3px;
+}
+.person strong{
+    font-size:12px;
+}
+.person span{
+    color:var(--muted);
+    font-size:10.5px;
+}
+.score{
+    font-weight:900;
+    color:#172033;
+}
+.coverage{
+    color:#475569;
+    line-height:1.4;
+}
+.badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:23px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:10px;
+    font-weight:900;
+    line-height:1;
+    white-space:nowrap;
+    border:1px solid transparent;
+}
+.badge--success{
+    color:var(--green);
+    background:var(--green-bg);
+    border-color:#bbf7d0;
+}
+.badge--warning{
+    color:var(--yellow);
+    background:var(--yellow-bg);
+    border-color:#fde68a;
+}
+.badge--danger{
+    color:var(--red);
+    background:var(--red-bg);
+    border-color:#fecaca;
+}
+.badge--info{
+    color:var(--blue);
+    background:var(--blue-bg);
+    border-color:#bfdbfe;
+}
+.badge--muted,
+.badge--neutral{
+    color:#475569;
+    background:var(--slate-bg);
+    border-color:#e2e8f0;
+}
+.legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    margin-top:12px;
+    color:var(--muted);
+    font-size:10.5px;
+}
+.footer{
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    padding:16px 34px 22px;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+    font-size:10.5px;
+    background:#fbfdff;
+}
+.print{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:20;
+    border:0;
+    border-radius:999px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+    color:#fff;
+    padding:12px 18px;
+    font-weight:850;
+    box-shadow:0 14px 35px rgba(29,111,229,.28);
+    cursor:pointer;
+}
+.print:hover{
+    transform:translateY(-1px);
+}
+@media print{
+    @page{
+        size:A4 landscape;
+        margin:10mm;
+    }
+    html,
+    body{
+        background:#fff !important;
+    }
+    body::before{
+        color:rgba(15,23,42,.055);
+    }
+    .page{
+        width:auto;
+        margin:0;
+        border:0;
+        border-radius:0;
+        box-shadow:none;
+        overflow:visible;
+    }
+    .header,
+    .content,
+    .footer{
+        padding-left:0;
+        padding-right:0;
+    }
+    .print{
+        display:none;
+    }
+    .scope-card,
+    .kpis,
+    .notice,
+    .table-wrap,
+    .footer{
+        break-inside:avoid-page;
+        page-break-inside:avoid;
+    }
+    tr{
+        break-inside:avoid-page;
+        page-break-inside:avoid;
+    }
+}
+</style>
+</head>
+<body>
+<main class="page">
+    <div class="report-topbar"></div>
+
+    <header class="header">
+        <div class="brand-block">
+            <span class="eyebrow">Documento confidencial</span>
+            <div class="brand">ComplianceHub</div>
+            <h1 class="title">Exportar solicitações</h1>
+            <p class="lead">
+                Este documento consolida as solicitações carregadas no portal no momento da geração.
+                O recorte abaixo não substitui o relatório individual de cada candidato e deve ser usado como índice operacional para conferência, triagem e prestação de contas.
+            </p>
+        </div>
+
+        <aside class="header-meta" aria-label="Detalhes do arquivo">
+            <div class="header-meta__item"><span>Empresa</span><strong>${esc(tenantName || 'Não informado')}</strong></div>
+            <div class="header-meta__item"><span>Gerado em</span><strong>${esc(nowLabel)}</strong></div>
+            <div class="header-meta__item"><span>Formato</span><strong>HTML imprimível</strong></div>
+            <div class="header-meta__item"><span>Classificação</span><strong>Confidencial</strong></div>
+        </aside>
+    </header>
+
+    <section class="content">
+        <div class="scope-card">
+            <div class="scope-card__main">
+                <h2>Escopo e leitura correta</h2>
+                <p>
+                    A exportação considera apenas os registros atualmente carregados no navegador e os filtros aplicados pelo usuário.
+                    Casos sem resultado final aparecem com cobertura indisponível para evitar interpretação equivocada dos campos analíticos.
+                </p>
+            </div>
+            <div class="scope-card__side">
+                <div class="scope-list">
+                    <div><span>Escopo aplicado</span><strong>${esc(scopeLabel)}</strong></div>
+                    <div><span>Total incluído</span><strong>${summary.total} solicitação(ões)</strong></div>
+                    <div><span>Concluídas</span><strong>${summary.done}</strong></div>
+                    <div><span>Sem resultado final</span><strong>${summary.pending}</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <section class="kpis" aria-label="Resumo do arquivo">
+            <div class="kpi kpi--info"><strong>${summary.total}</strong><span>Total no recorte</span></div>
+            <div class="kpi kpi--success"><strong>${summary.done}</strong><span>Concluídas</span></div>
+            <div class="kpi kpi--warning"><strong>${summary.pending}</strong><span>Sem resultado</span></div>
+            <div class="kpi kpi--danger"><strong>${summary.red}</strong><span>Alertas altos</span></div>
+        </section>
+
+        <div class="notices">
+            <section class="notice notice--info">
+                <strong>Orientação de uso</strong>
+                <span>Use este resumo para acompanhamento gerencial. Para decisão individual, abra o dossiê completo do candidato e revise as evidências, fontes e observações do analista.</span>
+            </section>
+            ${pendingWarning}
+            ${redWarning}
+        </div>
+
+        <section class="table-wrap" aria-label="Tabela de solicitações exportadas">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Situação</th>
+                        <th>Cobertura</th>
+                        <th>Risco</th>
+                        <th>Nível de atenção</th>
+                        <th>Resultado</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>${tableRows}</tbody>
+            </table>
+        </section>
+
+        <div class="legend">
+            <strong>Legenda:</strong>
+            ${badge('Baixo/Recomendado', 'success')}
+            ${badge('Atenção/Pendente', 'warning')}
+            ${badge('Alto/Não recomendado', 'danger')}
+            ${badge('Em análise', 'info')}
+            ${badge('Indisponível', 'muted')}
+        </div>
+    </section>
+
+    <footer class="footer">
+        <span>ComplianceHub · Documento confidencial</span>
+        <span>Gerado em ${esc(nowLabel)}</span>
+    </footer>
+</main>
+
+<button class="print" onclick="window.print()">Imprimir / salvar PDF</button>
+</body>
+</html>`;
 }
 
 function downloadBlob(blob, filename) {
@@ -228,11 +885,16 @@ function openHtmlBlob(html) {
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+function artifactLabel(item) {
+    if (item.artifactUrl) return 'Artefato armazenado';
+    return 'Gerado localmente - não armazenado';
+}
+
 export default function ExportacoesPage() {
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
     const tenantId = userProfile?.tenantId || null;
-    const { cases } = useCases();
+    const { cases, loading: casesLoading, error: casesError } = useCases();
     const [exportType, setExportType] = useState('CSV');
     const [exportScope, setExportScope] = useState('ALL');
     const [dateFrom, setDateFrom] = useState('');
@@ -248,52 +910,29 @@ export default function ExportacoesPage() {
 
     useEffect(() => {
         if (isDemoMode || !tenantId) {
-            setExportsState({
-                exports: isDemoMode ? getMockExports(tenantId) : [],
-                loading: false,
-                error: null,
-            });
+            setExportsState({ exports: isDemoMode ? getMockExports(tenantId) : [], loading: false, error: null });
             return undefined;
         }
-
-        setExportsState((currentState) => ({
-            ...currentState,
-            loading: true,
-            error: null,
-        }));
-
+        setExportsState((currentState) => ({ ...currentState, loading: true, error: null }));
         const timeoutId = window.setTimeout(() => {
             setExportsState((currentState) => (
                 currentState.loading
-                    ? {
-                        exports: [],
-                        loading: false,
-                        error: new Error('Firestore exports subscription timeout.'),
-                    }
+                    ? { exports: [], loading: false, error: new Error('Tempo esgotado ao carregar o histórico de exportações.') }
                     : currentState
             ));
         }, LIVE_QUERY_TIMEOUT_MS);
-
         const unsubscribe = subscribeToExports(tenantId, (data, error) => {
             window.clearTimeout(timeoutId);
-            setExportsState({
-                exports: data,
-                loading: false,
-                error: error || null,
-            });
+            setExportsState({ exports: data, loading: false, error: error || null });
         });
-
         return () => {
             window.clearTimeout(timeoutId);
             unsubscribe();
         };
     }, [isDemoMode, tenantId]);
 
-    // Cleanup demo timer on unmount
-    useEffect(() => {
-        return () => {
-            if (demoTimerRef.current) window.clearTimeout(demoTimerRef.current);
-        };
+    useEffect(() => () => {
+        if (demoTimerRef.current) window.clearTimeout(demoTimerRef.current);
     }, []);
 
     const filteredCases = useMemo(() => {
@@ -307,12 +946,52 @@ export default function ExportacoesPage() {
     }, [cases, exportScope, dateFrom, dateTo]);
 
     const recordCount = filteredCases.length;
+    const invalidDateRange = Boolean(dateFrom && dateTo && dateFrom > dateTo);
+    const pendingCount = filteredCases.filter((currentCase) => currentCase.status !== 'DONE').length;
+    const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === exportScope)?.label || exportScope;
+    const dateRange = (dateFrom || dateTo) ? ` (${dateFrom || '...'} a ${dateTo || '...'})` : '';
+    const exportTypeConfig = EXPORT_TYPE_OPTIONS[exportType] || EXPORT_TYPE_OPTIONS.CSV;
+    const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
+
+    const prepareExportArtifact = () => {
+        const ts = new Date().toISOString().slice(0, 10);
+        if (exportType === 'CSV') {
+            return {
+                mode: 'download',
+                blob: new Blob(['\uFEFF' + buildCsvContent(filteredCases)], { type: 'text/csv;charset=utf-8' }),
+                filename: `${isDemoMode ? 'compliancehub-demo-resumo' : 'compliancehub-resumo-exportacao'}-${ts}.csv`,
+            };
+        }
+        if (exportType === 'REPORT') {
+            return { mode: 'html', html: buildBatchReportHtml(filteredCases, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
+        }
+        return { mode: 'html', html: buildPrintableHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
+    };
+
+    const deliverPreparedExport = (prepared) => {
+        if (prepared.mode === 'download') {
+            downloadBlob(prepared.blob, prepared.filename);
+            return;
+        }
+        openHtmlBlob(prepared.html);
+    };
 
     const handleExport = async () => {
         setFeedback('');
-
+        if (casesLoading) {
+            setFeedback('Aguarde o carregamento dos casos antes de gerar a exportação.');
+            return;
+        }
+        if (casesError) {
+            setFeedback('Não foi possível carregar os casos. A exportação foi bloqueada para evitar arquivo incompleto.');
+            return;
+        }
+        if (invalidDateRange) {
+            setFeedback('A data inicial não pode ser posterior à data final.');
+            return;
+        }
         if (recordCount === 0) {
-            setFeedback('Nao ha registros disponiveis para este recorte.');
+            setFeedback('Não há registros carregados disponíveis para este recorte.');
             return;
         }
 
@@ -320,27 +999,10 @@ export default function ExportacoesPage() {
             setExporting(true);
             demoTimerRef.current = window.setTimeout(() => {
                 try {
-                    const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === exportScope)?.label || exportScope;
-                    const dateRange = (dateFrom || dateTo)
-                        ? ` (${dateFrom || '...'} a ${dateTo || '...'})`
-                        : '';
-
-                    if (exportType === 'CSV') {
-                        const csv = buildCsvContent(filteredCases);
-                        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-                        const ts = new Date().toISOString().slice(0, 10);
-                        downloadBlob(blob, `compliancehub-demo-${ts}.csv`);
-                    } else if (exportType === 'REPORT') {
-                        const html = buildBatchReportHtml(filteredCases, userProfile?.tenantName || 'Demo');
-                        openHtmlBlob(html);
-                    } else {
-                        const html = buildPdfHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || 'Demo');
-                        openHtmlBlob(html);
-                    }
-
-                    setFeedback(`Exportacao ${exportType} gerada com ${recordCount} registros.`);
+                    deliverPreparedExport(prepareExportArtifact());
+                    setFeedback(`${exportTypeConfig.historyLabel} registrado na auditoria e gerado com ${recordCount} registro(s).`);
                 } catch (demoError) {
-                    setFeedback(extractErrorMessage(demoError, 'Erro ao gerar exportacao demo.'));
+                    setFeedback(extractErrorMessage(demoError, 'Erro ao gerar exportação demo.'));
                 } finally {
                     setExporting(false);
                 }
@@ -349,48 +1011,31 @@ export default function ExportacoesPage() {
         }
 
         if (!user || !tenantId) {
-            setFeedback('Nao foi possivel confirmar a sua sessao para exportacao.');
+            setFeedback('Não foi possível confirmar a sua sessão para exportação.');
             return;
         }
 
         setExporting(true);
-
         try {
-            const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === exportScope)?.label || exportScope;
-            const dateRange = (dateFrom || dateTo)
-                ? ` (${dateFrom || '...'} a ${dateTo || '...'})`
-                : '';
-
-            if (exportType === 'CSV') {
-                const csv = buildCsvContent(filteredCases);
-                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-                const ts = new Date().toISOString().slice(0, 10);
-                downloadBlob(blob, `compliancehub-export-${ts}.csv`);
-            } else if (exportType === 'REPORT') {
-                const html = buildBatchReportHtml(filteredCases, userProfile?.tenantName || '');
-                openHtmlBlob(html);
-            } else {
-                const html = buildPdfHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || '');
-                openHtmlBlob(html);
-            }
-
+            const prepared = prepareExportArtifact();
             await callRegisterClientExport({
                 type: exportType,
+                scopeCode: exportScope,
                 scope: scopeLabel + dateRange,
                 records: recordCount,
-                artifactMode: exportType === 'CSV' ? 'download' : 'html_blob',
+                artifactMode: exportTypeConfig.artifactMode,
+                filters: { status: exportScope, dateFrom: dateFrom || null, dateTo: dateTo || null },
+                containsPending: pendingCount > 0,
             });
-
-            setFeedback('Exportacao gerada com sucesso!');
+            deliverPreparedExport(prepared);
+            setFeedback(`${exportTypeConfig.historyLabel} registrado na auditoria e gerado com sucesso.`);
         } catch (error) {
             console.error('Error creating export:', error);
-            setFeedback(extractErrorMessage(error, 'Nao foi possivel gerar a exportacao agora.'));
+            setFeedback(extractErrorMessage(error, 'Não foi possível registrar a exportação. Nenhum arquivo foi entregue.'));
         } finally {
             setExporting(false);
         }
     };
-
-    const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
 
     const openHistoryArtifact = (item) => {
         const caseData = item?.artifactCaseId ? getMockCaseById(item.artifactCaseId) : null;
@@ -399,149 +1044,154 @@ export default function ExportacoesPage() {
     };
 
     return (
-        <div className="export-page">
-            <h2>Exportacoes</h2>
+        <PageShell size="default" className="export-page">
+            <PageHeader
+                eyebrow="Arquivos"
+                title="Exportar solicitações"
+                description="Gere arquivos com os dados permitidos para acompanhamento e conferência."
+                metric={{ value: cases.length, label: 'Casos carregados' }}
+            />
 
             <div className="export-new">
-                <h3>Nova exportacao</h3>
+                <h3>Nova exportação</h3>
+                <p className="export-new__hint">
+                    Esta exportação considera apenas os resultados carregados agora. Para períodos maiores, solicite uma exportação completa ao suporte.
+                </p>
+                {casesLoading && <p className="export-alert export-alert--info">Carregando solicitações antes de liberar a exportação.</p>}
+                {casesError && <p className="export-alert export-alert--danger">{extractErrorMessage(casesError, 'Não foi possível carregar as solicitações para exportação.')}</p>}
+                {invalidDateRange && <p className="export-alert export-alert--danger">A data inicial não pode ser posterior à data final.</p>}
+                {pendingCount > 0 && !casesLoading && !casesError && (
+                    <p className="export-alert export-alert--warning">
+                        Este recorte inclui {pendingCount} solicitação(ões) sem resultado final. O CSV identificará a cobertura analítica para evitar interpretação ambígua.
+                    </p>
+                )}
+
                 <div className="export-new__form">
                     <div className="export-new__field">
                         <label>Formato</label>
                         <div className="export-toggle-group">
-                            <button type="button" className={`export-toggle ${exportType === 'CSV' ? 'export-toggle--active' : ''}`} onClick={() => setExportType('CSV')} aria-pressed={exportType === 'CSV'}>CSV</button>
-                            <button type="button" className={`export-toggle ${exportType === 'PDF' ? 'export-toggle--active' : ''}`} onClick={() => setExportType('PDF')} aria-pressed={exportType === 'PDF'}>PDF</button>
-                            <button type="button" className={`export-toggle ${exportType === 'REPORT' ? 'export-toggle--active' : ''}`} onClick={() => setExportType('REPORT')} aria-pressed={exportType === 'REPORT'}>Relatório</button>
+                            {Object.entries(EXPORT_TYPE_OPTIONS).map(([value, config]) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    className={`export-toggle ${exportType === value ? 'export-toggle--active' : ''}`}
+                                    onClick={() => setExportType(value)}
+                                    aria-pressed={exportType === value}
+                                >
+                                    {config.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                     <div className="export-new__field">
-                        <label>Escopo</label>
-                        <select className="export-select" value={exportScope} onChange={(event) => setExportScope(event.target.value)}>
-                            {SCOPE_OPTIONS.map((option) => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
+                        <label htmlFor="export-scope">Escopo</label>
+                        <select id="export-scope" className="export-select" value={exportScope} onChange={(event) => setExportScope(event.target.value)}>
+                            {SCOPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                         </select>
                     </div>
                     <div className="export-new__field">
-                        <label>De</label>
-                        <input type="date" className="export-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+                        <label htmlFor="export-date-from">De</label>
+                        <input id="export-date-from" type="date" className="export-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
                     </div>
                     <div className="export-new__field">
-                        <label>Ate</label>
-                        <input type="date" className="export-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+                        <label htmlFor="export-date-to">Até</label>
+                        <input id="export-date-to" type="date" className="export-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
                     </div>
                     <div className="export-new__field">
-                        <label>Registros</label>
-                        <span className="export-count">{recordCount}</span>
+                        <label>Registros disponíveis</label>
+                        <span className="export-count">{casesLoading ? '...' : recordCount}</span>
                     </div>
-                    <button type="button" className="export-btn" onClick={handleExport} disabled={exporting || recordCount === 0}>
-                        {exporting ? 'Gerando...' : 'Gerar exportacao'}
+                    <button type="button" className="export-btn" onClick={handleExport} disabled={exporting || casesLoading || Boolean(casesError) || invalidDateRange || recordCount === 0}>
+                        {exporting ? 'Registrando...' : 'Registrar e gerar'}
                     </button>
                 </div>
-                {feedback && (
-                    <p role="status" aria-live="polite" style={{ marginTop: 12, fontSize: '.875rem', color: feedback.includes('sucesso') ? 'var(--green-700)' : 'var(--text-secondary)' }}>
-                        {feedback}
-                    </p>
-                )}
+                {feedback && <p role="status" aria-live="polite" className="export-feedback">{feedback}</p>}
             </div>
 
             <div className="export-history">
-                <h3>Historico</h3>
+                <h3>Arquivos gerados</h3>
                 <MobileDataCardList
                     items={history}
                     loading={exportsState.loading && !isDemoMode}
-                    emptyMessage={exportsState.error ? extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.') : 'Nenhuma exportacao registrada.'}
+                    emptyMessage={exportsState.error ? extractErrorMessage(exportsState.error, 'Não foi possível carregar o histórico de exportações agora.') : 'Nenhuma exportação registrada.'}
                     renderCard={(item) => (
                         <>
                             <div className="mobile-card__header">
-                                <div className="mobile-card__title">{item.type}</div>
+                                <div className="mobile-card__title">{EXPORT_TYPE_OPTIONS[item.type]?.historyLabel || item.type}</div>
                                 <StatusBadge status={item.status || 'DONE'} />
                             </div>
                             <div className="mobile-card__meta">
                                 <span className="mobile-card__meta-item">{item.scope}</span>
-                                <span className="mobile-card__meta-item">{item.records} registro(s)</span>
+                                <span className="mobile-card__meta-item">{item.records} solicitação(ões)</span>
                                 <span className="mobile-card__meta-item">{item.createdAt}</span>
+                                <span className="mobile-card__meta-item">Gerado por: {item.createdByName || item.createdByEmail || 'Não informado'}</span>
                             </div>
                             <div className="mobile-card__actions">
                                 {isDemoMode && item.artifactCaseId ? (
-                                    <button
-                                        type="button"
-                                        className="export-btn"
-                                        style={{ padding: '8px 14px', fontSize: '.8125rem', minHeight: 44 }}
-                                        onClick={() => openHistoryArtifact(item)}
-                                    >
-                                        Abrir
-                                    </button>
+                                    <button type="button" className="export-btn export-btn--compact" onClick={() => openHistoryArtifact(item)}>Abrir demo</button>
                                 ) : (
-                                    <span style={{ color: 'var(--text-tertiary)', fontSize: '.8125rem' }}>
-                                        {item.artifactMode === 'download' ? '⬇ Baixado' : '↗ Aberto'}
-                                    </span>
+                                    <span className="export-artifact-note">{artifactLabel(item)}</span>
                                 )}
                             </div>
                         </>
                     )}
                 >
                     <div className="export-table-wrapper">
-                        <table className="data-table" aria-label="Historico de exportacoes">
+                        <table className="data-table" aria-label="Histórico de exportações">
                             <thead>
                                 <tr>
                                     <th className="data-table__th" scope="col">ID</th>
                                     <th className="data-table__th" scope="col">Formato</th>
                                     <th className="data-table__th" scope="col">Escopo</th>
-                                    <th className="data-table__th" scope="col">Registros</th>
+                                    <th className="data-table__th" scope="col">Solicitações</th>
+                                    <th className="data-table__th" scope="col">Gerado por</th>
                                     <th className="data-table__th" scope="col">Data</th>
                                     <th className="data-table__th" scope="col">Status</th>
-                                    <th className="data-table__th" scope="col">Acao</th>
+                                    <th className="data-table__th" scope="col">Artefato</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {exportsState.loading && !isDemoMode && (
-                                    <tr>
-                                        <td colSpan={7} className="data-table__empty">Carregando exportacoes...</td>
+                                {exportsState.loading && !isDemoMode && Array.from({ length: 3 }, (_, i) => (
+                                    <tr key={`sk-${i}`} aria-hidden="true">
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${50 + (i % 3) * 15}%` }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 60 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton" style={{ width: 56, height: 20, borderRadius: 10 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 50 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 44 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 40 }} /></td>
+                                        <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 36 }} /></td>
                                     </tr>
-                                )}
+                                ))}
                                 {!isDemoMode && !exportsState.loading && exportsState.error && (
-                                    <tr>
-                                        <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>
-                                            {extractErrorMessage(exportsState.error, 'Nao foi possivel carregar o historico de exportacoes agora.')}
-                                        </td>
-                                    </tr>
+                                    <tr><td colSpan={8} className="data-table__empty export-error">{extractErrorMessage(exportsState.error, 'Não foi possível carregar o histórico de exportações agora.')}</td></tr>
                                 )}
                                 {(!exportsState.loading || isDemoMode) && !exportsState.error && history.map((item) => (
                                     <tr key={item.id} className="data-table__row">
                                         <td className="data-table__td data-table__td--mono">{item.id}</td>
-                                        <td className="data-table__td">{item.type}</td>
+                                        <td className="data-table__td">{EXPORT_TYPE_OPTIONS[item.type]?.historyLabel || item.type}</td>
                                         <td className="data-table__td">{item.scope}</td>
                                         <td className="data-table__td">{item.records}</td>
+                                        <td className="data-table__td">{item.createdByName || item.createdByEmail || 'Não informado'}</td>
                                         <td className="data-table__td">{item.createdAt}</td>
                                         <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
                                         <td className="data-table__td">
                                             {isDemoMode && item.artifactCaseId ? (
-                                                <button
-                                                    type="button"
-                                                    className="export-btn"
-                                                    style={{ padding: '6px 10px', fontSize: '.75rem' }}
-                                                    onClick={() => openHistoryArtifact(item)}
-                                                >
-                                                    Abrir
-                                                </button>
+                                                <button type="button" className="export-btn export-btn--compact" onClick={() => openHistoryArtifact(item)}>Abrir demo</button>
                                             ) : (
-                                                <span style={{ color: 'var(--text-tertiary)', fontSize: '.75rem' }}>
-                                                    {item.artifactMode === 'download' ? '⬇ Baixado' : '↗ Aberto'}
-                                                </span>
+                                                <span className="export-artifact-note">{artifactLabel(item)}</span>
                                             )}
                                         </td>
                                     </tr>
                                 ))}
                                 {(!exportsState.loading || isDemoMode) && !exportsState.error && history.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="data-table__empty">Nenhuma exportacao registrada.</td>
-                                    </tr>
+                                    <tr><td colSpan={8} className="data-table__empty">Nenhuma exportação registrada.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                 </MobileDataCardList>
             </div>
-        </div>
+        </PageShell>
     );
 }

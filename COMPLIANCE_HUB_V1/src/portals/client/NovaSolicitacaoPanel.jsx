@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
-import { callCreateClientSolicitation, callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
+import { callCreateClientSolicitation, callGetClientQuotaStatus, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { getUserFriendlyMessage } from '../../core/errorUtils';
 import { validateCpf, validateUrl } from '../../core/validators';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import Modal from '../../ui/components/Modal/Modal';
+import { ERROR_MESSAGES } from '../../core/copy';
 import './NovaSolicitacaoPage.css';
 
 const STEP_LABELS = ['Identidade', 'Redes sociais', 'Contexto', 'Revisão'];
@@ -19,6 +20,7 @@ const INITIAL_FORM = {
     position: '',
     department: '',
     hiringUf: '',
+    candidateResidenceUf: '',
     email: '',
     phone: '',
     instagram: '',
@@ -50,8 +52,13 @@ function maskCpf(cpf) {
     return `***.***.***-${digits.slice(9)}`;
 }
 
+function normalizeUpper(value) {
+    if (value == null) return value;
+    return String(value).toUpperCase();
+}
+
 /**
- * Off-canvas panel for creating a new due diligence solicitation.
+ * Painel lateral para criar uma nova solicitação de análise cadastral.
  * Props:
  *   open      — controls visibility
  *   onClose   — called when panel should close (cancel, backdrop click, after success)
@@ -72,6 +79,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     const [showExceedModal, setShowExceedModal] = useState(false);
     const [discardModalOpen, setDiscardModalOpen] = useState(false);
     const [pendingNavigationPath, setPendingNavigationPath] = useState(null);
+    const [tenantPhases, setTenantPhases] = useState([]);
     const redirectTimerRef = useRef(null);
     const panelBodyRef = useRef(null);
 
@@ -79,12 +87,11 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     const location = useLocation();
     const { user, userProfile } = useAuth();
     const tenantId = userProfile?.tenantId || null;
-    const tenantLabel = userProfile?.tenantName || userProfile?.tenantId || 'Franquia em sincronização';
+    const tenantLabel = userProfile?.tenantName || userProfile?.tenantId || 'Empresa em sincronização';
     const hasConfirmedTenant = Boolean(tenantId);
     const isDemoProfile = userProfile?.source === 'demo';
     const isMobile = useMediaQuery('(max-width: 768px)');
     const [step, setStep] = useState(0);
-    const totalSteps = STEP_LABELS.length;
     const [openSections, setOpenSections] = useState({ social: false, context: false });
 
     // Reset state each time the panel opens
@@ -104,6 +111,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
             setPendingNavigationPath(null);
             panelBodyRef.current?.scrollTo?.(0, 0);
             setOpenSections({ social: false, context: false });
+            setTenantPhases([]);
         }
     }, [open]);
 
@@ -127,6 +135,20 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
             .finally(() => { if (!cancelled) setQuotaLoading(false); });
         return () => { cancelled = true; };
     }, [open, user, isDemoProfile]);
+
+    // Load company phases when panel opens
+    useEffect(() => {
+        if (!open || !tenantId || isDemoProfile) return undefined;
+        let cancelled = false;
+        getTenantSettings(tenantId)
+            .then((settings) => {
+                if (!cancelled) setTenantPhases(getEnabledPhases(settings?.analysisConfig));
+            })
+            .catch(() => {
+                if (!cancelled) setTenantPhases([]);
+            });
+        return () => { cancelled = true; };
+    }, [open, tenantId, isDemoProfile]);
 
     const isDirty = useMemo(() => {
         if (submitted) return false;
@@ -186,11 +208,23 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const toggleSection = (key) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
+    const effectivePhases = isDemoProfile ? ['criminal', 'labor', 'warrant', 'osint', 'social', 'digital'] : tenantPhases;
+    const has = (phase) => effectivePhases.includes(phase);
+    const showSocialSection = has('social');
+
+    const stepLabels = useMemo(() => {
+        const labels = ['Identidade'];
+        if (showSocialSection) labels.push('Redes sociais');
+        labels.push('Contexto', 'Revisão');
+        return labels;
+    }, [showSocialSection]);
+    const totalSteps = stepLabels.length;
+
     const SOCIAL_FIELDS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'];
     const filledSocials = SOCIAL_FIELDS.filter((k) => form[k]).length + form.otherSocialUrls.length;
     const socialSummary = filledSocials > 0
         ? `${filledSocials} rede${filledSocials !== 1 ? 's' : ''} informada${filledSocials !== 1 ? 's' : ''}`
-        : 'Opcional — enriquece a análise OSINT';
+        : 'Opcional — ajuda a localizar perfis públicos';
     const contextSummary = `Prioridade ${form.priority === 'HIGH' ? 'Alta' : 'Normal'}${form.digitalProfileNotes ? ' · com observações' : ''}`;
 
     const update = (field, value) => {
@@ -200,9 +234,11 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const validate = () => {
         const next = {};
-        if (!form.fullName.trim()) next.fullName = 'Nome obrigatório — é o identificador principal do caso.';
-        if (!form.cpf.trim()) next.cpf = 'CPF obrigatório para busca nas bases de dados.';
+        if (!form.fullName.trim()) next.fullName = 'Nome obrigatório — é o identificador principal da solicitação.';
+        if (!form.cpf.trim()) next.cpf = 'Informe o CPF para iniciar a análise.';
         else if (!validateCpf(form.cpf)) next.cpf = 'CPF inválido — verifique os dígitos.';
+        if (!form.hiringUf) next.hiringUf = 'UF de local de trabalho é obrigatória.';
+        if (!form.candidateResidenceUf) next.candidateResidenceUf = 'UF de residência atual é obrigatória.';
         ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].forEach((field) => {
             if (form[field] && !validateUrl(form[field])) {
                 next[field] = 'Informe uma URL válida (https://...) ou um @usuário.';
@@ -217,11 +253,11 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         if (!validate()) return;
 
         if (!userProfile) {
-            setErrors({ general: 'Sua sessão ainda está sincronizando. Aguarde alguns segundos e tente novamente.' });
+            setErrors({ general: `${ERROR_MESSAGES.sessionSyncing}. Aguarde alguns segundos e tente novamente.` });
             return;
         }
         if (!tenantId) {
-            setErrors({ general: 'A franquia do seu perfil ainda não foi confirmada. Aguarde a sincronização e tente novamente.' });
+            setErrors({ general: `${ERROR_MESSAGES.tenantNotLoaded}. Aguarde a sincronização e tente novamente.` });
             return;
         }
 
@@ -255,6 +291,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                 position: form.position || '',
                 department: form.department || '',
                 hiringUf: form.hiringUf || '',
+                candidateResidenceUf: form.candidateResidenceUf || '',
                 email: form.email || '',
                 phone: form.phone || '',
                 priority: form.priority,
@@ -294,7 +331,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         setForm((prev) => ({ ...prev, otherSocialUrls: prev.otherSocialUrls.filter((_, i) => i !== index) }));
     };
 
-    const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf);
+    const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf)
+        && form.hiringUf && form.candidateResidenceUf;
     const quotaBlocked = quota?.hasLimits && (
         (quota.dailyLimit && quota.dailyCount >= quota.dailyLimit && !quota.allowDailyExceedance) ||
         (quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit && !quota.allowMonthlyExceedance)
@@ -317,24 +355,24 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                 className={`ns-panel${open ? ' ns-panel--open' : ''}`}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Nova solicitação de due diligence"
+                aria-label="Nova análise"
             >
                 {/* Header */}
                 <div className="ns-panel__header">
                     <div className="ns-panel__header-content">
                         <div className="ns-panel__header-meta">
-                            <span className="ns-panel__step-badge">Due Diligence</span>
+                            <span className="ns-panel__step-badge">Análise Cadastral</span>
                             {tenantLabel && (
                                 <span className="ns-panel__tenant-badge">{tenantLabel}</span>
                             )}
                         </div>
-                        <h2 className="ns-panel__header-title">Nova solicitação de análise</h2>
+                        <h2 className="ns-panel__header-title">Nova análise</h2>
                         <p className="ns-panel__header-sub">
-                            Preencha os dados do candidato para abrir o dossiê. Campos com <span style={{ color: 'var(--red-500)' }}>*</span> são obrigatórios para iniciar a análise.
+                            Preencha os dados da pessoa que será analisada. Campos com <span style={{ color: 'var(--red-500)' }}>*</span> são obrigatórios para iniciar a análise.
                         </p>
                         {!hasConfirmedTenant && (
                             <p className="ns-panel__tenant-warning">
-                                Franquia não confirmada — o envio ficará bloqueado até a sincronização do perfil terminar.
+                                Empresa ainda não carregada — o envio ficará bloqueado até a sincronização do perfil terminar.
                             </p>
                         )}
                     </div>
@@ -359,7 +397,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                 </svg>
                             </div>
                             <h2>Solicitação enviada com sucesso!</h2>
-                            <p>O caso foi criado e já está na fila de análise. Você pode acompanhar o andamento na lista de solicitações. O painel fechará automaticamente.</p>
+                            <p>A análise foi criada e já está na fila. Você pode acompanhar o andamento na lista de solicitações. O painel fechará automaticamente.</p>
                         </div>
                     ) : (
                         <form id={formId} className="ns-form" onSubmit={handleSubmit} noValidate>
@@ -374,8 +412,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         <div className="ns-quota-banner ns-quota-banner--blocked" role="alert">
                                             <strong>Limite atingido —</strong>{' '}
                                             {dailyExceeded && !quota.allowDailyExceedance
-                                                ? `Você atingiu o limite diário de ${quota.dailyLimit} consultas. Novas solicitações poderão ser feitas a partir de amanhã.`
-                                                : `Você atingiu o limite mensal de ${quota.monthlyLimit} consultas. Entre em contato com o administrador para ampliar a cota.`}
+                                                ? `Você atingiu o limite diário de ${quota.dailyLimit} análises. Novas solicitações poderão ser feitas a partir de amanhã.`
+                                                : `Você atingiu o limite mensal de ${quota.monthlyLimit} análises. Entre em contato com o administrador para ampliar a cota.`}
                                         </div>
                                     );
                                 }
@@ -384,8 +422,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         <div className="ns-quota-banner ns-quota-banner--warning" role="status">
                                             <strong>Atenção —</strong>{' '}
                                             {dailyExceeded
-                                                ? `Você já usou ${quota.dailyCount} de ${quota.dailyLimit} consultas hoje. A próxima será contabilizada como excedente diário.`
-                                                : `Você já usou ${quota.monthlyCount} de ${quota.monthlyLimit} consultas no mês. A próxima poderá ser faturada no próximo ciclo.`}
+                                                ? `Você já usou ${quota.dailyCount} de ${quota.dailyLimit} análises hoje. A próxima será contabilizada como uso acima do limite diário.`
+                                                : `Você já usou ${quota.monthlyCount} de ${quota.monthlyLimit} análises no mês. A próxima poderá ser faturada no próximo ciclo.`}
                                         </div>
                                     );
                                 }
@@ -400,7 +438,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                             {isMobile && (
                                 <div className="ns-stepper">
                                     <div className="ns-stepper__bar">
-                                        {STEP_LABELS.map((label, i) => (
+                                        {stepLabels.map((label, i) => (
                                             <div
                                                 key={label}
                                                 className={`ns-stepper__dot${i <= step ? ' ns-stepper__dot--active' : ''}${i < step ? ' ns-stepper__dot--done' : ''}`}
@@ -412,7 +450,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             <div className="ns-stepper__fill" style={{ width: `${(step / (totalSteps - 1)) * 100}%` }} />
                                         </div>
                                     </div>
-                                    <span className="ns-stepper__label">{STEP_LABELS[step]}</span>
+                                    <span className="ns-stepper__label">{stepLabels[step]}</span>
                                 </div>
                             )}
 
@@ -422,7 +460,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                     <span className="ns-section__icon">01</span>
                                     <div>
                                         <h3>Identidade do candidato</h3>
-                                        <p className="ns-section__desc">Nome e CPF são obrigatórios. Os demais dados enriquecem a análise e ajudam a identificar registros em bases estaduais.</p>
+                                        <p className="ns-section__desc">Nome e CPF são obrigatórios. Os demais dados complementam a análise e ajudam a identificar registros em bases estaduais.</p>
                                     </div>
                                 </div>
 
@@ -435,8 +473,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             type="text"
                                             className={`ns-input${errors.fullName ? ' ns-input--error' : ''}`}
                                             value={form.fullName}
-                                            onChange={(e) => update('fullName', e.target.value)}
-                                            placeholder="Conforme consta no documento de identidade"
+                                            onChange={(e) => update('fullName', normalizeUpper(e.target.value))}
+                                            placeholder="CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE"
                                             aria-required="true"
                                             aria-describedby={errors.fullName ? 'err-fullName' : undefined}
                                         />
@@ -458,7 +496,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             inputMode="numeric"
                                             aria-describedby="help-cpf"
                                         />
-                                        <span id="help-cpf" className="ns-help">Identificador principal do caso — será mascarado no painel após o envio.</span>
+                                        <span id="help-cpf" className="ns-help">Identificador principal da solicitação — será mascarado no painel após o envio.</span>
                                         {errors.cpf && <span className="ns-error" role="alert">{errors.cpf}</span>}
                                     </div>
 
@@ -479,7 +517,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             type="text"
                                             className="ns-input"
                                             value={form.position}
-                                            onChange={(e) => update('position', e.target.value)}
+                                            onChange={(e) => update('position', normalizeUpper(e.target.value))}
                                             placeholder="Ex.: Analista Financeiro Sênior"
                                         />
                                     </div>
@@ -490,24 +528,49 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             type="text"
                                             className="ns-input"
                                             value={form.department}
-                                            onChange={(e) => update('department', e.target.value)}
+                                            onChange={(e) => update('department', normalizeUpper(e.target.value))}
                                             placeholder="Ex.: Financeiro, RH, Operações"
                                         />
                                     </div>
 
                                     <div className="ns-field">
-                                        <label className="ns-label">Estado (UF) de contratação</label>
+                                        <label className="ns-label">
+                                            UF de local de trabalho <span className="ns-required" aria-label="obrigatório">*</span>
+                                        </label>
                                         <select
-                                            className="ns-input"
+                                            className={`ns-input${errors.hiringUf ? ' ns-input--error' : ''}`}
                                             value={form.hiringUf}
                                             onChange={(e) => update('hiringUf', e.target.value)}
+                                            aria-required="true"
+                                            aria-describedby={errors.hiringUf ? 'err-hiringUf' : 'help-hiringUf'}
                                         >
                                             <option value="">Selecione a UF...</option>
                                             {BRAZIL_UF_OPTIONS.map((uf) => (
                                                 <option key={uf} value={uf}>{uf}</option>
                                             ))}
                                         </select>
-                                        <span className="ns-help">Usado para direcionar a busca de processos judiciais no tribunal local.</span>
+                                        <span id="help-hiringUf" className="ns-help">Onde o candidato exercerá a função.</span>
+                                        {errors.hiringUf && <span id="err-hiringUf" className="ns-error" role="alert">{errors.hiringUf}</span>}
+                                    </div>
+
+                                    <div className="ns-field">
+                                        <label className="ns-label">
+                                            UF de residência atual <span className="ns-required" aria-label="obrigatório">*</span>
+                                        </label>
+                                        <select
+                                            className={`ns-input${errors.candidateResidenceUf ? ' ns-input--error' : ''}`}
+                                            value={form.candidateResidenceUf}
+                                            onChange={(e) => update('candidateResidenceUf', e.target.value)}
+                                            aria-required="true"
+                                            aria-describedby={errors.candidateResidenceUf ? 'err-candidateResidenceUf' : 'help-candidateResidenceUf'}
+                                        >
+                                            <option value="">Selecione a UF...</option>
+                                            {BRAZIL_UF_OPTIONS.map((uf) => (
+                                                <option key={uf} value={uf}>{uf}</option>
+                                            ))}
+                                        </select>
+                                        <span id="help-candidateResidenceUf" className="ns-help">Onde o candidato mora atualmente.</span>
+                                        {errors.candidateResidenceUf && <span id="err-candidateResidenceUf" className="ns-error" role="alert">{errors.candidateResidenceUf}</span>}
                                     </div>
 
                                     <div className="ns-field">
@@ -536,6 +599,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                             </div>
 
                             {/* Step 2 — Fontes digitais */}
+                            {showSocialSection && (
                             <div
                                 className={`ns-section${!isMobile ? ' ns-section--accordion' : ''}${(!isMobile && openSections.social) ? ' ns-section--expanded' : ''}`}
                                 style={isMobile && step !== 1 ? { display: 'none' } : undefined}
@@ -554,7 +618,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         {(!isMobile && !openSections.social) ? (
                                             <p className="ns-section__summary">{socialSummary}</p>
                                         ) : (
-                                            <p className="ns-section__desc">Informe ao menos uma rede para alimentar a análise de imagem pública e OSINT. Use a URL completa do perfil ou @usuário.</p>
+                                            <p className="ns-section__desc">Informe ao menos uma rede para ajudar na análise de imagem pública. Use a URL completa do perfil ou @usuário.</p>
                                         )}
                                     </div>
                                     {!isMobile && (
@@ -616,7 +680,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             type="text"
                                             className="ns-input ns-input--sm"
                                             value={otherLabel}
-                                            onChange={(e) => setOtherLabel(e.target.value)}
+                                            onChange={(e) => setOtherLabel(normalizeUpper(e.target.value))}
                                             placeholder="Nome da rede (ex.: Kwai)"
                                         />
                                         <input
@@ -638,6 +702,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                 </div>
                                 )}
                             </div>
+                            )}
 
                             {/* Step 3 — Contexto */}
                             <div
@@ -676,7 +741,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                     <textarea
                                         className="ns-textarea"
                                         value={form.digitalProfileNotes}
-                                        onChange={(e) => update('digitalProfileNotes', e.target.value)}
+                                        onChange={(e) => update('digitalProfileNotes', normalizeUpper(e.target.value))}
                                         placeholder="Informe aqui contextos úteis: apelidos conhecidos, outros nomes, contas alternativas, histórico relevante ou pontos de atenção específicos..."
                                         maxLength={500}
                                         rows={4}
@@ -736,10 +801,12 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         {form.dateOfBirth && <div className="ns-review__item"><span>Nascimento:</span> {form.dateOfBirth}</div>}
                                         {form.position && <div className="ns-review__item"><span>Cargo:</span> {form.position}</div>}
                                         {form.department && <div className="ns-review__item"><span>Departamento:</span> {form.department}</div>}
-                                        {form.hiringUf && <div className="ns-review__item"><span>UF:</span> {form.hiringUf}</div>}
+                                        {form.hiringUf && <div className="ns-review__item"><span>UF de trabalho:</span> {form.hiringUf}</div>}
+                                        {form.candidateResidenceUf && <div className="ns-review__item"><span>UF de residência:</span> {form.candidateResidenceUf}</div>}
                                         {form.email && <div className="ns-review__item"><span>E-mail:</span> {form.email}</div>}
                                         {form.phone && <div className="ns-review__item"><span>Telefone:</span> {form.phone}</div>}
                                     </div>
+                                    {showSocialSection && (
                                     <div className="ns-review__group">
                                         <div className="ns-review__heading">
                                             Redes sociais
@@ -752,9 +819,10 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             <div key={i} className="ns-review__item"><span>{s.label}:</span> {s.url}</div>
                                         ))}
                                         {!['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].some((k) => form[k]) && form.otherSocialUrls.length === 0 && (
-                                            <div className="ns-review__item ns-review__item--empty">Nenhuma rede informada — a análise OSINT ficará limitada.</div>
+                                            <div className="ns-review__item ns-review__item--empty">Nenhuma rede informada — a busca por perfis públicos ficará limitada.</div>
                                         )}
                                     </div>
+                                    )}
                                     <div className="ns-review__group">
                                         <div className="ns-review__heading">
                                             Contexto
@@ -809,7 +877,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
             <Modal
                 open={showExceedModal}
                 onClose={() => setShowExceedModal(false)}
-                title="Confirmar envio excedente?"
+                title="Confirmar envio acima do limite?"
                 footer={(
                     <>
                         <button type="button" className="ns-btn ns-btn--ghost" onClick={() => setShowExceedModal(false)}>Cancelar</button>
@@ -822,15 +890,17 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                 <div className="ns-critical-modal">
                     <p>
                         {quota?.dailyLimit && quota.dailyCount >= quota.dailyLimit
-                            ? `Você já usou ${quota.dailyCount} de ${quota.dailyLimit} consultas hoje. Esta solicitação será registrada como excedente diário e poderá gerar custo adicional.`
-                            : `Você já usou ${quota?.monthlyCount} de ${quota?.monthlyLimit} consultas neste mês. Esta solicitação poderá ser faturada no próximo ciclo.`}
+                            ? `Você já usou ${quota.dailyCount} de ${quota.dailyLimit} análises hoje. Esta solicitação será registrada como uso acima do limite diário e poderá gerar custo adicional.`
+                            : `Você já usou ${quota?.monthlyCount} de ${quota?.monthlyLimit} análises neste mês. Esta solicitação poderá ser faturada no próximo ciclo.`}
                     </p>
                     <dl>
-                        <div><dt>Franquia</dt><dd>{tenantLabel}</dd></div>
+                        <div><dt>Empresa</dt><dd>{tenantLabel}</dd></div>
                         <div><dt>Candidato</dt><dd>{form.fullName || '(nome não informado)'}</dd></div>
                         <div><dt>CPF</dt><dd>{form.cpf ? maskCpf(form.cpf) : '(CPF não informado)'}</dd></div>
+                        {form.hiringUf && <div><dt>UF de trabalho</dt><dd>{form.hiringUf}</dd></div>}
+                        {form.candidateResidenceUf && <div><dt>UF de residência</dt><dd>{form.candidateResidenceUf}</dd></div>}
                     </dl>
-                    <p>A tentativa será registrada na auditoria independentemente do resultado.</p>
+                    <p>A tentativa será registrada no histórico independentemente do resultado.</p>
                 </div>
             </Modal>
 
@@ -853,7 +923,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                 <div className="ns-critical-modal">
                     <p>Existem dados preenchidos que ainda não foram enviados. Ao fechar, o rascunho será perdido e você precisará preencher novamente.</p>
                     <dl>
-                        <div><dt>Franquia</dt><dd>{tenantLabel}</dd></div>
+                        <div><dt>Empresa</dt><dd>{tenantLabel}</dd></div>
                         <div><dt>Candidato</dt><dd>{form.fullName || '(nome não preenchido ainda)'}</dd></div>
                         <div><dt>CPF</dt><dd>{form.cpf ? maskCpf(form.cpf) : '(CPF não preenchido ainda)'}</dd></div>
                     </dl>

@@ -19,6 +19,12 @@
     font-weight: 700;
 }
 
+.solicitacoes-page__subtitle {
+    margin-top: 4px;
+    font-size: .875rem;
+    color: var(--text-secondary);
+}
+
 .solicitacoes-page__cta {
     padding: 10px 22px;
     background: linear-gradient(135deg, var(--brand-600), var(--brand-500));
@@ -26,14 +32,14 @@
     border-radius: var(--radius-md);
     font-size: .875rem;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, .25);
+    box-shadow: 0 2px 8px rgba(29, 111, 229, .25);
     transition: all var(--transition-fast);
     white-space: nowrap;
 }
 
 .solicitacoes-page__cta:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(99, 102, 241, .35);
+    box-shadow: 0 4px 16px rgba(29, 111, 229, .35);
 }
 
 /* --- KPIs --- */
@@ -88,7 +94,7 @@
 
 .filter-bar__search-input:focus {
     border-color: var(--border-focus);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+    box-shadow: 0 0 0 3px rgba(29, 111, 229, .12);
 }
 
 .filter-bar__select {
@@ -275,6 +281,8 @@
 
 .empty-state__icon {
     font-size: 2.5rem;
+    color: var(--text-tertiary);
+    display: flex;
 }
 
 .empty-state__btn {
@@ -510,7 +518,7 @@
 .progress-bar-3__seg--active .progress-bar-3__dot {
     background: var(--brand-500);
     border-color: var(--brand-600);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+    box-shadow: 0 0 0 3px rgba(29, 111, 229, .15);
 }
 
 .progress-bar-3__label {
@@ -570,7 +578,7 @@
 }
 .correction-form__input:focus {
     border-color: var(--brand-500);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+    box-shadow: 0 0 0 3px rgba(29, 111, 229, .12);
     outline: none;
 }
 .correction-form__actions {
