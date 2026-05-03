@@ -204,6 +204,7 @@ export default function TenantSettingsPage() {
     return (
         <PageShell size="narrow" className="ts-page">
             <PageHeader
+                compact
                 eyebrow="Configurações da empresa"
                 title={tenantDisplayName}
                 description="Ajuste etapas da análise, limites de uso e fontes de consulta."

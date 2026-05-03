@@ -282,14 +282,6 @@
     .ts-enrichment-grid {
         grid-template-columns: 1fr;
     }
-    .ts-page__header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .ts-page__actions {
-        margin-left: 0;
-        width: 100%;
-    }
     .ts-btn--primary {
         width: 100%;
     }

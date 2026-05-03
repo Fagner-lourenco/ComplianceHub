@@ -882,7 +882,7 @@ export default function CasoPage() {
 
     if (loadingCase) {
         return (
-            <div className="caso-page" role="status" aria-live="polite" aria-label="Carregando caso">
+            <PageShell size="default" className="caso-page" role="status" aria-live="polite" aria-label="Carregando caso">
                 <div className="caso-section" aria-hidden="true">
                     <div className="skeleton" style={{ width: 220, height: 24, marginBottom: 12, borderRadius: 6 }} />
                     <div className="skeleton skeleton--text" style={{ width: '60%', marginBottom: 8 }} />
@@ -896,7 +896,7 @@ export default function CasoPage() {
                         </div>
                     ))}
                 </div>
-            </div>
+            </PageShell>
         );
     }
 
@@ -955,9 +955,9 @@ export default function CasoPage() {
                 eyebrow="Detalhe da análise"
                 title={candidateName}
                 description="Revise as informações, registre a decisão e conclua a análise."
+                backAction={{ onClick: () => requestNavigateAway(isDemoMode ? '/demo/ops/fila' : '/ops/fila'), label: 'Voltar' }}
                 actions={
                 <div className="caso-header__actions">
-                    <button className="caso-btn caso-btn--ghost" onClick={() => requestNavigateAway(isDemoMode ? '/demo/ops/fila' : '/ops/fila')}>Voltar</button>
                     {canEditCase && (
                         <button className="caso-btn caso-btn--ghost" onClick={saveDraft} disabled={!hasDirtyDraft || draftStatus === 'saving'}>
                             {draftStatus === 'saving' ? 'Salvando...' : 'Salvar rascunho'}

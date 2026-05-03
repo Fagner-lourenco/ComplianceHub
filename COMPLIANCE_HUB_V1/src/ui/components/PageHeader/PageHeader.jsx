@@ -28,9 +28,9 @@ export default function PageHeader({
                 <div className="page-header__title-row">
                     <h1 className="page-header__title">{title}</h1>
                     {backAction && (
-                        <Link className="page-header__back" to={backAction.to}>
-                            {backAction.label ?? 'Voltar'}
-                        </Link>
+                        backAction.onClick
+                            ? <button type="button" className="page-header__back" onClick={backAction.onClick}>{backAction.label ?? 'Voltar'}</button>
+                            : <Link className="page-header__back" to={backAction.to}>{backAction.label ?? 'Voltar'}</Link>
                     )}
                 </div>
                 {description && (
