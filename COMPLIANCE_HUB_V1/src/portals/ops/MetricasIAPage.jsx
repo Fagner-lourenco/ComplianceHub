@@ -3,6 +3,8 @@ import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useCases } from '../../hooks/useCases';
 import { extractErrorMessage } from '../../core/errorUtils';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './MetricasIAPage.css';
 
 /* ── Constants ── */
@@ -49,10 +51,10 @@ export default function MetricasIAPage() {
     const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
     const { cases, loading, error } = useCases(tenantOverride);
     const [periodDays, setPeriodDays] = useState(30);
-    const [now] = useState(() => Date.now());
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
 
     const m = useMemo(() => {
+        const now = Date.now();
         const cutoff = periodDays > 0
             ? new Date(now - periodDays * 86400000).toISOString().slice(0, 10)
             : '0000';
@@ -138,31 +140,36 @@ export default function MetricasIAPage() {
             reviewRate: pct(decisions.ADJUSTED + decisions.IGNORED, aiCases.length),
             byTenant: Object.entries(byTenant).sort((a, b) => (b[1].fdCost + b[1].aiCost) - (a[1].fdCost + a[1].aiCost)),
         };
-    }, [cases, now, periodDays, showAllTenants]);
+    }, [cases, periodDays, showAllTenants]);
 
     if (loading) return (
-        <div className="ops-dash"><h2 className="ops-dash__title">Dashboard Operacional</h2>
-            <p className="ops-dash__loading">Carregando dados...</p></div>
+        <PageShell size="default" className="ops-dash" role="status" aria-live="polite" aria-label="Carregando metricas de IA">
+            <p className="ops-dash__loading" aria-busy="true">Carregando dados...</p>
+        </PageShell>
     );
 
     if (error) return (
-        <div className="ops-dash"><h2 className="ops-dash__title">Dashboard Operacional</h2>
-            <p style={{ color: 'var(--red-600)', padding: '24px 0' }}>{extractErrorMessage(error, 'Nao foi possivel carregar os dados agora.')}</p></div>
+        <PageShell size="default" className="ops-dash" role="alert">
+            <p style={{ color: 'var(--red-600)', padding: '24px 0' }}>{extractErrorMessage(error, 'Nao foi possivel carregar os dados agora.')}</p>
+        </PageShell>
     );
 
     return (
-        <div className="ops-dash">
-            {/* ── Header ── */}
-            <div className="ops-dash__header">
-                <h2 className="ops-dash__title">Dashboard Operacional</h2>
-                <div className="ops-dash__period-tabs">
-                    {PERIOD_OPTIONS.map(o => (
-                        <button key={o.value}
-                            className={`ops-dash__period-btn${periodDays === o.value ? ' ops-dash__period-btn--active' : ''}`}
-                            onClick={() => setPeriodDays(o.value)}>{o.label}</button>
-                    ))}
-                </div>
-            </div>
+        <PageShell size="default" className="ops-dash">
+            <PageHeader
+                eyebrow="Qualidade da análise"
+                title="Métricas da análise automática"
+                description="Acompanhe desempenho, divergências e pontos de atenção da análise automática."
+                actions={
+                    <div className="ops-dash__period-tabs">
+                        {PERIOD_OPTIONS.map(o => (
+                            <button key={o.value}
+                                className={`ops-dash__period-btn${periodDays === o.value ? ' ops-dash__period-btn--active' : ''}`}
+                                onClick={() => setPeriodDays(o.value)}>{o.label}</button>
+                        ))}
+                    </div>
+                }
+            />
 
             {/* ── Row 1: Volume KPIs ── */}
             <div className="ops-dash__kpi-row">
@@ -186,7 +193,7 @@ export default function MetricasIAPage() {
             </Section>
 
             {/* ── Row 3: Providers 3-col ── */}
-            <h3 className="ops-dash__group-title">Provedores de Dados</h3>
+            <h3 className="ops-dash__group-title">Fontes de Dados</h3>
             <div className="ops-dash__grid-3">
                 {PROVIDERS.map(p => {
                     const s = m.prov[p.key];
@@ -234,7 +241,7 @@ export default function MetricasIAPage() {
                     </div>
                 </Section>
 
-                <Section title="IA — Tokens & Custo" icon="🤖">
+                <Section title="Análise Automática — Tokens & Custo" icon="🤖">
                     <div className="ops-dash__cost-total">{fmtUSD(m.ai.costUSD)}</div>
                     <div className="ops-dash__token-grid">
                         <TokenStat label="Input" value={m.ai.tokIn} />
@@ -248,7 +255,7 @@ export default function MetricasIAPage() {
             </div>
 
             {/* ── Row 5: AI Quality bars ── */}
-            <Section title="Qualidade da IA" icon="📊">
+            <Section title="Qualidade da Análise Automática" icon="📊">
                 <div className="ops-dash__bars">
                     <QualityBar label="JSON Estruturado" value={m.ai.structOk} total={m.ai.total} color="green" />
                     <QualityBar label="Texto (fallback)" value={m.ai.structFail} total={m.ai.total} color="yellow" />
@@ -281,12 +288,12 @@ export default function MetricasIAPage() {
 
             {/* ── Row 7: Per-Tenant Table ── */}
             {showAllTenants && m.byTenant.length > 0 && (
-                <Section title="Resumo por Franquia" icon="🏢">
+                <Section title="Resumo por Empresa" icon="🏢">
                     <div className="ops-dash__table-wrap">
                         <table className="ops-dash__table">
                             <thead>
                                 <tr>
-                                    <th>Franquia</th>
+                                    <th>Empresa</th>
                                     <th>Casos</th>
                                     <th>Concluídos</th>
                                     <th>Custo FD (BRL)</th>
@@ -310,7 +317,7 @@ export default function MetricasIAPage() {
                     </div>
                 </Section>
             )}
-        </div>
+        </PageShell>
     );
 }
 

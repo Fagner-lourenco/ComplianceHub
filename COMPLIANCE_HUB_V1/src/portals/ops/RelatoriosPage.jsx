@@ -6,6 +6,8 @@ import { fetchPublicReports, revokePublicReport } from '../../core/firebase/fire
 import { getMockPublicReports } from '../../data/mockData';
 import { extractErrorMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './RelatoriosPage.css';
 
 function formatTs(value) {
@@ -21,10 +23,49 @@ function isExpired(value) {
     return d < new Date();
 }
 
+function getReportCandidateName(report) {
+    return report?.candidateName || report?.meta?.candidateName || '—';
+}
+
+function getReportStatus(report) {
+    const active = report?.active !== false;
+    const expired = isExpired(report?.expiresAt);
+    if (!active) return 'REVOKED';
+    if (expired) return 'EXPIRED';
+    return 'ACTIVE';
+}
+
 function buildPublicReportUrl(token, isDemoMode, caseId) {
     if (!token) return '#';
     if (isDemoMode && caseId) return `${window.location.origin}/demo/r/${caseId}`;
     return `${window.location.origin}/r/${token}`;
+}
+
+function RevokeModal({ report, onConfirm, onCancel, loading }) {
+    if (!report) return null;
+    const name = getReportCandidateName(report);
+    return (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="revoke-title">
+            <div className="modal-content" style={{ maxWidth: 480 }}>
+                <h3 id="revoke-title" className="modal-title">Revogar relatório público</h3>
+                <p className="modal-body">
+                    O link público de <strong>{name}</strong> será desativado permanentemente.
+                    O link <code>…{report.id.slice(-8)}</code> não será mais acessível externamente.
+                </p>
+                <p className="modal-body" style={{ color: 'var(--red-600)', fontSize: '.875rem' }}>
+                    Esta ação será auditada e não pode ser desfeita.
+                </p>
+                <div className="modal-actions">
+                    <button type="button" className="caso-btn caso-btn--ghost" onClick={onCancel} disabled={loading}>
+                        Cancelar
+                    </button>
+                    <button type="button" className="caso-btn caso-btn--danger" onClick={onConfirm} disabled={loading}>
+                        {loading ? 'Desativando…' : 'Confirmar revogação'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 export default function RelatoriosPage() {
@@ -37,6 +78,7 @@ export default function RelatoriosPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [revoking, setRevoking] = useState(null);
+    const [revokeTarget, setRevokeTarget] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [feedback, setFeedback] = useState('');
 
@@ -51,31 +93,34 @@ export default function RelatoriosPage() {
         }
         fetchPublicReports(tenantId)
             .then((data) => setReports(data))
-            .catch((err) => setError(extractErrorMessage(err, 'Nao foi possivel carregar os relatorios.')))
+            .catch((err) => setError(extractErrorMessage(err, 'Não foi possível carregar os relatórios.')))
             .finally(() => setLoading(false));
     }, [tenantId, isDemoMode]);
 
     const filtered = reports.filter((r) => {
         if (!searchTerm) return true;
         const term = searchTerm.toLowerCase();
-        return (
-            (r.candidateName || '').toLowerCase().includes(term) ||
-            r.id.toLowerCase().includes(term)
-        );
+        const name = getReportCandidateName(r).toLowerCase();
+        return name.includes(term) || r.id.toLowerCase().includes(term);
     });
 
-    const handleRevoke = async (token) => {
-        if (!window.confirm('Revogar este relatório tornará o link inativo. Confirmar?')) return;
-        setRevoking(token);
+    const handleRevokeClick = (report) => {
+        setRevokeTarget(report);
         setFeedback('');
+    };
+
+    const handleRevokeConfirm = async () => {
+        if (!revokeTarget) return;
+        setRevoking(revokeTarget.id);
         try {
-            await revokePublicReport(token);
-            setReports((prev) => prev.map((r) => r.id === token ? { ...r, active: false } : r));
-            setFeedback('Relatorio publico desativado com sucesso.');
+            await revokePublicReport(revokeTarget.id);
+            setReports((prev) => prev.map((r) => (r.id === revokeTarget.id ? { ...r, active: false } : r)));
+            setFeedback('Relatório público desativado com sucesso.');
         } catch (err) {
-            alert(extractErrorMessage(err, 'Erro ao revogar relatório.'));
+            setFeedback(extractErrorMessage(err, 'Erro ao revogar relatório.'));
         } finally {
             setRevoking(null);
+            setRevokeTarget(null);
         }
     };
 
@@ -87,21 +132,23 @@ export default function RelatoriosPage() {
     const handleCopy = async (token, caseId) => {
         try {
             await navigator.clipboard.writeText(buildPublicReportUrl(token, isDemoMode, caseId));
-            setFeedback('Link publico copiado com sucesso.');
+            setFeedback('Link público copiado com sucesso.');
         } catch {
-            setFeedback('Nao foi possivel copiar o link agora.');
+            setFeedback('Não foi possível copiar o link agora.');
         }
     };
 
+    const activeCount = reports.filter((r) => getReportStatus(r) === 'ACTIVE').length;
+    const expiredCount = reports.filter((r) => getReportStatus(r) === 'EXPIRED').length;
+    const revokedCount = reports.filter((r) => getReportStatus(r) === 'REVOKED').length;
+
     return (
-        <div className="relatorios-page">
-            <div className="relatorios-header">
-                <div>
-                    <h2 className="relatorios-header__title">Relatórios Públicos</h2>
-                    <p className="relatorios-header__subtitle">Links compartilháveis gerados pelo sistema</p>
-                </div>
-                <span className="relatorios-header__count">{reports.length} relatório(s)</span>
-            </div>
+        <PageShell size="default" className="relatorios-page">
+            <PageHeader
+                eyebrow="Compartilhamento"
+                title="Relatórios compartilhados"
+                description="Gerencie links de acesso gerados para relatórios concluídos."
+            />
 
             <div className="relatorios-toolbar">
                 <div className="filter-bar__search">
@@ -109,12 +156,15 @@ export default function RelatoriosPage() {
                     <input
                         type="text"
                         className="filter-bar__search-input"
-                        placeholder="Buscar por candidato ou token..."
+                        placeholder="Buscar por candidato ou link..."
                         aria-label="Buscar relatórios"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <span className="relatorios-header__count" title="Ativos">{activeCount} ativo(s)</span>
+                <span className="relatorios-header__count" title="Expirados" style={{ opacity: 0.7 }}>{expiredCount} exp.</span>
+                <span className="relatorios-header__count" title="Revogados" style={{ opacity: 0.5 }}>{revokedCount} rev.</span>
             </div>
 
             {feedback && (
@@ -128,13 +178,15 @@ export default function RelatoriosPage() {
                 loading={loading}
                 emptyMessage={error || 'Nenhum relatório encontrado.'}
                 renderCard={(report) => {
-                    const expired = isExpired(report.expiresAt);
-                    const active = report.active !== false;
+                    const status = getReportStatus(report);
+                    const expired = status === 'EXPIRED';
+                    const active = status === 'ACTIVE';
+                    const name = getReportCandidateName(report);
                     return (
                         <>
                             <div className="mobile-card__header">
-                                <div className="mobile-card__title">{report.candidateName || '—'}</div>
-                                {active && !expired
+                                <div className="mobile-card__title">{name}</div>
+                                {active
                                     ? <span className="relatorios-status relatorios-status--active">Ativo</span>
                                     : <span className="relatorios-status relatorios-status--inactive">{expired ? 'Expirado' : 'Revogado'}</span>
                                 }
@@ -143,12 +195,13 @@ export default function RelatoriosPage() {
                                 <span className="mobile-card__meta-item" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '.75rem' }}>
                                     <a href={isDemoMode && report.caseId ? `/demo/r/${report.caseId}` : `/r/${report.id}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-600)', textDecoration: 'none' }}>…{report.id.slice(-8)}</a>
                                 </span>
+                                <span className="mobile-card__meta-item">Empresa: {report.tenantId || '—'}</span>
                                 <span className="mobile-card__meta-item">Criado: {formatTs(report.createdAt)}</span>
                                 <span className="mobile-card__meta-item" style={{ color: expired ? 'var(--red-600)' : 'inherit', fontWeight: expired ? 600 : 400 }}>
                                     Expira: {formatTs(report.expiresAt)}{expired && ' EXPIRADO'}
                                 </span>
                             </div>
-                            {active && !expired && (
+                            {active && (
                                 <div className="mobile-card__actions">
                                     <button
                                         className="caso-btn caso-btn--ghost relatorios-action-btn"
@@ -167,9 +220,9 @@ export default function RelatoriosPage() {
                                     <button
                                         className="caso-btn caso-btn--ghost relatorios-action-btn relatorios-action-btn--danger"
                                         disabled={revoking === report.id}
-                                        onClick={() => handleRevoke(report.id)}
+                                        onClick={() => handleRevokeClick(report)}
                                     >
-                                        {revoking === report.id ? 'Desativando...' : 'Desativar'}
+                                        {revoking === report.id ? 'Desativando…' : 'Desativar'}
                                     </button>
                                 </div>
                             )}
@@ -181,8 +234,9 @@ export default function RelatoriosPage() {
                     <table className="data-table" aria-label="Relatórios públicos">
                         <thead>
                             <tr>
-                                <th className="data-table__th" scope="col">Token</th>
+                                <th className="data-table__th" scope="col">Link</th>
                                 <th className="data-table__th" scope="col">Candidato</th>
+                                <th className="data-table__th" scope="col">Tenant</th>
                                 <th className="data-table__th" scope="col">Criado em</th>
                                 <th className="data-table__th" scope="col">Expira em</th>
                                 <th className="data-table__th" scope="col">Status</th>
@@ -190,19 +244,27 @@ export default function RelatoriosPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
-                                <tr>
-                                    <td colSpan={6} className="data-table__empty">Carregando...</td>
+                            {loading && Array.from({ length: 4 }, (_, i) => (
+                                <tr key={`sk-${i}`} aria-hidden="true">
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${50 + (i % 3) * 15}%` }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 80 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton" style={{ width: 60, height: 20, borderRadius: 10 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 60 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 56 }} /></td>
+                                    <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 40 }} /></td>
                                 </tr>
-                            )}
+                            ))}
                             {!loading && error && (
                                 <tr>
-                                    <td colSpan={6} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{error}</td>
+                                    <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{error}</td>
                                 </tr>
                             )}
                             {!loading && !error && filtered.map((report) => {
-                                const expired = isExpired(report.expiresAt);
-                                const active = report.active !== false;
+                                const status = getReportStatus(report);
+                                const expired = status === 'EXPIRED';
+                                const active = status === 'ACTIVE';
+                                const name = getReportCandidateName(report);
                                 return (
                                     <tr key={report.id} className="data-table__row">
                                         <td className="data-table__td data-table__td--mono" style={{ fontSize: '.75rem', letterSpacing: '.03em' }}>
@@ -215,20 +277,21 @@ export default function RelatoriosPage() {
                                                 …{report.id.slice(-8)}
                                             </a>
                                         </td>
-                                        <td className="data-table__td">{report.candidateName || '—'}</td>
+                                        <td className="data-table__td">{name}</td>
+                                        <td className="data-table__td" style={{ fontSize: '.8125rem' }}>{report.tenantId || '—'}</td>
                                         <td className="data-table__td" style={{ fontSize: '.8125rem' }}>{formatTs(report.createdAt)}</td>
                                         <td className="data-table__td" style={{ fontSize: '.8125rem', color: expired ? 'var(--red-600)' : 'inherit', fontWeight: expired ? 600 : 400 }}>
                                             {formatTs(report.expiresAt)}
                                             {expired && <span style={{ marginLeft: 4, fontSize: '.72rem' }}>EXPIRADO</span>}
                                         </td>
                                         <td className="data-table__td">
-                                            {active && !expired
+                                            {active
                                                 ? <span className="relatorios-status relatorios-status--active">Ativo</span>
                                                 : <span className="relatorios-status relatorios-status--inactive">{expired ? 'Expirado' : 'Revogado'}</span>
                                             }
                                         </td>
                                         <td className="data-table__td">
-                                            {active && !expired && (
+                                            {active && (
                                                 <div className="relatorios-actions">
                                                     <button
                                                         className="caso-btn caso-btn--ghost relatorios-action-btn relatorios-action-btn--inline"
@@ -247,9 +310,9 @@ export default function RelatoriosPage() {
                                                     <button
                                                         className="caso-btn caso-btn--ghost relatorios-action-btn relatorios-action-btn--inline relatorios-action-btn--danger"
                                                         disabled={revoking === report.id}
-                                                        onClick={() => handleRevoke(report.id)}
+                                                        onClick={() => handleRevokeClick(report)}
                                                     >
-                                                        {revoking === report.id ? 'Desativando...' : 'Desativar'}
+                                                        {revoking === report.id ? 'Desativando…' : 'Desativar'}
                                                     </button>
                                                 </div>
                                             )}
@@ -259,13 +322,22 @@ export default function RelatoriosPage() {
                             })}
                             {!loading && !error && filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="data-table__empty">Nenhum relatório encontrado.</td>
+                                    <td colSpan={7} className="data-table__empty">Nenhum relatório encontrado.</td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
             </MobileDataCardList>
-        </div>
+
+            {revokeTarget && (
+                <RevokeModal
+                    report={revokeTarget}
+                    onConfirm={handleRevokeConfirm}
+                    onCancel={() => setRevokeTarget(null)}
+                    loading={Boolean(revoking)}
+                />
+            )}
+        </PageShell>
     );
 }

@@ -20,17 +20,24 @@ import {
     subscribeToCaseDoc,
     subscribeToCaseAuditLogs,
     callRerunAiAnalysis,
+    callAssignCaseToAnalyst,
+    callUnassignCase,
+    callListOpsUsers,
 } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
+import { getSlaStatus, getSlaColor } from '../../core/caseSla';
+
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
+import './CasoPage.css';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
     if (d.length !== 11) return cpf || '';
     return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
-import './CasoPage.css';
 
 const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
@@ -59,6 +66,7 @@ const CORRECTION_REASONS = [
     'Dados incompletos',
     'Outro',
 ];
+const READ_ONLY_CASE_STATUSES = new Set(['DONE', 'CORRECTION_NEEDED', 'WAITING_INFO']);
 
 const TIMELINE_ACTION_LABELS = {
     CASE_CONCLUDED: 'Caso concluído',
@@ -68,14 +76,14 @@ const TIMELINE_ACTION_LABELS = {
     CASE_CORRECTED: 'Corrigido pelo cliente',
     SOLICITATION_CREATED: 'Caso solicitado',
     EXPORT_CREATED: 'Relatório gerado',
-    AI_DECISION_SET: 'Decisão da IA registrada',
-    AI_ANALYSIS_RUN: 'Análise de IA executada',
-    AI_HOMONYM_ANALYSIS_RUN: 'Análise de homônimos (IA)',
+    AI_DECISION_SET: 'Decisão da análise automática registrada',
+    AI_ANALYSIS_RUN: 'Análise automática executada',
+    AI_HOMONYM_ANALYSIS_RUN: 'Análise de homônimos (automática)',
     CASE_DRAFT_SAVED: 'Rascunho salvo',
-    AI_RERUN: 'IA re-executada',
+    AI_RERUN: 'Análise automática re-executada',
     PUBLIC_REPORT_CREATED: 'Relatório público gerado',
     CLIENT_PUBLIC_REPORT_CREATED: 'Relatório do cliente gerado',
-    ENRICHMENT_PHASE_RERUN: 'Enriquecimento re-executado',
+    ENRICHMENT_PHASE_RERUN: 'Consulta automática re-executada',
 };
 
 function getAiHomonymDecisionLabel(value) {
@@ -313,6 +321,10 @@ export default function CasoPage() {
     const [returning, setReturning] = useState(false);
     const [returnError, setReturnError] = useState(null);
     const [showHighRiskConfirm, setShowHighRiskConfirm] = useState(false);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [pendingNavigationTarget, setPendingNavigationTarget] = useState(null);
+    const [draftStatus, setDraftStatus] = useState('idle');
+    const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
     const [caseTimeline, setCaseTimeline] = useState([]);
     const dirtyFieldsRef = useRef(new Set());
     const highRiskConfirmedRef = useRef(false);
@@ -320,7 +332,12 @@ export default function CasoPage() {
 
     // Auto-save dirty fields as draft when switching steps
     const saveDraft = useCallback(async () => {
-        if (isDemoMode || !caseData?.id || dirtyFieldsRef.current.size === 0 || concluded) return;
+        if (isDemoMode || !caseData?.id || dirtyFieldsRef.current.size === 0 || concluded) return false;
+        if (READ_ONLY_CASE_STATUSES.has(caseData.status)) {
+            setSaveError('Este caso está em modo leitura. Rascunhos não podem ser salvos neste status.');
+            return false;
+        }
+        setDraftStatus('saving');
         const dirty = dirtyFieldsRef.current;
         const payload = {};
         for (const field of dirty) {
@@ -332,23 +349,35 @@ export default function CasoPage() {
         if (Object.keys(payload).length === 0) return;
         const savedFields = new Set(dirty);
         try {
-            await callSaveCaseDraftByAnalyst({
+            const result = await callSaveCaseDraftByAnalyst({
                 caseId: caseData.id,
                 payload,
             });
+            if (result && Object.prototype.hasOwnProperty.call(result, 'success') && result.success !== true) {
+                throw new Error('Backend nao confirmou o salvamento do rascunho.');
+            }
             // Only clear fields that were actually saved, preserving any newly dirtied fields
             for (const f of savedFields) {
                 dirtyFieldsRef.current.delete(f);
             }
+            setLastDraftSavedAt(new Date());
+            setDraftStatus('saved');
+            return true;
         } catch (err) {
             console.warn('Auto-save draft failed:', err.message);
             // P10: Show error to analyst instead of silent failure
             setSaveError('Falha ao salvar rascunho automaticamente. Suas alteracoes podem nao ter sido salvas.');
+            setDraftStatus('error');
+            return false;
         }
-    }, [caseData?.id, form, isDemoMode, concluded, enabledPhases]);
+    }, [caseData?.id, caseData?.status, form, isDemoMode, concluded, enabledPhases]);
 
-    const handleRetryPhase = useCallback(async (phase) => {
+    const handleRetryPhase = useCallback(async (phase, scope = 'cascade') => {
         if (isDemoMode || !caseData?.id) return;
+        if (READ_ONLY_CASE_STATUSES.has(caseData.status)) {
+            setSaveError('Reexecução bloqueada: este caso está em modo leitura.');
+            return;
+        }
 
         try {
             setRetryingPhase(phase);
@@ -356,14 +385,14 @@ export default function CasoPage() {
             if (phase === 'ai') {
                 await callRerunAiAnalysis(caseData.id);
             } else {
-                await callRerunEnrichmentPhase(caseData.id, phase);
+                await callRerunEnrichmentPhase(caseData.id, phase, scope);
             }
         } catch (err) {
             setSaveError(extractErrorMessage(err, 'Erro ao reexecutar fase.'));
         } finally {
             setRetryingPhase(null);
         }
-    }, [caseData?.id, isDemoMode]);
+    }, [caseData?.id, caseData?.status, isDemoMode]);
 
     useEffect(() => {
         if (isDemoMode) {
@@ -476,7 +505,7 @@ export default function CasoPage() {
         const hasOsint = enabledPhases.includes('osint');
         const hasSocial = enabledPhases.includes('social');
         if (hasOsint || hasSocial) {
-            result.push({ key: 'osint_social', label: hasOsint && hasSocial ? 'OSINT e Social' : hasOsint ? 'OSINT' : 'Social' });
+            result.push({ key: 'osint_social', label: hasOsint && hasSocial ? 'Perfis públicos e Social' : hasOsint ? 'Perfis públicos' : 'Social' });
         }
         const hasDigital = enabledPhases.includes('digital');
         const hasConflict = enabledPhases.includes('conflictInterest');
@@ -488,8 +517,57 @@ export default function CasoPage() {
     }, [enabledPhases]);
 
     const currentStepKey = steps[activeStep]?.key;
+    const canEditCase = !READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded;
+    const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
+    const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
+
+    // Assignment modal state
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [opsUsers, setOpsUsers] = useState([]);
+    const [assigning, setAssigning] = useState(false);
+    const [assignError, setAssignError] = useState(null);
+
+    const openAssignModal = async () => {
+        if (!canAssignOthers || isDemoMode) return;
+        setAssignError(null);
+        setAssignModalOpen(true);
+        try {
+            const res = await callListOpsUsers();
+            setOpsUsers((res?.users || []).filter((u) => u.status === 'active' && u.uid !== caseData?.assigneeId));
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Erro ao carregar analistas.'));
+        }
+    };
+
+    const handleAssignToUser = async (targetUid) => {
+        if (!caseData?.id || assigning) return;
+        setAssigning(true);
+        setAssignError(null);
+        try {
+            await callAssignCaseToAnalyst({ caseId: caseData.id, targetUid });
+            setAssignModalOpen(false);
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Falha ao atribuir caso.'));
+        } finally {
+            setAssigning(false);
+        }
+    };
+
+    const handleUnassign = async () => {
+        if (!caseData?.id || assigning) return;
+        setAssigning(true);
+        setAssignError(null);
+        try {
+            await callUnassignCase({ caseId: caseData.id });
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Falha ao remover responsavel.'));
+        } finally {
+            setAssigning(false);
+        }
+    };
 
     const update = (field, value) => {
+        if (!canEditCase) return;
         dirtyFieldsRef.current.add(field);
         setForm((previous) => {
             const next = { ...previous, [field]: value };
@@ -507,6 +585,7 @@ export default function CasoPage() {
     };
 
     const toggleVector = (field, value) => {
+        if (!canEditCase) return;
         dirtyFieldsRef.current.add(field);
         setForm((previous) => {
             const current = Array.isArray(previous[field]) ? previous[field] : [];
@@ -520,24 +599,30 @@ export default function CasoPage() {
     };
 
     const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
+    const activeWarrantCount = (
+        (caseData?.juditActiveWarrantCount || 0) +
+        (Array.isArray(caseData?.bigdatacorpActiveWarrants)
+            ? caseData.bigdatacorpActiveWarrants.filter((warrant) => warrant?.isActive !== false).length
+            : 0)
+    );
 
     const checklist = [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('labor') && { label: 'Trabalhista definido', ok: Boolean(form.laborFlag) },
         enabledPhases.includes('warrant') && { label: 'Mandado de prisao definido', ok: !!form.warrantFlag },
-        enabledPhases.includes('osint') && { label: 'OSINT definido', ok: Boolean(form.osintLevel) },
+        enabledPhases.includes('osint') && { label: 'Perfis públicos definido', ok: Boolean(form.osintLevel) },
         enabledPhases.includes('social') && { label: 'Social definido', ok: Boolean(form.socialStatus) },
         enabledPhases.includes('digital') && { label: 'Perfil digital definido', ok: Boolean(form.digitalFlag) },
         enabledPhases.includes('conflictInterest') && { label: 'Conflito de interesse definido', ok: Boolean(form.conflictInterest) },
-        { label: 'Veredito final definido', ok: Boolean(form.finalVerdict) },
+        { label: 'Resultado final definido', ok: Boolean(form.finalVerdict) },
         // ── Data quality warnings (non-blocking) ──
         form.criminalFlag === 'NEGATIVE' && (caseData?.juditCriminalCount || 0) > 0 && {
             label: `Flag criminal NEGATIVE mas ${caseData.juditCriminalCount} processo(s) criminal(is) encontrado(s)`,
             ok: true, warn: true,
         },
-        form.warrantFlag === 'NEGATIVE' && (caseData?.juditActiveWarrantCount || 0) > 0 && {
-            label: `Flag mandado NEGATIVE mas ${caseData.juditActiveWarrantCount} mandado(s) ativo(s) encontrado(s)`,
-            ok: true, warn: true,
+        form.warrantFlag === 'NEGATIVE' && activeWarrantCount > 0 && {
+            label: `Bloqueio: flag de mandado negativa com ${activeWarrantCount} mandado(s) ativo(s) encontrado(s)`,
+            ok: false, block: true,
         },
         form.analystComment && form.analystComment.trim().length > 0 && form.analystComment.trim().length < 20 && {
             label: 'Justificativa final muito curta (< 20 caracteres)',
@@ -548,7 +633,7 @@ export default function CasoPage() {
             ok: true, warn: true,
         },
         risk.riskScore >= 50 && risk.riskScore < 70 && form.finalVerdict === 'FIT' && {
-            label: `Score de risco ${risk.riskScore} (médio-alto) com veredito FIT`,
+            label: `Nível de atenção ${risk.riskScore} (médio-alto) com resultado FIT`,
             ok: true, warn: true,
         },
     ].filter(Boolean);
@@ -563,7 +648,12 @@ export default function CasoPage() {
         if (caseData.juditRoleSummary?.some((role) => role?.hasExactCpfMatch)) facts.push('CPF exato encontrado em parte da Judit');
         if (caseData.escavadorProcessos?.some((processo) => processo?.hasExactCpfMatch)) facts.push('CPF exato encontrado em processo do Escavador');
         return facts;
-    }, [caseData]);
+    }, [
+        caseData?.juditActiveWarrantCount,
+        caseData?.juditExecutionFlag,
+        caseData?.juditRoleSummary,
+        caseData?.escavadorProcessos,
+    ]);
     const aiHomonymDivergesFromHardFacts = Boolean(
         aiHomonymStructured &&
         (aiHomonymStructured.decision === 'LIKELY_HOMONYM' || aiHomonymStructured.recommendedAction === 'DISCARD') &&
@@ -587,9 +677,9 @@ export default function CasoPage() {
         if (!isEnriched) return null;
         const originals = caseData?.enrichmentOriginalValues || {};
         if (!(field in originals)) return null;
-        // Show "via API" if field still matches the original enriched value
+        // Show "via integração" if field still matches the original enriched value
         if (form[field] === originals[field]) {
-            return <span className="caso-api-badge">via API</span>;
+            return <span className="caso-api-badge">via integração</span>;
         }
         return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
     };
@@ -602,7 +692,7 @@ export default function CasoPage() {
     };
 
     const handleReturn = async () => {
-        if (!caseData || !returnReason || returning) return;
+        if (!caseData || !returnReason || returning || !canEditCase) return;
         setReturnError(null);
 
         if (isDemoMode) {
@@ -635,6 +725,33 @@ export default function CasoPage() {
     };
 
     const isCorrectionNeeded = caseData?.status === 'CORRECTION_NEEDED';
+    const isReadOnlyCase = READ_ONLY_CASE_STATUSES.has(caseData?.status);
+    const goToNextStep = () => setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+    const goToPreviousStep = () => setActiveStep((prev) => Math.max(prev - 1, 0));
+    const requestNavigateAway = (target) => {
+        if (dirtyFieldsRef.current.size > 0 && canEditCase) {
+            setPendingNavigationTarget(target);
+            setShowLeaveModal(true);
+            return;
+        }
+        navigate(target);
+    };
+    const leaveWithoutSaving = () => {
+        const target = pendingNavigationTarget || (isDemoMode ? '/demo/ops/fila' : '/ops/fila');
+        dirtyFieldsRef.current = new Set();
+        setShowLeaveModal(false);
+        setPendingNavigationTarget(null);
+        navigate(target);
+    };
+    const saveAndLeave = async () => {
+        const target = pendingNavigationTarget || (isDemoMode ? '/demo/ops/fila' : '/ops/fila');
+        const saved = await saveDraft();
+        if (saved) {
+            setShowLeaveModal(false);
+            setPendingNavigationTarget(null);
+            navigate(target);
+        }
+    };
 
     // Keyboard shortcuts: Ctrl+S save, Ctrl+Enter conclude, ←/→ steps
     useEffect(() => {
@@ -648,7 +765,7 @@ export default function CasoPage() {
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
-                if (allOk && !saving && !concluded) {
+                if (allOk && !saving && !concluded && canEditCase) {
                     document.querySelector('.caso-btn.caso-btn--primary[data-conclude]')?.click();
                 }
             }
@@ -661,10 +778,10 @@ export default function CasoPage() {
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
-    }, [saveDraft, allOk, saving, concluded, steps]);
+    }, [saveDraft, allOk, saving, concluded, steps, canEditCase]);
 
     const handleConclude = async () => {
-        if (!caseData || !allOk || saving) {
+        if (!caseData || !allOk || saving || !canEditCase) {
             return;
         }
 
@@ -765,10 +882,19 @@ export default function CasoPage() {
 
     if (loadingCase) {
         return (
-            <div className="caso-page">
-                <div className="caso-section">
-                    <h3>Carregando caso</h3>
-                    <p style={{ color: 'var(--text-secondary)' }}>Estamos sincronizando os dados reais deste caso.</p>
+            <div className="caso-page" role="status" aria-live="polite" aria-label="Carregando caso">
+                <div className="caso-section" aria-hidden="true">
+                    <div className="skeleton" style={{ width: 220, height: 24, marginBottom: 12, borderRadius: 6 }} />
+                    <div className="skeleton skeleton--text" style={{ width: '60%', marginBottom: 8 }} />
+                    <div className="skeleton skeleton--text" style={{ width: '40%' }} />
+                </div>
+                <div className="caso-section" aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px,1fr))', gap: 12 }}>
+                    {Array.from({ length: 4 }, (_, i) => (
+                        <div key={i} style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-default)', padding: 16 }}>
+                            <div className="skeleton skeleton--text" style={{ width: '50%', marginBottom: 8 }} />
+                            <div className="skeleton" style={{ width: 48, height: 28, borderRadius: 4 }} />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -776,7 +902,7 @@ export default function CasoPage() {
 
     if (caseError || !caseData) {
         return (
-            <div className="caso-page">
+            <PageShell size="default" className="caso-page" role="alert">
                 <div className="caso-section">
                     <h3>Caso indisponivel</h3>
                     <p style={{ color: 'var(--text-secondary)' }}>{caseError || 'Nao foi possivel localizar este caso.'}</p>
@@ -787,13 +913,13 @@ export default function CasoPage() {
                         </button>
                     </div>
                 </div>
-            </div>
+            </PageShell>
         );
     }
 
     if (concluded) {
         return (
-            <div className="caso-page">
+            <PageShell size="default" className="caso-page">
                 <div className="caso-success animate-scaleIn">
                     <span style={{ fontSize: '3rem' }}>OK</span>
                     <h2>Caso concluido com sucesso</h2>
@@ -802,49 +928,42 @@ export default function CasoPage() {
                         Voltar para a fila
                     </button>
                 </div>
-            </div>
+            </PageShell>
         );
     }
 
+    const candidateName = caseData?.candidateName ?? 'Análise';
+    const slaStatus = getSlaStatus(caseData);
+    const slaColor = getSlaColor(slaStatus.state);
+
     return (
-        <div className="caso-page">
-            <div className="caso-header">
-                <div className="caso-header__info">
-                    <h2>{caseData.candidateName}</h2>
-                    <div className="caso-header__meta">
-                        <StatusBadge status={caseData.status} />
-                        <span className="caso-header__id">{caseData.id}</span>
-                        <span className="caso-header__cpf">{formatFullCpf(caseData.cpf) || caseData.cpfMasked}</span>
-                        <span className="caso-header__tenant" style={{ fontSize: '.75rem', padding: '2px 6px', background: 'var(--gray-200)', borderRadius: '4px', fontWeight: 600 }}>
-                            {caseData.tenantName}
-                        </span>
-                        {((caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)) > 0 && (
-                            <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 600 }}>
-                                {(caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)} criminal(is)
-                            </span>
-                        )}
-                        {(() => {
-                            const warrantProcesses = new Set();
-                            (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
-                            (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
-                            const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
-                            return dedupCount > 0 ? (
-                                <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
-                                    ⚠ {dedupCount} mandado(s)
-                                </span>
-                            ) : null;
-                        })()}
-                        {caseData.riskLevel && caseData.status === 'DONE' && (
-                            <>
-                                <RiskChip value={caseData.riskLevel} size="sm" />
-                                <span style={{ fontSize: '.72rem', color: 'var(--text-secondary)' }}>{caseData.riskScore} pts</span>
-                            </>
-                        )}
-                    </div>
+        <PageShell size="default" className="caso-page">
+            {slaStatus.state !== 'no_sla' && (
+                <div className={`caso-sla-banner caso-sla-banner--${slaColor}`}>
+                    <span className="caso-sla-banner__dot" aria-hidden="true" />
+                    <span className="caso-sla-banner__text">
+                        <strong>Prazo combinado {slaStatus.slaHours}h</strong>
+                        {' — '}
+                        {slaStatus.remainingText}
+                    </span>
+                    <span className="caso-sla-banner__deadline">
+                        Prazo: {slaStatus.deadline?.toLocaleString('pt-BR')}
+                    </span>
                 </div>
+            )}
+            <PageHeader
+                eyebrow="Detalhe da análise"
+                title={candidateName}
+                description="Revise as informações, registre a decisão e conclua a análise."
+                actions={
                 <div className="caso-header__actions">
-                    <button className="caso-btn caso-btn--ghost" onClick={() => navigate(isDemoMode ? '/demo/ops/fila' : '/ops/fila')}>Voltar</button>
-                    {!isCorrectionNeeded && caseData.status !== 'DONE' && (
+                    <button className="caso-btn caso-btn--ghost" onClick={() => requestNavigateAway(isDemoMode ? '/demo/ops/fila' : '/ops/fila')}>Voltar</button>
+                    {canEditCase && (
+                        <button className="caso-btn caso-btn--ghost" onClick={saveDraft} disabled={!hasDirtyDraft || draftStatus === 'saving'}>
+                            {draftStatus === 'saving' ? 'Salvando...' : 'Salvar rascunho'}
+                        </button>
+                    )}
+                    {!isCorrectionNeeded && canEditCase && (
                         <button className="caso-btn caso-btn--warning" onClick={() => setShowReturnModal(true)}>Devolver ao cliente</button>
                     )}
                     {caseData.status === 'DONE' && (
@@ -873,18 +992,88 @@ export default function CasoPage() {
                             }
                         }}>🔗 Copiar Link</button>
                     )}
-                    {caseData.status !== 'DONE' && (
+                    {canEditCase && (
                         <button className="caso-btn caso-btn--primary" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                             {saving ? 'Salvando...' : 'Concluir'}
                         </button>
                     )}
+                    {canAssignOthers && caseData.assigneeId && (
+                        <button className="caso-btn caso-btn--ghost" onClick={openAssignModal} disabled={assigning}>
+                            Trocar responsavel
+                        </button>
+                    )}
+                    {canAssignOthers && caseData.assigneeId && (
+                        <button className="caso-btn caso-btn--ghost" onClick={handleUnassign} disabled={assigning}>
+                            Remover responsavel
+                        </button>
+                    )}
+                    {canAssignOthers && !caseData.assigneeId && (
+                        <button className="caso-btn caso-btn--ghost" onClick={openAssignModal} disabled={assigning}>
+                            Atribuir
+                        </button>
+                    )}
                 </div>
+                }
+            />
+            <div className="caso-meta">
+                <StatusBadge status={caseData.status} />
+                <span className="caso-header__id">{caseData.id}</span>
+                <span className="caso-header__cpf">{formatFullCpf(caseData.cpf) || caseData.cpfMasked}</span>
+                <span className="caso-header__tenant" style={{ fontSize: '.75rem', padding: '2px 6px', background: 'var(--gray-200)', borderRadius: '4px', fontWeight: 600 }}>
+                    {caseData.tenantName}
+                </span>
+                {caseData.assigneeName && (
+                    <span title={`Responsavel: ${caseData.assigneeName} (${caseData.assigneeEmail || ''})`} style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--blue-100)', color: 'var(--blue-700)', borderRadius: '4px', fontWeight: 600 }}>
+                        👤 {caseData.assigneeName}
+                    </span>
+                )}
+                {((caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)) > 0 && (
+                    <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 600 }}>
+                        {(caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)} criminal(is)
+                    </span>
+                )}
+                {(() => {
+                    const warrantProcesses = new Set();
+                    (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
+                    (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
+                    const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
+                    return dedupCount > 0 ? (
+                        <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
+                            ⚠ {dedupCount} mandado(s)
+                        </span>
+                    ) : null;
+                })()}
+                {caseData.riskLevel && caseData.status === 'DONE' && (
+                    <>
+                        <RiskChip value={caseData.riskLevel} size="sm" />
+                        <span style={{ fontSize: '.72rem', color: 'var(--text-secondary)' }}>{caseData.riskScore} pts</span>
+                    </>
+                )}
             </div>
+
+            {isReadOnlyCase && (
+                <div className="caso-readonly-banner" role="status">
+                    <strong>Modo leitura</strong>
+                    <span>
+                        {caseData.status === 'DONE'
+                            ? 'Caso concluído. Campos analíticos e reprocessamentos ficam bloqueados para preservar o dossiê publicado.'
+                            : 'Caso aguardando ação do cliente. A edição operacional fica bloqueada até a correção ser reenviada.'}
+                    </span>
+                </div>
+            )}
+
+            {!isReadOnlyCase && (
+                <div className={`caso-draft-bar caso-draft-bar--${draftStatus}`} role="status" aria-live="polite">
+                    <span>{hasDirtyDraft ? 'Rascunho com alterações não salvas' : 'Rascunho sem alterações pendentes'}</span>
+                    {lastDraftSavedAt && <span>Último salvamento: {lastDraftSavedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>}
+                    {draftStatus === 'error' && <span>Falha no último salvamento. Tente novamente antes de sair.</span>}
+                </div>
+            )}
 
             {/* Enrichment Pipeline — vertical provider status */}
             <EnrichmentPipeline
                 caseData={caseData}
-                onRetryPhase={handleRetryPhase}
+                onRetryPhase={canEditCase ? handleRetryPhase : undefined}
                 retryingPhase={retryingPhase}
             />
 
@@ -896,7 +1085,7 @@ export default function CasoPage() {
                 return latestEnrichment > draftTs ? (
                     <div style={{ margin: '0 0 .5rem', padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '.85rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span>⚠️</span>
-                        <span>Dados de enriquecimento ou IA foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
+                        <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
                     </div>
                 ) : null;
             })()}
@@ -905,10 +1094,10 @@ export default function CasoPage() {
                 <details style={{ margin: '0 0 .5rem', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px', fontSize: '.85rem' }}>
                     <summary style={{ cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', listStyle: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}>
                         <span style={{ color: 'var(--blue-500, #3b82f6)' }}>✦</span>
-                        Síntese da IA
+                        Síntese da análise automática
                         {caseData.aiStructured?.riskLevel && <RiskChip value={caseData.aiStructured.riskLevel} size="sm" />}
                         {caseData.aiStructured?.riskScore != null && (
-                            <span style={{ fontSize: '.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>— Score: {caseData.aiStructured.riskScore}</span>
+                            <span style={{ fontSize: '.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>— Nível de atenção: {caseData.aiStructured.riskScore}</span>
                         )}
                     </summary>
                     {caseData.aiStructured?.resumo && (
@@ -928,7 +1117,7 @@ export default function CasoPage() {
                 <details className="caso-comparativo" style={{ margin: '0 0 .5rem', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px', fontSize: '.85rem' }}>
                     <summary style={{ cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', listStyle: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}>
                         <span style={{ color: 'var(--purple-500, #a855f7)' }}>⚖</span>
-                        Comparativo IA vs Analista
+                        Comparativo Análise Automática vs Analista
                         {(() => {
                             const aiScore = caseData.aiStructured?.riskScore ?? null;
                             const analystScore = caseData.riskScore ?? risk.riskScore;
@@ -941,7 +1130,7 @@ export default function CasoPage() {
                     </summary>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
                         <div style={{ padding: '10px', borderRadius: '8px', background: 'var(--blue-50, #eff6ff)', border: '1px solid var(--blue-200, #bfdbfe)' }}>
-                            <div style={{ fontSize: '.7rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--blue-600, #2563eb)', marginBottom: '4px' }}>IA</div>
+                            <div style={{ fontSize: '.7rem', fontWeight: 600, textTransform: 'uppercase', color: 'var(--blue-600, #2563eb)', marginBottom: '4px' }}>Análise Automática</div>
                             <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{caseData.aiStructured.riskScore} pts</div>
                             {caseData.aiStructured.riskLevel && <div style={{ fontSize: '.8rem', color: 'var(--text-secondary)' }}>{caseData.aiStructured.riskLevel}</div>}
                             {caseData.aiStructured.veredicto && <div style={{ fontSize: '.8rem', fontWeight: 600 }}>{caseData.aiStructured.veredicto}</div>}
@@ -973,31 +1162,31 @@ export default function CasoPage() {
             {overallEnrichmentStatus === 'RUNNING' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--running">
                     <span className="caso-enrichment-spinner" />
-                    Enriquecimento automatico em andamento... Os campos serao preenchidos automaticamente.
+                    Consulta automática em andamento... Os campos serão preenchidos automaticamente.
                 </div>
             )}
             {overallEnrichmentStatus === 'DONE' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--done">
-                    Enriquecimento concluido. Revise os campos preenchidos automaticamente (marcados com <span className="caso-api-badge caso-api-badge--inline">via API</span>).
+                    Consulta automática concluída. Revise os campos preenchidos automaticamente (marcados com <span className="caso-api-badge caso-api-badge--inline">via integração</span>).
                 </div>
             )}
             {overallEnrichmentStatus === 'PARTIAL' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--partial">
                     {Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0
-                        ? `Enriquecimento parcial. A Judit ainda esta processando ${formatPendingJuditPhases(caseData.juditPendingAsyncPhases)} em modo assincrono e os resultados serao incorporados automaticamente.`
-                        : 'Enriquecimento parcial. Algumas consultas falharam. Revise os campos disponiveis e preencha os demais manualmente.'}
-                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.juditError || caseData.enrichmentError, 'Erro no enriquecimento.')})</span>}
+                        ? `Consulta automática parcial. A Judit ainda está processando ${formatPendingJuditPhases(caseData.juditPendingAsyncPhases)} em modo assincrono e os resultados serao incorporados automaticamente.`
+                        : 'Consulta automática parcial. Algumas consultas falharam. Revise os campos disponiveis e preencha os demais manualmente.'}
+                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.juditError || caseData.enrichmentError, 'Erro na consulta automática.')})</span>}
                 </div>
             )}
             {overallEnrichmentStatus === 'FAILED' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--failed">
-                    Falha no enriquecimento automatico. Preencha os campos manualmente.
-                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.juditError || caseData.enrichmentError, 'Erro no enriquecimento.')})</span>}
+                    Falha na consulta automática. Preencha os campos manualmente.
+                    {(caseData.juditError || caseData.enrichmentError) && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.juditError || caseData.enrichmentError, 'Erro na consulta automática.')})</span>}
                 </div>
             )}
             {overallEnrichmentStatus === 'BLOCKED' && (
                 <div className="caso-enrichment-banner caso-enrichment-banner--blocked">
-                    Gate de identidade: enriquecimento bloqueado.
+                    Validação de identidade: consulta automática bloqueada.
                     {(caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason) && (
                         <span className="caso-enrichment-error"> {caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason}</span>
                     )}
@@ -1009,7 +1198,7 @@ export default function CasoPage() {
 
             {typeof caseData?.aiError === 'string' && /circuit breaker/i.test(caseData.aiError) && (
                 <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>
-                    <strong>IA temporariamente indisponivel</strong> — o circuit breaker foi acionado apos falhas consecutivas. A analise sera retentada automaticamente ou use o botao &quot;Tentar novamente&quot; no pipeline.
+                    <strong>Análise automática temporariamente indisponível</strong> — o circuit breaker foi acionado apos falhas consecutivas. A analise sera retentada automaticamente ou use o botao &quot;Tentar novamente&quot; no pipeline.
                 </div>
             )}
 
@@ -1057,11 +1246,18 @@ export default function CasoPage() {
                         </div>
 
                         <h4 style={{ marginTop: 20 }}>Redes sociais fornecidas</h4>
-                        <SocialLinks profiles={caseData.socialProfiles || {}} size="md" showEmpty />
+                        <SocialLinks profiles={{ ...(caseData.socialProfiles || {}), otherSocialUrls: caseData.otherSocialUrls || [] }} size="md" showEmpty />
 
-                        {caseData.juditIdentity && (
-                            <div className="caso-identity-block">
-                                <h4>Dados Cadastrais (Judit) <span className="caso-api-badge">via API</span></h4>
+                        {caseData.juditIdentity && (() => {
+                            const gateSource = caseData.juditGateResult?.source;
+                            const identityLabel = gateSource === 'bigdatacorp-primary'
+                                ? 'Dados Cadastrais (BigDataCorp)'
+                                : gateSource === 'fontedata-fallback'
+                                    ? 'Dados Cadastrais (FonteData)'
+                                    : 'Dados Cadastrais (Judit)';
+                            return (
+                                <div className="caso-identity-block">
+                                    <h4>{identityLabel} <span className="caso-api-badge">via integração</span></h4>
                                 <div className="caso-grid">
                                     {caseData.juditIdentity.name && (
                                         <div className="caso-field">
@@ -1107,12 +1303,13 @@ export default function CasoPage() {
                                 {caseData.juditIdentity.consultedAt && (
                                     <p className="caso-identity-consulted">Consultado em: {new Date(caseData.juditIdentity.consultedAt).toLocaleString('pt-BR')}</p>
                                 )}
-                            </div>
-                        )}
+                                </div>
+                            );
+                        })()}
 
                         {caseData.enrichmentIdentity && (
                             <div className="caso-identity-block">
-                                <h4>Dados da Receita Federal {caseData.juditIdentity ? <span className="caso-api-badge caso-api-badge--muted">fallback</span> : <span className="caso-api-badge">via API</span>}</h4>
+                                <h4>Dados da Receita Federal {caseData.juditIdentity ? <span className="caso-api-badge caso-api-badge--muted">fallback</span> : <span className="caso-api-badge">via integração</span>}</h4>
                                 <div className="caso-grid">
                                     {caseData.enrichmentIdentity.name && (
                                         <div className="caso-field">
@@ -1302,7 +1499,7 @@ export default function CasoPage() {
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <div className="caso-section-header">
                                     <h4>
-                                        Analise de Homonimos por IA <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
+                                        Análise de Homônimos (automática) <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
                                         <span className="caso-api-badge caso-api-badge--purple" style={{ marginLeft: 4 }}>consultiva</span>
                                         {caseData.aiHomonymStructuredOk && <span className="caso-api-badge caso-api-badge--green" style={{ marginLeft: 4 }}>JSON ok</span>}
                                         {caseData.aiHomonymFromCache && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--gray-100)', color: 'var(--gray-600)' }}>Cache</span>}
@@ -1377,12 +1574,12 @@ export default function CasoPage() {
 
                                 {caseData.aiHomonymCostUsd != null && (
                                     <p style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginTop: 6 }}>
-                                        Custo IA homonimos: ${caseData.aiHomonymCostUsd.toFixed(4)} USD
+                                        Custo da análise de homônimos: ${caseData.aiHomonymCostUsd.toFixed(4)} USD
                                         {caseData.aiHomonymTokens && ` (${caseData.aiHomonymTokens.input} in / ${caseData.aiHomonymTokens.output} out tokens)`}
                                     </p>
                                 )}
                                 {caseData.aiHomonymError && (
-                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro IA homonimos: {extractErrorMessage(caseData.aiHomonymError, 'Falha na análise de homônimos.')}</p>
+                                    <p style={{ fontSize: '.75rem', color: 'var(--red-600)', marginTop: 4 }}>Erro na análise de homônimos: {extractErrorMessage(caseData.aiHomonymError, 'Falha na análise de homônimos.')}</p>
                                 )}
                             </div>
                         )}
@@ -1390,7 +1587,7 @@ export default function CasoPage() {
                         {(caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured) && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                                    <h4>Análise de IA <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
+                                    <h4>Análise automática <span className="caso-api-badge">{caseData.aiModel || 'GPT-5.4-nano'}</span>
                                         {caseData.aiStructuredOk && <span className="caso-api-badge caso-api-badge--green" style={{ marginLeft: 4 }}>JSON ✓</span>}
                                         {caseData.aiStructuredOk === false && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>Texto</span>}
                                         {caseData.aiFromCache && <span className="caso-api-badge" style={{ marginLeft: 4, background: 'var(--gray-100)', color: 'var(--gray-600)' }}>Cache</span>}
@@ -1456,7 +1653,7 @@ export default function CasoPage() {
                                         </div>
                                         {caseData.aiStructured.sugestaoScore != null && (
                                             <div className="ai-structured-card__section">
-                                                <strong>Sugestão IA</strong>
+                                                <strong>Sugestão da análise automática</strong>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
                                                     <ScoreBar score={caseData.aiStructured.sugestaoScore} />
                                                     {caseData.aiStructured.sugestaoVeredito && <RiskChip value={caseData.aiStructured.sugestaoVeredito} size="md" bold />}
@@ -1483,20 +1680,21 @@ export default function CasoPage() {
                                         )}
 
                                         {/* Review buttons: accept / adjust / ignore AI suggestion */}
-                                        {caseData.aiStructured.sugestaoScore != null && caseData.status !== 'DONE' && (
+                                        {caseData.aiStructured.sugestaoScore != null && canEditCase && (
                                             <div className="ai-structured-card__actions">
                                                 <button className="caso-btn caso-btn--primary" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
-                                                    setForm(f => ({
-                                                        ...f,
-                                                        ...(caseData.aiStructured.sugestaoVeredito && { finalVerdict: caseData.aiStructured.sugestaoVeredito }),
-                                                        ...(caseData.aiStructured.sugestaoScore != null && { riskScore: caseData.aiStructured.sugestaoScore }),
-                                                    }));
+                                                    if (caseData.aiStructured.sugestaoVeredito) {
+                                                        dirtyFieldsRef.current.add('finalVerdict');
+                                                        setForm(f => ({
+                                                            ...f,
+                                                            finalVerdict: caseData.aiStructured.sugestaoVeredito,
+                                                        }));
+                                                    }
                                                     callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'ACCEPTED' }).catch((err) => setSaveError(extractErrorMessage(err, 'Falha ao registrar decisao IA.')));
-                                                }}>✓ Aceitar sugestão</button>
+                                                }}>Aplicar resultado sugerido</button>
                                                 <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
-                                                    // P01: ADJUSTED only registers decision — analyst edits values manually
                                                     callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'ADJUSTED' }).catch((err) => setSaveError(extractErrorMessage(err, 'Falha ao registrar decisao IA.')));
-                                                }}>✏️ Ajustar manualmente</button>
+                                                }}>Ajustar manualmente</button>
                                                 <button className="caso-btn caso-btn--ghost" style={{ fontSize: '.75rem', padding: '6px 14px' }} onClick={() => {
                                                     callSetAiDecisionByAnalyst({ caseId: caseData.id, decision: 'IGNORED' }).catch((err) => setSaveError(extractErrorMessage(err, 'Falha ao registrar decisao IA.')));
                                                 }}>Ignorar</button>
@@ -1530,7 +1728,7 @@ export default function CasoPage() {
                         {(caseData.escavadorEnrichmentStatus === 'DONE' || caseData.escavadorEnrichmentStatus === 'PARTIAL') && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <h4>
-                                    Escavador <span className="caso-api-badge">via API</span>
+                                    Escavador <span className="caso-api-badge">via integração</span>
                                     {caseData.escavadorCriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
                                 </h4>
                                 <div className="caso-grid">
@@ -1610,7 +1808,7 @@ export default function CasoPage() {
                         {(caseData.juditEnrichmentStatus === 'DONE' || caseData.juditEnrichmentStatus === 'PARTIAL') && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <h4>
-                                    Judit <span className="caso-api-badge">via API</span>
+                                    Judit <span className="caso-api-badge">via integração</span>
                                     {caseData.juditWarrantFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>MANDADO ATIVO</span>}
                                     {caseData.juditCriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
                                     {caseData.juditHomonymFlag && <span className="caso-api-badge" style={{ marginLeft: 6, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>HOMONIMO</span>}
@@ -1722,7 +1920,7 @@ export default function CasoPage() {
                         {(caseData.bigdatacorpEnrichmentStatus === 'DONE' || caseData.bigdatacorpEnrichmentStatus === 'PARTIAL') && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <h4>
-                                    BigDataCorp <span className="caso-api-badge">via API</span>
+                                    BigDataCorp <span className="caso-api-badge">via integração</span>
                                     {caseData.bigdatacorpHasArrestWarrant && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>MANDADO ATIVO</span>}
                                     {caseData.bigdatacorpCriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
                                     {caseData.bigdatacorpIsPep && <span className="caso-api-badge" style={{ marginLeft: 6, background: 'var(--yellow-100)', color: 'var(--yellow-800)' }}>PEP</span>}
@@ -1844,7 +2042,7 @@ export default function CasoPage() {
 
                         <div className="caso-step-nav">
                             <div />
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -1892,11 +2090,39 @@ export default function CasoPage() {
                     </Modal>
                 )}
 
+                {showLeaveModal && (
+                    <Modal
+                        open={showLeaveModal}
+                        onClose={() => setShowLeaveModal(false)}
+                        title="Sair do caso com rascunho aberto?"
+                        maxWidth={500}
+                        footer={(
+                            <>
+                                <button type="button" className="btn-secondary" onClick={() => setShowLeaveModal(false)}>Continuar revisando</button>
+                                <button type="button" className="btn-secondary" onClick={leaveWithoutSaving}>Sair sem salvar</button>
+                                <button type="button" className="btn-primary" disabled={draftStatus === 'saving'} onClick={saveAndLeave}>
+                                    {draftStatus === 'saving' ? 'Salvando...' : 'Salvar e sair'}
+                                </button>
+                            </>
+                        )}
+                    >
+                        <div className="caso-critical-modal">
+                            <p>Existem alterações locais que ainda não foram registradas como rascunho.</p>
+                            <dl>
+                                <div><dt>Caso</dt><dd>{caseData.id}</dd></div>
+                                <div><dt>Candidato</dt><dd>{caseData.candidateName || 'Não informado'}</dd></div>
+                                <div><dt>Tenant</dt><dd>{caseData.tenantName || caseData.tenantId || 'Não informado'}</dd></div>
+                            </dl>
+                            <p>Salvar o rascunho registra a ação no histórico operacional.</p>
+                        </div>
+                    </Modal>
+                )}
+
                 {showHighRiskConfirm && (
                     <Modal
                         open={showHighRiskConfirm}
                         onClose={() => setShowHighRiskConfirm(false)}
-                        title="Risco alto com veredicto FIT"
+                        title="Atenção alta com resultado FIT"
                         maxWidth={440}
                         footer={(
                             <>
@@ -1908,7 +2134,7 @@ export default function CasoPage() {
                         )}
                     >
                         <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            O score de risco calculado é <strong>{risk.riskScore} pts</strong> ({risk.riskLevel}), mas o veredicto selecionado é <strong>FIT</strong>.
+                            O nível de atenção calculado é <strong>{risk.riskScore} pts</strong> ({risk.riskLevel}), mas o resultado selecionado é <strong>FIT</strong>.
                         </p>
                         <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.5 }}>
                             Deseja concluir o caso mesmo assim? Esta ação ficará registrada no log de auditoria.
@@ -2242,8 +2468,8 @@ export default function CasoPage() {
                         )}
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -2427,8 +2653,8 @@ export default function CasoPage() {
                         )}
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -2602,8 +2828,8 @@ export default function CasoPage() {
                         )}
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -2611,7 +2837,7 @@ export default function CasoPage() {
                 {currentStepKey === 'osint_social' && (
                     <div className="caso-section">
                         {enabledPhases.includes('osint') && (<>
-                        <h3>OSINT</h3>
+                        <h3>Perfis públicos</h3>
                         <div className="caso-field">
                             <label>Nivel <span className="caso-req">*</span></label>
                             <div className="caso-select-group">
@@ -2641,7 +2867,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field">
-                            <label>Resumo OSINT</label>
+                            <label>Resumo de perfis públicos</label>
                             <textarea className="caso-textarea" value={form.osintNotes} onChange={(event) => update('osintNotes', event.target.value)} rows={3} />
                         </div>
                         </>)}
@@ -2687,8 +2913,8 @@ export default function CasoPage() {
                         </>)}
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -2699,7 +2925,7 @@ export default function CasoPage() {
                         <h3>Perfil digital</h3>
                         <div className="caso-field">
                             <label>Perfis informados</label>
-                            <SocialLinks profiles={caseData.socialProfiles || {}} size="md" showEmpty />
+                            <SocialLinks profiles={{ ...(caseData.socialProfiles || {}), otherSocialUrls: caseData.otherSocialUrls || [] }} size="md" showEmpty />
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
@@ -2760,8 +2986,8 @@ export default function CasoPage() {
                         </>)}
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            <button className="caso-btn caso-btn--primary" onClick={() => setActiveStep(activeStep + 1)}>Proximo</button>
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
                 )}
@@ -2776,11 +3002,11 @@ export default function CasoPage() {
                                 <RiskChip value={risk.riskLevel} size="lg" bold />
                             </div>
                             <div className="caso-risk-item">
-                                <span className="caso-risk-label">Score</span>
+                                <span className="caso-risk-label">Nível de atenção</span>
                                 <ScoreBar score={risk.riskScore} />
                             </div>
                             <div className="caso-risk-item">
-                                <span className="caso-risk-label">Veredito sugerido</span>
+                                <span className="caso-risk-label">Resultado sugerido</span>
                                 <RiskChip value={risk.suggestedVerdict} size="lg" bold />
                             </div>
                         </div>
@@ -2821,7 +3047,7 @@ export default function CasoPage() {
                                     )}
                                     {caseData.aiAnalysis && (
                                         <div className="caso-provenance-item caso-provenance-item--ok">
-                                            <span className="caso-provenance-item__label">IA ({caseData.aiModel || 'GPT'})</span>
+                                            <span className="caso-provenance-item__label">Análise automática ({caseData.aiModel || 'GPT'})</span>
                                             <span className="caso-provenance-item__status">Analisado</span>
                                         </div>
                                     )}
@@ -2881,9 +3107,9 @@ export default function CasoPage() {
                             {checklist.map((item) => (
                                 <div
                                     key={item.label}
-                                    className={`caso-checklist__item ${item.warn ? 'caso-checklist__item--warn' : item.ok ? 'caso-checklist__item--ok' : 'caso-checklist__item--missing'}`}
+                                    className={`caso-checklist__item ${item.block ? 'caso-checklist__item--block' : item.warn ? 'caso-checklist__item--warn' : item.ok ? 'caso-checklist__item--ok' : 'caso-checklist__item--missing'}`}
                                 >
-                                    <span>{item.warn ? '⚠' : item.ok ? 'OK' : 'X'}</span>
+                                    <span>{item.block ? 'Bloqueio' : item.warn ? 'Aviso' : item.ok ? 'OK' : 'Pendente'}</span>
                                     <span>{item.label}</span>
                                 </div>
                             ))}
@@ -2906,10 +3132,10 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field">
-                            <label>Justificativa final do veredito</label>
+                            <label>Justificativa final do resultado</label>
                             <textarea
                                 className="caso-textarea caso-textarea--autosize"
-                                aria-label="Justificativa final do veredito"
+                                aria-label="Justificativa final do resultado"
                                 value={form.analystComment}
                                 onChange={(event) => update('analystComment', event.target.value)}
                                 rows={4}
@@ -2922,8 +3148,8 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-step-nav">
-                            <button className="caso-btn caso-btn--ghost" onClick={() => setActiveStep(activeStep - 1)}>Anterior</button>
-                            {caseData.status !== 'DONE' && (
+                            <button className="caso-btn caso-btn--ghost" onClick={goToPreviousStep}>Anterior</button>
+                            {canEditCase && (
                                 <button className="caso-btn caso-btn--primary caso-btn--conclude" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                                     {saving ? 'Salvando...' : 'Concluir caso'}
                                 </button>
@@ -2950,6 +3176,43 @@ export default function CasoPage() {
                     </ol>
                 </details>
             )}
-        </div>
+
+            {/* Assignment modal */}
+            <Modal
+                open={assignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                title={caseData?.assigneeId ? 'Trocar responsavel' : 'Atribuir caso'}
+            >
+                <div style={{ minWidth: 280 }}>
+                    <p style={{ marginBottom: 16, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Caso: <strong style={{ color: 'var(--text-primary)' }}>{caseData?.candidateName}</strong>
+                    </p>
+                    {assignError && (
+                        <div role="alert" style={{ padding: 'var(--space-3)', background: 'var(--red-50)', color: 'var(--red-700)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-3)', fontSize: '0.875rem' }}>
+                            {assignError}
+                        </div>
+                    )}
+                    {opsUsers.length === 0 && !assignError ? (
+                        <p style={{ color: 'var(--text-secondary)', padding: 'var(--space-4) 0', textAlign: 'center' }}>Nenhum analista disponivel.</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto' }}>
+                            {opsUsers.map((u) => (
+                                <button
+                                    key={u.uid}
+                                    type="button"
+                                    className="btn-secondary"
+                                    style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '12px 16px' }}
+                                    disabled={assigning}
+                                    onClick={() => handleAssignToUser(u.uid)}
+                                >
+                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.displayName || u.email}</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
+        </PageShell>
     );
 }

@@ -3,35 +3,11 @@
    ============================================ */
 .ops-dash {
     width: 100%;
-    max-width: 1240px;
-    margin: 0 auto;
     min-width: 0;
 }
 .ops-dash__loading {
     color: var(--text-secondary);
     padding: var(--space-6) 0;
-}
-
-/* ── Header ── */
-.ops-dash__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-bottom: var(--space-6);
-    padding: var(--space-5);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border-default);
-    background:
-        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
-        linear-gradient(135deg, var(--bg-card), var(--gray-50));
-    box-shadow: var(--shadow-xs);
-}
-.ops-dash__title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 0;
 }
 
 /* Period tabs */
@@ -397,9 +373,6 @@
 }
 
 @media (max-width: 768px) {
-    .ops-dash__header {
-        padding: var(--space-4);
-    }
     .ops-dash__grid-2 { grid-template-columns: 1fr; }
     .ops-dash__grid-3 { grid-template-columns: 1fr; }
     .ops-dash__kpi-row { grid-template-columns: repeat(2, 1fr); }

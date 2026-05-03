@@ -5,59 +5,6 @@
     min-width: 0;
 }
 
-.saude-header {
-    background:
-        radial-gradient(circle at top right, rgba(99, 102, 241, .08), transparent 30%),
-        linear-gradient(135deg, var(--bg-card), var(--gray-50));
-    padding: var(--space-6) var(--space-8);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 4px solid var(--brand-500);
-}
-
-.saude-header__title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 4px 0;
-    line-height: 1.2;
-}
-
-.saude-header__subtitle {
-    font-size: .875rem;
-    color: var(--text-secondary);
-    margin: 0;
-}
-
-.saude-header__actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.saude-header__refresh {
-    padding: 6px 14px;
-    border-radius: 8px;
-    background: var(--brand-600);
-    color: #fff;
-    border: 1px solid var(--brand-500);
-    cursor: pointer;
-    font-size: .8125rem;
-    font-weight: 600;
-    transition: background .15s;
-}
-
-.saude-header__refresh:hover {
-    background: var(--brand-700);
-}
-
-.saude-header__refresh:disabled {
-    opacity: .5;
-    cursor: not-allowed;
-}
-
 .saude-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));

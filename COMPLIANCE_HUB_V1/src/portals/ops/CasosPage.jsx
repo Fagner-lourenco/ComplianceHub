@@ -11,8 +11,12 @@ import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatDate } from '../../core/formatDate';
 import { useCases } from '../../hooks/useCases';
 import { getCaseStats } from '../../core/caseUtils';
+import { getSlaStatus } from '../../core/caseSla';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage } from '../../core/errorUtils';
+import SlaBadge from '../../ui/components/SlaBadge/SlaBadge';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './CasosPage.css';
 
 function formatFullCpf(cpf) {
@@ -24,10 +28,10 @@ function formatFullCpf(cpf) {
 function EnrichmentIcon({ status }) {
     if (!status || status === 'PENDING') return null;
     const config = {
-        RUNNING: { cls: 'enrichment-icon--running', title: 'Enriquecimento em andamento', label: '' },
-        DONE: { cls: 'enrichment-icon--done', title: 'Enriquecimento concluido', label: '✓' },
-        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Enriquecimento parcial', label: '!' },
-        FAILED: { cls: 'enrichment-icon--failed', title: 'Enriquecimento falhou', label: '✕' },
+        RUNNING: { cls: 'enrichment-icon--running', title: 'Consulta em andamento', label: '' },
+        DONE: { cls: 'enrichment-icon--done', title: 'Consulta concluída', label: '✓' },
+        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Consulta parcial', label: '!' },
+        FAILED: { cls: 'enrichment-icon--failed', title: 'Consulta falhou', label: '✕' },
         BLOCKED: { cls: 'enrichment-icon--blocked', title: 'CPF bloqueado no gate de identidade', label: '⊘' },
     };
     const c = config[status];
@@ -53,6 +57,7 @@ export default function CasosPage() {
     const [riskFilter, setRiskFilter] = useState('ALL');
     const [enrichmentFilter, setEnrichmentFilter] = useState('ALL');
     const [verdictFilter, setVerdictFilter] = useState('ALL');
+    const [slaFilter, setSlaFilter] = useState('ALL');
 
     const stats = useMemo(() => getCaseStats(cases), [cases]);
 
@@ -75,6 +80,16 @@ export default function CasosPage() {
             result = result.filter((c) => getOverallEnrichmentStatus(c) === enrichmentFilter);
         }
 
+        if (slaFilter !== 'ALL') {
+            result = result.filter((c) => {
+                const { state } = getSlaStatus(c);
+                if (slaFilter === 'ON_TIME') return state === 'on_time';
+                if (slaFilter === 'WARNING') return state === 'warning';
+                if (slaFilter === 'OVERDUE') return state === 'overdue';
+                return true;
+            });
+        }
+
         if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
         if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
 
@@ -91,10 +106,15 @@ export default function CasosPage() {
         }
 
         return result;
-    }, [cases, dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, statusFilter, verdictFilter]);
+    }, [cases, dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, slaFilter, statusFilter, verdictFilter]);
 
     return (
-        <div className="casos-page">
+        <PageShell size="default" className="casos-page">
+            <PageHeader
+                eyebrow="Operacional"
+                title="Casos"
+                description="Consulte todas as análises, filtre por situação e acompanhe os resultados."
+            />
             <div className="casos-page__kpis">
                 <KpiCard label="Total" value={stats.total} color="neutral" onClick={() => setStatusFilter('ALL')} />
                 <KpiCard label="Concluidos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} />
@@ -149,18 +169,24 @@ export default function CasosPage() {
                         <option value="LOW">Baixo</option>
                     </select>
                     <select className="filter-bar__select" value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)}>
-                        <option value="ALL">Todos os vereditos</option>
+                        <option value="ALL">Todos os resultados</option>
                         <option value="FIT">FIT</option>
                         <option value="ATTENTION">ATTENTION</option>
                         <option value="NOT_RECOMMENDED">NOT RECOMMENDED</option>
                     </select>
                     <select className="filter-bar__select" value={enrichmentFilter} onChange={(e) => setEnrichmentFilter(e.target.value)}>
-                        <option value="ALL">Enriquecimento</option>
+                        <option value="ALL">Consulta automática</option>
                         <option value="DONE">Concluído</option>
                         <option value="RUNNING">Em andamento</option>
                         <option value="PARTIAL">Parcial</option>
                         <option value="FAILED">Falhou</option>
                         <option value="BLOCKED">Bloqueado</option>
+                    </select>
+                    <select className="filter-bar__select" value={slaFilter} onChange={(e) => setSlaFilter(e.target.value)}>
+                        <option value="ALL">Prazo combinado</option>
+                        <option value="ON_TIME">No prazo</option>
+                        <option value="WARNING">Alerta</option>
+                        <option value="OVERDUE">Vencido</option>
                     </select>
                     <input type="date" className="filter-bar__select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" />
                     <input type="date" className="filter-bar__select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" />
@@ -187,6 +213,7 @@ export default function CasosPage() {
                             <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
                         </div>
                         <div className="mobile-card__badges">
+                            <SlaBadge caseData={currentCase} />
                             <RiskChip value={currentCase.riskLevel} />
                             <RiskChip value={currentCase.finalVerdict} bold />
                             <ScoreBar score={currentCase.riskScore} />
@@ -216,24 +243,25 @@ export default function CasosPage() {
                                 <th className="data-table__th" scope="col">Cargo</th>
                                 <th className="data-table__th" scope="col">Data</th>
                                 <th className="data-table__th" scope="col">Status</th>
-                                <th className="data-table__th" scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
+                                <th className="data-table__th" scope="col">Prazo</th>
+                                <th className="data-table__th" scope="col" style={{ width: 40 }} title="Consulta automática">⚡</th>
                                 <th className="data-table__th" scope="col">Criminal</th>
                                 <th className="data-table__th" scope="col">Score</th>
-                                <th className="data-table__th" scope="col">Veredito</th>
+                                <th className="data-table__th" scope="col">Resultado</th>
                                 <th className="data-table__th" scope="col">Acoes</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading && (
                                 <tr>
-                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                    <td colSpan={13} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                         Carregando casos...
                                     </td>
                                 </tr>
                             )}
                             {!loading && error && (
                                 <tr>
-                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
+                                    <td colSpan={13} className="data-table__empty" style={{ textAlign: 'center', padding: 48, color: 'var(--red-700)' }}>
                                         {extractErrorMessage(error, 'Nao foi possivel carregar os casos agora.')}
                                     </td>
                                 </tr>
@@ -247,6 +275,7 @@ export default function CasosPage() {
                                     <td className="data-table__td">{currentCase.candidatePosition}</td>
                                     <td className="data-table__td">{formatDate(currentCase.createdAt)}</td>
                                     <td className="data-table__td"><StatusBadge status={currentCase.status} /></td>
+                                    <td className="data-table__td"><SlaBadge caseData={currentCase} /></td>
                                     <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                     <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
                                     <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
@@ -263,7 +292,7 @@ export default function CasosPage() {
                             ))}
                             {!loading && !error && filtered.length === 0 && (
                                 <tr>
-                                    <td colSpan={12} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
+                                    <td colSpan={13} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                         Nenhum caso encontrado.
                                     </td>
                                 </tr>
@@ -276,6 +305,6 @@ export default function CasosPage() {
             <div style={{ textAlign: 'right', fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
                 Mostrando {filtered.length} de {cases.length} casos
             </div>
-        </div>
+        </PageShell>
     );
 }

@@ -9,6 +9,8 @@ import {
 } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './TenantSettingsPage.css';
 
 const DEFAULT_ENRICHMENT = {
@@ -87,18 +89,21 @@ export default function TenantSettingsPage() {
     const { tenantId } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
     const [tenantName, setTenantName] = useState('');
     const [phases, setPhases] = useState(null);
-    const [limits, setLimits] = useState({ dailyLimit: '', monthlyLimit: '', allowDailyExceedance: true, allowMonthlyExceedance: false });
+    const [limits, setLimits] = useState({ dailyLimit: '', monthlyLimit: '', slaHours: 48, allowDailyExceedance: true, allowMonthlyExceedance: false });
     const [enrichment, setEnrichment] = useState({ ...DEFAULT_ENRICHMENT });
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [saved, setSaved] = useState(false);
     const [quota, setQuota] = useState(null);
+    const [limitErrors, setLimitErrors] = useState({ daily: '', monthly: '', sla: '' });
 
     useEffect(() => {
         if (!tenantId) return;
         setLoading(true);
+        setLoadError(null);
         setError(null);
         getTenantSettings(tenantId)
             .then((settings) => {
@@ -107,11 +112,11 @@ export default function TenantSettingsPage() {
                 setLimits({
                     dailyLimit: settings.dailyLimit ?? '',
                     monthlyLimit: settings.monthlyLimit ?? '',
+                    slaHours: settings.slaHours ?? 48,
                     allowDailyExceedance: settings.allowDailyExceedance !== false,
                     allowMonthlyExceedance: settings.allowMonthlyExceedance === true,
                 });
                 setEnrichment(mergeEnrichment(settings.enrichmentConfig));
-                // Load usage counters from tenantUsage collection
                 if (settings.dailyLimit || settings.monthlyLimit) {
                     getTenantUsage(tenantId).then((usage) => {
                         const now = new Date();
@@ -130,27 +135,48 @@ export default function TenantSettingsPage() {
                 }
             })
             .catch((err) => {
-                setPhases({ ...DEFAULT_ANALYSIS_CONFIG });
+                setLoadError(extractErrorMessage(err, 'Nao foi possivel carregar a configuracao.'));
+                setPhases(null);
                 setEnrichment({ ...DEFAULT_ENRICHMENT });
-                setError(extractErrorMessage(err, 'Nao foi possivel carregar a configuracao. Exibindo valores padrao.'));
             })
             .finally(() => setLoading(false));
     }, [tenantId]);
 
+    const validateLimits = (nextLimits) => {
+        const errors = { daily: '', monthly: '', sla: '' };
+        if (nextLimits.dailyLimit !== '' && nextLimits.dailyLimit !== null && nextLimits.dailyLimit !== undefined) {
+            const val = Number(nextLimits.dailyLimit);
+            if (Number.isNaN(val) || val < 0) errors.daily = 'Limite diario invalido.';
+        }
+        if (nextLimits.monthlyLimit !== '' && nextLimits.monthlyLimit !== null && nextLimits.monthlyLimit !== undefined) {
+            const val = Number(nextLimits.monthlyLimit);
+            if (Number.isNaN(val) || val < 0) errors.monthly = 'Limite mensal invalido.';
+        }
+        if (nextLimits.slaHours !== '' && nextLimits.slaHours !== null && nextLimits.slaHours !== undefined) {
+            const val = Number(nextLimits.slaHours);
+            if (Number.isNaN(val) || val < 1 || !Number.isFinite(val)) errors.sla = 'Prazo de resposta invalido. Deve ser pelo menos 1 hora.';
+        }
+        setLimitErrors(errors);
+        return !errors.daily && !errors.monthly && !errors.sla;
+    };
+
     const handleSave = async () => {
-        if (!tenantId || !phases) return;
+        if (!tenantId || !phases || loadError) return;
+        if (!validateLimits(limits)) return;
         setSaving(true);
         setSaved(false);
         setError(null);
         try {
             const rawDaily = limits.dailyLimit === '' ? null : Number(limits.dailyLimit);
             const rawMonthly = limits.monthlyLimit === '' ? null : Number(limits.monthlyLimit);
+            const rawSlaHours = limits.slaHours === '' ? 48 : Number(limits.slaHours);
             await callUpdateTenantSettingsByAnalyst({
                 tenantId,
                 analysisConfig: phases,
                 limits: {
-                    dailyLimit: rawDaily !== null && (isNaN(rawDaily) || rawDaily < 0) ? null : rawDaily,
-                    monthlyLimit: rawMonthly !== null && (isNaN(rawMonthly) || rawMonthly < 0) ? null : rawMonthly,
+                    dailyLimit: rawDaily,
+                    monthlyLimit: rawMonthly,
+                    slaHours: rawSlaHours,
                     allowDailyExceedance: limits.allowDailyExceedance,
                     allowMonthlyExceedance: limits.allowMonthlyExceedance,
                 },
@@ -165,28 +191,35 @@ export default function TenantSettingsPage() {
         }
     };
 
+    const tenantDisplayName = tenantName || tenantId || 'Empresa';
+
     if (loading) {
         return (
-            <div className="ts-page">
-                <p className="ts-page__loading">Carregando configuracoes...</p>
-            </div>
+            <PageShell size="narrow" className="ts-page" role="status" aria-live="polite" aria-label="Carregando configurações da empresa">
+                <p className="ts-page__loading" aria-busy="true">Carregando configuracoes...</p>
+            </PageShell>
         );
     }
 
     return (
-        <div className="ts-page">
-            <div className="ts-page__header">
-                <button type="button" className="ts-page__back" onClick={() => navigate('/ops/clientes')}>&larr; Voltar</button>
-                <div>
-                    <h2 className="ts-page__title">Configuracoes do Tenant</h2>
-                    <p className="ts-page__subtitle">{tenantName || tenantId}</p>
-                </div>
-                <div className="ts-page__actions">
-                    <button type="button" className="ts-btn ts-btn--primary" disabled={saving} onClick={handleSave}>
-                        {saving ? 'Salvando...' : 'Salvar configuracao'}
+        <PageShell size="narrow" className="ts-page">
+            <PageHeader
+                eyebrow="Configurações da empresa"
+                title={tenantDisplayName}
+                description="Ajuste etapas da análise, limites de uso e fontes de consulta."
+                backAction={{ to: '/ops/clientes', label: '← Clientes' }}
+                actions={
+                    <button
+                        type="button"
+                        className="ts-btn ts-btn--primary"
+                        disabled={saving || loadError || !phases}
+                        onClick={handleSave}
+                        title={loadError ? 'Recarregue a pagina para tentar novamente' : ''}
+                    >
+                        {saving ? 'Salvando...' : loadError ? 'Carregamento com erro' : 'Salvar configuracao'}
                     </button>
-                </div>
-            </div>
+                }
+            />
 
             {error && (
                 <div className="ts-alert ts-alert--error" role="alert">{error}</div>
@@ -199,7 +232,7 @@ export default function TenantSettingsPage() {
                 {/* ─── Fases de Analise ─── */}
                 <section className="ts-card">
                     <h3 className="ts-card__title">Fases de Analise</h3>
-                    <p className="ts-card__desc">Habilite ou desabilite as fases de analise para esta franquia.</p>
+                    <p className="ts-card__desc">Habilite ou desabilite as etapas da análise para esta empresa.</p>
                     {phases && Object.entries(ANALYSIS_PHASE_LABELS).map(([key, label]) => (
                         <div key={key} className="ts-toggle-row">
                             <span className="ts-toggle-label">{label}</span>
@@ -224,22 +257,53 @@ export default function TenantSettingsPage() {
                         <input
                             type="number"
                             min="0"
-                            className="ts-input"
+                            className={`ts-input ${limitErrors.daily ? 'ts-input--error' : ''}`}
                             placeholder="Ilimitado"
                             value={limits.dailyLimit}
-                            onChange={(e) => setLimits((prev) => ({ ...prev, dailyLimit: e.target.value }))}
+                            onChange={(e) => {
+                                setLimits((prev) => ({ ...prev, dailyLimit: e.target.value }));
+                                if (limitErrors.daily) setLimitErrors((prev) => ({ ...prev, daily: '' }));
+                            }}
+                            aria-invalid={!!limitErrors.daily}
                         />
+                        {limitErrors.daily && <span className="ts-field-error">{limitErrors.daily}</span>}
                     </div>
                     <div className="ts-form-group">
                         <label className="ts-label">Limite mensal</label>
                         <input
                             type="number"
                             min="0"
-                            className="ts-input"
+                            className={`ts-input ${limitErrors.monthly ? 'ts-input--error' : ''}`}
                             placeholder="Ilimitado"
                             value={limits.monthlyLimit}
-                            onChange={(e) => setLimits((prev) => ({ ...prev, monthlyLimit: e.target.value }))}
+                            onChange={(e) => {
+                                setLimits((prev) => ({ ...prev, monthlyLimit: e.target.value }));
+                                if (limitErrors.monthly) setLimitErrors((prev) => ({ ...prev, monthly: '' }));
+                            }}
+                            aria-invalid={!!limitErrors.monthly}
                         />
+                        {limitErrors.monthly && <span className="ts-field-error">{limitErrors.monthly}</span>}
+                    </div>
+
+                    <div className="ts-form-group">
+                        <label className="ts-label">Prazo de resposta combinado</label>
+                        <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            className={`ts-input ${limitErrors.sla ? 'ts-input--error' : ''}`}
+                            placeholder="48"
+                            value={limits.slaHours}
+                            onChange={(e) => {
+                                setLimits((prev) => ({ ...prev, slaHours: e.target.value }));
+                                if (limitErrors.sla) setLimitErrors((prev) => ({ ...prev, sla: '' }));
+                            }}
+                            aria-invalid={!!limitErrors.sla}
+                        />
+                        <span className="ts-hint">
+                            Prazo padrão, em horas, para conclusão das novas solicitações desta empresa.
+                        </span>
+                        {limitErrors.sla && <span className="ts-field-error">{limitErrors.sla}</span>}
                     </div>
 
                     <hr className="ts-divider" />
@@ -276,11 +340,11 @@ export default function TenantSettingsPage() {
                     )}
                 </section>
 
-                {/* ─── Pipeline de Enriquecimento ─── */}
+                {/* ─── Etapas da Consulta Automática ─── */}
                 <section className="ts-card ts-card--full">
                     <h3 className="ts-card__title">Pipeline de Enriquecimento</h3>
                     <p className="ts-card__desc">
-                        Consultas externas executadas automaticamente ao criar uma solicitacao. Providers rodam em paralelo.
+                        Consultas externas executadas automaticamente ao criar uma solicitação. Sequência: BigDataCorp → Judit → Escavador/DJEN.
                     </p>
 
                     <div className="ts-toggle-row">
@@ -289,7 +353,7 @@ export default function TenantSettingsPage() {
                             type="button"
                             className={`ts-toggle ${enrichment.enabled ? 'ts-toggle--on' : 'ts-toggle--off'}`}
                             onClick={() => setEnrichment((prev) => ({ ...prev, enabled: !prev.enabled }))}
-                            aria-label="Toggle enriquecimento"
+                            aria-label="Ativar consulta automática"
                         >
                             <span className="ts-toggle__knob" />
                         </button>
@@ -305,7 +369,7 @@ export default function TenantSettingsPage() {
                                         <div>
                                             <label className="ts-label">Gate de identidade — similaridade minima do nome</label>
                                             <p className="ts-hint" style={{ margin: 0 }}>
-                                                Nomes abaixo deste limiar bloqueiam o enriquecimento do provider. Aplica-se a BigDataCorp e Judit.
+                                                Nomes abaixo deste limiar bloqueiam a consulta automática da fonte de dados. Aplica-se a BigDataCorp e Judit.
                                             </p>
                                         </div>
                                         <input
@@ -315,10 +379,15 @@ export default function TenantSettingsPage() {
                                             step="0.05"
                                             className="ts-input ts-input--sm"
                                             value={enrichment.gate?.minNameSimilarity ?? 0.7}
-                                            onChange={(e) => setEnrichment((prev) => ({
-                                                ...prev,
-                                                gate: { ...prev.gate, minNameSimilarity: parseFloat(e.target.value) || 0 },
-                                            }))}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                const parsed = val === '' ? 0.7 : parseFloat(val);
+                                                const clamped = Number.isFinite(parsed) ? Math.min(1, Math.max(0, parsed)) : 0.7;
+                                                setEnrichment((prev) => ({
+                                                    ...prev,
+                                                    gate: { ...prev.gate, minNameSimilarity: clamped },
+                                                }));
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -344,7 +413,7 @@ export default function TenantSettingsPage() {
                                     <div className="ts-enrichment-section">
                                         <h4 className="ts-enrichment-title"><span className="ts-provider-number">1</span> BigDataCorp</h4>
                                         <p className="ts-hint" style={{ marginBottom: 8 }}>
-                                            Provider primario. Valida CPF, busca processos judiciais e faz screening KYC (PEP, sancoes, mandados).
+                                            Fonte de dados primária. Valida CPF, busca processos judiciais e faz screening KYC (PEP, sanções, mandados).
                                         </p>
                                         <div className="ts-toggle-row">
                                             <span className="ts-toggle-label" style={{ fontWeight: 500 }}>Habilitado</span>
@@ -532,7 +601,7 @@ export default function TenantSettingsPage() {
                                         <details>
                                             <summary className="ts-enrichment-title" style={{ cursor: 'pointer' }}><span className="ts-provider-number ts-provider-number--muted">4</span> FonteData <span className="ts-hint">(legado / fallback)</span></summary>
                                             <p className="ts-hint" style={{ marginBottom: 8, marginTop: 4 }}>
-                                                APIs legadas. Usadas como fonte complementar ou sob demanda manual.
+                                                Integrações legadas. Usadas como fonte complementar ou sob demanda manual.
                                             </p>
                                             {[
                                                 { key: 'identity', label: 'Dados Cadastrais (PF Basica)', cost: 'R$ 0,24' },
@@ -573,7 +642,7 @@ export default function TenantSettingsPage() {
 
                                     {/* 5. IA */}
                                     <div className="ts-enrichment-section">
-                                        <h4 className="ts-enrichment-title"><span className="ts-provider-number">5</span> Analise de IA</h4>
+                                        <h4 className="ts-enrichment-title"><span className="ts-provider-number">5</span> Análise Automática</h4>
                                         <p className="ts-hint" style={{ marginBottom: 8 }}>
                                             Detecta homonimos, resolve ambiguidades e gera resumo executivo com recomendacao.
                                         </p>
@@ -611,6 +680,6 @@ export default function TenantSettingsPage() {
                     })()}
                 </section>
             </div>
-        </div>
+        </PageShell>
     );
 }

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../core/auth/useAuth';
 import { callGetSystemHealth } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './SaudePage.css';
 
 function formatTs(value) {
@@ -12,17 +14,25 @@ function formatTs(value) {
 }
 
 function getStatus(provider) {
-    if (!provider) return 'healthy';
+    // BUG-R6-008: Absence of telemetry is NOT healthy — it's unknown/stale.
+    if (!provider) return 'unknown';
     const now = Date.now();
     const disabledUntil = provider.disabledUntil?.seconds
         ? provider.disabledUntil.seconds * 1000
         : provider.disabledUntil || 0;
     if (disabledUntil > now) return 'down';
     if ((provider.failCount || 0) > 0) return 'degraded';
+    // If we have no lastSuccess timestamp, the provider has never been checked.
+    if (!provider.lastSuccess && !provider.lastFailure) return 'unknown';
+    // If lastSuccess is older than 30 minutes, consider stale/degraded.
+    const lastSuccessMs = provider.lastSuccess?.seconds
+        ? provider.lastSuccess.seconds * 1000
+        : provider.lastSuccess || 0;
+    if (lastSuccessMs && (now - lastSuccessMs) > 30 * 60 * 1000) return 'stale';
     return 'healthy';
 }
 
-const STATUS_LABELS = { healthy: 'Saudável', degraded: 'Degradado', down: 'Indisponível' };
+const STATUS_LABELS = { healthy: 'Saudável', degraded: 'Degradado', down: 'Indisponível', unknown: 'Desconhecido', stale: 'Desatualizado' };
 
 const KNOWN_PROVIDERS = ['judit', 'escavador', 'fontedata', 'bigdatacorp', 'openai'];
 
@@ -52,7 +62,7 @@ export default function SaudePage() {
                 setProviders(data?.providers || {});
             }
         } catch (err) {
-            setError(extractErrorMessage(err, 'Não foi possível carregar a saúde dos provedores.'));
+            setError(extractErrorMessage(err, 'Não foi possível carregar a saúde das fontes de dados.'));
         } finally {
             setLoading(false);
         }
@@ -66,23 +76,22 @@ export default function SaudePage() {
     }));
 
     return (
-        <div className="saude-page">
-            <div className="saude-header">
-                <div>
-                    <h2 className="saude-header__title">Saúde dos Provedores</h2>
-                    <p className="saude-header__subtitle">Circuit breaker e status em tempo real</p>
-                </div>
-                <div className="saude-header__actions">
+        <PageShell size="default" className="saude-page">
+            <PageHeader
+                eyebrow="Integrações"
+                title="Saúde das integrações"
+                description="Verifique se as fontes de consulta estão disponíveis para uso."
+                actions={
                     <button
                         type="button"
-                        className="saude-header__refresh"
+                        className="btn-secondary"
                         onClick={load}
                         disabled={loading}
                     >
                         {loading ? 'Carregando…' : '↻ Atualizar'}
                     </button>
-                </div>
-            </div>
+                }
+            />
 
             {error && <div className="saude-error">{error}</div>}
 
@@ -128,6 +137,6 @@ export default function SaudePage() {
                     );
                 })}
             </div>
-        </div>
+        </PageShell>
     );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Modal from '../../ui/components/Modal/Modal';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
@@ -10,19 +11,26 @@ import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useCases } from '../../hooks/useCases';
-import { callAssignCaseToCurrentAnalyst } from '../../core/firebase/firestoreService';
+import {
+    callAssignCaseToCurrentAnalyst,
+    callAssignCaseToAnalyst,
+    callListOpsUsers,
+} from '../../core/firebase/firestoreService';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { formatDate } from '../../core/formatDate';
 import { extractErrorMessage } from '../../core/errorUtils';
+import SlaBadge from '../../ui/components/SlaBadge/SlaBadge';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './FilaPage.css';
 
 function EnrichmentIcon({ status }) {
     if (!status || status === 'PENDING') return null;
     const config = {
-        RUNNING: { cls: 'enrichment-icon--running', title: 'Enriquecimento em andamento', label: '' },
-        DONE: { cls: 'enrichment-icon--done', title: 'Enriquecimento concluido', label: '✓' },
-        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Enriquecimento parcial', label: '!' },
-        FAILED: { cls: 'enrichment-icon--failed', title: 'Enriquecimento falhou', label: '✕' },
+        RUNNING: { cls: 'enrichment-icon--running', title: 'Consulta em andamento', label: '' },
+        DONE: { cls: 'enrichment-icon--done', title: 'Consulta concluída', label: '✓' },
+        PARTIAL: { cls: 'enrichment-icon--partial', title: 'Consulta parcial', label: '!' },
+        FAILED: { cls: 'enrichment-icon--failed', title: 'Consulta falhou', label: '✕' },
         BLOCKED: { cls: 'enrichment-icon--blocked', title: 'CPF bloqueado no gate de identidade', label: '⊘' },
     };
     const c = config[status];
@@ -32,7 +40,7 @@ function EnrichmentIcon({ status }) {
 
 export default function FilaPage() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const isDemoMode = !user;
     const routePrefix = isDemoMode ? '/demo' : '';
     const { selectedTenantId } = useTenant();
@@ -51,9 +59,19 @@ export default function FilaPage() {
     const [selected, setSelected] = useState(new Set());
     const [bulkRunning, setBulkRunning] = useState(false);
 
+    // Assignment modal state
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [assignModalCase, setAssignModalCase] = useState(null);
+    const [opsUsers, setOpsUsers] = useState([]);
+    const [assigning, setAssigning] = useState(false);
+    const [assignError, setAssignError] = useState(null);
+
     useEffect(() => {
         return () => { clearTimeout(assumeErrorTimerRef.current); };
     }, []);
+
+    const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
+    const isAssignable = (c) => c.status === 'PENDING' && !c.assigneeId;
 
     const queue = useMemo(() => {
         let result = cases.filter((currentCase) => currentCase.status !== 'DONE');
@@ -111,7 +129,8 @@ export default function FilaPage() {
         if (selected.size === queue.length) {
             setSelected(new Set());
         } else {
-            setSelected(new Set(queue.map((c) => c.id)));
+            // FILA-002: só seleciona casos assumíveis (PENDING sem responsável)
+            setSelected(new Set(queue.filter(isAssignable).map((c) => c.id)));
         }
     };
 
@@ -120,23 +139,58 @@ export default function FilaPage() {
         setBulkRunning(true);
         setAssumeError(null);
         const ids = [...selected];
-        let failed = 0;
+        const failedIds = [];
         for (const id of ids) {
             try {
                 await callAssignCaseToCurrentAnalyst({ caseId: id });
-            } catch { failed++; }
+            } catch {
+                failedIds.push(id);
+            }
         }
         setBulkRunning(false);
         setSelected(new Set());
-        if (failed > 0) {
-            setAssumeError(`${failed} de ${ids.length} caso(s) falharam ao ser atribuídos.`);
+        if (failedIds.length > 0) {
+            setAssumeError(`${failedIds.length} de ${ids.length} caso(s) falharam ao ser atribuídos.`);
             clearTimeout(assumeErrorTimerRef.current);
             assumeErrorTimerRef.current = setTimeout(() => setAssumeError(null), 6000);
         }
     };
 
+    const openAssignModal = async (currentCase) => {
+        if (!canAssignOthers || isDemoMode) return;
+        setAssignModalCase(currentCase);
+        setAssignError(null);
+        setAssignModalOpen(true);
+        try {
+            const res = await callListOpsUsers();
+            setOpsUsers((res?.users || []).filter((u) => u.status === 'active' && u.uid !== currentCase.assigneeId));
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Erro ao carregar analistas.'));
+        }
+    };
+
+    const handleAssignToUser = async (targetUid) => {
+        if (!assignModalCase || assigning) return;
+        setAssigning(true);
+        setAssignError(null);
+        try {
+            await callAssignCaseToAnalyst({ caseId: assignModalCase.id, targetUid });
+            setAssignModalOpen(false);
+            setAssignModalCase(null);
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Falha ao atribuir caso.'));
+        } finally {
+            setAssigning(false);
+        }
+    };
+
     return (
-        <div className="fila-page">
+        <PageShell size="default" className="fila-page">
+            <PageHeader
+                eyebrow="Operacional"
+                title="Fila de análise"
+                description="Priorize solicitações pendentes, casos próximos do prazo e análises aguardando responsável."
+            />
             <div className="fila-page__kpis">
                 <KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setFilter('PENDING')} />
                 <KpiCard label="Em Analise" value={stats.inProgress} color="blue" onClick={() => setFilter('IN_PROGRESS')} />
@@ -175,8 +229,8 @@ export default function FilaPage() {
                         <option value="MINE">Meus casos</option>
                         <option value="UNASSIGNED">Sem responsavel</option>
                     </select>
-                    <input type="date" className="fila-filter-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" />
-                    <input type="date" className="fila-filter-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" />
+                    <input type="date" className="fila-filter-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" aria-label="Filtrar de" />
+                    <input type="date" className="fila-filter-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" aria-label="Filtrar ate" />
                 </div>
             </FilterPanelMobile>
 
@@ -193,7 +247,7 @@ export default function FilaPage() {
             <MobileDataCardList
                 items={queue}
                 loading={loading}
-                emptyMessage="Nenhum caso pendente na fila."
+                emptyMessage={filter !== 'ALL' || assignment !== 'ALL' || dateFrom || dateTo ? 'Nenhum caso corresponde aos filtros selecionados.' : 'Nenhum caso pendente na fila.'}
                 renderCard={(currentCase) => (
                     <>
                         <div className="mobile-card__header">
@@ -208,14 +262,15 @@ export default function FilaPage() {
                                 <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
                             )}
                             <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
-                            <span className={`fila-priority fila-priority--${currentCase.priority.toLowerCase()}`}>
+                            <span className={`fila-priority fila-priority--${(currentCase.priority || 'normal').toLowerCase()}`}>
                                 {currentCase.priority === 'HIGH' ? 'Alta' : 'Normal'}
                             </span>
                         </div>
                         <div className="mobile-card__badges">
+                            <SlaBadge caseData={currentCase} />
                             <RiskChip value={currentCase.riskLevel} />
                             <RiskChip value={currentCase.criminalFlag} />
-                            <ScoreBar score={currentCase.riskScore} />
+                            <ScoreBar score={currentCase.riskScore ?? null} />
                             <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
                         </div>
                         <div className="mobile-card__divider" />
@@ -233,10 +288,17 @@ export default function FilaPage() {
                                 Abrir
                             </button>
                         </div>
+                        {currentCase.assigneeName && (
+                            <div className="mobile-card__meta">
+                                <span className="mobile-card__meta-item" style={{ color: 'var(--text-secondary)' }}>
+                                    Responsavel: {currentCase.assigneeName}
+                                </span>
+                            </div>
+                        )}
                     </>
                 )}
             >
-                {/* Desktop table — unchanged */}
+                {/* Desktop table */}
                 <div className="fila-page__table-wrapper">
                     <table className="fila-table" aria-label="Fila de trabalho">
                         <thead>
@@ -250,24 +312,36 @@ export default function FilaPage() {
                                 <th scope="col">Data</th>
                                 <th scope="col">Prioridade</th>
                                 <th scope="col">Status</th>
-                                <th scope="col" style={{ width: 40 }} title="Enriquecimento">⚡</th>
+                                <th scope="col">Prazo</th>
+                                <th scope="col" style={{ width: 40 }} title="Consulta automática">⚡</th>
                                 <th scope="col">Criminal</th>
                                 <th scope="col">Score</th>
                                 <th scope="col">Risco</th>
+                                <th scope="col">Responsavel</th>
                                 <th scope="col">Acoes</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {loading && (
-                                <tr>
-                                    <td colSpan={12} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
-                                        Carregando fila...
-                                    </td>
+                            {loading && Array.from({ length: 6 }, (_, i) => (
+                                <tr key={`sk-${i}`} aria-hidden="true">
+                                    <td><div className="skeleton" style={{ width: 16, height: 16, borderRadius: 3 }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: `${60 + (i % 3) * 15}%` }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: '70%' }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: '80%' }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: 72 }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: 50 }} /></td>
+                                    <td><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 99 }} /></td>
+                                    <td><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 99 }} /></td>
+                                    <td />
+                                    <td><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 99 }} /></td>
+                                    <td><div className="skeleton skeleton--text" style={{ width: 48 }} /></td>
+                                    <td><div className="skeleton" style={{ width: 56, height: 22, borderRadius: 99 }} /></td>
+                                    <td />
                                 </tr>
-                            )}
+                            ))}
                             {!loading && error && (
                                 <tr>
-                                    <td colSpan={12} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
+                                    <td colSpan={14} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
                                         {extractErrorMessage(error, 'Nao foi possivel carregar a fila de trabalho agora.')}
                                     </td>
                                 </tr>
@@ -285,15 +359,19 @@ export default function FilaPage() {
                                     <td>{currentCase.candidatePosition}</td>
                                     <td>{formatDate(currentCase.createdAt)}</td>
                                     <td>
-                                        <span className={`fila-priority fila-priority--${currentCase.priority.toLowerCase()}`}>
+                                        <span className={`fila-priority fila-priority--${(currentCase.priority || 'normal').toLowerCase()}`}>
                                             {currentCase.priority === 'HIGH' ? 'Alta' : 'Normal'}
                                         </span>
                                     </td>
                                     <td><StatusBadge status={currentCase.status} /></td>
+                                    <td><SlaBadge caseData={currentCase} /></td>
                                     <td style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                     <td><RiskChip value={currentCase.criminalFlag} /></td>
                                     <td><ScoreBar score={currentCase.riskScore} /></td>
                                     <td><RiskChip value={currentCase.riskLevel} /></td>
+                                    <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: 120 }}>
+                                        {currentCase.assigneeName || currentCase.assigneeEmail || (currentCase.assigneeId ? 'Atribuido' : '—')}
+                                    </td>
                                     <td>
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                             {!currentCase.assigneeId && (
@@ -306,6 +384,26 @@ export default function FilaPage() {
                                                     {assumingCaseId === currentCase.id ? 'Assumindo...' : 'Assumir'}
                                                 </button>
                                             )}
+                                            {canAssignOthers && currentCase.assigneeId && (
+                                                <button
+                                                    className="btn-secondary"
+                                                    title="Trocar responsavel"
+                                                    disabled={isDemoMode}
+                                                    onClick={() => openAssignModal(currentCase)}
+                                                >
+                                                    Trocar
+                                                </button>
+                                            )}
+                                            {canAssignOthers && !currentCase.assigneeId && (
+                                                <button
+                                                    className="btn-secondary"
+                                                    title="Atribuir"
+                                                    disabled={isDemoMode}
+                                                    onClick={() => openAssignModal(currentCase)}
+                                                >
+                                                    Atribuir
+                                                </button>
+                                            )}
                                             <button className="btn-secondary" onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}>
                                                 Abrir
                                             </button>
@@ -315,9 +413,13 @@ export default function FilaPage() {
                             ))}
                             {!loading && !error && queue.length === 0 && (
                                 <tr>
-                                    <td colSpan={12} style={{ textAlign: 'center', padding: '48px' }}>
+                                    <td colSpan={14} style={{ textAlign: 'center', padding: '48px' }}>
                                         <span style={{ fontSize: '2rem' }}>OK</span>
-                                        <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>Nenhum caso pendente na fila.</p>
+                                        <p style={{ marginTop: 8, color: 'var(--text-secondary)' }}>
+                                            {filter !== 'ALL' || assignment !== 'ALL' || dateFrom || dateTo
+                                                ? 'Nenhum caso corresponde aos filtros selecionados.'
+                                                : 'Nenhum caso pendente na fila.'}
+                                        </p>
                                     </td>
                                 </tr>
                             )}
@@ -325,6 +427,43 @@ export default function FilaPage() {
                     </table>
                 </div>
             </MobileDataCardList>
-        </div>
+
+            {/* Assignment modal */}
+            <Modal
+                open={assignModalOpen}
+                onClose={() => { setAssignModalOpen(false); setAssignModalCase(null); }}
+                title={assignModalCase?.assigneeId ? 'Trocar responsavel' : 'Atribuir caso'}
+            >
+                <div style={{ minWidth: 280 }}>
+                    <p style={{ marginBottom: 16, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Caso: <strong style={{ color: 'var(--text-primary)' }}>{assignModalCase?.candidateName}</strong>
+                    </p>
+                    {assignError && (
+                        <div role="alert" style={{ padding: 'var(--space-3)', background: 'var(--red-50)', color: 'var(--red-700)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-3)', fontSize: '0.875rem' }}>
+                            {assignError}
+                        </div>
+                    )}
+                    {opsUsers.length === 0 && !assignError ? (
+                        <p style={{ color: 'var(--text-secondary)', padding: 'var(--space-4) 0', textAlign: 'center' }}>Nenhum analista disponivel.</p>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 320, overflowY: 'auto' }}>
+                            {opsUsers.map((u) => (
+                                <button
+                                    key={u.uid}
+                                    type="button"
+                                    className="btn-secondary"
+                                    style={{ justifyContent: 'flex-start', textAlign: 'left', padding: '12px 16px' }}
+                                    disabled={assigning}
+                                    onClick={() => handleAssignToUser(u.uid)}
+                                >
+                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{u.displayName || u.email}</span>
+                                    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
+        </PageShell>
     );
 }

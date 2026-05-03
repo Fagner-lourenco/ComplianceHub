@@ -13,6 +13,8 @@ import {
 } from '../../core/audit/auditCatalog';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
+import PageShell from '../../ui/layouts/PageShell';
+import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './AuditoriaPage.css';
 
 const actionOptions = getActionFilterOptions();
@@ -55,17 +57,12 @@ export default function AuditoriaPage() {
     }, [actionFilter, categoryFilter, logs, searchTerm]);
 
     return (
-        <div className="auditoria-page">
-            <div className="auditoria-header">
-                <div>
-                    <h2 className="auditoria-header__title">Auditoria e Logs</h2>
-                    <p className="auditoria-header__subtitle">Registros completos de ações e eventos do sistema</p>
-                </div>
-                <div className="auditoria-header__badge">
-                    <span className="auditoria-header__badge-label">Registros</span>
-                    <strong>{filtered.length}</strong>
-                </div>
-            </div>
+        <PageShell size="default" className="auditoria-page">
+            <PageHeader
+                eyebrow="Histórico"
+                title="Auditoria operacional"
+                description="Acompanhe ações relevantes executadas no sistema."
+            />
 
             <FilterPanelMobile
                 searchElement={
@@ -206,6 +203,6 @@ export default function AuditoriaPage() {
             <div style={{ textAlign: 'right', fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
                 {filtered.length} registros
             </div>
-        </div>
+        </PageShell>
     );
 }
