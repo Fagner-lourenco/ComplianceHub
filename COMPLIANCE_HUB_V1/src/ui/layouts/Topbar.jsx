@@ -18,11 +18,9 @@ export default function Topbar({ onMenuClick, topbarRef }) {
                 >
                     ☰
                 </button>
-                <div className="topbar__title-group">
-                    <span className="topbar__subtitle">
-                        {isOpsPortal ? 'Painel operacional' : 'Portal do cliente'}
-                    </span>
-                </div>
+                <span className="topbar__subtitle">
+                    {isOpsPortal ? 'Painel operacional' : 'Portal do cliente'}
+                </span>
 
                 <div className="topbar__right">
                     <NotificationBell />

@@ -11,6 +11,10 @@ export default function PageHeader({
     compact = false,
     className = '',
 }) {
+    if (process.env.NODE_ENV !== 'production' && !title) {
+        console.error('PageHeader: `title` prop is required');
+    }
+
     return (
         <header
             className={['page-header', compact && 'page-header--compact', className]
@@ -22,12 +26,12 @@ export default function PageHeader({
                     <span className="page-header__eyebrow">{eyebrow}</span>
                 )}
                 <div className="page-header__title-row">
+                    <h1 className="page-header__title">{title}</h1>
                     {backAction && (
                         <Link className="page-header__back" to={backAction.to}>
                             {backAction.label ?? 'Voltar'}
                         </Link>
                     )}
-                    <h1 className="page-header__title">{title}</h1>
                 </div>
                 {description && (
                     <p className="page-header__description">{description}</p>

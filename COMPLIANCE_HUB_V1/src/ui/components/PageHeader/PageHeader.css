@@ -61,7 +61,6 @@
     gap: var(--space-3);
     flex-wrap: wrap;
     flex-shrink: 0;
-    min-width: 0;
 }
 
 .page-header__actions {
@@ -95,6 +94,7 @@
 }
 
 .page-header__back {
+    order: -1;
     width: fit-content;
     font-size: 0.82rem;
     font-weight: 700;

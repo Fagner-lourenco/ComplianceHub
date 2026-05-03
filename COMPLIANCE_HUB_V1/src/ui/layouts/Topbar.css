@@ -31,13 +31,6 @@
     margin-left: auto;
 }
 
-.topbar__title-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
 .topbar__subtitle {
     font-size: 0.8125rem;
     color: var(--text-secondary);

@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './core/auth/AuthContext';
 import { useAuth } from './core/auth/useAuth';
 import { TenantProvider } from './core/contexts/TenantContext';
+import { NotificationProvider } from './core/notifications/NotificationProvider';
 import { DemoProviders } from './demo/DemoProviders';
 import {
     getPortal,
@@ -35,6 +36,7 @@ const ExportacoesPage = lazyRetry(() => import('./portals/client/ExportacoesPage
 const NovaSolicitacaoPage = lazyRetry(() => import('./portals/client/NovaSolicitacaoPage'));
 const RelatoriosClientePage = lazyRetry(() => import('./portals/client/RelatoriosClientePage'));
 const SolicitacoesPage = lazyRetry(() => import('./portals/client/SolicitacoesPage'));
+const ClientReportPage = lazyRetry(() => import('./portals/client/ClientReportPage'));
 const AuditoriaClientePage = lazyRetry(() => import('./portals/client/AuditoriaClientePage'));
 const AuditoriaPage = lazyRetry(() => import('./portals/ops/AuditoriaPage'));
 const MetricasIAPage = lazyRetry(() => import('./portals/ops/MetricasIAPage'));
@@ -45,6 +47,7 @@ const CasosPage = lazyRetry(() => import('./portals/ops/CasosPage'));
 const ClientesPage = lazyRetry(() => import('./portals/ops/ClientesPage'));
 const TenantSettingsPage = lazyRetry(() => import('./portals/ops/TenantSettingsPage'));
 const FilaPage = lazyRetry(() => import('./portals/ops/FilaPage'));
+const EquipeOpsPage = lazyRetry(() => import('./portals/ops/EquipeOpsPage'));
 const PerfilPage = lazyRetry(() => import('./pages/PerfilPage'));
 
 function SplashScreen() {
@@ -123,7 +126,7 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                 }}>
-                    Sessao autenticada
+                    Login confirmado
                 </div>
                 <h2 style={{ marginBottom: '12px', fontSize: '1.5rem' }}>{title}</h2>
                 <p style={{ marginBottom: '20px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{message}</p>
@@ -142,7 +145,7 @@ function AccessState({ title, message, allowRetry = true, allowLogout = true }) 
                         letterSpacing: '0.04em',
                         marginBottom: '6px',
                     }}>
-                        Identidade confirmada no Firebase Auth
+                        Login confirmado
                     </div>
                     <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{identityName}</div>
                     {identityEmail && (
@@ -193,8 +196,8 @@ function ProfileResolutionState() {
     if (profileStatus === 'missing') {
         return (
             <AccessState
-                title="Perfil operacional nao localizado"
-                message="O Firebase Auth confirmou o login, mas o documento correspondente em userProfiles ainda nao foi encontrado. Sem esse perfil, o sistema nao libera portal, papel ou franquias."
+                title="Seu acesso ainda não foi liberado"
+                message="Seu login foi confirmado, mas não encontramos um perfil de acesso para esta conta. Entre em contato com o administrador da sua empresa para liberar o acesso."
             />
         );
     }
@@ -203,7 +206,7 @@ function ProfileResolutionState() {
         return (
             <AccessState
                 title="Falha ao sincronizar o perfil"
-                message="Sua sessao foi restaurada, mas o Firestore nao entregou o perfil do usuario. Se houver uma copia local valida, a navegacao sera corrigida automaticamente assim que a sincronizacao voltar."
+                message="Não foi possível carregar seus dados de acesso. Se o problema continuar, tente recarregar a página."
             />
         );
     }
@@ -211,8 +214,8 @@ function ProfileResolutionState() {
     if (profileStatus === 'delayed') {
         return (
             <AccessState
-                title="Confirmando permissoes e contexto"
-                message="A rede ou o Firestore estao mais lentos do que o esperado. Mantivemos sua sessao ativa e estamos aguardando o perfil confirmado para liberar o painel correto sem exibir dados do tenant errado."
+                title="Confirmando permissões e contexto"
+                message="Estamos confirmando seus dados. Aguarde um momento."
             />
         );
     }
@@ -304,12 +307,12 @@ function AppRoutes() {
                     element={(
                         <RequireAuth>
                             <RequirePortal portal="client">
-                                <AppLayout title="Portal Cliente" />
+                                <AppLayout />
                             </RequirePortal>
                         </RequireAuth>
                     )}
                 >
-                    <Route index element={<Navigate to="solicitacoes" replace />} />
+                    <Route index element={<Navigate to="dashboard" replace />} />
                     <Route
                         path="dashboard"
                         element={(
@@ -323,6 +326,14 @@ function AppRoutes() {
                         element={(
                             <RequirePermission permission={PERMISSIONS.CASE_READ}>
                                 <SolicitacoesPage />
+                            </RequirePermission>
+                        )}
+                    />
+                    <Route
+                        path="relatorio/:caseId"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.CASE_READ}>
+                                <ClientReportPage />
                             </RequirePermission>
                         )}
                     />
@@ -345,7 +356,7 @@ function AppRoutes() {
                     <Route
                         path="relatorios"
                         element={(
-                            <RequirePermission permission={PERMISSIONS.CASE_EXPORT}>
+                            <RequirePermission permission={PERMISSIONS.REPORT_PUBLIC_VIEW}>
                                 <RelatoriosClientePage />
                             </RequirePermission>
                         )}
@@ -374,7 +385,7 @@ function AppRoutes() {
                     element={(
                         <RequireAuth>
                             <RequirePortal portal="ops">
-                                <AppLayout title="Portal Operacional" />
+                                <AppLayout />
                             </RequirePortal>
                         </RequireAuth>
                     )}
@@ -439,7 +450,7 @@ function AppRoutes() {
                     <Route
                         path="relatorios"
                         element={(
-                            <RequirePermission permission={PERMISSIONS.AUDIT_VIEW}>
+                            <RequirePermission permission={PERMISSIONS.REPORT_PUBLIC_VIEW}>
                                 <RelatoriosPage />
                             </RequirePermission>
                         )}
@@ -452,6 +463,14 @@ function AppRoutes() {
                             </RequirePermission>
                         )}
                     />
+                    <Route
+                        path="equipe"
+                        element={(
+                            <RequirePermission permission={PERMISSIONS.USERS_MANAGE}>
+                                <EquipeOpsPage />
+                            </RequirePermission>
+                        )}
+                    />
                     <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
@@ -459,13 +478,14 @@ function AppRoutes() {
                     path="/demo/client"
                     element={(
                         <DemoProviders mode="client">
-                            <AppLayout title="Portal Cliente Demo" />
+                            <AppLayout />
                         </DemoProviders>
                     )}
                 >
                     <Route index element={<Navigate to="solicitacoes" replace />} />
                     <Route path="dashboard" element={<DashboardClientePage />} />
                     <Route path="solicitacoes" element={<SolicitacoesPage />} />
+                    <Route path="relatorio/:caseId" element={<ClientReportPage />} />
                     <Route path="nova-solicitacao" element={<NovaSolicitacaoPage />} />
                     <Route path="exportacoes" element={<ExportacoesPage />} />
                     <Route path="relatorios" element={<RelatoriosClientePage />} />
@@ -478,7 +498,7 @@ function AppRoutes() {
                     path="/demo/ops"
                     element={(
                         <DemoProviders mode="ops">
-                            <AppLayout title="Portal Operacional Demo" />
+                            <AppLayout />
                         </DemoProviders>
                     )}
                 >
@@ -489,6 +509,7 @@ function AppRoutes() {
                     <Route path="auditoria" element={<AuditoriaPage />} />
                     <Route path="relatorios" element={<RelatoriosPage />} />
                     <Route path="saude" element={<SaudePage />} />
+                    <Route path="equipe" element={<EquipeOpsPage />} />
                     <Route path="perfil" element={<PerfilPage />} />
                 </Route>
 
@@ -508,7 +529,9 @@ function App() {
                 <ErrorBoundary>
                     <TenantProvider>
                         <ErrorBoundary>
-                            <AppRoutes />
+                            <NotificationProvider>
+                                <AppRoutes />
+                            </NotificationProvider>
                         </ErrorBoundary>
                     </TenantProvider>
                 </ErrorBoundary>
