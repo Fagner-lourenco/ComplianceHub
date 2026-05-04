@@ -1,32 +1,3 @@
-.ns-page {
-    width: 100%;
-    max-width: 1040px;
-    margin: 0 auto;
-    min-width: 0;
-}
-
-.ns-page__header {
-    margin-bottom: var(--space-6);
-    padding: var(--space-5);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border-default);
-    background:
-        radial-gradient(circle at top right, rgba(29, 111, 229, .08), transparent 30%),
-        linear-gradient(135deg, var(--bg-card), var(--gray-50));
-    box-shadow: var(--shadow-xs);
-}
-
-.ns-page__header h2 {
-    font-size: 1.375rem;
-    font-weight: 700;
-}
-
-.ns-page__header p {
-    color: var(--text-secondary);
-    font-size: .875rem;
-    margin-top: 4px;
-}
-
 /* Sections */
 .ns-section {
     background: var(--bg-card);
@@ -343,10 +314,6 @@
 
 /* --- Mobile Responsive --- */
 @media (max-width: 768px) {
-    .ns-page__header {
-        padding: var(--space-4);
-    }
-
     .ns-section {
         padding: var(--space-3);
     }
