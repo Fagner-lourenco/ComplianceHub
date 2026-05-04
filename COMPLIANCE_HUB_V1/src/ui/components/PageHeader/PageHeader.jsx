@@ -30,7 +30,7 @@ export default function PageHeader({
                     {backAction && (
                         backAction.onClick
                             ? <button type="button" className="page-header__back" onClick={backAction.onClick}>{backAction.label ?? 'Voltar'}</button>
-                            : <Link className="page-header__back" to={backAction.to}>{backAction.label ?? 'Voltar'}</Link>
+                            : backAction.to && <Link className="page-header__back" to={backAction.to}>{backAction.label ?? 'Voltar'}</Link>
                     )}
                 </div>
                 {description && (

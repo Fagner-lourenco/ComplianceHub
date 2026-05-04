@@ -199,10 +199,10 @@ ol {
   --z-tooltip: 85;
 
   /* Page layout */
-  --page-max-default: 1240px;
-  --page-max-narrow:  1040px;
+  --page-max-default: 1600px;
+  --page-max-narrow:  1200px;
   --page-max-form:    960px;
-  --page-max-report:  1440px;
+  --page-max-report:  1600px;
   --page-gap:         var(--space-5);
 
   /* Semantic surfaces */
