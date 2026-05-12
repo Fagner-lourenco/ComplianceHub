@@ -1,15 +1,20 @@
-/**
- * Cloud Functions: Judit-First Enrichment Pipeline (Datalake-First Strategy)
+﻿/**
+ * Cloud Functions: BigDataCorp-First Enrichment Pipeline
  *
- * Flow (datalake-first — async DISABLED by default):
- * 1. GATE: Judit Entity Data Lake (R$ 0,12) — validate CPF active + name similarity
- *    Fallback: FonteData receita-federal-pf (R$ 0,54) if Judit gate fails
+ * Flow (BigDataCorp-first — async DISABLED by default):
+ * 1. GATE: BigDataCorp Basic Data (R$ 0,03) — validate CPF active + name similarity + death record
+ *    Fallback: FonteData receita-federal-pf (R$ 0,54) if BDC gate fails
  * 2. If gate fails → BLOCKED
- * 3. LAWSUITS: Sync datalake simples (R$ 0,50) — DEFAULT. Datalake detalhada (R$ 1,50/1k). On Demand (R$ 6,00/1k) only if forced.
+ * 3. LAWSUITS: BigDataCorp processes (R$ 0,07) + Judit sync datalake simples (R$ 0,50)
  * 4. PARALLEL: Warrants (R$ 1,00) + Penal Execution (R$ 0,50)
- * 5. NAME SUPPLEMENT: Sync datalake by name if CPF found 0 lawsuits
+ * 5. NAME SUPPLEMENT: Judit sync datalake by name if CPF found 0 lawsuits
  * 6. CONDITIONAL: Escavador cross-validation (triggered by criminal/warrant/execution flags)
- * 7. Auto-classification + AI analysis
+ * 7. DJEN: Comunicacoes judiciais (after Judit settles)
+ * 8. Auto-classification + AI analysis
+ *
+ * IMPORTANTE: Triggers onDocumentUpdated NAO rodam retroativamente para documentos
+ * ja em estado terminal (DONE, CORRECTION_NEEDED). Casos em estado terminal nao
+ * serao reprocessados automaticamente — requerem acao manual (rerun ou correction).
  *
  * Persistence: request_id, request body, raw response metadata saved per phase.
  */
@@ -21,6 +26,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 
 const {
     queryWarrant, queryLabor, queryIdentity,
@@ -59,6 +65,7 @@ const {
 const {
     getEscavadorTribunais,
     getJuditTribunais,
+    buildCandidateUfs,
 } = require('./helpers/tribunalMap');
 const {
     buildHomonymAnalysisInput,
@@ -89,9 +96,12 @@ const {
 const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
+const { createSystemCaseMessage, buildNotificationFunctions } = require('./caseCommunication');
 
 initializeApp();
 let db = getFirestore();
+
+const caseComm = buildNotificationFunctions(db);
 
 const fontedataApiKey = defineSecret('FONTEDATA_API_KEY');
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
@@ -150,8 +160,7 @@ const DEFAULT_JUDIT_CONFIG = {
     filters: {
         autoTribunals: false,    // NO tribunal filter by default — causes missed processes
         tribunals: [],           // manual override
-        useAsync: false,         // ⚠️  DEFAULT=false: sync simples (R$0.50). Async datalake (R$1.50/1k) ou on_demand (R$6.00/1k) apenas se forçado.
-        useWebhook: true,        // warrant/execution are async by contract — use callback instead of blocking polling
+        useAsync: false,         // WARNING: DEFAULT=false: sync simples (R.50). Async datalake (R.50/1k) ou on_demand (R.00/1k) apenas se forçado.        useWebhook: true,        // warrant/execution are async by contract — use callback instead of blocking polling
         cacheTtlDays: 7,        // reuse Judit cache if extracted within X days (0 = no cache)
     },
     realTime: {
@@ -170,7 +179,7 @@ const DEFAULT_JUDIT_CONFIG = {
     gate: { minNameSimilarity: 0.7 },
     nameSearchSupplement: {
         enabled: true,           // enable name-based search when CPF yields 0 lawsuits
-        maxCpfsComNome: 3,       // only search if name has ≤ N CPFs (avoid homonym pollution)
+        maxCpfsComNome: 3,       // only search if name has â‰¤ N CPFs (avoid homonym pollution)
         preferSync: true,        // use sync datalake by name (cheaper) instead of async
     },
     persistence: {
@@ -191,7 +200,7 @@ const DEFAULT_BIGDATACORP_CONFIG = {
 };
 
 const DEFAULT_DJEN_CONFIG = {
-    enabled: true,            // FREE API — no cost, always run
+    enabled: false,           // Optional public source; enable per tenant when needed
     phases: {
         comunicacoes: true,   // GET /comunicacao
     },
@@ -447,7 +456,7 @@ Regras:
   3. Tipo de mandado e tipo de prisao
   4. Texto da decisao judicial quando disponivel
   5. Impacto operacional para contratacao
-- keyFindings: lista de ate 12 bullets factuais e materiais para o relatorio. Cada bullet deve ser auto-contido e citar a fonte (ex: "Mandado ativo BNMP-123 no TJSP — prisao preventiva (Judit)")
+  - keyFindings: lista de ate 12 bullets factuais e materiais para o relatorio. Cada bullet deve ser auto-contido e citar a fonte (ex: "Mandado ativo BNMP-123 no TJSP - prisao preventiva (Judit)")
 - finalJustification: justificativa PRESCRITIVA do veredito (max 900 chars). Deve recomendar a decisao (apto/atencao/nao recomendado) e fundamentar com os achados mais relevantes. NAO repita o resumo executivo. Foque em: por que este veredito e adequado, quais riscos sao materiais e quais mitigacoes sao possiveis.
 - diferencie fato confirmado, evidencia ambigua e lacuna de cobertura
 - use a analise especializada de homonimos como insumo consultivo sempre que ela existir e for relevante
@@ -500,6 +509,18 @@ function stripUndefined(obj) {
     for (const [k, v] of Object.entries(obj)) {
         if (v === undefined) continue;
         clean[k] = (v && typeof v === 'object') ? stripUndefined(v) : v;
+    }
+    return clean;
+}
+
+function sanitizePublicStructuredValue(value) {
+    if (typeof value === 'string') return sanitizeStructuredText(value, 1200);
+    if (Array.isArray(value)) return value.slice(0, 50).map(sanitizePublicStructuredValue);
+    if (!value || typeof value !== 'object') return value;
+    if (Object.getPrototypeOf(value) !== Object.prototype) return value;
+    const clean = {};
+    for (const [key, child] of Object.entries(value)) {
+        clean[key] = sanitizePublicStructuredValue(child);
     }
     return clean;
 }
@@ -720,11 +741,62 @@ function validateAiPrefillSchema(obj) {
 }
 
 /**
- * Sanitize AI response — remove any CPF/phone numbers the model may hallucinate.
+ * P2-016: Detecta e corrige mojibake comum de ISO-8859-1 decodificado como UTF-8.
+ * Ex: "Ã§" -> "Ã§", "Ã£" -> "Ã£", "Ã¡" -> "Ã¡".
+ */
+function fixLatinMojibake(text) {
+    if (!text || typeof text !== 'string') return text;
+    // Heuristica: se nao ha padroes tipicos de mojibake latino, retorna como esta
+    if (!/\u00C3[\u0080-\u00BF]/.test(text)) {
+        return text;
+    }
+    const map = {
+        '\u00C3\u00A1': '\u00E1', '\u00C3\u00A9': '\u00E9', '\u00C3\u00AD': '\u00ED',
+        '\u00C3\u00B3': '\u00F3', '\u00C3\u00BA': '\u00FA', '\u00C3\u00A0': '\u00E0',
+        '\u00C3\u00A8': '\u00E8', '\u00C3\u00AC': '\u00EC', '\u00C3\u00B2': '\u00F2',
+        '\u00C3\u00B9': '\u00F9', '\u00C3\u00A2': '\u00E2', '\u00C3\u00AA': '\u00EA',
+        '\u00C3\u00AE': '\u00EE', '\u00C3\u00B4': '\u00F4', '\u00C3\u00BB': '\u00FB',
+        '\u00C3\u00A3': '\u00E3', '\u00C3\u00B5': '\u00F5', '\u00C3\u00A7': '\u00E7',
+        '\u00C3\u0080': '\u00C0', '\u00C3\u0081': '\u00C1', '\u00C3\u0082': '\u00C2',
+        '\u00C3\u0083': '\u00C3', '\u00C3\u0084': '\u00C4', '\u00C3\u0085': '\u00C5',
+        '\u00C3\u0086': '\u00C6', '\u00C3\u0087': '\u00C7', '\u00C3\u0088': '\u00C8',
+        '\u00C3\u0089': '\u00C9', '\u00C3\u008A': '\u00CA', '\u00C3\u008B': '\u00CB',
+        '\u00C3\u008C': '\u00CC', '\u00C3\u008D': '\u00CD', '\u00C3\u008E': '\u00CE',
+        '\u00C3\u008F': '\u00CF', '\u00C3\u0091': '\u00D1', '\u00C3\u0092': '\u00D2',
+        '\u00C3\u0093': '\u00D3', '\u00C3\u0094': '\u00D4', '\u00C3\u0095': '\u00D5',
+        '\u00C3\u0096': '\u00D6', '\u00C3\u0098': '\u00D8', '\u00C3\u0099': '\u00D9',
+        '\u00C3\u009A': '\u00DA', '\u00C3\u009B': '\u00DB', '\u00C3\u009C': '\u00DC',
+        '\u00C3\u009D': '\u00DD', '\u00C3\u009F': '\u00DF',
+    };
+    let result = text;
+    for (const [from, to] of Object.entries(map)) {
+        result = result.split(from).join(to);
+    }
+    return result;
+}
+
+/**
+ * Normaliza caracteres Unicode problematicos para ASCII equivalente.
+ * Previne mojibake em browsers/editores com encoding incorreto.
+ */
+function normalizeUnicodeToAscii(text) {
+    if (!text || typeof text !== 'string') return text;
+    return text
+        .replace(/[\u2018\u2019]/g, "'")   // smart single quotes → apostrophe
+        .replace(/[\u201C\u201D]/g, '"')   // smart double quotes → straight quotes
+        .replace(/\u2014/g, '--')           // em-dash → double hyphen
+        .replace(/\u2013/g, '-')            // en-dash → hyphen
+        .replace(/\u2026/g, '...')          // ellipsis → three dots
+        .replace(/\u00A0/g, ' ');           // non-breaking space → regular space
+}
+
+/**
+ * Sanitize AI response - remove any CPF/phone numbers the model may hallucinate.
  */
 function sanitizeAiOutput(text) {
     if (!text) return text;
-    return text
+    return fixLatinMojibake(normalizeUnicodeToAscii(text))
+        .replace(/<[^>]*>/g, '')
         .replace(/(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)/g, '[CPF_REMOVIDO]')
         .replace(/(?<!\d)\(?\d{2}\)?\s?\d{4,5}-?\d{4}(?!\d)/g, '[TEL_REMOVIDO]');
 }
@@ -791,6 +863,183 @@ function isSettledProviderStatus(status) {
     return status === 'DONE' || status === 'PARTIAL' || status === 'FAILED' || status === 'SKIPPED' || status === 'BLOCKED';
 }
 
+function hasPendingJuditAsync(caseData = {}) {
+    const count = Number(caseData.juditPendingAsyncCount || 0);
+    const phases = Array.isArray(caseData.juditPendingAsyncPhases)
+        ? caseData.juditPendingAsyncPhases.filter(Boolean)
+        : [];
+    return count > 0 || phases.length > 0;
+}
+
+function isProviderTerminalForPipeline(status) {
+    return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
+}
+
+function isJuditSettled(caseData = {}) {
+    return isProviderTerminalForPipeline(caseData.juditEnrichmentStatus)
+        && !hasPendingJuditAsync(caseData);
+}
+
+function canRunFinalClassification(caseData = {}) {
+    if (hasPendingJuditAsync(caseData)) {
+        return { ok: false, reason: 'judit_async_pending' };
+    }
+
+    if (!isProviderTerminalForPipeline(caseData.bigdatacorpEnrichmentStatus)) {
+        return { ok: false, reason: `bigdatacorp_${caseData.bigdatacorpEnrichmentStatus || 'PENDING'}` };
+    }
+
+    if (!isProviderTerminalForPipeline(caseData.juditEnrichmentStatus)) {
+        return { ok: false, reason: `judit_${caseData.juditEnrichmentStatus || 'PENDING'}` };
+    }
+
+    if (caseData.juditNeedsEscavador === true && !isProviderTerminalForPipeline(caseData.escavadorEnrichmentStatus)) {
+        return { ok: false, reason: `escavador_${caseData.escavadorEnrichmentStatus || 'PENDING'}` };
+    }
+
+    // DJEN/DPJe must settle if it was started/pending, but SKIPPED/FAILED is fine
+    if (caseData.djenEnrichmentStatus && !isProviderTerminalForPipeline(caseData.djenEnrichmentStatus)) {
+        return { ok: false, reason: `djen_${caseData.djenEnrichmentStatus}` };
+    }
+
+    return { ok: true, reason: 'ready' };
+}
+
+async function maybeRunAutoClassifyAndAi(caseRef, caseId, sourceLabel, options = {}) {
+    if (options.skipAutoClassify === true) {
+        console.log(`Case ${caseId} [AutoClassify via ${sourceLabel}]: skipped by option.`);
+        return { ran: false, reason: 'skipAutoClassify' };
+    }
+
+    const freshDoc = await caseRef.get();
+    if (!freshDoc.exists) return { ran: false, reason: 'case_missing' };
+
+    const freshData = freshDoc.data() || {};
+    const readiness = canRunFinalClassification(freshData);
+
+    if (!readiness.ok) {
+        console.log(`Case ${caseId} [AutoClassify via ${sourceLabel}]: deferred — ${readiness.reason}.`);
+        return { ran: false, reason: readiness.reason };
+    }
+
+    await runAutoClassifyAndAi(caseRef, caseId, freshData);
+    return { ran: true, reason: 'ready' };
+}
+
+function computeAutoClassifySignature(caseData = {}) {
+    const signatureFields = [
+        'enrichmentGeneration',
+        'bigdatacorpEnrichmentStatus',
+        'bigdatacorpProcessTotal',
+        'bigdatacorpCriminalCount',
+        'bigdatacorpLaborCount',
+        'bigdatacorpHasArrestWarrant',
+        'bigdatacorpIsPep',
+        'bigdatacorpIsSanctioned',
+        'bigdatacorpWasSanctioned',
+        'juditEnrichmentStatus',
+        'juditProcessTotal',
+        'juditCriminalCount',
+        'juditActiveWarrantCount',
+        'juditExecutionFlag',
+        'juditNeedsEscavador',
+        'escavadorEnrichmentStatus',
+        'escavadorProcessTotal',
+        'escavadorCriminalCount',
+        'djenEnrichmentStatus',
+        'djenCriminalFlag',
+        'djenLaborFlag',
+        'enrichmentStatus',
+        'fontedataCriminalFlag',
+        'fontedataWarrantFlag',
+        'fontedataLaborFlag',
+    ];
+    const signature = {};
+    for (const field of signatureFields) {
+        const value = caseData[field];
+        if (value !== undefined) signature[field] = value;
+    }
+    signature.juditPendingAsyncPhases = Array.isArray(caseData.juditPendingAsyncPhases)
+        ? [...caseData.juditPendingAsyncPhases].sort()
+        : [];
+    signature.bigdatacorpActiveWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants)
+        ? caseData.bigdatacorpActiveWarrants.map((item) => item?.numero || item?.number || item?.id || item?.status || '').sort()
+        : [];
+    return computeSimpleHash(JSON.stringify(signature));
+}
+
+async function acquirePhaseRun(caseRef, statusField, allowedStatuses = [undefined, null, 'PENDING']) {
+    return db.runTransaction(async (tx) => {
+        const snap = await tx.get(caseRef);
+        if (!snap.exists) return { acquired: false, caseData: null };
+        const caseData = snap.data() || {};
+        const currentStatus = caseData[statusField];
+        if (!allowedStatuses.includes(currentStatus)) {
+            return { acquired: false, caseData };
+        }
+        tx.update(caseRef, {
+            [statusField]: 'RUNNING',
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+        return { acquired: true, caseData: { ...caseData, [statusField]: 'RUNNING' } };
+    });
+}
+
+async function acquireAutoClassifyRun(caseRef, caseId) {
+    const owner = `${caseId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return db.runTransaction(async (tx) => {
+        const snap = await tx.get(caseRef);
+        if (!snap.exists) return { acquired: false, owner, caseData: null, reason: 'missing_case' };
+        const caseData = snap.data() || {};
+        const lock = caseData.autoClassifyLock || null;
+        const lockExpiresAt = asDate(lock?.expiresAt);
+        if (lockExpiresAt && lockExpiresAt.getTime() > Date.now()) {
+            tx.update(caseRef, {
+                autoClassifyRerunRequested: true,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            return { acquired: false, owner, caseData, reason: 'locked' };
+        }
+        const signature = computeAutoClassifySignature(caseData);
+        if (caseData.autoClassifySignature === signature && caseData.autoClassifiedAt) {
+            return { acquired: false, owner, caseData, reason: 'already_current' };
+        }
+        tx.update(caseRef, {
+            autoClassifyLock: {
+                owner,
+                startedAt: new Date(),
+                expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+                signature,
+            },
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+        return { acquired: true, owner, signature, caseData, reason: null };
+    });
+}
+
+async function releaseAutoClassifyRun(caseRef, owner) {
+    try {
+        return await db.runTransaction(async (tx) => {
+            const snap = await tx.get(caseRef);
+            if (!snap.exists) return false;
+            const data = snap.data() || {};
+            const currentOwner = data.autoClassifyLock?.owner;
+            if (currentOwner === owner) {
+                const rerunRequested = data.autoClassifyRerunRequested === true;
+                tx.update(caseRef, {
+                    autoClassifyLock: FieldValue.delete(),
+                    autoClassifyRerunRequested: FieldValue.delete(),
+                });
+                return rerunRequested;
+            }
+            return false;
+        });
+    } catch (err) {
+        console.warn('[AutoClassify]: failed to release lock:', err.message);
+        return false;
+    }
+}
+
 function getAiProvidersIncluded(caseData) {
     return [
         isDoneOrPartial(caseData.enrichmentStatus) ? 'FonteData' : null,
@@ -808,6 +1057,11 @@ function buildAiUpdatePayload(caseData, aiResult, options = {}) {
         aiProvidersIncluded: getAiProvidersIncluded(caseData),
         aiFromCache: !!aiResult.fromCache,
         aiError: aiResult.error || null,
+        aiStatus: aiResult.error
+            ? 'FAILED'
+            : aiResult.structuredOk
+                ? 'DONE'
+                : 'FAILED_SCHEMA',
         updatedAt: FieldValue.serverTimestamp(),
     };
 
@@ -821,7 +1075,7 @@ function buildAiUpdatePayload(caseData, aiResult, options = {}) {
         payload.aiStructuredOk = aiResult.structuredOk || false;
     }
 
-    const costUsd = estimateAiCostUsd(aiResult.inputTokens || 0, aiResult.outputTokens || 0);
+    const costUsd = aiResult.fromCache ? 0 : estimateAiCostUsd(aiResult.inputTokens || 0, aiResult.outputTokens || 0);
     payload.aiCostUsd = parseFloat(costUsd.toFixed(6));
     payload.aiTokens = { input: aiResult.inputTokens || 0, output: aiResult.outputTokens || 0 };
     return stripUndefined(payload);
@@ -878,10 +1132,26 @@ function buildAiHomonymUpdatePayload(caseData, homonymInput, aiResult) {
         payload.aiHomonymRecommendedAction = homonymInput?.needsAnalysis ? 'MANUAL_REVIEW' : null;
     }
 
-    const costUsd = estimateAiCostUsd(aiResult?.inputTokens || 0, aiResult?.outputTokens || 0);
+    const costUsd = aiResult?.fromCache ? 0 : estimateAiCostUsd(aiResult?.inputTokens || 0, aiResult?.outputTokens || 0);
     payload.aiHomonymCostUsd = parseFloat(costUsd.toFixed(6));
     payload.aiHomonymTokens = { input: aiResult?.inputTokens || 0, output: aiResult?.outputTokens || 0 };
     return stripUndefined(payload);
+}
+
+async function recordAiCostLedger(tenantId, updatePayload = {}) {
+    if (!tenantId) return;
+    const totalCost = Number(updatePayload.aiCostUsd || 0) + Number(updatePayload.aiHomonymCostUsd || 0);
+    if (!Number.isFinite(totalCost) || totalCost <= 0) return;
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const ledgerRef = db.collection('tenantSettings').doc(tenantId).collection('aiCostLedger').doc(monthKey);
+    await ledgerRef.set({
+        tenantId,
+        monthKey,
+        totalCostUsd: FieldValue.increment(Number(totalCost.toFixed(6))),
+        runs: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
 }
 
 function buildAiPrefillUpdatePayload(aiResult) {
@@ -1048,9 +1318,21 @@ function buildJuditCallbackUrl() {
 async function registerJuditWebhookRequest(requestId, caseId, phaseType, payload = {}) {
     if (!requestId || !caseId || !phaseType) return;
 
+    // BUG-R3-004: Capture current enrichment generation so stale callbacks can be rejected.
+    let enrichmentGeneration = null;
+    try {
+        const caseDoc = await db.collection('cases').doc(caseId).get();
+        if (caseDoc.exists) {
+            enrichmentGeneration = caseDoc.data()?.enrichmentGeneration || 0;
+        }
+    } catch (err) {
+        console.warn(`[registerJuditWebhookRequest]: could not read enrichmentGeneration for case ${caseId}:`, err.message);
+    }
+
     await db.collection('juditWebhookRequests').doc(requestId).set({
         caseId,
         phaseType,
+        enrichmentGeneration,
         ...payload,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -1069,19 +1351,18 @@ function computeSimpleHash(value) {
 function computeAiCacheKey(caseData, options = {}) {
     const { kind = 'general', context = null, prompt = null } = options;
 
-    if (kind === 'homonym') {
-        const serializedContext = JSON.stringify({
-            version: AI_HOMONYM_CONTEXT_VERSION,
-            context: context || null,
-        });
-        return `ai_homonym_${computeSimpleHash(serializedContext)}`;
-    }
-
-    const promptPayload = JSON.stringify({
-        version: AI_PROMPT_VERSION,
+    const basePayload = {
+        model: AI_MODEL,
+        kind,
+        promptVersion: kind === 'homonym'
+            ? AI_HOMONYM_PROMPT_VERSION
+            : AI_PROMPT_VERSION,
+        contextVersion: kind === 'homonym' ? AI_HOMONYM_CONTEXT_VERSION : null,
         prompt: prompt || '',
-    });
-    return `ai_${computeSimpleHash(promptPayload)}`;
+        context: context || null,
+    };
+
+    return `ai_${kind}_${computeSimpleHash(JSON.stringify(basePayload))}`;
 }
 
 async function runStructuredAiAnalysis({
@@ -1501,6 +1782,9 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.specificRole && p.specificRole) existing.specificRole = p.specificRole;
                 if (!existing.comarca && p.courtDistrict) existing.comarca = p.courtDistrict;
                 if (p.isDirectCpfMatch && existing.matchType !== 'CPF confirmado') existing.matchType = 'CPF confirmado';
+                if (p.isCriminal && !existing.isCriminal) existing.isCriminal = true;
+                if (p.isLabor && !existing.isTrabalhista) existing.isTrabalhista = true;
+                if (p.isActive && !existing.isActive) existing.isActive = true;
                 // v5 enrichment - merge BDC fields
                 if (!existing.courtLevel && p.courtLevel) existing.courtLevel = p.courtLevel;
                 if (!existing.judgingBody && p.judgingBody) existing.judgingBody = p.judgingBody;
@@ -1993,7 +2277,7 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
     const uf = enrichmentConfig.filters?.uf || caseData.hiringUf || null;
     const tasks = [];
 
-    // ── Circuit Breaker: check FonteData before queuing tasks ──
+    // â”€â”€ Circuit Breaker: check FonteData before queuing tasks â”€â”€
     const fontedataCircuit = await checkCircuit('fontedata');
     if (fontedataCircuit.open) {
         console.warn(`Case ${caseId}: FonteData circuit OPEN — skipping. ${fontedataCircuit.reason}`);
@@ -2003,6 +2287,7 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
             enrichmentSources: { gate: gateSource, fontedata: { circuitOpen: true } },
             updatedAt: FieldValue.serverTimestamp(),
         });
+        return { status: 'PARTIAL', error: fontedataCircuit.reason };
     }
 
     if (!fontedataCircuit.open && phases.identity !== false) {
@@ -2074,12 +2359,12 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
         }
     }
 
-    // ── Circuit Breaker: record FonteData outcome ──
+    // â”€â”€ Circuit Breaker: record FonteData outcome â”€â”€
     if (tasks.length > 0 && !fontedataCircuit.open) {
         if (failCount === 0) {
-            recordSuccess('fontedata').catch(() => {});
+            await recordSuccess('fontedata');
         } else if (failCount > 0 && successCount === 0) {
-            recordFailure('fontedata', errors[0] || 'All phases failed').catch(() => {});
+            await recordFailure('fontedata', errors[0] || 'All phases failed');
         }
     }
 
@@ -2209,7 +2494,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
         return { status: 'FAILED', error };
     }
 
-    // ── Circuit Breaker: check Escavador ──
+    // â”€â”€ Circuit Breaker: check Escavador â”€â”€
     const escCircuit = await checkCircuit('escavador');
     if (escCircuit.open) {
         console.warn(`Case ${caseId} [Escavador]: circuit OPEN — skipping. ${escCircuit.reason}`);
@@ -2263,18 +2548,10 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
             `Tribunais filter: [${tribunais.join(',')}].`,
         );
 
-        recordSuccess('escavador').catch(() => {});
+        await recordSuccess('escavador');
 
         if (!options.skipAutoClassify) {
-            const freshDoc = await caseRef.get();
-            const freshData = freshDoc.data() || {};
-            if (isSettledProviderStatus(freshData.juditEnrichmentStatus)) {
-                try {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                } catch (classifyErr) {
-                    console.error(`Case ${caseId} [AutoClassify via Escavador]: error:`, classifyErr.message);
-                }
-            }
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador', options);
         }
 
         return { status: 'DONE', error: null };
@@ -2283,7 +2560,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
             ? `${err.message} (${err.statusCode})`
             : (err.message || 'Erro desconhecido');
         console.error(`Case ${caseId} [Escavador]: failed:`, errMsg);
-        recordFailure('escavador', errMsg).catch(() => {});
+        await recordFailure('escavador', errMsg);
         await caseRef.update({
             escavadorEnrichmentStatus: 'FAILED',
             escavadorError: errMsg,
@@ -2292,15 +2569,7 @@ async function runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorC
 
         // Run auto-classify even on failure — Escavador data is supplementary
         if (!options.skipAutoClassify) {
-            try {
-                const freshDoc = await caseRef.get();
-                const freshData = freshDoc.data() || {};
-                if (isSettledProviderStatus(freshData.juditEnrichmentStatus)) {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                }
-            } catch (classifyErr) {
-                console.error(`Case ${caseId} [AutoClassify via Escavador failure]: error:`, classifyErr.message);
-            }
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador failure', options);
         }
 
         return { status: 'FAILED', error: errMsg };
@@ -2361,7 +2630,15 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
 
         console.log(`Case ${caseId} [BigDataCorp]: querying CPF=${cpf}, processLimit=${processLimit}`);
 
-        const result = await queryBigDataCorpCombined(cpf, credentials, { processLimit });
+        const bdcPhases = bdcConfig.phases || {};
+        const datasets = {
+            basicData: bdcPhases.basicData !== false,
+            processes: bdcPhases.processes !== false,
+            kyc: bdcPhases.kyc !== false,
+            occupation: bdcPhases.occupation !== false,
+        };
+
+        const result = await queryBigDataCorpCombined(cpf, credentials, { processLimit, datasets });
 
         // Normalize each dataset
         const phases = bdcConfig.phases || {};
@@ -2377,8 +2654,9 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             costBRL += 0.03;
         }
 
-        // ─── GATE: BDC Basic Data (cpfStatus + name similarity + death record) ───
-        if (!options.skipGate && updatePayload.bigdatacorpCpfStatus) {
+        // â”€â”€â”€ GATE: BDC Basic Data (cpfStatus + name similarity + death record) â”€â”€â”€
+        // P2-008: verifica fase habilitada em vez de truthy de cpfStatus
+        if (!options.skipGate && phases.basicData !== false && updatePayload.bigdatacorpCpfStatus !== undefined) {
             const nameFromBDC = updatePayload.bigdatacorpName || '';
             const nameProvided = caseData.candidateName || '';
             const minSim = bdcConfig.gate?.minNameSimilarity ?? 0.7;
@@ -2469,19 +2747,11 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             `Sanctioned: ${updatePayload.bigdatacorpIsSanctioned || false}.`,
         );
 
-        recordSuccess('bigdatacorp').catch(() => {});
+        await recordSuccess('bigdatacorp');
 
-        // Re-run auto-classify if all other providers are settled
+        // Re-run auto-classify if pipeline is ready
         if (!options.skipAutoClassify) {
-            const freshDoc = await caseRef.get();
-            const freshData = freshDoc.data() || {};
-            if (isSettledProviderStatus(freshData.juditEnrichmentStatus)) {
-                try {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                } catch (classifyErr) {
-                    console.error(`Case ${caseId} [AutoClassify via BigDataCorp]: error:`, classifyErr.message);
-                }
-            }
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'BigDataCorp', options);
         }
 
         return { status: 'DONE', error: null };
@@ -2490,7 +2760,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             ? `${err.message} (${err.statusCode})`
             : (err.message || 'Erro desconhecido');
         console.error(`Case ${caseId} [BigDataCorp]: failed:`, errMsg);
-        recordFailure('bigdatacorp', errMsg).catch(() => {});
+        await recordFailure('bigdatacorp', errMsg);
         await caseRef.update({
             bigdatacorpEnrichmentStatus: 'FAILED',
             bigdatacorpError: errMsg,
@@ -2564,6 +2834,8 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         await caseRef.update({
             juditEnrichmentStatus: 'FAILED',
             juditError: error,
+            juditPendingAsyncPhases: FieldValue.delete(),
+            juditPendingAsyncCount: FieldValue.delete(),
             updatedAt: FieldValue.serverTimestamp(),
         });
         return { status: 'FAILED', error };
@@ -2581,12 +2853,14 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         await caseRef.update({
             juditEnrichmentStatus: 'FAILED',
             juditError: error,
+            juditPendingAsyncPhases: FieldValue.delete(),
+            juditPendingAsyncCount: FieldValue.delete(),
             updatedAt: FieldValue.serverTimestamp(),
         });
         return { status: 'FAILED', error };
     }
 
-    // ── Circuit Breaker: check Judit ──
+    // â”€â”€ Circuit Breaker: check Judit â”€â”€
     const juditCircuit = await checkCircuit('judit');
     if (juditCircuit.open) {
         console.warn(`Case ${caseId} [Judit]: circuit OPEN — skipping. ${juditCircuit.reason}`);
@@ -2598,22 +2872,22 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         return { status: 'SKIPPED', error: juditCircuit.reason };
     }
 
-    const phases = juditConfig.phases;
+    const phases = { ...(juditConfig.phases || {}) };
+    const juditFilters = juditConfig.filters || {};
 
-    // ─── GATE: BDC-primary → Judit-fallback → FonteData-fallback ───
+    // â”€â”€â”€ GATE: BDC-primary → Judit-fallback → FonteData-fallback â”€â”€â”€
     // Priority: 1) BigDataCorp gate result  2) Judit Entity  3) FonteData Receita Federal
     let gateEntityData = null;
     let entityUfs = [];
-    if (!options.skipGate && phases.entity !== false) {
+    const bdcGatePassed = caseData.bigdatacorpEnrichmentStatus === 'DONE' && caseData.bigdatacorpGateResult?.passed === true;
+    const shouldRunIdentityGate = !options.skipGate;
+    if (shouldRunIdentityGate) {
         const existingGate = caseData.juditGateResult;
         if (existingGate?.passed === true) {
             console.log(`Case ${caseId} [Judit]: gate already passed (source: ${existingGate.source}), skipping gate.`);
             entityUfs = caseData.juditAllUfs || [];
-        } else if (
-            caseData.bigdatacorpEnrichmentStatus === 'DONE' &&
-            caseData.bigdatacorpGateResult?.passed === true
-        ) {
-            // ── BDC gate passed → reuse BDC identity, skip Judit gate ──
+        } else if (bdcGatePassed) {
+            // â”€â”€ BDC gate passed → reuse BDC identity, skip Judit gate â”€â”€
             const bdcGate = caseData.bigdatacorpGateResult;
             console.log(`Case ${caseId} [Judit]: using BigDataCorp identity gate (similarity: ${((bdcGate.nameSimilarity || 0) * 100).toFixed(0)}%).`);
 
@@ -2638,27 +2912,42 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 consultedAt: new Date().toISOString(),
             };
 
-            // Still query Judit Entity for UFs (needed for tribunal-directed searches)
-            try {
-                const entityRaw = await queryEntityDataLake(cpf, apiKey);
-                gateEntityData = normalizeJuditEntity(entityRaw, cpf);
-                entityUfs = gateEntityData.juditAllUfs || [];
-                console.log(`Case ${caseId} [Judit]: Entity UFs fetched: [${entityUfs.join(', ')}].`);
+            if (phases.entity !== false || juditFilters.autoTribunals === true) {
+                // Query Judit Entity only when explicitly enabled or needed for tribunal-directed searches.
+                try {
+                    const entityRaw = await queryEntityDataLake(cpf, apiKey);
+                    gateEntityData = normalizeJuditEntity(entityRaw, cpf);
+                    entityUfs = gateEntityData.juditAllUfs || [];
+                    console.log(`Case ${caseId} [Judit]: Entity UFs fetched: [${entityUfs.join(', ')}].`);
 
-                await caseRef.update({
-                    juditIdentity: fallbackIdentity,
-                    juditGateResult,
-                    juditPrimaryUf: gateEntityData.juditPrimaryUf,
-                    juditAllUfs: entityUfs,
-                    juditHasLawsuits: gateEntityData.juditHasLawsuits,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-            } catch (entityErr) {
-                // Entity query failed — use hiringUf as fallback for UFs
+                    await caseRef.update({
+                        juditIdentity: fallbackIdentity,
+                        juditGateResult,
+                        juditPrimaryUf: gateEntityData.juditPrimaryUf,
+                        juditAllUfs: entityUfs,
+                        juditHasLawsuits: gateEntityData.juditHasLawsuits,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                } catch (entityErr) {
+                    // Entity query failed — use hiringUf as fallback for UFs
+                    const uf = caseData.hiringUf || null;
+                    entityUfs = uf ? [uf] : [];
+                    console.warn(`Case ${caseId} [Judit]: Entity UF query failed (${entityErr.message}), using hiringUf=[${entityUfs.join(', ')}].`);
+
+                    await caseRef.update({
+                        juditIdentity: fallbackIdentity,
+                        juditGateResult,
+                        juditPrimaryUf: uf,
+                        juditAllUfs: entityUfs,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                }
+            } else {
                 const uf = caseData.hiringUf || null;
-                entityUfs = uf ? [uf] : [];
-                console.warn(`Case ${caseId} [Judit]: Entity UF query failed (${entityErr.message}), using hiringUf=[${entityUfs.join(', ')}].`);
-
+                entityUfs = Array.isArray(caseData.juditAllUfs) && caseData.juditAllUfs.length > 0
+                    ? caseData.juditAllUfs
+                    : (uf ? [uf] : []);
+                console.log(`Case ${caseId} [Judit]: BDC gate reused; Judit Entity skipped by config. UFs=[${entityUfs.join(', ')}].`);
                 await caseRef.update({
                     juditIdentity: fallbackIdentity,
                     juditGateResult,
@@ -2668,7 +2957,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 });
             }
         } else {
-            // ── BDC did not pass gate → run Judit gate as fallback ──
+            // â”€â”€ BDC did not pass gate → run Judit gate as fallback â”€â”€
             const bdcStatus = caseData.bigdatacorpEnrichmentStatus || 'N/A';
             console.log(`Case ${caseId} [Judit]: BDC status=${bdcStatus}, running Judit identity gate as fallback.`);
             try {
@@ -2819,6 +3108,8 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                         juditEnrichmentStatus: 'FAILED',
                         juditError: error,
                         juditSources: { entity: { error: gateErrMsg, fallbackError: fbMsg, consultedAt: new Date().toISOString() } },
+                        juditPendingAsyncPhases: FieldValue.delete(),
+                        juditPendingAsyncCount: FieldValue.delete(),
                         updatedAt: FieldValue.serverTimestamp(),
                     });
                     return { status: 'FAILED', error };
@@ -2829,9 +3120,8 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         entityUfs = caseData.juditAllUfs || [];
     }
 
-    // ─── ENRICHMENT: datalake-first strategy ───
+    // â”€â”€â”€ ENRICHMENT: datalake-first strategy â”€â”€â”€
     // Flow: 1) Sync datalake lawsuits (R$0.50) → 2) Parallel warrants + execution → 3) Name supplement → 4) Async ONLY if triggered
-    const juditFilters = juditConfig.filters || {};
     const ufs = entityUfs.length > 0 ? entityUfs : (caseData.hiringUf ? [caseData.hiringUf] : []);
     let tribunals = juditFilters.tribunals?.length > 0 ? juditFilters.tribunals : [];
     if (tribunals.length === 0 && juditFilters.autoTribunals === true && ufs.length > 0) {
@@ -2869,7 +3159,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         juditSources.entity = caseData.juditSources.entity;
     }
 
-    // ─── STEP 1: Lawsuits (sync datalake by default, async only if explicitly forced) ───
+    // â”€â”€â”€ STEP 1: Lawsuits (sync datalake by default, async only if explicitly forced) â”€â”€â”€
     if (phases.lawsuits !== false) {
         const useAsync = juditFilters.useAsync === true;  // DEFAULT=false → sync datalake
         try {
@@ -2911,23 +3201,17 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         }
     }
 
-    // ─── STEP 2: Warrants + Execution (parallel, always async — these endpoints have no sync alternative) ───
+    // â”€â”€â”€ STEP 2: Warrants + Execution (parallel, always async — these endpoints have no sync alternative) â”€â”€â”€
     // Optimization: skip Judit warrant (R$1.00) if BigDataCorp already confirmed arrest warrants
     let warrantSkippedByBdc = false;
     if (phases.warrant !== false) {
-        try {
-            const midDoc = await caseRef.get();
-            const midData = midDoc.data() || {};
-            if (
-                ['DONE', 'PARTIAL'].includes(midData.bigdatacorpEnrichmentStatus) &&
-                midData.bigdatacorpHasArrestWarrant === true
-            ) {
-                warrantSkippedByBdc = true;
-                phases.warrant = false;
-                console.log(`Case ${caseId} [Judit]: Warrant search SKIPPED — BigDataCorp already confirmed arrest warrant(s). Saving R$1.00.`);
-            }
-        } catch (checkErr) {
-            console.warn(`Case ${caseId} [Judit]: Could not check BDC status before warrant, proceeding normally:`, checkErr.message);
+        if (
+            ['DONE', 'PARTIAL'].includes(caseData.bigdatacorpEnrichmentStatus) &&
+            caseData.bigdatacorpHasArrestWarrant === true
+        ) {
+            warrantSkippedByBdc = true;
+            phases.warrant = false;
+            console.log(`Case ${caseId} [Judit]: Warrant search SKIPPED — BigDataCorp already confirmed arrest warrant(s). Saving R$1.00.`);
         }
     }
 
@@ -3034,7 +3318,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 
     const totalPhases = (phases.lawsuits !== false ? 1 : 0) + parallelTasks.length + (warrantSkippedByBdc ? 1 : 0);
 
-    // ─── STEP 3: NAME SEARCH SUPPLEMENT — search by name when CPF found 0 lawsuits ───
+    // â”€â”€â”€ STEP 3: NAME SEARCH SUPPLEMENT — search by name when CPF found 0 lawsuits â”€â”€â”€
     const nameConfig = juditConfig.nameSearchSupplement || {};
     const cpfLawsuitCount = updatePayload.juditProcessTotal || 0;
     const candidateName = caseData.candidateName || '';
@@ -3114,7 +3398,9 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
     if (totalPhases === 0) {
         juditStatus = 'SKIPPED';
     } else if (pendingCount > 0) {
-        juditStatus = successCount > 0 || failCount > 0 ? 'PARTIAL' : 'RUNNING';
+        // While there are async callbacks pending, Judit is still RUNNING.
+        // PARTIAL would mislead downstream triggers (Escavador/DJEN/auto-classify).
+        juditStatus = 'RUNNING';
     } else if (failCount === 0) {
         juditStatus = 'DONE';
     } else if (successCount > 0) {
@@ -3123,10 +3409,10 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         juditStatus = 'FAILED';
     }
 
-    // ─── EVALUATE: should Escavador run as cross-validation? ───
+    // â”€â”€â”€ EVALUATE: should Escavador run as cross-validation? â”€â”€â”€
     const needsEscavador = evaluateEscavadorNeed(updatePayload, juditConfig);
 
-    // ─── PERSIST ───
+    // â”€â”€â”€ PERSIST â”€â”€â”€
     const error = errors.length > 0 ? errors.join('; ') : null;
     const persistencePayload = savePersistence ? { juditRawPayloads } : {};
 
@@ -3158,14 +3444,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 
     if (!options.skipAutoClassify && (juditStatus === 'DONE' || juditStatus === 'PARTIAL')) {
         try {
-            const freshDoc = await caseRef.get();
-            const freshData = freshDoc.data() || {};
-
-            if (needsEscavador && (freshData.escavadorEnrichmentStatus === 'RUNNING' || freshData.escavadorEnrichmentStatus === 'PENDING' || !freshData.escavadorEnrichmentStatus)) {
-                console.log(`Case ${caseId} [AutoClassify]: Skipped — Escavador needed and still ${freshData.escavadorEnrichmentStatus || 'PENDING'}. Will run when Escavador completes.`);
-            } else {
-                await runAutoClassifyAndAi(caseRef, caseId, freshData);
-            }
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit completion');
         } catch (classifyErr) {
             console.error(`Case ${caseId} [AutoClassify]: error:`, classifyErr.message);
         }
@@ -3181,11 +3460,11 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
         `Tribunals filter: [${tribunals.join(',')}].`,
     );
 
-    // ── Circuit Breaker: record Judit outcome ──
+    // â”€â”€ Circuit Breaker: record Judit outcome â”€â”€
     if (juditStatus === 'DONE' || juditStatus === 'PARTIAL') {
-        recordSuccess('judit').catch(() => {});
+        await recordSuccess('judit');
     } else if (juditStatus === 'FAILED') {
-        recordFailure('judit', error || 'All phases failed').catch(() => {});
+        await recordFailure('judit', error || 'All phases failed');
     }
 
     return { status: juditStatus, error, needsEscavador };
@@ -3237,13 +3516,24 @@ exports.enrichJuditOnCase = onDocumentUpdated(
         }
 
         try {
+            const runLock = await acquirePhaseRun(caseRef, 'juditEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [Judit]: skipped because status is already ${runLock.caseData?.juditEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            const runCaseData = runLock.caseData || caseData;
             const juditConfig = await loadJuditConfig(tenantId);
             if (!juditConfig.enabled) {
-                console.log(`Case ${caseId} [Judit]: disabled for tenant ${tenantId}.`);
+                console.log(`Case ${caseId} [Judit]: disabled for tenant ${tenantId}. Skipping.`);
+                await caseRef.update({
+                    juditEnrichmentStatus: 'SKIPPED',
+                    juditError: null,
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
                 return;
             }
 
-            await runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig);
+            await runJuditEnrichmentPhase(caseRef, caseId, runCaseData, juditConfig);
 
             // Audit: log automatic enrichment trigger
             try {
@@ -3261,7 +3551,13 @@ exports.enrichJuditOnCase = onDocumentUpdated(
             } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [Judit]: error:`, err.message);
-            throw err;
+            await caseRef.update({
+                juditEnrichmentStatus: 'FAILED',
+                juditError: err.message,
+                juditPendingAsyncPhases: FieldValue.delete(),
+                juditPendingAsyncCount: FieldValue.delete(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
         }
     },
 );
@@ -3290,6 +3586,13 @@ exports.enrichBigDataCorpOnCase = onDocumentCreated(
         }
 
         try {
+            const runLock = await acquirePhaseRun(caseRef, 'bigdatacorpEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [BigDataCorp]: skipped because status is already ${runLock.caseData?.bigdatacorpEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            const runCaseData = runLock.caseData || caseData;
+
             const bdcConfig = await loadBigDataCorpConfig(tenantId);
             if (!bdcConfig.enabled) {
                 console.log(`Case ${caseId} [BigDataCorp]: disabled for tenant ${tenantId}, writing SKIPPED.`);
@@ -3298,10 +3601,11 @@ exports.enrichBigDataCorpOnCase = onDocumentCreated(
                     bigdatacorpError: 'Provider desabilitado para este tenant.',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'BigDataCorp disabled');
                 return;
             }
 
-            await runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfig);
+            await runBigDataCorpEnrichmentPhase(caseRef, caseId, runCaseData, bdcConfig);
 
             // Audit: log automatic enrichment trigger
             try {
@@ -3324,12 +3628,51 @@ exports.enrichBigDataCorpOnCase = onDocumentCreated(
     },
 );
 
+exports.enrichBigDataCorpOnCorrection = onDocumentUpdated(
+    { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB', secrets: [bigdatacorpAccessToken, bigdatacorpTokenId, openaiApiKey] },
+    async (event) => {
+        const before = event.data?.before?.data();
+        const after = event.data?.after?.data();
+        if (!before || !after) return;
+
+        if (before.status !== 'CORRECTION_NEEDED' || after.status !== 'PENDING') return;
+        if (after.bigdatacorpEnrichmentStatus !== 'PENDING') return;
+
+        const caseId = event.params.caseId;
+        const caseRef = db.collection('cases').doc(caseId);
+        const tenantId = after.tenantId;
+        if (!tenantId) return;
+
+        try {
+            const runLock = await acquirePhaseRun(caseRef, 'bigdatacorpEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [BigDataCorp correction]: skipped because status is already ${runLock.caseData?.bigdatacorpEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            const runCaseData = runLock.caseData || after;
+            const bdcConfig = await loadBigDataCorpConfig(tenantId);
+            if (!bdcConfig.enabled) {
+                console.log(`Case ${caseId} [BigDataCorp correction]: disabled for tenant ${tenantId}, writing SKIPPED.`);
+                await caseRef.update({
+                    bigdatacorpEnrichmentStatus: 'SKIPPED',
+                    bigdatacorpError: 'Provider desabilitado para este tenant.',
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                return;
+            }
+
+            await runBigDataCorpEnrichmentPhase(caseRef, caseId, runCaseData, bdcConfig);
+        } catch (err) {
+            console.error(`Case ${caseId} [BigDataCorp correction]: error:`, err.message);
+        }
+    },
+);
+
 /* =========================================================
    JUDIT — Re-enrichment after client correction.
-   Triggered when a case transitions from CORRECTION_NEEDED to
-   PENDING with a fresh correctedAt. Since enrichJuditOnCase
-   watches bigdatacorpEnrichmentStatus changes, this separate
-   trigger handles re-runs directly on correction events.
+   Triggered only as fallback when correction did not schedule BDC.
+   The normal correction path re-runs BigDataCorp first, then Judit
+   via enrichJuditOnCase when BDC reaches a terminal state.
    ========================================================= */
 
 exports.enrichJuditOnCorrection = onDocumentUpdated(
@@ -3344,6 +3687,10 @@ exports.enrichJuditOnCorrection = onDocumentUpdated(
 
         // Guard: must have juditEnrichmentStatus reset to PENDING
         if (after.juditEnrichmentStatus !== 'PENDING') return;
+        if (!isSettledProviderStatus(after.bigdatacorpEnrichmentStatus)) {
+            console.log(`Case ${event.params.caseId} [Judit correction]: waiting for BigDataCorp correction gate (${after.bigdatacorpEnrichmentStatus || 'PENDING'}).`);
+            return;
+        }
 
         const caseData = after;
         const caseId = event.params.caseId;
@@ -3353,17 +3700,34 @@ exports.enrichJuditOnCorrection = onDocumentUpdated(
         if (!tenantId) return;
 
         try {
+            const runLock = await acquirePhaseRun(caseRef, 'juditEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [Judit correction]: skipped because status is already ${runLock.caseData?.juditEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            const runCaseData = runLock.caseData || caseData;
             const juditConfig = await loadJuditConfig(tenantId);
             if (!juditConfig.enabled) {
-                console.log(`Case ${caseId} [Judit correction]: disabled for tenant ${tenantId}.`);
+                console.log(`Case ${caseId} [Judit correction]: disabled for tenant ${tenantId}. Skipping.`);
+                await caseRef.update({
+                    juditEnrichmentStatus: 'SKIPPED',
+                    juditError: null,
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
                 return;
             }
 
             console.log(`Case ${caseId} [Judit correction]: re-running enrichment after client correction.`);
-            await runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig);
+            await runJuditEnrichmentPhase(caseRef, caseId, runCaseData, juditConfig);
         } catch (err) {
             console.error(`Case ${caseId} [Judit correction]: error:`, err.message);
-            throw err;
+            await caseRef.update({
+                juditEnrichmentStatus: 'FAILED',
+                juditError: err.message,
+                juditPendingAsyncPhases: FieldValue.delete(),
+                juditPendingAsyncCount: FieldValue.delete(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
         }
     },
 );
@@ -3387,12 +3751,12 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
         const after = event.data?.after?.data();
         if (!before || !after) return;
 
-        // Guard: only trigger when Judit enrichment completes
+        // Guard: only trigger when Judit enrichment completes and is truly settled
         const statusBefore = before.juditEnrichmentStatus;
         const statusAfter = after.juditEnrichmentStatus;
         const needsEscavadorTurnedTrue = before.juditNeedsEscavador !== true && after.juditNeedsEscavador === true;
         if (statusBefore === statusAfter && !needsEscavadorTurnedTrue) return;
-        if (statusAfter !== 'DONE' && statusAfter !== 'PARTIAL') return;
+        if (!isJuditSettled(after)) return;
 
         // Guard: don't re-trigger if Escavador already ran, except when it was
         // previously skipped and Judit async completion now requires validation.
@@ -3417,19 +3781,13 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
                 // BUG-3 fix: When Escavador is disabled but Judit flagged it as needed,
                 // we must still mark SKIPPED and run auto-classification. Otherwise the
                 // pipeline gets permanently stuck waiting for Escavador to complete.
+                await caseRef.update({
+                    escavadorEnrichmentStatus: 'SKIPPED',
+                    escavadorError: null,
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
                 if (caseData.juditNeedsEscavador) {
-                    await caseRef.update({
-                        escavadorEnrichmentStatus: 'SKIPPED',
-                        escavadorError: null,
-                        updatedAt: FieldValue.serverTimestamp(),
-                    });
-                    try {
-                        const freshDoc = await caseRef.get();
-                        const freshData = freshDoc.data() || {};
-                        await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                    } catch (classifyErr) {
-                        console.error(`Case ${caseId} [AutoClassify via Escavador disabled]: error:`, classifyErr.message);
-                    }
+                    await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador disabled');
                 }
                 return;
             }
@@ -3444,18 +3802,21 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 // Run auto-classify since Escavador will not run
-                try {
-                    const freshDoc = await caseRef.get();
-                    const freshData = freshDoc.data() || {};
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                } catch (classifyErr) {
-                    console.error(`Case ${caseId} [AutoClassify via Escavador skip]: error:`, classifyErr.message);
-                }
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador skip');
                 return;
             }
 
             console.log(`Case ${caseId} [Escavador]: running cross-validation (juditNeedsEscavador=${caseData.juditNeedsEscavador}, forceRun=${forceRun}).`);
-            await runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorConfig);
+            const runLock = await acquirePhaseRun(
+                caseRef,
+                'escavadorEnrichmentStatus',
+                canReviveSkippedEscavador ? [undefined, null, 'PENDING', 'SKIPPED'] : [undefined, null, 'PENDING'],
+            );
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [Escavador]: skipped because status is already ${runLock.caseData?.escavadorEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            await runEscavadorEnrichmentPhase(caseRef, caseId, runLock.caseData || caseData, escavadorConfig);
 
             // Audit: log automatic enrichment trigger
             try {
@@ -3473,7 +3834,11 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
             } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [Escavador]: error:`, err.message);
-            throw err;
+            await caseRef.update({
+                escavadorEnrichmentStatus: 'FAILED',
+                escavadorError: err.message,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
         }
     },
 );
@@ -3491,15 +3856,24 @@ exports.enrichDjenOnCase = onDocumentUpdated(
         const after = event.data?.after?.data();
         if (!before || !after) return;
 
-        // Guard: only trigger when Judit enrichment completes
+        // Guard: only trigger when Judit enrichment completes and is truly settled
         const statusBefore = before.juditEnrichmentStatus;
         const statusAfter = after.juditEnrichmentStatus;
         if (statusBefore === statusAfter) return;
-        if (statusAfter !== 'DONE' && statusAfter !== 'PARTIAL') return;
+        if (!isJuditSettled(after)) return;
 
         // Guard: don't re-trigger if DJEN already ran
         const djenStatus = after.djenEnrichmentStatus;
         if (djenStatus && djenStatus !== 'PENDING') return;
+
+        // P2-007: Guard — wait for Escavador when Judit flagged it as needed
+        if (after.juditNeedsEscavador === true) {
+            const escavadorStatus = after.escavadorEnrichmentStatus;
+            if (!isSettledProviderStatus(escavadorStatus)) {
+                console.log(`Case ${event.params.caseId} [DJEN]: waiting for Escavador to settle (status=${escavadorStatus || 'PENDING'}).`);
+                return;
+            }
+        }
 
         // Guard: don't enrich concluded cases
         if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
@@ -3515,11 +3889,23 @@ exports.enrichDjenOnCase = onDocumentUpdated(
             const djenConfig = await loadDjenConfig(tenantId);
             if (!djenConfig.enabled) {
                 console.log(`Case ${caseId} [DJEN]: disabled for tenant ${tenantId}.`);
+                await caseRef.update({
+                    djenEnrichmentStatus: 'SKIPPED',
+                    djenError: null,
+                    djenSkippedReason: 'disabled_for_tenant',
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'DJEN disabled');
                 return;
             }
 
             console.log(`Case ${caseId} [DJEN]: running enrichment (strategy=${djenConfig.searchStrategy}).`);
-            await runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig);
+            const runLock = await acquirePhaseRun(caseRef, 'djenEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [DJEN]: skipped because status is already ${runLock.caseData?.djenEnrichmentStatus || 'set'}.`);
+                return;
+            }
+            await runDjenEnrichmentPhase(caseRef, caseId, runLock.caseData || caseData, djenConfig);
 
             // Audit: log automatic enrichment trigger
             try {
@@ -3556,7 +3942,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
     });
 
     try {
-        const candidateName = caseData.name || caseData.candidateName || '';
+        const candidateName = caseData.candidateName || '';
         const candidateCpf = (caseData.cpf || '').replace(/\D/g, '');
         const strategy = djenConfig.searchStrategy || 'hybrid';
 
@@ -3645,14 +4031,10 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
         const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
         const strictNameMatch = namesakeCount > 10;
 
-        // Build candidate UFs for geo-tagging (cascading fallback)
-        const candidateUfs = caseData.juditAllUfs
-            || caseData.enrichmentAllUfs
-            || (caseData.juditPrimaryUf ? [caseData.juditPrimaryUf]
-                : caseData.enrichmentPrimaryUf ? [caseData.enrichmentPrimaryUf]
-                    : (caseData.hiringUf ? [caseData.hiringUf] : []));
+        // Build candidate UFs for geo-tagging from all available sources
+        const candidateUfs = buildCandidateUfs(caseData);
 
-        const normalized = normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, knownProcessSet, { strictNameMatch, candidateUfs });
+        const normalized = normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, knownProcessSet, { strictNameMatch, candidateUfs, namesakeCount });
         const { _source, ...fields } = normalized;
 
         await caseRef.update({
@@ -3673,17 +4055,10 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
 
         // Cascade auto-classify if main providers are settled
         if (!options.skipAutoClassify) {
-            const freshDoc = await caseRef.get();
-            const freshData = freshDoc.data() || {};
-            const escavadorStatus = freshData.escavadorEnrichmentStatus;
-            if (escavadorStatus !== 'RUNNING') {
-                try {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                } catch (classifyErr) {
-                    console.error(`Case ${caseId} [AutoClassify via DJEN]: error:`, classifyErr.message);
-                }
-            } else {
-                console.log(`Case ${caseId} [AutoClassify via DJEN]: deferred — Escavador still RUNNING.`);
+            try {
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'DJEN', options);
+            } catch (classifyErr) {
+                console.error(`Case ${caseId} [AutoClassify via DJEN]: error:`, classifyErr.message);
             }
         }
 
@@ -3701,16 +4076,7 @@ async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, opt
 
         // Run auto-classify even on DJEN failure — DJEN data is supplementary
         if (!options.skipAutoClassify) {
-            try {
-                const freshDoc = await caseRef.get();
-                const freshData = freshDoc.data() || {};
-                const escavadorStatus = freshData.escavadorEnrichmentStatus;
-                if (escavadorStatus !== 'RUNNING') {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                }
-            } catch (classifyErr) {
-                console.error(`Case ${caseId} [AutoClassify via DJEN failure]: error:`, classifyErr.message);
-            }
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'DJEN failure', options);
         }
 
         return { status: 'FAILED', error: errMsg };
@@ -3758,6 +4124,14 @@ function extractKnownProcessNumbers(caseData) {
  * Checks tenant AI budget before running AI.
  */
 async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
+    const lock = await acquireAutoClassifyRun(caseRef, caseId);
+    if (!lock.acquired) {
+        console.log(`Case ${caseId} [AutoClassify]: skipped (${lock.reason || 'not_acquired'}).`);
+        return { skipped: true, reason: lock.reason || 'not_acquired' };
+    }
+    freshData = lock.caseData || freshData || {};
+
+    try {
     const autoClassification = computeAutoClassification(freshData);
     const updatePayload = {};
 
@@ -3777,17 +4151,28 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
 
                 if (aiEnabled && tenantData.enrichmentConfig?.ai?.monthlyBudgetUsd) {
                     const budget = tenantData.enrichmentConfig.ai.monthlyBudgetUsd;
+                    // BUG-R5-002: Use tenant-level AI cost ledger instead of O(n) case scan.
+                    // Fallback to case scan only if ledger doesn't exist (backward compat).
                     const now = new Date();
-                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                    const costSnapshot = await db.collection('cases')
-                        .where('tenantId', '==', tenantId)
-                        .where('aiExecutedAt', '>=', monthStart)
-                        .select('aiCostUsd', 'aiHomonymCostUsd')
-                        .get();
+                    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    const ledgerRef = db.collection('tenantSettings').doc(tenantId).collection('aiCostLedger').doc(monthKey);
+                    const ledgerSnap = await ledgerRef.get();
                     let totalCost = 0;
-                    costSnapshot.forEach((docSnap) => {
-                        totalCost += (docSnap.data().aiCostUsd || 0) + (docSnap.data().aiHomonymCostUsd || 0);
-                    });
+                    if (ledgerSnap.exists) {
+                        totalCost = ledgerSnap.data().totalCostUsd || 0;
+                    } else {
+                        // Fallback: O(n) scan for backward compatibility. Warn about performance.
+                        console.warn(`[AI Budget] Tenant ${tenantId}: aiCostLedger missing for ${monthKey}. Falling back to O(n) case scan. Consider running backfill.`);
+                        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                        const costSnapshot = await db.collection('cases')
+                            .where('tenantId', '==', tenantId)
+                            .where('aiExecutedAt', '>=', monthStart)
+                            .select('aiCostUsd', 'aiHomonymCostUsd')
+                            .get();
+                        costSnapshot.forEach((docSnap) => {
+                            totalCost += (docSnap.data().aiCostUsd || 0) + (docSnap.data().aiHomonymCostUsd || 0);
+                        });
+                    }
                     if (totalCost >= budget) {
                         console.warn(`Case ${caseId}: AI budget exceeded ($${totalCost.toFixed(4)} >= $${budget}). Skipping AI.`);
                         updatePayload.aiError = `Budget mensal excedido ($${totalCost.toFixed(4)}/$${budget})`;
@@ -3817,6 +4202,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
 
                 await caseRef.update({
                     ...updatePayload,
+                    autoClassifySignature: lock.signature || computeAutoClassifySignature(freshData),
                     autoClassifiedAt: FieldValue.serverTimestamp(),
                     updatedAt: FieldValue.serverTimestamp(),
                 });
@@ -3864,7 +4250,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
 
                     console.log(`Case ${caseId} [AI_HOMONYM]: ${homonymResult.error ? 'ERROR' : 'OK'} (${homonymResult.fromCache ? 'cached' : 'fresh'}, $${(updatePayload.aiHomonymCostUsd || 0).toFixed(4)}, structured=${homonymResult.structuredOk})`);
 
-                    writeAuditEvent({
+                    await writeAuditEvent({
                         action: 'AI_HOMONYM_ANALYSIS_RUN',
                         tenantId,
                         actor: { type: ACTOR_TYPE.SYSTEM, id: 'system', email: 'cloud-function' },
@@ -3894,7 +4280,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                 });
                 console.log(`Case ${caseId} [AI]: ${aiResult.error ? 'ERROR' : 'OK'} (${aiResult.fromCache ? 'cached' : 'fresh'}, $${(updatePayload.aiCostUsd || 0).toFixed(4)}, structured=${aiResult.structuredOk})`);
 
-                writeAuditEvent({
+                await writeAuditEvent({
                     action: 'AI_ANALYSIS_RUN',
                     tenantId,
                     actor: { type: ACTOR_TYPE.SYSTEM, id: 'system', email: 'cloud-function' },
@@ -3949,6 +4335,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
             if (homonymInput.needsAnalysis && !updatePayload.aiHomonymError) {
                 updatePayload.aiHomonymError = aiErr.message;
             }
+            updatePayload.aiStatus = 'FAILED';
         }
     } else {
         if (homonymInput.needsAnalysis && !updatePayload.aiHomonymError) {
@@ -3964,6 +4351,7 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                 error: updatePayload.aiError || 'IA desabilitada para este tenant.',
             },
         };
+        updatePayload.aiStatus = 'SKIPPED';
     }
 
     // Deterministic prefill: generate rich content for all narrative fields
@@ -4012,9 +4400,38 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
     if (Object.keys(updatePayload).length > 0) {
         await caseRef.update({
             ...updatePayload,
+            autoClassifySignature: lock.signature || computeAutoClassifySignature(freshData),
             autoClassifiedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
+        await recordAiCostLedger(tenantId, updatePayload).catch((err) => {
+            console.warn(`Case ${caseId} [AI Ledger]: failed to record cost:`, err.message);
+        });
+    }
+    return { success: true };
+    } catch (unexpectedErr) {
+        console.error(`Case ${caseId} [AutoClassify]: unexpected error:`, unexpectedErr.message);
+        try {
+            await caseRef.update({
+                aiStatus: 'FAILED',
+                aiError: unexpectedErr.message,
+                autoClassifySignature: lock.signature || computeAutoClassifySignature(freshData),
+                autoClassifiedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        } catch (updateErr) {
+            console.error(`Case ${caseId} [AutoClassify]: failed to persist error state:`, updateErr.message);
+        }
+        throw unexpectedErr;
+    } finally {
+        const shouldRerun = await releaseAutoClassifyRun(caseRef, lock.owner);
+        if (shouldRerun) {
+            console.log(`Case ${caseId} [AutoClassify]: rerun requested while locked. Reprocessing latest state.`);
+            const latestDoc = await caseRef.get();
+            if (latestDoc.exists) {
+                await runAutoClassifyAndAi(caseRef, caseId, latestDoc.data() || {});
+            }
+        }
     }
 }
 
@@ -4028,6 +4445,14 @@ function computeAutoClassification(caseData) {
     const juditFailed = caseData.juditEnrichmentStatus === 'FAILED';
     const fontedataFailed = caseData.enrichmentStatus === 'FAILED';
     const bigdatacorpDone = caseData.bigdatacorpEnrichmentStatus === 'DONE' || caseData.bigdatacorpEnrichmentStatus === 'PARTIAL';
+    const bigdatacorpHasKycData = bigdatacorpDone || (
+        caseData.bigdatacorpEnrichmentStatus === 'BLOCKED' &&
+        (
+            caseData.bigdatacorpIsPep === true ||
+            caseData.bigdatacorpIsSanctioned === true ||
+            caseData.bigdatacorpWasSanctioned === true
+        )
+    );
     const fontedataCriminal = caseData.fontedataCriminalFlag === 'POSITIVE';
     const fontedataLabor = caseData.fontedataLaborFlag === 'POSITIVE';
     const fontedataWarrant = caseData.fontedataWarrantFlag === 'POSITIVE';
@@ -4037,13 +4462,31 @@ function computeAutoClassification(caseData) {
     const djenCriminal = djenDone && caseData.djenCriminalFlag === 'POSITIVE';
     const djenLabor = djenDone && caseData.djenLaborFlag === true;
     // DJEN searches by name only — unreliable as strong evidence for common names
+    // BUT: if most criminal comunicações geo-match candidate UFs, confidence increases
     const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
-    const djenReliableAsStrongEvidence = namesakeCount <= 10;
+    const djenComunicacoes = caseData.djenComunicacoes || [];
+    const djenCriminalItems = djenComunicacoes.filter((i) => i.area === 'criminal');
+    const djenCriminalGeoMatched = djenCriminalItems.filter((i) => i.geoMatch === true).length;
+    const djenCriminalGeoMatchRatio = djenCriminalItems.length > 0
+        ? djenCriminalGeoMatched / djenCriminalItems.length
+        : 0;
+    const djenHighScoreCount = djenComunicacoes.filter((i) => (i.probabilityScore || 0) >= 80).length;
+
+    // DJEN is strong evidence when:
+    // 1. Few homonyms (â‰¤10), OR
+    // 2. Moderate homonyms (â‰¤50) with strong geo-match (â‰¥70% criminais na UF), OR
+    // 3. High probability scores (â‰¥5 items with score â‰¥80)
+    const djenReliableAsStrongEvidence = namesakeCount <= 10
+        || (namesakeCount <= 50 && djenCriminalGeoMatchRatio >= 0.7)
+        || (djenHighScoreCount >= 5);
+
     const djenCriminalStrong = djenCriminal && djenReliableAsStrongEvidence;
     const djenCriminalWeak = djenCriminal && !djenReliableAsStrongEvidence;
-    const bigdatacorpPep = bigdatacorpDone && caseData.bigdatacorpIsPep === true;
-    const bigdatacorpSanctioned = bigdatacorpDone && caseData.bigdatacorpIsSanctioned === true;
-    const bigdatacorpWasSanctioned = bigdatacorpDone && caseData.bigdatacorpWasSanctioned === true;
+    const djenLaborStrong = djenLabor && djenReliableAsStrongEvidence;
+    const djenLaborWeak = djenLabor && !djenReliableAsStrongEvidence;
+    const bigdatacorpPep = bigdatacorpHasKycData && caseData.bigdatacorpIsPep === true;
+    const bigdatacorpSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpIsSanctioned === true;
+    const bigdatacorpWasSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpWasSanctioned === true;
     const juditExecutionPositive = caseData.juditExecutionFlag === 'POSITIVE';
     const homonymInput = buildHomonymAnalysisInput(caseData);
     const coverage = homonymInput.providerCoverage || {};
@@ -4118,16 +4561,19 @@ function computeAutoClassification(caseData) {
     const dedupedReferenceCandidates = dedupByCnj(normalizedReferenceCandidates);
 
     const relevantCriminalCandidates = dedupedReferenceCandidates.filter(
-        (candidate) => candidate.isCriminal && !candidate.lowRiskRole,
+        (candidate) => candidate.isCriminal && !candidate.lowRiskRole && candidate.roleClassification?.category !== 'VICTIM',
     );
     const relevantLaborCandidates = dedupedReferenceCandidates.filter(
-        (candidate) => isLaborCandidate(candidate) && !candidate.lowRiskRole,
+        (candidate) => isLaborCandidate(candidate) && !candidate.lowRiskRole && candidate.roleClassification?.category === 'PLAINTIFF',
+    );
+    const defendantLaborCandidates = dedupedReferenceCandidates.filter(
+        (candidate) => isLaborCandidate(candidate) && candidate.roleClassification?.category === 'DEFENDANT',
     );
     const lowRiskReferenceCandidates = referenceCandidates.filter(
         (candidate) => candidate.hasExactCpfMatch && (candidate.lowRiskRole || isProtectedByLowRisk(candidate)),
     );
     const lowRiskLaborCandidates = referenceCandidates.filter(
-        (candidate) => isLaborCandidate(candidate) && (candidate.lowRiskRole || isProtectedByLowRisk(candidate)),
+        (candidate) => isLaborCandidate(candidate) && (candidate.lowRiskRole || candidate.roleClassification?.category === 'DEFENDANT' || isProtectedByLowRisk(candidate)),
     );
     const weakCriminalCandidates = ambiguousCandidates.filter((candidate) => candidate.isCriminal);
     const weakLaborCandidates = ambiguousCandidates.filter((candidate) => isLaborCandidate(candidate));
@@ -4271,19 +4717,27 @@ function computeAutoClassification(caseData) {
 
     const laborSourceFailed = fontedataFailed && caseData.enrichmentSources?.labor?.error;
 
-    if (fontedataLabor || bigdatacorpLabor || djenLabor || relevantLaborCandidates.length > 0) {
+    if (fontedataLabor || bigdatacorpLabor || djenLaborStrong || relevantLaborCandidates.length > 0) {
         result.laborFlag = 'POSITIVE';
         const sources = [];
         if (fontedataLabor) sources.push('FonteData TRT');
         if (bigdatacorpLabor) sources.push('BigDataCorp');
-        if (djenLabor) sources.push('DJEN');
+        if (djenLaborStrong) sources.push('DJEN (forte)');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Escavador')) sources.push('Escavador');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Judit')) sources.push('Judit');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'BigDataCorp')) sources.push('BigDataCorp');
         pushUnique(laborNotes, `Trabalhista POSITIVO confirmado por: ${sources.join(', ') || 'processos identificados'}.`);
+    } else if (djenLaborWeak) {
+        result.laborFlag = 'INCONCLUSIVE';
+        pushUnique(laborNotes, 'Achados trabalhistas no DJEN/DPJe dependem de nome comum sem confirmacao forte de identidade. Revisao manual recomendada.');
     } else if (lowRiskLaborCandidates.length > 0) {
         result.laborFlag = 'NEGATIVE';
-        pushUnique(laborNotes, 'Processos trabalhistas encontrados apenas em papel de baixo risco, como testemunha; nao ha apontamento trabalhista relevante contra o candidato.');
+        const defendantCount = defendantLaborCandidates.length;
+        if (defendantCount > 0) {
+            pushUnique(laborNotes, `Processos trabalhistas encontrados como REU/RECLAMADO (${defendantCount}) — baixo risco para contratacao (foi processado, nao processou). Nenhum apontamento como autor/reclamante.`);
+        } else {
+            pushUnique(laborNotes, 'Processos trabalhistas encontrados apenas em papel de baixo risco, como testemunha; nao ha apontamento trabalhista relevante contra o candidato.');
+        }
     } else if (weakLaborCandidates.length > 0) {
         result.laborFlag = 'INCONCLUSIVE';
         pushUnique(laborNotes, 'Achados trabalhistas dependem de match fraco ou nome e permanecem inconclusivos.');
@@ -4384,6 +4838,17 @@ function computeAutoClassification(caseData) {
 
 const IDENTITY_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+    'requestedBy', 'requestedByName', 'requestedByEmail',
+    'slaHours',
+
+    // Validação cadastral BigDataCorp
+    'bigdatacorpName',
+    'bigdatacorpCpfStatus',
+    'bigdatacorpBirthDate',
+    'bigdatacorpAge',
+    'bigdatacorpGender',
+    'bigdatacorpMotherName',
+    'bigdatacorpHasDeathRecord',
 ];
 
 const RESULT_ONLY_FIELDS = [
@@ -4396,7 +4861,6 @@ const RESULT_ONLY_FIELDS = [
     'conflictInterest', 'conflictNotes',
     'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
     'enabledPhases',
-    'processHighlights',
     'warrantFindings',
     'keyFindings',
     'executiveSummary',
@@ -4428,10 +4892,6 @@ const CLIENT_CASE_FIELDS = [
     'concludedAt',
     'updatedAt',
     'correctedAt',
-    'correctionReason',
-    'correctionNotes',
-    'correctionRequestedAt',
-    'correctionRequestedBy',
     // executiveSummary, keyFindings, processHighlights, warrantFindings already in PUBLIC_RESULT_FIELDS
     'statusSummary',
     'sourceSummary',
@@ -4452,7 +4912,7 @@ function buildClientCasePayload(caseId, caseData) {
     for (const field of fieldsToSync) {
         const value = caseData[field];
         if (value !== undefined && value !== null) {
-            payload[field] = value;
+            payload[field] = sanitizePublicStructuredValue(value);
         }
     }
 
@@ -4463,18 +4923,36 @@ function buildClientCasePayload(caseId, caseData) {
     if (payload.hasNotes === undefined) payload.hasNotes = Boolean(caseData.analystComment || caseData.executiveSummary || caseData.clientNotes);
     if (payload.hasEvidence === undefined) {
         payload.hasEvidence = Boolean(
-            (Array.isArray(caseData.processHighlights) && caseData.processHighlights.length > 0)
-            || (Array.isArray(caseData.warrantFindings) && caseData.warrantFindings.length > 0)
+            (Array.isArray(caseData.warrantFindings) && caseData.warrantFindings.length > 0)
             || (Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0)
             || (Array.isArray(caseData.timelineEvents) && caseData.timelineEvents.some((event) => event.status === 'risk'))
         );
     }
+
+    // Communication fields
+    if (caseData.communicationStatus !== undefined) payload.communicationStatus = caseData.communicationStatus;
+    if (caseData.lastMessageAt !== undefined) payload.lastMessageAt = caseData.lastMessageAt;
+    if (caseData.lastMessagePreview !== undefined) payload.lastMessagePreview = caseData.lastMessagePreview;
+    if (caseData.lastMessageByPortal !== undefined) payload.lastMessageByPortal = caseData.lastMessageByPortal;
+    if (caseData.clientUnreadMessages !== undefined) payload.clientUnreadMessages = caseData.clientUnreadMessages;
 
     return payload;
 }
 
 async function writeClientCaseMirror(caseId, caseData) {
     const payload = buildClientCasePayload(caseId, caseData);
+    // BUG-R5-001: Only write if payload actually changed to reduce write amplification.
+    const existingRef = db.collection('clientCases').doc(caseId);
+    const existingSnap = await existingRef.get();
+    if (existingSnap.exists) {
+        const existing = existingSnap.data() || {};
+        const payloadJson = JSON.stringify(payload);
+        const existingJson = JSON.stringify(existing);
+        if (payloadJson === existingJson) {
+            console.log(`[clientCases] case ${caseId}: no visible change, skipping mirror write.`);
+            return;
+        }
+    }
     // clientCases is a fully controlled sanitized mirror, so replace the whole
     // document to prevent stale public fields from surviving across reopens.
     await db.collection('clientCases').doc(caseId).set(payload);
@@ -4518,6 +4996,11 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
         const caseId = event.params.caseId;
 
         if (after.status === 'DONE') {
+            // P2-014: Validate minimum content before publishing
+            if (!hasPublicReportMinimumContent(after)) {
+                console.warn(`Case ${caseId}: status DONE but minimum content not met, skipping publicResult.`);
+                return;
+            }
             // P06: Guard — skip if concludeCaseByAnalyst already wrote publicResult/latest synchronously
             const existingPublic = await db.collection('cases').doc(caseId).collection('publicResult').doc('latest').get();
             if (existingPublic.exists) {
@@ -4547,12 +5030,18 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
    ========================================================= */
 
 exports.createOpsClientUser = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const operatorProfile = await getOpsUserProfile(uid);
+
+        // CLI-OPS-001: Only admins/supervisors can create client users
+        if (operatorProfile.role !== 'admin' && operatorProfile.role !== 'owner' && operatorProfile.role !== 'supervisor') {
+            throw new HttpsError('permission-denied', 'Apenas administradores e supervisores podem criar clientes.');
+        }
+
         const {
             email,
             password,
@@ -4573,6 +5062,14 @@ exports.createOpsClientUser = onCall(
         const tenantId = requestedTenantId || normalizeTenantSlug(tenantName);
         if (!tenantId) {
             throw new HttpsError('invalid-argument', 'Nao foi possivel gerar tenantId valido.');
+        }
+
+        // CLI-OPS-005: Reject if new tenant collides with existing
+        if (!requestedTenantId) {
+            const existingTenant = await db.collection('tenantSettings').doc(tenantId).get();
+            if (existingTenant.exists) {
+                throw new HttpsError('already-exists', `Tenant "${tenantId}" ja existe. Selecione-o na lista ou escolha outro nome.`);
+            }
         }
 
         const authUser = await getAuth().createUser({
@@ -4600,7 +5097,9 @@ exports.createOpsClientUser = onCall(
             const tenantDoc = await tenantRef.get();
             if (!tenantDoc.exists) {
                 await tenantRef.set({
+                    name: tenantName || tenantId,
                     analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG },
+                    slaHours: 48,
                     updatedAt: FieldValue.serverTimestamp(),
                 });
             }
@@ -4630,7 +5129,7 @@ exports.createOpsClientUser = onCall(
    ========================================================= */
 
 exports.listTenantUsers = onCall(
-    { region: 'southamerica-east1' },
+    { region: 'southamerica-east1' , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
@@ -4663,7 +5162,7 @@ exports.listTenantUsers = onCall(
 );
 
 exports.createTenantUser = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
@@ -4723,7 +5222,7 @@ exports.createTenantUser = onCall(
 );
 
 exports.updateTenantUser = onCall(
-    { region: 'southamerica-east1' },
+    { region: 'southamerica-east1' , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
@@ -4816,9 +5315,298 @@ exports.updateTenantUser = onCall(
     },
 );
 
-/* ── updateOwnProfile ── */
+/* â”€â”€ syncUserClaims â”€â”€ */
+exports.syncUserClaims = onCall(
+    { region: 'southamerica-east1' , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const callerDoc = await db.collection('userProfiles').doc(uid).get();
+        const callerData = callerDoc.data() || {};
+        const isAdmin = ['admin', 'owner', 'supervisor'].includes(callerData.role);
+        if (!isAdmin) {
+            throw new HttpsError('permission-denied', 'Apenas administradores podem sincronizar claims.');
+        }
+
+        const { targetUid } = request.data || {};
+        if (!targetUid) {
+            throw new HttpsError('invalid-argument', 'targetUid e obrigatorio.');
+        }
+
+        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
+        if (!targetDoc.exists) {
+            throw new HttpsError('not-found', 'Usuario nao encontrado em userProfiles.');
+        }
+
+        const targetData = targetDoc.data();
+        await getAuth().setCustomUserClaims(targetUid, {
+            role: targetData.role,
+            tenantId: targetData.tenantId,
+        });
+
+        return {
+            success: true,
+            uid: targetUid,
+            role: targetData.role,
+            tenantId: targetData.tenantId,
+        };
+    },
+);
+
+/* â”€â”€ repairAllClaims â”€â”€ */
+exports.repairAllClaims = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 300 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const callerDoc = await db.collection('userProfiles').doc(uid).get();
+        const callerData = callerDoc.data() || {};
+        if (!['admin', 'owner'].includes(callerData.role)) {
+            throw new HttpsError('permission-denied', 'Apenas administradores podem executar reparo em massa.');
+        }
+
+        const snapshot = await db.collection('userProfiles').get();
+        let fixed = 0;
+        let skipped = 0;
+        let errors = 0;
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            const targetUid = doc.id;
+
+            if (!data.role || !data.tenantId) {
+                skipped++;
+                continue;
+            }
+
+            try {
+                await getAuth().setCustomUserClaims(targetUid, {
+                    role: data.role,
+                    tenantId: data.tenantId,
+                });
+                fixed++;
+            } catch {
+                errors++;
+            }
+        }
+
+        return { success: true, total: snapshot.size, fixed, skipped, errors };
+    },
+);
+
+/* â”€â”€ listOpsUsers â”€â”€ */
+exports.listOpsUsers = onCall(
+    { region: 'southamerica-east1' , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
+
+        const callerProfile = await getOpsUserProfile(uid);
+        assertOpsManager(callerProfile);
+
+        const { tenantId } = request.data || {};
+        let q = db.collection('userProfiles');
+
+        if (callerProfile.role === 'supervisor') {
+            q = q.where('tenantId', '==', callerProfile.tenantId);
+        } else if (callerProfile.role === 'admin' && callerProfile.tenantId) {
+            q = q.where('tenantId', '==', callerProfile.tenantId);
+        } else if (callerProfile.role === 'admin' && tenantId) {
+            q = q.where('tenantId', '==', tenantId);
+        }
+
+        const snapshot = await q.get();
+        const users = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (!OPS_ROLES.has(data.role)) return;
+            users.push({
+                uid: doc.id,
+                email: data.email || '',
+                displayName: data.displayName || '',
+                role: data.role,
+                tenantId: data.tenantId || null,
+                tenantName: data.tenantName || '',
+                status: data.status || 'active',
+                createdAt: data.createdAt || null,
+            });
+        });
+
+        return { users };
+    },
+);
+
+/* â”€â”€ createOpsUser â”€â”€ */
+exports.createOpsUser = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
+
+        const callerProfile = await getOpsUserProfile(uid);
+        assertOpsManager(callerProfile);
+
+        const { email, password, displayName, role = 'analyst', tenantId } = request.data || {};
+
+        if (!OPS_MANAGEABLE_ROLES.has(role)) {
+            throw new HttpsError('invalid-argument', 'Role invalida. Use analyst, supervisor ou admin.');
+        }
+        if (!email || !password || !displayName) {
+            throw new HttpsError('invalid-argument', 'Email, senha e nome sao obrigatorios.');
+        }
+
+        if (callerProfile.role === 'supervisor' && role !== 'analyst') {
+            throw new HttpsError('permission-denied', 'Supervisor so pode criar analistas.');
+        }
+
+        const targetTenantId = callerProfile.role === 'supervisor'
+            ? callerProfile.tenantId
+            : (tenantId || callerProfile.tenantId);
+        if (!targetTenantId) {
+            throw new HttpsError('invalid-argument', 'tenantId obrigatorio para criar usuario operacional.');
+        }
+
+        let tenantName = '';
+        const tenantDoc = await db.collection('tenantSettings').doc(targetTenantId).get();
+        if (tenantDoc.exists) tenantName = tenantDoc.data().name || '';
+
+        const authUser = await getAuth().createUser({
+            email,
+            password,
+            displayName: sanitizeDisplayName(displayName),
+        });
+
+        try {
+            await db.collection('userProfiles').doc(authUser.uid).set({
+                email,
+                displayName: sanitizeDisplayName(displayName),
+                role,
+                tenantId: targetTenantId,
+                tenantName,
+                status: 'active',
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            await getAuth().setCustomUserClaims(authUser.uid, { role, tenantId: targetTenantId });
+
+            await writeAuditEvent({
+                action: 'OPS_USER_CREATED',
+                tenantId: targetTenantId,
+                actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
+                entity: { type: 'USER', id: authUser.uid, label: email },
+                related: { userId: authUser.uid },
+                source: SOURCE.PORTAL_OPS,
+                ip: getClientIp(request),
+                detail: `Usuario ops ${email} criado com role ${role} por ${callerProfile.email}.`,
+                templateVars: { targetEmail: email },
+            });
+
+            return { uid: authUser.uid };
+        } catch (error) {
+            await getAuth().deleteUser(authUser.uid).catch(() => {});
+            throw error;
+        }
+    },
+);
+
+/* â”€â”€ updateOpsUser â”€â”€ */
+exports.updateOpsUser = onCall(
+    { region: 'southamerica-east1' , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
+
+        const callerProfile = await getOpsUserProfile(uid);
+        assertOpsManager(callerProfile);
+
+        const { targetUid, role, status, displayName, tenantId } = request.data || {};
+        if (!targetUid) throw new HttpsError('invalid-argument', 'ID do usuario alvo e obrigatorio.');
+
+        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
+        if (!targetDoc.exists) throw new HttpsError('not-found', 'Usuario nao encontrado.');
+        const targetProfile = targetDoc.data();
+
+        if (!OPS_ROLES.has(targetProfile.role)) {
+            throw new HttpsError('permission-denied', 'Este usuario nao pode ser gerenciado por aqui.');
+        }
+        if (callerProfile.role === 'supervisor' && targetProfile.tenantId !== callerProfile.tenantId) {
+            throw new HttpsError('permission-denied', 'Voce nao pode gerenciar usuarios de outra franquia.');
+        }
+        if (callerProfile.role === 'supervisor' && targetProfile.role !== 'analyst') {
+            throw new HttpsError('permission-denied', 'Supervisor so pode gerenciar analistas.');
+        }
+        if (targetUid === uid && role && role !== callerProfile.role) {
+            throw new HttpsError('invalid-argument', 'Voce nao pode alterar seu proprio papel.');
+        }
+        if (targetUid === uid && status === 'inactive') {
+            throw new HttpsError('invalid-argument', 'Voce nao pode desativar a si mesmo.');
+        }
+
+        const updateData = { updatedAt: FieldValue.serverTimestamp() };
+
+        if (role !== undefined) {
+            if (!OPS_MANAGEABLE_ROLES.has(role)) {
+                throw new HttpsError('invalid-argument', 'Role invalida. Use analyst, supervisor ou admin.');
+            }
+            updateData.role = role;
+        }
+        if (status !== undefined) {
+            const normalized = normalizeUserStatus(status);
+            updateData.status = normalized;
+            if (normalized === 'inactive') {
+                await getAuth().updateUser(targetUid, { disabled: true });
+            } else {
+                await getAuth().updateUser(targetUid, { disabled: false });
+            }
+        }
+        if (displayName !== undefined) {
+            const trimmed = sanitizeDisplayName(displayName);
+            if (trimmed.length < 2) throw new HttpsError('invalid-argument', 'Nome precisa ter pelo menos 2 caracteres.');
+            updateData.displayName = trimmed;
+        }
+        if (tenantId !== undefined && callerProfile.role !== 'supervisor') {
+            updateData.tenantId = tenantId;
+            const tDoc = await db.collection('tenantSettings').doc(tenantId).get();
+            if (tDoc.exists) updateData.tenantName = tDoc.data().name || '';
+        }
+
+        await db.collection('userProfiles').doc(targetUid).update(updateData);
+
+        const freshDoc = await db.collection('userProfiles').doc(targetUid).get();
+        const freshData = freshDoc.data() || {};
+        await getAuth().setCustomUserClaims(targetUid, {
+            role: freshData.role,
+            tenantId: freshData.tenantId,
+        });
+
+        const changes = [];
+        if (role) changes.push(`role=${role}`);
+        if (status) changes.push(`status=${status}`);
+        if (displayName) changes.push(`name=${sanitizeDisplayName(displayName)}`);
+        if (tenantId) changes.push(`tenant=${tenantId}`);
+
+        await writeAuditEvent({
+            action: 'OPS_USER_UPDATED',
+            tenantId: freshData.tenantId || targetProfile.tenantId || null,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
+            entity: { type: 'USER', id: targetUid, label: targetProfile.email },
+            related: { userId: targetUid },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `${targetProfile.email}: ${changes.join(', ')}.`,
+            templateVars: { targetEmail: targetProfile.email, changes: changes.join(', ') },
+        });
+
+        return { success: true };
+    },
+);
+
+/* â”€â”€ updateOwnProfile â”€â”€ */
 exports.updateOwnProfile = onCall(
-    { region: 'southamerica-east1' },
+    { region: 'southamerica-east1' , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -4828,25 +5616,31 @@ exports.updateOwnProfile = onCall(
             throw new HttpsError('not-found', 'Perfil nao encontrado.');
         }
 
-        const { displayName } = request.data || {};
+        const { displayName, portal } = request.data || {};
         if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {
             throw new HttpsError('invalid-argument', 'Nome precisa ter pelo menos 2 caracteres.');
         }
-
         const trimmed = displayName.trim();
+        if (trimmed.length > 80) {
+            throw new HttpsError('invalid-argument', 'Nome pode ter no maximo 80 caracteres.');
+        }
+
         await db.collection('userProfiles').doc(uid).update({
             displayName: trimmed,
             updatedAt: FieldValue.serverTimestamp(),
         });
         await getAuth().updateUser(uid, { displayName: trimmed });
 
+        const profileData = profileDoc.data();
+        const isOps = portal === 'ops' || String(profileData.role).startsWith('analyst') || String(profileData.role).startsWith('supervisor') || String(profileData.role).startsWith('admin');
+
         await writeAuditEvent({
             action: 'OWN_PROFILE_UPDATED',
-            tenantId: profileDoc.data().tenantId || null,
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profileDoc.data().email || uid, displayName: trimmed },
+            tenantId: profileData.tenantId || null,
+            actor: { type: isOps ? ACTOR_TYPE.OPS_USER : ACTOR_TYPE.CLIENT_USER, id: uid, email: profileData.email || uid, displayName: trimmed },
             entity: { type: 'PROFILE', id: uid, label: trimmed },
             related: { userId: uid },
-            source: SOURCE.PORTAL_CLIENT,
+            source: isOps ? SOURCE.PORTAL_OPS : SOURCE.PORTAL_CLIENT,
             ip: getClientIp(request),
             detail: `displayName: ${trimmed}`,
             templateVars: { actorName: trimmed },
@@ -4857,7 +5651,7 @@ exports.updateOwnProfile = onCall(
 );
 
 exports.createClientSolicitation = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    { region: 'southamerica-east1', timeoutSeconds: 120, cors: [/\.vercel\.app$/, /localhost/] },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -4870,6 +5664,7 @@ exports.createClientSolicitation = onCall(
             position = '',
             department = '',
             hiringUf = '',
+            candidateResidenceUf = '',
             email = '',
             phone = '',
             priority = 'NORMAL',
@@ -4880,8 +5675,72 @@ exports.createClientSolicitation = onCall(
 
         const candidateName = String(fullName || '').trim();
         const cpfDigits = sanitizeCpf(cpf);
-        if (!candidateName || cpfDigits.length !== 11) {
-            throw new HttpsError('invalid-argument', 'Nome completo e CPF valido sao obrigatorios.');
+        if (candidateName.length < 3 || cpfDigits.length !== 11 || !validateCpfDigits(cpfDigits)) {
+            throw new HttpsError('invalid-argument', 'Nome completo deve ter no minimo 3 caracteres e CPF valido e obrigatorio.');
+        }
+
+        // P2-003: Normaliza campos textuais (trim)
+        const trimmedPosition = String(position || '').trim();
+        const trimmedDepartment = String(department || '').trim();
+        const trimmedEmail = String(email || '').trim();
+        const trimmedPhone = String(phone || '').trim();
+        const trimmedDob = String(dateOfBirth || '').trim();
+        const trimmedHiringUf = String(hiringUf || '').trim().toUpperCase();
+        const trimmedResidenceUf = String(candidateResidenceUf || '').trim().toUpperCase();
+        const trimmedNotes = String(digitalProfileNotes || '').trim().slice(0, 500);
+        const trimmedSocialProfiles = {
+            instagram: String(socialProfiles?.instagram || '').trim(),
+            facebook: String(socialProfiles?.facebook || '').trim(),
+            linkedin: String(socialProfiles?.linkedin || '').trim(),
+            tiktok: String(socialProfiles?.tiktok || '').trim(),
+            twitter: String(socialProfiles?.twitter || '').trim(),
+            youtube: String(socialProfiles?.youtube || '').trim(),
+        };
+
+        // Validate UF fields
+        const VALID_UFS = new Set(['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']);
+        const hiringUfClean = trimmedHiringUf;
+        const residenceUfClean = trimmedResidenceUf;
+        if (!VALID_UFS.has(hiringUfClean)) {
+            throw new HttpsError('invalid-argument', `UF de local de trabalho invalida: ${hiringUf}`);
+        }
+        if (!VALID_UFS.has(residenceUfClean)) {
+            throw new HttpsError('invalid-argument', `UF de residencia invalida: ${candidateResidenceUf}`);
+        }
+
+        // P1-001: Validate field lengths
+        if (candidateName.length > 200) {
+            throw new HttpsError('invalid-argument', 'Nome completo deve ter no maximo 200 caracteres.');
+        }
+        if (trimmedPosition.length > 100) {
+            throw new HttpsError('invalid-argument', 'Cargo deve ter no maximo 100 caracteres.');
+        }
+        if (trimmedDepartment.length > 100) {
+            throw new HttpsError('invalid-argument', 'Departamento deve ter no maximo 100 caracteres.');
+        }
+        if (trimmedNotes.length > 500) {
+            throw new HttpsError('invalid-argument', 'Notas devem ter no maximo 500 caracteres.');
+        }
+
+        // P1-002: Validate email format
+        if (trimmedEmail) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(trimmedEmail)) {
+                throw new HttpsError('invalid-argument', 'Formato de e-mail invalido.');
+            }
+        }
+
+        // P1-003: Validate date of birth format
+        if (trimmedDob && !/^\d{4}-\d{2}-\d{2}$/.test(trimmedDob)) {
+            throw new HttpsError('invalid-argument', 'Data de nascimento deve estar no formato AAAA-MM-DD.');
+        }
+
+        // P1-004: Validate social profile URLs
+        const urlRegex = /^https?:\/\/.+/;
+        for (const [key, url] of Object.entries(trimmedSocialProfiles)) {
+            if (url && !urlRegex.test(String(url))) {
+                throw new HttpsError('invalid-argument', `URL invalida para ${key}: deve comecar com http:// ou https://`);
+            }
         }
 
         const tenantId = profile.tenantId;
@@ -4891,6 +5750,8 @@ exports.createClientSolicitation = onCall(
         const enabledPhases = Object.entries(analysisConfig)
             .filter(([, value]) => value?.enabled)
             .map(([key]) => key);
+        const tenantSlaHours = Number(tenantData?.slaHours ?? 48);
+        const safeSlaHours = Number.isFinite(tenantSlaHours) && tenantSlaHours >= 1 ? tenantSlaHours : 48;
 
         await enforceTenantSubmissionLimits(tenantId, tenantData || {}, {
             actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
@@ -4911,19 +5772,26 @@ exports.createClientSolicitation = onCall(
             candidateName,
             cpf: cpfDigits,
             cpfMasked: maskCpf(cpfDigits),
-            candidatePosition: String(position || ''),
-            department: String(department || ''),
-            dateOfBirth: String(dateOfBirth || ''),
-            email: String(email || ''),
-            phone: String(phone || ''),
-            instagram: String(socialProfiles.instagram || ''),
-            facebook: String(socialProfiles.facebook || ''),
-            linkedin: String(socialProfiles.linkedin || ''),
-            tiktok: String(socialProfiles.tiktok || ''),
-            twitter: String(socialProfiles.twitter || ''),
-            youtube: String(socialProfiles.youtube || ''),
-            otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : [],
-            digitalProfileNotes: String(digitalProfileNotes || ''),
+            candidatePosition: trimmedPosition,
+            department: trimmedDepartment,
+            dateOfBirth: trimmedDob,
+            candidateResidenceUf: trimmedResidenceUf,
+            email: trimmedEmail,
+            phone: trimmedPhone,
+            instagram: trimmedSocialProfiles.instagram,
+            facebook: trimmedSocialProfiles.facebook,
+            linkedin: trimmedSocialProfiles.linkedin,
+            tiktok: trimmedSocialProfiles.tiktok,
+            twitter: trimmedSocialProfiles.twitter,
+            youtube: trimmedSocialProfiles.youtube,
+            otherSocialUrls: (Array.isArray(otherSocialUrls) ? otherSocialUrls : [])
+                .filter(item => item && typeof item === 'object')
+                .map(item => ({
+                    label: String(item.label || '').trim().slice(0, 50),
+                    url: String(item.url || '').trim().slice(0, 500),
+                }))
+                .slice(0, 20),
+            digitalProfileNotes: trimmedNotes,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
@@ -4933,31 +5801,32 @@ exports.createClientSolicitation = onCall(
             tenantName,
             candidateId: candidateRef.id,
             candidateName,
-            candidatePosition: String(position || ''),
-            department: String(department || ''),
+            candidatePosition: trimmedPosition,
+            department: trimmedDepartment,
             cpf: cpfDigits,
             cpfMasked: maskCpf(cpfDigits),
-            hiringUf: String(hiringUf || ''),
+            hiringUf: trimmedHiringUf,
+            candidateResidenceUf: trimmedResidenceUf,
             priority: priority === 'HIGH' ? 'HIGH' : 'NORMAL',
             requestedBy: formatRequestedBy(profile, uid),
             requestedByName: profile.displayName || null,
             requestedByEmail: profile.email || null,
             enabledPhases: enabledPhases.length > 0 ? enabledPhases : Object.keys(DEFAULT_ANALYSIS_CONFIG),
-            socialProfiles: {
-                instagram: String(socialProfiles.instagram || ''),
-                facebook: String(socialProfiles.facebook || ''),
-                linkedin: String(socialProfiles.linkedin || ''),
-                tiktok: String(socialProfiles.tiktok || ''),
-                twitter: String(socialProfiles.twitter || ''),
-                youtube: String(socialProfiles.youtube || ''),
-            },
-            otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : [],
-            dateOfBirth: String(dateOfBirth || ''),
-            email: String(email || ''),
-            phone: String(phone || ''),
-            clientSubmissionNotes: String(digitalProfileNotes || ''),
+            socialProfiles: trimmedSocialProfiles,
+            otherSocialUrls: (Array.isArray(otherSocialUrls) ? otherSocialUrls : [])
+                .filter(item => item && typeof item === 'object')
+                .map(item => ({
+                    label: String(item.label || '').trim().slice(0, 50),
+                    url: String(item.url || '').trim().slice(0, 500),
+                }))
+                .slice(0, 20),
+            dateOfBirth: trimmedDob,
+            email: trimmedEmail,
+            phone: trimmedPhone,
+            clientSubmissionNotes: trimmedNotes,
             status: 'PENDING',
             assigneeId: null,
+            slaHours: safeSlaHours,
             criminalFlag: null,
             laborFlag: null,
             laborSeverity: null,
@@ -4974,12 +5843,17 @@ exports.createClientSolicitation = onCall(
             hasNotes: false,
             hasEvidence: false,
             enrichmentStatus: 'PENDING',
+            bigdatacorpEnrichmentStatus: 'PENDING',
+            juditEnrichmentStatus: 'PENDING',
+            escavadorEnrichmentStatus: 'PENDING',
+            djenEnrichmentStatus: 'PENDING',
             enrichmentSources: {},
             enrichmentIdentity: null,
             enrichmentGateResult: null,
             enrichedAt: null,
             enrichmentOriginalValues: {},
             aiAnalysis: null,
+            aiStatus: null,
             aiCostUsd: null,
             aiModel: null,
             aiTokens: null,
@@ -4990,7 +5864,12 @@ exports.createClientSolicitation = onCall(
             updatedAt: FieldValue.serverTimestamp(),
         });
 
-        await batch.commit();
+        try {
+            await batch.commit();
+        } catch (batchErr) {
+            await compensateTenantSubmissionLimit(tenantId);
+            throw batchErr;
+        }
 
         await writeAuditEvent({
             action: 'SOLICITATION_CREATED',
@@ -5003,6 +5882,15 @@ exports.createClientSolicitation = onCall(
             detail: `Nova solicitacao criada para ${candidateName}`,
         });
 
+        try {
+            const caseSnapshot = await caseRef.get();
+            if (caseSnapshot.exists) {
+                await createNewSolicitationNotifications(caseRef.id, caseSnapshot.data());
+            }
+        } catch (err) {
+            console.warn('[notifications] failed to create new solicitation notifications', err);
+        }
+
         return {
             caseId: caseRef.id,
             candidateId: candidateRef.id,
@@ -5011,13 +5899,24 @@ exports.createClientSolicitation = onCall(
 );
 
 exports.submitClientCorrection = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid, { requireRequester: true });
-        const { caseId, candidateName, cpf, linkedin = '', instagram = '' } = request.data || {};
+        const {
+            caseId,
+            candidateName,
+            cpf,
+            linkedin = '',
+            instagram = '',
+            facebook = '',
+            twitter = '',
+            tiktok = '',
+            youtube = '',
+            otherSocialUrls = [],
+        } = request.data || {};
         if (!caseId || !candidateName || !cpf) {
             throw new HttpsError('invalid-argument', 'Dados obrigatorios ausentes para reenviar o caso.');
         }
@@ -5035,7 +5934,7 @@ exports.submitClientCorrection = onCall(
         }
 
         const cpfDigits = sanitizeCpf(cpf);
-        if (cpfDigits.length !== 11) {
+        if (cpfDigits.length !== 11 || !validateCpfDigits(cpfDigits)) {
             throw new HttpsError('invalid-argument', 'CPF invalido para reenviar o caso.');
         }
 
@@ -5055,17 +5954,117 @@ exports.submitClientCorrection = onCall(
                 ...(caseData.socialProfiles || {}),
                 linkedin: String(linkedin || ''),
                 instagram: String(instagram || ''),
+                facebook: String(facebook || ''),
+                twitter: String(twitter || ''),
+                tiktok: String(tiktok || ''),
+                youtube: String(youtube || ''),
             },
+            otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : (caseData.otherSocialUrls || []),
             status: 'PENDING',
+            // Increment enrichment generation to invalidate stale async callbacks.
+            enrichmentGeneration: FieldValue.increment(1),
             // BUG-2 fix: Reset enrichment statuses so the pipeline can re-run.
+            // BUG-R1-001 fix: Also reset BigDataCorp so the new CPF/name gets a fresh gate.
+            bigdatacorpEnrichmentStatus: 'PENDING',
+            bigdatacorpError: null,
+            bigdatacorpGateResult: FieldValue.delete(),
+            bigdatacorpName: FieldValue.delete(),
+            bigdatacorpBirthDate: FieldValue.delete(),
+            bigdatacorpCpfStatus: FieldValue.delete(),
+            bigdatacorpHasDeathRecord: FieldValue.delete(),
+            bigdatacorpProcessTotal: FieldValue.delete(),
+            bigdatacorpProcessos: FieldValue.delete(),
+            bigdatacorpCriminalFlag: FieldValue.delete(),
+            bigdatacorpCriminalCount: FieldValue.delete(),
+            bigdatacorpLaborFlag: FieldValue.delete(),
+            bigdatacorpLaborCount: FieldValue.delete(),
+            bigdatacorpIsPep: FieldValue.delete(),
+            bigdatacorpPepLevel: FieldValue.delete(),
+            bigdatacorpPepDetails: FieldValue.delete(),
+            bigdatacorpIsSanctioned: FieldValue.delete(),
+            bigdatacorpWasSanctioned: FieldValue.delete(),
+            bigdatacorpHasArrestWarrant: FieldValue.delete(),
+            bigdatacorpSanctionCount: FieldValue.delete(),
+            bigdatacorpSanctionTypes: FieldValue.delete(),
+            bigdatacorpSanctionSources: FieldValue.delete(),
+            bigdatacorpSanctionDetails: FieldValue.delete(),
+            bigdatacorpActiveWarrants: FieldValue.delete(),
+            bigdatacorpProfessionNotes: FieldValue.delete(),
+            bigdatacorpKycNotes: FieldValue.delete(),
+            bigdatacorpProcessNotes: FieldValue.delete(),
+            bigdatacorpNameUniqueness: FieldValue.delete(),
+            bigdatacorpSources: FieldValue.delete(),
+            bigdatacorpCostBRL: FieldValue.delete(),
+            bigdatacorpElapsedMs: FieldValue.delete(),
+            bigdatacorpQueryDate: FieldValue.delete(),
+            bigdatacorpEnrichedAt: FieldValue.delete(),
+            // BUG-R3-005 fix: Reset DJEN so the new CPF/name gets fresh comunicações.
+            djenEnrichmentStatus: 'PENDING',
+            djenError: null,
+            djenComunicacoes: FieldValue.delete(),
+            djenSources: FieldValue.delete(),
+            djenCostBRL: FieldValue.delete(),
+            djenElapsedMs: FieldValue.delete(),
+            djenQueryDate: FieldValue.delete(),
+            djenEnrichedAt: FieldValue.delete(),
+            // Reset downstream providers
             juditEnrichmentStatus: 'PENDING',
             juditError: null,
+            juditIdentity: FieldValue.delete(),
+            juditGateResult: FieldValue.delete(),
+            juditPrimaryUf: FieldValue.delete(),
+            juditAllUfs: FieldValue.delete(),
+            juditHasLawsuits: FieldValue.delete(),
+            juditProcessTotal: FieldValue.delete(),
+            juditRoleSummary: FieldValue.delete(),
+            juditProcessos: FieldValue.delete(),
+            juditCriminalFlag: FieldValue.delete(),
+            juditCriminalCount: FieldValue.delete(),
+            juditWarrantFlag: FieldValue.delete(),
+            juditWarrantNotes: FieldValue.delete(),
+            juditWarrants: FieldValue.delete(),
+            juditActiveWarrantCount: FieldValue.delete(),
+            juditExecutionFlag: FieldValue.delete(),
+            juditExecutionCount: FieldValue.delete(),
+            juditExecutions: FieldValue.delete(),
+            juditExecutionNotes: FieldValue.delete(),
+            juditNameSearchFlag: FieldValue.delete(),
+            juditNameSearchProcessTotal: FieldValue.delete(),
+            juditNameSearchCriminalCount: FieldValue.delete(),
+            juditNameSearchCpfsComNome: FieldValue.delete(),
+            juditNeedsEscavador: FieldValue.delete(),
+            juditNeedsEscavadorReason: FieldValue.delete(),
+            juditPendingAsyncPhases: FieldValue.delete(),
+            juditPendingAsyncCount: FieldValue.delete(),
+            juditRequestIds: FieldValue.delete(),
+            juditSources: FieldValue.delete(),
+            juditRawPayloads: FieldValue.delete(),
+            juditCostBRL: FieldValue.delete(),
+            juditEnrichedAt: FieldValue.delete(),
             escavadorEnrichmentStatus: 'PENDING',
             escavadorError: null,
+            escavadorProcessTotal: FieldValue.delete(),
+            escavadorProcessos: FieldValue.delete(),
+            escavadorCriminalFlag: FieldValue.delete(),
+            escavadorCriminalCount: FieldValue.delete(),
+            escavadorLaborFlag: FieldValue.delete(),
+            escavadorLaborCount: FieldValue.delete(),
+            escavadorNotes: FieldValue.delete(),
+            escavadorCpfsComEsseNome: FieldValue.delete(),
+            escavadorSources: FieldValue.delete(),
+            escavadorEnrichedAt: FieldValue.delete(),
             enrichmentStatus: 'PENDING',
             enrichmentError: null,
+            enrichmentSources: {},
+            enrichmentIdentity: FieldValue.delete(),
+            enrichmentGateResult: FieldValue.delete(),
+            enrichmentOriginalValues: {},
+            enrichedAt: FieldValue.delete(),
             // Clear stale classification and AI data so they don't bleed into re-analysis
             autoClassifiedAt: FieldValue.delete(),
+            autoClassifySignature: FieldValue.delete(),
+            autoClassifyLock: FieldValue.delete(),
+            autoClassifyRerunRequested: FieldValue.delete(),
             criminalFlag: FieldValue.delete(),
             criminalSeverity: FieldValue.delete(),
             criminalEvidenceQuality: FieldValue.delete(),
@@ -5078,12 +6077,35 @@ exports.submitClientCorrection = onCall(
             providerDivergence: FieldValue.delete(),
             reviewRecommended: FieldValue.delete(),
             aiRawResponse: FieldValue.delete(),
+            aiAnalysis: FieldValue.delete(),
+            aiStatus: FieldValue.delete(),
             aiStructured: FieldValue.delete(),
             aiStructuredOk: FieldValue.delete(),
+            aiCostUsd: FieldValue.delete(),
+            aiTokens: FieldValue.delete(),
+            aiExecutedAt: FieldValue.delete(),
+            aiProvidersIncluded: FieldValue.delete(),
+            aiPromptVersion: FieldValue.delete(),
+            aiFromCache: FieldValue.delete(),
             aiError: FieldValue.delete(),
             aiHomonymStructured: FieldValue.delete(),
+            aiHomonymStructuredOk: FieldValue.delete(),
+            aiHomonymRawResponse: FieldValue.delete(),
             aiHomonymTriggered: FieldValue.delete(),
+            aiHomonymDecision: FieldValue.delete(),
+            aiHomonymConfidence: FieldValue.delete(),
+            aiHomonymRisk: FieldValue.delete(),
+            aiHomonymRecommendedAction: FieldValue.delete(),
+            aiHomonymCostUsd: FieldValue.delete(),
+            aiHomonymTokens: FieldValue.delete(),
+            aiHomonymExecutedAt: FieldValue.delete(),
             aiHomonymError: FieldValue.delete(),
+            prefillNarratives: FieldValue.delete(),
+            deterministicPrefill: FieldValue.delete(),
+            negativePartialSafetyNetEligible: FieldValue.delete(),
+            negativePartialSafetyNetReasons: FieldValue.delete(),
+            negativePartialSafetyNetAction: FieldValue.delete(),
+            negativePartialSafetyNetTriggered: FieldValue.delete(),
             riskScore: FieldValue.delete(),
             riskLevel: FieldValue.delete(),
             finalVerdict: FieldValue.delete(),
@@ -5115,6 +6137,11 @@ exports.submitClientCorrection = onCall(
                 cpfMasked: maskCpf(cpfDigits),
                 linkedin: String(linkedin || ''),
                 instagram: String(instagram || ''),
+                facebook: String(facebook || ''),
+                twitter: String(twitter || ''),
+                tiktok: String(tiktok || ''),
+                youtube: String(youtube || ''),
+                otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : (caseData.otherSocialUrls || []),
                 updatedAt: FieldValue.serverTimestamp(),
             });
         }
@@ -5129,34 +6156,77 @@ exports.submitClientCorrection = onCall(
             related: { caseId },
             source: SOURCE.PORTAL_CLIENT,
             ip: getClientIp(request),
-            detail: `Caso corrigido e reenviado: ${String(candidateName).trim()}`,
         });
+
+        // Criar mensagem automatica na comunicacao
+        try {
+            await createSystemCaseMessage({
+                caseId,
+                caseData,
+                tenantId: caseData.tenantId,
+                systemType: 'CORRECTION_SUBMITTED',
+                body: 'O cliente corrigiu os dados e reenviou a analise.',
+            });
+        } catch (err) {
+            console.warn('[communication] failed to create system message for correction submitted', err);
+        }
+
 
         return { success: true };
     },
 );
 
 exports.registerClientExport = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
-        const { type, scope, records = 0, artifactMode = 'download' } = request.data || {};
+        const { type, scope, scopeCode = 'ALL', records = 0, artifactMode = 'download', filters = {}, containsPending = false } = request.data || {};
         if (!type || !scope) {
             throw new HttpsError('invalid-argument', 'Tipo e escopo da exportacao sao obrigatorios.');
+        }
+        const allowedTypes = new Set(['CSV', 'PRINT', 'REPORT']);
+        const allowedScopes = new Set(['ALL', 'DONE', 'PENDING', 'RED']);
+        const allowedArtifactModes = new Set(['download', 'printable_html', 'html_blob']);
+        const normalizedType = String(type).toUpperCase();
+        const normalizedScopeCode = String(scopeCode || 'ALL').toUpperCase();
+        const normalizedArtifactMode = String(artifactMode || 'download');
+        const normalizedRecords = Number(records) || 0;
+        if (!allowedTypes.has(normalizedType)) {
+            throw new HttpsError('invalid-argument', 'Formato de exportacao invalido.');
+        }
+        if (!allowedScopes.has(normalizedScopeCode)) {
+            throw new HttpsError('invalid-argument', 'Escopo de exportacao invalido.');
+        }
+        if (!allowedArtifactModes.has(normalizedArtifactMode)) {
+            throw new HttpsError('invalid-argument', 'Modo de artefato invalido.');
+        }
+        if (!Number.isFinite(normalizedRecords) || normalizedRecords < 1 || normalizedRecords > 500) {
+            throw new HttpsError('invalid-argument', 'Quantidade de registros invalida para exportacao client-side.');
         }
 
         const exportRef = db.collection('exports').doc();
         const batch = db.batch();
         batch.set(exportRef, {
             tenantId: profile.tenantId,
-            type: String(type),
+            type: normalizedType,
+            scopeCode: normalizedScopeCode,
             scope: String(scope),
-            records: Number(records) || 0,
-            artifactMode: String(artifactMode || 'download'),
+            records: normalizedRecords,
+            artifactMode: normalizedArtifactMode,
+            storageStatus: 'LOCAL_ONLY',
+            filters: {
+                status: String(filters?.status || normalizedScopeCode),
+                dateFrom: filters?.dateFrom || null,
+                dateTo: filters?.dateTo || null,
+            },
+            containsPending: Boolean(containsPending),
             status: 'READY',
+            createdByUid: uid,
+            createdByEmail: profile.email || uid,
+            createdByName: profile.displayName || profile.email || uid,
             createdAt: FieldValue.serverTimestamp(),
         });
 
@@ -5165,12 +6235,20 @@ exports.registerClientExport = onCall(
         await writeAuditEvent({
             action: 'EXPORT_CREATED',
             tenantId: profile.tenantId,
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
-            entity: { type: 'EXPORT', id: exportRef.id, label: `${type}:${scope}` },
+            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid, displayName: profile.displayName || null },
+            entity: { type: 'EXPORT', id: exportRef.id, label: `${normalizedType}:${scope}` },
             related: { exportId: exportRef.id },
             source: SOURCE.PORTAL_CLIENT,
             ip: getClientIp(request),
-            detail: `Exportacao gerada com ${Number(records) || 0} registros`,
+            detail: `Exportacao client-side local gerada com ${normalizedRecords} registros carregados`,
+            clientDetail: `Exportacao registrada com ${normalizedRecords} registros carregados. Artefato gerado localmente e nao armazenado.`,
+            clientMetadata: {
+                type: normalizedType,
+                scopeCode: normalizedScopeCode,
+                records: normalizedRecords,
+                artifactMode: normalizedArtifactMode,
+                storageStatus: 'LOCAL_ONLY',
+            },
         });
 
         return { exportId: exportRef.id };
@@ -5178,20 +6256,26 @@ exports.registerClientExport = onCall(
 );
 
 exports.backfillClientCasesMirror = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 540 },
+    { region: 'southamerica-east1', timeoutSeconds: 540 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
         await getOpsUserProfile(uid);
 
-        const snapshot = await db.collection('cases').get();
-        const docs = snapshot.docs || [];
+        // BUG-R5-004: Paginate backfill to avoid loading all cases into memory.
+        let lastDoc = null;
         let count = 0;
+        const pageSize = 400;
 
-        for (let start = 0; start < docs.length; start += 400) {
-            const chunk = docs.slice(start, start + 400);
+        while (true) {
+            let q = db.collection('cases').limit(pageSize);
+            if (lastDoc) q = q.startAfter(lastDoc);
+            const snapshot = await q.get();
+            const docs = snapshot.docs || [];
+            if (docs.length === 0) break;
+
             const batch = db.batch();
-            chunk.forEach((docSnap) => {
+            docs.forEach((docSnap) => {
                 batch.set(
                     db.collection('clientCases').doc(docSnap.id),
                     buildClientCasePayload(docSnap.id, docSnap.data() || {}),
@@ -5200,13 +6284,16 @@ exports.backfillClientCasesMirror = onCall(
                 count += 1;
             });
             await batch.commit();
+
+            lastDoc = docs[docs.length - 1];
+            if (docs.length < pageSize) break;
         }
         return { synced: count };
     },
 );
 
 exports.createAnalystPublicReport = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5214,7 +6301,7 @@ exports.createAnalystPublicReport = onCall(
         const profile = await getOpsUserProfile(uid);
         const meta = sanitizePublicReportMeta(request.data?.meta || {});
         const caseId = typeof request.data?.caseId === 'string' ? request.data.caseId.trim() : '';
-        const TTL_DAYS = 365;
+        const TTL_DAYS = 14;
         const expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
         const reportRef = db.collection('publicReports').doc();
 
@@ -5228,6 +6315,7 @@ exports.createAnalystPublicReport = onCall(
             caseSnap = await caseRef.get();
             if (caseSnap.exists) {
                 const caseData = caseSnap.data() || {};
+                assertOpsCanAccessCase(profile, caseData, caseId);
                 if (caseData.status !== 'DONE') {
                     throw new HttpsError('failed-precondition', 'Relatorio publico so pode ser gerado para casos concluidos.');
                 }
@@ -5256,15 +6344,17 @@ exports.createAnalystPublicReport = onCall(
                             }
                             // Report is stale or outdated template — regenerate HTML into existing doc
                             const freshHtml = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+                            const newExpiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
                             await existingRef.update({
                                 html: freshHtml,
                                 createdAt: FieldValue.serverTimestamp(),
+                                expiresAt: newExpiresAt,
                                 reportBuildVersion: REPORT_BUILD_VERSION,
                                 publicSnapshotHash,
                                 tenantId: reportTenantId,
                                 candidateName: String(caseData.candidateName || meta.candidateName || '').slice(0, 160),
                             });
-                            return { token: caseData.publicReportToken, expiresAt: expiresDate.toISOString() };
+                            return { token: caseData.publicReportToken, expiresAt: newExpiresAt.toISOString() };
                         }
                     }
                 }
@@ -5327,7 +6417,7 @@ exports.createAnalystPublicReport = onCall(
 );
 
 exports.createClientPublicReport = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5374,22 +6464,30 @@ exports.createClientPublicReport = onCall(
                     }
                     // Report is stale or outdated template — regenerate HTML into existing doc
                     const freshHtml = await buildCanonicalReportHtml(caseId, caseData);
+                    const newExpiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
                     await existingRef.update({
                         html: freshHtml,
                         createdAt: FieldValue.serverTimestamp(),
+                        expiresAt: newExpiresAt,
                         reportBuildVersion: REPORT_BUILD_VERSION,
                         tenantId: profile.tenantId,
                         caseId,
                         candidateName: String(caseData.candidateName || '').slice(0, 160),
                     });
-                    return { token: caseData.publicReportToken, expiresAt: expiresDate.toISOString() };
+                    return { token: caseData.publicReportToken, expiresAt: newExpiresAt.toISOString() };
                 }
             }
         }
 
         const html = await buildCanonicalReportHtml(caseId, caseData);
 
-        const TTL_DAYS = 365;
+        // P1-016: Compute publicSnapshotHash for integrity verification
+        const publicSnapshot = await syncPublicResultLatest(caseId, caseData, {}, {
+            concludedAtOverride: caseData.concludedAt || caseData.updatedAt || new Date(),
+        });
+        const publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
+
+        const TTL_DAYS = 14;
         const expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
         const reportRef = db.collection('publicReports').doc();
 
@@ -5403,9 +6501,10 @@ exports.createClientPublicReport = onCall(
             caseId,
             candidateName: String(caseData.candidateName || '').slice(0, 160),
             reportBuildVersion: REPORT_BUILD_VERSION,
+            publicSnapshotHash,
         });
 
-        await caseRef.update({ publicReportToken: reportRef.id });
+        await caseRef.update({ publicReportToken: reportRef.id, reportReady: true });
 
         // AUD-011: Audit log for client report creation
         await writeAuditEvent({
@@ -5454,26 +6553,38 @@ function serializeManagedPublicReport(docSnap) {
 }
 
 exports.listClientPublicReports = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
-        const snapshot = await db.collection('publicReports')
+        // BUG-R5-007: Support server-side pagination.
+        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), 200);
+        const lastCreatedAt = request.data?.lastCreatedAt || null;
+
+        let q = db.collection('publicReports')
             .where('tenantId', '==', profile.tenantId)
             .orderBy('createdAt', 'desc')
-            .limit(200)
-            .get();
+            .limit(pageSize);
+        if (lastCreatedAt) {
+            q = q.startAfter(new Date(lastCreatedAt));
+        }
+        const snapshot = await q.get();
+
+        const reports = snapshot.docs.map(serializeManagedPublicReport);
+        const lastReport = reports[reports.length - 1];
 
         return {
-            reports: snapshot.docs.map(serializeManagedPublicReport),
+            reports,
+            hasMore: reports.length === pageSize,
+            nextCursor: lastReport?.createdAt || null,
         };
     },
 );
 
 exports.revokeClientPublicReport = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5530,7 +6641,7 @@ exports.revokeClientPublicReport = onCall(
 
 // AUD-011: Server-side revocation with audit log
 exports.revokePublicReport = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5544,6 +6655,13 @@ exports.revokePublicReport = onCall(
         if (!reportSnap.exists) throw new HttpsError('not-found', 'Relatorio nao encontrado.');
 
         const reportData = reportSnap.data();
+
+        // BUG-R2-003: Validate tenant isolation — ops user can only revoke reports from their tenant.
+        const reportTenantId = reportData.tenantId || null;
+        if (reportTenantId && reportTenantId !== profile.tenantId) {
+            throw new HttpsError('permission-denied', 'Relatorio nao pertence ao seu tenant.');
+        }
+
         if (reportData.active === false) {
             return { success: true, alreadyRevoked: true };
         }
@@ -5599,10 +6717,7 @@ const ALLOWED_CONCLUDE_FIELDS = new Set([
     'finalVerdict',
     'keyFindings',
     'analystComment',
-    'riskLevel',
-    'riskScore',
     'enabledPhases',
-    'hasNotes',
 ]);
 
 const ALLOWED_DRAFT_FIELDS = new Set([
@@ -5662,6 +6777,10 @@ function normalizeKeyFindingsValue(value) {
 
 function normalizeNarrativeValue(field, value) {
     if (value === undefined) return undefined;
+    if (field === 'enabledPhases') {
+        const allowed = new Set(Object.keys(DEFAULT_ANALYSIS_CONFIG));
+        return Array.isArray(value) ? value.filter((item) => allowed.has(item)) : [];
+    }
     if (field === 'keyFindings') return normalizeKeyFindingsValue(value);
     if (REVIEW_DRAFT_ARRAY_FIELDS.has(field)) return Array.isArray(value) ? value.filter(Boolean) : [];
     if (typeof value === 'string') {
@@ -5733,7 +6852,7 @@ function pickDraftPayload(payload = {}, existingReviewDraft = {}) {
 }
 
 exports.assignCaseToCurrentAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5747,10 +6866,24 @@ exports.assignCaseToCurrentAnalyst = onCall(
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
 
         const caseData = caseDoc.data() || {};
-        await caseRef.update({
-            assigneeId: uid,
-            status: 'IN_PROGRESS',
-            updatedAt: FieldValue.serverTimestamp(),
+        assertOpsCanAccessCase(profile, caseData, caseId);
+
+        // FILA-001: só permite assumir casos PENDING sem responsável
+        // P1-009: Use transaction to prevent race conditions
+        await db.runTransaction(async (t) => {
+            const snap = await t.get(caseRef);
+            const data = snap.data() || {};
+            if (data.status !== 'PENDING') {
+                throw new HttpsError('failed-precondition', `Caso nao pode ser assumido (status: ${data.status || 'desconhecido'}).`);
+            }
+            if (data.assigneeId) {
+                throw new HttpsError('failed-precondition', 'Caso ja possui responsavel.');
+            }
+            t.update(caseRef, {
+                assigneeId: uid,
+                status: 'IN_PROGRESS',
+                updatedAt: FieldValue.serverTimestamp(),
+            });
         });
 
         await writeAuditEvent({
@@ -5768,8 +6901,136 @@ exports.assignCaseToCurrentAnalyst = onCall(
     },
 );
 
+/* â”€â”€ assignCaseToAnalyst â”€â”€ */
+exports.assignCaseToAnalyst = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const callerProfile = await getOpsUserProfile(uid);
+        assertCanAssignCase(callerProfile);
+
+        const caseId = String(request.data?.caseId || '').trim();
+        const targetUid = String(request.data?.targetUid || '').trim();
+        if (!caseId || !targetUid) throw new HttpsError('invalid-argument', 'caseId e targetUid obrigatorios.');
+
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseDoc.data() || {};
+        assertOpsCanAccessCase(callerProfile, caseData, caseId);
+
+        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
+        if (!targetDoc.exists) throw new HttpsError('not-found', 'Analista nao encontrado.');
+        const targetProfile = targetDoc.data();
+        if (!OPS_ROLES.has(targetProfile.role)) {
+            throw new HttpsError('invalid-argument', 'Usuario alvo nao e um analista.');
+        }
+        if (targetProfile.status === 'inactive') {
+            throw new HttpsError('failed-precondition', 'Analista esta inativo.');
+        }
+        if (caseData.tenantId && targetProfile.tenantId !== caseData.tenantId) {
+            throw new HttpsError('permission-denied', 'Analista nao pertence ao mesmo tenant.');
+        }
+
+        // P1-009: Use transaction to prevent race conditions
+        const isReassignment = !!caseData.assigneeId;
+        await db.runTransaction(async (t) => {
+            const snap = await t.get(caseRef);
+            const data = snap.data() || {};
+            const updateFields = {
+                assigneeId: targetUid,
+                assigneeName: targetProfile.displayName || targetProfile.email || targetUid,
+                assigneeEmail: targetProfile.email || '',
+                assignedAt: new Date().toISOString(),
+                assignedBy: uid,
+                assignedByEmail: callerProfile.email || '',
+                updatedAt: FieldValue.serverTimestamp(),
+            };
+            if (data.status === 'PENDING' && !data.reviewDraft) {
+                updateFields.status = 'IN_PROGRESS';
+            }
+            t.update(caseRef, updateFields);
+        });
+
+        await writeAuditEvent({
+            action: isReassignment ? 'CASE_REASSIGNED' : 'CASE_ASSIGNED',
+            tenantId: caseData.tenantId || null,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
+            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+            related: { caseId, targetUid, targetEmail: targetProfile.email },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Caso ${isReassignment ? 'reatribuido' : 'atribuido'} para ${targetProfile.displayName || targetProfile.email}`,
+            templateVars: { actorName: callerProfile.displayName || callerProfile.email, candidateName: caseData.candidateName },
+        });
+
+        return { success: true, assigneeId: targetUid, assigneeName: targetProfile.displayName };
+    },
+);
+
+/* â”€â”€ unassignCase â”€â”€ */
+exports.unassignCase = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const callerProfile = await getOpsUserProfile(uid);
+        assertCanAssignCase(callerProfile);
+
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseDoc = await caseRef.get();
+        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseDoc.data() || {};
+        assertOpsCanAccessCase(callerProfile, caseData, caseId);
+
+        if (!caseData.assigneeId) {
+            throw new HttpsError('failed-precondition', 'Caso nao possui responsavel.');
+        }
+
+        // P2-017: Prevent unassigning DONE cases
+        if (caseData.status === 'DONE') {
+            throw new HttpsError('failed-precondition', 'Nao e possivel remover responsavel de caso concluido.');
+        }
+
+        const updateFields = {
+            assigneeId: FieldValue.delete(),
+            assigneeName: FieldValue.delete(),
+            assigneeEmail: FieldValue.delete(),
+            assignedAt: FieldValue.delete(),
+            assignedBy: FieldValue.delete(),
+            assignedByEmail: FieldValue.delete(),
+            updatedAt: FieldValue.serverTimestamp(),
+        };
+        const hasReviewData = caseData.reviewDraft && Object.keys(caseData.reviewDraft).length > 0;
+        if (!hasReviewData && caseData.status === 'IN_PROGRESS') {
+            updateFields.status = 'PENDING';
+        }
+
+        await caseRef.update(updateFields);
+
+        await writeAuditEvent({
+            action: 'CASE_UNASSIGNED',
+            tenantId: caseData.tenantId || null,
+            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
+            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+            related: { caseId },
+            source: SOURCE.PORTAL_OPS,
+            ip: getClientIp(request),
+            detail: `Responsavel removido do caso ${caseData.candidateName || caseId}`,
+        });
+
+        return { success: true };
+    },
+);
+
 exports.returnCaseToClient = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -5787,9 +7048,7 @@ exports.returnCaseToClient = onCall(
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
         const caseData = caseDoc.data() || {};
 
-        if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
-            throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
-        }
+        assertOpsCanAccessCase(profile, caseData, caseId);
 
         const updateFields = {
             status: 'CORRECTION_NEEDED',
@@ -5813,6 +7072,24 @@ exports.returnCaseToClient = onCall(
 
         await caseRef.update(updateFields);
 
+        // Criar mensagem automatica na comunicacao
+        try {
+            const systemBody = notes
+                ? `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}. Detalhes: ${notes}.`
+                : `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}.`;
+            await createSystemCaseMessage({
+                caseId,
+                caseData,
+                tenantId: caseData.tenantId,
+                db,
+                systemType: 'CORRECTION_REQUESTED',
+                body: systemBody,
+            });
+        } catch (err) {
+            console.warn('[communication] failed to create system message for correction', err);
+        }
+
+
         await writeAuditEvent({
             action: 'CASE_RETURNED',
             tenantId: caseData.tenantId || null,
@@ -5829,6 +7106,19 @@ exports.returnCaseToClient = onCall(
     },
 );
 
+/**
+ * Build a source label for a process group based on the actual providers present.
+ * BUG-R1-003 fix: replaces generic "Judit / Escavador / BigDataCorp" with real sources.
+ */
+function buildProcessGroupSource(items) {
+    const providers = new Set();
+    for (const item of items) {
+        if (item.source) providers.add(item.source);
+    }
+    if (providers.size === 0) return 'Fontes consultadas';
+    return Array.from(providers).join(' / ');
+}
+
 function buildProcessHighlights(caseData) {
     const juditItems = caseData.juditRoleSummary || [];
     const escItems = caseData.escavadorProcessos || [];
@@ -5839,7 +7129,9 @@ function buildProcessHighlights(caseData) {
         if ((p.secrecyLevel || 0) > 0) continue;
         if (!p.isCriminal && !p.hasExactCpfMatch && p.status !== 'ATIVO') continue;
         if (p.isPossibleHomonym && !p.hasExactCpfMatch) continue;
-        if (p.code) seenCnj.add(p.code);
+        // BUG-R1-005: Normalize CNJ for deduplication.
+        const juditCnj = normCnj(p.code);
+        if (juditCnj) seenCnj.add(juditCnj);
         relevant.push({
             processNumber: p.code,
             area: p.area,
@@ -5852,10 +7144,11 @@ function buildProcessHighlights(caseData) {
         });
     }
     for (const p of escItems) {
-        const cnj = p.numeroCnj || '';
+        const cnj = normCnj(p.numeroCnj || '');
         // P04: When same CNJ exists in Judit, merge complementary data instead of discarding
+        // BUG-R1-005: Normalize CNJ for deduplication.
         if (cnj && seenCnj.has(cnj)) {
-            const existing = relevant.find((r) => r.processNumber === cnj);
+            const existing = relevant.find((r) => normCnj(r.processNumber) === cnj);
             if (existing) {
                 if (!existing.classification && p.assuntoPrincipal) existing.classification = p.assuntoPrincipal;
                 if (!existing.stage && p.grauFormatado) existing.stage = p.grauFormatado;
@@ -5869,8 +7162,9 @@ function buildProcessHighlights(caseData) {
         const isCriminal = /penal|criminal/i.test(p.area || '');
         const isActive = /ativo/i.test(p.status || '');
         if (!isCriminal && !isActive) continue;
+        if (cnj) seenCnj.add(cnj);
         relevant.push({
-            processNumber: cnj || null,
+            processNumber: p.numeroCnj || null,
             area: p.area,
             status: p.status,
             court: p.tribunalSigla,
@@ -5882,11 +7176,13 @@ function buildProcessHighlights(caseData) {
     }
 
     // BigDataCorp processes
+    // BUG-R1-004: BDC may return CNJ in .numeroCnj, .Number, or .number fields.
     const bdcItems = caseData.bigdatacorpProcessos || [];
     for (const p of bdcItems) {
-        const cnj = p.numeroCnj || '';
+        const cnjRaw = p.numeroCnj || p.Number || p.number || p.cnj || '';
+        const cnj = normCnj(cnjRaw);
         if (cnj && seenCnj.has(cnj)) {
-            const existing = relevant.find((r) => r.processNumber === cnj);
+            const existing = relevant.find((r) => normCnj(r.processNumber) === cnj);
             if (existing) {
                 if (!existing.classification && p.assunto) existing.classification = p.assunto;
                 if (!existing.court && p.tribunal) existing.court = p.tribunal;
@@ -5899,7 +7195,7 @@ function buildProcessHighlights(caseData) {
         const isActive = /ativo|tramitando/i.test(p.status || '');
         if (!isCriminal && !isActive) continue;
         relevant.push({
-            processNumber: cnj || null,
+            processNumber: cnjRaw || null,
             area: p.area || null,
             status: p.status || null,
             court: p.tribunal || null,
@@ -5919,11 +7215,11 @@ function buildProcessHighlights(caseData) {
     return Object.entries(byArea).map(([area, items]) => ({
         title: area,
         area,
-        source: 'Judit / Escavador / BigDataCorp',
+        source: buildProcessGroupSource(items),
         total: items.length,
         summary: `${items.length} registro(s) identificado(s) na área ${area}.`,
         items: items.map((p) => ({
-            processNumber: p.processNumber || 'Nº não disponível',
+            processNumber: p.processNumber || 'NÂº não disponível',
             status: p.status,
             court: p.court,
             classification: p.classification,
@@ -5933,18 +7229,43 @@ function buildProcessHighlights(caseData) {
 }
 
 function buildWarrantFindings(caseData) {
-    const findings = (caseData.juditWarrants || []).map((w) => ({
-        status: w.status || 'Status não informado',
-        court: w.court || w.tribunalAcronym || null,
-        reference: w.code || null,
-        source: 'Judit',
-        summary: [
-            w.warrantType,
-            w.arrestType,
-            w.issueDate ? `Emitido em ${w.issueDate}` : null,
-            w.regime ? `Regime: ${w.regime}` : null,
-        ].filter(Boolean).join('. '),
-    }));
+    const seenCnjs = new Set();
+    const findings = [];
+    for (const w of (caseData.juditWarrants || [])) {
+        const cnj = normCnj(w.code || '');
+        if (cnj) seenCnjs.add(cnj);
+        findings.push({
+            status: w.status || 'Status não informado',
+            court: w.court || w.tribunalAcronym || null,
+            reference: w.code || null,
+            source: 'Judit',
+            summary: [
+                w.warrantType,
+                w.arrestType,
+                w.issueDate ? `Emitido em ${w.issueDate}` : null,
+                w.regime ? `Regime: ${w.regime}` : null,
+            ].filter(Boolean).join('. '),
+        });
+    }
+    // BUG-R1-006: Include BigDataCorp active warrants
+    const bdcWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants) ? caseData.bigdatacorpActiveWarrants : [];
+    for (const w of bdcWarrants) {
+        if (!w) continue;
+        const cnj = normCnj(w.number || w.processNumber || '');
+        if (cnj && seenCnjs.has(cnj)) continue;
+        if (cnj) seenCnjs.add(cnj);
+        findings.push({
+            status: w.isActive !== false ? 'Ativo' : 'Inativo',
+            court: w.court || w.tribunal || null,
+            reference: w.number || w.processNumber || null,
+            source: 'BigDataCorp',
+            summary: [
+                w.type || 'Mandado de prisao',
+                w.court ? `Tribunal: ${w.court}` : null,
+                w.issuedAt ? `Emitido em ${w.issuedAt}` : null,
+            ].filter(Boolean).join('. '),
+        });
+    }
     // FonteData is a reserve provider — only include its warrant finding when Judit returned nothing
     if (findings.length === 0 && caseData.enrichmentSources?.warrant && !caseData.enrichmentSources.warrant.error) {
         const ws = caseData.enrichmentSources.warrant;
@@ -5980,6 +7301,50 @@ function evaluateComplexityTriggers(caseData) {
     return { isComplex: triggers.length > 0, triggersActive: triggers };
 }
 
+/**
+ * Format a single DJEN comunicação for prefill notes.
+ * Clean, compact format: numero | classe | tribunal | data | polo | orgao | advogados | link.
+ */
+function formatDjenComunicacao(item, index) {
+    const lines = [];
+    const num = index + 1;
+    const processo = item.numeroProcessoMascara || item.numeroProcesso || 'Processo nao informado';
+    const classe = item.classe || 'Classe nao informada';
+    const tribunal = item.tribunal || 'Tribunal nao informado';
+    const data = item.dataDisponibilizacao || 'Data nao informada';
+    const orgao = item.orgao || '';
+    const poloLabel = item.polo === 'A' ? 'autor' : item.polo === 'P' ? 'reu' : 'polo nao informado';
+
+    // Header line: numero | classe | tribunal | data
+    let header = `${String(num).padStart(2, '0')}. ${processo} | ${classe} | ${tribunal} | ${data}`;
+    if (item.geoMatch === true) header += ' | [UF candidato]';
+    else if (item.geoMatch === false) header += ' | [outro estado]';
+    lines.push(header);
+
+    // Second line: polo + orgao
+    if (orgao) {
+        lines.push(`    Polo: ${poloLabel} | Orgao: ${orgao}`);
+    } else {
+        lines.push(`    Polo: ${poloLabel}`);
+    }
+
+    // Advogados
+    const advogados = (item.advogados || []).filter((a) => a.nome);
+    if (advogados.length > 0) {
+        const advStr = advogados.map((a) => {
+            if (a.oab && a.ufOab) return `${a.nome} (OAB ${a.oab}/${a.ufOab})`;
+            return a.nome;
+        }).join(', ');
+        lines.push(`    Advogado(s): ${advStr}`);
+    }
+
+    // Score
+    const score = item.probabilityScore || 0;
+    lines.push(`    Score: ${score}/100`);
+
+    return lines.join('\n');
+}
+
 function buildDetCriminalNotes(caseData) {
     const parts = [];
     const cf = caseData.criminalFlag || 'NEGATIVE';
@@ -5994,8 +7359,7 @@ function buildDetCriminalNotes(caseData) {
 
     // Header context (no redundant status — badge already in report)
     if (cf === 'POSITIVE') {
-        const sev = (caseData.criminalSeverity || 'não classificada').toUpperCase();
-        parts.push(`Severidade ${sev}. Síntese dos registros em nome de ${caseData.candidateName || 'candidato(a)'}:`);
+        // go straight to listing
     } else if (cf === 'INCONCLUSIVE_HOMONYM') {
         parts.push('Possível homonímia detectada — registros identificados podem não pertencer ao candidato.');
     } else if (cf === 'INCONCLUSIVE_LOW_COVERAGE') {
@@ -6012,7 +7376,7 @@ function buildDetCriminalNotes(caseData) {
     // CPF-confirmed processes
     if (cpfConfirmed.length > 0) {
         parts.push('');
-        parts.push(`PROCESSOS IDENTIFICADOS (${cpfConfirmed.length} com CPF confirmado):`);
+        // no header — go straight to listing
         for (let i = 0; i < cpfConfirmed.length; i++) {
             const p = cpfConfirmed[i];
             // Extract sentence details from decisions
@@ -6037,7 +7401,7 @@ function buildDetCriminalNotes(caseData) {
     // Name-only processes
     if (nameOnly.length > 0) {
         parts.push('');
-        const label = nameOnly.length === 1 ? 'PROCESSO ADICIONAL (sem confirmação de CPF):' : `PROCESSOS ADICIONAIS (${nameOnly.length}, sem confirmação de CPF):`;
+        const label = nameOnly.length === 1 ? 'Processo adicional (sem confirmação de CPF):' : `Processos adicionais (${nameOnly.length}, sem confirmação de CPF):`;
         parts.push(label);
         for (const p of nameOnly) {
             parts.push('');
@@ -6092,10 +7456,41 @@ function buildDetCriminalNotes(caseData) {
 
     if (observations.length > 0) {
         parts.push('');
-        parts.push('OBSERVAÇÕES:');
         for (const obs of observations) {
             parts.push(`• ${obs}`);
         }
+    }
+
+    // DJEN/DPJe criminal communications
+    const djenCriminalItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'criminal');
+    if (djenCriminalItems.length > 0) {
+        parts.push('');
+        parts.push(`Comunicacoes criminais localizadas no DJEN/DPJe (${djenCriminalItems.length}):`);
+        djenCriminalItems.slice(0, 5).forEach((item, index) => {
+            parts.push(formatDjenComunicacao(item, index));
+        });
+        if (djenCriminalItems.length > 5) {
+            parts.push(`    ... e mais ${djenCriminalItems.length - 5} comunicacao(oes) criminal(is) (ver DJEN completo no painel).`);
+        }
+    }
+
+    // FonteData criminal
+    if (caseData.fontedataCriminalFlag === 'POSITIVE') {
+        parts.push('');
+        parts.push('Achado criminal FonteData:');
+        parts.push(caseData.criminalNotes || 'FonteData indicou apontamento criminal, sem detalhamento adicional disponivel.');
+    }
+
+    // Active warrant note
+    if (caseData.warrantFlag === 'POSITIVE') {
+        parts.push('');
+        parts.push('Mandado ativo localizado. Mandados sao tratados como achado critico operacional, independentemente da origem/natureza do processo. Detalhes completos constam na secao de mandados.');
+    }
+
+    // KYC/Sanctions
+    if (caseData.sanctionFlag === 'POSITIVE' || caseData.bigdatacorpIsSanctioned === true) {
+        parts.push('');
+        parts.push('BigDataCorp KYC indicou sancao ativa ou alerta critico. Verificar fontes de sancao e detalhes KYC no relatorio.');
     }
 
     return parts.join('\n');
@@ -6109,7 +7504,7 @@ function buildDetLaborNotes(caseData) {
 
     // Header context (no redundant status — badge already in report)
     if (lf === 'POSITIVE') {
-        parts.push('Processos trabalhistas identificados nas bases consultadas.');
+        // go straight to listing
     } else if (lf === 'INCONCLUSIVE') {
         parts.push('Resultado inconclusivo na análise trabalhista.');
     } else if (lf === 'NOT_FOUND') {
@@ -6121,7 +7516,7 @@ function buildDetLaborNotes(caseData) {
     // Process listing (when POSITIVE)
     if (laborProcesses.length > 0) {
         parts.push('');
-        parts.push(`PROCESSOS TRABALHISTAS (${laborProcesses.length}):`);
+        // no header — go straight to listing
         for (let i = 0; i < Math.min(laborProcesses.length, 6); i++) {
             const p = laborProcesses[i];
             parts.push('');
@@ -6135,7 +7530,6 @@ function buildDetLaborNotes(caseData) {
 
     // Professional context — ALWAYS shown
     parts.push('');
-    parts.push('CONTEXTO PROFISSIONAL:');
     const profHistory = caseData.bigdatacorpProfessionHistory;
     const employer = caseData.bigdatacorpEmployer;
     const employerCnpj = caseData.bigdatacorpEmployerCnpj;
@@ -6186,6 +7580,32 @@ function buildDetLaborNotes(caseData) {
         parts.push(`   Servidor público: ${isPublic ? 'Sim' : 'Não'}`);
     } else {
         parts.push('   Dados profissionais não disponíveis nas bases consultadas.');
+    }
+
+    // DJEN/DPJe labor communications
+    const djenLaborItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'trabalhista');
+    if (djenLaborItems.length > 0) {
+        parts.push('');
+        parts.push(`Comunicacoes trabalhistas localizadas no DJEN/DPJe (${djenLaborItems.length}):`);
+        djenLaborItems.slice(0, 5).forEach((item, index) => {
+            parts.push(formatDjenComunicacao(item, index));
+        });
+        if (djenLaborItems.length > 5) {
+            parts.push(`    ... e mais ${djenLaborItems.length - 5} comunicacao(oes) trabalhista(s) (ver DJEN completo no painel).`);
+        }
+    }
+
+    // FonteData labor
+    if (caseData.fontedataLaborFlag === 'POSITIVE') {
+        parts.push('');
+        parts.push('Achado trabalhista FonteData/TRT:');
+        parts.push(caseData.laborNotes || 'FonteData indicou apontamento trabalhista, sem detalhamento adicional disponivel.');
+    }
+
+    // Explain positive without structured processes
+    if (lf === 'POSITIVE' && laborProcesses.length === 0 && djenLaborItems.length === 0 && caseData.fontedataLaborFlag !== 'POSITIVE') {
+        parts.push('');
+        parts.push('O resultado trabalhista positivo decorre dos indicadores consolidados das fontes consultadas, mas nao ha processo detalhado estruturado disponivel para listagem neste bloco. Revisao manual recomendada.');
     }
 
     return parts.join('\n');
@@ -6242,9 +7662,8 @@ function buildDetWarrantNotes(caseData) {
 
     // Warrant listing
     if (unified.length > 0) {
-        const label = unified.length === 1 ? 'MANDADO IDENTIFICADO:' : `MANDADOS IDENTIFICADOS (${unified.length}):`;
         parts.push('');
-        parts.push(label);
+        // no header — go straight to listing
         for (const w of unified) {
             const wType = classifyWarrantType(w);
             const indent = '   ';
@@ -6397,29 +7816,11 @@ function buildDetKeyFindings(caseData) {
 
 function buildDetExecutiveSummary(caseData) {
     const parts = [];
-    const name = caseData.candidateName || 'Candidato';
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
     const juditRoleSummary = caseData.juditRoleSummary || [];
 
-    // Paragraph 1: Bio data
-    const bioItems = [name];
-    if (caseData.bigdatacorpAge) bioItems.push(`${caseData.bigdatacorpAge} anos`);
-    if (caseData.bigdatacorpGender) bioItems.push(`sexo ${caseData.bigdatacorpGender === 'M' ? 'masculino' : 'feminino'}`);
-    const cpf = caseData.cpf || '';
-    if (cpf) {
-        const cpfDigits = cpf.replace(/\D/g, '');
-        const masked = cpfDigits.replace(/(\d{3})\d{3}\d{3}(\d{2})/, '$1.***.***-$2');
-        const cpfStatus = caseData.bigdatacorpCpfStatus || caseData.enrichmentIdentity?.cpfStatus;
-        bioItems.push(`CPF ${masked}${cpfStatus ? ` (status: ${cpfStatus})` : ''}`);
-    }
-    let bioLine = bioItems.join(', ') + '.';
-    if (caseData.bigdatacorpMotherName) {
-        bioLine += ` Filiação materna: ${caseData.bigdatacorpMotherName}.`;
-    }
-    parts.push(bioLine);
-
-    // Paragraph 2: Professional context
+    // Paragraph 1: Professional context
     const employer = caseData.bigdatacorpEmployer;
     const profHistory = caseData.bigdatacorpProfessionHistory;
     if (employer || (profHistory && profHistory.length > 0)) {
@@ -6440,7 +7841,7 @@ function buildDetExecutiveSummary(caseData) {
         parts.push(profLine);
     }
 
-    // Paragraph 3: Findings summary
+    // Paragraph 2: Findings summary
     const findingsSentences = [];
     const cf = caseData.criminalFlag;
     if (cf === 'POSITIVE') {
@@ -6493,7 +7894,7 @@ function buildDetExecutiveSummary(caseData) {
         parts.push(`A análise identificou ${findingsSentences.join('. Há ')}.`);
     }
 
-    // Paragraph 4: Risk level
+    // Paragraph 3: Risk level
     const riskScores = { POSITIVE: 90, INCONCLUSIVE: 50, INCONCLUSIVE_HOMONYM: 50, INCONCLUSIVE_LOW_COVERAGE: 40, NEGATIVE_PARTIAL: 40, NOT_FOUND: 0, NEGATIVE: 0 };
     const pepRisk = caseData.pepFlag === 'POSITIVE' ? 60 : 0;
     const sanctionRisk = caseData.sanctionFlag === 'POSITIVE' ? 95 : caseData.sanctionFlag === 'HISTORICAL' ? 40 : 0;
@@ -6791,12 +8192,25 @@ function buildSourceSummary(caseData) {
             return;
         }
         if (typeof bucket === 'object') {
-            Object.values(bucket).forEach((item) => pushUnique(String(item || '')));
+            // BUG-R1-007: Read provider/endpoint/dataset instead of raw toString
+            const provider = bucket.provider || bucket.source || '';
+            const endpoint = bucket.endpoint || bucket.dataset || bucket.phase || '';
+            if (provider) {
+                const label = endpoint ? `${provider}:${endpoint}` : provider;
+                pushUnique(label);
+            } else {
+                Object.values(bucket).forEach((item) => {
+                    if (typeof item === 'string') pushUnique(item);
+                });
+            }
         }
     };
 
     appendSourceBucket(caseData.juditSources);
     appendSourceBucket(caseData.escavadorSources);
+    appendSourceBucket(caseData.bigdatacorpSources);
+    appendSourceBucket(caseData.djenSources);
+    appendSourceBucket(caseData.fontedataSources);
 
     return sources.length > 0 ? sources.join(' | ') : 'Fontes automatizadas e revisao analitica.';
 }
@@ -6923,7 +8337,7 @@ function buildTimelineEvents(caseData, options = {}) {
 
 function calculateTurnaroundHours(caseData, concludedAtOverride = null) {
     const createdAt = asDate(caseData.createdAt);
-    const concludedAt = asDate(concludedAtOverride) || asDate(caseData.concludedAt) || asDate(caseData.updatedAt);
+    const concludedAt = asDate(concludedAtOverride) || asDate(caseData.concludedAt);
     if (!createdAt || !concludedAt) return null;
     const diffHours = (concludedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
     if (!Number.isFinite(diffHours) || diffHours < 0) return null;
@@ -6985,7 +8399,6 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
             (
                 hasMeaningfulValue(merged.executiveSummary)
                 || (Array.isArray(merged.keyFindings) && merged.keyFindings.length > 0)
-                || (Array.isArray(merged.processHighlights) && merged.processHighlights.length > 0)
                 || (Array.isArray(merged.warrantFindings) && merged.warrantFindings.length > 0)
                 || hasMeaningfulValue(merged.analystComment)
             );
@@ -6994,7 +8407,7 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
     for (const field of PUBLIC_RESULT_FIELDS) {
         const value = merged[field];
         if (value !== undefined && value !== null && value !== '') {
-            snapshot[field] = value;
+            snapshot[field] = sanitizePublicStructuredValue(value);
         }
     }
 
@@ -7072,6 +8485,10 @@ async function revokeCasePublicationArtifacts(caseId, caseData) {
         if (reportSnap.exists) {
             await reportRef.update({ active: false });
         }
+        // P2-018: Clear publicReportToken from case to prevent stale references
+        await db.collection('cases').doc(caseId).update({
+            publicReportToken: FieldValue.delete(),
+        });
     }
 
     const publicResultRef = db.collection('cases').doc(caseId).collection('publicResult').doc('latest');
@@ -7091,14 +8508,13 @@ function hasPublicReportMinimumContent(caseData, publicSnapshot = {}) {
         (
             hasMeaningfulValue(reportData.executiveSummary) ||
             (Array.isArray(reportData.keyFindings) && reportData.keyFindings.length > 0) ||
-            (Array.isArray(reportData.processHighlights) && reportData.processHighlights.length > 0) ||
             (Array.isArray(reportData.warrantFindings) && reportData.warrantFindings.length > 0) ||
             hasMeaningfulValue(reportData.analystComment)
         );
 }
 
 exports.concludeCaseByAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 },
+    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -7113,8 +8529,30 @@ exports.concludeCaseByAnalyst = onCall(
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
         const caseData = caseDoc.data() || {};
 
-        if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
-            throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
+        assertOpsCanAccessCase(profile, caseData, caseId);
+
+        // P2-015: Validate assignee — only assignee or manager can conclude
+        if (caseData.assigneeId && caseData.assigneeId !== uid && !canAssignCases(profile)) {
+            throw new HttpsError('permission-denied', 'Apenas o analista responsavel ou gestor pode concluir este caso.');
+        }
+
+        // P2-012: Validate enabledPhases against tenant configuration
+        const tenantData = await getTenantSettingsData(caseData.tenantId);
+        const tenantAnalysisConfig = tenantData?.analysisConfig || DEFAULT_ANALYSIS_CONFIG;
+        const requiredPhases = Object.entries(tenantAnalysisConfig)
+            .filter(([, value]) => value?.enabled)
+            .map(([key]) => key);
+        const payloadEnabledPhases = Array.isArray(payload.enabledPhases) ? payload.enabledPhases : [];
+        if (payloadEnabledPhases.length > 0) {
+            const missingRequired = requiredPhases.filter((phase) => !payloadEnabledPhases.includes(phase));
+            if (missingRequired.length > 0) {
+                throw new HttpsError('invalid-argument', `enabledPhases deve conter as fases obrigatorias configuradas: ${missingRequired.join(', ')}.`);
+            }
+        }
+
+        const ALLOWED_CONCLUDE_STATUSES = ['PENDING', 'IN_PROGRESS', 'ANALYSIS_READY'];
+        if (!ALLOWED_CONCLUDE_STATUSES.includes(caseData.status)) {
+            throw new HttpsError('failed-precondition', `Caso nao pode ser concluido (status: ${caseData.status || 'desconhecido'}).`);
         }
 
         const updatePayload = pickConcludePayload(payload);
@@ -7122,15 +8560,65 @@ exports.concludeCaseByAnalyst = onCall(
             updatePayload.assigneeId = caseData.assigneeId || uid;
         }
 
-        // Hard facts validation: block conclusion if Judit found active warrants but warrantFlag is unresolved
+        // BUG-R4-006: Validate field dependencies — severity requires flag, notes require flag.
+        const dependencyRules = [
+            { field: 'criminalSeverity', requires: 'criminalFlag', message: 'Severidade criminal requer flag criminal.' },
+            { field: 'laborSeverity', requires: 'laborFlag', message: 'Severidade trabalhista requer flag trabalhista.' },
+            { field: 'criminalNotes', requires: 'criminalFlag', message: 'Notas criminal requerem flag criminal.' },
+            { field: 'laborNotes', requires: 'laborFlag', message: 'Notas trabalhista requerem flag trabalhista.' },
+            { field: 'warrantNotes', requires: 'warrantFlag', message: 'Notas de mandado requerem flag de mandado.' },
+            { field: 'osintVectors', requires: 'osintLevel', message: 'Vetores OSINT requerem nivel OSINT.' },
+            { field: 'socialReasons', requires: 'socialStatus', message: 'Razoes social requerem status social.' },
+            { field: 'digitalVectors', requires: 'digitalFlag', message: 'Vetores digital requerem flag digital.' },
+        ];
+        for (const rule of dependencyRules) {
+            if (hasMeaningfulValue(updatePayload[rule.field]) && !hasMeaningfulValue(updatePayload[rule.requires])) {
+                throw new HttpsError('invalid-argument', rule.message);
+            }
+        }
+
+        // Hard facts validation: block conclusion if any provider found active warrants but warrantFlag is unresolved
+        // BUG-R4-005: Include BigDataCorp warrants in the validation.
+        const juditActiveWarrants = caseData.juditActiveWarrantCount || 0;
+        const bdcActiveWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants)
+            ? caseData.bigdatacorpActiveWarrants.filter((w) => w?.isActive !== false).length
+            : 0;
+        const totalActiveWarrants = juditActiveWarrants + bdcActiveWarrants;
+
+        const effectiveWarrantFlag =
+            updatePayload.warrantFlag ||
+            caseData.reviewDraft?.warrantFlag ||
+            caseData.warrantFlag ||
+            null;
+
         if (
-            (caseData.juditActiveWarrantCount || 0) > 0 &&
-            updatePayload.warrantFlag &&
-            !['POSITIVE', 'INCONCLUSIVE'].includes(updatePayload.warrantFlag)
+            totalActiveWarrants > 0 &&
+            !['POSITIVE', 'INCONCLUSIVE'].includes(effectiveWarrantFlag)
         ) {
             throw new HttpsError(
                 'failed-precondition',
-                `Caso possui ${caseData.juditActiveWarrantCount} mandado(s) ativo(s) na Judit. O campo Mandado de Prisao deve ser POSITIVO ou INCONCLUSIVO para concluir.`,
+                `Caso possui ${totalActiveWarrants} mandado(s) ativo(s). O campo Mandado de Prisao deve ser POSITIVO ou INCONCLUSIVO para concluir.`,
+            );
+        }
+
+        // Validate execution penal consistency
+        const hasPenalExecution =
+            caseData.juditExecutionFlag === 'POSITIVE' ||
+            Number(caseData.juditExecutionCount || 0) > 0;
+
+        const effectiveCriminalFlag =
+            updatePayload.criminalFlag ||
+            caseData.reviewDraft?.criminalFlag ||
+            caseData.criminalFlag ||
+            null;
+
+        if (
+            hasPenalExecution &&
+            !['POSITIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(effectiveCriminalFlag)
+        ) {
+            throw new HttpsError(
+                'failed-precondition',
+                'Caso possui execucao penal positiva. Revise o campo criminal antes de concluir.',
             );
         }
 
@@ -7217,18 +8705,28 @@ exports.concludeCaseByAnalyst = onCall(
             (
                 hasMeaningfulValue(updatePayload.executiveSummary)
                 || (Array.isArray(updatePayload.keyFindings) && updatePayload.keyFindings.length > 0)
-                || (Array.isArray(updatePayload.processHighlights) && updatePayload.processHighlights.length > 0)
                 || (Array.isArray(updatePayload.warrantFindings) && updatePayload.warrantFindings.length > 0)
                 || hasMeaningfulValue(updatePayload.analystComment)
             );
         updatePayload.reportReady = hasMinContent;
 
-        await caseRef.update(updatePayload);
+        // P3-002: Compute hasNotes server-side — never accept from client payload
+        updatePayload.hasNotes = Boolean(
+            updatePayload.analystComment || updatePayload.executiveSummary || caseData.clientNotes
+        );
 
-        // Sync write to publicResult/latest — eliminates race condition with async trigger
-        await syncPublicResultLatest(caseId, caseData, updatePayload, {
+        const publicData = buildSanitizedPublicResultSnapshot(caseId, caseData, updatePayload, {
             concludedAtOverride: conclusionTimestamp,
         });
+        const publicWritePayload = {
+            ...publicData,
+            publishedAt: FieldValue.serverTimestamp(),
+            concludedAt: publicData.concludedAt || conclusionTimestamp,
+        };
+        const concludeBatch = db.batch();
+        concludeBatch.update(caseRef, updatePayload);
+        concludeBatch.set(caseRef.collection('publicResult').doc('latest'), publicWritePayload);
+        await concludeBatch.commit();
 
         await writeAuditEvent({
             action: 'CASE_CONCLUDED',
@@ -7241,23 +8739,58 @@ exports.concludeCaseByAnalyst = onCall(
             detail: `Caso concluido para ${caseData.candidateName || caseId}`,
         });
 
+        try {
+            const concludedCaseSnap = await caseRef.get();
+            if (concludedCaseSnap.exists) {
+                await createCaseCompletedNotifications(caseId, concludedCaseSnap.data());
+            }
+        } catch (err) {
+            console.warn('[notifications] failed to create case completed notifications', err);
+        }
+
         return { success: true };
     },
 );
 
 exports.updateTenantSettingsByAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getOpsUserProfile(uid);
+
+        // BUG-R2-004: Only admins can update tenant settings. Analysts are read-only.
+        if (profile.role !== 'admin' && profile.role !== 'owner') {
+            throw new HttpsError('permission-denied', 'Apenas administradores podem alterar configuracoes do tenant.');
+        }
+
         const tenantId = String(request.data?.tenantId || '').trim();
         const analysisConfig = request.data?.analysisConfig || {};
         const limits = request.data?.limits || {};
         const enrichmentConfig = request.data?.enrichmentConfig;
 
         if (!tenantId) throw new HttpsError('invalid-argument', 'tenantId obrigatorio.');
+
+        // TENANT-SET-002: Validate tenant exists before updating
+        const tenantExists = await db.collection('tenantSettings').doc(tenantId).get();
+        if (!tenantExists.exists) {
+            throw new HttpsError('not-found', `Tenant "${tenantId}" nao encontrado.`);
+        }
+
+        // TENANT-SET-004: Validate limits schema
+        if (limits.dailyLimit !== null && limits.dailyLimit !== undefined) {
+            const daily = Number(limits.dailyLimit);
+            if (Number.isNaN(daily) || daily < 0 || !Number.isFinite(daily)) {
+                throw new HttpsError('invalid-argument', 'Limite diario invalido.');
+            }
+        }
+        if (limits.monthlyLimit !== null && limits.monthlyLimit !== undefined) {
+            const monthly = Number(limits.monthlyLimit);
+            if (Number.isNaN(monthly) || monthly < 0 || !Number.isFinite(monthly)) {
+                throw new HttpsError('invalid-argument', 'Limite mensal invalido.');
+            }
+        }
 
         const payload = {
             analysisConfig,
@@ -7269,6 +8802,13 @@ exports.updateTenantSettingsByAnalyst = onCall(
         };
         if (enrichmentConfig !== undefined) {
             payload.enrichmentConfig = enrichmentConfig;
+        }
+        if (limits.slaHours !== null && limits.slaHours !== undefined) {
+            const sla = Number(limits.slaHours);
+            if (Number.isNaN(sla) || sla < 1 || !Number.isFinite(sla)) {
+                throw new HttpsError('invalid-argument', 'SLA invalido. Deve ser um numero positivo de horas.');
+            }
+            payload.slaHours = sla;
         }
 
         await db.collection('tenantSettings').doc(tenantId).set(payload, { merge: true });
@@ -7289,7 +8829,7 @@ exports.updateTenantSettingsByAnalyst = onCall(
 );
 
 exports.saveCaseDraftByAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -7304,12 +8844,17 @@ exports.saveCaseDraftByAnalyst = onCall(
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
         const caseData = caseDoc.data() || {};
 
-        if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
-            throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
-        }
+        assertOpsCanAccessCase(profile, caseData, caseId);
 
-        if (caseData.status === 'DONE') {
-            throw new HttpsError('failed-precondition', 'Nao e possivel salvar rascunho em caso ja concluido.');
+        if (['DONE', 'CORRECTION_NEEDED', 'WAITING_INFO'].includes(caseData.status)) {
+            throw new HttpsError('failed-precondition', 'Nao e possivel salvar rascunho neste status do caso.');
+        }
+        if (
+            caseData.assigneeId &&
+            caseData.assigneeId !== uid &&
+            !['supervisor', 'admin', 'owner'].includes(profile.role)
+        ) {
+            throw new HttpsError('permission-denied', 'Caso atribuido a outro analista. Assuma ou redistribua o caso antes de salvar rascunho.');
         }
 
         const updatePayload = pickDraftPayload(payload, caseData.reviewDraft || {});
@@ -7331,7 +8876,7 @@ exports.saveCaseDraftByAnalyst = onCall(
 );
 
 exports.setAiDecisionByAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 },
+    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -7349,11 +8894,23 @@ exports.setAiDecisionByAnalyst = onCall(
         const caseDoc = await caseRef.get();
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
         const caseData = caseDoc.data() || {};
+        assertOpsCanAccessCase(profile, caseData, caseId);
 
-        await caseRef.update({
+        // BUG-R4-002: When accepting AI suggestion, also persist the score and verdict.
+        const updateFields = {
             aiDecision: decision,
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+        if (decision === 'ACCEPTED' && caseData.aiStructured) {
+            const ai = caseData.aiStructured;
+            if (typeof ai.sugestaoScore === 'number') {
+                updateFields.aiAcceptedScore = ai.sugestaoScore;
+            }
+            if (ai.sugestaoVeredito) {
+                updateFields.aiAcceptedVeredito = ai.sugestaoVeredito;
+            }
+        }
+        await caseRef.update(updateFields);
 
         await writeAuditEvent({
             action: 'AI_DECISION_SET',
@@ -7376,17 +8933,134 @@ exports.setAiDecisionByAnalyst = onCall(
    Rate limited: max 3 runs per case, min 1 min between runs.
    ========================================================= */
 
-const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin']);
+const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin', 'owner']);
 const CLIENT_REQUESTER_ROLES = new Set(['CLIENT', 'client_operator', 'client_manager']);
 const CLIENT_VIEW_ROLES = new Set(['CLIENT', 'client_viewer', 'client_operator', 'client_manager']);
 const CLIENT_MANAGEABLE_ROLES = new Set(['client_viewer', 'client_operator', 'client_manager']);
+const OPS_MANAGEABLE_ROLES = new Set(['analyst', 'supervisor', 'admin']);
+
+
+async function createCaseCompletedNotifications(caseId, caseData) {
+    const recipients = await caseComm.findClientNotificationRecipientsForCase(caseData);
+    if (recipients.length === 0) return [];
+
+    const candidateName = caseData?.candidateName || 'solicitação';
+    const tenantId = caseData?.tenantId;
+
+    const results = [];
+    for (const recipient of recipients) {
+        try {
+            const nid = await caseComm.createNotification({
+                tenantId,
+                recipientUid: recipient.uid,
+                type: caseComm.NOTIFICATION_TYPES.CASE_COMPLETED,
+                title: 'Análise concluída',
+                message: `A análise de ${candidateName} já está disponível.`,
+                targetUrl: `/client/relatorio/${caseId}`,
+                caseId,
+                candidateName,
+                source: { kind: 'system', caseId, event: 'case_completed' },
+            });
+            results.push(nid);
+        } catch (err) {
+            console.warn('[notifications] failed to create CASE_COMPLETED for', recipient.uid, err.message);
+        }
+    }
+    return results;
+}
+
+async function createNewSolicitationNotifications(caseId, caseData) {
+    const tenantId = caseData?.tenantId;
+    const recipients = await caseComm.findOpsNotificationRecipientsForTenant(tenantId);
+    if (recipients.length === 0) return [];
+
+    const candidateName = String(caseData?.candidateName || 'solicitação').replace(/[<>&"']/g, '');
+    const tenantName = String(caseData?.tenantName || 'Uma empresa').replace(/[<>&"']/g, '');
+
+    const results = [];
+    for (const recipient of recipients) {
+        let lastErr = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                if (attempt > 1) {
+                    await new Promise((r) => setTimeout(r, 200 * attempt));
+                }
+                const nid = await caseComm.createNotification({
+                    tenantId,
+                    recipientUid: recipient.uid,
+                    type: caseComm.NOTIFICATION_TYPES.NEW_CLIENT_SOLICITATION,
+                    title: 'Nova solicitação recebida',
+                    message: `${tenantName} enviou uma nova análise.`,
+                    targetUrl: `/ops/caso/${caseId}`,
+                    caseId,
+                    candidateName,
+                    source: { kind: 'system', caseId, event: 'new_client_solicitation' },
+                });
+                results.push(nid);
+                lastErr = null;
+                break;
+            } catch (err) {
+                lastErr = err;
+                console.warn(`[notifications] attempt ${attempt}/3 failed for NEW_CLIENT_SOLICITATION recipient=${recipient.uid}:`, err.message);
+            }
+        }
+        if (lastErr) {
+            console.error('[notifications] exhausted retries for NEW_CLIENT_SOLICITATION recipient=', recipient.uid);
+        }
+    }
+    return results;
+}
+
+function canManageOpsUsers(profile = {}) {
+    return ['supervisor', 'admin', 'owner'].includes(profile.role);
+}
+function canAssignCases(profile = {}) {
+    return ['supervisor', 'admin', 'owner'].includes(profile.role);
+}
+function normalizeUserStatus(status) {
+    const value = String(status || 'active').trim().toLowerCase();
+    return ['active', 'inactive', 'suspended'].includes(value) ? value : 'active';
+}
+function sanitizeDisplayName(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+}
+function assertOpsManager(profile) {
+    if (!canManageOpsUsers(profile)) throw new HttpsError('permission-denied', 'Sem permissao para gerenciar equipe operacional.');
+}
+function assertCanAssignCase(profile) {
+    if (!canAssignCases(profile)) throw new HttpsError('permission-denied', 'Sem permissao para atribuir casos.');
+}
 
 async function getOpsUserProfile(uid) {
     const profileDoc = await db.collection('userProfiles').doc(uid).get();
     if (!profileDoc.exists || !OPS_ROLES.has(profileDoc.data().role)) {
         throw new HttpsError('permission-denied', 'Apenas analistas podem re-executar fases do pipeline.');
     }
-    return profileDoc.data();
+    const profile = profileDoc.data();
+    if (profile.status === 'inactive') {
+        throw new HttpsError('permission-denied', 'Conta desativada. Contate o gestor da franquia.');
+    }
+    return profile;
+}
+
+/**
+ * Assert that an ops user can access a case.
+ * Validates: case exists, tenant isolation, user is active.
+ * Throws HttpsError with appropriate code if any check fails.
+ */
+function assertOpsCanAccessCase(profile, caseData, caseId) {
+    if (!caseData) {
+        throw new HttpsError('not-found', 'Caso nao encontrado.');
+    }
+    if (!caseData.tenantId) {
+        throw new HttpsError('failed-precondition', `Caso ${caseId || ''} sem tenantId.`);
+    }
+    if (!profile.tenantId && (profile.role === 'admin' || profile.role === 'owner')) {
+        return;
+    }
+    if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
+        throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
+    }
 }
 
 async function getClientUserProfile(uid, { requireRequester = false } = {}) {
@@ -7409,6 +9083,22 @@ async function getClientUserProfile(uid, { requireRequester = false } = {}) {
     return profile;
 }
 
+/**
+ * Validate CPF digits including check digits (same algorithm as frontend).
+ * BUG-R1-010 fix: backend must reject invalid CPFs, not just check length.
+ */
+function validateCpfDigits(digits) {
+    if (typeof digits !== 'string' || digits.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+    for (let t = 9; t < 11; t++) {
+        let sum = 0;
+        for (let i = 0; i < t; i++) sum += Number(digits[i]) * (t + 1 - i);
+        const remainder = (sum * 10) % 11;
+        if ((remainder === 10 ? 0 : remainder) !== Number(digits[t])) return false;
+    }
+    return true;
+}
+
 function sanitizeCpf(cpf) {
     return String(cpf || '').replace(/\D/g, '').slice(0, 11);
 }
@@ -7427,22 +9117,29 @@ function normalizeTenantSlug(value = '') {
 }
 
 function formatRequestedBy(profile, uid) {
-    return profile.email || profile.displayName || uid;
+    const name = String(profile.displayName || '').trim();
+    const email = String(profile.email || '').trim();
+    if (name && email) return `${name} (${email})`;
+    if (name) return name;
+    if (email) return email;
+    return uid;
 }
 
 function sanitizePublicReportHtml(html) {
     return String(html || '')
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
         .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
-        .replace(/<button\s+class="print-btn"[^>]*>[\s\S]*?<\/button>/gi, '')
+        .replace(/<button\b[^>]*\bclass="[^"]*\bprint-btn\b[^"]*"[^>]*>[\s\S]*?<\/button>/gi, '')
         .replace(/\son\w+=(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
         .replace(/\s(href|src)=("|')\s*javascript:[\s\S]*?\2/gi, ' $1="#"');
 }
 
 function getClientIp(request) {
+    const rawIp = request?.rawRequest?.ip;
+    if (rawIp) return String(rawIp).trim();
     const forwarded = request?.rawRequest?.headers?.['x-forwarded-for'];
     if (forwarded) return String(forwarded).split(',')[0].trim();
-    return request?.rawRequest?.ip || null;
+    return null;
 }
 
 function sanitizePublicReportMeta(meta = {}) {
@@ -7453,6 +9150,9 @@ function sanitizePublicReportMeta(meta = {}) {
 }
 
 async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = null) {
+    if (caseData?.status !== 'DONE') {
+        throw new HttpsError('failed-precondition', `Relatório só pode ser gerado para casos concluídos (status: ${caseData?.status || 'desconhecido'}).`);
+    }
     // Use provided payload if available, otherwise read from Firestore
     let publicResultData;
     if (sanitizedPayload) {
@@ -7475,9 +9175,9 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
     let timelineEvents = caseData.timelineEvents;
     if (!Array.isArray(timelineEvents) || timelineEvents.length === 0) {
         timelineEvents = [
-            caseData.createdAt && { type: 'created', status: 'done', title: 'Solicitacao enviada', at: typeof caseData.createdAt === 'string' ? caseData.createdAt : '' },
-            caseData.analysisStartedAt && { type: 'analysis_started', status: 'done', title: 'Processamento iniciado', at: typeof caseData.analysisStartedAt === 'string' ? caseData.analysisStartedAt : '' },
-            caseData.concludedAt && { type: 'concluded', status: 'done', title: 'Analise concluida', at: typeof caseData.concludedAt === 'string' ? caseData.concludedAt : '' },
+            caseData.createdAt && { type: 'created', status: 'done', title: 'Solicitação enviada', at: caseData.createdAt?.toDate ? caseData.createdAt.toDate().toISOString() : (typeof caseData.createdAt === 'string' ? caseData.createdAt : '') },
+            caseData.analysisStartedAt && { type: 'analysis_started', status: 'done', title: 'Processamento iniciado', at: caseData.analysisStartedAt?.toDate ? caseData.analysisStartedAt.toDate().toISOString() : (typeof caseData.analysisStartedAt === 'string' ? caseData.analysisStartedAt : '') },
+            caseData.concludedAt && { type: 'concluded', status: 'done', title: 'Análise concluída', at: caseData.concludedAt?.toDate ? caseData.concludedAt.toDate().toISOString() : (typeof caseData.concludedAt === 'string' ? caseData.concludedAt : '') },
         ].filter(Boolean);
     }
 
@@ -7497,8 +9197,8 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         id: caseId,
         tenantName: caseData.tenantName || '',
         timelineEvents,
-        sourceSummary,
-        statusSummary: caseData.statusSummary || 'Analise concluida e pronta para consulta e compartilhamento.',
+        sourceSummary: publicResultData?.sourceSummary || sourceSummary,
+        statusSummary: publicResultData?.statusSummary || caseData.statusSummary || 'Analise concluida e pronta para consulta e compartilhamento.',
     };
     const { buildCaseReportHtml } = require('./reportBuilder.cjs');
     const rawHtml = buildCaseReportHtml(reportData);
@@ -7630,6 +9330,26 @@ async function enforceTenantSubmissionLimits(tenantId, settings, { actor, ip } =
     return { dailyCount: result.dailyCount, monthlyCount: result.monthlyCount, exceeded: result.exceeded };
 }
 
+async function compensateTenantSubmissionLimit(tenantId) {
+    const usageRef = db.collection('tenantUsage').doc(tenantId);
+    try {
+        await db.runTransaction(async (tx) => {
+            const usageSnap = await tx.get(usageRef);
+            if (!usageSnap.exists) return;
+            const usage = usageSnap.data();
+            const dailyCount = Math.max(0, (usage.dailyCount || 0) - 1);
+            const monthlyCount = Math.max(0, (usage.monthlyCount || 0) - 1);
+            tx.update(usageRef, {
+                dailyCount,
+                monthlyCount,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        });
+    } catch (compErr) {
+        console.error(`[compensateTenantSubmissionLimit] Failed to decrement quota for tenant ${tenantId}:`, compErr.message);
+    }
+}
+
 async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request = null) {
     const aiRunCount = caseData.aiRunCount || 0;
     if (aiRunCount >= 3) {
@@ -7641,8 +9361,15 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         throw new HttpsError('resource-exhausted', 'Aguarde 1 minuto entre execucoes de IA.');
     }
 
-    if (!isDoneOrPartial(caseData.juditEnrichmentStatus) && !isDoneOrPartial(caseData.enrichmentStatus)) {
-        throw new HttpsError('failed-precondition', 'Enriquecimento (Judit ou FonteData) nao concluido.');
+    const hasUsableEnrichment = [
+        caseData.juditEnrichmentStatus,
+        caseData.enrichmentStatus,
+        caseData.bigdatacorpEnrichmentStatus,
+        caseData.escavadorEnrichmentStatus,
+        caseData.djenEnrichmentStatus,
+    ].some(isDoneOrPartial);
+    if (!hasUsableEnrichment) {
+        throw new HttpsError('failed-precondition', 'Nenhuma fonte de enriquecimento concluida ou parcial para reexecutar a IA.');
     }
 
     const aiKey = openaiApiKey.value();
@@ -7741,6 +9468,9 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
     }
 
     await caseRef.update(updatePayload);
+    await recordAiCostLedger(caseData.tenantId, updatePayload).catch((err) => {
+        console.warn(`Case ${caseId} [AI Ledger rerun]: failed to record cost:`, err.message);
+    });
 
     await writeAuditEvent({
         action: 'AI_RERUN',
@@ -7781,7 +9511,7 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
 }
 
 exports.rerunAiAnalysis = onCall(
-    { region: 'southamerica-east1', secrets: [openaiApiKey] },
+    { region: 'southamerica-east1', secrets: [openaiApiKey] , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -7796,23 +9526,67 @@ exports.rerunAiAnalysis = onCall(
         const caseRef = db.collection('cases').doc(caseId);
         const caseDoc = await caseRef.get();
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseDoc.data() || {};
+        assertOpsCanAccessCase(profile, caseData, caseId);
 
-        return rerunAiForCase(caseRef, caseId, caseDoc.data() || {}, uid, profile, request);
+        return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
     },
 );
 
+function makeRunId(prefix, caseId) {
+    return `${prefix}_${caseId}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function buildProviderRunIds(caseId) {
+    return {
+        enrichmentRunId: makeRunId('enrichment', caseId),
+        bigdatacorpRunId: makeRunId('bdc', caseId),
+        juditRunId: makeRunId('judit', caseId),
+        djenRunId: makeRunId('djen', caseId),
+        escavadorRunId: makeRunId('escavador', caseId),
+        fontedataRunId: makeRunId('fontedata', caseId),
+    };
+}
+
+async function markPendingJuditRequestsStale(caseId, reason = 'rerun_started') {
+    const snapshot = await db.collection('juditWebhookRequests')
+        .where('caseId', '==', caseId)
+        .where('status', 'in', ['PENDING', 'CHECKING', 'PROCESSING_COMPLETION', 'PROCESSING_ERROR'])
+        .limit(100)
+        .get();
+
+    if (snapshot.empty) return 0;
+
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => {
+        batch.set(doc.ref, {
+            status: 'STALE',
+            staleReason: reason,
+            staleAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+    });
+
+    await batch.commit();
+    return snapshot.size;
+}
+
 exports.rerunEnrichmentPhase = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 540, secrets: [fontedataApiKey, openaiApiKey, escavadorApiToken, juditApiKey, bigdatacorpAccessToken, bigdatacorpTokenId] },
+    { region: 'southamerica-east1', timeoutSeconds: 540, secrets: [fontedataApiKey, openaiApiKey, escavadorApiToken, juditApiKey, bigdatacorpAccessToken, bigdatacorpTokenId] , cors: true },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
-        const { caseId, phase } = request.data || {};
+        const { caseId, phase, scope = 'cascade' } = request.data || {};
         if (!caseId || typeof caseId !== 'string') {
             throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
         }
-        if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(phase)) {
+        if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
             throw new HttpsError('invalid-argument', 'Fase invalida para rerun.');
+        }
+        // BUG-R3-007: Validate scope parameter.
+        if (!['single', 'cascade'].includes(scope)) {
+            throw new HttpsError('invalid-argument', 'Escopo invalido. Use "single" ou "cascade".');
         }
 
         const profile = await getOpsUserProfile(uid);
@@ -7821,6 +9595,8 @@ exports.rerunEnrichmentPhase = onCall(
         if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
 
         const caseData = caseDoc.data() || {};
+        assertOpsCanAccessCase(profile, caseData, caseId);
+
         if (phase === 'ai') {
             return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
         }
@@ -7829,12 +9605,205 @@ exports.rerunEnrichmentPhase = onCall(
             throw new HttpsError('failed-precondition', 'Nao e permitido reexecutar enriquecimento em casos concluidos ou devolvidos.');
         }
 
+        // â”€â”€â”€ FULL RERUN (phase='all') â”€â”€â”€
+        if (phase === 'all') {
+            const force = request.data?.force === true;
+            const reason = request.data?.reason || 'manual_full_rerun';
+
+            // Block if any provider is running and force is not set
+            const runningProviders = [
+                caseData.bigdatacorpEnrichmentStatus === 'RUNNING' ? 'BigDataCorp' : null,
+                caseData.juditEnrichmentStatus === 'RUNNING' ? 'Judit' : null,
+                caseData.djenEnrichmentStatus === 'RUNNING' ? 'DJEN' : null,
+                caseData.escavadorEnrichmentStatus === 'RUNNING' ? 'Escavador' : null,
+            ].filter(Boolean);
+
+            if (runningProviders.length > 0 && !force) {
+                throw new HttpsError(
+                    'failed-precondition',
+                    `Provider(s) em execucao: ${runningProviders.join(', ')}. Use force=true para forcar o rerun.`,
+                );
+            }
+
+            // Mark pending Judit requests as stale
+            const staleCount = await markPendingJuditRequestsStale(caseId, `${reason}_full_rerun`);
+
+            // Generate new run IDs
+            const runIds = buildProviderRunIds(caseId);
+
+            // Build reset payload
+            const resetPayload = {
+                ...runIds,
+                enrichmentGeneration: FieldValue.increment(1),
+                bigdatacorpEnrichmentStatus: 'PENDING',
+                juditEnrichmentStatus: 'PENDING',
+                djenEnrichmentStatus: 'PENDING',
+                escavadorEnrichmentStatus: 'PENDING',
+                enrichmentStatus: 'PENDING',
+                bigdatacorpError: null,
+                juditError: null,
+                djenError: null,
+                escavadorError: null,
+                enrichmentError: null,
+                fullRerunRequestedAt: FieldValue.serverTimestamp(),
+                fullRerunRequestedBy: uid,
+                fullRerunReason: reason,
+                fullRerunStatus: 'PENDING',
+                updatedAt: FieldValue.serverTimestamp(),
+            };
+
+            // Delete derived fields
+            const allDerivedFields = [
+                'autoClassifiedAt', 'autoClassifySignature', 'autoClassifyLock', 'autoClassifyRerunRequested',
+                'aiStatus', 'aiRawResponse', 'aiAnalysis', 'aiStructured', 'aiStructuredOk', 'aiError',
+                'aiCostUsd', 'aiTokens', 'aiExecutedAt', 'aiProvidersIncluded', 'aiPromptVersion', 'aiFromCache',
+                'aiHomonymStructured', 'aiHomonymStructuredOk', 'aiHomonymRawResponse', 'aiHomonymTriggered',
+                'aiHomonymDecision', 'aiHomonymConfidence', 'aiHomonymRisk', 'aiHomonymRecommendedAction',
+                'aiHomonymCostUsd', 'aiHomonymTokens', 'aiHomonymExecutedAt', 'aiHomonymError',
+                'prefillNarratives', 'deterministicPrefill',
+                'riskScore', 'riskLevel', 'finalVerdict', 'publicReportToken', 'reportSlug', 'reportReady',
+                'sourceSummary', 'statusSummary', 'nextSteps', 'processHighlights', 'warrantFindings',
+                'criminalFlag', 'criminalSeverity', 'criminalEvidenceQuality', 'criminalNotes',
+                'warrantFlag', 'warrantNotes', 'laborFlag', 'laborSeverity', 'laborNotes',
+                'coverageLevel', 'coverageNotes', 'providerDivergence', 'ambiguityNotes', 'reviewRecommended',
+                'negativePartialSafetyNetEligible', 'negativePartialSafetyNetReasons',
+                'negativePartialSafetyNetAction', 'negativePartialSafetyNetTriggered',
+                'juditIdentity', 'juditGateResult', 'juditPrimaryUf', 'juditAllUfs', 'juditHasLawsuits',
+                'juditProcessTotal', 'juditRoleSummary', 'juditProcessos', 'juditCriminalFlag', 'juditCriminalCount',
+                'juditWarrantFlag', 'juditWarrantNotes', 'juditWarrants', 'juditActiveWarrantCount',
+                'juditExecutionFlag', 'juditExecutionCount', 'juditExecutions', 'juditExecutionNotes',
+                'juditNameSearchFlag', 'juditNameSearchProcessTotal', 'juditNameSearchCriminalCount',
+                'juditNameSearchCpfsComNome', 'juditNeedsEscavador', 'juditNeedsEscavadorReason',
+                'juditPendingAsyncPhases', 'juditPendingAsyncCount', 'juditRequestIds', 'juditSources',
+                'juditRawPayloads', 'juditCostBRL', 'juditEnrichedAt', 'juditPartialDataAvailable',
+                'escavadorProcessTotal', 'escavadorProcessos', 'escavadorCriminalFlag', 'escavadorCriminalCount',
+                'escavadorLaborFlag', 'escavadorLaborCount', 'escavadorNotes', 'escavadorCpfsComEsseNome',
+                'escavadorSources', 'escavadorEnrichedAt',
+                'djenComunicacoes', 'djenCriminalFlag', 'djenLaborFlag', 'djenNotes',
+                'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
+                'bigdatacorpBasicData', 'bigdatacorpGateResult', 'bigdatacorpName', 'bigdatacorpCpfStatus',
+                'bigdatacorpProcessTotal', 'bigdatacorpCriminalFlag', 'bigdatacorpCriminalCount',
+                'bigdatacorpDirectCriminalCount', 'bigdatacorpPossibleHomonymCriminalCount',
+                'bigdatacorpLaborFlag', 'bigdatacorpLaborCount', 'bigdatacorpDirectLaborCount',
+                'bigdatacorpPossibleHomonymLaborCount', 'bigdatacorpCivilCount', 'bigdatacorpProcessos',
+                'bigdatacorpProcessNotes', 'bigdatacorpKycNotes', 'bigdatacorpProfessionNotes',
+                'bigdatacorpIsPep', 'bigdatacorpIsSanctioned', 'bigdatacorpWasSanctioned',
+                'bigdatacorpSanctionDetails', 'bigdatacorpActiveWarrants', 'bigdatacorpHasArrestWarrant',
+                'bigdatacorpSources', 'bigdatacorpRawPayloads', 'bigdatacorpCostBRL', 'bigdatacorpEnrichedAt',
+                'enrichmentSources', 'enrichmentIdentity', 'enrichmentGateResult', 'enrichmentPrimaryUf',
+                'enrichmentAllUfs', 'fontedataCriminalFlag', 'fontedataWarrantFlag', 'fontedataLaborFlag',
+                'enrichedAt',
+            ];
+            for (const field of allDerivedFields) {
+                resetPayload[field] = FieldValue.delete();
+            }
+
+            await caseRef.update(resetPayload);
+
+            // Start BigDataCorp with lock
+            const bdcConfig = await loadBigDataCorpConfig(caseData.tenantId);
+            if (bdcConfig.enabled) {
+                const runLock = await acquirePhaseRun(caseRef, 'bigdatacorpEnrichmentStatus');
+                if (runLock.acquired) {
+                    const freshData = (await caseRef.get()).data() || {};
+                    await runBigDataCorpEnrichmentPhase(caseRef, caseId, freshData, bdcConfig);
+                }
+            } else {
+                await caseRef.update({
+                    bigdatacorpEnrichmentStatus: 'SKIPPED',
+                    bigdatacorpError: 'Provider desabilitado para este tenant.',
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'BigDataCorp disabled on full rerun');
+            }
+
+            await writeAuditEvent({
+                action: 'ENRICHMENT_FULL_RERUN',
+                tenantId: caseData.tenantId,
+                actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
+                entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+                related: { caseId },
+                source: SOURCE.PORTAL_OPS,
+                ip: getClientIp(request),
+                metadata: { reason, staleJuditRequests: staleCount, force },
+                templateVars: { candidateName: caseData.candidateName || caseId },
+            });
+
+            return {
+                success: true,
+                phase: 'all',
+                message: 'Rerun geral iniciado. BigDataCorp foi acionado; demais etapas seguirao pelos triggers.',
+                staleJuditRequests: staleCount,
+            };
+        }
+
+        const aiDerivedFields = [
+            'autoClassifiedAt', 'autoClassifySignature', 'autoClassifyLock', 'autoClassifyRerunRequested',
+            'aiStatus', 'aiRawResponse', 'aiAnalysis', 'aiStructured', 'aiStructuredOk', 'aiError',
+            'aiCostUsd', 'aiTokens', 'aiExecutedAt', 'aiProvidersIncluded', 'aiPromptVersion', 'aiFromCache',
+            'aiHomonymStructured', 'aiHomonymStructuredOk', 'aiHomonymRawResponse', 'aiHomonymTriggered',
+            'aiHomonymDecision', 'aiHomonymConfidence', 'aiHomonymRisk', 'aiHomonymRecommendedAction',
+            'aiHomonymCostUsd', 'aiHomonymTokens', 'aiHomonymExecutedAt', 'aiHomonymError',
+            'prefillNarratives', 'deterministicPrefill',
+            'riskScore', 'riskLevel', 'finalVerdict', 'publicReportToken', 'reportSlug', 'reportReady',
+            'sourceSummary', 'statusSummary', 'nextSteps', 'processHighlights', 'warrantFindings',
+        ];
+        const classificationDerivedFields = [
+            'criminalFlag', 'criminalSeverity', 'criminalEvidenceQuality', 'criminalNotes',
+            'warrantFlag', 'warrantNotes', 'laborFlag', 'laborSeverity', 'laborNotes',
+            'coverageLevel', 'coverageNotes', 'providerDivergence', 'ambiguityNotes', 'reviewRecommended',
+            'negativePartialSafetyNetEligible', 'negativePartialSafetyNetReasons',
+            'negativePartialSafetyNetAction', 'negativePartialSafetyNetTriggered',
+        ];
+        const fullDerivedFields = [...classificationDerivedFields, ...aiDerivedFields];
+        const juditDataFields = [
+            'juditIdentity', 'juditGateResult', 'juditPrimaryUf', 'juditAllUfs', 'juditHasLawsuits',
+            'juditProcessTotal', 'juditRoleSummary', 'juditProcessos', 'juditCriminalFlag', 'juditCriminalCount',
+            'juditWarrantFlag', 'juditWarrantNotes', 'juditWarrants', 'juditActiveWarrantCount',
+            'juditExecutionFlag', 'juditExecutionCount', 'juditExecutions', 'juditExecutionNotes',
+            'juditNameSearchFlag', 'juditNameSearchProcessTotal', 'juditNameSearchCriminalCount',
+            'juditNameSearchCpfsComNome', 'juditNeedsEscavador', 'juditNeedsEscavadorReason',
+            'juditPendingAsyncPhases', 'juditPendingAsyncCount', 'juditRequestIds', 'juditSources',
+            'juditRawPayloads', 'juditCostBRL', 'juditEnrichedAt',
+        ];
+        const escavadorDataFields = [
+            'escavadorProcessTotal', 'escavadorProcessos', 'escavadorCriminalFlag', 'escavadorCriminalCount',
+            'escavadorLaborFlag', 'escavadorLaborCount', 'escavadorNotes', 'escavadorCpfsComEsseNome',
+            'escavadorSources', 'escavadorEnrichedAt',
+        ];
+        const djenDataFields = [
+            'djenComunicacoes', 'djenCriminalFlag', 'djenLaborFlag', 'djenNotes',
+            'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
+        ];
+        const applyDeleteFields = (target, fields) => {
+            for (const field of fields) target[field] = FieldValue.delete();
+        };
+        const applyCascadeReset = (target, currentPhase) => {
+            if (currentPhase === 'bigdatacorp') {
+                target.juditEnrichmentStatus = 'PENDING';
+                target.juditError = null;
+                target.escavadorEnrichmentStatus = 'PENDING';
+                target.escavadorError = null;
+                target.djenEnrichmentStatus = 'PENDING';
+                target.djenError = null;
+                applyDeleteFields(target, juditDataFields);
+                applyDeleteFields(target, escavadorDataFields);
+                applyDeleteFields(target, djenDataFields);
+            } else if (currentPhase === 'judit') {
+                target.escavadorEnrichmentStatus = 'PENDING';
+                target.escavadorError = null;
+                target.djenEnrichmentStatus = 'PENDING';
+                target.djenError = null;
+                applyDeleteFields(target, escavadorDataFields);
+                applyDeleteFields(target, djenDataFields);
+            }
+        };
         const phaseMeta = {
-            fontedata: { statusField: 'enrichmentStatus', errorField: 'enrichmentError', label: 'FonteData' },
-            escavador: { statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', label: 'Escavador' },
-            judit: { statusField: 'juditEnrichmentStatus', errorField: 'juditError', label: 'Judit' },
-            bigdatacorp: { statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', label: 'BigDataCorp' },
-            djen: { statusField: 'djenEnrichmentStatus', errorField: 'djenError', label: 'DJEN' },
+            fontedata: { statusField: 'enrichmentStatus', errorField: 'enrichmentError', label: 'FonteData', derived: fullDerivedFields },
+            escavador: { statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', label: 'Escavador', derived: aiDerivedFields },
+            judit: { statusField: 'juditEnrichmentStatus', errorField: 'juditError', label: 'Judit', derived: fullDerivedFields },
+            bigdatacorp: { statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', label: 'BigDataCorp', derived: fullDerivedFields },
+            djen: { statusField: 'djenEnrichmentStatus', errorField: 'djenError', label: 'DJEN', derived: aiDerivedFields },
         };
         const meta = phaseMeta[phase];
         const beforeStatus = caseData[meta.statusField] || 'PENDING';
@@ -7845,8 +9814,8 @@ exports.rerunEnrichmentPhase = onCall(
         if (phase === 'fontedata' && beforeStatus === 'BLOCKED') {
             throw new HttpsError('failed-precondition', 'FonteData bloqueou o caso no gate de identidade. Corrija os dados antes de tentar novamente.');
         }
-        if (!['FAILED', 'PARTIAL'].includes(beforeStatus)) {
-            throw new HttpsError('failed-precondition', `${meta.label} so pode ser reexecutado quando estiver em falha parcial ou total.`);
+        if (!['FAILED', 'PARTIAL', 'DONE', 'SKIPPED', 'BLOCKED'].includes(beforeStatus)) {
+            throw new HttpsError('failed-precondition', `${meta.label} so pode ser reexecutado quando estiver em estado terminal.`);
         }
         // Escavador requires Judit to be done
         if (phase === 'escavador' && !isDoneOrPartial(caseData.juditEnrichmentStatus)) {
@@ -7856,22 +9825,38 @@ exports.rerunEnrichmentPhase = onCall(
         if (!caseData.tenantId) {
             throw new HttpsError('failed-precondition', 'Caso sem tenantId.');
         }
+        const getFreshCaseData = async () => {
+            const freshDoc = await caseRef.get();
+            return freshDoc.data() || caseData;
+        };
 
         if (phase === 'fontedata') {
             const enrichmentConfig = await loadFonteDataConfig(caseData.tenantId);
             if (!enrichmentConfig.enabled) {
                 throw new HttpsError('failed-precondition', 'FonteData desabilitado para este tenant.');
             }
+            // BUG-R3-006: Invalidate derived phases before rerun.
+            // BUG-R3-007: Only invalidate when scope is 'cascade' (default).
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.fontedata.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
 
-            await runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichmentConfig);
+            // P1-008: Acquire phase lock to prevent race conditions on manual rerun
+            const lock = await acquirePhaseRun(caseRef, 'enrichmentStatus');
+            if (!lock.acquired) {
+                throw new HttpsError('failed-precondition', 'Enriquecimento ja em andamento. Aguarde a conclusao.');
+            }
+            await runFonteDataEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), enrichmentConfig);
 
             // FonteData rerun does NOT cascade to Judit/Escavador anymore.
             // Run auto-classify to incorporate any new FonteData data.
             try {
-                const freshData = (await caseRef.get()).data() || {};
-                if (isDoneOrPartial(freshData.enrichmentStatus)) {
-                    await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                }
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'FonteData rerun');
             } catch (classifyErr) {
                 console.error(`Case ${caseId} [AutoClassify via FonteData rerun]: error:`, classifyErr.message);
             }
@@ -7882,7 +9867,17 @@ exports.rerunEnrichmentPhase = onCall(
             if (!escavadorConfig.enabled) {
                 throw new HttpsError('failed-precondition', 'Escavador desabilitado para este tenant.');
             }
-            await runEscavadorEnrichmentPhase(caseRef, caseId, caseData, escavadorConfig);
+            // BUG-R3-006: Invalidate derived phases before rerun.
+            // BUG-R3-007: Only invalidate when scope is 'cascade' (default).
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.escavador.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
+            await runEscavadorEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavadorConfig);
         }
 
         if (phase === 'judit') {
@@ -7890,9 +9885,21 @@ exports.rerunEnrichmentPhase = onCall(
             if (!juditConfig.enabled) {
                 throw new HttpsError('failed-precondition', 'Judit desabilitado para este tenant.');
             }
+            // BUG-R3-006: Invalidate derived phases before rerun.
+            // BUG-R3-007: Only invalidate when scope is 'cascade' (default).
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.judit.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                applyCascadeReset(invalidateFields, 'judit');
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
             // On rerun, skip gate if it already passed
-            const skipGate = caseData.juditGateResult?.passed === true;
-            await runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, { skipGate });
+            const freshCaseData = await getFreshCaseData();
+            const skipGate = freshCaseData.juditGateResult?.passed === true;
+            await runJuditEnrichmentPhase(caseRef, caseId, freshCaseData, juditConfig, { skipGate });
         }
 
         if (phase === 'bigdatacorp') {
@@ -7900,7 +9907,18 @@ exports.rerunEnrichmentPhase = onCall(
             if (!bdcConfig.enabled) {
                 throw new HttpsError('failed-precondition', 'BigDataCorp desabilitado para este tenant.');
             }
-            await runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfig);
+            // BUG-R3-006: Invalidate derived phases before rerun so stale data doesn't persist.
+            // BUG-R3-007: Only invalidate when scope is 'cascade' (default).
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.bigdatacorp.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                applyCascadeReset(invalidateFields, 'bigdatacorp');
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
+            await runBigDataCorpEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), bdcConfig);
         }
 
         if (phase === 'djen') {
@@ -7908,7 +9926,17 @@ exports.rerunEnrichmentPhase = onCall(
             if (!djenConfig.enabled) {
                 throw new HttpsError('failed-precondition', 'DJEN desabilitado para este tenant.');
             }
-            await runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig);
+            // BUG-R3-006: Invalidate derived phases before rerun.
+            // BUG-R3-007: Only invalidate when scope is 'cascade' (default).
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.djen.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
+            await runDjenEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), djenConfig);
         }
 
         const refreshedDoc = await caseRef.get();
@@ -7969,6 +9997,12 @@ exports.juditWebhook = onRequest(
         const eventType = payload.event_type;
         const innerPayload = payload.payload || {};
 
+        // Classify event type BEFORE any lock so we can handle incrementals immediately.
+        const isCompleted = innerPayload.response_type === 'application_info'
+            && innerPayload.response_data?.code === 600;
+        const isError = innerPayload.response_type === 'application_error';
+        const isIncremental = !isCompleted && !isError;
+
         // Look up the case linked to this Judit request_id via mapping collection
         const mappingDoc = await db.collection('juditWebhookRequests').doc(requestId).get();
         if (!mappingDoc.exists) {
@@ -7977,55 +10011,87 @@ exports.juditWebhook = onRequest(
             return;
         }
 
-        const { caseId, phaseType } = mappingDoc.data();
+        const { caseId, phaseType, enrichmentGeneration: mappingGeneration } = mappingDoc.data();
         const caseRef = db.collection('cases').doc(caseId);
         const caseDoc = await caseRef.get();
         if (!caseDoc.exists) {
             console.log(`[Judit Webhook]: case ${caseId} not found. Cleaning up.`);
-            await mappingDoc.ref.delete();
+            await mappingDoc.ref.set({
+                status: 'FAILED',
+                processedBy: 'webhook',
+                failReason: 'case_not_found',
+                processedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
             res.status(200).json({ ok: true, ignored: true });
+            return;
+        }
+
+        // Reject callback from a previous enrichment cycle.
+        const currentCaseData = caseDoc.data() || {};
+        const currentGeneration = currentCaseData.enrichmentGeneration || 0;
+        if (mappingGeneration != null && mappingGeneration !== currentGeneration) {
+            console.log(`[Judit Webhook]: stale callback for case ${caseId} (mappingGen=${mappingGeneration}, currentGen=${currentGeneration}). Ignoring.`);
+            await mappingDoc.ref.set({
+                status: 'STALE',
+                staleReason: `generation_mismatch:${mappingGeneration}->${currentGeneration}`,
+                staleAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            res.status(200).json({ ok: true, ignored: true, reason: 'stale_generation' });
             return;
         }
 
         console.log(`[Judit Webhook]: event=${eventType || 'unknown'} type=${innerPayload.response_type || 'unknown'} for case=${caseId}, phase=${phaseType}, request=${requestId}`);
 
-        // Respond immediately to avoid Judit callback timeout
-        res.status(200).json({ ok: true, case_id: caseId, event: eventType });
-
-        // Acquire atomic lock via transaction to prevent race with juditAsyncFallback.
-        // If the mapping doc was already claimed (processedBy set), skip processing.
-        let lockAcquired = false;
-        try {
-            lockAcquired = await db.runTransaction(async (tx) => {
-                const freshMapping = await tx.get(mappingDoc.ref);
-                if (!freshMapping.exists || freshMapping.data().processedBy) {
-                    return false; // Already processed or deleted by fallback
-                }
-                tx.update(mappingDoc.ref, { processedBy: 'webhook', processedAt: FieldValue.serverTimestamp() });
-                return true;
-            });
-        } catch (lockErr) {
-            console.warn(`[Judit Webhook]: lock contention for request ${requestId}: ${lockErr.message}`);
-        }
-
-        if (!lockAcquired) {
-            console.log(`[Judit Webhook]: request ${requestId} already processed by fallback. Skipping.`);
+        // Incremental events: no lock, no case update, just track and return.
+        if (isIncremental) {
+            await mappingDoc.ref.set({
+                lastIncrementalEventAt: FieldValue.serverTimestamp(),
+                lastResponseType: innerPayload.response_type || null,
+                lastResponseCode: innerPayload.response_data?.code ?? null,
+                updatedAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            res.status(200).json({ ok: true, ignored: true, reason: 'incremental' });
             return;
         }
 
-        // Judit docs: event_type is always "response_created".
-        // Completion = payload.response_type "application_info" + response_data.code 600
-        // Error = payload.response_type "application_error"
-        const isCompleted = innerPayload.response_type === 'application_info'
-            && innerPayload.response_data?.code === 600;
-        const isError = innerPayload.response_type === 'application_error';
+        // Acquire atomic lock via transaction to prevent race with juditAsyncFallback.
+        let lockResult;
+        try {
+            lockResult = await db.runTransaction(async (tx) => {
+                const fresh = await tx.get(mappingDoc.ref);
+                if (!fresh.exists) return { acquired: false, reason: 'mapping_missing' };
+                const data = fresh.data() || {};
+                if (['DONE', 'FAILED', 'STALE'].includes(data.status) || data.processedBy) {
+                    return { acquired: false, reason: 'already_terminal' };
+                }
+                tx.update(mappingDoc.ref, {
+                    status: isCompleted ? 'PROCESSING_COMPLETION' : 'PROCESSING_ERROR',
+                    processingStartedAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                return { acquired: true, mapping: data };
+            });
+        } catch (lockErr) {
+            console.warn(`[Judit Webhook]: lock contention for request ${requestId}: ${lockErr.message}`);
+            lockResult = { acquired: false, reason: 'lock_error' };
+        }
 
+        if (!lockResult || !lockResult.acquired) {
+            console.log(`[Judit Webhook]: request ${requestId} already terminal or locked (${lockResult?.reason || 'unknown'}). Skipping.`);
+            res.status(200).json({ ok: true, case_id: caseId, event: eventType, ignored: true, reason: lockResult?.reason || 'already_processed' });
+            return;
+        }
+
+        // Process completion or error, then respond 200 AFTER persistence.
         if (isCompleted) {
             try {
                 const apiKey = juditApiKey.value();
                 const items = await fetchResponses(requestId, apiKey);
-                const currentCaseData = caseDoc.data() || {};
-                const cpf = (currentCaseData.cpf || '').replace(/\D/g, '');
+                const freshCaseDoc = await caseRef.get();
+                const freshCaseData = freshCaseDoc.data() || {};
+                const cpf = (freshCaseData.cpf || '').replace(/\D/g, '');
 
                 let normalized;
                 if (phaseType === 'warrant') {
@@ -8044,8 +10110,8 @@ exports.juditWebhook = onRequest(
                     }
                 }
 
-                const currentPendingPhases = Array.isArray(currentCaseData.juditPendingAsyncPhases)
-                    ? currentCaseData.juditPendingAsyncPhases
+                const currentPendingPhases = Array.isArray(freshCaseData.juditPendingAsyncPhases)
+                    ? freshCaseData.juditPendingAsyncPhases
                     : [];
                 const remainingPendingPhases = currentPendingPhases.filter((phase) => phase !== phaseType);
 
@@ -8061,36 +10127,38 @@ exports.juditWebhook = onRequest(
                 updateFields.updatedAt = FieldValue.serverTimestamp();
 
                 if (remainingPendingPhases.length === 0) {
-                    const juditConfig = await loadJuditConfig(currentCaseData.tenantId);
-                    const mergedCaseData = { ...currentCaseData, ...fields, juditPendingAsyncPhases: [] };
+                    const juditConfig = await loadJuditConfig(freshCaseData.tenantId);
+                    const mergedCaseData = { ...freshCaseData, ...fields, juditPendingAsyncPhases: [] };
                     updateFields.juditNeedsEscavador = evaluateEscavadorNeed(mergedCaseData, juditConfig);
-                    updateFields.juditEnrichmentStatus = currentCaseData.juditError ? 'PARTIAL' : 'DONE';
+                    updateFields.juditEnrichmentStatus = freshCaseData.juditError ? 'PARTIAL' : 'DONE';
                     updateFields.juditEnrichedAt = FieldValue.serverTimestamp();
                 }
 
                 await caseRef.update(updateFields);
 
-                // Clean up the mapping
-                await mappingDoc.ref.delete();
+                // Keep audit trail — update mapping to DONE instead of deleting.
+                await mappingDoc.ref.set({
+                    status: 'DONE',
+                    processedBy: 'webhook',
+                    processedAt: FieldValue.serverTimestamp(),
+                    responseCount: items.length,
+                    updatedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
 
                 console.log(`[Judit Webhook]: case ${caseId} updated with ${items.length} ${phaseType} result(s).`);
 
-                if (remainingPendingPhases.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
-                    try {
-                        const freshDoc = await caseRef.get();
-                        const freshData = freshDoc.data() || {};
+                res.status(200).json({ ok: true, case_id: caseId, event: eventType });
 
-                        if (freshData.juditNeedsEscavador && (freshData.escavadorEnrichmentStatus === 'RUNNING' || freshData.escavadorEnrichmentStatus === 'PENDING' || freshData.escavadorEnrichmentStatus === 'SKIPPED' || !freshData.escavadorEnrichmentStatus)) {
-                            console.log(`[Judit Webhook]: auto-classify skipped for case ${caseId} because Escavador is still pending.`);
-                        } else {
-                            await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                        }
+                if (remainingPendingPhases.length === 0 && freshCaseData.status !== 'DONE' && freshCaseData.status !== 'CORRECTION_NEEDED') {
+                    try {
+                        await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit webhook');
                     } catch (classifyErr) {
                         console.error(`[Judit Webhook]: auto-classify error for case ${caseId}:`, classifyErr.message);
                     }
                 }
             } catch (err) {
                 console.error(`[Judit Webhook]: error processing completed for case ${caseId}:`, err.message);
+                res.status(500).json({ ok: false, error: err.message });
             }
         } else if (isError) {
             try {
@@ -8098,9 +10166,10 @@ exports.juditWebhook = onRequest(
                 const errorMessage = innerPayload.response_data?.message || 'Unknown error';
                 console.error(`[Judit Webhook]: application_error for case=${caseId}, phase=${phaseType}: code=${errorCode}, msg=${errorMessage}`);
 
-                const currentCaseData = caseDoc.data() || {};
-                const currentPendingPhases = Array.isArray(currentCaseData.juditPendingAsyncPhases)
-                    ? currentCaseData.juditPendingAsyncPhases
+                const freshCaseDoc = await caseRef.get();
+                const freshCaseData = freshCaseDoc.data() || {};
+                const currentPendingPhases = Array.isArray(freshCaseData.juditPendingAsyncPhases)
+                    ? freshCaseData.juditPendingAsyncPhases
                     : [];
                 const remainingPendingPhases = currentPendingPhases.filter((phase) => phase !== phaseType);
 
@@ -8121,13 +10190,31 @@ exports.juditWebhook = onRequest(
                 }
 
                 await caseRef.update(updateFields);
-                await mappingDoc.ref.delete();
+
+                // Keep audit trail — update mapping to FAILED instead of deleting.
+                await mappingDoc.ref.set({
+                    status: 'FAILED',
+                    processedBy: 'webhook',
+                    processedAt: FieldValue.serverTimestamp(),
+                    failReason: `application_error:${errorCode}`,
+                    updatedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
+
                 console.log(`[Judit Webhook]: case ${caseId} marked error for phase ${phaseType}.`);
+
+                res.status(200).json({ ok: true, case_id: caseId, event: eventType });
+
+                if (remainingPendingPhases.length === 0 && freshCaseData.status !== 'DONE' && freshCaseData.status !== 'CORRECTION_NEEDED') {
+                    try {
+                        await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit webhook');
+                    } catch (classifyErr) {
+                        console.error(`[Judit Webhook]: auto-classify error for case ${caseId}:`, classifyErr.message);
+                    }
+                }
             } catch (err) {
                 console.error(`[Judit Webhook]: error handling application_error for case ${caseId}:`, err.message);
+                res.status(500).json({ ok: false, error: err.message });
             }
-        } else {
-            console.log(`[Judit Webhook]: incremental event for case=${caseId}, response_type=${innerPayload.response_type || 'unknown'}. Waiting for completion.`);
         }
     },
 );
@@ -8162,35 +10249,51 @@ exports.juditAsyncFallback = onSchedule(
 
         console.log(`[Judit Fallback]: found ${snapshot.size} stale webhook request(s). Processing...`);
 
-        for (const mappingDoc of snapshot.docs) {
+        // BUG-R3-001: Sort by criticality — warrant first, then execution, then lawsuits.
+        // Warrants are safety-critical (active warrants block case conclusion).
+        const PHASE_PRIORITY = { warrant: 0, execution: 1, lawsuits: 2 };
+        const sortedDocs = snapshot.docs.slice().sort((a, b) => {
+            const pa = PHASE_PRIORITY[a.data().phaseType] ?? 99;
+            const pb = PHASE_PRIORITY[b.data().phaseType] ?? 99;
+            return pa - pb;
+        });
+
+        for (const mappingDoc of sortedDocs) {
             const { caseId, phaseType, tenantId } = mappingDoc.data();
             const requestId = mappingDoc.id;
 
-            // Skip if already processed by webhook (atomic lock check)
-            if (mappingDoc.data().processedBy) {
-                console.log(`[Judit Fallback]: request ${requestId} already processed by ${mappingDoc.data().processedBy}. Cleaning mapping.`);
-                await mappingDoc.ref.delete();
-                continue;
-            }
-
             // Acquire atomic lock via transaction to prevent race with webhook handler
-            let lockAcquired = false;
+            // Use CHECKING status + claimExpiresAt instead of processedBy to avoid blocking webhook
+            const owner = `fallback-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            let lockResult = { acquired: false };
             try {
-                lockAcquired = await db.runTransaction(async (tx) => {
+                lockResult = await db.runTransaction(async (tx) => {
                     const freshMapping = await tx.get(mappingDoc.ref);
-                    if (!freshMapping.exists || freshMapping.data().processedBy) {
-                        return false;
+                    if (!freshMapping.exists) return { acquired: false, reason: 'missing' };
+                    const data = freshMapping.data() || {};
+                    if (['DONE', 'FAILED', 'STALE'].includes(data.status)) {
+                        return { acquired: false, reason: 'terminal' };
                     }
-                    tx.update(mappingDoc.ref, { processedBy: 'fallback', processedAt: FieldValue.serverTimestamp() });
-                    return true;
+                    // Check claim expiration
+                    const claimExpiresAt = data.claimExpiresAt?.toDate?.() || null;
+                    if (claimExpiresAt && claimExpiresAt.getTime() > Date.now()) {
+                        return { acquired: false, reason: 'claimed' };
+                    }
+                    tx.update(mappingDoc.ref, {
+                        status: 'CHECKING',
+                        claimedBy: owner,
+                        claimExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    });
+                    return { acquired: true, mapping: data };
                 });
             } catch (lockErr) {
                 console.warn(`[Judit Fallback]: lock contention for request ${requestId}: ${lockErr.message}`);
                 continue;
             }
 
-            if (!lockAcquired) {
-                console.log(`[Judit Fallback]: request ${requestId} already claimed. Skipping.`);
+            if (!lockResult.acquired) {
+                console.log(`[Judit Fallback]: request ${requestId} not acquired (${lockResult.reason}). Skipping.`);
                 continue;
             }
 
@@ -8204,6 +10307,20 @@ exports.juditAsyncFallback = onSchedule(
                 }
 
                 const currentCaseData = caseDoc.data() || {};
+                // Reject fallback from a previous enrichment cycle
+                const currentGeneration = currentCaseData.enrichmentGeneration || 0;
+                const mappingGeneration = lockResult.mapping?.enrichmentGeneration;
+                if (mappingGeneration != null && mappingGeneration !== currentGeneration) {
+                    console.log(`[Judit Fallback]: stale mapping for case ${caseId} (mappingGen=${mappingGeneration}, currentGen=${currentGeneration}).`);
+                    await mappingDoc.ref.set({
+                        status: 'STALE',
+                        staleReason: `generation_mismatch:${mappingGeneration}->${currentGeneration}`,
+                        staleAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                    continue;
+                }
+
                 const pendingPhases = Array.isArray(currentCaseData.juditPendingAsyncPhases)
                     ? currentCaseData.juditPendingAsyncPhases
                     : [];
@@ -8246,8 +10363,7 @@ exports.juditAsyncFallback = onSchedule(
 
                         if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
                             try {
-                                const freshDoc = await caseRef.get();
-                                await runAutoClassifyAndAi(caseRef, caseId, freshDoc.data() || {});
+                                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit fallback timeout');
                             } catch (classifyErr) {
                                 console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
                             }
@@ -8272,13 +10388,17 @@ exports.juditAsyncFallback = onSchedule(
                     }
                     failUpdate.updatedAt = FieldValue.serverTimestamp();
                     await caseRef.update(failUpdate);
-                    await mappingDoc.ref.delete();
+                    await mappingDoc.ref.set({
+                        status: 'FAILED',
+                        processedBy: 'fallback',
+                        processedAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
                     console.log(`[Judit Fallback]: marked phase ${phaseType} as CANCELLED for case ${caseId} (request status: ${requestStatus}).`);
 
                     if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
                         try {
-                            const freshDoc = await caseRef.get();
-                            await runAutoClassifyAndAi(caseRef, caseId, freshDoc.data() || {});
+                            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit fallback cancelled');
                         } catch (classifyErr) {
                             console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
                         }
@@ -8299,13 +10419,17 @@ exports.juditAsyncFallback = onSchedule(
                     }
                     failUpdate.updatedAt = FieldValue.serverTimestamp();
                     await caseRef.update(failUpdate);
-                    await mappingDoc.ref.delete();
+                    await mappingDoc.ref.set({
+                        status: 'FAILED',
+                        processedBy: 'fallback',
+                        processedAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
                     console.log(`[Judit Fallback]: marked phase ${phaseType} as FAILED for case ${caseId} (request status: ${requestStatus}).`);
 
                     if (remaining.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
                         try {
-                            const freshDoc = await caseRef.get();
-                            await runAutoClassifyAndAi(caseRef, caseId, freshDoc.data() || {});
+                            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit fallback failed');
                         } catch (classifyErr) {
                             console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
                         }
@@ -8332,9 +10456,23 @@ exports.juditAsyncFallback = onSchedule(
                     }
                     failUpdate.updatedAt = FieldValue.serverTimestamp();
                     await caseRef.update(failUpdate);
-                    await mappingDoc.ref.delete();
+                    await mappingDoc.ref.set({
+                        status: 'FAILED',
+                        processedBy: 'fallback',
+                        processedAt: FieldValue.serverTimestamp(),
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
                     console.log(`[Judit Fallback]: marked phase ${phaseType} as ERROR for case ${caseId}.`);
                     continue;
+                }
+
+                // BUG-R3-003: If BigDataCorp already found active warrants, warrant fallback
+                // must not downgrade the case. Validate before normalizing.
+                const bdcActiveWarrants = Array.isArray(currentCaseData.bigdatacorpActiveWarrants)
+                    ? currentCaseData.bigdatacorpActiveWarrants.filter((w) => w?.isActive !== false).length
+                    : 0;
+                if (phaseType === 'warrant' && bdcActiveWarrants > 0) {
+                    console.log(`[Judit Fallback]: case ${caseId} has ${bdcActiveWarrants} active warrant(s) from BigDataCorp. Warrant fallback will supplement, not override.`);
                 }
 
                 // Successfully fetched responses — process them like the webhook would
@@ -8377,18 +10515,17 @@ exports.juditAsyncFallback = onSchedule(
                 }
 
                 await caseRef.update(updateFields);
-                await mappingDoc.ref.delete();
+                await mappingDoc.ref.set({
+                    status: 'DONE',
+                    processedBy: 'fallback',
+                    processedAt: FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
                 console.log(`[Judit Fallback]: case ${caseId} updated with ${items.length} ${phaseType} result(s) via fallback.`);
 
                 if (remainingPendingPhases.length === 0 && currentCaseData.status !== 'DONE' && currentCaseData.status !== 'CORRECTION_NEEDED') {
                     try {
-                        const freshDoc = await caseRef.get();
-                        const freshData = freshDoc.data() || {};
-                        if (freshData.juditNeedsEscavador && (!freshData.escavadorEnrichmentStatus || freshData.escavadorEnrichmentStatus === 'PENDING' || freshData.escavadorEnrichmentStatus === 'SKIPPED')) {
-                            console.log(`[Judit Fallback]: auto-classify skipped for case ${caseId} — Escavador still pending.`);
-                        } else {
-                            await runAutoClassifyAndAi(caseRef, caseId, freshData);
-                        }
+                        await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Judit fallback completed');
                     } catch (classifyErr) {
                         console.error(`[Judit Fallback]: auto-classify error for case ${caseId}:`, classifyErr.message);
                     }
@@ -8428,6 +10565,8 @@ exports.__test = {
     extractSentenceDetails,
     formatProcessBlock,
     sanitizeAiOutput,
+    normalizeUnicodeToAscii,
+    fixLatinMojibake,
     _setDb(mockDb) { db = mockDb; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },
 };
@@ -8437,7 +10576,7 @@ exports.__test = {
    ========================================================= */
 
 exports.getSystemHealth = onCall(
-    { region: 'southamerica-east1' },
+    { region: 'southamerica-east1' , cors: true },
     async (request) => {
         if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
         const profile = await getOpsUserProfile(request.auth.uid);
@@ -8469,10 +10608,298 @@ exports.getSystemHealth = onCall(
    ========================================================= */
 
 exports.getClientQuotaStatus = onCall(
-    { region: 'southamerica-east1' },
+    { region: 'southamerica-east1', cors: [/\.vercel\.app$/, /localhost/] },
     async (request) => {
         if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
         return getClientQuotaStatusInner(request.auth.uid);
+    },
+);
+
+/* =========================================================
+   PDF Generation — Server-side rendering with Puppeteer
+   ========================================================= */
+
+const { renderHtmlToPdfBuffer } = require('./helpers/pdfRenderer');
+const { injectPdfExportCss, injectPublicVerificationBanner } = require('./helpers/pdfHtml');
+
+const PDF_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes for signed URL
+const PDF_SIGNED_URL_ACTION = 'read';
+
+function makeSafePdfFilename(value) {
+    const base = String(value || 'relatorio')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9\-_\s]/g, '_')
+        .replace(/_+/g, '_')
+        .trim()
+        .slice(0, 80);
+    return base || 'relatorio';
+}
+
+function asIsoForFilename(date) {
+    const d = date instanceof Date ? date : new Date(date || Date.now());
+    return d.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+}
+
+async function savePdfAndCreateSignedUrl({ pdfBuffer, storagePath, filename, metadata = {}, expiresMs = PDF_EXPIRY_MS }) {
+    const bucket = getStorage().bucket();
+    const filePath = `${storagePath}/${filename}`;
+    const file = bucket.file(filePath);
+
+    await file.save(pdfBuffer, {
+        metadata: {
+            contentType: 'application/pdf',
+            metadata: {
+                ...metadata,
+                generatedAt: new Date().toISOString(),
+            },
+        },
+    });
+
+    // Generate signed URL for secure temporary access
+    try {
+        const [signedUrl] = await file.getSignedUrl({
+            action: PDF_SIGNED_URL_ACTION,
+            expires: Date.now() + expiresMs,
+            responseDisposition: `attachment; filename="${filename}"`,
+        });
+        return { signedUrl, filePath, filename };
+    } catch (signErr) {
+        console.error(`[savePdfAndCreateSignedUrl] Signed URL generation failed for ${filePath}:`, signErr.message);
+        throw new Error(
+            `Falha ao gerar URL assinada para o PDF. ` +
+            `Verifique se a service account tem a permissao 'iam.serviceAccounts.signBlob'. ` +
+            `Erro original: ${signErr.message}`,
+        );
+    }
+}
+
+exports.generateClientCasePdf = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '2GiB' , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getClientUserProfile(uid);
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+
+        const caseRef = db.collection('cases').doc(caseId);
+        const caseSnap = await caseRef.get();
+        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseSnap.data() || {};
+
+        if (caseData.tenantId !== profile.tenantId) {
+            throw new HttpsError('permission-denied', 'Caso nao pertence ao seu tenant.');
+        }
+        if (caseData.status !== 'DONE') {
+            throw new HttpsError('failed-precondition', 'PDF disponivel apenas para casos concluidos.');
+        }
+        if (!hasPublicReportMinimumContent(caseData)) {
+            throw new HttpsError('failed-precondition', 'Relatorio ainda nao possui conteudo minimo para exportacao.');
+        }
+
+        try {
+            console.log(`[generateClientCasePdf] caseId=${caseId} tenant=${profile.tenantId} — starting HTML build`);
+            // Build canonical HTML
+            const html = await buildCanonicalReportHtml(caseId, caseData);
+            console.log(`[generateClientCasePdf] caseId=${caseId} — HTML built, length=${html?.length || 0}`);
+            const pdfHtml = injectPdfExportCss(html, { includeWatermark: true });
+            console.log(`[generateClientCasePdf] caseId=${caseId} — CSS injected`);
+
+            // Render PDF
+            console.log(`[generateClientCasePdf] caseId=${caseId} — launching Chromium via Puppeteer`);
+            const pdfBuffer = await renderHtmlToPdfBuffer(pdfHtml, {
+                timeoutMs: 90000,
+                setContentTimeoutMs: 90000,
+                pdfTimeoutMs: 90000,
+            });
+            console.log(`[generateClientCasePdf] caseId=${caseId} — PDF rendered, buffer size=${pdfBuffer?.length || 0}`);
+
+            const tenantId = profile.tenantId;
+            const candidateName = makeSafePdfFilename(caseData.candidateName);
+            const timestamp = asIsoForFilename(new Date());
+            const filename = `${candidateName}_${timestamp}.pdf`;
+
+            // Try to upload to Storage; fallback to base64 data URL if bucket unavailable
+            let signedUrl = null;
+            let filePath = null;
+            let storageFailed = false;
+            try {
+                const storagePath = `tenants/${tenantId}/cases/${caseId}/pdfExports`;
+                const uploadResult = await savePdfAndCreateSignedUrl({
+                    pdfBuffer,
+                    storagePath,
+                    filename,
+                    metadata: {
+                        caseId,
+                        tenantId,
+                        generatedBy: uid,
+                        candidateName: caseData.candidateName || '',
+                    },
+                });
+                signedUrl = uploadResult.signedUrl;
+                filePath = uploadResult.filePath;
+                console.log(`[generateClientCasePdf] caseId=${caseId} — uploaded to ${filePath}`);
+            } catch (storageErr) {
+                const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
+                    storageErr?.code === 404 ||
+                    storageErr?.status === 404;
+                if (isBucketMissing) {
+                    console.warn(`[generateClientCasePdf] caseId=${caseId} — Storage bucket unavailable, falling back to base64 data URL`);
+                    storageFailed = true;
+                } else {
+                    throw storageErr;
+                }
+            }
+
+            if (!storageFailed && signedUrl) {
+                // Persist metadata in Firestore subcollection
+                const exportRef = caseRef.collection('pdfExports').doc();
+                await exportRef.set({
+                    filePath,
+                    filename,
+                    generatedAt: FieldValue.serverTimestamp(),
+                    generatedBy: uid,
+                    generatedByEmail: profile.email || uid,
+                    candidateName: caseData.candidateName || '',
+                    tenantId,
+                    caseId,
+                    signedUrl,
+                    signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
+                });
+
+                await writeAuditEvent({
+                    action: 'CLIENT_REPORT_PDF_GENERATED',
+                    tenantId,
+                    actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid, displayName: profile.displayName || null },
+                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+                    related: { caseId, exportId: exportRef.id, filePath },
+                    source: SOURCE.PORTAL_CLIENT,
+                    ip: getClientIp(request),
+                    detail: `PDF do relatorio gerado para ${caseData.candidateName || caseId}`,
+                    clientMetadata: { filePath, filename },
+                });
+
+                return { url: signedUrl, expiresInSeconds: Math.floor(PDF_EXPIRY_MS / 1000) };
+            }
+
+            // Fallback: return base64 data URL for direct client download
+            const base64Pdf = pdfBuffer.toString('base64');
+            const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
+            console.log(`[generateClientCasePdf] caseId=${caseId} — returning base64 data URL, length=${dataUrl.length}`);
+
+            await writeAuditEvent({
+                action: 'CLIENT_REPORT_PDF_GENERATED',
+                tenantId,
+                actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid, displayName: profile.displayName || null },
+                entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+                related: { caseId },
+                source: SOURCE.PORTAL_CLIENT,
+                ip: getClientIp(request),
+                detail: `PDF do relatorio gerado (base64 fallback) para ${caseData.candidateName || caseId}`,
+                clientMetadata: { filename, fallback: 'base64' },
+            });
+
+            return { url: dataUrl, expiresInSeconds: 0, filename, fallback: 'base64' };
+        } catch (err) {
+            console.error(`[generateClientCasePdf] caseId=${caseId} tenant=${profile.tenantId} error:`, err.message, err.stack);
+            throw new HttpsError('internal', `Falha ao gerar PDF: ${err.message}`);
+        }
+    },
+);
+
+exports.generatePublicReportPdf = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB' , cors: true },
+    async (request) => {
+        const token = String(request.data?.token || '').trim();
+        if (!token) throw new HttpsError('invalid-argument', 'Token do relatorio obrigatorio.');
+
+        const reportRef = db.collection('publicReports').doc(token);
+        const reportSnap = await reportRef.get();
+        if (!reportSnap.exists) throw new HttpsError('not-found', 'Relatorio nao encontrado.');
+
+        const reportData = reportSnap.data() || {};
+        const status = resolvePublicReportStatus(reportData);
+        if (status === 'REVOKED') throw new HttpsError('failed-precondition', 'Relatorio revogado.');
+        if (status === 'EXPIRED') throw new HttpsError('failed-precondition', 'Link expirado.');
+
+        // Defense in depth: verify case is still DONE
+        const caseId = reportData.caseId;
+        if (caseId) {
+            const caseSnap = await db.collection('cases').doc(caseId).get();
+            if (caseSnap.exists) {
+                const caseData = caseSnap.data() || {};
+                if (caseData.status !== 'DONE') {
+                    throw new HttpsError('failed-precondition', 'Caso nao esta concluido.');
+                }
+            }
+        }
+
+        // Use HTML stored in publicReports (already sanitized)
+        let html = reportData.html || '';
+        if (!html.trim()) {
+            throw new HttpsError('internal', 'HTML do relatorio indisponivel.');
+        }
+
+        // Inject public verification banner and PDF CSS
+        html = injectPublicVerificationBanner(html, reportData, token);
+        html = injectPdfExportCss(html, { includeWatermark: false });
+
+        const pdfBuffer = await renderHtmlToPdfBuffer(html, {
+            timeoutMs: 90000,
+            setContentTimeoutMs: 90000,
+            pdfTimeoutMs: 90000,
+        });
+
+        const candidateName = makeSafePdfFilename(reportData.candidateName);
+        const timestamp = asIsoForFilename(new Date());
+        const filename = `${candidateName}_${timestamp}.pdf`;
+        const storagePath = `publicReports/${token}/pdfExports`;
+
+        const { signedUrl, filePath } = await savePdfAndCreateSignedUrl({
+            pdfBuffer,
+            storagePath,
+            filename,
+            metadata: {
+                token,
+                caseId: reportData.caseId || '',
+                candidateName: reportData.candidateName || '',
+                generatedBy: reportData.createdBy || 'public',
+            },
+        });
+
+        // Persist metadata in publicReports subcollection
+        const exportRef = reportRef.collection('pdfExports').doc();
+        await exportRef.set({
+            filePath,
+            filename,
+            generatedAt: FieldValue.serverTimestamp(),
+            candidateName: reportData.candidateName || '',
+            token,
+            caseId: reportData.caseId || null,
+            signedUrl,
+            signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
+        });
+
+        // Best-effort audit (public access — no authenticated actor)
+        try {
+            await writeAuditEvent({
+                action: 'PUBLIC_REPORT_PDF_GENERATED',
+                tenantId: reportData.tenantId || null,
+                actor: { type: ACTOR_TYPE.PUBLIC_LINK, id: token },
+                entity: { type: 'REPORT_PUBLIC', id: token, label: reportData.candidateName || token },
+                related: { caseId: reportData.caseId || null, token, filePath },
+                source: SOURCE.PUBLIC_REPORT,
+                ip: getClientIp(request),
+                detail: `PDF do relatorio publico gerado${reportData.candidateName ? ` para ${reportData.candidateName}` : ''}`,
+                clientMetadata: { filePath, filename },
+            });
+        } catch {
+            // Non-blocking: audit failure should not break PDF generation
+        }
+
+        return { url: signedUrl, expiresInSeconds: Math.floor(PDF_EXPIRY_MS / 1000) };
     },
 );
 
@@ -8510,3 +10937,228 @@ async function getClientQuotaStatusInner(uid) {
         allowMonthlyExceedance,
     };
 }
+
+/* =========================================================
+   NOTIFICATIONS — Callable functions for frontend
+   ========================================================= */
+
+exports.markNotificationAsRead = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 30 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const { notificationId } = request.data || {};
+        if (!notificationId) throw new HttpsError('invalid-argument', 'notificationId obrigatorio.');
+
+        const notificationRef = db.collection('notifications').doc(notificationId);
+        const notificationDoc = await notificationRef.get();
+        if (!notificationDoc.exists) throw new HttpsError('not-found', 'Notificacao nao encontrada.');
+
+        const notificationData = notificationDoc.data();
+        if (notificationData.recipientUid !== uid) {
+            throw new HttpsError('permission-denied', 'Sem permissao para alterar esta notificacao.');
+        }
+
+        await notificationRef.update({
+            read: true,
+            readAt: FieldValue.serverTimestamp(),
+        });
+
+        return { success: true };
+    },
+);
+
+exports.markAllNotificationsAsRead = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 30 , cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const snapshot = await db.collection('notifications')
+            .where('recipientUid', '==', uid)
+            .where('read', '==', false)
+            .limit(100)
+            .get();
+
+        if (snapshot.empty) return { updated: 0 };
+
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.update(doc.ref, {
+                read: true,
+                readAt: FieldValue.serverTimestamp(),
+            });
+        });
+
+        await batch.commit();
+        return { updated: snapshot.docs.length };
+    },
+);
+
+// â”€â”€ Client GeoIP proxy (bypasses browser CORS / rate-limit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function isPrivateOrLocalIp(ip) {
+    const value = String(ip || '').trim();
+    return (
+        value === '127.0.0.1' ||
+        value === '::1' ||
+        value.startsWith('10.') ||
+        value.startsWith('192.168.') ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(value)
+    );
+}
+
+function normalizeIp(ip) {
+    if (!ip) return null;
+    let value = String(ip).trim();
+    if (value.includes(',')) {
+        // x-forwarded-for can be a comma-separated list; pick the first public IP
+        const parts = value.split(',').map((p) => p.trim()).filter(Boolean);
+        for (const part of parts) {
+            const cleaned = part.startsWith('::ffff:') ? part.slice(7) : part;
+            if (!isPrivateOrLocalIp(cleaned)) {
+                return cleaned;
+            }
+        }
+        // fallback to first item if all are private
+        value = parts[0];
+    }
+    if (value.startsWith('::ffff:')) value = value.slice(7);
+    return value || null;
+}
+
+function getRequestIp(req) {
+    const candidates = [
+        req.headers['x-forwarded-for'],
+        req.headers['x-real-ip'],
+        req.headers['cf-connecting-ip'],
+        req.headers['fastly-client-ip'],
+        req.ip,
+        req.socket?.remoteAddress,
+    ];
+    for (const candidate of candidates) {
+        const ip = normalizeIp(candidate);
+        if (ip) return ip;
+    }
+    return null;
+}
+
+
+
+function sanitizeGeoText(value, maxLength = 80) {
+    return String(value || '')
+        .replace(/[<>]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, maxLength);
+}
+
+async function lookupIpLocation(ip) {
+    if (!ip || isPrivateOrLocalIp(ip)) {
+        return {
+            ip,
+            city: null,
+            region: null,
+            regionCode: null,
+            countryName: null,
+            countryCode: null,
+            lookupOk: false,
+            reason: 'private_or_local_ip',
+        };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+
+    try {
+        const response = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+                Accept: 'application/json',
+                'User-Agent': 'ComplianceHub-SecurityContext/1.0',
+            },
+        });
+
+        if (!response.ok) {
+            return {
+                ip,
+                lookupOk: false,
+                reason: `http_${response.status}`,
+            };
+        }
+
+        const data = await response.json();
+
+        return {
+            ip,
+            city: sanitizeGeoText(data.city) || null,
+            region: sanitizeGeoText(data.region) || null,
+            regionCode: sanitizeGeoText(data.region_code || data.regionCode, 12) || null,
+            countryName: sanitizeGeoText(data.country_name || data.countryName) || null,
+            countryCode: sanitizeGeoText(data.country_code || data.countryCode, 12) || null,
+            lookupOk: true,
+            provider: 'ipapi.co',
+        };
+    } catch (err) {
+        return {
+            ip,
+            city: null,
+            region: null,
+            regionCode: null,
+            countryName: null,
+            countryCode: null,
+            lookupOk: false,
+            reason: err?.name === 'AbortError' ? 'timeout' : 'lookup_failed',
+            provider: 'ipapi.co',
+        };
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+exports.getClientGeoIp = onCall(
+    {
+        region: 'southamerica-east1',
+        memory: '256MiB',
+        timeoutSeconds: 10,
+        cors: true,
+    },
+    async (request) => {
+        const clientIp = getRequestIp(request.rawRequest) || normalizeIp(request.data?.clientIp);
+
+        if (!clientIp) {
+            return {
+                monitored: true,
+                ip: null,
+                city: null,
+                region: null,
+                regionCode: null,
+                countryName: null,
+                countryCode: null,
+                lookupOk: false,
+                reason: 'ip_not_detected',
+            };
+        }
+
+        const lookup = await lookupIpLocation(clientIp);
+
+        return {
+            monitored: true,
+            ip: lookup.ip || clientIp,
+            city: lookup.city || null,
+            region: lookup.region || null,
+            regionCode: lookup.regionCode || null,
+            countryName: lookup.countryName || null,
+            countryCode: lookup.countryCode || null,
+            lookupOk: lookup.lookupOk === true,
+            reason: lookup.reason || null,
+            provider: lookup.provider || null,
+        };
+    }
+);
+
+// Case Communication exports
+exports.sendCaseMessage = caseComm.sendCaseMessage;
+exports.markCaseCommunicationRead = caseComm.markCaseCommunicationRead;

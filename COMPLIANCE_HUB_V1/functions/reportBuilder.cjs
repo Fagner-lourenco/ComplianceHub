@@ -3,7 +3,7 @@
    IMPORTANT: Keep in sync with the frontend version. */
 'use strict';
 
-const REPORT_BUILD_VERSION = 2;
+const REPORT_BUILD_VERSION = 4;
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -22,6 +22,61 @@ const RISK_LEVEL_LABEL = { GREEN: 'Baixo', YELLOW: 'Médio', RED: 'Alto' };
 const PRIORITY_LABEL  = { NORMAL: 'Normal', HIGH: 'Alta' };
 const SEVERITY_LABEL  = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' };
 
+function normalizeTextForCompare(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isMeaningfullyDifferentName(nameA, nameB) {
+    const a = normalizeTextForCompare(nameA);
+    const b = normalizeTextForCompare(nameB);
+    if (!a || !b) return false;
+    return a !== b;
+}
+
+function formatCpfStatus(status) {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (!normalized) return '';
+    const map = {
+        REGULAR: 'CPF regular',
+        SUSPENSA: 'CPF suspenso',
+        SUSPENSO: 'CPF suspenso',
+        CANCELADA: 'CPF cancelado',
+        CANCELADO: 'CPF cancelado',
+        PENDENTE: 'CPF pendente de regularização',
+        'PENDENTE DE REGULARIZACAO': 'CPF pendente de regularização',
+        'PENDENTE DE REGULARIZAÇÃO': 'CPF pendente de regularização',
+        NULA: 'CPF nulo',
+        NULO: 'CPF nulo',
+    };
+    return map[normalized] || `CPF ${normalized}`;
+}
+
+function formatGender(value) {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (!normalized || normalized === 'U' || normalized === 'UNKNOWN' || normalized === 'DESCONHECIDO') return '';
+    if (normalized === 'M' || normalized === 'MALE' || normalized === 'MASCULINO') return 'Masculino';
+    if (normalized === 'F' || normalized === 'FEMALE' || normalized === 'FEMININO') return 'Feminino';
+    return '';
+}
+
+function formatBirthAndAge(birthDate, age) {
+    const date = birthDate ? formatDateBR(birthDate).split(' ')[0] : '';
+    const parsedAge = Number(age);
+    if (date && Number.isFinite(parsedAge) && parsedAge > 0) {
+        return `${date} · ${parsedAge} anos`;
+    }
+    if (date) return date;
+    if (Number.isFinite(parsedAge) && parsedAge > 0) {
+        return `${parsedAge} anos`;
+    }
+    return '';
+}
+
 function isLikelyUid(value) {
     return typeof value === 'string' && /^[A-Za-z0-9_-]{20,}$/.test(value);
 }
@@ -33,7 +88,7 @@ function formatRequestedBy(caseData) {
     if (email && name) return `${name} (${email})`;
     if (email) return email;
     if (name) return name;
-    if (!fallback || isLikelyUid(fallback)) return 'Usuário interno';
+    if (!fallback || isLikelyUid(fallback)) return 'Solicitante não identificado';
     return fallback;
 }
 
@@ -149,16 +204,34 @@ function buildCaseBody(c, generatedAt) {
     const ep = Array.isArray(c.enabledPhases) && c.enabledPhases.length > 0 ? c.enabledPhases : null;
     const has = (p) => !ep || ep.includes(p);
 
+    const cpfDisplay = c.cpfMasked || maskCpfValue(c.cpf);
+    const cpfStatusLabel = formatCpfStatus(c.bigdatacorpCpfStatus);
+    const cpfWithStatus = cpfStatusLabel ? `${cpfDisplay} · ${cpfStatusLabel}` : cpfDisplay;
+
+    const confirmedName = c.bigdatacorpName;
+    const shouldShowConfirmedName = isMeaningfullyDifferentName(confirmedName, c.candidateName);
+
+    const birthAndAge = formatBirthAndAge(c.bigdatacorpBirthDate, c.bigdatacorpAge);
+    const gender = formatGender(c.bigdatacorpGender);
+    const requestedBy = formatRequestedBy(c);
+
     const idFields = [
         fieldHtml('Nome completo', c.candidateName),
-        fieldHtml('CPF', c.cpfMasked || maskCpfValue(c.cpf)),
+        shouldShowConfirmedName ? fieldHtml('Nome confirmado na base', confirmedName) : null,
+        fieldHtml('CPF', cpfWithStatus),
+        birthAndAge ? fieldHtml('Nascimento / idade', birthAndAge) : null,
+        gender ? fieldHtml('Sexo', gender) : null,
+        c.bigdatacorpMotherName ? fieldHtml('Filiação materna', c.bigdatacorpMotherName) : null,
         fieldHtml('Cargo', c.candidatePosition),
         fieldHtml('Departamento', c.department),
         fieldHtml('E-mail', c.email),
         fieldHtml('Telefone', c.phone),
         fieldHtml('Data da solicitação', formatDateBR(c.createdAt)),
         fieldHtml('Prioridade', PRIORITY_LABEL[c.priority] || c.priority),
-        fieldHtml('Solicitado por', formatRequestedBy(c)),
+        fieldHtml('Solicitado por', requestedBy),
+        c.bigdatacorpHasDeathRecord === true
+            ? fieldHtml('Alerta cadastral', 'Indicativo de óbito localizado')
+            : null,
     ].filter(Boolean).join('');
 
     const sp = c.socialProfiles || {};
@@ -169,8 +242,8 @@ function buildCaseBody(c, generatedAt) {
         socialLinkHtml(sp.twitter||c.twitter,'Twitter / X','🐦'),
         socialLinkHtml(sp.tiktok||c.tiktok,'TikTok','🎵'),
         socialLinkHtml(sp.youtube||c.youtube,'YouTube','▶️'),
-        ...(Array.isArray(c.otherSocialUrls) ? c.otherSocialUrls.map(u=>socialLinkHtml(u,u,'🔗')) : []),
-        ...(Array.isArray(sp.other) ? sp.other.map(u=>socialLinkHtml(u,u,'🔗')) : []),
+        ...(Array.isArray(c.otherSocialUrls) ? c.otherSocialUrls.map(u=>socialLinkHtml(u?.url||u,u?.label||u?.url||u,'🔗')) : []),
+        ...(Array.isArray(sp.other) ? sp.other.map(u=>socialLinkHtml(u?.url||u,u?.label||u?.url||u,'🔗')) : []),
     ].filter(Boolean);
 
     const socialSec = sLinks.length > 0

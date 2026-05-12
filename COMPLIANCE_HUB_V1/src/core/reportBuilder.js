@@ -1,6 +1,6 @@
 /* Report builder — standalone HTML for print / PDF export */
 
-export const REPORT_BUILD_VERSION = 2;
+export const REPORT_BUILD_VERSION = 4;
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -32,6 +32,61 @@ Object.assign(LABOR_LABEL, {
 Object.assign(WARRANT_LABEL, {
     INCONCLUSIVE: 'Inconclusivo',
 });
+
+function normalizeTextForCompare(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function isMeaningfullyDifferentName(nameA, nameB) {
+    const a = normalizeTextForCompare(nameA);
+    const b = normalizeTextForCompare(nameB);
+    if (!a || !b) return false;
+    return a !== b;
+}
+
+function formatCpfStatus(status) {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (!normalized) return '';
+    const map = {
+        REGULAR: 'CPF regular',
+        SUSPENSA: 'CPF suspenso',
+        SUSPENSO: 'CPF suspenso',
+        CANCELADA: 'CPF cancelado',
+        CANCELADO: 'CPF cancelado',
+        PENDENTE: 'CPF pendente de regularização',
+        'PENDENTE DE REGULARIZACAO': 'CPF pendente de regularização',
+        'PENDENTE DE REGULARIZAÇÃO': 'CPF pendente de regularização',
+        NULA: 'CPF nulo',
+        NULO: 'CPF nulo',
+    };
+    return map[normalized] || `CPF ${normalized}`;
+}
+
+function formatGender(value) {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (!normalized || normalized === 'U' || normalized === 'UNKNOWN' || normalized === 'DESCONHECIDO') return '';
+    if (normalized === 'M' || normalized === 'MALE' || normalized === 'MASCULINO') return 'Masculino';
+    if (normalized === 'F' || normalized === 'FEMALE' || normalized === 'FEMININO') return 'Feminino';
+    return '';
+}
+
+function formatBirthAndAge(birthDate, age) {
+    const date = birthDate ? formatDateBR(birthDate).split(' ')[0] : '';
+    const parsedAge = Number(age);
+    if (date && Number.isFinite(parsedAge) && parsedAge > 0) {
+        return `${date} · ${parsedAge} anos`;
+    }
+    if (date) return date;
+    if (Number.isFinite(parsedAge) && parsedAge > 0) {
+        return `${parsedAge} anos`;
+    }
+    return '';
+}
 
 function formatDateBR(value) {
     if (!value) return '';
@@ -79,7 +134,7 @@ function formatRequestedBy(caseData) {
     if (email && name) return `${name} (${email})`;
     if (email) return email;
     if (name) return name;
-    if (!fallback || isLikelyUid(fallback)) return 'Usuário interno';
+    if (!fallback || isLikelyUid(fallback)) return 'Solicitante não identificado';
     return fallback;
 }
 
@@ -102,6 +157,20 @@ function phaseRow(icon, name, resultBadge, sevBadge, notes, tags, color) {
 function listBlock(title, items) {
     if (!Array.isArray(items) || items.length === 0) return '';
     return `<div class="sec"><div class="sec__t">${esc(title)}</div><ul class="blist">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul></div>`;
+}
+
+function warrantFindingsHtml(items) {
+    if (!Array.isArray(items) || items.length === 0) return '';
+    return `<div class="sec"><div class="sec__t">Situação de Mandados</div><div class="hlist">${items.map((item) => `
+        <div class="hcard">
+            <div class="hcard__top">
+                <strong>${esc(item.status || 'Sem status')}</strong>
+                ${item.source ? `<span class="hcard__meta">${esc(item.source)}</span>` : ''}
+            </div>
+            ${[item.court, item.reference].filter(Boolean).length > 0 ? `<div class="hcard__item-body">${[item.court, item.reference].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>` : ''}
+            ${item.summary ? `<p class="hcard__summary">${esc(item.summary)}</p>` : ''}
+        </div>
+    `).join('')}</div></div>`;
 }
 
 function processHighlightsHtml(items) {
@@ -130,20 +199,6 @@ function processHighlightsHtml(items) {
     `).join('')}</div></div>`;
 }
 
-function warrantFindingsHtml(items) {
-    if (!Array.isArray(items) || items.length === 0) return '';
-    return `<div class="sec"><div class="sec__t">Situação de Mandados</div><div class="hlist">${items.map((item) => `
-        <div class="hcard">
-            <div class="hcard__top">
-                <strong>${esc(item.status || 'Sem status')}</strong>
-                ${item.source ? `<span class="hcard__meta">${esc(item.source)}</span>` : ''}
-            </div>
-            ${[item.court, item.reference].filter(Boolean).length > 0 ? `<div class="hcard__item-body">${[item.court, item.reference].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>` : ''}
-            ${item.summary ? `<p class="hcard__summary">${esc(item.summary)}</p>` : ''}
-        </div>
-    `).join('')}</div></div>`;
-}
-
 function timelineHtml(items) {
     if (!Array.isArray(items) || items.length === 0) return '';
     return `<div class="sec"><div class="sec__t">Histórico do Andamento</div><div class="tlist">${items.map((item) => `
@@ -162,16 +217,39 @@ function buildCaseBody(c, cd, generatedAt) {
     const ep  = Array.isArray(c.enabledPhases) && c.enabledPhases.length > 0 ? c.enabledPhases : null;
     const has = (p) => !ep || ep.includes(p);
 
+    const cpfDisplay = c.cpfMasked || cd.cpfMasked || maskCpfValue(c.cpf || cd.cpf);
+    const cpfStatusLabel = formatCpfStatus(c.bigdatacorpCpfStatus || cd.bigdatacorpCpfStatus);
+    const cpfWithStatus = cpfStatusLabel ? `${cpfDisplay} · ${cpfStatusLabel}` : cpfDisplay;
+
+    const confirmedName = c.bigdatacorpName || cd.bigdatacorpName;
+    const shouldShowConfirmedName = isMeaningfullyDifferentName(confirmedName, c.candidateName || cd.candidateName);
+
+    const birthAndAge = formatBirthAndAge(
+        c.bigdatacorpBirthDate || cd.bigdatacorpBirthDate,
+        c.bigdatacorpAge || cd.bigdatacorpAge
+    );
+    const gender = formatGender(c.bigdatacorpGender || cd.bigdatacorpGender);
+    const requestedBy = formatRequestedBy(c);
+
     const idFields = [
         fieldHtml('Nome completo', c.candidateName || cd.candidateName),
-        fieldHtml('CPF', c.cpfMasked || cd.cpfMasked || maskCpfValue(c.cpf || cd.cpf)),
+        shouldShowConfirmedName ? fieldHtml('Nome confirmado na base', confirmedName) : null,
+        fieldHtml('CPF', cpfWithStatus),
+        birthAndAge ? fieldHtml('Nascimento / idade', birthAndAge) : null,
+        gender ? fieldHtml('Sexo', gender) : null,
+        (c.bigdatacorpMotherName || cd.bigdatacorpMotherName)
+            ? fieldHtml('Filiação materna', c.bigdatacorpMotherName || cd.bigdatacorpMotherName)
+            : null,
         fieldHtml('Cargo', c.candidatePosition || cd.candidatePosition),
         fieldHtml('Departamento', cd.department || c.department),
         fieldHtml('E-mail', cd.email || c.email),
         fieldHtml('Telefone', cd.phone || c.phone),
         fieldHtml('Data da solicitação', formatDateBR(c.createdAt)),
         fieldHtml('Prioridade', PRIORITY_LABEL[c.priority] || c.priority),
-        fieldHtml('Solicitado por', formatRequestedBy(c)),
+        fieldHtml('Solicitado por', requestedBy),
+        (c.bigdatacorpHasDeathRecord === true || cd.bigdatacorpHasDeathRecord === true)
+            ? fieldHtml('Alerta cadastral', 'Indicativo de óbito localizado')
+            : null,
     ].filter(Boolean).join('');
 
     const sp = c.socialProfiles || cd.socialProfiles || {};
@@ -328,8 +406,6 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .cbox{background:#fafbff;border-left:4px solid #4f46e5;padding:14px 18px;border-radius:0 7px 7px 0;font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap}
 .ftr{margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}
 .ftr__id{font-family:monospace;font-size:9px}
-.print-btn{position:fixed;bottom:20px;right:20px;background:#4f46e5;color:#fff;border:none;padding:10px 22px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(79,70,229,.4);z-index:999}
-.print-btn:hover{background:#4338ca}
 .page-break{page-break-after:always;height:0;overflow:hidden}
 .batch-cover{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:80px 40px}
 .batch-cover__brand{font-size:28px;font-weight:800;color:#4f46e5;margin-bottom:4px}
@@ -340,7 +416,6 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 body{background:#fff}
 .page{max-width:100%;padding:20px 24px;box-shadow:none}
-.print-btn{display:none!important}
 .hdr{page-break-inside:avoid;break-inside:avoid}
 .sec{page-break-inside:avoid;break-inside:avoid}
 .sec__t{page-break-after:avoid;break-after:avoid}
@@ -372,7 +447,6 @@ export function buildCaseReportHtml(caseData, candidateData) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>${REPORT_CSS}</style></head><body>
 <div class="page">${buildCaseBody(c, cd, generatedAt)}</div>
-<button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
 </body></html>`;
 }
 
@@ -402,6 +476,5 @@ export function buildBatchReportHtml(cases, tenantName) {
 <div class="page">${cover}</div>
 <div class="page-break"></div>
 ${pages}
-<button class="print-btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
 </body></html>`;
 }
