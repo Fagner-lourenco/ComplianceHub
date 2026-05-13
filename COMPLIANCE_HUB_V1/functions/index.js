@@ -10745,8 +10745,10 @@ exports.generateClientCasePdf = onCall(
                 const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
                     storageErr?.code === 404 ||
                     storageErr?.status === 404;
-                if (isBucketMissing) {
-                    console.warn(`[generateClientCasePdf] caseId=${caseId} — Storage bucket unavailable, falling back to base64 data URL`);
+                const isSignBlobDenied = storageErr?.message?.includes('signBlob') ||
+                    storageErr?.message?.includes('iam.serviceAccounts.signBlob');
+                if (isBucketMissing || isSignBlobDenied) {
+                    console.warn(`[generateClientCasePdf] caseId=${caseId} — Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64 data URL`);
                     storageFailed = true;
                 } else {
                     throw storageErr;
@@ -10857,30 +10859,52 @@ exports.generatePublicReportPdf = onCall(
         const filename = `${candidateName}_${timestamp}.pdf`;
         const storagePath = `publicReports/${token}/pdfExports`;
 
-        const { signedUrl, filePath } = await savePdfAndCreateSignedUrl({
-            pdfBuffer,
-            storagePath,
-            filename,
-            metadata: {
-                token,
-                caseId: reportData.caseId || '',
-                candidateName: reportData.candidateName || '',
-                generatedBy: reportData.createdBy || 'public',
-            },
-        });
+        let signedUrl = null;
+        let filePath = null;
+        let returnUrl;
 
-        // Persist metadata in publicReports subcollection
-        const exportRef = reportRef.collection('pdfExports').doc();
-        await exportRef.set({
-            filePath,
-            filename,
-            generatedAt: FieldValue.serverTimestamp(),
-            candidateName: reportData.candidateName || '',
-            token,
-            caseId: reportData.caseId || null,
-            signedUrl,
-            signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
-        });
+        try {
+            const uploadResult = await savePdfAndCreateSignedUrl({
+                pdfBuffer,
+                storagePath,
+                filename,
+                metadata: {
+                    token,
+                    caseId: reportData.caseId || '',
+                    candidateName: reportData.candidateName || '',
+                    generatedBy: reportData.createdBy || 'public',
+                },
+            });
+            signedUrl = uploadResult.signedUrl;
+            filePath = uploadResult.filePath;
+            returnUrl = signedUrl;
+        } catch (storageErr) {
+            const isSignBlobDenied = storageErr?.message?.includes('signBlob') ||
+                storageErr?.message?.includes('iam.serviceAccounts.signBlob');
+            const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
+                storageErr?.code === 404 || storageErr?.status === 404;
+            if (isSignBlobDenied || isBucketMissing) {
+                console.warn(`[generatePublicReportPdf] Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64`);
+                returnUrl = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+            } else {
+                throw storageErr;
+            }
+        }
+
+        // Persist metadata if uploaded successfully
+        if (filePath) {
+            const exportRef = reportRef.collection('pdfExports').doc();
+            await exportRef.set({
+                filePath,
+                filename,
+                generatedAt: FieldValue.serverTimestamp(),
+                candidateName: reportData.candidateName || '',
+                token,
+                caseId: reportData.caseId || null,
+                signedUrl,
+                signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
+            });
+        }
 
         // Best-effort audit (public access — no authenticated actor)
         try {
@@ -10899,7 +10923,7 @@ exports.generatePublicReportPdf = onCall(
             // Non-blocking: audit failure should not break PDF generation
         }
 
-        return { url: signedUrl, expiresInSeconds: Math.floor(PDF_EXPIRY_MS / 1000) };
+        return { url: returnUrl, expiresInSeconds: signedUrl ? Math.floor(PDF_EXPIRY_MS / 1000) : 0 };
     },
 );
 
