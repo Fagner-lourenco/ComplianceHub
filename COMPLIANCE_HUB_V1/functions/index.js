@@ -8411,6 +8411,9 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
         }
     }
 
+    // Ensure caseId is always exposed in the public snapshot (used in report footer)
+    if (caseId) snapshot.id = caseId;
+
     return stripUndefined(snapshot);
 }
 

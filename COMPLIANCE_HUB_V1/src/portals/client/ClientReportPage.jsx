@@ -67,7 +67,11 @@ export default function ClientReportPage() {
         // REPORT-001: Use publicResult as canonical source when available
         // publicResult is enriched by the backend with candidateData, computed fields,
         // and sanitized values. This ensures the internal report matches the public report.
-        const reportData = effectivePublicResult || caseView;
+        const reportData = {
+            ...(effectivePublicResult || caseView),
+            // Backfill id for legacy publicResult docs that omitted it
+            id: (effectivePublicResult?.id) || caseView.id,
+        };
         return buildCaseReportHtml(reportData);
     }, [caseView, reportAvailability.available, effectivePublicResult]);
 
