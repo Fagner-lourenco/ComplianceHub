@@ -229,13 +229,28 @@ export default function PublicReportPage() {
     };
 
     const handlePrint = () => {
-        if (iframeRef.current?.contentWindow) {
-            iframeRef.current.contentWindow.focus();
-            iframeRef.current.contentWindow.print();
+        // Open the report HTML in a popup and trigger print there.
+        // Iframe sandbox blocks contentWindow.print() in many browsers.
+        if (!reportHtml) return;
+        const blob = new Blob([reportHtml], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+        const win = window.open(blobUrl, '_blank', 'noopener,noreferrer,width=900,height=1100');
+        if (!win) {
+            // Popup blocked — fallback: try iframe print, then page print
+            try {
+                iframeRef.current?.contentWindow?.focus();
+                iframeRef.current?.contentWindow?.print();
+            } catch {
+                window.print();
+            }
+            window.setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
             return;
         }
-
-        window.print();
+        win.addEventListener('load', () => {
+            win.focus();
+            win.print();
+        });
+        window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
     };
 
     const handleDownloadPdf = async () => {
@@ -276,23 +291,7 @@ export default function PublicReportPage() {
         );
     }
 
-    // PUB-010: Build verification banner HTML
-    const verificationBanner = reportMeta
-        ? `<div class="report-verification-banner">
-            <div class="report-verification-banner__inner">
-                <span class="report-verification-banner__label">ComplianceHub</span>
-                <span class="report-verification-banner__sep">·</span>
-                <span class="report-verification-banner__item">ID: …${reportMeta.token}</span>
-                <span class="report-verification-banner__sep">·</span>
-                <span class="report-verification-banner__item">Válido até: ${reportMeta.expiresAt ? new Date(reportMeta.expiresAt.seconds ? reportMeta.expiresAt.seconds * 1000 : reportMeta.expiresAt).toLocaleDateString('pt-BR') : '—'}</span>
-                ${reportMeta.publicSnapshotHash ? `<span class="report-verification-banner__sep">·</span><span class="report-verification-banner__item">Hash: ${reportMeta.publicSnapshotHash.slice(0, 8)}</span>` : ''}
-            </div>
-        </div>`
-        : '';
-
-    const htmlWithBanner = reportHtml
-        ? reportHtml.replace(/<body\b[^>]*>/i, (match) => `${match}${verificationBanner}`)
-        : reportHtml;
+    const htmlWithBanner = reportHtml;
 
     return (
         <div className="public-report">

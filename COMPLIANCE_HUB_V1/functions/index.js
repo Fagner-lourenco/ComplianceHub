@@ -10623,7 +10623,7 @@ exports.getClientQuotaStatus = onCall(
    ========================================================= */
 
 const { renderHtmlToPdfBuffer } = require('./helpers/pdfRenderer');
-const { injectPdfExportCss, injectPublicVerificationBanner } = require('./helpers/pdfHtml');
+const { injectPdfExportCss } = require('./helpers/pdfHtml');
 
 const PDF_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes for signed URL
 const PDF_SIGNED_URL_ACTION = 'read';
@@ -10848,8 +10848,7 @@ exports.generatePublicReportPdf = onCall(
             throw new HttpsError('internal', 'HTML do relatorio indisponivel.');
         }
 
-        // Inject public verification banner and PDF CSS
-        html = injectPublicVerificationBanner(html, reportData, token);
+        // Inject only PDF export CSS — verification banner removed (was rendering as ugly box)
         html = injectPdfExportCss(html, { includeWatermark: false });
 
         const pdfBuffer = await renderHtmlToPdfBuffer(html, {
