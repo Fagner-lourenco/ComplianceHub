@@ -10787,9 +10787,10 @@ exports.generateClientCasePdf = onCall(
             }
 
             // Fallback: return base64 data URL for direct client download
-            const base64Pdf = pdfBuffer.toString('base64');
+            const safePdfBuffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+            const base64Pdf = safePdfBuffer.toString('base64');
             const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
-            console.log(`[generateClientCasePdf] caseId=${caseId} — returning base64 data URL, length=${dataUrl.length}`);
+            console.log(`[generateClientCasePdf] caseId=${caseId} — returning base64 data URL, length=${dataUrl.length}, bufferBytes=${safePdfBuffer.length}`);
 
             await writeAuditEvent({
                 action: 'CLIENT_REPORT_PDF_GENERATED',
@@ -10884,8 +10885,9 @@ exports.generatePublicReportPdf = onCall(
             const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
                 storageErr?.code === 404 || storageErr?.status === 404;
             if (isSignBlobDenied || isBucketMissing) {
-                console.warn(`[generatePublicReportPdf] Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64`);
-                returnUrl = `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+                const safePdfBuffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
+                console.warn(`[generatePublicReportPdf] Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64 (bufferBytes=${safePdfBuffer.length})`);
+                returnUrl = `data:application/pdf;base64,${safePdfBuffer.toString('base64')}`;
             } else {
                 throw storageErr;
             }

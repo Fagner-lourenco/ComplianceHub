@@ -896,25 +896,39 @@ export async function generatePublicReportPdf(token) {
 }
 
 export function triggerPdfDownload(url, filename) {
+    if (!url) throw new Error('URL do PDF vazia.');
     let objectUrl = null;
     try {
         if (url.startsWith('data:')) {
-            const [header, base64] = url.split(',');
-            const mime = header.split(':')[1]?.split(';')[0] || 'application/pdf';
+            const commaIdx = url.indexOf(',');
+            if (commaIdx === -1) throw new Error('Data URL malformada (sem virgula).');
+            const header = url.slice(0, commaIdx);
+            const base64Raw = url.slice(commaIdx + 1);
+            const mime = header.match(/data:([^;]+)/)?.[1] || 'application/pdf';
+            // Strip any whitespace/newlines that may have been introduced
+            const base64 = base64Raw.replace(/\s/g, '');
+            // Validate base64 charset before atob
+            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
+                throw new Error(`Base64 invalido (chars fora do alfabeto). Prefixo: ${base64.slice(0, 40)}`);
+            }
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
             const blob = new Blob([bytes], { type: mime });
+            if (blob.size < 100) {
+                throw new Error(`PDF decodificado vazio (${blob.size} bytes).`);
+            }
             objectUrl = URL.createObjectURL(blob);
         }
         const link = document.createElement('a');
         link.href = objectUrl || url;
         link.download = filename;
+        link.rel = 'noopener';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     } finally {
-        if (objectUrl) window.setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+        if (objectUrl) window.setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
     }
 }
 
