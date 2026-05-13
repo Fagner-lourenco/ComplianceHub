@@ -4,7 +4,7 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import Modal from '../../ui/components/Modal/Modal';
 import { useAuth } from '../../core/auth/useAuth';
-import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf } from '../../core/firebase/firestoreService';
+import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf, triggerPdfDownload } from '../../core/firebase/firestoreService';
 import { getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
@@ -64,8 +64,12 @@ export default function ClientReportPage() {
 
     const reportHtml = useMemo(() => {
         if (!caseView || !reportAvailability.available) return '';
-        return buildCaseReportHtml(caseView);
-    }, [caseView, reportAvailability.available]);
+        // REPORT-001: Use publicResult as canonical source when available
+        // publicResult is enriched by the backend with candidateData, computed fields,
+        // and sanitized values. This ensures the internal report matches the public report.
+        const reportData = effectivePublicResult || caseView;
+        return buildCaseReportHtml(reportData);
+    }, [caseView, reportAvailability.available, effectivePublicResult]);
 
     // HTML shown in the embedded iframe — strip the internal print button (we have our own)
     const iframeHtml = useMemo(() => {
@@ -98,12 +102,8 @@ export default function ClientReportPage() {
         setPdfState({ status: 'loading', message: 'Gerando PDF...' });
         try {
             const { url } = await generateClientCasePdf(caseId);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `relatorio_${caseView?.candidateName || caseId}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const filename = `relatorio_${caseView?.candidateName || caseId}.pdf`;
+            triggerPdfDownload(url, filename);
             setPdfState({ status: 'success', message: 'PDF gerado e download iniciado.' });
             window.setTimeout(() => setPdfState({ status: 'idle', message: '' }), 4000);
         } catch (err) {
@@ -227,7 +227,7 @@ export default function ClientReportPage() {
                     ref={iframeRef}
                     title={`Dossiê — ${caseView?.candidateName || 'Candidato'}`}
                     srcDoc={iframeHtml}
-                    sandbox="allow-scripts allow-modals"
+                    sandbox="allow-modals"
                     className="crp__frame"
                 />
             ) : (

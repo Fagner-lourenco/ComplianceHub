@@ -27,13 +27,13 @@ export const DEFAULT_ANALYSIS_CONFIG = {
 };
 
 export const ANALYSIS_PHASE_LABELS = {
-    criminal:         'Criminal',
+    criminal:         'Análise criminal',
     labor:            'Trabalhista',
-    warrant:          'Mandado de Prisao',
-    osint:            'OSINT',
+    warrant:          'Mandado de prisão',
+    osint:            'Perfis públicos',
     social:           'Social',
-    digital:          'Perfil Digital',
-    conflictInterest: 'Conflito de Interesse',
+    digital:          'Perfil digital',
+    conflictInterest: 'Conflito de interesse',
 };
 
 function mapProfilesToTenantDirectory(profiles) {
@@ -118,6 +118,8 @@ function mapCaseDocument(id, data) {
         id,
         ...data,
         createdAt: formatFirestoreDate(data.createdAt),
+        updatedAt: formatFirestoreDate(data.updatedAt),
+        concludedAt: formatFirestoreDate(data.concludedAt),
     };
 }
 
@@ -304,22 +306,28 @@ async function fetchOrderedCollection({
     fallbackMessage,
     mapper,
 }) {
-    const sdkPromise = withFirestoreTimeout(
-        getDocs(buildTenantCollectionQuery(collectionId, tenantId, orderField)),
-        timeoutMessage,
-    ).then((snapshot) => snapshot.docs.map((documentSnapshot) => mapper(documentSnapshot.id, documentSnapshot.data())));
-
-    const restPromise = new Promise((resolve) => {
-        window.setTimeout(resolve, REST_FALLBACK_DELAY_MS);
-    }).then(() => runFirestoreRestQuery(
-        buildTenantStructuredQuery(collectionId, tenantId, orderField),
-        fallbackMessage,
-    )).then((payload) => mapRestQueryDocuments(payload, mapper));
-
     try {
-        return await Promise.any([sdkPromise, restPromise]);
-    } catch {
-        return [];
+        const snapshot = await withFirestoreTimeout(
+            getDocs(buildTenantCollectionQuery(collectionId, tenantId, orderField)),
+            timeoutMessage,
+        );
+        return snapshot.docs.map((documentSnapshot) => mapper(documentSnapshot.id, documentSnapshot.data()));
+    } catch (sdkError) {
+        console.warn(`[fetchOrderedCollection] SDK query failed for ${collectionId}, using REST fallback:`, sdkError.message);
+        await new Promise((resolve) => {
+            window.setTimeout(resolve, REST_FALLBACK_DELAY_MS);
+        });
+
+        try {
+            const payload = await runFirestoreRestQuery(
+                buildTenantStructuredQuery(collectionId, tenantId, orderField),
+                fallbackMessage,
+            );
+            return mapRestQueryDocuments(payload, mapper);
+        } catch (restError) {
+            console.warn(`[fetchOrderedCollection] REST fallback failed for ${collectionId}:`, restError.message);
+            return [];
+        }
     }
 }
 
@@ -389,10 +397,10 @@ export function subscribeToTenantDirectory(callback) {
    ========================================================= */
 
 export async function getTenantSettings(tenantId) {
-    if (!tenantId) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null };
+    if (!tenantId) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null, slaHours: 48 };
 
     const snapshot = await getDoc(doc(db, 'tenantSettings', tenantId));
-    if (!snapshot.exists()) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null };
+    if (!snapshot.exists()) return { analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG }, dailyLimit: null, monthlyLimit: null, enrichmentConfig: null, slaHours: 48 };
 
     const data = snapshot.data();
     return {
@@ -403,6 +411,7 @@ export async function getTenantSettings(tenantId) {
         allowDailyExceedance: data.allowDailyExceedance ?? null,
         allowMonthlyExceedance: data.allowMonthlyExceedance ?? null,
         enrichmentConfig: data.enrichmentConfig ?? null,
+        slaHours: data.slaHours ?? 48,
     };
 }
 
@@ -592,7 +601,7 @@ export function fetchCandidates(tenantId) {
    ========================================================= */
 
 export function subscribeToAuditLogs(tenantId, callback) {
-    const q = buildTenantCollectionQuery('auditLogs', tenantId, 'timestamp');
+    const q = buildTenantCollectionQuery('auditLogs', tenantId, 'occurredAt');
 
     return onSnapshot(q, (snapshot) => {
         const logs = snapshot.docs.map((documentSnapshot) => mapAuditLogDocument(documentSnapshot.id, documentSnapshot.data()));
@@ -607,7 +616,7 @@ export function fetchAuditLogs(tenantId) {
     return fetchOrderedCollection({
         collectionId: 'auditLogs',
         tenantId,
-        orderField: 'timestamp',
+        orderField: 'occurredAt',
         timeoutMessage: 'Firestore audit logs query timeout.',
         fallbackMessage: 'Firestore audit logs REST fallback failed.',
         mapper: mapAuditLogDocument,
@@ -669,9 +678,16 @@ export async function revokePublicReport(token) {
     await callBackendFunction('revokePublicReport', { token });
 }
 
-export async function fetchClientPublicReports() {
-    const result = await callBackendFunction('listClientPublicReports', {});
-    return Array.isArray(result?.reports) ? result.reports : [];
+export async function fetchClientPublicReports(cursor = null, pageSize = 50) {
+    const payload = {};
+    if (cursor) payload.lastCreatedAt = cursor;
+    if (pageSize) payload.pageSize = Math.min(Math.max(Number(pageSize), 1), 200);
+    const result = await callBackendFunction('listClientPublicReports', payload);
+    return {
+        reports: Array.isArray(result?.reports) ? result.reports : [],
+        hasMore: Boolean(result?.hasMore),
+        nextCursor: result?.nextCursor || null,
+    };
 }
 
 export async function revokeClientPublicReport(token) {
@@ -759,16 +775,20 @@ export async function getCasePublicResult(caseId) {
    AI RE-RUN — Callable function invocation
    ========================================================= */
 
-export async function callRerunEnrichmentPhase(caseId, phase) {
+export async function callRerunEnrichmentPhase(caseId, phase, scope = 'cascade', options = {}) {
     const { getFunctions, httpsCallable } = await import('firebase/functions');
     const functions = getFunctions(undefined, 'southamerica-east1');
     const fn = httpsCallable(functions, 'rerunEnrichmentPhase');
-    const result = await fn({ caseId, phase });
+    const result = await fn({ caseId, phase, scope, ...options });
     return result.data;
 }
 
 export async function callRerunAiAnalysis(caseId) {
     return callRerunEnrichmentPhase(caseId, 'ai');
+}
+
+export async function callRerunFullEnrichment(caseId, options = {}) {
+    return callRerunEnrichmentPhase(caseId, 'all', 'cascade', options);
 }
 
 async function callBackendFunction(name, payload) {
@@ -777,6 +797,10 @@ async function callBackendFunction(name, payload) {
     const fn = httpsCallable(functions, name);
     const result = await fn(payload);
     return result.data;
+}
+
+export async function callGetClientGeoIp(clientIp = null) {
+    return callBackendFunction('getClientGeoIp', clientIp ? { clientIp } : {});
 }
 
 export async function callCreateClientSolicitation(payload) {
@@ -815,6 +839,22 @@ export async function callAssignCaseToCurrentAnalyst(payload) {
     return callBackendFunction('assignCaseToCurrentAnalyst', payload);
 }
 
+export async function callListOpsUsers(payload = {}) {
+    return callBackendFunction('listOpsUsers', payload);
+}
+export async function callCreateOpsUser(payload) {
+    return callBackendFunction('createOpsUser', payload);
+}
+export async function callUpdateOpsUser(payload) {
+    return callBackendFunction('updateOpsUser', payload);
+}
+export async function callAssignCaseToAnalyst(payload) {
+    return callBackendFunction('assignCaseToAnalyst', payload);
+}
+export async function callUnassignCase(payload) {
+    return callBackendFunction('unassignCase', payload);
+}
+
 export async function callReturnCaseToClient(payload) {
     return callBackendFunction('returnCaseToClient', payload);
 }
@@ -841,4 +881,75 @@ export async function callGetSystemHealth() {
 
 export async function callGetClientQuotaStatus() {
     return callBackendFunction('getClientQuotaStatus', {});
+}
+
+export async function generateClientCasePdf(caseId) {
+    const result = await callBackendFunction('generateClientCasePdf', { caseId });
+    if (!result?.url) throw new Error('Backend nao retornou URL do PDF.');
+    return result;
+}
+
+export async function generatePublicReportPdf(token) {
+    const result = await callBackendFunction('generatePublicReportPdf', { token });
+    if (!result?.url) throw new Error('Backend nao retornou URL do PDF publico.');
+    return result;
+}
+
+export function triggerPdfDownload(url, filename) {
+    let objectUrl = null;
+    try {
+        if (url.startsWith('data:')) {
+            const [header, base64] = url.split(',');
+            const mime = header.split(':')[1]?.split(';')[0] || 'application/pdf';
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mime });
+            objectUrl = URL.createObjectURL(blob);
+        }
+        const link = document.createElement('a');
+        link.href = objectUrl || url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } finally {
+        if (objectUrl) window.setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+    }
+}
+
+// Case Communication
+export function subscribeToCaseMessages(caseId, tenantId, callback) {
+    if (!caseId || !tenantId) {
+        callback([], null);
+        return () => {};
+    }
+    const q = query(
+        collection(db, 'caseMessages'),
+        where('caseId', '==', caseId),
+        where('tenantId', '==', tenantId),
+        orderBy('createdAt', 'asc')
+    );
+    return onSnapshot(q, (snapshot) => {
+        const messages = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
+            };
+        });
+        callback(messages, null);
+    }, (error) => {
+        console.error('Error subscribing to case messages:', error);
+        callback([], error);
+    });
+}
+
+export async function callSendCaseMessage(payload) {
+    return callBackendFunction('sendCaseMessage', payload);
+}
+
+export async function callMarkCaseCommunicationRead(payload) {
+    return callBackendFunction('markCaseCommunicationRead', payload);
 }
