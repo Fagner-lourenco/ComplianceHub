@@ -103,6 +103,9 @@ let db = getFirestore();
 
 const caseComm = buildNotificationFunctions(db);
 
+const PUBLIC_REPORT_TTL_DAYS = 14;
+const PUBLIC_REPORT_TTL_MS = PUBLIC_REPORT_TTL_DAYS * 24 * 60 * 60 * 1000;
+
 const fontedataApiKey = defineSecret('FONTEDATA_API_KEY');
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
 const escavadorApiToken = defineSecret('ESCAVADOR_API_TOKEN');
@@ -4862,6 +4865,7 @@ const RESULT_ONLY_FIELDS = [
     'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
     'enabledPhases',
     'warrantFindings',
+    'processHighlights',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
@@ -6462,14 +6466,18 @@ exports.createClientPublicReport = onCall(
                     if (reportCreated >= caseUpdated && versionMatch) {
                         return { token: caseData.publicReportToken, expiresAt: expiresDate.toISOString() };
                     }
-                    // Report is stale or outdated template — regenerate HTML into existing doc
-                    const freshHtml = await buildCanonicalReportHtml(caseId, caseData);
-                    const newExpiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
+                    // Report is stale or outdated template — regenerate using canonical flow
+                    const {
+                        html: freshHtml,
+                        publicSnapshotHash: freshHash,
+                    } = await prepareCanonicalReport(caseId, caseData);
+                    const newExpiresAt = new Date(Date.now() + PUBLIC_REPORT_TTL_MS);
                     await existingRef.update({
                         html: freshHtml,
                         createdAt: FieldValue.serverTimestamp(),
                         expiresAt: newExpiresAt,
                         reportBuildVersion: REPORT_BUILD_VERSION,
+                        publicSnapshotHash: freshHash,
                         tenantId: profile.tenantId,
                         caseId,
                         candidateName: String(caseData.candidateName || '').slice(0, 160),
@@ -6479,16 +6487,13 @@ exports.createClientPublicReport = onCall(
             }
         }
 
-        const html = await buildCanonicalReportHtml(caseId, caseData);
+        const {
+            html,
+            publicSnapshot,
+            publicSnapshotHash,
+        } = await prepareCanonicalReport(caseId, caseData);
 
-        // P1-016: Compute publicSnapshotHash for integrity verification
-        const publicSnapshot = await syncPublicResultLatest(caseId, caseData, {}, {
-            concludedAtOverride: caseData.concludedAt || caseData.updatedAt || new Date(),
-        });
-        const publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
-
-        const TTL_DAYS = 14;
-        const expiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + PUBLIC_REPORT_TTL_MS);
         const reportRef = db.collection('publicReports').doc();
 
         await reportRef.set({
@@ -6549,6 +6554,8 @@ function serializeManagedPublicReport(docSnap) {
         status: resolvePublicReportStatus(reportData),
         createdAt: createdAt ? createdAt.toISOString() : null,
         expiresAt: expiresAt ? expiresAt.toISOString() : null,
+        reportBuildVersion: reportData.reportBuildVersion || null,
+        publicSnapshotHash: reportData.publicSnapshotHash || null,
     };
 }
 
@@ -6689,6 +6696,157 @@ exports.revokePublicReport = onCall(
         });
 
         return { success: true };
+    },
+);
+
+// ─── Report View Callables ───────────────────────────────────────────────────
+
+exports.getClientCaseReportHtml = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60, cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getClientUserProfile(uid);
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+
+        const caseSnap = await db.collection('cases').doc(caseId).get();
+        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseSnap.data() || {};
+
+        if (caseData.tenantId !== profile.tenantId) {
+            throw new HttpsError('permission-denied', 'Caso nao pertence ao seu tenant.');
+        }
+
+        const { html, publicSnapshot, publicSnapshotHash, reportBuildVersion } = await prepareCanonicalReport(caseId, caseData);
+
+        return {
+            html,
+            caseId,
+            candidateName: publicSnapshot.candidateName || caseData.candidateName || '',
+            publicSnapshotHash,
+            reportBuildVersion,
+            reportReady: true,
+            generatedAt: new Date().toISOString(),
+        };
+    },
+);
+
+exports.getOpsCaseReportHtml = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60, cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+
+        const caseSnap = await db.collection('cases').doc(caseId).get();
+        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseSnap.data() || {};
+
+        assertOpsCanAccessCase(profile, caseData, caseId);
+
+        const { html, publicSnapshot, publicSnapshotHash, reportBuildVersion } = await prepareCanonicalReport(caseId, caseData);
+
+        return {
+            html,
+            caseId,
+            candidateName: publicSnapshot.candidateName || caseData.candidateName || '',
+            tenantId: caseData.tenantId || null,
+            publicSnapshotHash,
+            reportBuildVersion,
+            generatedAt: new Date().toISOString(),
+        };
+    },
+);
+
+async function getPublicReportViewInner(tokenInput) {
+    const token = String(tokenInput || '').trim();
+    if (!token) throw new HttpsError('invalid-argument', 'Token obrigatorio.');
+
+    const reportSnap = await db.collection('publicReports').doc(token).get();
+    if (!reportSnap.exists) throw new HttpsError('not-found', 'Relatorio nao encontrado.');
+
+    const reportData = reportSnap.data() || {};
+    const status = resolvePublicReportStatus(reportData);
+
+    if (status === 'REVOKED') throw new HttpsError('failed-precondition', 'Relatorio revogado.');
+    if (status === 'EXPIRED') throw new HttpsError('failed-precondition', 'Link expirado.');
+
+    if (!reportData.caseId) throw new HttpsError('failed-precondition', 'Relatorio sem caso vinculado.');
+
+    const caseSnap = await db.collection('cases').doc(reportData.caseId).get();
+    if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso vinculado nao encontrado.');
+    const caseData = caseSnap.data() || {};
+
+    if (caseData.status !== 'DONE') {
+        throw new HttpsError('failed-precondition', 'Relatorio em revisao.');
+    }
+
+    if (reportData.reportBuildVersion !== REPORT_BUILD_VERSION) {
+        throw new HttpsError(
+            'failed-precondition',
+            'Relatorio desatualizado. Solicite a geracao de um novo link.',
+        );
+    }
+
+    if (!reportData.html) throw new HttpsError('internal', 'HTML do relatorio indisponivel.');
+
+    const createdAt = asDate(reportData.createdAt);
+    const expiresAt = asDate(reportData.expiresAt);
+
+    return {
+        html: reportData.html,
+        token: token.slice(-12),
+        candidateName: reportData.candidateName || caseData.candidateName || '',
+        caseId: reportData.caseId,
+        tenantId: reportData.tenantId || null,
+        createdAt: createdAt ? createdAt.toISOString() : null,
+        expiresAt: expiresAt ? expiresAt.toISOString() : null,
+        reportBuildVersion: reportData.reportBuildVersion || REPORT_BUILD_VERSION,
+        publicSnapshotHash: reportData.publicSnapshotHash || null,
+    };
+}
+
+exports.getPublicReportView = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 30, cors: true },
+    async (request) => {
+        return getPublicReportViewInner(request.data?.token);
+    },
+);
+
+exports.listOpsPublicReports = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60, cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const requestedTenantId = String(request.data?.tenantId || '').trim() || null;
+        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 100, 1), 200);
+
+        const isGlobal = !profile.tenantId && ['admin', 'owner'].includes(profile.role);
+        const effectiveTenantId = isGlobal ? requestedTenantId : (profile.tenantId || null);
+
+        let q;
+        if (effectiveTenantId) {
+            q = db.collection('publicReports')
+                .where('tenantId', '==', effectiveTenantId)
+                .orderBy('createdAt', 'desc')
+                .limit(pageSize);
+        } else {
+            q = db.collection('publicReports')
+                .orderBy('createdAt', 'desc')
+                .limit(pageSize);
+        }
+
+        const snap = await q.get();
+        return {
+            reports: snap.docs.map(serializeManagedPublicReport),
+        };
     },
 );
 
@@ -9156,7 +9314,8 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
     if (caseData?.status !== 'DONE') {
         throw new HttpsError('failed-precondition', `Relatório só pode ser gerado para casos concluídos (status: ${caseData?.status || 'desconhecido'}).`);
     }
-    // Use provided payload if available, otherwise read from Firestore
+
+    // Use provided sanitized payload (preferred); otherwise read from Firestore
     let publicResultData;
     if (sanitizedPayload) {
         publicResultData = sanitizedPayload;
@@ -9166,16 +9325,27 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         publicResultData = prSnap.exists ? prSnap.data() : {};
     }
 
-    // Enrich with candidate data (department, email, phone, socialProfiles)
-    let candidateData = {};
+    // Fetch only specific allowed fields from candidates/ (department, email, phone not yet in publicResult)
+    // These fields are display-only metadata, not sensitive analysis data
+    let candidateExtras = {};
     if (caseData.candidateId) {
-        const candRef = db.collection('candidates').doc(caseData.candidateId);
-        const candSnap = await candRef.get();
-        if (candSnap.exists) candidateData = candSnap.data() || {};
+        try {
+            const candSnap = await db.collection('candidates').doc(caseData.candidateId).get();
+            if (candSnap.exists) {
+                const c = candSnap.data() || {};
+                candidateExtras = {
+                    department: c.department || '',
+                    email: c.email || '',
+                    phone: c.phone || '',
+                };
+            }
+        } catch {
+            // Non-critical: proceed without candidate extras
+        }
     }
 
-    // Build timeline events from case milestones
-    let timelineEvents = caseData.timelineEvents;
+    // Build timeline events from case milestones if not already in publicResult
+    let timelineEvents = publicResultData.timelineEvents || caseData.timelineEvents;
     if (!Array.isArray(timelineEvents) || timelineEvents.length === 0) {
         timelineEvents = [
             caseData.createdAt && { type: 'created', status: 'done', title: 'Solicitação enviada', at: caseData.createdAt?.toDate ? caseData.createdAt.toDate().toISOString() : (typeof caseData.createdAt === 'string' ? caseData.createdAt : '') },
@@ -9184,24 +9354,28 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         ].filter(Boolean);
     }
 
-    // Compute sourceSummary from enrichment sources if not already set
-    let sourceSummary = caseData.sourceSummary;
-    if (!sourceSummary) {
+    // Compute sourceSummary fallback from enrichment sources (only if not set in publicResult)
+    let sourceSummaryFallback = '';
+    if (!publicResultData.sourceSummary) {
         const sources = Object.entries(caseData.enrichmentSources || {})
             .map(([phase, sourceData]) => sourceData?.source ? `${phase}: ${sourceData.source}` : null)
             .filter(Boolean);
-        sourceSummary = sources.length > 0 ? sources.join(' | ') : 'Fontes automatizadas e revisao analitica.';
+        sourceSummaryFallback = sources.length > 0 ? sources.join(' | ') : 'Fontes automatizadas e revisao analitica.';
     }
 
+    // publicResultData is the canonical source — candidate extras and safe case fields only supplement
     const reportData = {
-        ...candidateData,
-        ...caseData,
-        ...publicResultData,
-        id: caseId,
+        ...candidateExtras,
+        // Safe, non-sensitive identity fields from caseData as fallback
         tenantName: caseData.tenantName || '',
+        id: caseId,
+        // publicResultData wins over everything above
+        ...publicResultData,
+        // Explicit overrides that must always be resolved correctly
+        id: caseId,
         timelineEvents,
-        sourceSummary: publicResultData?.sourceSummary || sourceSummary,
-        statusSummary: publicResultData?.statusSummary || caseData.statusSummary || 'Analise concluida e pronta para consulta e compartilhamento.',
+        sourceSummary: publicResultData.sourceSummary || sourceSummaryFallback,
+        statusSummary: publicResultData.statusSummary || 'Análise concluída e pronta para consulta e compartilhamento.',
     };
     const { buildCaseReportHtml } = require('./reportBuilder.cjs');
     const rawHtml = buildCaseReportHtml(reportData);
@@ -9210,6 +9384,38 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         throw new HttpsError('internal', 'Falha ao gerar HTML do relatorio.');
     }
     return html;
+}
+
+/**
+ * Prepara o relatório canônico completo: sincroniza publicResult, valida conteúdo mínimo,
+ * computa hash e gera HTML. Fonte única para todos os artefatos de relatório.
+ */
+async function prepareCanonicalReport(caseId, caseData) {
+    if (!caseId) {
+        throw new HttpsError('invalid-argument', 'caseId obrigatório.');
+    }
+    if (caseData?.status !== 'DONE') {
+        throw new HttpsError('failed-precondition', 'Relatório disponível apenas para casos concluídos.');
+    }
+
+    // Sync publicResult/latest BEFORE generating HTML (BUG-006 fix)
+    const publicSnapshot = await syncPublicResultLatest(caseId, caseData, {}, {
+        concludedAtOverride: caseData.concludedAt || caseData.updatedAt || new Date(),
+    });
+
+    if (!hasPublicReportMinimumContent(caseData, publicSnapshot)) {
+        throw new HttpsError('failed-precondition', 'Relatório ainda não possui conteúdo mínimo para publicação.');
+    }
+
+    const publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
+    const html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+
+    return {
+        html,
+        publicSnapshot,
+        publicSnapshotHash,
+        reportBuildVersion: REPORT_BUILD_VERSION,
+    };
 }
 
 async function enforceTenantSubmissionLimits(tenantId, settings, { actor, ip } = {}) {
@@ -10550,6 +10756,7 @@ exports.__test = {
     formatDateKey,
     formatMonthKey,
     getClientQuotaStatusInner,
+    getPublicReportViewInner,
     buildDeterministicPrefill,
     evaluateComplexityTriggers,
     buildDetCriminalNotes,
@@ -10704,10 +10911,10 @@ exports.generateClientCasePdf = onCall(
 
         try {
             console.log(`[generateClientCasePdf] caseId=${caseId} tenant=${profile.tenantId} — starting HTML build`);
-            // Build canonical HTML
-            const html = await buildCanonicalReportHtml(caseId, caseData);
+            // Build canonical HTML (watermark already in REPORT_CSS)
+            const { html } = await prepareCanonicalReport(caseId, caseData);
             console.log(`[generateClientCasePdf] caseId=${caseId} — HTML built, length=${html?.length || 0}`);
-            const pdfHtml = injectPdfExportCss(html, { includeWatermark: true });
+            const pdfHtml = injectPdfExportCss(html, { includeWatermark: false });
             console.log(`[generateClientCasePdf] caseId=${caseId} — CSS injected`);
 
             // Render PDF
