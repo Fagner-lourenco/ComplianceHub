@@ -6,6 +6,7 @@ import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
+import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatDate } from '../../core/formatDate';
@@ -18,6 +19,8 @@ import SlaBadge from '../../ui/components/SlaBadge/SlaBadge';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './CasosPage.css';
+
+const PAGE_SIZE = 50;
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -58,6 +61,7 @@ export default function CasosPage() {
     const [enrichmentFilter, setEnrichmentFilter] = useState('ALL');
     const [verdictFilter, setVerdictFilter] = useState('ALL');
     const [slaFilter, setSlaFilter] = useState('ALL');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const stats = useMemo(() => getCaseStats(cases), [cases]);
 
@@ -107,6 +111,14 @@ export default function CasosPage() {
 
         return result;
     }, [cases, dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, slaFilter, statusFilter, verdictFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    const paginatedCases = useMemo(() => {
+        const start = (safeCurrentPage - 1) * PAGE_SIZE;
+        return filtered.slice(start, start + PAGE_SIZE);
+    }, [filtered, safeCurrentPage]);
 
     return (
         <PageShell size="default" className="casos-page">
@@ -194,7 +206,7 @@ export default function CasosPage() {
             </FilterPanelMobile>
 
             <MobileDataCardList
-                items={filtered}
+                items={paginatedCases}
                 loading={loading}
                 emptyMessage="Nenhum caso encontrado."
                 renderCard={(currentCase) => (
@@ -266,7 +278,7 @@ export default function CasosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {!loading && !error && filtered.map((currentCase) => (
+                            {!loading && !error && paginatedCases.map((currentCase) => (
                                 <tr key={currentCase.id} className="data-table__row">
                                     <td className="data-table__td data-table__td--mono">{currentCase.id}</td>
                                     <td className="data-table__td" style={{ fontSize: '.75rem' }}>{currentCase.tenantName}</td>
@@ -301,6 +313,14 @@ export default function CasosPage() {
                     </table>
                 </div>
             </MobileDataCardList>
+
+            <PaginationControls
+                page={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={filtered.length}
+                itemLabel="casos"
+                onPageChange={setCurrentPage}
+            />
 
             <div style={{ textAlign: 'right', fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
                 Mostrando {filtered.length} de {cases.length} casos

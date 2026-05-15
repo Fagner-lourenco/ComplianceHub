@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './Drawer.css';
 
 const FOCUSABLE_SELECTOR = [
@@ -96,7 +97,7 @@ export default function Drawer({ open, onClose, title, subtitle, headerExtra, ta
 
     const tabContent = tabs ? tabs[activeTab]?.content : children;
 
-    return (
+    const drawerContent = (
         <>
             <div className="drawer-overlay" onClick={onClose} aria-hidden="true" />
             <aside
@@ -145,4 +146,6 @@ export default function Drawer({ open, onClose, title, subtitle, headerExtra, ta
             </aside>
         </>
     );
+
+    return createPortal(drawerContent, document.body);
 }

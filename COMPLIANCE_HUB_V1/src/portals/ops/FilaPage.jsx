@@ -7,6 +7,7 @@ import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
+import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
@@ -23,6 +24,8 @@ import SlaBadge from '../../ui/components/SlaBadge/SlaBadge';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './FilaPage.css';
+
+const PAGE_SIZE = 50;
 
 function EnrichmentIcon({ status }) {
     if (!status || status === 'PENDING') return null;
@@ -53,6 +56,7 @@ export default function FilaPage() {
     const [assignment, setAssignment] = useState('ALL');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [assumingCaseId, setAssumingCaseId] = useState(null);
     const [assumeError, setAssumeError] = useState(null);
     const assumeErrorTimerRef = useRef(null);
@@ -94,12 +98,21 @@ export default function FilaPage() {
         return result;
     }, [assignment, cases, dateFrom, dateTo, filter, user?.uid]);
 
-    const stats = {
-        pending: cases.filter((currentCase) => currentCase.status === 'PENDING').length,
-        inProgress: cases.filter((currentCase) => currentCase.status === 'IN_PROGRESS').length,
-        waiting: cases.filter((currentCase) => currentCase.status === 'WAITING_INFO').length,
-        corrections: cases.filter((currentCase) => currentCase.status === 'CORRECTION_NEEDED').length,
-    };
+    const stats = useMemo(() => cases.reduce((acc, currentCase) => {
+        if (currentCase.status === 'PENDING') acc.pending += 1;
+        if (currentCase.status === 'IN_PROGRESS') acc.inProgress += 1;
+        if (currentCase.status === 'WAITING_INFO') acc.waiting += 1;
+        if (currentCase.status === 'CORRECTION_NEEDED') acc.corrections += 1;
+        return acc;
+    }, { pending: 0, inProgress: 0, waiting: 0, corrections: 0 }), [cases]);
+
+    const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    const paginatedQueue = useMemo(() => {
+        const start = (safeCurrentPage - 1) * PAGE_SIZE;
+        return queue.slice(start, start + PAGE_SIZE);
+    }, [queue, safeCurrentPage]);
 
     const handleAssume = async (currentCase) => {
         if (assumingCaseId || !user) return;
@@ -126,12 +139,16 @@ export default function FilaPage() {
     };
 
     const toggleAll = () => {
-        if (selected.size === queue.length) {
-            setSelected(new Set());
-        } else {
-            // FILA-002: só seleciona casos assumíveis (PENDING sem responsável)
-            setSelected(new Set(queue.filter(isAssignable).map((c) => c.id)));
-        }
+        const visibleAssignableIds = paginatedQueue.filter(isAssignable).map((c) => c.id);
+        const allVisibleSelected = visibleAssignableIds.length > 0 && visibleAssignableIds.every((id) => selected.has(id));
+        setSelected((prev) => {
+            const next = new Set(prev);
+            visibleAssignableIds.forEach((id) => {
+                if (allVisibleSelected) next.delete(id);
+                else next.add(id);
+            });
+            return next;
+        });
     };
 
     const bulkAssign = async () => {
@@ -245,7 +262,7 @@ export default function FilaPage() {
             )}
 
             <MobileDataCardList
-                items={queue}
+                items={paginatedQueue}
                 loading={loading}
                 emptyMessage={filter !== 'ALL' || assignment !== 'ALL' || dateFrom || dateTo ? 'Nenhum caso corresponde aos filtros selecionados.' : 'Nenhum caso pendente na fila.'}
                 renderCard={(currentCase) => (
@@ -304,7 +321,7 @@ export default function FilaPage() {
                         <thead>
                             <tr>
                                 <th scope="col" style={{ width: 36 }}>
-                                    <input type="checkbox" checked={queue.length > 0 && selected.size === queue.length} onChange={toggleAll} disabled={bulkRunning} aria-label="Selecionar todos" />
+                                    <input type="checkbox" checked={paginatedQueue.some(isAssignable) && paginatedQueue.filter(isAssignable).every((currentCase) => selected.has(currentCase.id))} onChange={toggleAll} disabled={bulkRunning} aria-label="Selecionar todos" />
                                 </th>
                                 <th scope="col">Candidato</th>
                                 <th scope="col">Empresa</th>
@@ -346,7 +363,7 @@ export default function FilaPage() {
                                     </td>
                                 </tr>
                             )}
-                            {!loading && !error && queue.map((currentCase) => (
+                            {!loading && !error && paginatedQueue.map((currentCase) => (
                                 <tr
                                     key={currentCase.id}
                                     className={`fila-table__row ${currentCase.priority === 'HIGH' ? 'fila-table__row--high' : ''} ${selected.has(currentCase.id) ? 'fila-table__row--selected' : ''}`}
@@ -364,7 +381,7 @@ export default function FilaPage() {
                                         </span>
                                     </td>
                                     <td><StatusBadge status={currentCase.status} /></td>
-                                    <td><SlaBadge caseData={currentCase} /></td>
+                                    <td><SlaBadge caseData={currentCase} audience="ops" /></td>
                                     <td style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                     <td><RiskChip value={currentCase.criminalFlag} /></td>
                                     <td><ScoreBar score={currentCase.riskScore} /></td>
@@ -427,6 +444,14 @@ export default function FilaPage() {
                     </table>
                 </div>
             </MobileDataCardList>
+
+            <PaginationControls
+                page={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={queue.length}
+                itemLabel="casos"
+                onPageChange={setCurrentPage}
+            />
 
             {/* Assignment modal */}
             <Modal

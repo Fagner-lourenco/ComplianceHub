@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import './Modal.css';
 
 const FOCUSABLE_SELECTOR = [
@@ -90,7 +91,7 @@ export default function Modal({
 
     if (!open) return null;
 
-    return (
+    const modalContent = (
         <div className="app-modal__overlay" onMouseDown={onClose}>
             <div
                 ref={dialogRef}
@@ -118,4 +119,6 @@ export default function Modal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

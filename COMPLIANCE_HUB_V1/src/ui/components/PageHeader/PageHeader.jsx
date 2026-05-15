@@ -1,7 +1,8 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import './PageHeader.css';
 
-export default function PageHeader({
+function PageHeader({
     eyebrow,
     title,
     description,
@@ -11,7 +12,7 @@ export default function PageHeader({
     compact = false,
     className = '',
 }) {
-    if (process.env.NODE_ENV !== 'production' && !title) {
+    if (typeof window !== 'undefined' && import.meta.env?.DEV && !title) {
         console.error('PageHeader: `title` prop is required');
     }
 
@@ -54,3 +55,5 @@ export default function PageHeader({
         </header>
     );
 }
+
+export default memo(PageHeader);

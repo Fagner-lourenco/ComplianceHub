@@ -1,10 +1,18 @@
+import { memo } from 'react';
 import './KpiCard.css';
 
-export default function KpiCard({ label, value, color = 'neutral', onClick }) {
+function KpiCard({ label, value, color = 'neutral', onClick }) {
+    const Component = onClick ? 'button' : 'div';
+    const props = onClick
+        ? { type: 'button', onClick, 'aria-label': `${label}: ${value}` }
+        : { 'aria-label': `${label}: ${value}` };
+
     return (
-        <button type="button" className={`kpi-card kpi-card--${color}`} onClick={onClick} aria-label={`${label}: ${value}`}>
+        <Component className={`kpi-card kpi-card--${color}`} {...props}>
             <div className="kpi-card__value">{value}</div>
             <div className="kpi-card__label">{label}</div>
-        </button>
+        </Component>
     );
 }
+
+export default memo(KpiCard);

@@ -1,14 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
-import { fetchPublicReports, revokePublicReport } from '../../core/firebase/firestoreService';
+import { fetchOpsPublicReports, revokePublicReport } from '../../core/firebase/firestoreService';
 import { getMockPublicReports } from '../../data/mockData';
 import { extractErrorMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './RelatoriosPage.css';
+
+const PAGE_SIZE = 50;
 
 function formatTs(value) {
     if (!value) return '—';
@@ -80,6 +83,7 @@ export default function RelatoriosPage() {
     const [revoking, setRevoking] = useState(null);
     const [revokeTarget, setRevokeTarget] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [feedback, setFeedback] = useState('');
 
     useEffect(() => {
@@ -91,18 +95,26 @@ export default function RelatoriosPage() {
             setLoading(false);
             return;
         }
-        fetchPublicReports(tenantId)
+        fetchOpsPublicReports(tenantId)
             .then((data) => setReports(data))
             .catch((err) => setError(extractErrorMessage(err, 'Não foi possível carregar os relatórios.')))
             .finally(() => setLoading(false));
     }, [tenantId, isDemoMode]);
 
-    const filtered = reports.filter((r) => {
+    const filtered = useMemo(() => reports.filter((r) => {
         if (!searchTerm) return true;
         const term = searchTerm.toLowerCase();
         const name = getReportCandidateName(r).toLowerCase();
         return name.includes(term) || r.id.toLowerCase().includes(term);
-    });
+    }), [reports, searchTerm]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    const paginatedReports = useMemo(() => {
+        const start = (safeCurrentPage - 1) * PAGE_SIZE;
+        return filtered.slice(start, start + PAGE_SIZE);
+    }, [filtered, safeCurrentPage]);
 
     const handleRevokeClick = (report) => {
         setRevokeTarget(report);
@@ -138,9 +150,13 @@ export default function RelatoriosPage() {
         }
     };
 
-    const activeCount = reports.filter((r) => getReportStatus(r) === 'ACTIVE').length;
-    const expiredCount = reports.filter((r) => getReportStatus(r) === 'EXPIRED').length;
-    const revokedCount = reports.filter((r) => getReportStatus(r) === 'REVOKED').length;
+    const reportCounts = useMemo(() => reports.reduce((acc, report) => {
+        const status = getReportStatus(report);
+        if (status === 'ACTIVE') acc.active += 1;
+        if (status === 'EXPIRED') acc.expired += 1;
+        if (status === 'REVOKED') acc.revoked += 1;
+        return acc;
+    }, { active: 0, expired: 0, revoked: 0 }), [reports]);
 
     return (
         <PageShell size="default" className="relatorios-page">
@@ -162,9 +178,9 @@ export default function RelatoriosPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <span className="relatorios-header__count" title="Ativos">{activeCount} ativo(s)</span>
-                <span className="relatorios-header__count" title="Expirados" style={{ opacity: 0.7 }}>{expiredCount} exp.</span>
-                <span className="relatorios-header__count" title="Revogados" style={{ opacity: 0.5 }}>{revokedCount} rev.</span>
+                <span className="relatorios-header__count" title="Ativos">{reportCounts.active} ativo(s)</span>
+                <span className="relatorios-header__count" title="Expirados" style={{ opacity: 0.7 }}>{reportCounts.expired} exp.</span>
+                <span className="relatorios-header__count" title="Revogados" style={{ opacity: 0.5 }}>{reportCounts.revoked} rev.</span>
             </div>
 
             {feedback && (
@@ -174,7 +190,7 @@ export default function RelatoriosPage() {
             )}
 
             <MobileDataCardList
-                items={filtered}
+                items={paginatedReports}
                 loading={loading}
                 emptyMessage={error || 'Nenhum relatório encontrado.'}
                 renderCard={(report) => {
@@ -260,7 +276,7 @@ export default function RelatoriosPage() {
                                     <td colSpan={7} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{error}</td>
                                 </tr>
                             )}
-                            {!loading && !error && filtered.map((report) => {
+                            {!loading && !error && paginatedReports.map((report) => {
                                 const status = getReportStatus(report);
                                 const expired = status === 'EXPIRED';
                                 const active = status === 'ACTIVE';
@@ -329,6 +345,14 @@ export default function RelatoriosPage() {
                     </table>
                 </div>
             </MobileDataCardList>
+
+            <PaginationControls
+                page={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={filtered.length}
+                itemLabel="relatórios"
+                onPageChange={setCurrentPage}
+            />
 
             {revokeTarget && (
                 <RevokeModal

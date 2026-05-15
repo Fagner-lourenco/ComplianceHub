@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
@@ -18,9 +18,13 @@ import { getCaseStats } from '../../core/caseUtils';
 import { formatDate } from '../../core/formatDate';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
+import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import { VERDICT_LABELS } from '../../core/copy';
 import './SolicitacoesPage.css';
+
+const PAGE_SIZE = 50;
 
 function hasAnySocialProfile(profiles = {}) {
     if (!profiles || typeof profiles !== 'object') return false;
@@ -103,6 +107,7 @@ export default function SolicitacoesPage() {
     const [correctionError, setCorrectionError] = useState(null);
     const [correctionSaving, setCorrectionSaving] = useState(false);
     const [novaPanelOpen, setNovaPanelOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         if (!userProfile?.tenantId || isDemoMode) return;
@@ -162,7 +167,7 @@ export default function SolicitacoesPage() {
         cases.forEach((caseData) => (caseData.enabledPhases || []).forEach((phase) => union.add(phase)));
         return union.size > 0 ? [...union] : tenantPhases;
     }, [cases, tenantPhases]);
-    const has = (phase) => visiblePhases.includes(phase);
+    const has = useCallback((phase) => visiblePhases.includes(phase), [visiblePhases]);
     const stats = useMemo(() => getCaseStats(cases), [cases]);
     const selectedCaseView = useMemo(() => (selectedCase ? resolveClientCaseView(selectedCase, publicResult) : null), [publicResult, selectedCase]);
     const reportAvailability = useMemo(() => getReportAvailability(selectedCase, publicResult), [publicResult, selectedCase]);
@@ -194,12 +199,20 @@ export default function SolicitacoesPage() {
         return result;
     }, [cases, searchTerm, sortDir, sortField, statusFilter, verdictFilter]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredCases.length / PAGE_SIZE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    const paginatedCases = useMemo(() => {
+        const start = (safeCurrentPage - 1) * PAGE_SIZE;
+        return filteredCases.slice(start, start + PAGE_SIZE);
+    }, [filteredCases, safeCurrentPage]);
+
     const handleSort = (field) => {
         if (sortField === field) setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'));
         else { setSortField(field); setSortDir('desc'); }
     };
 
-    const handleOpenReport = async () => {
+    const handleOpenReport = useCallback(async () => {
         if (!selectedCaseView || !reportAvailability.available) {
             setReportStatus({ state: 'unavailable', message: reportAvailability.message });
             return;
@@ -214,9 +227,9 @@ export default function SolicitacoesPage() {
             console.error('Error generating report:', currentError);
             setReportStatus({ state: 'error', message: extractErrorMessage(currentError, 'Nao foi possivel abrir o dossie agora.') });
         }
-    };
+    }, [location.pathname, navigate, reportAvailability.available, reportAvailability.message, selectedCaseView]);
 
-    const handleResubmit = async () => {
+    const handleResubmit = useCallback(async () => {
         if (!selectedCase || !correctionForm || !user) return;
         const name = (correctionForm.candidateName || '').trim();
         if (name.length < 3) {
@@ -245,13 +258,13 @@ export default function SolicitacoesPage() {
         } finally {
             setCorrectionSaving(false);
         }
-    };
+    }, [correctionForm, selectedCase, user]);
 
     const hasSocialProfiles = hasAnySocialProfile(selectedCase?.socialProfiles);
     const hasSocialAnalysis = hasMeaningfulSocialAnalysis(selectedCaseView);
     const shouldShowSocialTab = has('social') && (hasSocialProfiles || hasSocialAnalysis);
 
-    const drawerTabs = selectedCase ? [
+    const drawerTabs = useMemo(() => (selectedCase ? [
         {
             label: 'Resumo',
             content: (
@@ -417,6 +430,20 @@ export default function SolicitacoesPage() {
             ),
         }] : []),
         {
+            label: 'Comunicacao',
+            badge: selectedCase?.clientUnreadMessages > 0 ? selectedCase.clientUnreadMessages : null,
+            content: (
+                <div className="case-detail" style={{ height: '100%', minHeight: 400 }}>
+                    <CaseCommunicationPanel
+                        caseId={selectedCase.id}
+                        caseData={selectedCase}
+                        portal="client"
+                    />
+                </div>
+            ),
+        },
+
+        {
             label: 'Timeline',
             content: (
                 <div className="case-detail"><div className="timeline">{(selectedCaseView?.timelineEvents || []).map((event, index) => <div key={`${event.type}-${index}`} className="timeline__item"><div className={`timeline__dot ${event.status === 'risk' ? 'timeline__dot--yellow' : event.status === 'current' ? 'timeline__dot--blue' : 'timeline__dot--green'}`} /><div className="timeline__content"><strong>{event.title}</strong><span className="timeline__date">{formatDate(event.at)}</span>{event.description && <span className="timeline__date">{event.description}</span>}</div></div>)}</div></div>
@@ -428,7 +455,7 @@ export default function SolicitacoesPage() {
                 <div className="case-detail"><div className="case-detail__section"><h4>Disponibilidade</h4><p>{reportAvailability.message}</p>{selectedCaseView?.reportSlug && <p><strong>Identificador:</strong> {selectedCaseView.reportSlug}</p>}</div>{reportStatus.message && <p role={reportStatus.state === 'error' ? 'alert' : 'status'} style={{ color: reportStatus.state === 'error' ? 'var(--red-600)' : reportStatus.state === 'success' ? 'var(--green-700)' : 'var(--text-secondary)' }}>{reportStatus.message}</p>}<div className="case-detail__section"><p>Esta prévia é resumida. Para leitura, impressão ou compartilhamento externo, abra o dossiê autenticado.</p><button className="btn-primary" style={{ fontSize: '.8125rem' }} onClick={handleOpenReport} disabled={reportStatus.state === 'loading' || !reportAvailability.available}>{reportStatus.state === 'loading' ? 'Abrindo...' : 'Abrir dossiê completo'}</button></div></div>
             ),
         },
-    ] : [];
+    ] : []), [correctionError, correctionForm, correctionSaving, has, handleOpenReport, handleResubmit, hasSocialAnalysis, hasSocialProfiles, isDemoMode, publicResultLoading, reportAvailability.available, reportAvailability.message, reportStatus.message, reportStatus.state, selectedCase, selectedCaseView, shouldShowSocialTab]);
 
     return (
         <PageShell size="default" className="solicitacoes-page">
@@ -453,7 +480,7 @@ export default function SolicitacoesPage() {
                 <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nas solicitações carregadas por nome, CPF ou ID..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
             </FilterPanelMobile>
             <MobileDataCardList
-                items={filteredCases}
+                items={paginatedCases}
                 loading={loading}
                 emptyMessage={error ? extractErrorMessage(error, 'Não foi possível carregar suas solicitações agora.') : 'Nenhuma solicitação encontrada.'}
                 renderCard={(caseData) => (
@@ -483,8 +510,15 @@ export default function SolicitacoesPage() {
                     </div>
                 )}
             >
-                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitações de análise cadastral"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')} aria-sort={sortField === 'candidateName' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')} aria-sort={sortField === 'createdAt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">Perfis públicos</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')} aria-sort={sortField === 'riskScore' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Resultado</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && Array.from({ length: 5 }, (_, i) => (<tr key={`sk-${i}`} aria-hidden="true"><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${55 + (i % 4) * 10}%` }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 90 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td><td className="data-table__td"><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 20 }} /></td><td className="data-table__td" colSpan={9}><div className="skeleton skeleton--text" style={{ width: '40%' }} /></td></tr>))}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && filteredCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 4v4M16 4v4M2 8h20M8 12h8M8 16h4"/></svg></span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
+                <div className="solicitacoes-page__table-wrapper"><table className="data-table" aria-label="Solicitações de análise cadastral"><thead><tr><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('candidateName')} aria-sort={sortField === 'candidateName' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Nome {sortField === 'candidateName' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">CPF</th><th className="data-table__th" scope="col">Cargo</th><th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('createdAt')} aria-sort={sortField === 'createdAt' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Data {sortField === 'createdAt' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Status</th>{has('criminal') && <th className="data-table__th" scope="col">Criminal</th>}{has('labor') && <th className="data-table__th" scope="col">Trabalhista</th>}{has('warrant') && <th className="data-table__th" scope="col">Mandado</th>}{has('osint') && <th className="data-table__th" scope="col">Perfis públicos</th>}{has('social') && <th className="data-table__th" scope="col">Social</th>}{has('digital') && <th className="data-table__th" scope="col">Digital</th>}<th className="data-table__th data-table__th--sortable" scope="col" onClick={() => handleSort('riskScore')} aria-sort={sortField === 'riskScore' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>Score {sortField === 'riskScore' && (sortDir === 'asc' ? '↑' : '↓')}</th><th className="data-table__th" scope="col">Resultado</th><th className="data-table__th" scope="col">Indicadores</th></tr></thead><tbody>{loading && Array.from({ length: 5 }, (_, i) => (<tr key={`sk-${i}`} aria-hidden="true"><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: `${55 + (i % 4) * 10}%` }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 90 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 70 }} /></td><td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 72 }} /></td><td className="data-table__td"><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 20 }} /></td><td className="data-table__td" colSpan={9}><div className="skeleton skeleton--text" style={{ width: '40%' }} /></td></tr>))}{!loading && error && <tr><td colSpan={14} className="data-table__empty" style={{ color: 'var(--red-700)' }}>{extractErrorMessage(error, 'Nao foi possivel carregar suas solicitacoes agora.')}</td></tr>}{!loading && !error && paginatedCases.map((caseData) => <tr key={caseData.id} className={`data-table__row ${heatmapMode ? `data-table__row--heat-${caseData.riskLevel || 'none'}` : ''} ${selectedCase?.id === caseData.id ? 'data-table__row--selected' : ''}`} onClick={() => setSelectedCase(caseData)}><td className="data-table__td data-table__td--name">{caseData.candidateName}</td><td className="data-table__td data-table__td--mono">{caseData.cpfMasked}</td><td className="data-table__td">{caseData.candidatePosition}</td><td className="data-table__td">{formatDate(caseData.createdAt)}</td><td className="data-table__td"><StatusBadge status={caseData.status} />{caseData.status !== 'DONE' && <span style={{ display: 'block', fontSize: '.6875rem', color: getMacroProgress(caseData).color, fontStyle: 'italic', marginTop: 2 }}>{getMacroProgress(caseData).label}</span>}</td>{has('criminal') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.criminalFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('labor') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.laborFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('warrant') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.warrantFlag} /> : <span className="data-table__hidden">—</span>}</td>}{has('osint') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.osintLevel} /> : <span className="data-table__hidden">—</span>}</td>}{has('social') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.socialStatus} /> : <span className="data-table__hidden">—</span>}</td>}{has('digital') && <td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.digitalFlag} /> : <span className="data-table__hidden">—</span>}</td>}<td className="data-table__td">{caseData.status === 'DONE' ? <ScoreBar score={caseData.riskScore || 0} /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.status === 'DONE' ? <RiskChip value={caseData.finalVerdict} bold size="md" /> : <span className="data-table__hidden">—</span>}</td><td className="data-table__td">{caseData.hasNotes && '📝 '}{caseData.hasEvidence && '📎'}</td></tr>)}{!loading && !error && filteredCases.length === 0 && <tr><td colSpan={14} className="data-table__empty"><div className="empty-state"><span className="empty-state__icon" aria-hidden="true"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 4v4M16 4v4M2 8h20M8 12h8M8 16h4"/></svg></span><p>Nenhuma solicitacao encontrada.</p><button className="empty-state__btn" onClick={() => { setStatusFilter('ALL'); setVerdictFilter('ALL'); setSearchTerm(''); }}>Limpar filtros</button></div></td></tr>}</tbody></table></div>
             </MobileDataCardList>
+            <PaginationControls
+                page={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={filteredCases.length}
+                itemLabel="registros"
+                onPageChange={setCurrentPage}
+            />
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
             <NovaSolicitacaoPanel

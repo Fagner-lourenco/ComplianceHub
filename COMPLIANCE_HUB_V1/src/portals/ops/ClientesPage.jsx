@@ -13,9 +13,12 @@ import {
 import { extractErrorMessage } from '../../core/errorUtils';
 import Modal from '../../ui/components/Modal/Modal';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
+import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './ClientesPage.css';
+
+const PAGE_SIZE = 50;
 
 function generatePassword() {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
@@ -52,6 +55,12 @@ function buildTenantRows(clients) {
     return [...map.values()];
 }
 
+function getEnabledPhaseKeys(config) {
+    return config
+        ? Object.entries(config).filter(([, value]) => value?.enabled).map(([key]) => key)
+        : [];
+}
+
 export default function ClientesPage() {
     const { user } = useAuth();
     const { selectedTenantId } = useTenant();
@@ -60,6 +69,7 @@ export default function ClientesPage() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [formError, setFormError] = useState(null);
@@ -219,6 +229,14 @@ export default function ClientesPage() {
         ));
     }, [tenantRows, searchTerm, selectedTenantId]);
 
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const safeCurrentPage = Math.min(currentPage, totalPages);
+
+    const paginatedClients = useMemo(() => {
+        const start = (safeCurrentPage - 1) * PAGE_SIZE;
+        return filtered.slice(start, start + PAGE_SIZE);
+    }, [filtered, safeCurrentPage]);
+
     return (
         <PageShell size="default" className="clientes-page">
             <PageHeader
@@ -257,15 +275,13 @@ export default function ClientesPage() {
                 </div>
             )}
             <MobileDataCardList
-                items={filtered}
+                items={paginatedClients}
                 loading={loading}
                 emptyMessage="Nenhum cliente encontrado."
                 renderCard={(row) => {
                     const config = tenantConfigs[row.tenantId];
                     const hasConfigError = tenantConfigErrors.has(row.tenantId);
-                    const enabledKeys = config
-                        ? Object.entries(config).filter(([, v]) => v?.enabled).map(([k]) => k)
-                        : [];
+                    const enabledKeys = getEnabledPhaseKeys(config);
                     return (
                         <>
                             <div className="mobile-card__title">{row.tenantName}</div>
@@ -321,12 +337,10 @@ export default function ClientesPage() {
                                     <td className="data-table__td"><div className="skeleton skeleton--text" style={{ width: 50 }} /></td>
                                 </tr>
                             ))}
-                            {!loading && filtered.map((row) => {
+                            {!loading && paginatedClients.map((row) => {
                                 const config = tenantConfigs[row.tenantId];
                                 const hasConfigError = tenantConfigErrors.has(row.tenantId);
-                                const enabledKeys = config
-                                    ? Object.entries(config).filter(([, v]) => v?.enabled).map(([k]) => k)
-                                    : [];
+                                const enabledKeys = getEnabledPhaseKeys(config);
                                 return (
                                     <tr key={row.tenantId} className="data-table__row">
                                         <td className="data-table__td" style={{ fontWeight: 500 }}>{row.tenantName}</td>
@@ -366,6 +380,14 @@ export default function ClientesPage() {
                     </table>
                 </div>
             </MobileDataCardList>
+
+            <PaginationControls
+                page={safeCurrentPage}
+                pageSize={PAGE_SIZE}
+                totalItems={filtered.length}
+                itemLabel="clientes"
+                onPageChange={setCurrentPage}
+            />
 
             {isModalOpen && (
                 <Modal

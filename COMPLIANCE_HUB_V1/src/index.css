@@ -199,10 +199,10 @@ ol {
   --z-tooltip: 85;
 
   /* Page layout */
-  --page-max-default: 1600px;
-  --page-max-narrow:  1200px;
+  --page-max-default: calc(100% - var(--space-6));
+  --page-max-narrow:  calc(100% - var(--space-6));
   --page-max-form:    960px;
-  --page-max-report:  1600px;
+  --page-max-report:  calc(100% - var(--space-6));
   --page-gap:         var(--space-5);
 
   /* Semantic surfaces */
@@ -438,7 +438,7 @@ samp,
   font-weight: 600;
   font-size: .875rem;
   letter-spacing: .01em;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -473,7 +473,7 @@ samp,
   font-weight: 600;
   font-size: .875rem;
   letter-spacing: .01em;
-  transition: all var(--transition-fast);
+  transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -626,6 +626,7 @@ textarea:focus-visible {
   -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100%;
+  contain: layout paint;
 }
 
 /* ============================================

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import './MobileDataCardList.css';
 
@@ -13,7 +14,7 @@ import './MobileDataCardList.css';
  * - loading: boolean
  * - className: optional wrapper className
  */
-export default function MobileDataCardList({
+function MobileDataCardList({
     items = [],
     renderCard,
     children,
@@ -57,3 +58,5 @@ export default function MobileDataCardList({
         </div>
     );
 }
+
+export default memo(MobileDataCardList);

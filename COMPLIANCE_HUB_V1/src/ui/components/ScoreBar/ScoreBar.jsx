@@ -1,6 +1,18 @@
+import { memo } from 'react';
 import './ScoreBar.css';
 
-export default function ScoreBar({ score = 0 }) {
+function ScoreBar({ score = 0, audience = 'client' }) {
+    const isOps = audience === 'ops';
+    const emptyLabel = isOps ? 'Nível de atenção não calculado' : 'Nível de atenção não calculado';
+    const scoreLabel = 'Nível de atenção';
+
+    if (score == null) {
+        return (
+            <span className="score-bar score-bar--empty" title={emptyLabel}>
+                —
+            </span>
+        );
+    }
     const clamped = Math.min(100, Math.max(0, score));
     const color = clamped >= 70 ? 'red' : clamped >= 30 ? 'yellow' : 'green';
     return (
@@ -10,8 +22,8 @@ export default function ScoreBar({ score = 0 }) {
             aria-valuenow={clamped}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label={`Score de risco: ${clamped} de 100`}
-            title={`Score: ${clamped}/100`}
+            aria-label={`${scoreLabel}: ${clamped} de 100`}
+            title={`${scoreLabel}: ${clamped}/100`}
         >
             <div className="score-bar__track">
                 <div
@@ -23,3 +35,5 @@ export default function ScoreBar({ score = 0 }) {
         </div>
     );
 }
+
+export default memo(ScoreBar);
