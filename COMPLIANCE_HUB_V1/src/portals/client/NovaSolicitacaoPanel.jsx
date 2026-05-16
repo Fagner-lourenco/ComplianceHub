@@ -209,7 +209,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const toggleSection = (key) => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
 
-    const effectivePhases = isDemoProfile ? ['criminal', 'labor', 'warrant', 'osint', 'social', 'digital'] : tenantPhases;
+    const effectivePhases = isDemoProfile ? ['criminal', 'labor', 'warrant', 'osint', 'social', 'digital', 'conflictInterest'] : tenantPhases;
     const has = (phase) => effectivePhases.includes(phase);
     const showSocialSection = has('social');
 

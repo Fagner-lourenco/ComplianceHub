@@ -21,9 +21,17 @@ import {
 
 import { NotificationContext } from './notificationContext';
 
+// Mock notifications for demo mode
+const DEMO_NOTIFICATIONS = [
+    { id: 'notif-1', uid: 'demo-user', type: 'CASE_DONE', title: 'Analise concluida', body: 'A analise de Ana Paula Oliveira foi concluida.', read: false, createdAt: new Date('2026-03-21T11:35:00'), data: { caseId: 'CASE-001', tenantId: 'TEN-001' } },
+    { id: 'notif-2', uid: 'demo-user', type: 'CASE_CORRECTION_NEEDED', title: 'Correcao solicitada', body: 'A analise de Maria Fernanda Costa necessita correcao de dados.', read: false, createdAt: new Date('2026-04-02T09:00:00'), data: { caseId: 'CASE-003', tenantId: 'TEN-001' } },
+    { id: 'notif-3', uid: 'demo-user', type: 'CASE_COMMENT', title: 'Novo comentario', body: 'O analista comentou no caso Carlos Eduardo Santos.', read: true, createdAt: new Date('2026-03-19T14:00:00'), data: { caseId: 'CASE-002', tenantId: 'TEN-001' } },
+];
+
 export function NotificationProvider({ children }) {
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const uid = user?.uid || null;
+    const isDemo = userProfile?.source === 'demo';
 
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -37,13 +45,20 @@ export function NotificationProvider({ children }) {
 
     // Subscribe to notifications list
     useEffect(() => {
-        if (!uid) {
+        if (!uid && !isDemo) {
             // Use microtask to avoid setState-in-effect lint error
             queueMicrotask(() => {
                 setNotifications([]);
                 setUnreadCount(0);
             });
             initialLoadRef.current = true;
+            return undefined;
+        }
+
+        if (isDemo) {
+            setNotifications(DEMO_NOTIFICATIONS);
+            setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
+            initialLoadRef.current = false;
             return undefined;
         }
 
@@ -94,10 +109,15 @@ export function NotificationProvider({ children }) {
 
     // Subscribe to unread count
     useEffect(() => {
-        if (!uid) {
+        if (!uid && !isDemo) {
             queueMicrotask(() => {
                 setUnreadCount(0);
             });
+            return undefined;
+        }
+
+        if (isDemo) {
+            setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
             return undefined;
         }
 
@@ -106,11 +126,13 @@ export function NotificationProvider({ children }) {
         });
 
         return () => unsubscribe();
-    }, [uid]);
+    }, [uid, isDemo]);
 
     const markAsRead = useCallback(async (notificationId) => {
         try {
-            await markNotificationAsRead(notificationId);
+            if (!isDemo) {
+                await markNotificationAsRead(notificationId);
+            }
             setNotifications((prev) =>
                 prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)),
             );
@@ -118,17 +140,19 @@ export function NotificationProvider({ children }) {
         } catch (err) {
             console.warn('Failed to mark notification as read:', err);
         }
-    }, []);
+    }, [isDemo]);
 
     const markAllAsRead = useCallback(async () => {
         try {
-            await markAllNotificationsAsRead();
+            if (!isDemo) {
+                await markAllNotificationsAsRead();
+            }
             setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
             setUnreadCount(0);
         } catch (err) {
             console.warn('Failed to mark all notifications as read:', err);
         }
-    }, []);
+    }, [isDemo]);
 
     const enableSoundAlerts = useCallback(async () => {
         const ok = await unlockNotificationAudio();

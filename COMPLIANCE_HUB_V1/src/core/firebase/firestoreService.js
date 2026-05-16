@@ -13,6 +13,19 @@ import {
 import { auth, db } from './config';
 import { CLIENT_ROLES } from '../rbac/permissions';
 
+// Mock messages for demo mode
+const MOCK_CASE_MESSAGES = {
+    'CASE-001': [
+        { id: 'msg-1', caseId: 'CASE-001', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Bom dia! Gostaria de saber se ha alguma previsao de conclusao para a analise da Ana Paula.', createdAt: new Date('2026-03-20T10:30:00') },
+        { id: 'msg-2', caseId: 'CASE-001', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Bom dia, Paula! A analise esta em fase final de revisao. Prevemos conclusao ainda hoje.', createdAt: new Date('2026-03-20T11:00:00') },
+        { id: 'msg-3', caseId: 'CASE-001', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Otimo, agradeço o retorno!', createdAt: new Date('2026-03-20T11:15:00') },
+    ],
+    'CASE-002': [
+        { id: 'msg-4', caseId: 'CASE-002', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Prezados, identificamos achados graves na analise do candidato Carlos Eduardo Santos. Recomendamos agendamento de call para discutir.', createdAt: new Date('2026-03-19T14:00:00') },
+        { id: 'msg-5', caseId: 'CASE-002', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Vamos agendar sim. Obrigada pelo alerta.', createdAt: new Date('2026-03-19T14:30:00') },
+    ],
+};
+
 const FIRESTORE_QUERY_TIMEOUT_MS = 5000;
 const REST_FALLBACK_DELAY_MS = 2000;
 let firebaseFunctionsModulePromise = null;
@@ -891,6 +904,19 @@ export async function callGetSystemHealth() {
 }
 
 export async function callGetClientQuotaStatus() {
+    // Demo mode: return mock quota
+    if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/demo')) {
+        return {
+            hasLimits: true,
+            dailyLimit: 10,
+            monthlyLimit: 100,
+            dailyCount: 3,
+            monthlyCount: 15,
+            dailyRemaining: 7,
+            monthlyRemaining: 85,
+            resetAt: new Date(Date.now() + 86400000).toISOString(),
+        };
+    }
     return callBackendFunction('getClientQuotaStatus', {});
 }
 
@@ -978,6 +1004,12 @@ export function subscribeToCaseMessages(caseId, tenantId, callback) {
         callback([], null);
         return () => {};
     }
+    // Demo mode: return mock messages
+    if (caseId.startsWith('CASE-') && tenantId === 'TEN-001') {
+        const mockMessages = MOCK_CASE_MESSAGES[caseId] || [];
+        setTimeout(() => callback(mockMessages, null), 300);
+        return () => {};
+    }
     const q = query(
         collection(db, 'caseMessages'),
         where('caseId', '==', caseId),
@@ -1001,6 +1033,11 @@ export function subscribeToCaseMessages(caseId, tenantId, callback) {
 }
 
 export async function callSendCaseMessage(payload) {
+    const { caseId, tenantId } = payload || {};
+    // Demo mode: simulate success
+    if (caseId?.startsWith('CASE-') && tenantId === 'TEN-001') {
+        return { ok: true, messageId: `demo-msg-${Date.now()}`, simulated: true };
+    }
     return callBackendFunction('sendCaseMessage', payload);
 }
 

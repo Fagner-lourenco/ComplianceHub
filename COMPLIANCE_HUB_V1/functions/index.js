@@ -6779,8 +6779,17 @@ exports.getOpsCaseReportPreview = onCall(
 
         assertOpsCanAccessCase(profile, caseData, caseId);
 
-        // Preview: nao exige status DONE, usa dados atuais do caso
-        const html = await buildCanonicalReportHtml(caseId, caseData, null, true);
+        // Preview: monta snapshot a partir dos dados atuais do caso (inclui rascunhos)
+        // Promove campos do reviewDraft para nivel superior se nao houver valor direto
+        const reviewDraft = caseData.reviewDraft || {};
+        const enrichedCaseData = { ...caseData };
+        for (const field of ALLOWED_DRAFT_FIELDS) {
+            if (!hasMeaningfulValue(enrichedCaseData[field]) && hasMeaningfulValue(reviewDraft[field])) {
+                enrichedCaseData[field] = reviewDraft[field];
+            }
+        }
+        const previewSnapshot = buildSanitizedPublicResultSnapshot(caseId, enrichedCaseData, {}, {});
+        const html = await buildCanonicalReportHtml(caseId, enrichedCaseData, previewSnapshot, true);
         
         // Injeta banner de preview no topo
         const previewBanner = '<div style="background:#f59e0b;color:#fff;padding:12px 16px;text-align:center;font-weight:bold;font-size:14px;border-radius:0 0 8px 8px;margin-bottom:16px;position:sticky;top:0;z-index:1000;">⚠️ PRÉVIA — RELATÓRIO NÃO FINALIZADO</div>';
