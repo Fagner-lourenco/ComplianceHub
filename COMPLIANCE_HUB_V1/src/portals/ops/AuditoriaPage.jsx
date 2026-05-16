@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { useAuditLogs } from '../../hooks/useAuditLogs';
@@ -56,6 +56,35 @@ export default function AuditoriaPage() {
         return result;
     }, [actionFilter, categoryFilter, logs, searchTerm]);
 
+    const renderCard = useCallback((log) => {
+        const badge = getActionBadgeStyle(log.action);
+        const catStyle = log.category ? getCategoryColor(log.category) : null;
+        return (
+            <>
+                <div className="mobile-card__header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span className="audit-action-badge" style={{ color: badge.color, background: badge.bg }}>
+                            {getActionLabel(log.action)}
+                        </span>
+                        {catStyle && (
+                            <span className="audit-action-badge" style={{ color: catStyle.color, background: catStyle.bg, fontSize: '.625rem' }}>
+                                {getCategoryLabel(log.category)}
+                            </span>
+                        )}
+                        <span style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono, monospace)' }}>{log.timestamp}</span>
+                    </div>
+                </div>
+                <div className="mobile-card__meta">
+                    <span className="mobile-card__meta-item">👤 {log.user}</span>
+                    <span className="mobile-card__meta-item" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '.75rem' }}>🎯 {log.target}</span>
+                </div>
+                {log.detail && (
+                    <div className="mobile-card__subtitle">{log.detail}</div>
+                )}
+            </>
+        );
+    }, []);
+
     return (
         <PageShell size="default" className="auditoria-page">
             <PageHeader
@@ -102,37 +131,7 @@ export default function AuditoriaPage() {
                 items={filtered}
                 loading={loading}
                 emptyMessage={error ? extractErrorMessage(error, 'Nao foi possivel carregar os logs agora.') : 'Nenhum log encontrado.'}
-                renderCard={(log) => {
-                    const badge = getActionBadgeStyle(log.action);
-                    const catStyle = log.category ? getCategoryColor(log.category) : null;
-                    return (
-                        <>
-                            <div className="mobile-card__header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    <span className="audit-action-badge" style={{ color: badge.color, background: badge.bg }}>
-                                        {getActionLabel(log.action)}
-                                    </span>
-                                    {catStyle && (
-                                        <span className="audit-action-badge" style={{ color: catStyle.color, background: catStyle.bg, fontSize: '.625rem' }}>
-                                            {getCategoryLabel(log.category)}
-                                        </span>
-                                    )}
-                                    <span style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono, monospace)' }}>{log.timestamp}</span>
-                                </div>
-                            </div>
-                            <div className="mobile-card__meta">
-                                <span className="mobile-card__meta-item">👤 {log.user}</span>
-                                <span className="mobile-card__meta-item" style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '.75rem' }}>🎯 {log.target}</span>
-                            </div>
-                            {log.detail && (
-                                <div className="mobile-card__subtitle">{log.detail}</div>
-                            )}
-                            {log.ip && (
-                                <div style={{ fontSize: '.6875rem', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono, monospace)', marginTop: 4 }}>IP: {log.ip}</div>
-                            )}
-                        </>
-                    );
-                }}
+                renderCard={renderCard}
             >
                 <div className="auditoria-table-wrapper">
                     <table className="data-table" aria-label="Logs de auditoria">

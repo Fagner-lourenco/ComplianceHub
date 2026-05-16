@@ -52,6 +52,8 @@ export const ACTION_LABELS = {
     // Case lifecycle
     SOLICITATION_CREATED: { label: 'Nova solicitação', category: CATEGORY.CASE },
     CASE_ASSIGNED: { label: 'Caso atribuído', category: CATEGORY.CASE },
+    CASE_REASSIGNED: { label: 'Caso reatribuído', category: CATEGORY.CASE },
+    CASE_UNASSIGNED: { label: 'Responsável removido', category: CATEGORY.CASE },
     CASE_RETURNED: { label: 'Caso devolvido', category: CATEGORY.CASE },
     CASE_CORRECTED: { label: 'Caso corrigido', category: CATEGORY.CASE },
     CASE_CONCLUDED: { label: 'Caso concluído', category: CATEGORY.CASE },
@@ -65,11 +67,15 @@ export const ACTION_LABELS = {
 
     // Export
     EXPORT_CREATED: { label: 'Exportação criada', category: CATEGORY.EXPORT },
+    CLIENT_REPORT_PDF_GENERATED: { label: 'PDF do relatório gerado', category: CATEGORY.EXPORT },
+    PUBLIC_REPORT_PDF_GENERATED: { label: 'PDF público gerado', category: CATEGORY.EXPORT },
 
     // Tenant admin
     USER_CREATED: { label: 'Usuário criado', category: CATEGORY.TENANT_ADMIN },
     TENANT_USER_CREATED: { label: 'Usuário tenant criado', category: CATEGORY.TENANT_ADMIN },
     TENANT_USER_UPDATED: { label: 'Usuário tenant atualizado', category: CATEGORY.TENANT_ADMIN },
+    OPS_USER_CREATED: { label: 'Usuário ops criado', category: CATEGORY.TENANT_ADMIN },
+    OPS_USER_UPDATED: { label: 'Usuário ops atualizado', category: CATEGORY.TENANT_ADMIN },
 
     // Profile
     OWN_PROFILE_UPDATED: { label: 'Perfil atualizado', category: CATEGORY.PROFILE },

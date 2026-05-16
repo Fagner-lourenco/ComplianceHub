@@ -35,7 +35,7 @@ const INITIAL_BACKOFF_MS = 1000;
 const REQUEST_TIMEOUT_MS = 15000;
 
 const POLL_INTERVAL_MS = 3000;
-const POLL_MAX_WAIT_MS = 8 * 60 * 1000;
+const POLL_MAX_WAIT_MS = 7 * 60 * 1000; // P2-009: 7 minutos
 const DEFAULT_CACHE_TTL_DAYS = 7;
 
 class JuditError extends Error {

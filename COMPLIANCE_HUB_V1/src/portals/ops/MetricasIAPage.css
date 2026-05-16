@@ -27,7 +27,7 @@
     color: var(--text-secondary);
     cursor: pointer;
     border-right: 1px solid var(--border-default);
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s;
 }
 .ops-dash__period-btn:last-child { border-right: none; }
 .ops-dash__period-btn:hover { background: var(--gray-50); }

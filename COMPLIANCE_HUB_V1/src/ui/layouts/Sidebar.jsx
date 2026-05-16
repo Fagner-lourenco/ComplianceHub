@@ -1,31 +1,21 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
+import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatRoleLabel, hasPermission, PERMISSIONS } from '../../core/rbac/permissions';
+import { CLIENT_NAV, OPS_NAV, ICONS, CONTEXT_LABELS } from '../../core/copy/navigation.jsx';
 import './Sidebar.css';
-
-const clientNav = [
-    { to: '/client/dashboard', icon: 'DB', label: 'Dashboard', permission: PERMISSIONS.CASE_READ },
-    { to: '/client/solicitacoes', icon: '[]', label: 'Solicitacoes', permission: PERMISSIONS.CASE_READ },
-    { to: '/client/exportacoes', icon: 'EX', label: 'Exportacoes', permission: PERMISSIONS.CASE_EXPORT },
-    { to: '/client/relatorios', icon: 'RL', label: 'Relatorios', permission: PERMISSIONS.CASE_EXPORT },
-    { to: '/client/equipe', icon: 'EQ', label: 'Equipe', permission: PERMISSIONS.USERS_MANAGE },
-    { to: '/client/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.TENANT_AUDIT_VIEW },
-];
-
-const opsNav = [
-    { to: '/ops/fila', icon: 'WK', label: 'Fila de trabalho', permission: PERMISSIONS.CASE_READ },
-    { to: '/ops/casos', icon: 'CS', label: 'Todos os casos', permission: PERMISSIONS.CASE_READ },
-    { to: '/ops/clientes', icon: 'CL', label: 'Gestao de clientes', permission: PERMISSIONS.USERS_MANAGE },
-    { to: '/ops/auditoria', icon: 'LG', label: 'Auditoria', permission: PERMISSIONS.AUDIT_VIEW },
-    { to: '/ops/metricas-ia', icon: 'AI', label: 'Métricas IA', permission: PERMISSIONS.AUDIT_VIEW },
-    { to: '/ops/relatorios', icon: 'RL', label: 'Relatórios', permission: PERMISSIONS.REPORT_PUBLIC_VIEW },
-    { to: '/ops/saude', icon: 'HP', label: 'Saúde APIs', permission: PERMISSIONS.AUDIT_VIEW },
-];
 
 export default function Sidebar({ isOpen, onClose }) {
     const { logout, userProfile } = useAuth();
-    const { selectedTenantLabel } = useTenant();
+    const {
+        canSelectTenant,
+        selectedTenantId,
+        selectedTenantLabel,
+        setSelectedTenantId,
+        tenantStatus,
+        tenants,
+    } = useTenant();
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -33,17 +23,24 @@ export default function Sidebar({ isOpen, onClose }) {
     const isOpsPortal = location.pathname.startsWith('/ops') || location.pathname.startsWith('/demo/ops');
     const routePrefix = isDemoPortal ? '/demo' : '';
     const currentRole = userProfile?.role || null;
-    const demoHiddenOps = ['/ops/clientes', '/ops/metricas-ia'];
+    const demoHiddenOps = ['/ops/clientes', '/ops/metricas-ia', '/ops/equipe'];
     const navigationSource = isOpsPortal
-        ? opsNav.filter((item) => !(isDemoPortal && demoHiddenOps.includes(item.to)))
-        : clientNav;
+        ? OPS_NAV.filter((item) => !(isDemoPortal && demoHiddenOps.includes(item.to)))
+        : CLIENT_NAV;
     const navItems = navigationSource.filter((item) => hasPermission(currentRole, item.permission));
 
-    const displayName = userProfile?.displayName || 'Usuario';
-    const displayEmail = userProfile?.email || 'Email nao informado';
-    const displayRole = currentRole ? formatRoleLabel(currentRole) : 'Permissoes em sincronizacao';
-    const contextLabel = isOpsPortal ? 'Contexto do painel' : 'Franquia vinculada';
-    const displayTenantLabel = isOpsPortal ? selectedTenantLabel : (userProfile?.tenantName || 'Nao vinculada');
+    const displayName = userProfile?.displayName || 'Usuário';
+    const displayEmail = userProfile?.email || 'E-mail não informado';
+    const displayRole = currentRole ? formatRoleLabel(currentRole) : 'Permissões em sincronização';
+    const ctx = isOpsPortal ? CONTEXT_LABELS.OPS : CONTEXT_LABELS.CLIENT;
+    const contextLabel = ctx.sidebarContextLabel;
+    const displayTenantLabel = isOpsPortal ? selectedTenantLabel : (userProfile?.tenantName || 'Não vinculada');
+
+    const contextMeta = tenantStatus === 'loading'
+        ? ctx.loadingStatus
+        : tenantStatus === 'error'
+            ? ctx.syncStatus
+            : ctx.dataContextHint;
 
     const handleLogout = async () => {
         try {
@@ -70,7 +67,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         onClick={onClose}
                         className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
                     >
-                        <span className="sidebar__icon">{item.icon}</span>
+                        <span className="sidebar__icon">{ICONS[item.icon] || item.icon}</span>
                         <span className="sidebar__label">{item.label}</span>
                     </NavLink>
                 ))}
@@ -79,9 +76,26 @@ export default function Sidebar({ isOpen, onClose }) {
             <div className="sidebar__footer">
                 <div className="sidebar__context">
                     <div className="sidebar__context-label">{contextLabel}</div>
-                    <div className="sidebar__context-value" title={displayTenantLabel}>
-                        {displayTenantLabel}
-                    </div>
+                    {isOpsPortal && canSelectTenant ? (
+                        <select
+                            value={selectedTenantId || ALL_TENANTS_ID}
+                            onChange={(event) => setSelectedTenantId(event.target.value)}
+                            className="sidebar__tenant-select"
+                            aria-label="Selecionar empresa"
+                        >
+                            <option value={ALL_TENANTS_ID}>{ctx.allTenantsOption}</option>
+                            {tenants.map((tenant) => (
+                                <option key={tenant.id} value={tenant.id}>
+                                    {tenant.name}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <div className="sidebar__context-value" title={displayTenantLabel}>
+                            {displayTenantLabel}
+                        </div>
+                    )}
+                    <div className="sidebar__context-meta">{contextMeta}</div>
                 </div>
 
                 <div className="sidebar__user">
@@ -94,7 +108,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         </div>
                     </Link>
                     <button className="sidebar__logout" onClick={handleLogout} title="Sair do sistema">
-                        SAIR
+                        Sair
                     </button>
                 </div>
             </div>

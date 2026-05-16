@@ -11,6 +11,7 @@
  *   - occupation_data → employment/profession history
  */
 
+const { classifyRole } = require('../helpers/roleClassifier');
 const CRIMINAL_COURT_TYPES = /criminal|penal/i;
 const LABOR_COURT_TYPES = /trabalh/i;
 
@@ -111,6 +112,8 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
             }
         }
 
+        const roleClassification = classifyRole(specificRole || partyType, courtType);
+
         // Extract decisions for criminal processes (top 3, 500 chars max each)
         let decisions = null;
         if (isCriminal && Array.isArray(lawsuit.Decisions) && lawsuit.Decisions.length > 0) {
@@ -137,6 +140,11 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
             polo,
             partyType,
             specificRole,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
+            roleClassification,
             isCriminal,
             isLabor,
             cnjSubject: lawsuit.InferredCNJSubjectName || null,
@@ -151,6 +159,8 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
     const processTotal = lawsuits.length;
     const directCriminalCount = processos.filter((p) => p.isCriminal && p.isDirectCpfMatch).length;
     const directLaborCount = processos.filter((p) => p.isLabor && p.isDirectCpfMatch).length;
+    const possibleHomonymCriminalCount = Math.max(0, criminalCount - directCriminalCount);
+    const possibleHomonymLaborCount = Math.max(0, laborCount - directLaborCount);
     const hasCriminal = directCriminalCount > 0;
     const hasLabor = directLaborCount > 0;
     const activeCount = processos.filter((p) =>
@@ -188,8 +198,12 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
         bigdatacorpProcessTotal: processTotal,
         bigdatacorpCriminalFlag: hasCriminal ? 'POSITIVE' : 'NEGATIVE',
         bigdatacorpCriminalCount: criminalCount,
+        bigdatacorpDirectCriminalCount: directCriminalCount,
+        bigdatacorpPossibleHomonymCriminalCount: possibleHomonymCriminalCount,
         bigdatacorpLaborFlag: hasLabor ? 'POSITIVE' : 'NEGATIVE',
         bigdatacorpLaborCount: laborCount,
+        bigdatacorpDirectLaborCount: directLaborCount,
+        bigdatacorpPossibleHomonymLaborCount: possibleHomonymLaborCount,
         bigdatacorpCivilCount: civilCount,
         bigdatacorpActiveCount: activeCount,
         bigdatacorpTotalAsAuthor: processesData?.TotalLawsuitsAsAuthor ?? null,

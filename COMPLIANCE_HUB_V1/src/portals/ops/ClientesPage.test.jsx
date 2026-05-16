@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -51,7 +51,7 @@ describe('ClientesPage', () => {
         clientesPageMocks.callCreateOpsClientUser.mockReset();
     });
 
-    it('carrega e exibe a lista real de clientes', async () => {
+    it('carrega e exibe a lista agrupada por tenant', async () => {
         clientesPageMocks.fetchClients.mockResolvedValue([
             {
                 uid: 'client-1',
@@ -60,16 +60,19 @@ describe('ClientesPage', () => {
                 email: 'analista.rh@madero.com.br',
                 tenantId: 'madero-br',
                 createdAt: '2026-03-25',
+                role: 'client_manager',
+                status: 'active',
             },
         ]);
 
         render(<MemoryRouter><ClientesPage /></MemoryRouter>);
 
-        expect(screen.getByText('Carregando...')).toBeInTheDocument();
+        expect(document.querySelector('[aria-hidden="true"] .skeleton')).toBeInTheDocument();
 
-        expect(await screen.findByText('analista.rh@madero.com.br')).toBeInTheDocument();
-        expect(screen.getByText('Madero Industria e Comercio S.A.')).toBeInTheDocument();
-        expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+        expect(await screen.findByText('Madero Industria e Comercio S.A.')).toBeInTheDocument();
+        // Now grouped by tenant: shows user count instead of individual email
+        expect(screen.getByText('1')).toBeInTheDocument();
+        expect(document.querySelector('[aria-hidden="true"] .skeleton')).not.toBeInTheDocument();
     });
 
     it('mostra mensagem clara quando a consulta de clientes falha', async () => {
@@ -83,5 +86,35 @@ describe('ClientesPage', () => {
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Nao foi possivel carregar a lista de clientes agora. Tente novamente em alguns instantes.');
         expect(screen.queryByText('Carregando...')).not.toBeInTheDocument();
+    });
+
+    it('nao expoe senha provisoria no toast de sucesso', async () => {
+        clientesPageMocks.fetchClients.mockResolvedValue([]);
+        clientesPageMocks.callCreateOpsClientUser.mockResolvedValue({ uid: 'new-user', tenantId: 'tenant-x' });
+
+        render(<MemoryRouter><ClientesPage /></MemoryRouter>);
+
+        await screen.findByText('Nenhum cliente encontrado.');
+
+        fireEvent.click(screen.getByRole('button', { name: /Novo gestor/i }));
+
+        const tenantNameInput = screen.getByPlaceholderText('Ex: Madero Industria S.A.');
+        fireEvent.change(tenantNameInput, { target: { value: 'Nova Empresa' } });
+
+        const displayNameInput = screen.getByPlaceholderText('Ex: Joao Silva (RH)');
+        fireEvent.change(displayNameInput, { target: { value: 'Maria Gestora' } });
+
+        const emailInput = screen.getByPlaceholderText('joao@empresa.com.br');
+        fireEvent.change(emailInput, { target: { value: 'maria@nova.com' } });
+
+        fireEvent.click(screen.getByRole('button', { name: /Criar gestor/i }));
+
+        await vi.waitFor(() => {
+            const toast = screen.queryByRole('status');
+            if (!toast) return false;
+            expect(toast.textContent).toContain('Gestor criado com sucesso');
+            expect(toast.textContent).not.toContain('Senha provisoria');
+            return true;
+        });
     });
 });

@@ -23,14 +23,18 @@ import {
     callAssignCaseToAnalyst,
     callUnassignCase,
     callListOpsUsers,
+    getOpsCaseReportHtml,
+    getOpsCaseReportPreview,
 } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import { getSlaStatus, getSlaColor } from '../../core/caseSla';
+import { formatDateTimeBR } from '../../core/formatDate';
 
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
+import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
 import './CasoPage.css';
 
 function formatFullCpf(cpf) {
@@ -92,6 +96,23 @@ function getAiHomonymDecisionLabel(value) {
         LIKELY_HOMONYM: 'Provavel homonimo',
         UNCERTAIN: 'Inconclusivo',
     }[value] || (value || 'N/A');
+}
+
+function useOpenedSections() {
+    const [opened, setOpened] = useState(new Set());
+    const onToggle = useCallback((event) => {
+        const sectionId = event.target.closest('[data-lazy-section]')?.dataset.lazySection;
+        if (!sectionId) return;
+        if (event.target.open) {
+            setOpened((prev) => {
+                if (prev.has(sectionId)) return prev;
+                const next = new Set(prev);
+                next.add(sectionId);
+                return next;
+            });
+        }
+    }, []);
+    return { opened, onToggle };
 }
 
 function getAiHomonymActionLabel(value) {
@@ -306,6 +327,7 @@ export default function CasoPage() {
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
     const [saving, setSaving] = useState(false);
+    const [reportPreview, setReportPreview] = useState({ open: false, loading: false, html: '', error: '' });
     const [retryingPhase, setRetryingPhase] = useState(null);
     const formatPendingJuditPhases = (phases = []) => phases
         .map((phase) => ({
@@ -326,6 +348,7 @@ export default function CasoPage() {
     const [draftStatus, setDraftStatus] = useState('idle');
     const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
     const [caseTimeline, setCaseTimeline] = useState([]);
+    const { opened: openedSections, onToggle: handleDetailsToggle } = useOpenedSections();
     const dirtyFieldsRef = useRef(new Set());
     const highRiskConfirmedRef = useRef(false);
     const initializedCaseIdRef = useRef(null);
@@ -606,7 +629,7 @@ export default function CasoPage() {
             : 0)
     );
 
-    const checklist = [
+    const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('labor') && { label: 'Trabalhista definido', ok: Boolean(form.laborFlag) },
         enabledPhases.includes('warrant') && { label: 'Mandado de prisao definido', ok: !!form.warrantFlag },
@@ -636,8 +659,8 @@ export default function CasoPage() {
             label: `Nível de atenção ${risk.riskScore} (médio-alto) com resultado FIT`,
             ok: true, warn: true,
         },
-    ].filter(Boolean);
-    const allOk = checklist.every((item) => item.ok);
+    ].filter(Boolean), [enabledPhases, form, caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore]);
+    const allOk = useMemo(() => checklist.every((item) => item.ok), [checklist]);
     const aiHomonymStructured = caseData?.aiHomonymStructured || null;
     const aiHomonymVisible = Boolean(caseData?.aiHomonymTriggered || aiHomonymStructured || caseData?.aiHomonymError);
     const aiHomonymHardFacts = useMemo(() => {
@@ -648,12 +671,7 @@ export default function CasoPage() {
         if (caseData.juditRoleSummary?.some((role) => role?.hasExactCpfMatch)) facts.push('CPF exato encontrado em parte da Judit');
         if (caseData.escavadorProcessos?.some((processo) => processo?.hasExactCpfMatch)) facts.push('CPF exato encontrado em processo do Escavador');
         return facts;
-    }, [
-        caseData?.juditActiveWarrantCount,
-        caseData?.juditExecutionFlag,
-        caseData?.juditRoleSummary,
-        caseData?.escavadorProcessos,
-    ]);
+    }, [caseData]);
     const aiHomonymDivergesFromHardFacts = Boolean(
         aiHomonymStructured &&
         (aiHomonymStructured.decision === 'LIKELY_HOMONYM' || aiHomonymStructured.recommendedAction === 'DISCARD') &&
@@ -779,6 +797,29 @@ export default function CasoPage() {
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
     }, [saveDraft, allOk, saving, concluded, steps, canEditCase]);
+
+    const handleOpenReportPreview = async () => {
+        if (!caseData?.id) return;
+        if (isDemoMode) {
+            window.open(`/demo/r/${caseData.id}`, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        setReportPreview({ open: true, loading: true, html: '', error: '' });
+        try {
+            // Usa endpoint de preview para casos nao-DONE, mantém endpoint final para DONE
+            const payload = caseData.status === 'DONE'
+                ? await getOpsCaseReportHtml(caseData.id)
+                : await getOpsCaseReportPreview(caseData.id);
+            setReportPreview({ open: true, loading: false, html: payload.html, error: '' });
+        } catch (err) {
+            setReportPreview({
+                open: true,
+                loading: false,
+                html: '',
+                error: extractErrorMessage(err, 'Não foi possível gerar a prévia do relatório.'),
+            });
+        }
+    };
 
     const handleConclude = async () => {
         if (!caseData || !allOk || saving || !canEditCase) {
@@ -947,7 +988,7 @@ export default function CasoPage() {
                         {slaStatus.remainingText}
                     </span>
                     <span className="caso-sla-banner__deadline">
-                        Prazo: {slaStatus.deadline?.toLocaleString('pt-BR')}
+                        Prazo: {formatDateTimeBR(slaStatus.deadline)}
                     </span>
                 </div>
             )}
@@ -966,6 +1007,14 @@ export default function CasoPage() {
                     {!isCorrectionNeeded && canEditCase && (
                         <button className="caso-btn caso-btn--warning" onClick={() => setShowReturnModal(true)}>Devolver ao cliente</button>
                     )}
+                    {/* Preview disponível para qualquer status (DONE ou em análise) */}
+                    <button
+                        className="caso-btn caso-btn--ghost"
+                        onClick={handleOpenReportPreview}
+                        title={caseData.status === 'DONE' ? "Visualizar relatório final" : "Visualizar prévia do relatório com dados parciais"}
+                    >
+                        {caseData.status === 'DONE' ? 'Prévia do relatório' : 'Prévia do relatório'}
+                    </button>
                     {caseData.status === 'DONE' && (
                         <button className="caso-btn caso-btn--ghost" onClick={async () => {
                             if (isDemoMode) {
@@ -978,7 +1027,7 @@ export default function CasoPage() {
                             } catch (err) {
                                 setSaveError(extractErrorMessage(err, 'Erro ao gerar link do relatorio.'));
                             }
-                        }}>🖨️ Relatório</button>
+                        }}>Gerar link público</button>
                     )}
                     {caseData.status === 'DONE' && caseData.publicReportToken && (
                         <button className="caso-btn caso-btn--ghost" title="Copiar link do relatório público" onClick={async () => {
@@ -1076,6 +1125,15 @@ export default function CasoPage() {
                 onRetryPhase={canEditCase ? handleRetryPhase : undefined}
                 retryingPhase={retryingPhase}
             />
+            {/* Case Communication Panel */}
+            <div className='caso-section' style={{ marginTop: 16 }}>
+                <CaseCommunicationPanel
+                    caseId={caseId}
+                    caseData={caseData}
+                    portal='ops'
+                />
+            </div>
+
 
             {/* P09: Warning if enrichment/AI data changed after last draft save */}
             {caseData.draftSavedAt && caseData.status !== 'DONE' && (() => {
@@ -1754,10 +1812,11 @@ export default function CasoPage() {
                                     </div>
                                 )}
                                 {caseData.escavadorProcessos?.length > 0 && (
-                                    <details style={{ marginTop: 10 }}>
+                                    <details data-lazy-section="escavador-processos" onToggle={handleDetailsToggle} style={{ marginTop: 10 }}>
                                         <summary style={{ fontSize: '.8125rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                                             Ver {caseData.escavadorProcessos.length} processo(s) detalhado(s)
                                         </summary>
+                                        {openedSections.has('escavador-processos') && (
                                         <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 8 }}>
                                             <table className="data-table" style={{ fontSize: '.75rem' }}>
                                                 <thead>
@@ -1785,6 +1844,7 @@ export default function CasoPage() {
                                                 </tbody>
                                             </table>
                                         </div>
+                                        )}
                                     </details>
                                 )}
                                 {caseData.escavadorError && (
@@ -1870,10 +1930,11 @@ export default function CasoPage() {
                                 )}
 
                                 {caseData.juditRoleSummary?.length > 0 && (
-                                    <details style={{ marginTop: 10 }}>
+                                    <details data-lazy-section="judit-roles" onToggle={handleDetailsToggle} style={{ marginTop: 10 }}>
                                         <summary style={{ fontSize: '.8125rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                                             Papeis nos processos ({caseData.juditRoleSummary.length})
                                         </summary>
+                                        {openedSections.has('judit-roles') && (
                                         <div className="caso-contact-list" style={{ marginTop: 6, flexWrap: 'wrap' }}>
                                             {Object.entries(
                                                 caseData.juditRoleSummary.reduce((acc, r) => {
@@ -1887,6 +1948,7 @@ export default function CasoPage() {
                                                 </span>
                                             ))}
                                         </div>
+                                        )}
                                     </details>
                                 )}
 
@@ -2045,6 +2107,34 @@ export default function CasoPage() {
                             <button className="caso-btn caso-btn--primary" onClick={goToNextStep}>Proximo</button>
                         </div>
                     </div>
+                )}
+
+                {reportPreview.open && (
+                    <Modal
+                        open
+                        onClose={() => setReportPreview({ open: false, loading: false, html: '', error: '' })}
+                        title="Prévia do relatório final"
+                        maxWidth={900}
+                    >
+                        {reportPreview.loading && (
+                            <p style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                Gerando prévia...
+                            </p>
+                        )}
+                        {reportPreview.error && (
+                            <p role="alert" style={{ padding: '24px', color: 'var(--red-600)' }}>
+                                {reportPreview.error}
+                            </p>
+                        )}
+                        {reportPreview.html && (
+                            <iframe
+                                title="Prévia do relatório final"
+                                srcDoc={reportPreview.html}
+                                sandbox="allow-modals allow-popups allow-popups-to-escape-sandbox"
+                                style={{ display: 'block', width: '100%', height: '75vh', border: 'none' }}
+                            />
+                        )}
+                    </Modal>
                 )}
 
                 {showReturnModal && (
@@ -2297,6 +2387,7 @@ export default function CasoPage() {
                                                 <th className="data-table__th">Area</th>
                                                 <th className="data-table__th">Tribunal</th>
                                                 <th className="data-table__th">Tipo parte</th>
+                                                <th className="data-table__th">Classificacao</th>
                                                 <th className="data-table__th">Status</th>
                                                 <th className="data-table__th">Flags</th>
                                             </tr>
@@ -2308,11 +2399,18 @@ export default function CasoPage() {
                                                     <td className="data-table__td">{r.area || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
                                                     <td className="data-table__td">{r.personType || '—'}</td>
+                                                    <td className="data-table__td">
+                                                        {r.isVictim && <span className="caso-flag-chip caso-flag-chip--green">Vitima</span>}
+                                                        {r.isLawyer && <span className="caso-flag-chip caso-flag-chip--gray">Advogado</span>}
+                                                        {r.isWitness && <span className="caso-flag-chip caso-flag-chip--gray">Testemunha</span>}
+                                                        {r.isDefendant && <span className="caso-flag-chip caso-flag-chip--red">Reu</span>}
+                                                        {r.isPlaintiff && <span className="caso-flag-chip caso-flag-chip--yellow">Autor</span>}
+                                                        {!r.isVictim && !r.isLawyer && !r.isWitness && !r.isDefendant && !r.isPlaintiff && <span className="caso-flag-chip caso-flag-chip--neutral">—</span>}
+                                                    </td>
                                                     <td className="data-table__td">{r.status || '—'}</td>
                                                     <td className="data-table__td">
                                                         {r.isCriminal && <span className="caso-flag-chip caso-flag-chip--red">Criminal</span>}
                                                         {r.isPossibleHomonym && <span className="caso-flag-chip caso-flag-chip--yellow">Homonimo?</span>}
-                                                        {r.isWitness && <span className="caso-flag-chip caso-flag-chip--gray">Testemunha</span>}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -2368,10 +2466,11 @@ export default function CasoPage() {
 
                         {/* BigDataCorp non-criminal processes — collapsible */}
                         {caseData.bigdatacorpProcessos?.some((p) => !p.isCriminal) && (
-                            <details className="caso-identity-block" style={{ marginTop: 16 }}>
+                            <details data-lazy-section="bdc-processos" onToggle={handleDetailsToggle} className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '.85rem' }}>
                                     Outros processos BigDataCorp ({caseData.bigdatacorpProcessos.filter((p) => !p.isCriminal).length})
                                 </summary>
+                                {openedSections.has('bdc-processos') && (
                                 <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 8 }}>
                                     <table className="data-table" style={{ fontSize: '.75rem' }}>
                                         <thead>
@@ -2401,17 +2500,19 @@ export default function CasoPage() {
                                         </tbody>
                                     </table>
                                 </div>
+                                )}
                             </details>
                         )}
 
                         {/* DJEN comunicações */}
                         {caseData.djenComunicacoes?.length > 0 && (
-                            <details className="caso-identity-block" style={{ marginTop: 16 }}>
+                            <details data-lazy-section="djen-comunicacoes" onToggle={handleDetailsToggle} className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '.85rem' }}>
                                     Comunicações judiciais DJEN ({caseData.djenComunicacoes.length})
                                     <span style={{ fontSize: '.65rem', fontWeight: 600, padding: '1px 6px', borderRadius: 999, background: 'var(--green-100, #dcfce7)', color: 'var(--green-700, #15803d)', marginLeft: 6 }}>GRÁTIS</span>
                                     {caseData.djenCriminalCount > 0 && <span className="caso-flag-chip caso-flag-chip--red" style={{ marginLeft: 6 }}>{caseData.djenCriminalCount} criminais</span>}
                                 </summary>
+                                {openedSections.has('djen-comunicacoes') && (
                                 <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 8 }}>
                                     <table className="data-table" style={{ fontSize: '.75rem' }}>
                                         <thead>
@@ -2445,6 +2546,7 @@ export default function CasoPage() {
                                         </tbody>
                                     </table>
                                 </div>
+                                )}
                             </details>
                         )}
 
@@ -3160,10 +3262,11 @@ export default function CasoPage() {
             </div>
 
             {caseTimeline.length > 0 && (
-                <details style={{ margin: '1rem 0 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px', fontSize: '.85rem' }}>
+                <details data-lazy-section="case-timeline" onToggle={handleDetailsToggle} style={{ margin: '1rem 0 0', padding: '10px 14px', background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '8px', fontSize: '.85rem' }}>
                     <summary style={{ cursor: 'pointer', fontWeight: 600, listStyle: 'none', WebkitAppearance: 'none', MozAppearance: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
                         🕒 Histórico do caso ({caseTimeline.length})
                     </summary>
+                    {openedSections.has('case-timeline') && (
                     <ol style={{ margin: '10px 0 0', paddingLeft: '1.2rem', lineHeight: 1.8 }}>
                         {caseTimeline.map((log) => (
                             <li key={log.id} style={{ marginBottom: 4 }}>
@@ -3174,6 +3277,7 @@ export default function CasoPage() {
                             </li>
                         ))}
                     </ol>
+                    )}
                 </details>
             )}
 

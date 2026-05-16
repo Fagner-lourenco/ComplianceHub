@@ -42,7 +42,7 @@ const sharedCases = [
         analysisStartedAt: '2026-03-20T09:10:00-03:00',
         updatedAt: '2026-03-21T11:35:00-03:00',
         concludedAt: '2026-03-21T11:35:00-03:00',
-        slaHours: 48,
+        slaHours: 3,
         turnaroundHours: 27.3,
         status: 'DONE',
         assigneeId: 'analyst1',

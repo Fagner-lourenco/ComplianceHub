@@ -238,6 +238,7 @@ async function main() {
         const prDocPath = `${BASE_PATH}/cases/${caseId}/publicResult/latest`;
         const PUBLIC_RESULT_FIELDS = [
             'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+            'requestedBy', 'requestedByName', 'requestedByEmail',
             'criminalFlag', 'criminalSeverity', 'criminalNotes',
             'laborFlag', 'laborSeverity', 'laborNotes',
             'warrantFlag', 'warrantNotes',
@@ -311,18 +312,37 @@ async function main() {
             publicResultsUpdated++;
         }
 
-        // Clean stale correction/draft fields from clientCases when DONE
-        const staleFields = ['correctionReason', 'correctionNotes', 'correctionRequestedAt', 'correctionRequestedBy', 'reviewDraft', 'draftSavedAt'];
+        // Sync requester fields to clientCases mirror
         const clientCaseDocPath = `${BASE_PATH}/clientCases/${caseId}`;
         const clientCaseDoc = await getDocument(accessToken, clientCaseDocPath);
         if (clientCaseDoc) {
             const clientData = parseFirestoreFields(clientCaseDoc.fields || {});
+            const requesterFields = {};
+            const requesterFieldNames = [];
+            for (const field of ['requestedBy', 'requestedByName', 'requestedByEmail']) {
+                const caseVal = caseData[field];
+                const clientVal = clientData[field];
+                if (caseVal !== undefined && caseVal !== null && caseVal !== '' && caseVal !== clientVal) {
+                    requesterFields[field] = { stringValue: caseVal };
+                    requesterFieldNames.push(field);
+                }
+            }
+            if (requesterFieldNames.length > 0) {
+                if (DRY_RUN) {
+                    console.log(`   🔄 [DRY-RUN] Atualizaria clientCases com ${requesterFieldNames.join(', ')}`);
+                } else {
+                    await patchDocument(accessToken, clientCaseDocPath, requesterFields, requesterFieldNames);
+                    console.log(`   ✅ clientCases atualizado com ${requesterFieldNames.join(', ')}`);
+                }
+            }
+
+            // Clean stale correction/draft fields from clientCases when DONE
+            const staleFields = ['correctionReason', 'correctionNotes', 'correctionRequestedAt', 'correctionRequestedBy', 'reviewDraft', 'draftSavedAt'];
             const fieldsToDelete = staleFields.filter(f => clientData[f] !== undefined && clientData[f] !== null);
             if (fieldsToDelete.length > 0) {
                 if (DRY_RUN) {
                     console.log(`   🔄 [DRY-RUN] Deletaria ${fieldsToDelete.length} campos stale de clientCases: ${fieldsToDelete.join(', ')}`);
                 } else {
-                    // Firestore REST API: set fields with null transforms to delete
                     const cleanFields = {};
                     for (const f of fieldsToDelete) cleanFields[f] = { nullValue: null };
                     await patchDocument(accessToken, clientCaseDocPath, cleanFields, fieldsToDelete);

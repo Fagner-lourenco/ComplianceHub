@@ -87,7 +87,7 @@ function mergeEnrichment(saved) {
 
 export default function TenantSettingsPage() {
     const { tenantId } = useParams();
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // eslint-disable-line no-unused-vars
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(null);
     const [tenantName, setTenantName] = useState('');

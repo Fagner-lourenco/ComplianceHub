@@ -1,0 +1,16 @@
+﻿
+        // Criar mensagem automatica na comunicacao
+        try {
+            const systemBody = notes
+                ? `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}. Detalhes: ${notes}.`
+                : `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}.`;
+            await createSystemCaseMessage({
+                caseId,
+                caseData,
+                tenantId: caseData.tenantId,
+                systemType: 'CORRECTION_REQUESTED',
+                body: systemBody,
+            });
+        } catch (err) {
+            console.warn('[communication] failed to create system message for correction', err);
+        }

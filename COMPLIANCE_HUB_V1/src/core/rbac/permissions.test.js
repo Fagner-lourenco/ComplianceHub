@@ -153,10 +153,10 @@ describe('permissions — RBAC', () => {
             }
         });
 
-        it('PERMISSIONS tem 8 permissoes distintas', () => {
+        it('PERMISSIONS tem 10 permissoes distintas', () => {
             const perms = Object.values(PERMISSIONS);
-            expect(perms).toHaveLength(8);
-            expect(new Set(perms).size).toBe(8);
+            expect(perms).toHaveLength(10);
+            expect(new Set(perms).size).toBe(10);
         });
     });
 });

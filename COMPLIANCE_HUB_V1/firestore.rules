@@ -10,7 +10,8 @@ service cloud.firestore {
 
     // Get the current user's profile document
     function getUserProfile() {
-      return get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data;
+      let profile = get(/databases/$(database)/documents/userProfiles/$(request.auth.uid));
+      return profile != null && profile.data != null ? profile.data : {};
     }
 
     // Fast role check via custom claims (set by Cloud Functions on user creation/update).
@@ -33,14 +34,14 @@ service cloud.firestore {
       return userTenantId != null && tenantId != null && userTenantId == tenantId;
     }
 
-    // Check if user is internal staff
+    // Check if user is internal staff (includes owner for full access)
     function isAnalyst() {
-      return getUserRole() in ['analyst', 'supervisor', 'admin'];
+      return getUserRole() in ['analyst', 'supervisor', 'admin', 'owner'];
     }
 
-    // Check if user is admin specifically
+    // Check if user is admin or owner (full administrative access)
     function isAdmin() {
-      return getUserRole() == 'admin';
+      return getUserRole() in ['admin', 'owner'];
     }
 
     // Check if user is a client
@@ -58,23 +59,24 @@ service cloud.firestore {
         isAnalyst()
       );
       
-      // Profiles are provisioned and managed only by internal staff.
-      // This blocks self-promotion of role or tenant context from the client.
-      allow create, update, delete: if isAuthenticated() && isAnalyst();
+      // Profiles are provisioned and managed only by Cloud Functions.
+      // This blocks self-promotion of role or tenant context from the client,
+      // and prevents analysts from elevating privileges or cross-tenant access.
+      allow create, update, delete: if false;
     }
 
     // 2. Cases
     match /cases/{caseId} {
       // Raw cases are operational/internal documents.
+      // Admin/owner see all tenants; other ops users see only their tenant.
       // Client portal must consume the sanitized mirror in /clientCases.
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if isAuthenticated() && isAnalyst() && (
+        isAdmin() || isSameTenant(resource.data.tenantId)
+      );
 
-      // Analysts can update any case. Client corrections are handled via Cloud Functions.
-      allow update: if isAuthenticated() && isAnalyst();
-      
-      allow create: if isAuthenticated() && isAnalyst();
-      
-      allow delete: if isAuthenticated() && isAdmin();
+      // All mutations must go through audited Cloud Functions.
+      // Direct SDK writes bypass tenant validation, state machines and audit trails.
+      allow create, update, delete: if false;
 
       // 2a. Public Result — sanitized subcollection for client access
       // Published by Cloud Function when analyst concludes case (status → DONE).
@@ -89,7 +91,9 @@ service cloud.firestore {
 
       // 2b. AI Cache — internal subcollection for inference caching
       match /aiCache/{docId} {
-        allow read: if isAuthenticated() && isAnalyst();
+        allow read: if isAuthenticated() && isAnalyst() && (
+          isAdmin() || isSameTenant(get(/databases/$(database)/documents/cases/$(caseId)).data.tenantId)
+        );
         // Only Cloud Functions write here
         allow create, update, delete: if false;
       }
@@ -107,16 +111,19 @@ service cloud.firestore {
 
     // 3. Candidates
     match /candidates/{candidateId} {
-      allow read, update: if isAuthenticated() && isAnalyst();
+      allow read: if isAuthenticated() && isAnalyst() && (
+        isAdmin() || isSameTenant(resource.data.tenantId)
+      );
       
-      allow create: if isAuthenticated() && isAnalyst();
-      
-      allow delete: if isAuthenticated() && isAdmin();
+      // All mutations must go through audited Cloud Functions.
+      allow create, update, delete: if false;
     }
 
     // 4. Audit Logs (ops-only — complete trail)
     match /auditLogs/{logId} {
-      allow read: if isAuthenticated() && isAnalyst();
+      allow read: if isAuthenticated() && isAnalyst() && (
+        isAdmin() || isSameTenant(resource.data.tenantId)
+      );
       
       // Complete audit trail is written by Cloud Functions to keep projections
       // and actor metadata consistent.
@@ -157,16 +164,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // 7. Public Reports (shareable links — public read with TTL, analyst manage)
+    // 7. Public Reports (shareable links)
+    // All reads are served via callable Cloud Functions (getPublicReportView, listOpsPublicReports,
+    // listClientPublicReports) using Admin SDK — no direct client read needed.
     match /publicReports/{token} {
-      allow read: if
-        (isAuthenticated() && isAnalyst()) ||
-        (
-          resource.data.expiresAt is timestamp
-          && request.time < resource.data.expiresAt
-          && (resource.data.active != false)
-        );
-      // Only Cloud Functions create these documents.
+      allow read: if false;
       allow create: if false;
       allow update: if false;
       allow delete: if false;
@@ -187,5 +189,27 @@ service cloud.firestore {
       // Only Cloud Functions write here (via transaction in enforceTenantSubmissionLimits)
       allow create, update, delete: if false;
     }
+
+    // 10. Notifications (internal real-time alerts)
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.recipientUid == request.auth.uid;
+      // Only Cloud Functions create/update notifications
+      allow create, update, delete: if false;
+    }
+
+    // 11. Case Messages (communication between client and ops)
+    match /caseMessages/{messageId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() ||
+        (
+          resource.data.tenantId != null &&
+          isSameTenant(resource.data.tenantId) &&
+          (isClient() || isAnalyst())
+        )
+      );
+      allow create, update, delete: if false;
+    }
+
   }
 }

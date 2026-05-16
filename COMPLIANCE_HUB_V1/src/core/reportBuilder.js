@@ -311,7 +311,6 @@ function buildCaseBody(c, cd, generatedAt) {
         ? `<div class="sec"><div class="sec__t">Resumo Executivo</div><div class="ebox">
             ${c.executiveSummary ? `<div class="ebox__block"><strong>Visão executiva:</strong><div class="ebox__text">${esc(c.executiveSummary)}</div></div>` : ''}
             ${c.statusSummary ? `<p><strong>Situação atual:</strong> ${esc(c.statusSummary)}</p>` : ''}
-            ${c.sourceSummary ? `<p><strong>Origem resumida dos dados:</strong> ${esc(c.sourceSummary)}</p>` : ''}
         </div></div>`
         : '';
     const findingsSec = listBlock('Principais Apontamentos', c.keyFindings);
@@ -434,13 +433,15 @@ p,li{orphans:3;widows:3}
 .plist{page-break-inside:avoid;break-inside:avoid}
 }
 @page{size:A4;margin:14mm 12mm}
+body::before{content:"CONFIDENCIAL";position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);z-index:9999;pointer-events:none;white-space:nowrap;font-size:86px;line-height:1;font-weight:900;letter-spacing:.12em;color:rgba(15,23,42,.04);text-transform:uppercase;user-select:none}
+@media screen and (max-width:720px){body{background:#fff;font-size:13px}.page{width:100%;max-width:none;padding:24px 18px 32px}.hdr{flex-direction:column;gap:10px}.hdr__right{text-align:left}.fgrid{grid-template-columns:1fr;gap:10px}.rbox{flex-direction:column;align-items:stretch;gap:16px;padding:16px}.rbox__div{width:100%;height:1px;margin:0}.rbox__bar{max-width:none}.pr__top,.hcard__top,.hcard__item-top,.titem__row,.ftr{flex-direction:column;align-items:flex-start}.slinks{flex-direction:column}.slink{width:100%;justify-content:center}body::before{font-size:48px;letter-spacing:.08em;color:rgba(15,23,42,.035)}}
 `;
 
 export function buildCaseReportHtml(caseData, candidateData) {
     if (!caseData) return '';
     const c = caseData;
     const cd = candidateData || {};
-    const generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+    const generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Relatório — ${esc(c.candidateName || 'Candidato')}</title>
@@ -452,7 +453,7 @@ export function buildCaseReportHtml(caseData, candidateData) {
 
 export function buildBatchReportHtml(cases, tenantName) {
     if (!Array.isArray(cases) || cases.length === 0) return '';
-    const generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+    const generatedAt = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
 
     const cover = `<div class="batch-cover">
   <div class="batch-cover__brand">ComplianceHub</div>

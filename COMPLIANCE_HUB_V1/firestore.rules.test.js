@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 const rules = fs.readFileSync(path.join(process.cwd(), 'firestore.rules'), 'utf8');
 
 describe('firestore.rules V1 safety contract', () => {
-    it('keeps raw cases ops-only and publicResult function-owned', () => {
+    it('keeps raw cases ops-only with tenant isolation and publicResult function-owned', () => {
         expect(rules).toContain('match /cases/{caseId}');
         expect(rules).toContain('Client portal must consume the sanitized mirror in /clientCases.');
-        expect(rules).toContain('allow read: if isAuthenticated() && isAnalyst();');
+        expect(rules).toContain('isAdmin() || isSameTenant(resource.data.tenantId)');
         expect(rules).toContain('match /publicResult/{docId}');
         expect(rules).toContain('Only Cloud Functions write here');
     });
@@ -30,11 +30,15 @@ describe('firestore.rules V1 safety contract', () => {
         expect(rules).toContain('match /tenantUsage/{tenantId}');
     });
 
-    it('allows public reports only by active non-expired token and blocks direct writes', () => {
+    it('enforces tenant isolation on candidates and auditLogs for ops users', () => {
+        expect(rules).toContain('match /candidates/{candidateId}');
+        expect(rules).toContain('isAdmin() || isSameTenant(resource.data.tenantId)');
+    });
+
+    it('publicReports blocks all direct reads and writes (all access via callable)', () => {
         expect(rules).toContain('match /publicReports/{token}');
-        expect(rules).toContain('resource.data.expiresAt is timestamp');
-        expect(rules).toContain('request.time < resource.data.expiresAt');
-        expect(rules).toContain('resource.data.active != false');
+        // All reads are now served via Cloud Function callables (getPublicReportView, listOpsPublicReports, listClientPublicReports)
+        expect(rules).toContain('allow read: if false;');
         expect(rules).toContain('allow create: if false;');
         expect(rules).toContain('allow update: if false;');
     });

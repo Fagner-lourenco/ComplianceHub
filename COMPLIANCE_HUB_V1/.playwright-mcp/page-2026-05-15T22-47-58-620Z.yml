@@ -1,0 +1,4 @@
+- status "Carregando ComplianceHub" [ref=e3]:
+  - generic [ref=e4]: CH
+  - heading "ComplianceHub" [level=2] [ref=e5]
+  - paragraph [ref=e6]: Iniciando sistema seguro...

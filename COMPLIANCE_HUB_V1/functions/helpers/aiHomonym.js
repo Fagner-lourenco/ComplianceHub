@@ -7,7 +7,7 @@ const UF_REGION_MAP = {
     SE: 'NORTHEAST', TO: 'NORTH',
 };
 
-const LOW_RISK_ROLE_REGEX = /testemunha|informante|outro|desconhecido/i;
+const { classifyRole } = require('./roleClassifier');
 
 // BUG-10 fix: Use the best available cpfsComNome signal from all providers.
 // When Escavador didn't run, escavadorCpfsComEsseNome is 0, but Judit gate
@@ -54,8 +54,9 @@ function parseAddressCityUf(address) {
     };
 }
 
-function hasLowRiskRole(value) {
-    return LOW_RISK_ROLE_REGEX.test(String(value || ''));
+function hasLowRiskRole(value, area = '') {
+    const classification = classifyRole(value, area);
+    return classification.riskLevel === 'LOW' || classification.riskLevel === 'IGNORE';
 }
 
 function buildCandidateProfile(caseData = {}) {
@@ -164,7 +165,8 @@ function buildEscavadorProcessCandidates(caseData, candidateProfile) {
         const hasDivergentCpf = processo.hasDivergentCpf === true;
         const viaNameOnly = !hasExactCpfMatch && !hasDivergentCpf;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.processUf, processo.processCity);
-        const lowRiskRole = hasLowRiskRole(processo.tipoNormalizado || processo.tipo || processo.polo);
+        const roleClassification = classifyRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area);
+        const lowRiskRole = hasLowRiskRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area);
         const matchStrength = hasExactCpfMatch
             ? 'EXACT_CPF'
             : hasDivergentCpf
@@ -205,6 +207,7 @@ function buildEscavadorProcessCandidates(caseData, candidateProfile) {
             hasExactCpfMatch,
             hasDivergentCpf,
             matchedRole: processo.tipoNormalizado || processo.tipo || processo.polo || null,
+            roleClassification,
             lowRiskRole,
             matchStrength,
             evidenceOrigin,
@@ -228,7 +231,8 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
         const hasDivergentCpf = processo.hasDivergentCpf === true;
         const viaNameOnly = usedNameSupplement && !hasExactCpfMatch && !hasDivergentCpf;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.state, processo.city);
-        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side);
+        const roleClassification = classifyRole(processo.personType || processo.side, processo.area);
+        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side, processo.area);
         const matchStrength = hasExactCpfMatch
             ? 'EXACT_CPF'
             : hasDivergentCpf
@@ -265,6 +269,7 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
             hasExactCpfMatch,
             hasDivergentCpf,
             matchedRole: processo.personType || processo.side || null,
+            roleClassification,
             lowRiskRole,
             matchStrength,
             evidenceOrigin,
@@ -286,7 +291,8 @@ function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
         const hasExactCpfMatch = processo.isDirectCpfMatch === true;
         const viaNameOnly = !hasExactCpfMatch;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.estado, null);
-        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo);
+        const roleClassification = classifyRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType);
+        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType);
         const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
         const evidenceOrigin = resolveEvidenceOrigin('BigDataCorp', hasExactCpfMatch, viaNameOnly, matchStrength);
         const evidenceStrength = resolveEvidenceStrength({
@@ -317,6 +323,7 @@ function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
             hasExactCpfMatch,
             hasDivergentCpf: false,
             matchedRole: processo.specificRole || processo.partyType || processo.polo || null,
+            roleClassification,
             lowRiskRole,
             matchStrength,
             evidenceOrigin,

@@ -6347,7 +6347,7 @@ exports.createAnalystPublicReport = onCall(
                                 return { token: caseData.publicReportToken, expiresAt: expiresDate.toISOString() };
                             }
                             // Report is stale or outdated template — regenerate HTML into existing doc
-                            const freshHtml = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+                            const freshHtml = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot, false);
                             const newExpiresAt = new Date(Date.now() + TTL_DAYS * 24 * 60 * 60 * 1000);
                             await existingRef.update({
                                 html: freshHtml,
@@ -6363,7 +6363,7 @@ exports.createAnalystPublicReport = onCall(
                     }
                 }
 
-                html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+                html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot, false);
             }
         }
 
@@ -6489,7 +6489,7 @@ exports.createClientPublicReport = onCall(
 
         const {
             html,
-            publicSnapshot,
+            publicSnapshot: _publicSnapshot,
             publicSnapshotHash,
         } = await prepareCanonicalReport(caseId, caseData);
 
@@ -6758,6 +6758,40 @@ exports.getOpsCaseReportHtml = onCall(
             tenantId: caseData.tenantId || null,
             publicSnapshotHash,
             reportBuildVersion,
+            generatedAt: new Date().toISOString(),
+        };
+    },
+);
+
+exports.getOpsCaseReportPreview = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 60, cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+        const profile = await getOpsUserProfile(uid);
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+
+        const caseSnap = await db.collection('cases').doc(caseId).get();
+        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+        const caseData = caseSnap.data() || {};
+
+        assertOpsCanAccessCase(profile, caseData, caseId);
+
+        // Preview: nao exige status DONE, usa dados atuais do caso
+        const html = await buildCanonicalReportHtml(caseId, caseData, null, true);
+        
+        // Injeta banner de preview no topo
+        const previewBanner = '<div style="background:#f59e0b;color:#fff;padding:12px 16px;text-align:center;font-weight:bold;font-size:14px;border-radius:0 0 8px 8px;margin-bottom:16px;position:sticky;top:0;z-index:1000;">⚠️ PRÉVIA — RELATÓRIO NÃO FINALIZADO</div>';
+        const htmlWithBanner = previewBanner + html;
+
+        return {
+            html: htmlWithBanner,
+            caseId,
+            candidateName: caseData.candidateName || '',
+            tenantId: caseData.tenantId || null,
+            isPreview: true,
             generatedAt: new Date().toISOString(),
         };
     },
@@ -9310,8 +9344,8 @@ function sanitizePublicReportMeta(meta = {}) {
     };
 }
 
-async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = null) {
-    if (caseData?.status !== 'DONE') {
+async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = null, isPreview = false) {
+    if (!isPreview && caseData?.status !== 'DONE') {
         throw new HttpsError('failed-precondition', `Relatório só pode ser gerado para casos concluídos (status: ${caseData?.status || 'desconhecido'}).`);
     }
 
@@ -9372,7 +9406,6 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         // publicResultData wins over everything above
         ...publicResultData,
         // Explicit overrides that must always be resolved correctly
-        id: caseId,
         timelineEvents,
         sourceSummary: publicResultData.sourceSummary || sourceSummaryFallback,
         statusSummary: publicResultData.statusSummary || 'Análise concluída e pronta para consulta e compartilhamento.',
@@ -9408,7 +9441,7 @@ async function prepareCanonicalReport(caseId, caseData) {
     }
 
     const publicSnapshotHash = computePublicSnapshotHash(publicSnapshot);
-    const html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot);
+    const html = await buildCanonicalReportHtml(caseId, caseData, publicSnapshot, false);
 
     return {
         html,

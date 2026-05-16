@@ -52,7 +52,7 @@
     font-size: .8125rem;
     outline: none;
     background: var(--bg-card);
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .filter-bar__search-input:focus {
@@ -81,7 +81,7 @@
     font-size: .8125rem;
     font-weight: 500;
     background: var(--bg-card);
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .filter-bar__toggle--active {
@@ -465,7 +465,7 @@
     background: var(--gray-200);
     border: 2px solid var(--gray-300);
     z-index: 1;
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .progress-bar-3__seg--active .progress-bar-3__dot {
@@ -527,8 +527,9 @@
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
     font-size: .8125rem;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
+
 .correction-form__input:focus {
     border-color: var(--brand-500);
     box-shadow: 0 0 0 3px rgba(29, 111, 229, .12);

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
@@ -120,6 +120,44 @@ export default function CasosPage() {
         return filtered.slice(start, start + PAGE_SIZE);
     }, [filtered, safeCurrentPage]);
 
+    const handleClickAll = useCallback(() => setStatusFilter('ALL'), []);
+    const handleClickDone = useCallback(() => setStatusFilter('DONE'), []);
+    const handleClickPending = useCallback(() => setStatusFilter('PENDING'), []);
+
+    const renderCard = useCallback((currentCase) => (
+        <>
+            <div className="mobile-card__header">
+                <div>
+                    <div className="mobile-card__title">{currentCase.candidateName}</div>
+                    <div className="mobile-card__subtitle">{currentCase.tenantName}</div>
+                </div>
+                <StatusBadge status={currentCase.status} />
+            </div>
+            <div className="mobile-card__meta">
+                {currentCase.candidatePosition && (
+                    <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
+                )}
+                <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
+            </div>
+            <div className="mobile-card__badges">
+                <SlaBadge caseData={currentCase} />
+                <RiskChip value={currentCase.riskLevel} />
+                <RiskChip value={currentCase.finalVerdict} bold />
+                <ScoreBar score={currentCase.riskScore} />
+                <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
+            </div>
+            <div className="mobile-card__divider" />
+            <div className="mobile-card__actions">
+                <button
+                    className="btn-secondary"
+                    onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
+                >
+                    Abrir
+                </button>
+            </div>
+        </>
+    ), [navigate, routePrefix]);
+
     return (
         <PageShell size="default" className="casos-page">
             <PageHeader
@@ -128,9 +166,9 @@ export default function CasosPage() {
                 description="Consulte todas as análises, filtre por situação e acompanhe os resultados."
             />
             <div className="casos-page__kpis">
-                <KpiCard label="Total" value={stats.total} color="neutral" onClick={() => setStatusFilter('ALL')} />
-                <KpiCard label="Concluidos" value={stats.done} color="green" onClick={() => setStatusFilter('DONE')} />
-                <KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setStatusFilter('PENDING')} />
+                <KpiCard label="Total" value={stats.total} color="neutral" onClick={handleClickAll} />
+                <KpiCard label="Concluidos" value={stats.done} color="green" onClick={handleClickDone} />
+                <KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={handleClickPending} />
                 <KpiCard label="Alertas" value={stats.red} color="red" />
             </div>
 
@@ -209,39 +247,7 @@ export default function CasosPage() {
                 items={paginatedCases}
                 loading={loading}
                 emptyMessage="Nenhum caso encontrado."
-                renderCard={(currentCase) => (
-                    <>
-                        <div className="mobile-card__header">
-                            <div>
-                                <div className="mobile-card__title">{currentCase.candidateName}</div>
-                                <div className="mobile-card__subtitle">{currentCase.tenantName}</div>
-                            </div>
-                            <StatusBadge status={currentCase.status} />
-                        </div>
-                        <div className="mobile-card__meta">
-                            {currentCase.candidatePosition && (
-                                <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
-                            )}
-                            <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
-                        </div>
-                        <div className="mobile-card__badges">
-                            <SlaBadge caseData={currentCase} />
-                            <RiskChip value={currentCase.riskLevel} />
-                            <RiskChip value={currentCase.finalVerdict} bold />
-                            <ScoreBar score={currentCase.riskScore} />
-                            <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
-                        </div>
-                        <div className="mobile-card__divider" />
-                        <div className="mobile-card__actions">
-                            <button
-                                className="btn-secondary"
-                                onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}
-                            >
-                                Abrir
-                            </button>
-                        </div>
-                    </>
-                )}
+                renderCard={renderCard}
             >
                 {/* Desktop table — unchanged */}
                 <div className="casos-page__table-wrapper">

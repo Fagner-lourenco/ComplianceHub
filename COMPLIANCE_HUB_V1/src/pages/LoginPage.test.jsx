@@ -34,6 +34,10 @@ vi.mock('../core/firebase/config', () => ({
     auth: { currentUser: null },
 }));
 
+vi.mock('../core/firebase/firestoreService', () => ({
+    callGetClientGeoIp: vi.fn().mockResolvedValue({ ip: null, city: null, region: null, country: null }),
+}));
+
 describe('LoginPage', () => {
     beforeEach(() => {
         loginPageMocks.navigate.mockReset();

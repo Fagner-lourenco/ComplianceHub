@@ -17,10 +17,12 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const COLLECTION = 'systemHealth';
 
 const PROVIDER_DEFAULTS = {
-    judit:      { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
-    escavador:  { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
-    fontedata:  { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
-    openai:     { maxFails: 3, cooldownMs:  5 * 60 * 1000 },
+    judit:       { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
+    escavador:   { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
+    fontedata:   { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
+    bigdatacorp: { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
+    djen:        { maxFails: 5, cooldownMs: 10 * 60 * 1000 },
+    openai:      { maxFails: 3, cooldownMs:  5 * 60 * 1000 },
 };
 
 /**

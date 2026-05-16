@@ -12,6 +12,7 @@
  */
 
 const WITNESS_TYPES = /testemunha|informante/i;
+const { classifyRole } = require('../helpers/roleClassifier');
 
 function firstNumericValue(candidates = []) {
     for (const candidate of candidates) {
@@ -119,6 +120,7 @@ function normalizeJuditLawsuits(result, cpf) {
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const isWitness = role?.personType && WITNESS_TYPES.test(role.personType);
+        const roleClassification = classifyRole(role?.personType, data.area);
 
         roleSummary.push({
             code: data.code || null,
@@ -141,6 +143,11 @@ function normalizeJuditLawsuits(result, cpf) {
             hasExactCpfMatch,
             hasDivergentCpf,
             isWitness,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
+            roleClassification,
             isCriminal,
             isPossibleHomonym: tags.possible_homonym || false,
             subjects: Array.isArray(data.subjects) ? data.subjects.slice(0, 5).map((s) => s.name || s).filter(Boolean) : [],

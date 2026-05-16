@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Relatorio Publico - Renderizacao', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/demo/r/test-case-1');
+    await page.goto('/demo/r/CASE-001');
     await page.waitForLoadState('networkidle');
   });
 
@@ -12,7 +12,7 @@ test.describe('Relatorio Publico - Renderizacao', () => {
     page.on('console', msg => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
-    await page.goto('/demo/r/test-case-1');
+    await page.goto('/demo/r/CASE-001');
     await page.waitForLoadState('networkidle');
     expect(consoleErrors).toHaveLength(0);
   });
@@ -36,7 +36,7 @@ test.describe('Relatorio Publico - Renderizacao', () => {
     page.on('console', msg => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
-    await page.goto('/demo/r/test-case-1');
+    await page.goto('/demo/r/CASE-001');
     await page.waitForLoadState('networkidle');
     const cspErrors = consoleErrors.filter(e => e.includes('Content Security') || e.includes('csp'));
     expect(cspErrors).toHaveLength(0);

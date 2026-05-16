@@ -10,11 +10,14 @@ const require = createRequire(import.meta.url);
 let mod;
 try {
     mod = require('./index');
-} catch {
-    // Firebase init may fail in some CI environments
+} catch (err) {
+    // BUG-R6-003: Do NOT silently skip tests. Fail loudly so CI catches module load errors.
+    console.error('FATAL: Failed to load functions/index.js for tests:', err.message);
+    throw new Error(`Test suite cannot load functions/index.js: ${err.message}`);
 }
 
-const describeIfLoaded = mod?.__test ? describe : describe.skip;
+// BUG-R6-003: Always run tests — module load failure throws above, never skips.
+const describeIfLoaded = describe;
 
 describeIfLoaded('getClientQuotaStatusInner', () => {
     const { getClientQuotaStatusInner, formatDateKey, formatMonthKey, _setDb } = mod.__test;

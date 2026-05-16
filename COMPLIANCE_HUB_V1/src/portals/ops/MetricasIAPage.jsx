@@ -53,8 +53,8 @@ export default function MetricasIAPage() {
     const [periodDays, setPeriodDays] = useState(30);
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
 
+    const [now] = useState(() => Date.now());
     const m = useMemo(() => {
-        const now = Date.now();
         const cutoff = periodDays > 0
             ? new Date(now - periodDays * 86400000).toISOString().slice(0, 10)
             : '0000';
@@ -140,7 +140,7 @@ export default function MetricasIAPage() {
             reviewRate: pct(decisions.ADJUSTED + decisions.IGNORED, aiCases.length),
             byTenant: Object.entries(byTenant).sort((a, b) => (b[1].fdCost + b[1].aiCost) - (a[1].fdCost + a[1].aiCost)),
         };
-    }, [cases, periodDays, showAllTenants]);
+    }, [cases, periodDays, showAllTenants, now]);
 
     if (loading) return (
         <PageShell size="default" className="ops-dash" role="status" aria-live="polite" aria-label="Carregando metricas de IA">

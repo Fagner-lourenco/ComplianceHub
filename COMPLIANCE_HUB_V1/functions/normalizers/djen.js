@@ -22,10 +22,12 @@
 
 const { getDjenGeoMatch } = require('../helpers/tribunalMap.js');
 const { normalizeText } = require('../helpers/textNormalize.js');
+const { classifyRole } = require('../helpers/roleClassifier');
 
 const CRIMINAL_CLASS_REGEX = /criminal|penal|execu[çc][aã]o\s*penal|habeas\s*corpus|a[çc][aã]o\s*penal|inqu[eé]rito\s*policial|medida\s*de\s*seguran[çc]a/i;
 const LABOR_CLASS_REGEX = /trabalh|reclamat[oó]|dissídio/i;
 const MAX_NORMALIZED_ITEMS = 50;
+const MAX_NORMALIZED_ITEMS_GEO_MATCH = 100;
 const TEXT_TRUNCATE_LENGTH = 500;
 const NAME_SIMILARITY_THRESHOLD = 0.85;
 const PREPOSITIONS = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
@@ -268,31 +270,73 @@ function filterAndConfirmItems(items, candidateName, candidateCpf, knownProcessN
  * @param {string[]} [options.candidateUfs]  UFs where the candidate lives/works, for geo-tagging
  * @returns {object}  Normalized fields with `djen*` prefix
  */
+/**
+ * Compute a probability score (0-100+) for a DJEN comunicação belonging to the candidate.
+ * Higher score = higher confidence this comunicação is actually about the candidate.
+ */
+function computeProbabilityScore(item, namesakeCount) {
+    let score = 0;
+    const confirmation = item._confirmation || {};
+
+    // Identity confirmation (high weight)
+    if (confirmation.level === 'CPF_CONFIRMED') score += 100;
+    else if (confirmation.level === 'PROCESS_CONFIRMED') score += 80;
+    else if (confirmation.level === 'NAME_EXACT') score += 60;
+    else if (confirmation.level === 'NAME_SIMILAR') score += 30;
+
+    // Geo-match (medium-high weight)
+    if (item.geoMatch === true) score += 40;
+    else if (item.geoMatch === false) score -= 20;
+
+    // Criminal area (contextual boost)
+    if (item.area === 'criminal') score += 10;
+
+    // Trabalhista area (moderate boost)
+    if (item.area === 'trabalhista') score += 5;
+
+    // Polo: active party (author) is more relevant
+    if (item.polo === 'A') score += 15;
+    else if (item.polo === 'P') score += 5;
+
+    // Namesake penalty: common names reduce confidence
+    if (namesakeCount > 50) score *= 0.7;
+    else if (namesakeCount > 20) score *= 0.8;
+    else if (namesakeCount > 10) score *= 0.9;
+
+    return Math.round(score);
+}
+
 function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, knownProcessNumbers, options = {}) {
     const { candidateUfs = [] } = options;
     const { count, items, _request } = apiResult || {};
     const rawItems = items || [];
     const processSet = knownProcessNumbers || new Set();
+    const namesakeCount = options.namesakeCount || 0;
 
     // Filter & confirm items
     const { confirmed, filteredOutCount, confirmationStats } = filterAndConfirmItems(
         rawItems, candidateName, candidateCpf, processSet, options,
     );
 
-    let criminalCount = 0;
-    let laborCount = 0;
-    let civelCount = 0;
-    const processedItems = [];
-
+    // STEP 1: Classify and filter — keep only criminal + trabalhista (remove cíveis)
+    const relevantItems = [];
     for (const item of confirmed) {
         const area = classifyArea(item.nomeClasse, item.codigoClasse, item.siglaTribunal);
-        if (area === 'criminal') criminalCount++;
-        else if (area === 'trabalhista') laborCount++;
-        else civelCount++;
+        // Skip cível items — we only care about criminal and trabalhista
+        if (area === 'civel') continue;
+        relevantItems.push({ ...item, _area: area });
+    }
+
+    // STEP 2: Deduplicate by process number — keep the highest-scoring communication per process
+    const byProcess = new Map();
+    for (const item of relevantItems) {
+        const processKey = (item.numero_processo || item.numeroprocessocommascara || item.id || '').toString().trim();
+        if (!processKey) continue;
 
         const confirmation = item._confirmation || {};
+        const geoMatch = getDjenGeoMatch(item.siglaTribunal, candidateUfs);
 
-        processedItems.push({
+        const processedItem = {
             id: item.id,
             dataDisponibilizacao: item.data_disponibilizacao || null,
             tribunal: item.siglaTribunal || null,
@@ -300,12 +344,25 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             tipoComunicacao: item.tipoComunicacao || null,
             classe: item.nomeClasse || null,
             codigoClasse: item.codigoClasse || null,
-            area,
+            area: item._area,
             numeroProcesso: item.numero_processo || null,
             numeroProcessoMascara: item.numeroprocessocommascara || null,
             polo: confirmation.polo || findCandidatePolo(item.destinatarios, candidateName),
             confirmationLevel: confirmation.level || 'PROCESS_CONFIRMED',
-            geoMatch: getDjenGeoMatch(item.siglaTribunal, candidateUfs),
+            roleClassification: (() => {
+                const polo = confirmation.polo || findCandidatePolo(item.destinatarios, candidateName);
+                const area = item._area;
+                // Mapear polo para papel aproximado
+                let role = null;
+                if (polo === 'A') role = 'AUTOR';
+                else if (polo === 'P') role = 'REU';
+                return classifyRole(role, area);
+            })(),
+            isDefendant: false, // sera atualizado abaixo
+            isPlaintiff: false,
+            isVictim: false,
+            isLawyer: false,
+            geoMatch,
             textoResumo: truncateText(
                 (item.texto || '').replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, ''),
                 TEXT_TRUNCATE_LENGTH,
@@ -321,33 +378,66 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             })),
             link: item.link || null,
             ativo: item.ativo ?? true,
-        });
+        };
+
+        // Compute probability score
+        processedItem.probabilityScore = computeProbabilityScore(processedItem, namesakeCount);
+
+        // Update role classification flags
+        const rc = processedItem.roleClassification;
+        processedItem.isDefendant = rc.category === 'DEFENDANT';
+        processedItem.isPlaintiff = rc.category === 'PLAINTIFF';
+        processedItem.isVictim = rc.category === 'VICTIM';
+        processedItem.isLawyer = rc.category === 'LAWYER';
+
+        const existing = byProcess.get(processKey);
+        if (!existing || processedItem.probabilityScore > existing.probabilityScore) {
+            byProcess.set(processKey, processedItem);
+        }
     }
 
-    // Sort: criminal first, then by date descending
-    processedItems.sort((a, b) => {
-        if (a.area === 'criminal' && b.area !== 'criminal') return -1;
-        if (a.area !== 'criminal' && b.area === 'criminal') return 1;
-        // Descending date
-        return (b.dataDisponibilizacao || '').localeCompare(a.dataDisponibilizacao || '');
-    });
+    // Convert map to array
+    let processedItems = [...byProcess.values()];
 
-    // Truncate to max items
-    const normalizedItems = processedItems.slice(0, MAX_NORMALIZED_ITEMS);
+    // Count by area
+    let criminalCount = 0;
+    let laborCount = 0;
+    for (const item of processedItems) {
+        if (item.area === 'criminal') criminalCount++;
+        else if (item.area === 'trabalhista') laborCount++;
+    }
+
+    // Sort by probability score descending (highest confidence first)
+    processedItems.sort((a, b) => b.probabilityScore - a.probabilityScore);
+
+    // Dynamic limit: increase to 100 when there are strong geo-matches
+    const geoMatchedItems = processedItems.filter((i) => i.geoMatch === true);
+    const maxItems = geoMatchedItems.length >= 5
+        ? Math.min(MAX_NORMALIZED_ITEMS_GEO_MATCH, processedItems.length)
+        : MAX_NORMALIZED_ITEMS;
+
+    const normalizedItems = processedItems.slice(0, maxItems);
 
     // Build notes
     const totalFromApi = count || rawItems.length;
+    const civelFiltered = confirmed.length - relevantItems.length;
     let notes = `DJEN: ${totalFromApi} comunicação(ões) da API`;
     if (filteredOutCount > 0) {
         notes += `, ${filteredOutCount} descartada(s) por filtro de nome`;
     }
     notes += `, ${confirmed.length} confirmada(s)`;
-    if (normalizedItems.length < confirmed.length) {
-        notes += ` (${normalizedItems.length} normalizadas)`;
+    if (civelFiltered > 0) {
+        notes += ` (${civelFiltered} cível(is) removida(s))`;
+    }
+    notes += `, ${relevantItems.length} criminal/trabalhista`;
+    if (processedItems.length < relevantItems.length) {
+        notes += ` → ${processedItems.length} processo(s) único(s) após desduplicação`;
+    } else {
+        notes += ` → ${processedItems.length} processo(s) único(s)`;
     }
     notes += '.';
-    if (criminalCount > 0) notes += ` ${criminalCount} na esfera criminal/penal.`;
-    if (laborCount > 0) notes += ` ${laborCount} na esfera trabalhista.`;
+    if (criminalCount > 0) notes += ` ${criminalCount} criminal/penal.`;
+    if (laborCount > 0) notes += ` ${laborCount} trabalhista.`;
     if (totalFromApi >= 10000) notes += ' ATENÇÃO: limite de 10.000 resultados atingido — possível excesso de homônimos.';
 
     // Strict mode note
@@ -360,6 +450,16 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
     const geoOut = normalizedItems.filter((i) => i.geoMatch === false).length;
     if (candidateUfs.length > 0 && (geoIn > 0 || geoOut > 0)) {
         notes += ` ${geoIn} na UF do candidato (${candidateUfs.join(',')}), ${geoOut} em outros estados.`;
+    }
+
+    // Probability score breakdown
+    const highScoreItems = normalizedItems.filter((i) => (i.probabilityScore || 0) >= 80);
+    const mediumScoreItems = normalizedItems.filter((i) => {
+        const s = i.probabilityScore || 0;
+        return s >= 50 && s < 80;
+    });
+    if (highScoreItems.length > 0 || mediumScoreItems.length > 0) {
+        notes += ` ${highScoreItems.length} alta confiança (score ≥80), ${mediumScoreItems.length} média confiança (50-79).`;
     }
 
     // Confirmation breakdown
@@ -387,7 +487,8 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
         djenCriminalCount: criminalCount,
         djenLaborFlag: laborCount > 0,
         djenLaborCount: laborCount,
-        djenCivelCount: civelCount,
+        djenProcessCount: processedItems.length,
+        djenCivelCount: civelFiltered,
         djenComunicacoes: normalizedItems,
         djenNotes: notes,
         _source: {
@@ -400,7 +501,12 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             confirmationStats,
             criminalCount,
             laborCount,
-            civelCount,
+            civelCount: 0,
+            processCount: processedItems.length,
+            candidateUfsUsed: candidateUfs,
+            namesakeCount,
+            geoMatchedCount: geoIn,
+            highScoreCount: highScoreItems.length,
             consultedAt: new Date().toISOString(),
         },
     };

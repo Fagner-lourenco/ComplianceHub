@@ -15,5 +15,6 @@ export function getOverallEnrichmentStatus(caseData) {
     if (statuses.includes('FAILED') && statuses.includes('DONE')) return 'PARTIAL';
     if (statuses.includes('FAILED')) return 'FAILED';
     if (statuses.includes('DONE')) return 'DONE';
+    if (statuses.length > 0 && statuses.every((status) => status === 'SKIPPED')) return 'SKIPPED';
     return 'PENDING';
 }

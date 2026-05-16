@@ -8,10 +8,11 @@ export const ROLES = {
     ANALYST: 'analyst',
     SUPERVISOR: 'supervisor',
     ADMIN: 'admin',
+    OWNER: 'owner',
 };
 
 export const CLIENT_ROLES = [ROLES.LEGACY_CLIENT, ROLES.CLIENT_VIEWER, ROLES.CLIENT_OPERATOR, ROLES.CLIENT_MANAGER];
-export const OPS_ROLES = [ROLES.ANALYST, ROLES.SUPERVISOR, ROLES.ADMIN];
+export const OPS_ROLES = [ROLES.ANALYST, ROLES.SUPERVISOR, ROLES.ADMIN, ROLES.OWNER];
 
 const ROLE_LABELS = {
     [ROLES.LEGACY_CLIENT]: 'Cliente',
@@ -21,6 +22,7 @@ const ROLE_LABELS = {
     [ROLES.ANALYST]: 'Analista',
     [ROLES.SUPERVISOR]: 'Supervisor',
     [ROLES.ADMIN]: 'Administrador',
+    [ROLES.OWNER]: 'Proprietario',
 };
 
 export const PERMISSIONS = {
@@ -36,6 +38,9 @@ export const PERMISSIONS = {
     TENANT_AUDIT_VIEW: 'tenant_audit.view',
     // Settings
     SETTINGS_MANAGE: 'settings.manage',
+    // Public Reports
+    REPORT_PUBLIC_VIEW: 'report_public.view',
+    REPORT_PUBLIC_MANAGE: 'report_public.manage',
 };
 
 const ROLE_PERMISSIONS = {
@@ -47,11 +52,13 @@ const ROLE_PERMISSIONS = {
     [ROLES.CLIENT_VIEWER]: [
         PERMISSIONS.CASE_READ,
         PERMISSIONS.CASE_EXPORT,
+        PERMISSIONS.REPORT_PUBLIC_VIEW,
     ],
     [ROLES.CLIENT_OPERATOR]: [
         PERMISSIONS.CASE_READ,
         PERMISSIONS.CASE_CREATE_REQUEST,
         PERMISSIONS.CASE_EXPORT,
+        PERMISSIONS.REPORT_PUBLIC_VIEW,
     ],
     [ROLES.CLIENT_MANAGER]: [
         PERMISSIONS.CASE_READ,
@@ -60,12 +67,15 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.USERS_MANAGE,
         PERMISSIONS.SETTINGS_MANAGE,
         PERMISSIONS.TENANT_AUDIT_VIEW,
+        PERMISSIONS.REPORT_PUBLIC_VIEW,
+        PERMISSIONS.REPORT_PUBLIC_MANAGE,
     ],
     [ROLES.ANALYST]: [
         PERMISSIONS.CASE_READ,
         PERMISSIONS.CASE_WRITE,
         PERMISSIONS.CASE_EXPORT,
         PERMISSIONS.AUDIT_VIEW,
+        PERMISSIONS.REPORT_PUBLIC_VIEW,
     ],
     [ROLES.SUPERVISOR]: [
         PERMISSIONS.CASE_READ,
@@ -73,8 +83,11 @@ const ROLE_PERMISSIONS = {
         PERMISSIONS.CASE_EXPORT,
         PERMISSIONS.AUDIT_VIEW,
         PERMISSIONS.USERS_MANAGE,
+        PERMISSIONS.REPORT_PUBLIC_VIEW,
+        PERMISSIONS.REPORT_PUBLIC_MANAGE,
     ],
     [ROLES.ADMIN]: Object.values(PERMISSIONS), // All permissions
+    [ROLES.OWNER]: Object.values(PERMISSIONS), // All permissions
 };
 
 export function hasPermission(role, permission) {

@@ -75,6 +75,20 @@ const AUDIT_ACTIONS = {
         clientVisible: false,
         summaryTemplate: 'Caso assumido por {actorName}',
     },
+    CASE_REASSIGNED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Caso reatribuido para {targetName} por {actorName}',
+    },
+    CASE_UNASSIGNED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Responsavel removido do caso por {actorName}',
+    },
     CASE_RETURNED: {
         category: CATEGORY.CASE,
         level: LEVEL.WARNING,
@@ -151,6 +165,22 @@ const AUDIT_ACTIONS = {
         clientSummaryTemplate: 'Exportação criada — {records} registro(s)',
     },
 
+    CLIENT_REPORT_PDF_GENERATED: {
+        category: CATEGORY.EXPORT,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: true,
+        summaryTemplate: 'PDF do relatório gerado para {candidateName}',
+        clientSummaryTemplate: 'PDF do relatório gerado',
+    },
+    PUBLIC_REPORT_PDF_GENERATED: {
+        category: CATEGORY.EXPORT,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.REPORT_PUBLIC,
+        clientVisible: false,
+        summaryTemplate: 'PDF do relatório público gerado para {candidateName}',
+    },
+
     // ─── Tenant admin ────────────────────────────────────────────────────────
     USER_CREATED: {
         category: CATEGORY.TENANT_ADMIN,
@@ -174,6 +204,20 @@ const AUDIT_ACTIONS = {
         clientVisible: true,
         summaryTemplate: 'Usuário {targetEmail} atualizado — {changes}',
         clientSummaryTemplate: 'Usuário atualizado na franquia',
+    },
+    OPS_USER_CREATED: {
+        category: CATEGORY.TENANT_ADMIN,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.USER,
+        clientVisible: false,
+        summaryTemplate: 'Usuario operacional {targetEmail} criado por {actorName}',
+    },
+    OPS_USER_UPDATED: {
+        category: CATEGORY.TENANT_ADMIN,
+        level: LEVEL.AUDIT,
+        entityType: ENTITY_TYPE.USER,
+        clientVisible: false,
+        summaryTemplate: 'Usuario operacional {targetEmail} atualizado — {changes}',
     },
 
     // ─── Profile ─────────────────────────────────────────────────────────────

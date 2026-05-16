@@ -180,7 +180,9 @@ describe('writeAuditEvent', () => {
                 action: 'SOLICITATION_CREATED', // clientVisible: true
                 tenantId: 'tenant-1',
                 actor: { type: 'CLIENT_USER', id: 'u1', email: 'a@b.com', displayName: 'Ana' },
+                entity: { type: 'CASE', id: 'case-1', label: 'Maria' },
                 templateVars: { candidateName: 'Maria' },
+                detail: 'CPF 123.456.789-00 e nota interna',
             });
 
             // auditLogs write
@@ -196,6 +198,24 @@ describe('writeAuditEvent', () => {
             expect(tenantDoc.tenantId).toBe('tenant-1');
             // clientSummary should be interpolated
             expect(tenantDoc.summary).toContain('Maria');
+            expect(tenantDoc.actor).toMatchObject({ displayName: 'Ana', email: 'a@b.com' });
+            expect(tenantDoc.entity).toMatchObject({ type: 'CASE', id: 'case-1', label: 'Maria' });
+            expect(tenantDoc.detail).toBeNull();
+        });
+
+        it('projeta somente clientDetail quando detalhe cliente for informado', async () => {
+            await writeAuditEvent({
+                action: 'SOLICITATION_CREATED',
+                tenantId: 'tenant-1',
+                actor: { email: 'a@b.com' },
+                templateVars: { candidateName: 'Maria' },
+                detail: 'CPF 123.456.789-00 e nota interna',
+                clientDetail: 'Solicitação recebida pelo portal do cliente.',
+            });
+
+            const tenantDoc = mockSet.mock.calls[0][0];
+            expect(tenantDoc.detail).toBe('Solicitação recebida pelo portal do cliente.');
+            expect(tenantDoc.detail).not.toContain('CPF');
         });
 
         it('NAO projeta quando clientVisible eh false', async () => {
@@ -223,18 +243,43 @@ describe('writeAuditEvent', () => {
             expect(collectionCalls).not.toContain('tenantAuditLogs');
         });
 
-        it('falha na projecao nao propaga erro (catch silencioso)', async () => {
+        it('NAO projeta para tenantAuditLogs quando actor.type eh OPS_USER mesmo com clientVisible true', async () => {
+            await writeAuditEvent({
+                action: 'CASE_CONCLUDED', // clientVisible: true
+                tenantId: 'tenant-1',
+                actor: { type: 'OPS_USER', id: 'u1', email: 'ops@ops.com', displayName: 'Analista OPS' },
+                entity: { type: 'CASE', id: 'case-1', label: 'Candidato X' },
+                templateVars: { candidateName: 'Candidato X', verdict: 'APTO' },
+            });
+
+            const collectionCalls = mockCollection.mock.calls.map(c => c[0]);
+            expect(collectionCalls).toContain('auditLogs');
+            expect(collectionCalls).not.toContain('tenantAuditLogs');
+        });
+
+        it('projeta para tenantAuditLogs quando actor.type eh CLIENT_USER e clientVisible true', async () => {
+            await writeAuditEvent({
+                action: 'CASE_CORRECTED', // clientVisible: true
+                tenantId: 'tenant-1',
+                actor: { type: 'CLIENT_USER', id: 'u2', email: 'cliente@franquia.com', displayName: 'Cliente Admin' },
+                entity: { type: 'CASE', id: 'case-1', label: 'Candidato Y' },
+                templateVars: { candidateName: 'Candidato Y' },
+            });
+
+            const collectionCalls = mockCollection.mock.calls.map(c => c[0]);
+            expect(collectionCalls).toContain('auditLogs');
+            expect(collectionCalls).toContain('tenantAuditLogs');
+        });
+
+        it('falha na projecao propaga erro para tornar auditoria observavel', async () => {
             mockSet.mockRejectedValueOnce(new Error('Firestore write failed'));
 
-            // Should NOT throw
-            const eventId = await writeAuditEvent({
+            await expect(writeAuditEvent({
                 action: 'SOLICITATION_CREATED',
                 tenantId: 'tenant-1',
                 actor: { email: 'a@b.com' },
                 templateVars: { candidateName: 'Y' },
-            });
-
-            expect(eventId).toBe('audit-event-123');
+            })).rejects.toThrow('tenantAuditLogs projection failed');
         });
     });
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
@@ -81,6 +81,33 @@ export default function AuditoriaClientePage() {
     const hasFilters = categoryFilter !== 'ALL' || Boolean(searchTerm);
     const visibleCountLabel = hasFilters ? `${filtered.length} de ${logs.length}` : String(filtered.length);
 
+    const renderCard = useCallback((log) => {
+        const badge = getActionBadgeStyle(log.action);
+        const catStyle = log.category ? getCategoryColor(log.category) : null;
+        const actor = getActorLabel(log.actor, log.user);
+        const entity = getEntityLabel(log.entity, log.target);
+        return (
+            <article className="auditoria-ledger-card">
+                <div className="auditoria-ledger-card__top">
+                    <span className="audit-action-badge" style={{ color: badge.color, background: badge.bg }}>
+                        {getActionLabel(log.action)}
+                    </span>
+                    {catStyle && (
+                        <span className="audit-action-badge" style={{ color: catStyle.color, background: catStyle.bg }}>
+                            {getCategoryLabel(log.category)}
+                        </span>
+                    )}
+                    <span className="auditoria-ledger-card__time">{log.timestamp}</span>
+                </div>
+                <dl className="auditoria-ledger-card__grid">
+                    <div><dt>Responsável</dt><dd>{actor}</dd></div>
+                    <div><dt>Alvo</dt><dd>{entity}</dd></div>
+                    <div><dt>Detalhe</dt><dd>{log.clientSummary || log.summary || 'Evento registrado.'}</dd></div>
+                </dl>
+            </article>
+        );
+    }, []);
+
     return (
         <PageShell size="default" className="auditoria-cliente-page">
             <PageHeader
@@ -125,33 +152,7 @@ export default function AuditoriaClientePage() {
                 items={filtered}
                 loading={loading}
                 emptyMessage={error ? getErrorMessage(error) : 'Nenhum registro encontrado nos eventos carregados.'}
-                renderCard={(log) => {
-                    const badge = getActionBadgeStyle(log.action);
-                    const catStyle = log.category ? getCategoryColor(log.category) : null;
-                    const actor = getActorLabel(log.actor, log.user);
-                    const entity = getEntityLabel(log.entity, log.target);
-                    return (
-                        <article className="auditoria-ledger-card">
-                            <div className="auditoria-ledger-card__top">
-                                <span className="audit-action-badge" style={{ color: badge.color, background: badge.bg }}>
-                                    {getActionLabel(log.action)}
-                                </span>
-                                {catStyle && (
-                                    <span className="audit-action-badge" style={{ color: catStyle.color, background: catStyle.bg }}>
-                                        {getCategoryLabel(log.category)}
-                                    </span>
-                                )}
-                                <span className="auditoria-ledger-card__time">{log.timestamp}</span>
-                            </div>
-                            <dl className="auditoria-ledger-card__grid">
-                                <div><dt>Responsável</dt><dd>{actor}</dd></div>
-                                <div><dt>Alvo</dt><dd>{entity}</dd></div>
-                                <div><dt>Detalhe</dt><dd>{log.clientSummary || log.summary || 'Evento registrado.'}</dd></div>
-                                <div><dt>ID do evento</dt><dd className="auditoria-event-id">{getEventId(log)}</dd></div>
-                            </dl>
-                        </article>
-                    );
-                }}
+                renderCard={renderCard}
             >
                 <div className="auditoria-cliente-table-wrapper">
                     <table className="data-table auditoria-ledger-table" aria-label="Histórico de atividades da empresa">

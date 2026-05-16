@@ -142,7 +142,7 @@ export function TenantProvider({ children }) {
             : tenants.find((tenant) => tenant.id === selectedTenantId) || null
     ), [selectedTenantId, tenants]);
 
-    const selectTenant = (nextTenantId) => {
+    const selectTenant = useCallback((nextTenantId) => {
         if (!canAccessAllTenants(userProfile?.role)) {
             return;
         }
@@ -155,24 +155,35 @@ export function TenantProvider({ children }) {
         if (tenants.some((tenant) => tenant.id === nextTenantId)) {
             setSelectedTenantId(nextTenantId);
         }
-    };
+    }, [tenants, userProfile?.role]);
 
-    const value = {
-        canAccessAllTenants: canAccessAllTenants(userProfile?.role),
-        canSelectTenant: canAccessAllTenants(userProfile?.role) && tenants.length > 1,
+    const canAccessEveryTenant = canAccessAllTenants(userProfile?.role);
+    const selectedTenantLabel = useMemo(() => getSelectedTenantLabel({
+        role: userProfile?.role,
         selectedTenantId,
         selectedTenant,
-        selectedTenantLabel: getSelectedTenantLabel({
-            role: userProfile?.role,
-            selectedTenantId,
-            selectedTenant,
-            userProfile,
-            tenantStatus,
-        }),
+        userProfile,
+        tenantStatus,
+    }), [selectedTenantId, selectedTenant, tenantStatus, userProfile]);
+
+    const value = useMemo(() => ({
+        canAccessAllTenants: canAccessEveryTenant,
+        canSelectTenant: canAccessEveryTenant && tenants.length > 1,
+        selectedTenantId,
+        selectedTenant,
+        selectedTenantLabel,
         setSelectedTenantId: selectTenant,
         tenantStatus,
         tenants,
-    };
+    }), [
+        canAccessEveryTenant,
+        selectedTenantId,
+        selectedTenant,
+        selectedTenantLabel,
+        selectTenant,
+        tenantStatus,
+        tenants,
+    ]);
 
     return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
 }

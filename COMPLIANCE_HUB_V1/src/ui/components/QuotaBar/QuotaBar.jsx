@@ -48,7 +48,27 @@ export default function QuotaBar({ label, count = 0, limit, allowExceedance, com
     );
 }
 
-export function QuotaSummaryCard({ quota }) {
+export function QuotaSummaryCard({ quota, loading = false, error = null }) {
+    if (loading) {
+        return (
+            <div className="quota-summary-card quota-summary-card--muted" role="status" aria-live="polite">
+                <div className="quota-summary-card__title">Consumo de Consultas</div>
+                <p className="quota-summary-card__message">Carregando empresa e limites...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="quota-summary-card quota-summary-card--warning" role="alert">
+                <div className="quota-summary-card__title">Consumo temporariamente indisponivel</div>
+                <p className="quota-summary-card__message">
+                    Nao foi possivel carregar o consumo agora. Os limites continuam sendo validados no servidor.
+                </p>
+            </div>
+        );
+    }
+
     if (!quota || !quota.hasLimits) return null;
 
     return (

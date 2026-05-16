@@ -12,6 +12,7 @@ import { ERROR_MESSAGES } from '../../core/copy';
 import './NovaSolicitacaoPage.css';
 
 const STEP_LABELS = ['Identidade', 'Redes sociais', 'Contexto', 'Revisão'];
+const SOCIAL_FIELDS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'];
 
 const INITIAL_FORM = {
     fullName: '',
@@ -220,7 +221,6 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     }, [showSocialSection]);
     const totalSteps = stepLabels.length;
 
-    const SOCIAL_FIELDS = ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'];
     const filledSocials = SOCIAL_FIELDS.filter((k) => form[k]).length + form.otherSocialUrls.length;
     const socialSummary = filledSocials > 0
         ? `${filledSocials} rede${filledSocials !== 1 ? 's' : ''} informada${filledSocials !== 1 ? 's' : ''}`
@@ -239,7 +239,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         else if (!validateCpf(form.cpf)) next.cpf = 'CPF inválido — verifique os dígitos.';
         if (!form.hiringUf) next.hiringUf = 'UF de local de trabalho é obrigatória.';
         if (!form.candidateResidenceUf) next.candidateResidenceUf = 'UF de residência atual é obrigatória.';
-        ['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].forEach((field) => {
+        SOCIAL_FIELDS.forEach((field) => {
             if (form[field] && !validateUrl(form[field])) {
                 next[field] = 'Informe uma URL válida (https://...) ou um @usuário.';
             }
@@ -455,7 +455,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                             )}
 
                             {/* Step 1 — Identidade */}
-                            <div className="ns-section" style={isMobile && step !== 0 ? { display: 'none' } : undefined}>
+                            {(!isMobile || step === 0) && (
+                            <div className="ns-section">
                                 <div className="ns-section__header">
                                     <span className="ns-section__icon">01</span>
                                     <div>
@@ -597,12 +598,12 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                     </div>
                                 </div>
                             </div>
+                            )}
 
                             {/* Step 2 — Fontes digitais */}
-                            {showSocialSection && (
+                            {showSocialSection && (!isMobile || step === 1) && (
                             <div
                                 className={`ns-section${!isMobile ? ' ns-section--accordion' : ''}${(!isMobile && openSections.social) ? ' ns-section--expanded' : ''}`}
-                                style={isMobile && step !== 1 ? { display: 'none' } : undefined}
                             >
                                 <div
                                     className="ns-section__header"
@@ -705,9 +706,9 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                             )}
 
                             {/* Step 3 — Contexto */}
+                            {(!isMobile || step === 2) && (
                             <div
                                 className={`ns-section${!isMobile ? ' ns-section--accordion' : ''}${(!isMobile && openSections.context) ? ' ns-section--expanded' : ''}`}
-                                style={isMobile && step !== 2 ? { display: 'none' } : undefined}
                             >
                                 <div
                                     className="ns-section__header"
@@ -780,6 +781,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                 </div>
                                 )}
                             </div>
+                            )}
 
                             {/* Step 4 — Revisão (mobile only) */}
                             {isMobile && step === 3 && (
@@ -812,13 +814,13 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             Redes sociais
                                             <button type="button" className="ns-review__edit" onClick={() => setStep(1)}>Editar</button>
                                         </div>
-                                        {['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].filter((k) => form[k]).map((k) => (
+                                        {SOCIAL_FIELDS.filter((k) => form[k]).map((k) => (
                                             <div key={k} className="ns-review__item"><span>{k}:</span> {form[k]}</div>
                                         ))}
                                         {form.otherSocialUrls.map((s, i) => (
                                             <div key={i} className="ns-review__item"><span>{s.label}:</span> {s.url}</div>
                                         ))}
-                                        {!['instagram', 'facebook', 'linkedin', 'tiktok', 'twitter', 'youtube'].some((k) => form[k]) && form.otherSocialUrls.length === 0 && (
+                                        {!SOCIAL_FIELDS.some((k) => form[k]) && form.otherSocialUrls.length === 0 && (
                                             <div className="ns-review__item ns-review__item--empty">Nenhuma rede informada — a busca por perfis públicos ficará limitada.</div>
                                         )}
                                     </div>

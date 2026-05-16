@@ -3,6 +3,31 @@ import { getSlaStatus, getSlaColor } from '../../../core/caseSla';
 import { formatDateTimeBR } from '../../../core/formatDate';
 import './SlaBadge.css';
 
+/* =========================================================
+   Shared clock — one interval for all SlaBadge instances
+   ========================================================= */
+
+let intervalId = null;
+const listeners = new Set();
+
+function notifyListeners() {
+    listeners.forEach((fn) => fn());
+}
+
+function subscribeToClock(callback) {
+    listeners.add(callback);
+    if (listeners.size === 1) {
+        intervalId = window.setInterval(notifyListeners, 60_000);
+    }
+    return () => {
+        listeners.delete(callback);
+        if (listeners.size === 0 && intervalId !== null) {
+            window.clearInterval(intervalId);
+            intervalId = null;
+        }
+    };
+}
+
 /**
  * Indicador de prazo que mostra tempo restante / atraso de uma solicitação.
  * Auto-refreshes every minute for pending cases.
@@ -14,8 +39,7 @@ function SlaBadge({ caseData, size = 'sm', audience = 'client' }) {
 
     useEffect(() => {
         if (!isPending) return undefined;
-        const id = setInterval(() => setTick((t) => t + 1), 60_000);
-        return () => clearInterval(id);
+        return subscribeToClock(() => setTick((t) => t + 1));
     }, [isPending]);
 
     const status = getSlaStatus(caseData);

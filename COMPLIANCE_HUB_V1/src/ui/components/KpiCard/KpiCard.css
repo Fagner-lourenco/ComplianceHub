@@ -1,4 +1,5 @@
 .kpi-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -8,64 +9,113 @@
     border: 1px solid var(--border-default);
     min-width: 140px;
     flex: 1;
-    transition: all var(--transition-fast);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
     text-align: left;
+    overflow: hidden;
 }
 
-.kpi-card:hover {
+/* Top accent bar */
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gray-200);
+    transition: background var(--transition-fast);
+}
+
+button.kpi-card {
+    cursor: pointer;
+}
+
+button.kpi-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-card-hover);
+    border-color: transparent;
 }
 
 .kpi-card__value {
-    font-size: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 2rem;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    margin-top: var(--space-1);
 }
 
 .kpi-card__label {
-    font-size: .75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-top: 2px;
+    font-size: .6875rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-top: 6px;
 }
 
+/* Neutral */
 .kpi-card--neutral .kpi-card__value {
     color: var(--text-primary);
 }
 
+.kpi-card--neutral::before {
+    background: linear-gradient(90deg, var(--brand-400), var(--brand-300));
+}
+
+/* Green */
 .kpi-card--green .kpi-card__value {
     color: var(--green-600);
 }
 
-.kpi-card--green {
-    border-color: var(--green-100);
-    background: linear-gradient(135deg, var(--bg-card), var(--green-50));
+.kpi-card--green::before {
+    background: linear-gradient(90deg, var(--green-500), var(--green-600));
 }
 
+.kpi-card--green {
+    border-color: var(--green-100);
+    background: linear-gradient(160deg, var(--bg-card) 60%, var(--green-50));
+}
+
+/* Yellow */
 .kpi-card--yellow .kpi-card__value {
     color: var(--yellow-600);
 }
 
-.kpi-card--yellow {
-    border-color: var(--yellow-100);
-    background: linear-gradient(135deg, var(--bg-card), var(--yellow-50));
+.kpi-card--yellow::before {
+    background: linear-gradient(90deg, var(--yellow-400), var(--yellow-500));
 }
 
+.kpi-card--yellow {
+    border-color: var(--yellow-100);
+    background: linear-gradient(160deg, var(--bg-card) 60%, var(--yellow-50));
+}
+
+/* Red */
 .kpi-card--red .kpi-card__value {
     color: var(--red-600);
 }
 
-.kpi-card--red {
-    border-color: var(--red-100);
-    background: linear-gradient(135deg, var(--bg-card), var(--red-50));
+.kpi-card--red::before {
+    background: linear-gradient(90deg, var(--red-500), var(--red-600));
 }
 
+.kpi-card--red {
+    border-color: var(--red-100);
+    background: linear-gradient(160deg, var(--bg-card) 60%, var(--red-50));
+}
+
+/* Blue */
 .kpi-card--blue .kpi-card__value {
     color: var(--blue-600);
 }
 
+.kpi-card--blue::before {
+    background: linear-gradient(90deg, var(--blue-400), var(--blue-500));
+}
+
 .kpi-card--blue {
     border-color: var(--blue-100);
-    background: linear-gradient(135deg, var(--bg-card), var(--blue-50));
+    background: linear-gradient(160deg, var(--bg-card) 60%, var(--blue-50));
 }

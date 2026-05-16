@@ -5,7 +5,8 @@
  * plus a `_source` key for audit trail.
  */
 
-const CRIMINAL_AREAS = /penal|criminal/i;
+const { classifyRole } = require('../helpers/roleClassifier');
+const CRIMINAL_AREAS = /penal|criminal|crime|crim\.?|a[çc][aã]o\s*penal|inqu[ée]rito|inquerito|termo\s*circunstanciado|contraven[çc][aã]o|viol[eê]ncia\s*dom[eé]stica|maria\s*da\s*penha|medida\s*protetiva/i;
 
 /**
  * Find the role of a person in a process's envolvidos array by CPF.
@@ -51,6 +52,7 @@ function normalizeEscavadorProcessos(result, cpf) {
     const cpfsComEsseNome = envolvido?.cpfs_com_esse_nome || 0;
 
     let criminalCount = 0;
+    let laborCount = 0;
     const processos = [];
 
     for (const item of items) {
@@ -58,14 +60,20 @@ function normalizeEscavadorProcessos(result, cpf) {
         const fonte = Array.isArray(item.fontes) ? item.fontes[0] : null;
         const capa = fonte?.capa || {};
         const area = capa.area || '';
+        const classe = capa.classe || '';
         const isCriminal = CRIMINAL_AREAS.test(area);
+        const isLabor = /trabalh|reclamat[oó]ria|diss[ií]dio/i.test(area) ||
+            /trabalh|reclamat[oó]ria|diss[ií]dio/i.test(classe) ||
+            /\bTRT\d*\b|\bTST\b/i.test(fonte?.sigla || '');
         if (isCriminal) criminalCount++;
+        if (isLabor) laborCount++;
 
         // Find person's role in this process
         const envolvidos = fonte?.envolvidos || [];
         const role = findPersonRole(envolvidos, cpf);
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
+        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, area);
 
         processos.push({
             numeroCnj: item.numero_cnj || null,
@@ -89,10 +97,18 @@ function normalizeEscavadorProcessos(result, cpf) {
             matchDocumentoPor: item.match_documento_por || null,
             hasExactCpfMatch,
             hasDivergentCpf,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
+            roleClassification,
+            isCriminal,
+            isLabor,
         });
     }
 
     const hasCriminal = criminalCount > 0;
+    const hasLabor = laborCount > 0;
     const activeCount = processos.filter((p) =>
         p.status && /ativo/i.test(p.status),
     ).length;
@@ -103,6 +119,7 @@ function normalizeEscavadorProcessos(result, cpf) {
     if (truncated) notes += ' [TRUNCADO: mais páginas disponíveis na API]';
     notes += '.';
     if (hasCriminal) notes += ` ${criminalCount} na esfera criminal/penal.`;
+    if (hasLabor) notes += ` ${laborCount} na esfera trabalhista.`;
     if (activeCount > 0) notes += ` ${activeCount} processo(s) ativo(s).`;
 
     // Process summary (top 10)
@@ -122,6 +139,8 @@ function normalizeEscavadorProcessos(result, cpf) {
         escavadorProcessTotal: totalFromApi,
         escavadorCriminalFlag: hasCriminal ? 'POSITIVE' : 'NEGATIVE',
         escavadorCriminalCount: criminalCount,
+        escavadorLaborFlag: hasLabor ? 'POSITIVE' : 'NEGATIVE',
+        escavadorLaborCount: laborCount,
         escavadorActiveCount: activeCount,
         escavadorCpfsComEsseNome: cpfsComEsseNome,
         escavadorHomonymFlag: cpfsComEsseNome > 1,

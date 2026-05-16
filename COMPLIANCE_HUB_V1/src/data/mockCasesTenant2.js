@@ -39,7 +39,7 @@ export const TEN_002_CASES = [
         analysisStartedAt: '2026-03-24T09:40:00-03:00',
         updatedAt: '2026-03-25T13:10:00-03:00',
         concludedAt: '2026-03-25T13:10:00-03:00',
-        slaHours: 48,
+        slaHours: 3,
         turnaroundHours: 28.2,
         status: 'DONE',
         criminalFlag: 'NEGATIVE',

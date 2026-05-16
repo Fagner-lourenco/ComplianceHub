@@ -181,7 +181,6 @@ function normalizeProcessos(result) {
 
     const fontedataCriminalFlag = hasCriminal ? 'POSITIVE' : 'NEGATIVE';
     return {
-        criminalFlag: fontedataCriminalFlag,
         fontedataCriminalFlag,
         criminalNotes,
         processTotal: totalProcessos,

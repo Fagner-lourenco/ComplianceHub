@@ -5,6 +5,7 @@ import { useAuth } from '../../core/auth/useAuth';
 import {
     callRegisterClientExport,
     subscribeToExports,
+    getCasePublicResult,
 } from '../../core/firebase/firestoreService';
 import { getMockCaseById, getMockExports } from '../../data/mockData';
 import { useCases } from '../../hooks/useCases';
@@ -953,19 +954,20 @@ export default function ExportacoesPage() {
     const exportTypeConfig = EXPORT_TYPE_OPTIONS[exportType] || EXPORT_TYPE_OPTIONS.CSV;
     const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
 
-    const prepareExportArtifact = () => {
+    const prepareExportArtifact = (casesToExport = filteredCases) => {
         const ts = new Date().toISOString().slice(0, 10);
         if (exportType === 'CSV') {
             return {
                 mode: 'download',
-                blob: new Blob(['\uFEFF' + buildCsvContent(filteredCases)], { type: 'text/csv;charset=utf-8' }),
+                blob: new Blob(['\uFEFF' + buildCsvContent(casesToExport)], { type: 'text/csv;charset=utf-8' }),
                 filename: `${isDemoMode ? 'compliancehub-demo-resumo' : 'compliancehub-resumo-exportacao'}-${ts}.csv`,
             };
         }
         if (exportType === 'REPORT') {
-            return { mode: 'html', html: buildBatchReportHtml(filteredCases, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
+            const doneCases = casesToExport.filter((c) => c.status === 'DONE');
+            return { mode: 'html', html: buildBatchReportHtml(doneCases, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
         }
-        return { mode: 'html', html: buildPrintableHtml(filteredCases, scopeLabel + dateRange, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
+        return { mode: 'html', html: buildPrintableHtml(casesToExport, scopeLabel + dateRange, userProfile?.tenantName || (isDemoMode ? 'Demo' : '')) };
     };
 
     const deliverPreparedExport = (prepared) => {
@@ -974,6 +976,37 @@ export default function ExportacoesPage() {
             return;
         }
         openHtmlBlob(prepared.html);
+    };
+
+    /**
+     * Enrich cases with publicResult data for consistent report generation.
+     * REPORT-002: Batch reports must use enriched data (same as public reports).
+     */
+    const enrichCasesForExport = async (casesToEnrich) => {
+        if (isDemoMode) {
+            return casesToEnrich.map((c) => {
+                if (c.status === 'DONE' && c.publicResultMock) {
+                    return { ...c, ...c.publicResultMock };
+                }
+                return c;
+            });
+        }
+
+        const enriched = await Promise.all(
+            casesToEnrich.map(async (c) => {
+                if (c.status !== 'DONE') return c;
+                try {
+                    const publicResult = await getCasePublicResult(c.id);
+                    if (publicResult) {
+                        return { ...c, ...publicResult };
+                    }
+                } catch {
+                    // Fallback to caseData if publicResult unavailable
+                }
+                return c;
+            }),
+        );
+        return enriched;
     };
 
     const handleExport = async () => {
@@ -995,29 +1028,31 @@ export default function ExportacoesPage() {
             return;
         }
 
-        if (isDemoMode) {
-            setExporting(true);
-            demoTimerRef.current = window.setTimeout(() => {
-                try {
-                    deliverPreparedExport(prepareExportArtifact());
-                    setFeedback(`${exportTypeConfig.historyLabel} registrado na auditoria e gerado com ${recordCount} registro(s).`);
-                } catch (demoError) {
-                    setFeedback(extractErrorMessage(demoError, 'Erro ao gerar exportação demo.'));
-                } finally {
-                    setExporting(false);
-                }
-            }, 600);
-            return;
-        }
-
-        if (!user || !tenantId) {
-            setFeedback('Não foi possível confirmar a sua sessão para exportação.');
-            return;
-        }
-
         setExporting(true);
         try {
-            const prepared = prepareExportArtifact();
+            // REPORT-002: Enrich cases with publicResult before generating reports
+            const enrichedCases = await enrichCasesForExport(filteredCases);
+            const prepared = prepareExportArtifact(enrichedCases);
+
+            if (isDemoMode) {
+                demoTimerRef.current = window.setTimeout(() => {
+                    try {
+                        deliverPreparedExport(prepared);
+                        setFeedback(`${exportTypeConfig.historyLabel} registrado na auditoria e gerado com ${recordCount} registro(s).`);
+                    } catch (demoError) {
+                        setFeedback(extractErrorMessage(demoError, 'Erro ao gerar exportação demo.'));
+                    } finally {
+                        setExporting(false);
+                    }
+                }, 600);
+                return;
+            }
+
+            if (!user || !tenantId) {
+                setFeedback('Não foi possível confirmar a sua sessão para exportação.');
+                return;
+            }
+
             await callRegisterClientExport({
                 type: exportType,
                 scopeCode: exportScope,
@@ -1109,7 +1144,10 @@ export default function ExportacoesPage() {
             </div>
 
             <div className="export-history">
-                <h3>Arquivos gerados</h3>
+                <h3>Histórico de exportações locais</h3>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                    Os arquivos são gerados no seu dispositivo e não ficam armazenados na plataforma. Para baixar novamente, gere uma nova exportação.
+                </p>
                 <MobileDataCardList
                     items={history}
                     loading={exportsState.loading && !isDemoMode}

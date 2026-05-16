@@ -187,10 +187,12 @@ describe('firestoreService public report callables', () => {
 
         expect(firestoreServiceMocks.getFunctions).toHaveBeenCalledWith(undefined, 'southamerica-east1');
         expect(firestoreServiceMocks.httpsCallable).toHaveBeenCalledWith('functions-instance', 'listClientPublicReports');
-        expect(callableMock).toHaveBeenCalledWith({});
-        expect(reports).toEqual([
-            { token: 'rep-123', candidateName: 'Francisco Taciano de Sousa', status: 'ACTIVE' },
-        ]);
+        expect(callableMock).toHaveBeenCalledWith({ pageSize: 50 });
+        expect(reports).toEqual({
+            reports: [{ token: 'rep-123', candidateName: 'Francisco Taciano de Sousa', status: 'ACTIVE' }],
+            hasMore: false,
+            nextCursor: null,
+        });
     });
 
     it('revoga relatorio publico do cliente via callable backend segura', async () => {

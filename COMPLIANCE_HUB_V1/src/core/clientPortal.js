@@ -2,6 +2,18 @@
 // Any field additions on the backend must be mirrored here to avoid silent drift.
 const PUBLIC_RESULT_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+    'requestedBy', 'requestedByName', 'requestedByEmail',
+    'slaHours',
+
+    // Validação cadastral BigDataCorp
+    'bigdatacorpName',
+    'bigdatacorpCpfStatus',
+    'bigdatacorpBirthDate',
+    'bigdatacorpAge',
+    'bigdatacorpGender',
+    'bigdatacorpMotherName',
+    'bigdatacorpHasDeathRecord',
+
     'criminalFlag', 'criminalSeverity', 'criminalNotes',
     'laborFlag', 'laborSeverity', 'laborNotes',
     'warrantFlag', 'warrantNotes',
@@ -11,11 +23,21 @@ const PUBLIC_RESULT_FIELDS = [
     'conflictInterest', 'conflictNotes',
     'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
     'enabledPhases',
-    'processHighlights',
     'warrantFindings',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
+
+    // Campos de publicação cliente (sincronizado com backend)
+    'statusSummary',
+    'sourceSummary',
+    'nextSteps',
+    'timelineEvents',
+    'socialProfiles',
+    'reportReady',
+    'reportSlug',
+    'concludedAt',
+    'turnaroundHours',
 ];
 
 export const CLIENT_STATUS_LABELS = {
@@ -190,6 +212,12 @@ export function buildCaseReportPath(caseData, isDemoMode, token) {
     return token ? `/r/${token}` : null;
 }
 
+export function buildClientInternalReportPath(caseData, pathname = '') {
+    if (!caseData?.id) return null;
+    const basePath = pathname.startsWith('/demo/') ? '/demo/client' : '/client';
+    return `${basePath}/relatorio/${caseData.id}`;
+}
+
 export function getReportAvailability(caseData, publicResult) {
     if (!caseData) {
         return {
@@ -216,8 +244,15 @@ export function getReportAvailability(caseData, publicResult) {
         };
     }
 
-    // Content minimum: require finalVerdict AND executiveSummary to ensure report has meaningful data
-    if (!resolved.finalVerdict || !resolved.executiveSummary) {
+    // Content minimum: finalVerdict + at least one narrative field (matches hasPublicReportMinimumContent)
+    const hasNarrative =
+        Boolean(resolved.executiveSummary) ||
+        (Array.isArray(resolved.keyFindings) && resolved.keyFindings.length > 0) ||
+        (Array.isArray(resolved.warrantFindings) && resolved.warrantFindings.length > 0) ||
+        (Array.isArray(resolved.processHighlights) && resolved.processHighlights.length > 0) ||
+        Boolean(resolved.analystComment);
+
+    if (!resolved.finalVerdict || !hasNarrative) {
         return {
             available: false,
             state: 'pending',
@@ -273,6 +308,7 @@ export function getClientDashboardMetrics(cases) {
     const inProgressCases = cases.filter((caseData) => ['IN_PROGRESS', 'WAITING_INFO'].includes(caseData.status));
     const pendingCases = cases.filter((caseData) => caseData.status === 'PENDING');
     const correctionCases = cases.filter((caseData) => caseData.status === 'CORRECTION_NEEDED');
+    const waitingInfoCases = cases.filter((caseData) => caseData.status === 'WAITING_INFO');
 
     const verdicts = {
         FIT: doneCases.filter((caseData) => caseData.finalVerdict === 'FIT').length,
@@ -281,7 +317,12 @@ export function getClientDashboardMetrics(cases) {
     };
 
     const turnaroundHours = doneCases
-        .map((caseData) => caseData.turnaroundHours ?? diffHours(caseData.createdAt, caseData.concludedAt || caseData.updatedAt))
+        .map((caseData) => {
+            if (typeof caseData.turnaroundHours === 'number' && Number.isFinite(caseData.turnaroundHours)) {
+                return caseData.turnaroundHours;
+            }
+            return diffHours(caseData.createdAt, caseData.concludedAt);
+        })
         .filter((value) => typeof value === 'number' && Number.isFinite(value));
 
     const avgTurnaroundHours = turnaroundHours.length > 0
@@ -304,7 +345,8 @@ export function getClientDashboardMetrics(cases) {
     const maxMonthCount = Math.max(...months.map((month) => month.count), 1);
 
     const recentCompletedCases = [...doneCases]
-        .sort((left, right) => String(right.concludedAt || right.updatedAt || '').localeCompare(String(left.concludedAt || left.updatedAt || '')))
+        .filter((caseData) => caseData.concludedAt)
+        .sort((left, right) => String(right.concludedAt).localeCompare(String(left.concludedAt)))
         .slice(0, 4);
 
     return {
@@ -313,6 +355,7 @@ export function getClientDashboardMetrics(cases) {
         inProgress: inProgressCases.length,
         pending: pendingCases.length,
         corrections: correctionCases.length,
+        waitingInfo: waitingInfoCases.length,
         completionRate: total > 0 ? Math.round((doneCases.length / total) * 100) : 0,
         avgTurnaroundHours,
         verdicts,

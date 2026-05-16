@@ -1,17 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getDoc, doc } from 'firebase/firestore';
-import { getPublicReport, generatePublicReportPdf, triggerPdfDownload } from '../core/firebase/firestoreService';
-import { db } from '../core/firebase/config';
+import { getPublicReportView, generatePublicReportPdf, triggerPdfDownload } from '../core/firebase/firestoreService';
 import { getMockCaseById } from '../data/mockData';
 import { buildCaseReportHtml } from '../core/reportBuilder';
+import { formatDateTimeBR } from '../core/formatDate';
 import './PublicReportPage.css';
+
+function safeFilenamePart(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-zA-Z0-9_-]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80);
+}
 
 export default function PublicReportPage() {
     const { token, caseId } = useParams();
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [reportHtml, setReportHtml] = useState('');
+    const [rawReportHtml, setRawReportHtml] = useState('');
     const [copyOk, setCopyOk] = useState(false);
     const [reportMeta, setReportMeta] = useState(null);
     const [pdfState, setPdfState] = useState({ status: 'idle', message: '' });
@@ -70,74 +78,39 @@ export default function PublicReportPage() {
                     }
 
                     if (!cancelled) {
-                        setReportHtml(stripActiveContent(buildCaseReportHtml(caseData)));
+                        setRawReportHtml(buildCaseReportHtml(caseData));
                         setLoading(false);
                     }
                     return;
                 }
 
-                const report = await getPublicReport(token);
+                const report = await getPublicReportView(token);
                 if (cancelled) return;
-                if (!report?.html) {
-                    setError('not-found');
-                    setLoading(false);
-                    return;
-                }
-
-                // PUB-002: Check if report was revoked
-                if (report.active === false) {
-                    setError('revoked');
-                    setLoading(false);
-                    return;
-                }
-
-                const now = new Date();
-                let expiresAt = null;
-                if (report.expiresAt instanceof Date) {
-                    expiresAt = report.expiresAt;
-                } else if (typeof report.expiresAt?.toDate === 'function') {
-                    expiresAt = report.expiresAt.toDate();
-                } else if (report.expiresAt?.seconds) {
-                    expiresAt = new Date(report.expiresAt.seconds * 1000);
-                }
-                if (expiresAt && now > expiresAt) {
-                    setError('expired');
-                    setLoading(false);
-                    return;
-                }
-
-                // PUB-003: Verify case is still DONE
-                const linkedCaseId = report.caseId;
-                if (linkedCaseId) {
-                    try {
-                        const caseSnap = await getDoc(doc(db, 'cases', linkedCaseId));
-                        if (caseSnap.exists()) {
-                            const caseData = caseSnap.data();
-                            if (caseData?.status !== 'DONE') {
-                                setError('case-not-done');
-                                setLoading(false);
-                                return;
-                            }
-                        }
-                    } catch {
-                        // If case read fails, continue with report (defense in depth)
-                    }
-                }
 
                 setReportMeta({
-                    token: token.slice(-12),
+                    token: report.token,
+                    candidateName: report.candidateName || '',
                     createdAt: report.createdAt,
                     expiresAt: report.expiresAt,
                     reportBuildVersion: report.reportBuildVersion || '1.0',
                     publicSnapshotHash: report.publicSnapshotHash || null,
                 });
-                setReportHtml(stripActiveContent(report.html));
+                setRawReportHtml(report.html);
                 setLoading(false);
             } catch (err) {
                 if (!cancelled) {
                     const code = err?.code || '';
-                    if (code === 'permission-denied') {
+                    const msg = err?.message || '';
+                    if (code === 'not-found') {
+                        setError('not-found');
+                    } else if (msg.includes('revogado')) {
+                        setError('revoked');
+                    } else if (msg.includes('expirado') || msg.includes('expirado') || code === 'permission-denied') {
                         setError('expired');
+                    } else if (msg.includes('em revisao') || msg.includes('revisão')) {
+                        setError('case-not-done');
+                    } else if (msg.includes('desatualizado')) {
+                        setError('stale');
                     } else {
                         setError('network');
                     }
@@ -149,6 +122,8 @@ export default function PublicReportPage() {
         load();
         return () => { cancelled = true; };
     }, [caseId, isDemoRoute, token]);
+
+    const reportHtml = useMemo(() => stripActiveContent(rawReportHtml), [rawReportHtml]);
 
     useEffect(() => {
         if (!shouldAutoPrint || loading || error || !reportHtml || autoPrintTriggeredRef.current) {
@@ -171,8 +146,9 @@ export default function PublicReportPage() {
         const isExpired = error === 'expired';
         const isRevoked = error === 'revoked';
         const isCaseNotDone = error === 'case-not-done';
+        const isStale = error === 'stale';
         const isNetwork = error === 'network';
-        const isWarning = isCaseNotDone;
+        const isWarning = isCaseNotDone || isStale;
         return (
             <div className="public-report__state" role="alert">
                 <div className="public-report__state-card">
@@ -198,9 +174,11 @@ export default function PublicReportPage() {
                                 ? 'Este link não está mais disponível'
                                 : isCaseNotDone
                                     ? 'Relatório em revisão'
-                                    : isNetwork
-                                        ? 'Erro de conexão'
-                                        : 'Relatório não encontrado'}
+                                    : isStale
+                                        ? 'Relatório desatualizado'
+                                        : isNetwork
+                                            ? 'Erro de conexão'
+                                            : 'Relatório não encontrado'}
                     </h2>
                     <p className="public-report__state-text">
                         {isRevoked
@@ -209,9 +187,11 @@ export default function PublicReportPage() {
                                 ? 'O prazo de acesso a este link expirou. Solicite um novo link ao responsável pela análise.'
                                 : isCaseNotDone
                                     ? 'Este caso está sendo revisado e o relatório não está disponível no momento. Solicite um novo link quando a análise for concluída.'
-                                    : isNetwork
-                                        ? 'Não foi possível carregar o relatório. Verifique sua conexão e tente novamente.'
-                                        : 'O link pode ter expirado ou ser inválido.'}
+                                    : isStale
+                                        ? 'Este relatório foi atualizado e o link precisa ser regenerado. Solicite um novo link ao responsável pela análise.'
+                                        : isNetwork
+                                            ? 'Não foi possível carregar o relatório. Verifique sua conexão e tente novamente.'
+                                            : 'O link pode ter expirado ou ser inválido.'}
                     </p>
                 </div>
             </div>
@@ -262,7 +242,8 @@ export default function PublicReportPage() {
         setPdfState({ status: 'loading', message: 'Gerando PDF...' });
         try {
             const { url } = await generatePublicReportPdf(token);
-            triggerPdfDownload(url, `relatorio_${reportMeta?.candidateName || token}.pdf`);
+            const filenameBase = safeFilenamePart(reportMeta?.candidateName) || token;
+            triggerPdfDownload(url, `relatorio_${filenameBase}.pdf`);
             setPdfState({ status: 'success', message: 'PDF gerado e download iniciado.' });
             window.setTimeout(() => setPdfState({ status: 'idle', message: '' }), 4000);
         } catch {
@@ -291,40 +272,64 @@ export default function PublicReportPage() {
         );
     }
 
-    const htmlWithBanner = reportHtml;
-
     return (
         <div className="public-report">
-            <div className="public-report__actions">
-                <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="public-report__button public-report__button--secondary"
-                >
-                    {copyOk ? 'Link Copiado!' : 'Copiar Link'}
-                </button>
-                <button
-                    type="button"
-                    onClick={handleDownloadPdf}
-                    disabled={pdfState.status === 'loading'}
-                    className="public-report__button public-report__button--primary"
-                >
-                    {pdfState.status === 'loading' ? 'Gerando PDF...' : 'Baixar PDF'}
-                </button>
-                <button
-                    type="button"
-                    onClick={handlePrint}
-                    className="public-report__button public-report__button--secondary"
-                >
-                    Imprimir
-                </button>
+            <div className="public-report__topbar">
+                <div className="public-report__topbar-main">
+                    <span className="public-report__brand-dot" />
+                    <strong>ComplianceHub</strong>
+                    <span className="public-report__topbar-sep">·</span>
+                    <span>Relatório compartilhado</span>
+                </div>
+
+                {reportMeta && (
+                    <div className="public-report__topbar-meta">
+                        {reportMeta.candidateName && (
+                            <span>{reportMeta.candidateName}</span>
+                        )}
+                        {reportMeta.createdAt && (
+                            <span>Gerado: {formatDateTimeBR(reportMeta.createdAt)}</span>
+                        )}
+                        {reportMeta.expiresAt && (
+                            <span>Válido até: {formatDateTimeBR(reportMeta.expiresAt)}</span>
+                        )}
+                        {reportMeta.token && (
+                            <span title="Token de verificação">…{reportMeta.token}</span>
+                        )}
+                    </div>
+                )}
+
+                <div className="public-report__topbar-actions">
+                    <button
+                        type="button"
+                        onClick={handleCopyLink}
+                        className="public-report__button public-report__button--secondary"
+                    >
+                        {copyOk ? 'Copiado!' : 'Copiar link'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleDownloadPdf}
+                        disabled={pdfState.status === 'loading'}
+                        className="public-report__button public-report__button--primary"
+                    >
+                        {pdfState.status === 'loading' ? 'Gerando PDF...' : 'Baixar PDF'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handlePrint}
+                        className="public-report__button public-report__button--secondary"
+                    >
+                        Imprimir
+                    </button>
+                </div>
             </div>
 
             <iframe
                 ref={iframeRef}
                 title="Relatório Público"
-                srcDoc={htmlWithBanner}
-                sandbox="allow-modals"
+                srcDoc={reportHtml}
+                sandbox="allow-modals allow-popups allow-popups-to-escape-sandbox"
                 className="public-report__frame"
             />
         </div>

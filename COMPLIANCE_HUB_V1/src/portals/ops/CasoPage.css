@@ -106,7 +106,7 @@
     font-size: .8125rem;
     font-weight: 500;
     color: var(--text-secondary);
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
     white-space: nowrap;
     min-width: 0;
 }
@@ -224,7 +224,7 @@
     border-radius: var(--radius-md);
     font-size: .875rem;
     outline: none;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .caso-input:focus {
@@ -246,7 +246,7 @@
     outline: none;
     resize: vertical;
     font-family: inherit;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .caso-textarea:focus {
@@ -272,7 +272,7 @@
     padding: 8px 14px;
     border: 2px solid var(--border-default);
     border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
     background: var(--bg-card);
 }
 
@@ -427,7 +427,7 @@
     border-radius: var(--radius-md);
     font-size: .875rem;
     font-weight: 600;
-    transition: all var(--transition-fast);
+    transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-fast);
 }
 
 .caso-btn--primary {
@@ -968,6 +968,31 @@
 .caso-flag-chip--labor {
     background: var(--brand-100);
     color: var(--brand-700);
+}
+
+.caso-flag-chip--green {
+    background: var(--green-100);
+    color: var(--green-700);
+}
+
+.caso-flag-chip--yellow {
+    background: var(--yellow-100);
+    color: var(--yellow-700);
+}
+
+.caso-flag-chip--red {
+    background: var(--red-100);
+    color: var(--red-700);
+}
+
+.caso-flag-chip--gray {
+    background: var(--gray-200);
+    color: var(--text-secondary);
+}
+
+.caso-flag-chip--neutral {
+    background: var(--gray-100);
+    color: var(--text-tertiary);
 }
 
 /* ========== Warrant cards ========== */

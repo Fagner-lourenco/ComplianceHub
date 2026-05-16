@@ -15,6 +15,7 @@ import { CLIENT_ROLES } from '../rbac/permissions';
 
 const FIRESTORE_QUERY_TIMEOUT_MS = 5000;
 const REST_FALLBACK_DELAY_MS = 2000;
+let firebaseFunctionsModulePromise = null;
 
 export const DEFAULT_ANALYSIS_CONFIG = {
     criminal:         { enabled: true },
@@ -83,14 +84,24 @@ function decodeFirestoreFields(fields) {
 }
 
 function withFirestoreTimeout(promise, message) {
-    return Promise.race([
-        promise,
-        new Promise((_, reject) => {
-            window.setTimeout(() => {
-                reject(new Error(message));
-            }, FIRESTORE_QUERY_TIMEOUT_MS);
-        }),
-    ]);
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+            reject(new Error(message));
+        }, FIRESTORE_QUERY_TIMEOUT_MS);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+        window.clearTimeout(timeoutId);
+    });
+}
+
+function loadFirebaseFunctionsModule() {
+    if (!firebaseFunctionsModulePromise) {
+        firebaseFunctionsModulePromise = import('firebase/functions');
+    }
+
+    return firebaseFunctionsModulePromise;
 }
 
 function formatFirestoreDate(value) {
@@ -776,7 +787,7 @@ export async function getCasePublicResult(caseId) {
    ========================================================= */
 
 export async function callRerunEnrichmentPhase(caseId, phase, scope = 'cascade', options = {}) {
-    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const { getFunctions, httpsCallable } = await loadFirebaseFunctionsModule();
     const functions = getFunctions(undefined, 'southamerica-east1');
     const fn = httpsCallable(functions, 'rerunEnrichmentPhase');
     const result = await fn({ caseId, phase, scope, ...options });
@@ -792,7 +803,7 @@ export async function callRerunFullEnrichment(caseId, options = {}) {
 }
 
 async function callBackendFunction(name, payload) {
-    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const { getFunctions, httpsCallable } = await loadFirebaseFunctionsModule();
     const functions = getFunctions(undefined, 'southamerica-east1');
     const fn = httpsCallable(functions, name);
     const result = await fn(payload);
@@ -881,6 +892,35 @@ export async function callGetSystemHealth() {
 
 export async function callGetClientQuotaStatus() {
     return callBackendFunction('getClientQuotaStatus', {});
+}
+
+export async function getClientCaseReportHtml(caseId) {
+    const result = await callBackendFunction('getClientCaseReportHtml', { caseId });
+    if (!result?.html) throw new Error('Backend nao retornou HTML do relatorio.');
+    return result;
+}
+
+export async function getOpsCaseReportHtml(caseId) {
+    const result = await callBackendFunction('getOpsCaseReportHtml', { caseId });
+    if (!result?.html) throw new Error('Backend nao retornou HTML do relatorio.');
+    return result;
+}
+
+export async function getOpsCaseReportPreview(caseId) {
+    const result = await callBackendFunction('getOpsCaseReportPreview', { caseId });
+    if (!result?.html) throw new Error('Backend nao retornou HTML da previa.');
+    return result;
+}
+
+export async function getPublicReportView(token) {
+    const result = await callBackendFunction('getPublicReportView', { token });
+    if (!result?.html) throw new Error('Relatorio publico indisponivel.');
+    return result;
+}
+
+export async function fetchOpsPublicReports(tenantId, pageSize = 100) {
+    const result = await callBackendFunction('listOpsPublicReports', { tenantId: tenantId || null, pageSize });
+    return Array.isArray(result?.reports) ? result.reports : [];
 }
 
 export async function generateClientCasePdf(caseId) {

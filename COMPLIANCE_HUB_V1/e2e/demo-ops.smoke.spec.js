@@ -33,8 +33,8 @@ test.describe('Smoke - Paginas Demo Ops', () => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
 
-    await page.goto('/demo/ops/caso/test-case-1');
-    await expect(page).toHaveURL(/\/demo\/ops\/caso\/test-case-1/);
+    await page.goto('/demo/ops/caso/CASE-001');
+    await expect(page).toHaveURL(/\/demo\/ops\/caso\/CASE-001/);
     await expect(page.locator('body')).toBeVisible();
     
     expect(consoleErrors).toHaveLength(0);

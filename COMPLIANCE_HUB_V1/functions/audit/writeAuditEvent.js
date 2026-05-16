@@ -70,6 +70,7 @@ function stripUndefined(obj) {
  * @param {Object} [params.related]       — { caseId, reportToken, exportId, userId }
  * @param {string} [params.summary]       — Override auto-generated summary
  * @param {string} [params.detail]        — Human-readable detail string (NOT JSON.stringify)
+ * @param {string} [params.clientDetail]  — Client-safe detail for tenantAuditLogs projection
  * @param {Object} [params.metadata]      — Structured metadata (replaces old JSON.stringify in detail)
  * @param {Object} [params.clientMetadata] — Metadata safe for client projection
  * @param {string} [params.source]        — portal_ops | portal_client | cloud_function | system
@@ -85,6 +86,7 @@ async function writeAuditEvent({
     related = {},
     summary = null,
     detail = null,
+    clientDetail = null,
     metadata = null,
     clientMetadata = null,
     source = null,
@@ -168,7 +170,7 @@ async function writeAuditEvent({
     const docRef = await db().collection('auditLogs').add(eventDoc);
 
     // ── Project to tenantAuditLogs if client-visible ─────────────────────────
-    if (clientVisible && tenantId) {
+    if (clientVisible && tenantId && actor.type !== 'OPS_USER') {
         const tenantDoc = stripUndefined({
             eventId: docRef.id,
             occurredAt: FieldValue.serverTimestamp(),
@@ -196,13 +198,25 @@ async function writeAuditEvent({
             },
 
             summary: computedClientSummary || computedSummary,
-            detail: detail || null,
+            detail: clientDetail || null,
             metadata: clientMetadata || null,
             searchText,
         });
 
-        await db().collection('tenantAuditLogs').doc(docRef.id).set(tenantDoc)
-            .catch((err) => console.warn('tenantAuditLogs projection failed:', err.message));
+        try {
+            await db().collection('tenantAuditLogs').doc(docRef.id).set(tenantDoc);
+        } catch (err) {
+            // BUG-R6-006: Tenant audit projection failure must be observable, not swallowed.
+            console.error('AUDIT_PROJECTION_FAILED', {
+                eventId: docRef.id,
+                tenantId,
+                action,
+                error: err.message,
+                stack: err.stack,
+            });
+            // Re-throw so the caller knows audit failed — audit must be reliable or noisy.
+            throw new Error(`tenantAuditLogs projection failed for event ${docRef.id}: ${err.message}`);
+        }
     }
 
     return docRef.id;

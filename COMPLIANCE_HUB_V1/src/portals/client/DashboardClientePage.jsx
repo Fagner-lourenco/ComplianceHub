@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
@@ -51,11 +51,28 @@ export default function DashboardClientePage() {
         return () => { cancelled = true; };
     }, [user, isDemoMode]);
 
-    const navigateToCases = (filter) => {
+    const navigateToCases = useCallback((filter) => {
         if (isDemoMode) return;
         const params = filter ? `?filter=${filter}` : '';
         navigate(`/client/solicitacoes${params}`);
-    };
+    }, [isDemoMode, navigate]);
+
+    const actionItems = useMemo(() => [
+        ...(metrics.corrections > 0 ? [{
+            label: 'Aguardando correção',
+            count: metrics.corrections,
+            tone: 'danger',
+            cta: 'Ver solicitações',
+            filter: 'correction',
+        }] : []),
+        ...(metrics.waitingInfo > 0 ? [{
+            label: 'Aguardando informações',
+            count: metrics.waitingInfo,
+            tone: 'warning',
+            cta: 'Ver solicitações',
+            filter: 'waiting',
+        }] : []),
+    ], [metrics.corrections, metrics.waitingInfo]);
 
     if (loading) {
         return (
@@ -86,23 +103,6 @@ export default function DashboardClientePage() {
             </PageShell>
         );
     }
-
-    const actionItems = [
-        ...(metrics.corrections > 0 ? [{
-            label: 'Aguardando correção',
-            count: metrics.corrections,
-            tone: 'danger',
-            cta: 'Ver solicitações',
-            filter: 'correction',
-        }] : []),
-        ...(metrics.waitingInfo > 0 ? [{
-            label: 'Aguardando informações',
-            count: metrics.waitingInfo,
-            tone: 'warning',
-            cta: 'Ver solicitações',
-            filter: 'waiting',
-        }] : []),
-    ];
 
     return (
         <PageShell size="default" className="dashboard-cliente">

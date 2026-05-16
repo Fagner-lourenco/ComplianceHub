@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     signOut,
+    getIdToken,
 } from 'firebase/auth';
 import { doc, getDoc, getDocFromCache, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
@@ -92,6 +93,16 @@ export function AuthProvider({ children }) {
                 return false;
             }
 
+            // Force token refresh when server profile has role/tenantId but token claims don't.
+            // This ensures Firestore Rules receive custom claims without requiring re-login.
+            const tokenNeedsRefresh = source === 'server'
+                && nextProfile.role
+                && nextProfile.tenantId
+                && (!firebaseUser?.tokenResult?.claims?.role || !firebaseUser?.tokenResult?.claims?.tenantId);
+            if (tokenNeedsRefresh) {
+                getIdToken(firebaseUser, true).catch(() => {});
+            }
+
             setProfileError(null);
             setUserProfile((currentProfile) => {
                 if (!currentProfile || currentProfile.uid !== nextProfile.uid) {
@@ -170,6 +181,22 @@ export function AuthProvider({ children }) {
             setProfileStatus('loading');
             setLoading(false);
 
+            // AUD-016: Force token refresh before starting Firestore listeners
+            // if custom claims are missing. This prevents "Missing or insufficient
+            // permissions" when Firestore Rules depend on request.auth.token.role/tenantId.
+            const ensureTokenClaims = async () => {
+                try {
+                    const tokenResult = await firebaseUser.getIdTokenResult();
+                    const hasClaims = tokenResult.claims?.role && tokenResult.claims?.tenantId;
+                    if (!hasClaims) {
+                        // Wait for token refresh — claims may have been set by Cloud Function
+                        await getIdToken(firebaseUser, true);
+                    }
+                } catch {
+                    // Ignore token errors; let Firestore Rules handle auth fallback
+                }
+            };
+
             profileDelayTimer = window.setTimeout(async () => {
                 profileDelayTimer = null;
                 setProfileStatus((currentStatus) => (
@@ -207,17 +234,21 @@ export function AuthProvider({ children }) {
                 }
             }, PROFILE_RESCUE_DELAY_MS);
 
-            unsubscribeProfile = onSnapshot(
-                profileRef,
-                { includeMetadataChanges: true },
-                (snapshot) => {
-                    clearProfileDelayTimer();
-                    applyResolvedProfile(firebaseUser, snapshot);
-                },
-                (error) => {
-                    applyProfileFallbackError(firebaseUser, error);
-                },
-            );
+            // Start listeners after ensuring token has claims
+            ensureTokenClaims().then(() => {
+                if (cancelled) return;
+                unsubscribeProfile = onSnapshot(
+                    profileRef,
+                    { includeMetadataChanges: true },
+                    (snapshot) => {
+                        clearProfileDelayTimer();
+                        applyResolvedProfile(firebaseUser, snapshot);
+                    },
+                    (error) => {
+                        applyProfileFallbackError(firebaseUser, error);
+                    },
+                );
+            });
         });
 
         const safeBootTimer = window.setTimeout(() => {
@@ -236,14 +267,14 @@ export function AuthProvider({ children }) {
         };
     }, []);
 
-    const login = async (email, password) => {
+    const login = useCallback(async (email, password) => {
         const credential = await signInWithEmailAndPassword(auth, email, password);
         return { user: credential.user };
-    };
+    }, []);
 
-    const logout = () => signOut(auth);
+    const logout = useCallback(() => signOut(auth), []);
 
-    const refreshProfile = async () => {
+    const refreshProfile = useCallback(async () => {
         if (!auth.currentUser) {
             return null;
         }
@@ -267,9 +298,9 @@ export function AuthProvider({ children }) {
         setProfileError(null);
         setProfileStatus(source === 'cache' ? 'cached' : 'ready');
         return nextProfile;
-    };
+    }, [userProfile]);
 
-    const value = {
+    const value = useMemo(() => ({
         user,
         userProfile,
         loading,
@@ -279,7 +310,16 @@ export function AuthProvider({ children }) {
         login,
         logout,
         refreshProfile,
-    };
+    }), [
+        user,
+        userProfile,
+        loading,
+        profileStatus,
+        profileError,
+        login,
+        logout,
+        refreshProfile,
+    ]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

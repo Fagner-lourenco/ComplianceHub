@@ -59,10 +59,17 @@ export function resolveTenantOptions(userProfile, tenantDirectory = []) {
         }];
     }
 
+    // Ops users with a specific tenantId (e.g. supervisor, analyst) can only
+    // access their own tenant — do not expose the full tenant directory.
+    if (userProfile.tenantId) {
+        return [{
+            id: userProfile.tenantId,
+            name: userProfile.tenantName || userProfile.tenantId,
+        }];
+    }
+
+    // Global admins/owners (no tenantId) can access all tenants from directory
     return dedupeTenants([
-        userProfile.tenantId
-            ? { id: userProfile.tenantId, name: userProfile.tenantName || userProfile.tenantId }
-            : null,
         ...tenantDirectory,
     ]);
 }

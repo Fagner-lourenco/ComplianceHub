@@ -6,7 +6,7 @@ const PROVIDERS = [
     { key: 'judit', label: 'Judit', statusField: 'juditEnrichmentStatus', errorField: 'juditError', costField: null },
     { key: 'escavador', label: 'Escavador', statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', costField: null },
     { key: 'djen', label: 'DJEN', statusField: 'djenEnrichmentStatus', errorField: 'djenError', costField: null, free: true },
-    { key: 'autoclass', label: 'Auto-Classificação', statusField: null, errorField: null, costField: null },
+    { key: 'autoclass', label: 'Auto-classificação', statusField: null, errorField: null, costField: null },
     { key: 'ai', label: 'Análise IA', statusField: null, errorField: 'aiError', costField: 'aiCostUsd' },
     { key: 'fontedata', label: 'FonteData', statusField: 'enrichmentStatus', errorField: 'enrichmentError', costField: null, fallback: true },
 ];
@@ -17,6 +17,7 @@ const STATE_CONFIG = {
     DONE:     { icon: '✓', label: 'Concluído', cls: 'done' },
     PARTIAL:  { icon: '⚡', label: 'Parcial', cls: 'partial' },
     FAILED:   { icon: '✕', label: 'Falhou', cls: 'failed' },
+    FAILED_SCHEMA: { icon: '⚠️', label: 'Falha de schema', cls: 'failed' },
     SKIPPED:  { icon: '—', label: 'Ignorado', cls: 'skipped' },
     BLOCKED:  { icon: '🚫', label: 'Bloqueado', cls: 'blocked' },
     WAITING:  { icon: '⏳', label: 'Aguardando', cls: 'pending' },
@@ -32,6 +33,7 @@ function getProviderStatus(caseData, provider) {
         return 'WAITING';
     }
     if (provider.key === 'ai') {
+        if (caseData.aiStatus) return caseData.aiStatus;
         const hasGeneralResult = caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured;
         const hasHomonymResult = Boolean(caseData.aiHomonymStructured);
         const hasGeneralError = Boolean(caseData.aiError);
@@ -67,9 +69,9 @@ function getProviderStatus(caseData, provider) {
 }
 
 function canRetryProvider(provider, status, error, onRetryPhase) {
-    if (!onRetryPhase || !error) return false;
+    if (!onRetryPhase) return false;
     if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
-    return status === 'FAILED' || status === 'PARTIAL';
+    return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
 }
 
 export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPhase = null }) {
@@ -77,7 +79,7 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
 
     return (
         <div className="enrichment-pipeline">
-            <h4 className="enrichment-pipeline__title">Pipeline de Enriquecimento</h4>
+            <h4 className="enrichment-pipeline__title">Consulta automática</h4>
             <div className="enrichment-pipeline__list">
                 {PROVIDERS.map((provider) => {
                     const status = getProviderStatus(caseData, provider);
@@ -115,9 +117,9 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
                                     className="enrichment-pipeline__retry"
                                     disabled={isRetrying}
                                     onClick={() => onRetryPhase(provider.key)}
-                                    title={error}
+                                    title={error || `Reexecutar ${provider.label}`}
                                 >
-                                    {isRetrying ? 'Reexecutando...' : 'Tentar novamente'}
+                                    {isRetrying ? 'Reexecutando...' : (error ? 'Tentar novamente' : 'Reexecutar')}
                                 </button>
                             )}
                         </div>

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../core/auth/useAuth';
 import { subscribeToCandidates } from '../core/firebase/firestoreService';
 import { isClientRole } from '../core/rbac/permissions';
 
 const LIVE_QUERY_TIMEOUT_MS = 10_000;
+const EMPTY_CANDIDATES = [];
 
 /**
  * Hook that provides real-time candidates from Firestore.
@@ -31,6 +32,17 @@ export function useCandidates(overrideTenantId) {
         && isClientRole(userProfile?.role)
         && !userProfile?.tenantId,
     );
+    const demoResult = useMemo(() => ({ candidates: EMPTY_CANDIDATES, loading: false, error: null }), []);
+    const waitingResult = useMemo(() => ({ candidates: EMPTY_CANDIDATES, loading: true, error: null }), []);
+    const clientRoleResult = useMemo(() => ({ candidates: EMPTY_CANDIDATES, loading: false, error: null }), []);
+    const liveResult = useMemo(() => {
+        const isCurrentScope = liveState.scopeKey === scopeKey;
+        return {
+            candidates: isCurrentScope ? liveState.candidates : EMPTY_CANDIDATES,
+            loading: !isCurrentScope,
+            error: isCurrentScope ? liveState.error : null,
+        };
+    }, [liveState.candidates, liveState.error, liveState.scopeKey, scopeKey]);
 
     useEffect(() => {
         if (!user || waitingForClientTenant || isClientRole(userProfile?.role)) {
@@ -65,20 +77,16 @@ export function useCandidates(overrideTenantId) {
     }, [scopeKey, tenantId, user, userProfile?.role, waitingForClientTenant]);
 
     if (!user) {
-        return { candidates: [], loading: false, error: null };
+        return demoResult;
     }
 
     if (waitingForClientTenant) {
-        return { candidates: [], loading: true, error: null };
+        return waitingResult;
     }
 
     if (isClientRole(userProfile?.role)) {
-        return { candidates: [], loading: false, error: null };
+        return clientRoleResult;
     }
 
-    return {
-        candidates: liveState.scopeKey === scopeKey ? liveState.candidates : [],
-        loading: liveState.scopeKey !== scopeKey,
-        error: liveState.scopeKey === scopeKey ? liveState.error : null,
-    };
+    return liveResult;
 }

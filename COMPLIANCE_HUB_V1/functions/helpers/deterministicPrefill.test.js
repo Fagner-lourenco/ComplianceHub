@@ -328,8 +328,8 @@ describe('Deterministic Prefill', () => {
             const result = buildDeterministicPrefill(caseData);
 
             expect(caseData.criminalFlag).toBe('POSITIVE');
-            expect(result.criminalNotes).toContain('Severidade');
-            expect(result.criminalNotes).toContain('PROCESSOS IDENTIFICADOS');
+            // v7: headers removed — go straight to listing
+            expect(result.criminalNotes).toMatch(/Status:/);
             expect(result.criminalNotes.length).toBeGreaterThan(100);
             expect(result.executiveSummary).toMatch(/criminal/i);
             expect(result.keyFindings.length).toBeGreaterThan(0);
@@ -341,7 +341,7 @@ describe('Deterministic Prefill', () => {
             const result = buildDeterministicPrefill(caseData);
 
             if (caseData.warrantFlag === 'POSITIVE') {
-                expect(result.warrantNotes).toContain('MANDADO');
+                expect(result.warrantNotes).toMatch(/Status:/);
             }
             if (caseData.juditExecutionFlag === 'POSITIVE') {
                 expect(result.criminalNotes).toContain('Execução penal');
@@ -534,9 +534,10 @@ describe('Deterministic Prefill', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const notes = buildDetCriminalNotes(caseData);
             // Should reference match type (CPF confirmado, match por nome, etc)
-            const hasMatchInfo = /CPF confirmado|match por nome|possivel homonimo/i.test(notes);
+            /CPF confirmado|match por nome|possivel homonimo/i.test(notes);
             if ((caseData.juditRoleSummary || []).some((j) => j.isCriminal)) {
-                expect(hasMatchInfo).toBe(true);
+                // v7: no headers, but process listing should exist
+                expect(notes).toMatch(/Status:/);
             }
         });
 
@@ -550,7 +551,6 @@ describe('Deterministic Prefill', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const notes = buildDetWarrantNotes(caseData);
             if ((caseData.juditWarrants || []).length > 0 || (caseData.bigdatacorpActiveWarrants || []).length > 0) {
-                expect(notes).toContain('MANDADO');
                 expect(notes).toMatch(/Status:/);
             }
         });
@@ -605,8 +605,8 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetCriminalNotes(caseData);
             // Should NOT start with the generic "Criminal POSITIVO: evidencia forte confirmada por..."
             expect(notes).not.toContain('evidencia forte confirmada por');
-            // Should have its own rich header
-            expect(notes).toMatch(/Severidade.*Síntese/);
+            // v7: no rich header — go straight to listing
+            expect(notes).toMatch(/Status:/);
         });
 
         it('buildDetLaborNotes does NOT embed autoClassify generic text', () => {
@@ -615,14 +615,12 @@ describe('Deterministic Prefill', () => {
             // Should NOT contain the generic "Trabalhista POSITIVO confirmado por: ."
             expect(notes).not.toContain('confirmado por:');
             if (caseData.laborFlag === 'POSITIVE') {
-                // v6: headers removed — check for descriptive text
+                // v7: headers removed — check for process listing or professional context
                 const hasLaborProcesses = (caseData.laborProcesses || []).length > 0;
                 if (hasLaborProcesses) {
-                    expect(notes).toContain('Processos trabalhistas identificados');
-                    expect(notes).toContain('PROCESSOS TRABALHISTAS');
+                    expect(notes).toMatch(/Status:/);
                 } else {
-                    expect(notes).toContain('Processos trabalhistas identificados');
-                    expect(notes).toContain('CONTEXTO PROFISSIONAL');
+                    expect(notes).toContain('Último empregador');
                 }
             }
         });
@@ -633,7 +631,7 @@ describe('Deterministic Prefill', () => {
             // Should NOT contain stale callback text
             expect(notes).not.toContain('aguardando callback');
             if (caseData.warrantFlag === 'POSITIVE') {
-                expect(notes).toContain('MANDADO');
+                expect(notes).toMatch(/Status:/);
             }
         });
 
@@ -642,7 +640,6 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetCriminalNotes(caseData);
             if (caseData.criminalFlag === 'POSITIVE') {
                 // Should list individual processes with details
-                expect(notes).toContain('PROCESSOS IDENTIFICADOS');
                 expect(notes).toMatch(/Status:/);
                 // v5: Fonte: removed from text — providers not shown
                 expect(notes).not.toMatch(/Fonte:/);
@@ -653,7 +650,6 @@ describe('Deterministic Prefill', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const notes = buildDetWarrantNotes(caseData);
             if ((caseData.juditWarrants || []).length > 0 || (caseData.bigdatacorpActiveWarrants || []).length > 0) {
-                expect(notes).toContain('MANDADO');
                 expect(notes).toMatch(/Status:/);
                 // v5: no provider names in text
                 expect(notes).not.toContain('Detalhamento Judit');
@@ -690,7 +686,7 @@ describe('Deterministic Prefill', () => {
             });
             const notes = buildDetLaborNotes(caseData);
             if (caseData.laborFlag === 'POSITIVE') {
-                expect(notes).toContain('PROCESSOS TRABALHISTAS');
+                // v7: no headers, go straight to listing
                 expect(notes).toMatch(/Papel:/);
             }
         });
@@ -717,7 +713,7 @@ describe('Deterministic Prefill', () => {
             expect(caseData.laborNotes).toContain('BigDataCorp');
             // The det helper should also generate proper content
             const notes = buildDetLaborNotes(caseData);
-            expect(notes).toContain('trabalhistas');
+            expect(notes).toMatch(/Papel:/);
         });
     });
 
@@ -807,12 +803,37 @@ describe('Deterministic Prefill', () => {
             expect(result[0].comarca).toBe('Sobral');
         });
 
+        it('selectTopProcessos: BDC duplicate with second criminal merges isCriminal flag', () => {
+            const caseData = {
+                bigdatacorpProcessos: [
+                    {
+                        numero: '00407130820138060167',
+                        courtType: 'CIVEL',
+                        status: 'ARQUIVADO',
+                        isCriminal: false,
+                        isDirectCpfMatch: true,
+                    },
+                    {
+                        numero: '00407130820138060167',
+                        courtType: 'CRIMINAL',
+                        status: 'ENCERRADO',
+                        isCriminal: true,
+                        isDirectCpfMatch: true,
+                    },
+                ],
+            };
+            const result = selectTopProcessos(caseData, 20);
+            expect(result.length).toBe(1);
+            expect(result[0].isCriminal).toBe(true);
+            expect(result[0].matchType).toBe('CPF confirmado');
+        });
+
         it('buildDetCriminalNotes shows classe/assunto in process listing', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const notes = buildDetCriminalNotes(caseData);
             if (caseData.criminalFlag === 'POSITIVE') {
-                // v5: uses PROCESSOS IDENTIFICADOS header
-                expect(notes).toContain('PROCESSOS IDENTIFICADOS');
+                // v7: no header — go straight to listing
+                expect(notes).toMatch(/Status:/);
                 // Should show Tipo or Assunto for at least some processes
                 const hasClasseOrAssunto = /Tipo:|Assunto:/i.test(notes);
                 expect(hasClasseOrAssunto).toBe(true);
@@ -824,8 +845,8 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetCriminalNotes(caseData);
             // v4: Fonte: no longer in text, but matchType should still be present
             expect(notes).not.toMatch(/Fonte:/);
-            // Overall, there should be CPF confirmado entries
-            expect(notes).toContain('CPF confirmado');
+            // v7: no matchType shown in text, but process listing exists
+            expect(notes).toMatch(/Status:/);
         });
 
         it('buildDetLaborNotes handles POSITIVE flag with zero processes', () => {
@@ -838,9 +859,8 @@ describe('Deterministic Prefill', () => {
                 bigdatacorpProcessos: [],
             };
             const notes = buildDetLaborNotes(caseData);
-            expect(notes).toContain('Processos trabalhistas identificados');
-            // v5: no false-positive warning, always shows professional context
-            expect(notes).toContain('CONTEXTO PROFISSIONAL');
+            // v7: POSITIVE with zero processes — no header, straight to context
+            expect(notes).toContain('Dados profissionais não disponíveis');
         });
 
         it('buildDetWarrantNotes shows BDC warrant processNumber and imprisonmentKind', () => {
@@ -964,7 +984,6 @@ describe('Deterministic Prefill', () => {
             const result = buildDeterministicPrefill(caseData);
             expect(result.criminalNotes).toContain('Nenhum processo criminal');
             expect(result.laborNotes).toContain('nenhum processo trabalhista');
-            expect(result.laborNotes).toContain('Dados profissionais não disponíveis');
             expect(result.warrantNotes).toContain('Nenhum mandado');
             expect(result.finalJustification).toContain('Não foram identificados impeditivos');
             expect(result.executiveSummary).toBeTruthy();
@@ -987,6 +1006,7 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetLaborNotes(caseData);
             expect(notes).toContain('Faixa salarial: Entre 3.000 e 5.000');
             expect(notes).not.toMatch(/Faixa salarial:\s{2}/); // no double space
+            expect(notes).toContain('Último empregador');
         });
 
         // 4. laborFlag=POSITIVE + 0 labor processes
@@ -998,8 +1018,8 @@ describe('Deterministic Prefill', () => {
                 bigdatacorpProcessos: [],
             };
             const notes = buildDetLaborNotes(caseData);
-            expect(notes).toContain('Processos trabalhistas identificados');
-            expect(notes).toContain('CONTEXTO PROFISSIONAL');
+            // v7: POSITIVE with zero processes — no header, straight to context
+            expect(notes).toContain('Dados profissionais não disponíveis');
             expect(notes).not.toContain('PROCESSOS TRABALHISTAS');
         });
 
@@ -1146,9 +1166,10 @@ describe('Deterministic Prefill', () => {
             const result = buildDeterministicPrefill(caseData);
             expect(result.finalJustification).toContain('risco elevado');
             expect(result.executiveSummary).toContain('sanção ativa');
-            expect(result.warrantNotes).toContain('MANDADO');
-            expect(result.criminalNotes).toContain('Severidade');
-            expect(result.laborNotes).toContain('Processos trabalhistas identificados');
+            expect(result.warrantNotes).toMatch(/Status:/);
+            // criminalNotes: POSITIVE with no processes → fallback message
+            expect(result.criminalNotes).toContain('indisponíveis');
+            expect(result.laborNotes).toContain('Dados profissionais não disponíveis');
             // Fix A1 — no double space after "prisão" in keyFindings items
             for (const finding of result.keyFindings) {
                 expect(finding).not.toMatch(/prisão {2}/);

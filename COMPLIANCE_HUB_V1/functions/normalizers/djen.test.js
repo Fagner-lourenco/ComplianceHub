@@ -130,25 +130,25 @@ describe('normalizeDjenComunicacoes', () => {
     it('counts mixed areas correctly', () => {
         const items = [
             makeItem({ nomeClasse: 'APELAÇÃO CRIMINAL', codigoClasse: 417 }),
-            makeItem({ id: 2, nomeClasse: 'Ação Trabalhista', siglaTribunal: 'TRT2', codigoClasse: 0 }),
-            makeItem({ id: 3, nomeClasse: 'Procedimento Comum Cível', siglaTribunal: 'TJSP', codigoClasse: 0 }),
-            makeItem({ id: 4, nomeClasse: 'Procedimento Comum', siglaTribunal: 'TJRJ', codigoClasse: 0 }),
+            makeItem({ id: 2, nomeClasse: 'Ação Trabalhista', siglaTribunal: 'TRT2', codigoClasse: 0, numero_processo: '00200000000000000000' }),
+            makeItem({ id: 3, nomeClasse: 'Execução Penal', siglaTribunal: 'TJSP', codigoClasse: 0, numero_processo: '00300000000000000000' }),
+            makeItem({ id: 4, nomeClasse: 'Reclamatória Trabalhista', siglaTribunal: 'TRT1', codigoClasse: 0, numero_processo: '00400000000000000000' }),
         ];
         const result = normalizeDjenComunicacoes(
             { count: 4, items, _request: {} },
             'DIEGO FERNANDO PIRES',
         );
 
-        expect(result.djenCriminalCount).toBe(1);
-        expect(result.djenLaborCount).toBe(1);
-        expect(result.djenCivelCount).toBe(2);
+        expect(result.djenCriminalCount).toBe(2);
+        expect(result.djenLaborCount).toBe(2);
+        expect(result.djenCivelCount).toBe(0);
         expect(result.djenCriminalFlag).toBe('POSITIVE');
         expect(result.djenLaborFlag).toBe(true);
     });
 
     it('sorts criminal items first', () => {
         const items = [
-            makeItem({ id: 1, nomeClasse: 'Procedimento Cível', siglaTribunal: 'TJSP', codigoClasse: 0 }),
+            makeItem({ id: 1, nomeClasse: 'Ação Trabalhista', siglaTribunal: 'TRT2', codigoClasse: 0, numero_processo: '00200000000000000000' }),
             makeItem({ id: 2, nomeClasse: 'APELAÇÃO CRIMINAL', codigoClasse: 417 }),
         ];
         // Use a known process set so items are PROCESS_CONFIRMED regardless of name
@@ -161,7 +161,7 @@ describe('normalizeDjenComunicacoes', () => {
         );
 
         expect(result.djenComunicacoes[0].area).toBe('criminal');
-        expect(result.djenComunicacoes[1].area).toBe('civel');
+        expect(result.djenComunicacoes[1].area).toBe('trabalhista');
     });
 
     it('handles empty result', () => {
@@ -186,7 +186,12 @@ describe('normalizeDjenComunicacoes', () => {
 
     it('truncates to max 50 items', () => {
         const items = Array.from({ length: 60 }, (_, i) =>
-            makeItem({ id: i, nomeClasse: 'Procedimento Cível', siglaTribunal: 'TJSP', codigoClasse: 0 }),
+            makeItem({
+                id: i,
+                nomeClasse: 'APELAÇÃO CRIMINAL',
+                siglaTribunal: 'TJSP',
+                numero_processo: `${String(i).padStart(2, '0')}104442320228130701`,
+            }),
         );
         // Use known process set to confirm all items
         const knownProcesses = new Set(['00104442320228130701']);
@@ -197,6 +202,8 @@ describe('normalizeDjenComunicacoes', () => {
             knownProcesses,
         );
 
+        // All 60 are criminal with unique process numbers → 60 unique processes
+        // But limited to max 50 items
         expect(result.djenComunicacoes).toHaveLength(50);
         expect(result.djenComunicacaoTotal).toBe(60);
     });
@@ -306,20 +313,22 @@ describe('normalizeDjenComunicacoes', () => {
         const items = [
             makeItem({ siglaTribunal: 'TJMG' }),
             makeItem({ id: 2, siglaTribunal: 'TJSP', nomeClasse: 'Procedimento Comum', codigoClasse: 0 }),
+            makeItem({ id: 3, siglaTribunal: 'TJSP', numeroProcesso: '00200000000000000000', nomeClasse: 'Procedimento Comum', codigoClasse: 0 }),
         ];
         const knownProcesses = new Set(['00104442320228130701']);
         const result = normalizeDjenComunicacoes(
-            { count: 2, items, _request: {} },
+            { count: 3, items, _request: {} },
             'DIEGO FERNANDO PIRES',
             null,
             knownProcesses,
             { candidateUfs: ['MG'] },
         );
 
+        // Cível items are filtered out, only criminal/trabalhista remain
         const mgItem = result.djenComunicacoes.find((i) => i.tribunal === 'TJMG');
         const spItem = result.djenComunicacoes.find((i) => i.tribunal === 'TJSP');
         expect(mgItem.geoMatch).toBe(true);
-        expect(spItem.geoMatch).toBe(false);
+        expect(spItem).toBeUndefined();
     });
 
     it('geoMatch is null for national tribunals', () => {
@@ -354,18 +363,20 @@ describe('normalizeDjenComunicacoes', () => {
         const items = [
             makeItem({ siglaTribunal: 'TJMG' }),
             makeItem({ id: 2, siglaTribunal: 'TJSP', nomeClasse: 'Procedimento Comum', codigoClasse: 0 }),
+            makeItem({ id: 3, siglaTribunal: 'TJSP', numeroProcesso: '00200000000000000000', nomeClasse: 'Procedimento Comum', codigoClasse: 0 }),
         ];
         const knownProcesses = new Set(['00104442320228130701']);
         const result = normalizeDjenComunicacoes(
-            { count: 2, items, _request: {} },
+            { count: 3, items, _request: {} },
             'DIEGO FERNANDO PIRES',
             null,
             knownProcesses,
             { candidateUfs: ['MG'] },
         );
 
+        // Cível items are filtered out, only criminal remains (TJMG)
         expect(result.djenNotes).toContain('1 na UF do candidato (MG)');
-        expect(result.djenNotes).toContain('1 em outros estados');
+        expect(result.djenNotes).toContain('0 em outros estados');
     });
 });
 

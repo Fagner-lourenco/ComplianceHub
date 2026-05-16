@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../core/auth/useAuth';
 import { subscribeToAuditLogs } from '../core/firebase/firestoreService';
 import { isClientRole } from '../core/rbac/permissions';
 
 const LIVE_QUERY_TIMEOUT_MS = 10_000;
+const EMPTY_LOGS = [];
 
 const MOCK_AUDIT_LOGS = [
     { id: 'AUD-001', tenantId: 'TEN-001', timestamp: '2026-02-28 14:32:10', user: 'admin@compliancehub.com', action: 'CASE_CONCLUDED', target: 'CASE-001', detail: 'Caso concluido com veredito FIT', ip: '192.168.1.10' },
@@ -43,6 +44,24 @@ export function useAuditLogs(overrideTenantId) {
         && isClientRole(userProfile?.role)
         && !userProfile?.tenantId,
     );
+    const demoTenantId = overrideTenantId === undefined
+        ? (userProfile?.tenantId || null)
+        : overrideTenantId;
+    const demoLogs = useMemo(() => (
+        demoTenantId
+            ? MOCK_AUDIT_LOGS.filter((log) => log.tenantId === demoTenantId)
+            : MOCK_AUDIT_LOGS
+    ), [demoTenantId]);
+    const demoResult = useMemo(() => ({ logs: demoLogs, loading: false, error: null }), [demoLogs]);
+    const waitingResult = useMemo(() => ({ logs: EMPTY_LOGS, loading: true, error: null }), []);
+    const liveResult = useMemo(() => {
+        const isCurrentScope = liveState.scopeKey === scopeKey;
+        return {
+            logs: isCurrentScope ? liveState.logs : EMPTY_LOGS,
+            loading: !isCurrentScope,
+            error: isCurrentScope ? liveState.error : null,
+        };
+    }, [liveState.error, liveState.logs, liveState.scopeKey, scopeKey]);
 
     useEffect(() => {
         if (!user || waitingForClientTenant) {
@@ -77,23 +96,12 @@ export function useAuditLogs(overrideTenantId) {
     }, [scopeKey, tenantId, user, waitingForClientTenant]);
 
     if (!user) {
-        const demoTenantId = overrideTenantId === undefined
-            ? (userProfile?.tenantId || null)
-            : overrideTenantId;
-        const demoLogs = demoTenantId
-            ? MOCK_AUDIT_LOGS.filter((log) => log.tenantId === demoTenantId)
-            : MOCK_AUDIT_LOGS;
-
-        return { logs: demoLogs, loading: false, error: null };
+        return demoResult;
     }
 
     if (waitingForClientTenant) {
-        return { logs: [], loading: true, error: null };
+        return waitingResult;
     }
 
-    return {
-        logs: liveState.scopeKey === scopeKey ? liveState.logs : [],
-        loading: liveState.scopeKey !== scopeKey,
-        error: liveState.scopeKey === scopeKey ? liveState.error : null,
-    };
+    return liveResult;
 }

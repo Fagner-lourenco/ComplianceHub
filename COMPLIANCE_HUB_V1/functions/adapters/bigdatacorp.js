@@ -181,13 +181,29 @@ async function callPost(path, body, credentials) {
  * @param {number} [options.processLimit=100]  Max processes to return
  * @returns {Promise<{ raw: object, basicData: object|null, processes: object|null, kycData: object|null, professionData: object|null, elapsedMs: number }>}
  */
-async function queryCombined(cpf, credentials, options = {}) {
+function buildCombinedDatasets(options = {}) {
     const processLimit = options.processLimit || 100;
+    const datasets = options.datasets || {};
+    const parts = [];
+
+    if (datasets.basicData !== false) parts.push('basic_data');
+    if (datasets.processes !== false) parts.push(`processes.limit(${processLimit})`);
+    if (datasets.kyc !== false) parts.push('kyc');
+    if (datasets.occupation !== false) parts.push('occupation_data');
+
+    if (parts.length === 0) {
+        throw new BigDataCorpError('Nenhum dataset BigDataCorp habilitado para consulta.', 400, false);
+    }
+
+    return parts.join(',');
+}
+
+async function queryCombined(cpf, credentials, options = {}) {
     const startMs = Date.now();
 
     const body = {
         q: `doc{${cpf}} returnupdates{false}`,
-        Datasets: `basic_data,processes.limit(${processLimit}),kyc,occupation_data`,
+        Datasets: buildCombinedDatasets(options),
         Limit: 1,
     };
 
@@ -196,13 +212,14 @@ async function queryCombined(cpf, credentials, options = {}) {
 
     // Extract results from the first (and only) result entry
     const resultEntry = Array.isArray(data?.Result) ? data.Result[0] : null;
+    const datasets = options.datasets || {};
 
     return {
         raw: data,
-        basicData: resultEntry?.BasicData || null,
-        processes: resultEntry?.Processes || null,
-        kycData: resultEntry?.KycData || null,
-        professionData: resultEntry?.ProfessionData || null,
+        basicData: datasets.basicData !== false ? (resultEntry?.BasicData || null) : null,
+        processes: datasets.processes !== false ? (resultEntry?.Processes || null) : null,
+        kycData: datasets.kyc !== false ? (resultEntry?.KycData || null) : null,
+        professionData: datasets.occupation !== false ? (resultEntry?.ProfessionData || null) : null,
         elapsedMs,
     };
 }

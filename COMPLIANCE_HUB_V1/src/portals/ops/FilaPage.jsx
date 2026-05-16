@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../../ui/components/Modal/Modal';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
@@ -114,7 +114,7 @@ export default function FilaPage() {
         return queue.slice(start, start + PAGE_SIZE);
     }, [queue, safeCurrentPage]);
 
-    const handleAssume = async (currentCase) => {
+    const handleAssume = useCallback(async (currentCase) => {
         if (assumingCaseId || !user) return;
         setAssumingCaseId(currentCase.id);
         setAssumeError(null);
@@ -128,7 +128,80 @@ export default function FilaPage() {
         } finally {
             setAssumingCaseId(null);
         }
-    };
+    }, [assumingCaseId, user]);
+
+    const handleClickPending = useCallback(() => setFilter('PENDING'), []);
+    const handleClickInProgress = useCallback(() => setFilter('IN_PROGRESS'), []);
+    const handleClickWaiting = useCallback(() => setFilter('WAITING_INFO'), []);
+    const handleClickCorrections = useCallback(() => setFilter('CORRECTION_NEEDED'), []);
+
+    const openAssignModal = useCallback(async (currentCase) => {
+        if (!canAssignOthers || isDemoMode) return;
+        setAssignModalCase(currentCase);
+        setAssignError(null);
+        setAssignModalOpen(true);
+        try {
+            const res = await callListOpsUsers();
+            setOpsUsers((res?.users || []).filter((u) => u.status === 'active' && u.uid !== currentCase.assigneeId));
+        } catch (err) {
+            setAssignError(extractErrorMessage(err, 'Erro ao carregar analistas.'));
+        }
+    }, [canAssignOthers, isDemoMode]);
+
+    const renderCard = useCallback((currentCase) => (
+        <>
+            <div className="mobile-card__header">
+                <div>
+                    <div className="mobile-card__title">{currentCase.candidateName}</div>
+                    <div className="mobile-card__subtitle">{currentCase.tenantName}</div>
+                </div>
+                <StatusBadge status={currentCase.status} />
+            </div>
+            <div className="mobile-card__meta">
+                {currentCase.candidatePosition && (
+                    <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
+                )}
+                <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
+                <span className={`fila-priority fila-priority--${(currentCase.priority || 'normal').toLowerCase()}`}>
+                    {currentCase.priority === 'HIGH' ? 'Alta' : 'Normal'}
+                </span>
+            </div>
+            <div className="mobile-card__badges">
+                <SlaBadge caseData={currentCase} />
+                <RiskChip value={currentCase.riskLevel} />
+                <RiskChip value={currentCase.criminalFlag} />
+                <ScoreBar score={currentCase.riskScore ?? null} />
+                <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
+            </div>
+            <div className="mobile-card__divider" />
+            <div className="mobile-card__actions">
+                {!currentCase.assigneeId && (
+                    <button
+                        className="btn-primary"
+                        disabled={assumingCaseId === currentCase.id || isDemoMode}
+                        onClick={() => handleAssume(currentCase)}
+                    >
+                        Assumir
+                    </button>
+                )}
+                {currentCase.assigneeId && !currentCase.assigneeName && (
+                    <span className="mobile-card__assignee">Atribuído (oculto)</span>
+                )}
+                {currentCase.assigneeName && (
+                    <span className="mobile-card__assignee">{currentCase.assigneeName}</span>
+                )}
+                {canAssignOthers && (
+                    <button
+                        className="btn-secondary"
+                        disabled={isDemoMode}
+                        onClick={() => openAssignModal(currentCase)}
+                    >
+                        Atribuir
+                    </button>
+                )}
+            </div>
+        </>
+    ), [assumingCaseId, isDemoMode, canAssignOthers, handleAssume, openAssignModal]);
 
     const toggleSelect = (id) => {
         setSelected((prev) => {
@@ -173,19 +246,6 @@ export default function FilaPage() {
         }
     };
 
-    const openAssignModal = async (currentCase) => {
-        if (!canAssignOthers || isDemoMode) return;
-        setAssignModalCase(currentCase);
-        setAssignError(null);
-        setAssignModalOpen(true);
-        try {
-            const res = await callListOpsUsers();
-            setOpsUsers((res?.users || []).filter((u) => u.status === 'active' && u.uid !== currentCase.assigneeId));
-        } catch (err) {
-            setAssignError(extractErrorMessage(err, 'Erro ao carregar analistas.'));
-        }
-    };
-
     const handleAssignToUser = async (targetUid) => {
         if (!assignModalCase || assigning) return;
         setAssigning(true);
@@ -209,10 +269,10 @@ export default function FilaPage() {
                 description="Priorize solicitações pendentes, casos próximos do prazo e análises aguardando responsável."
             />
             <div className="fila-page__kpis">
-                <KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={() => setFilter('PENDING')} />
-                <KpiCard label="Em Analise" value={stats.inProgress} color="blue" onClick={() => setFilter('IN_PROGRESS')} />
-                <KpiCard label="Aguardando Info" value={stats.waiting} color="neutral" onClick={() => setFilter('WAITING_INFO')} />
-                {stats.corrections > 0 && <KpiCard label="Correcao Pendente" value={stats.corrections} color="red" onClick={() => setFilter('CORRECTION_NEEDED')} />}
+                <KpiCard label="Pendentes" value={stats.pending} color="yellow" onClick={handleClickPending} />
+                <KpiCard label="Em Analise" value={stats.inProgress} color="blue" onClick={handleClickInProgress} />
+                <KpiCard label="Aguardando Info" value={stats.waiting} color="neutral" onClick={handleClickWaiting} />
+                {stats.corrections > 0 && <KpiCard label="Correcao Pendente" value={stats.corrections} color="red" onClick={handleClickCorrections} />}
             </div>
 
             {assumeError && (
@@ -265,55 +325,7 @@ export default function FilaPage() {
                 items={paginatedQueue}
                 loading={loading}
                 emptyMessage={filter !== 'ALL' || assignment !== 'ALL' || dateFrom || dateTo ? 'Nenhum caso corresponde aos filtros selecionados.' : 'Nenhum caso pendente na fila.'}
-                renderCard={(currentCase) => (
-                    <>
-                        <div className="mobile-card__header">
-                            <div>
-                                <div className="mobile-card__title">{currentCase.candidateName}</div>
-                                <div className="mobile-card__subtitle">{currentCase.tenantName}</div>
-                            </div>
-                            <StatusBadge status={currentCase.status} />
-                        </div>
-                        <div className="mobile-card__meta">
-                            {currentCase.candidatePosition && (
-                                <span className="mobile-card__meta-item">{currentCase.candidatePosition}</span>
-                            )}
-                            <span className="mobile-card__meta-item">{formatDate(currentCase.createdAt)}</span>
-                            <span className={`fila-priority fila-priority--${(currentCase.priority || 'normal').toLowerCase()}`}>
-                                {currentCase.priority === 'HIGH' ? 'Alta' : 'Normal'}
-                            </span>
-                        </div>
-                        <div className="mobile-card__badges">
-                            <SlaBadge caseData={currentCase} />
-                            <RiskChip value={currentCase.riskLevel} />
-                            <RiskChip value={currentCase.criminalFlag} />
-                            <ScoreBar score={currentCase.riskScore ?? null} />
-                            <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
-                        </div>
-                        <div className="mobile-card__divider" />
-                        <div className="mobile-card__actions">
-                            {!currentCase.assigneeId && (
-                                <button
-                                    className="btn-primary"
-                                    disabled={assumingCaseId === currentCase.id || isDemoMode}
-                                    onClick={() => handleAssume(currentCase)}
-                                >
-                                    {assumingCaseId === currentCase.id ? 'Assumindo...' : 'Assumir'}
-                                </button>
-                            )}
-                            <button className="btn-secondary" onClick={() => navigate(`${routePrefix}/ops/caso/${currentCase.id}`)}>
-                                Abrir
-                            </button>
-                        </div>
-                        {currentCase.assigneeName && (
-                            <div className="mobile-card__meta">
-                                <span className="mobile-card__meta-item" style={{ color: 'var(--text-secondary)' }}>
-                                    Responsavel: {currentCase.assigneeName}
-                                </span>
-                            </div>
-                        )}
-                    </>
-                )}
+                renderCard={renderCard}
             >
                 {/* Desktop table */}
                 <div className="fila-page__table-wrapper">

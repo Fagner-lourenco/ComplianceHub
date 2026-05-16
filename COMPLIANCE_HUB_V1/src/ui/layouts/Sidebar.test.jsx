@@ -52,7 +52,7 @@ describe('Sidebar', () => {
             </MemoryRouter>,
         );
 
-        fireEvent.click(screen.getByRole('link', { name: /Todos os casos/i }));
+        fireEvent.click(screen.getByRole('link', { name: /Casos/i }));
 
         expect(screen.getByTestId('location')).toHaveTextContent('/demo/ops/casos');
     });
@@ -75,6 +75,6 @@ describe('Sidebar', () => {
             </MemoryRouter>,
         );
 
-        expect(screen.getByRole('link', { name: /Relatorios/i })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Links compartilhados/i })).toBeInTheDocument();
     });
 });

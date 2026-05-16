@@ -4,7 +4,7 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import Modal from '../../ui/components/Modal/Modal';
 import { useAuth } from '../../core/auth/useAuth';
-import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf, triggerPdfDownload } from '../../core/firebase/firestoreService';
+import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf, triggerPdfDownload, getClientCaseReportHtml } from '../../core/firebase/firestoreService';
 import { getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
@@ -28,6 +28,7 @@ export default function ClientReportPage() {
     const { cases, loading, error } = useCases(clientTenantId);
     const [publicResult, setPublicResult] = useState(null);
     const [publicResultError, setPublicResultError] = useState(null);
+    const [reportPayload, setReportPayload] = useState(null);
     const [shareModalOpen, setShareModalOpen] = useState(false);
     const [shareState, setShareState] = useState({ status: 'idle', message: '', token: '' });
     const [pdfState, setPdfState] = useState({ status: 'idle', message: '' });
@@ -62,18 +63,35 @@ export default function ClientReportPage() {
         return () => { cancelled = true; };
     }, [caseData, isDemoMode]);
 
+    // Fetch canonical HTML from backend (non-demo only)
+    useEffect(() => {
+        if (!caseData || caseData.status !== 'DONE' || isDemoMode) return;
+        let cancelled = false;
+        getClientCaseReportHtml(caseData.id)
+            .then((payload) => {
+                if (!cancelled) {
+                    setReportPayload(payload);
+                    setPublicResultError(null);
+                }
+            })
+            .catch((err) => {
+                if (!cancelled) setPublicResultError(err);
+            });
+        return () => { cancelled = true; };
+    }, [caseData, isDemoMode]);
+
     const reportHtml = useMemo(() => {
-        if (!caseView || !reportAvailability.available) return '';
-        // REPORT-001: Use publicResult as canonical source when available
-        // publicResult is enriched by the backend with candidateData, computed fields,
-        // and sanitized values. This ensures the internal report matches the public report.
+        if (!reportAvailability.available) return '';
+        // Non-demo: use canonical HTML from backend (same source as PDF and public link)
+        if (!isDemoMode) return reportPayload?.html || '';
+        // Demo mode: build locally
+        if (!caseView) return '';
         const reportData = {
             ...(effectivePublicResult || caseView),
-            // Backfill id for legacy publicResult docs that omitted it
             id: (effectivePublicResult?.id) || caseView.id,
         };
         return buildCaseReportHtml(reportData);
-    }, [caseView, reportAvailability.available, effectivePublicResult]);
+    }, [caseView, reportAvailability.available, effectivePublicResult, isDemoMode, reportPayload]);
 
     // HTML shown in the embedded iframe — strip the internal print button (we have our own)
     const iframeHtml = useMemo(() => {
@@ -231,7 +249,7 @@ export default function ClientReportPage() {
                     ref={iframeRef}
                     title={`Dossiê — ${caseView?.candidateName || 'Candidato'}`}
                     srcDoc={iframeHtml}
-                    sandbox="allow-modals"
+                    sandbox="allow-modals allow-popups allow-popups-to-escape-sandbox"
                     className="crp__frame"
                 />
             ) : (

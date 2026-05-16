@@ -147,6 +147,96 @@ function getDjenGeoMatch(siglaTribunal, candidateUfs) {
     return tribunalUfs.some((uf) => candidateSet.has(uf));
 }
 
+/**
+ * Mapeamento de região fiscal para UFs (usado no BigDataCorp).
+ */
+const FISCAL_REGION_TO_UFS = {
+    NORTE: ['AC', 'AM', 'AP', 'PA', 'RO', 'RR', 'TO'],
+    NORDESTE: ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'],
+    'CENTRO-OESTE': ['DF', 'GO', 'MT', 'MS'],
+    SUDESTE: ['ES', 'MG', 'RJ', 'SP'],
+    SUL: ['PR', 'RS', 'SC'],
+};
+
+/**
+ * Build a comprehensive list of candidate UFs from all available data sources.
+ * Sources (in priority order):
+ *   1. bigdatacorpFiscalRegion → mapped to UFs
+ *   2. hiringUf (from client form)
+ *   3. UFs from BDC process states
+ *   4. UFs from BDC profession history
+ *   5. juditAllUfs / enrichmentAllUfs
+ *
+ * @param {object} caseData
+ * @returns {string[]} Unique UFs (uppercase, 2-letter)
+ */
+const VALID_BRAZILIAN_UFS = new Set(['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']);
+
+function isValidUf(uf) {
+    return uf && uf.length === 2 && /^[A-Z]{2}$/i.test(uf) && VALID_BRAZILIAN_UFS.has(uf.toUpperCase());
+}
+
+function buildCandidateUfs(caseData) {
+    const ufs = new Set();
+
+    // 1. BDC fiscal region
+    const fiscalRegion = caseData?.bigdatacorpFiscalRegion;
+    if (fiscalRegion) {
+        const regionUfs = FISCAL_REGION_TO_UFS[fiscalRegion.toUpperCase()];
+        if (regionUfs) regionUfs.forEach((uf) => { if (VALID_BRAZILIAN_UFS.has(uf)) ufs.add(uf); });
+        // Also handle single-UF fiscal regions (e.g. "SP", "RJ")
+        if (isValidUf(fiscalRegion)) {
+            ufs.add(fiscalRegion.toUpperCase());
+        }
+    }
+
+    // 2. Hiring UF (from client form) — local de trabalho
+    const hiringUf = caseData?.hiringUf;
+    if (isValidUf(hiringUf)) {
+        ufs.add(hiringUf.toUpperCase());
+    }
+
+    // 2.5. Candidate residence UF (from client form)
+    const candidateResidenceUf = caseData?.candidateResidenceUf;
+    if (isValidUf(candidateResidenceUf)) {
+        ufs.add(candidateResidenceUf.toUpperCase());
+    }
+
+    // 3. UFs from BDC processes
+    const bdcProcessos = caseData?.bigdatacorpProcessos;
+    if (Array.isArray(bdcProcessos)) {
+        bdcProcessos.forEach((p) => {
+            const estado = p?.estado || p?.state || p?.uf;
+            if (isValidUf(estado)) ufs.add(estado.toUpperCase());
+        });
+    }
+
+    // 4. UFs from BDC profession history
+    const bdcProfHistory = caseData?.bigdatacorpProfessionHistory;
+    if (Array.isArray(bdcProfHistory)) {
+        bdcProfHistory.forEach((p) => {
+            const state = p?.state || p?.uf;
+            if (isValidUf(state)) ufs.add(state.toUpperCase());
+        });
+    }
+
+    // 5. Judit / FonteData UFs
+    const juditUfs = caseData?.juditAllUfs;
+    if (Array.isArray(juditUfs)) {
+        juditUfs.forEach((uf) => { if (isValidUf(uf)) ufs.add(uf.toUpperCase()); });
+    }
+    const enrichmentUfs = caseData?.enrichmentAllUfs;
+    if (Array.isArray(enrichmentUfs)) {
+        enrichmentUfs.forEach((uf) => { if (isValidUf(uf)) ufs.add(uf.toUpperCase()); });
+    }
+    const juditPrimary = caseData?.juditPrimaryUf;
+    if (isValidUf(juditPrimary)) ufs.add(juditPrimary.toUpperCase());
+    const enrichmentPrimary = caseData?.enrichmentPrimaryUf;
+    if (isValidUf(enrichmentPrimary)) ufs.add(enrichmentPrimary.toUpperCase());
+
+    return [...ufs];
+}
+
 module.exports = {
     ESCAVADOR_TRIBUNAIS,
     JUDIT_TRIBUNAIS,
@@ -154,4 +244,6 @@ module.exports = {
     getJuditTribunais,
     DJEN_TRIBUNAL_TO_UFS,
     getDjenGeoMatch,
+    FISCAL_REGION_TO_UFS,
+    buildCandidateUfs,
 };
