@@ -33,7 +33,7 @@ export default function DashboardClientePage() {
     const maxMonthCount = metrics.maxMonthCount || 1;
 
     useEffect(() => {
-        if (!user || isDemoMode) return undefined;
+        if (!user && !isDemoMode) return undefined;
         let cancelled = false;
         callGetClientQuotaStatus()
             .then((data) => {
@@ -52,9 +52,9 @@ export default function DashboardClientePage() {
     }, [user, isDemoMode]);
 
     const navigateToCases = useCallback((filter) => {
-        if (isDemoMode) return;
         const params = filter ? `?filter=${filter}` : '';
-        navigate(`/client/solicitacoes${params}`);
+        const prefix = isDemoMode ? '/demo' : '';
+        navigate(`${prefix}/client/solicitacoes${params}`);
     }, [isDemoMode, navigate]);
 
     const actionItems = useMemo(() => [

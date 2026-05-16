@@ -4,8 +4,38 @@ import { TenantContext } from '../core/contexts/tenant-context';
 import { ALL_TENANTS_ID } from '../core/contexts/tenantUtils';
 
 const DEMO_TENANTS = [
-    { id: 'TEN-001', name: 'TechCorp Inc.' },
-    { id: 'TEN-002', name: 'Banco Atlantico' },
+    {
+        id: 'TEN-001',
+        name: 'TechCorp Inc.',
+        analysisConfig: {
+            criminal: { enabled: true },
+            labor: { enabled: true },
+            warrant: { enabled: true },
+            osint: { enabled: true },
+            social: { enabled: true },
+            digital: { enabled: true },
+            conflictInterest: { enabled: true },
+        },
+        dailyLimit: 10,
+        monthlyLimit: 100,
+        slaHours: 48,
+    },
+    {
+        id: 'TEN-002',
+        name: 'Banco Atlantico',
+        analysisConfig: {
+            criminal: { enabled: true },
+            labor: { enabled: true },
+            warrant: { enabled: true },
+            osint: { enabled: true },
+            social: { enabled: true },
+            digital: { enabled: true },
+            conflictInterest: { enabled: true },
+        },
+        dailyLimit: 20,
+        monthlyLimit: 200,
+        slaHours: 24,
+    },
 ];
 
 const DEMO_PROFILES = {

@@ -126,7 +126,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     // Load quota when panel opens
     useEffect(() => {
-        if (!open || !user || isDemoProfile) return undefined;
+        if (!open || (!user && !isDemoProfile)) return undefined;
         let cancelled = false;
         setQuotaLoading(true);
         setQuotaError(null);

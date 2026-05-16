@@ -128,6 +128,25 @@ export function NotificationProvider({ children }) {
         return () => unsubscribe();
     }, [uid, isDemo]);
 
+    // Demo toast simulation
+    useEffect(() => {
+        if (!isDemo) return undefined;
+        const timer = window.setTimeout(() => {
+            const unread = DEMO_NOTIFICATIONS.filter(n => !n.read);
+            if (unread.length > 0) {
+                const newest = unread[0];
+                setLatestToast(newest);
+                if (toastTimerRef.current) {
+                    window.clearTimeout(toastTimerRef.current);
+                }
+                toastTimerRef.current = window.setTimeout(() => {
+                    setLatestToast(null);
+                }, 8000);
+            }
+        }, 3000);
+        return () => window.clearTimeout(timer);
+    }, [isDemo]);
+
     const markAsRead = useCallback(async (notificationId) => {
         try {
             if (!isDemo) {

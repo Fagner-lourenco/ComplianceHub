@@ -9,7 +9,7 @@
       "source_file": "add_import.py",
       "source_location": "L1",
       "id": "add_import_py",
-      "community": 72,
+      "community": 74,
       "norm_label": "add_import.py"
     },
     {
@@ -18,7 +18,7 @@
       "source_file": "add_import2.py",
       "source_location": "L1",
       "id": "add_import2_py",
-      "community": 73,
+      "community": 75,
       "norm_label": "add_import2.py"
     },
     {
@@ -27,7 +27,7 @@
       "source_file": "add_panel.py",
       "source_location": "L1",
       "id": "add_panel_py",
-      "community": 74,
+      "community": 76,
       "norm_label": "add_panel.py"
     },
     {
@@ -36,7 +36,7 @@
       "source_file": "create-users.js",
       "source_location": "L1",
       "id": "create_users_js",
-      "community": 50,
+      "community": 52,
       "norm_label": "create-users.js"
     },
     {
@@ -45,7 +45,7 @@
       "source_file": "create-users.js",
       "source_location": "L27",
       "id": "compliance_hub_v1_create_users_main",
-      "community": 50,
+      "community": 52,
       "norm_label": "main()"
     },
     {
@@ -54,7 +54,7 @@
       "source_file": "deletar-casos.js",
       "source_location": "L1",
       "id": "deletar_casos_js",
-      "community": 51,
+      "community": 53,
       "norm_label": "deletar-casos.js"
     },
     {
@@ -63,7 +63,7 @@
       "source_file": "deletar-casos.js",
       "source_location": "L27",
       "id": "compliance_hub_v1_deletar_casos_main",
-      "community": 51,
+      "community": 53,
       "norm_label": "main()"
     },
     {
@@ -72,7 +72,7 @@
       "source_file": "delete-record.js",
       "source_location": "L1",
       "id": "delete_record_js",
-      "community": 52,
+      "community": 54,
       "norm_label": "delete-record.js"
     },
     {
@@ -81,7 +81,7 @@
       "source_file": "delete-record.js",
       "source_location": "L27",
       "id": "compliance_hub_v1_delete_record_main",
-      "community": 52,
+      "community": 54,
       "norm_label": "main()"
     },
     {
@@ -90,7 +90,7 @@
       "source_file": "eslint.config.js",
       "source_location": "L1",
       "id": "eslint_config_js",
-      "community": 75,
+      "community": 77,
       "norm_label": "eslint.config.js"
     },
     {
@@ -99,7 +99,7 @@
       "source_file": "firestore.rules.test.js",
       "source_location": "L1",
       "id": "firestore_rules_test_js",
-      "community": 76,
+      "community": 78,
       "norm_label": "firestore.rules.test.js"
     },
     {
@@ -108,7 +108,7 @@
       "source_file": "fix_comm.py",
       "source_location": "L1",
       "id": "fix_comm_py",
-      "community": 77,
+      "community": 79,
       "norm_label": "fix_comm.py"
     },
     {
@@ -117,7 +117,7 @@
       "source_file": "fix_lint.py",
       "source_location": "L1",
       "id": "fix_lint_py",
-      "community": 78,
+      "community": 80,
       "norm_label": "fix_lint.py"
     },
     {
@@ -126,7 +126,7 @@
       "source_file": "fix_props.py",
       "source_location": "L1",
       "id": "fix_props_py",
-      "community": 79,
+      "community": 81,
       "norm_label": "fix_props.py"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "fix_timeline.py",
       "source_location": "L1",
       "id": "fix_timeline_py",
-      "community": 80,
+      "community": 82,
       "norm_label": "fix_timeline.py"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "playwright.config.js",
       "source_location": "L1",
       "id": "playwright_config_js",
-      "community": 81,
+      "community": 83,
       "norm_label": "playwright.config.js"
     },
     {
@@ -153,7 +153,7 @@
       "source_file": "update_index.py",
       "source_location": "L1",
       "id": "update_index_py",
-      "community": 82,
+      "community": 84,
       "norm_label": "update_index.py"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "vite.config.js",
       "source_location": "L1",
       "id": "vite_config_js",
-      "community": 53,
+      "community": 55,
       "norm_label": "vite.config.js"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "vite.config.js",
       "source_location": "L11",
       "id": "compliance_hub_v1_vite_config_manualchunks",
-      "community": 53,
+      "community": 55,
       "norm_label": "manualchunks()"
     },
     {
@@ -180,7 +180,7 @@
       "source_file": "e2e/casopage.lazy-render.spec.js",
       "source_location": "L1",
       "id": "e2e_casopage_lazy_render_spec_js",
-      "community": 83,
+      "community": 85,
       "norm_label": "casopage.lazy-render.spec.js"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "e2e/dashboard.navigation.spec.js",
       "source_location": "L1",
       "id": "e2e_dashboard_navigation_spec_js",
-      "community": 84,
+      "community": 86,
       "norm_label": "dashboard.navigation.spec.js"
     },
     {
@@ -198,7 +198,7 @@
       "source_file": "e2e/demo-client.smoke.spec.js",
       "source_location": "L1",
       "id": "e2e_demo_client_smoke_spec_js",
-      "community": 85,
+      "community": 87,
       "norm_label": "demo-client.smoke.spec.js"
     },
     {
@@ -207,7 +207,7 @@
       "source_file": "e2e/demo-ops.smoke.spec.js",
       "source_location": "L1",
       "id": "e2e_demo_ops_smoke_spec_js",
-      "community": 86,
+      "community": 88,
       "norm_label": "demo-ops.smoke.spec.js"
     },
     {
@@ -216,7 +216,7 @@
       "source_file": "e2e/login-report.smoke.spec.js",
       "source_location": "L1",
       "id": "e2e_login_report_smoke_spec_js",
-      "community": 87,
+      "community": 89,
       "norm_label": "login-report.smoke.spec.js"
     },
     {
@@ -225,7 +225,7 @@
       "source_file": "e2e/login.form.spec.js",
       "source_location": "L1",
       "id": "e2e_login_form_spec_js",
-      "community": 88,
+      "community": 90,
       "norm_label": "login.form.spec.js"
     },
     {
@@ -234,7 +234,7 @@
       "source_file": "e2e/nova-solicitacao.form.spec.js",
       "source_location": "L1",
       "id": "e2e_nova_solicitacao_form_spec_js",
-      "community": 89,
+      "community": 91,
       "norm_label": "nova-solicitacao.form.spec.js"
     },
     {
@@ -243,7 +243,7 @@
       "source_file": "e2e/public-report.render.spec.js",
       "source_location": "L1",
       "id": "e2e_public_report_render_spec_js",
-      "community": 90,
+      "community": 92,
       "norm_label": "public-report.render.spec.js"
     },
     {
@@ -252,7 +252,7 @@
       "source_file": "e2e/solicitacoes.drawer.spec.js",
       "source_location": "L1",
       "id": "e2e_solicitacoes_drawer_spec_js",
-      "community": 91,
+      "community": 93,
       "norm_label": "solicitacoes.drawer.spec.js"
     },
     {
@@ -261,7 +261,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L1",
       "id": "functions_casecommunication_js",
-      "community": 32,
+      "community": 33,
       "norm_label": "casecommunication.js"
     },
     {
@@ -270,7 +270,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L14",
       "id": "functions_casecommunication_resolveuserportal",
-      "community": 32,
+      "community": 33,
       "norm_label": "resolveuserportal()"
     },
     {
@@ -279,7 +279,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L20",
       "id": "functions_casecommunication_assertcanaccesscasecommunication",
-      "community": 32,
+      "community": 33,
       "norm_label": "assertcanaccesscasecommunication()"
     },
     {
@@ -288,7 +288,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L53",
       "id": "functions_casecommunication_sanitizecasemessagebody",
-      "community": 32,
+      "community": 33,
       "norm_label": "sanitizecasemessagebody()"
     },
     {
@@ -297,7 +297,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L75",
       "id": "functions_casecommunication_createsystemcasemessage",
-      "community": 32,
+      "community": 33,
       "norm_label": "createsystemcasemessage()"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "functions/caseCommunication.js",
       "source_location": "L123",
       "id": "functions_casecommunication_buildnotificationfunctions",
-      "community": 32,
+      "community": 33,
       "norm_label": "buildnotificationfunctions()"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "functions/debug-case.js",
       "source_location": "L1",
       "id": "functions_debug_case_js",
-      "community": 54,
+      "community": 56,
       "norm_label": "debug-case.js"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "functions/debug-case.js",
       "source_location": "L10",
       "id": "functions_debug_case_getcase",
-      "community": 54,
+      "community": 56,
       "norm_label": "getcase()"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "functions/enforceTenantSubmissionLimits.test.js",
       "source_location": "L1",
       "id": "functions_enforcetenantsubmissionlimits_test_js",
-      "community": 55,
+      "community": 57,
       "norm_label": "enforcetenantsubmissionlimits.test.js"
     },
     {
@@ -342,7 +342,7 @@
       "source_file": "functions/enforceTenantSubmissionLimits.test.js",
       "source_location": "L44",
       "id": "functions_enforcetenantsubmissionlimits_test_makeusagesnap",
-      "community": 55,
+      "community": 57,
       "norm_label": "makeusagesnap()"
     },
     {
@@ -351,7 +351,7 @@
       "source_file": "functions/fix-tenant-configs.js",
       "source_location": "L1",
       "id": "functions_fix_tenant_configs_js",
-      "community": 38,
+      "community": 40,
       "norm_label": "fix-tenant-configs.js"
     },
     {
@@ -360,7 +360,7 @@
       "source_file": "functions/fix-tenant-configs.js",
       "source_location": "L26",
       "id": "functions_fix_tenant_configs_setupcredentials",
-      "community": 38,
+      "community": 40,
       "norm_label": "setupcredentials()"
     },
     {
@@ -369,7 +369,7 @@
       "source_file": "functions/fix-tenant-configs.js",
       "source_location": "L54",
       "id": "functions_fix_tenant_configs_cleanuptmpadcfile",
-      "community": 38,
+      "community": 40,
       "norm_label": "cleanuptmpadcfile()"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "functions/fix-tenant-configs.js",
       "source_location": "L67",
       "id": "functions_fix_tenant_configs_fixtenantconfigs",
-      "community": 38,
+      "community": 40,
       "norm_label": "fixtenantconfigs()"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "functions/getClientQuotaStatus.test.js",
       "source_location": "L1",
       "id": "functions_getclientquotastatus_test_js",
-      "community": 56,
+      "community": 58,
       "norm_label": "getclientquotastatus.test.js"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "functions/getClientQuotaStatus.test.js",
       "source_location": "L39",
       "id": "functions_getclientquotastatus_test_buildmockdb",
-      "community": 56,
+      "community": 58,
       "norm_label": "buildmockdb()"
     },
     {
@@ -405,7 +405,7 @@
       "source_file": "functions/getPublicReportView.test.js",
       "source_location": "L1",
       "id": "functions_getpublicreportview_test_js",
-      "community": 57,
+      "community": 59,
       "norm_label": "getpublicreportview.test.js"
     },
     {
@@ -414,7 +414,7 @@
       "source_file": "functions/getPublicReportView.test.js",
       "source_location": "L11",
       "id": "functions_getpublicreportview_test_buildmockdb",
-      "community": 57,
+      "community": 59,
       "norm_label": "buildmockdb()"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "functions/index.js",
       "source_location": "L255",
       "id": "functions_index_formatdatekey",
-      "community": 19,
+      "community": 18,
       "norm_label": "formatdatekey()"
     },
     {
@@ -459,7 +459,7 @@
       "source_file": "functions/index.js",
       "source_location": "L268",
       "id": "functions_index_formatmonthkey",
-      "community": 19,
+      "community": 18,
       "norm_label": "formatmonthkey()"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "functions/index.js",
       "source_location": "L273",
       "id": "functions_index_asdate",
-      "community": 19,
+      "community": 18,
       "norm_label": "asdate()"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "functions/index.js",
       "source_location": "L314",
       "id": "functions_index_estimateaicostusd",
-      "community": 11,
+      "community": 12,
       "norm_label": "estimateaicostusd()"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "functions/index.js",
       "source_location": "L476",
       "id": "functions_index_sanitizestructuredlist",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizestructuredlist()"
     },
     {
@@ -504,7 +504,7 @@
       "source_file": "functions/index.js",
       "source_location": "L485",
       "id": "functions_index_sanitizestructuredtext",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizestructuredtext()"
     },
     {
@@ -513,7 +513,7 @@
       "source_file": "functions/index.js",
       "source_location": "L495",
       "id": "functions_index_sanitizeprocessassessments",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizeprocessassessments()"
     },
     {
@@ -522,7 +522,7 @@
       "source_file": "functions/index.js",
       "source_location": "L507",
       "id": "functions_index_stripundefined",
-      "community": 11,
+      "community": 12,
       "norm_label": "stripundefined()"
     },
     {
@@ -531,7 +531,7 @@
       "source_file": "functions/index.js",
       "source_location": "L519",
       "id": "functions_index_sanitizepublicstructuredvalue",
-      "community": 19,
+      "community": 18,
       "norm_label": "sanitizepublicstructuredvalue()"
     },
     {
@@ -540,7 +540,7 @@
       "source_file": "functions/index.js",
       "source_location": "L531",
       "id": "functions_index_sanitizeaistructured",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizeaistructured()"
     },
     {
@@ -549,7 +549,7 @@
       "source_file": "functions/index.js",
       "source_location": "L550",
       "id": "functions_index_sanitizeaihomonymstructured",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizeaihomonymstructured()"
     },
     {
@@ -558,7 +558,7 @@
       "source_file": "functions/index.js",
       "source_location": "L565",
       "id": "functions_index_sanitizeaiprefillstructured",
-      "community": 16,
+      "community": 17,
       "norm_label": "sanitizeaiprefillstructured()"
     },
     {
@@ -657,7 +657,7 @@
       "source_file": "functions/index.js",
       "source_location": "L750",
       "id": "functions_index_fixlatinmojibake",
-      "community": 25,
+      "community": 26,
       "norm_label": "fixlatinmojibake()"
     },
     {
@@ -666,7 +666,7 @@
       "source_file": "functions/index.js",
       "source_location": "L785",
       "id": "functions_index_normalizeunicodetoascii",
-      "community": 25,
+      "community": 26,
       "norm_label": "normalizeunicodetoascii()"
     },
     {
@@ -675,7 +675,7 @@
       "source_file": "functions/index.js",
       "source_location": "L799",
       "id": "functions_index_sanitizeaioutput",
-      "community": 25,
+      "community": 26,
       "norm_label": "sanitizeaioutput()"
     },
     {
@@ -684,7 +684,7 @@
       "source_file": "functions/index.js",
       "source_location": "L807",
       "id": "functions_index_compacterrormessage",
-      "community": 25,
+      "community": 26,
       "norm_label": "compacterrormessage()"
     },
     {
@@ -693,7 +693,7 @@
       "source_file": "functions/index.js",
       "source_location": "L816",
       "id": "functions_index_extractapierrormessage",
-      "community": 25,
+      "community": 26,
       "norm_label": "extractapierrormessage()"
     },
     {
@@ -702,7 +702,7 @@
       "source_file": "functions/index.js",
       "source_location": "L826",
       "id": "functions_index_formatopenaierror",
-      "community": 25,
+      "community": 26,
       "norm_label": "formatopenaierror()"
     },
     {
@@ -711,7 +711,7 @@
       "source_file": "functions/index.js",
       "source_location": "L851",
       "id": "functions_index_formatairuntimeerror",
-      "community": 25,
+      "community": 26,
       "norm_label": "formatairuntimeerror()"
     },
     {
@@ -720,7 +720,7 @@
       "source_file": "functions/index.js",
       "source_location": "L861",
       "id": "functions_index_isdoneorpartial",
-      "community": 11,
+      "community": 12,
       "norm_label": "isdoneorpartial()"
     },
     {
@@ -783,7 +783,7 @@
       "source_file": "functions/index.js",
       "source_location": "L932",
       "id": "functions_index_computeautoclassifysignature",
-      "community": 11,
+      "community": 25,
       "norm_label": "computeautoclassifysignature()"
     },
     {
@@ -801,7 +801,7 @@
       "source_file": "functions/index.js",
       "source_location": "L991",
       "id": "functions_index_acquireautoclassifyrun",
-      "community": 11,
+      "community": 12,
       "norm_label": "acquireautoclassifyrun()"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1023",
       "id": "functions_index_releaseautoclassifyrun",
-      "community": 11,
+      "community": 12,
       "norm_label": "releaseautoclassifyrun()"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1046",
       "id": "functions_index_getaiprovidersincluded",
-      "community": 11,
+      "community": 12,
       "norm_label": "getaiprovidersincluded()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1055",
       "id": "functions_index_buildaiupdatepayload",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaiupdatepayload()"
     },
     {
@@ -837,7 +837,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1087",
       "id": "functions_index_buildaihomonymresetpayload",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaihomonymresetpayload()"
     },
     {
@@ -846,7 +846,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1108",
       "id": "functions_index_buildaihomonymupdatepayload",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaihomonymupdatepayload()"
     },
     {
@@ -855,7 +855,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1144",
       "id": "functions_index_recordaicostledger",
-      "community": 11,
+      "community": 12,
       "norm_label": "recordaicostledger()"
     },
     {
@@ -864,7 +864,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1160",
       "id": "functions_index_buildaiprefillupdatepayload",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaiprefillupdatepayload()"
     },
     {
@@ -873,7 +873,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1179",
       "id": "functions_index_gettenantsettingsdata",
-      "community": 3,
+      "community": 34,
       "norm_label": "gettenantsettingsdata()"
     },
     {
@@ -882,7 +882,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1185",
       "id": "functions_index_loadfontedataconfig",
-      "community": 3,
+      "community": 34,
       "norm_label": "loadfontedataconfig()"
     },
     {
@@ -891,7 +891,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1216",
       "id": "functions_index_loadescavadorconfig",
-      "community": 3,
+      "community": 34,
       "norm_label": "loadescavadorconfig()"
     },
     {
@@ -900,7 +900,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1235",
       "id": "functions_index_loadjuditconfig",
-      "community": 3,
+      "community": 34,
       "norm_label": "loadjuditconfig()"
     },
     {
@@ -909,7 +909,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1275",
       "id": "functions_index_loadbigdatacorpconfig",
-      "community": 3,
+      "community": 34,
       "norm_label": "loadbigdatacorpconfig()"
     },
     {
@@ -918,7 +918,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1295",
       "id": "functions_index_loaddjenconfig",
-      "community": 3,
+      "community": 34,
       "norm_label": "loaddjenconfig()"
     },
     {
@@ -945,7 +945,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1348",
       "id": "functions_index_computesimplehash",
-      "community": 11,
+      "community": 25,
       "norm_label": "computesimplehash()"
     },
     {
@@ -954,7 +954,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1354",
       "id": "functions_index_computeaicachekey",
-      "community": 11,
+      "community": 12,
       "norm_label": "computeaicachekey()"
     },
     {
@@ -963,7 +963,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1371",
       "id": "functions_index_runstructuredaianalysis",
-      "community": 25,
+      "community": 26,
       "norm_label": "runstructuredaianalysis()"
     },
     {
@@ -972,7 +972,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1502",
       "id": "functions_index_runaianalysis",
-      "community": 11,
+      "community": 12,
       "norm_label": "runaianalysis()"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_file": "functions/index.js",
       "source_location": "L1848",
       "id": "functions_index_buildaiprompt",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaiprompt()"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "functions/index.js",
       "source_location": "L2017",
       "id": "functions_index_buildaiprefillprompt",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildaiprefillprompt()"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_file": "functions/index.js",
       "source_location": "L2140",
       "id": "functions_index_buildaihomonymprompt",
-      "community": 11,
+      "community": 12,
       "norm_label": "buildaihomonymprompt()"
     },
     {
@@ -1089,7 +1089,7 @@
       "source_file": "functions/index.js",
       "source_location": "L2165",
       "id": "functions_index_runaihomonymanalysis",
-      "community": 11,
+      "community": 12,
       "norm_label": "runaihomonymanalysis()"
     },
     {
@@ -1098,7 +1098,7 @@
       "source_file": "functions/index.js",
       "source_location": "L2180",
       "id": "functions_index_runaiprefillanalysis",
-      "community": 11,
+      "community": 22,
       "norm_label": "runaiprefillanalysis()"
     },
     {
@@ -1143,7 +1143,7 @@
       "source_file": "functions/index.js",
       "source_location": "L2793",
       "id": "functions_index_evaluatenegativepartialsafetynet",
-      "community": 11,
+      "community": 12,
       "norm_label": "evaluatenegativepartialsafetynet()"
     },
     {
@@ -1161,7 +1161,7 @@
       "source_file": "functions/index.js",
       "source_location": "L3940",
       "id": "functions_index_rundjenenrichmentphase",
-      "community": 12,
+      "community": 11,
       "norm_label": "rundjenenrichmentphase()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_file": "functions/index.js",
       "source_location": "L4093",
       "id": "functions_index_extractknownprocessnumbers",
-      "community": 12,
+      "community": 11,
       "norm_label": "extractknownprocessnumbers()"
     },
     {
@@ -1179,7 +1179,7 @@
       "source_file": "functions/index.js",
       "source_location": "L4129",
       "id": "functions_index_runautoclassifyandai",
-      "community": 11,
+      "community": 12,
       "norm_label": "runautoclassifyandai()"
     },
     {
@@ -1197,7 +1197,7 @@
       "source_file": "functions/index.js",
       "source_location": "L4908",
       "id": "functions_index_buildclientcasepayload",
-      "community": 19,
+      "community": 18,
       "norm_label": "buildclientcasepayload()"
     },
     {
@@ -1206,7 +1206,7 @@
       "source_file": "functions/index.js",
       "source_location": "L4946",
       "id": "functions_index_writeclientcasemirror",
-      "community": 19,
+      "community": 18,
       "norm_label": "writeclientcasemirror()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "functions/index.js",
       "source_location": "L6533",
       "id": "functions_index_resolvepublicreportstatus",
-      "community": 19,
+      "community": 18,
       "norm_label": "resolvepublicreportstatus()"
     },
     {
@@ -1224,77 +1224,77 @@
       "source_file": "functions/index.js",
       "source_location": "L6542",
       "id": "functions_index_serializemanagedpublicreport",
-      "community": 19,
+      "community": 18,
       "norm_label": "serializemanagedpublicreport()"
     },
     {
       "label": "getPublicReportViewInner()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L6800",
+      "source_location": "L6809",
       "id": "functions_index_getpublicreportviewinner",
-      "community": 19,
+      "community": 18,
       "norm_label": "getpublicreportviewinner()"
     },
     {
       "label": "hasMeaningfulValue()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L6950",
+      "source_location": "L6959",
       "id": "functions_index_hasmeaningfulvalue",
-      "community": 16,
+      "community": 17,
       "norm_label": "hasmeaningfulvalue()"
     },
     {
       "label": "normalizeKeyFindingsValue()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L6956",
+      "source_location": "L6965",
       "id": "functions_index_normalizekeyfindingsvalue",
-      "community": 16,
+      "community": 17,
       "norm_label": "normalizekeyfindingsvalue()"
     },
     {
       "label": "normalizeNarrativeValue()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L6970",
+      "source_location": "L6979",
       "id": "functions_index_normalizenarrativevalue",
-      "community": 16,
+      "community": 17,
       "norm_label": "normalizenarrativevalue()"
     },
     {
       "label": "resolveNarrativeField()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L6985",
+      "source_location": "L6994",
       "id": "functions_index_resolvenarrativefield",
-      "community": 16,
+      "community": 17,
       "norm_label": "resolvenarrativefield()"
     },
     {
       "label": "pickConcludePayload()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7013",
+      "source_location": "L7022",
       "id": "functions_index_pickconcludepayload",
-      "community": 16,
+      "community": 17,
       "norm_label": "pickconcludepayload()"
     },
     {
       "label": "pickDraftPayload()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7032",
+      "source_location": "L7041",
       "id": "functions_index_pickdraftpayload",
-      "community": 16,
+      "community": 12,
       "norm_label": "pickdraftpayload()"
     },
     {
       "label": "buildProcessGroupSource()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7305",
+      "source_location": "L7314",
       "id": "functions_index_buildprocessgroupsource",
       "community": 3,
       "norm_label": "buildprocessgroupsource()"
@@ -1303,25 +1303,25 @@
       "label": "buildProcessHighlights()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7314",
+      "source_location": "L7323",
       "id": "functions_index_buildprocesshighlights",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildprocesshighlights()"
     },
     {
       "label": "buildWarrantFindings()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7423",
+      "source_location": "L7432",
       "id": "functions_index_buildwarrantfindings",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildwarrantfindings()"
     },
     {
       "label": "evaluateComplexityTriggers()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7483",
+      "source_location": "L7492",
       "id": "functions_index_evaluatecomplexitytriggers",
       "community": 15,
       "norm_label": "evaluatecomplexitytriggers()"
@@ -1330,7 +1330,7 @@
       "label": "formatDjenComunicacao()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7500",
+      "source_location": "L7509",
       "id": "functions_index_formatdjencomunicacao",
       "community": 3,
       "norm_label": "formatdjencomunicacao()"
@@ -1339,7 +1339,7 @@
       "label": "buildDetCriminalNotes()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7540",
+      "source_location": "L7549",
       "id": "functions_index_builddetcriminalnotes",
       "community": 15,
       "norm_label": "builddetcriminalnotes()"
@@ -1348,7 +1348,7 @@
       "label": "buildDetLaborNotes()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7691",
+      "source_location": "L7700",
       "id": "functions_index_builddetlabornotes",
       "community": 15,
       "norm_label": "builddetlabornotes()"
@@ -1357,7 +1357,7 @@
       "label": "buildDetWarrantNotes()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7806",
+      "source_location": "L7815",
       "id": "functions_index_builddetwarrantnotes",
       "community": 15,
       "norm_label": "builddetwarrantnotes()"
@@ -1366,7 +1366,7 @@
       "label": "buildDetKeyFindings()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L7928",
+      "source_location": "L7937",
       "id": "functions_index_builddetkeyfindings",
       "community": 15,
       "norm_label": "builddetkeyfindings()"
@@ -1375,7 +1375,7 @@
       "label": "buildDetExecutiveSummary()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8009",
+      "source_location": "L8018",
       "id": "functions_index_builddetexecutivesummary",
       "community": 15,
       "norm_label": "builddetexecutivesummary()"
@@ -1384,7 +1384,7 @@
       "label": "buildDetFinalJustification()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8107",
+      "source_location": "L8116",
       "id": "functions_index_builddetfinaljustification",
       "community": 15,
       "norm_label": "builddetfinaljustification()"
@@ -1393,7 +1393,7 @@
       "label": "buildDeterministicPrefill()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8270",
+      "source_location": "L8279",
       "id": "functions_index_builddeterministicprefill",
       "community": 15,
       "norm_label": "builddeterministicprefill()"
@@ -1402,7 +1402,7 @@
       "label": "buildKeyFindings()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8293",
+      "source_location": "L8302",
       "id": "functions_index_buildkeyfindings",
       "community": 3,
       "norm_label": "buildkeyfindings()"
@@ -1411,7 +1411,7 @@
       "label": "buildExecutiveSummary()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8306",
+      "source_location": "L8315",
       "id": "functions_index_buildexecutivesummary",
       "community": 3,
       "norm_label": "buildexecutivesummary()"
@@ -1420,7 +1420,7 @@
       "label": "buildExpandedKeyFindings()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8312",
+      "source_location": "L8321",
       "id": "functions_index_buildexpandedkeyfindings",
       "community": 3,
       "norm_label": "buildexpandedkeyfindings()"
@@ -1429,7 +1429,7 @@
       "label": "buildExecutiveSummaryFallback()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8331",
+      "source_location": "L8340",
       "id": "functions_index_buildexecutivesummaryfallback",
       "community": 3,
       "norm_label": "buildexecutivesummaryfallback()"
@@ -1438,97 +1438,97 @@
       "label": "buildSourceSummary()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8365",
+      "source_location": "L8374",
       "id": "functions_index_buildsourcesummary",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildsourcesummary()"
     },
     {
       "label": "buildStatusSummary()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8410",
+      "source_location": "L8419",
       "id": "functions_index_buildstatussummary",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildstatussummary()"
     },
     {
       "label": "buildNextSteps()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8430",
+      "source_location": "L8439",
       "id": "functions_index_buildnextsteps",
-      "community": 16,
+      "community": 17,
       "norm_label": "buildnextsteps()"
     },
     {
       "label": "buildReportSlug()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8463",
+      "source_location": "L8472",
       "id": "functions_index_buildreportslug",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildreportslug()"
     },
     {
       "label": "buildTimelineEvents()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8469",
+      "source_location": "L8478",
       "id": "functions_index_buildtimelineevents",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildtimelineevents()"
     },
     {
       "label": "calculateTurnaroundHours()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8530",
+      "source_location": "L8539",
       "id": "functions_index_calculateturnaroundhours",
-      "community": 19,
+      "community": 18,
       "norm_label": "calculateturnaroundhours()"
     },
     {
       "label": "buildSanitizedPublicResultSnapshot()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8539",
+      "source_location": "L8548",
       "id": "functions_index_buildsanitizedpublicresultsnapshot",
-      "community": 18,
+      "community": 22,
       "norm_label": "buildsanitizedpublicresultsnapshot()"
     },
     {
       "label": "syncPublicResultLatest()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8612",
+      "source_location": "L8621",
       "id": "functions_index_syncpublicresultlatest",
-      "community": 18,
+      "community": 25,
       "norm_label": "syncpublicresultlatest()"
     },
     {
       "label": "buildReviewDraftSeed()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8625",
+      "source_location": "L8634",
       "id": "functions_index_buildreviewdraftseed",
-      "community": 16,
+      "community": 17,
       "norm_label": "buildreviewdraftseed()"
     },
     {
       "label": "buildResetPublishedCaseFields()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8635",
+      "source_location": "L8644",
       "id": "functions_index_buildresetpublishedcasefields",
-      "community": 16,
+      "community": 17,
       "norm_label": "buildresetpublishedcasefields()"
     },
     {
       "label": "revokeCasePublicationArtifacts()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8676",
+      "source_location": "L8685",
       "id": "functions_index_revokecasepublicationartifacts",
       "community": 3,
       "norm_label": "revokecasepublicationartifacts()"
@@ -1537,25 +1537,25 @@
       "label": "computePublicSnapshotHash()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8696",
+      "source_location": "L8705",
       "id": "functions_index_computepublicsnapshothash",
-      "community": 18,
+      "community": 25,
       "norm_label": "computepublicsnapshothash()"
     },
     {
       "label": "hasPublicReportMinimumContent()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L8700",
+      "source_location": "L8709",
       "id": "functions_index_haspublicreportminimumcontent",
-      "community": 16,
+      "community": 25,
       "norm_label": "haspublicreportminimumcontent()"
     },
     {
       "label": "createCaseCompletedNotifications()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9138",
+      "source_location": "L9147",
       "id": "functions_index_createcasecompletednotifications",
       "community": 3,
       "norm_label": "createcasecompletednotifications()"
@@ -1564,7 +1564,7 @@
       "label": "createNewSolicitationNotifications()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9167",
+      "source_location": "L9176",
       "id": "functions_index_createnewsolicitationnotifications",
       "community": 3,
       "norm_label": "createnewsolicitationnotifications()"
@@ -1573,7 +1573,7 @@
       "label": "canManageOpsUsers()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9209",
+      "source_location": "L9218",
       "id": "functions_index_canmanageopsusers",
       "community": 3,
       "norm_label": "canmanageopsusers()"
@@ -1582,7 +1582,7 @@
       "label": "canAssignCases()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9212",
+      "source_location": "L9221",
       "id": "functions_index_canassigncases",
       "community": 3,
       "norm_label": "canassigncases()"
@@ -1591,7 +1591,7 @@
       "label": "normalizeUserStatus()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9215",
+      "source_location": "L9224",
       "id": "functions_index_normalizeuserstatus",
       "community": 3,
       "norm_label": "normalizeuserstatus()"
@@ -1600,7 +1600,7 @@
       "label": "sanitizeDisplayName()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9219",
+      "source_location": "L9228",
       "id": "functions_index_sanitizedisplayname",
       "community": 3,
       "norm_label": "sanitizedisplayname()"
@@ -1609,7 +1609,7 @@
       "label": "assertOpsManager()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9222",
+      "source_location": "L9231",
       "id": "functions_index_assertopsmanager",
       "community": 3,
       "norm_label": "assertopsmanager()"
@@ -1618,7 +1618,7 @@
       "label": "assertCanAssignCase()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9225",
+      "source_location": "L9234",
       "id": "functions_index_assertcanassigncase",
       "community": 3,
       "norm_label": "assertcanassigncase()"
@@ -1627,7 +1627,7 @@
       "label": "getOpsUserProfile()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9229",
+      "source_location": "L9238",
       "id": "functions_index_getopsuserprofile",
       "community": 3,
       "norm_label": "getopsuserprofile()"
@@ -1636,7 +1636,7 @@
       "label": "assertOpsCanAccessCase()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9246",
+      "source_location": "L9255",
       "id": "functions_index_assertopscanaccesscase",
       "community": 3,
       "norm_label": "assertopscanaccesscase()"
@@ -1645,16 +1645,16 @@
       "label": "getClientUserProfile()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9261",
+      "source_location": "L9270",
       "id": "functions_index_getclientuserprofile",
-      "community": 19,
+      "community": 18,
       "norm_label": "getclientuserprofile()"
     },
     {
       "label": "validateCpfDigits()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9285",
+      "source_location": "L9294",
       "id": "functions_index_validatecpfdigits",
       "community": 3,
       "norm_label": "validatecpfdigits()"
@@ -1663,7 +1663,7 @@
       "label": "sanitizeCpf()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9297",
+      "source_location": "L9306",
       "id": "functions_index_sanitizecpf",
       "community": 3,
       "norm_label": "sanitizecpf()"
@@ -1672,7 +1672,7 @@
       "label": "maskCpf()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9301",
+      "source_location": "L9310",
       "id": "functions_index_maskcpf",
       "community": 3,
       "norm_label": "maskcpf()"
@@ -1681,16 +1681,16 @@
       "label": "normalizeTenantSlug()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9307",
+      "source_location": "L9316",
       "id": "functions_index_normalizetenantslug",
-      "community": 18,
+      "community": 22,
       "norm_label": "normalizetenantslug()"
     },
     {
       "label": "formatRequestedBy()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9314",
+      "source_location": "L9323",
       "id": "functions_index_formatrequestedby",
       "community": 3,
       "norm_label": "formatrequestedby()"
@@ -1699,25 +1699,25 @@
       "label": "sanitizePublicReportHtml()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9323",
+      "source_location": "L9332",
       "id": "functions_index_sanitizepublicreporthtml",
-      "community": 18,
+      "community": 25,
       "norm_label": "sanitizepublicreporthtml()"
     },
     {
       "label": "getClientIp()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9332",
+      "source_location": "L9341",
       "id": "functions_index_getclientip",
-      "community": 11,
+      "community": 12,
       "norm_label": "getclientip()"
     },
     {
       "label": "sanitizePublicReportMeta()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9340",
+      "source_location": "L9349",
       "id": "functions_index_sanitizepublicreportmeta",
       "community": 3,
       "norm_label": "sanitizepublicreportmeta()"
@@ -1726,34 +1726,34 @@
       "label": "buildCanonicalReportHtml()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9347",
+      "source_location": "L9356",
       "id": "functions_index_buildcanonicalreporthtml",
-      "community": 18,
+      "community": 25,
       "norm_label": "buildcanonicalreporthtml()"
     },
     {
       "label": "prepareCanonicalReport()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9426",
+      "source_location": "L9435",
       "id": "functions_index_preparecanonicalreport",
-      "community": 18,
+      "community": 25,
       "norm_label": "preparecanonicalreport()"
     },
     {
       "label": "enforceTenantSubmissionLimits()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9454",
+      "source_location": "L9463",
       "id": "functions_index_enforcetenantsubmissionlimits",
-      "community": 19,
+      "community": 18,
       "norm_label": "enforcetenantsubmissionlimits()"
     },
     {
       "label": "compensateTenantSubmissionLimit()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9575",
+      "source_location": "L9584",
       "id": "functions_index_compensatetenantsubmissionlimit",
       "community": 3,
       "norm_label": "compensatetenantsubmissionlimit()"
@@ -1762,16 +1762,16 @@
       "label": "rerunAiForCase()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9595",
+      "source_location": "L9604",
       "id": "functions_index_rerunaiforcase",
-      "community": 11,
+      "community": 12,
       "norm_label": "rerunaiforcase()"
     },
     {
       "label": "makeRunId()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9778",
+      "source_location": "L9787",
       "id": "functions_index_makerunid",
       "community": 3,
       "norm_label": "makerunid()"
@@ -1780,7 +1780,7 @@
       "label": "buildProviderRunIds()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9782",
+      "source_location": "L9791",
       "id": "functions_index_buildproviderrunids",
       "community": 3,
       "norm_label": "buildproviderrunids()"
@@ -1789,7 +1789,7 @@
       "label": "markPendingJuditRequestsStale()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L9793",
+      "source_location": "L9802",
       "id": "functions_index_markpendingjuditrequestsstale",
       "community": 3,
       "norm_label": "markpendingjuditrequestsstale()"
@@ -1798,7 +1798,7 @@
       "label": "applyDeleteFields()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10020",
+      "source_location": "L10029",
       "id": "functions_index_applydeletefields",
       "community": 3,
       "norm_label": "applydeletefields()"
@@ -1807,7 +1807,7 @@
       "label": "applyCascadeReset()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10023",
+      "source_location": "L10032",
       "id": "functions_index_applycascadereset",
       "community": 3,
       "norm_label": "applycascadereset()"
@@ -1816,7 +1816,7 @@
       "label": "getFreshCaseData()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10070",
+      "source_location": "L10079",
       "id": "functions_index_getfreshcasedata",
       "community": 3,
       "norm_label": "getfreshcasedata()"
@@ -1825,7 +1825,7 @@
       "label": "_setDb()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10813",
+      "source_location": "L10822",
       "id": "functions_index_setdb",
       "community": 3,
       "norm_label": "_setdb()"
@@ -1834,7 +1834,7 @@
       "label": "_setWriteAuditEvent()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10814",
+      "source_location": "L10823",
       "id": "functions_index_setwriteauditevent",
       "community": 3,
       "norm_label": "_setwriteauditevent()"
@@ -1843,7 +1843,7 @@
       "label": "makeSafePdfFilename()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10871",
+      "source_location": "L10880",
       "id": "functions_index_makesafepdffilename",
       "community": 3,
       "norm_label": "makesafepdffilename()"
@@ -1852,7 +1852,7 @@
       "label": "asIsoForFilename()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10882",
+      "source_location": "L10891",
       "id": "functions_index_asisoforfilename",
       "community": 3,
       "norm_label": "asisoforfilename()"
@@ -1861,7 +1861,7 @@
       "label": "savePdfAndCreateSignedUrl()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L10887",
+      "source_location": "L10896",
       "id": "functions_index_savepdfandcreatesignedurl",
       "community": 3,
       "norm_label": "savepdfandcreatesignedurl()"
@@ -1870,16 +1870,16 @@
       "label": "getClientQuotaStatusInner()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11174",
+      "source_location": "L11183",
       "id": "functions_index_getclientquotastatusinner",
-      "community": 19,
+      "community": 18,
       "norm_label": "getclientquotastatusinner()"
     },
     {
       "label": "isPrivateOrLocalIp()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11269",
+      "source_location": "L11278",
       "id": "functions_index_isprivateorlocalip",
       "community": 3,
       "norm_label": "isprivateorlocalip()"
@@ -1888,7 +1888,7 @@
       "label": "normalizeIp()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11280",
+      "source_location": "L11289",
       "id": "functions_index_normalizeip",
       "community": 3,
       "norm_label": "normalizeip()"
@@ -1897,7 +1897,7 @@
       "label": "getRequestIp()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11299",
+      "source_location": "L11308",
       "id": "functions_index_getrequestip",
       "community": 3,
       "norm_label": "getrequestip()"
@@ -1906,7 +1906,7 @@
       "label": "sanitizeGeoText()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11317",
+      "source_location": "L11326",
       "id": "functions_index_sanitizegeotext",
       "community": 3,
       "norm_label": "sanitizegeotext()"
@@ -1915,7 +1915,7 @@
       "label": "lookupIpLocation()",
       "file_type": "code",
       "source_file": "functions/index.js",
-      "source_location": "L11325",
+      "source_location": "L11334",
       "id": "functions_index_lookupiplocation",
       "community": 3,
       "norm_label": "lookupiplocation()"
@@ -1926,7 +1926,7 @@
       "source_file": "functions/repair-all-claims.js",
       "source_location": "L1",
       "id": "functions_repair_all_claims_js",
-      "community": 39,
+      "community": 41,
       "norm_label": "repair-all-claims.js"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "functions/repair-all-claims.js",
       "source_location": "L14",
       "id": "functions_repair_all_claims_setupcredentials",
-      "community": 39,
+      "community": 41,
       "norm_label": "setupcredentials()"
     },
     {
@@ -1944,7 +1944,7 @@
       "source_file": "functions/repair-all-claims.js",
       "source_location": "L41",
       "id": "functions_repair_all_claims_cleanuptmpadcfile",
-      "community": 39,
+      "community": 41,
       "norm_label": "cleanuptmpadcfile()"
     },
     {
@@ -1953,7 +1953,7 @@
       "source_file": "functions/repair-all-claims.js",
       "source_location": "L54",
       "id": "functions_repair_all_claims_repairallclaims",
-      "community": 39,
+      "community": 41,
       "norm_label": "repairallclaims()"
     },
     {
@@ -2043,7 +2043,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L1",
       "id": "functions_adapters_djen_js",
-      "community": 12,
+      "community": 11,
       "norm_label": "djen.js"
     },
     {
@@ -2052,7 +2052,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L27",
       "id": "adapters_djen_djenerror",
-      "community": 12,
+      "community": 11,
       "norm_label": "djenerror"
     },
     {
@@ -2061,7 +2061,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L28",
       "id": "adapters_djen_djenerror_constructor",
-      "community": 12,
+      "community": 11,
       "norm_label": ".constructor()"
     },
     {
@@ -2070,7 +2070,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L42",
       "id": "adapters_djen_callget",
-      "community": 12,
+      "community": 11,
       "norm_label": "callget()"
     },
     {
@@ -2079,7 +2079,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L129",
       "id": "adapters_djen_querycomunicacoesbyname",
-      "community": 12,
+      "community": 11,
       "norm_label": "querycomunicacoesbyname()"
     },
     {
@@ -2088,7 +2088,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L190",
       "id": "adapters_djen_querycomunicacoesbyprocesso",
-      "community": 12,
+      "community": 11,
       "norm_label": "querycomunicacoesbyprocesso()"
     },
     {
@@ -2097,7 +2097,7 @@
       "source_file": "functions/adapters/djen.js",
       "source_location": "L241",
       "id": "adapters_djen_querytribunais",
-      "community": 12,
+      "community": 11,
       "norm_label": "querytribunais()"
     },
     {
@@ -2106,7 +2106,7 @@
       "source_file": "functions/adapters/djen.test.js",
       "source_location": "L1",
       "id": "functions_adapters_djen_test_js",
-      "community": 92,
+      "community": 94,
       "norm_label": "djen.test.js"
     },
     {
@@ -2115,7 +2115,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L1",
       "id": "functions_adapters_escavador_js",
-      "community": 28,
+      "community": 29,
       "norm_label": "escavador.js"
     },
     {
@@ -2124,7 +2124,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L17",
       "id": "adapters_escavador_escavadorerror",
-      "community": 28,
+      "community": 29,
       "norm_label": "escavadorerror"
     },
     {
@@ -2133,7 +2133,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L18",
       "id": "adapters_escavador_escavadorerror_constructor",
-      "community": 28,
+      "community": 29,
       "norm_label": ".constructor()"
     },
     {
@@ -2142,7 +2142,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L32",
       "id": "adapters_escavador_callget",
-      "community": 28,
+      "community": 29,
       "norm_label": "callget()"
     },
     {
@@ -2151,7 +2151,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L116",
       "id": "adapters_escavador_queryprocessosbyperson",
-      "community": 28,
+      "community": 29,
       "norm_label": "queryprocessosbyperson()"
     },
     {
@@ -2160,7 +2160,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L154",
       "id": "adapters_escavador_queryprocessobycnj",
-      "community": 28,
+      "community": 29,
       "norm_label": "queryprocessobycnj()"
     },
     {
@@ -2169,7 +2169,7 @@
       "source_file": "functions/adapters/escavador.js",
       "source_location": "L167",
       "id": "adapters_escavador_querymovimentacoes",
-      "community": 28,
+      "community": 29,
       "norm_label": "querymovimentacoes()"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "functions/adapters/judit.test.js",
       "source_location": "L1",
       "id": "functions_adapters_judit_test_js",
-      "community": 93,
+      "community": 95,
       "norm_label": "judit.test.js"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "functions/audit/auditCatalog.js",
       "source_location": "L1",
       "id": "functions_audit_auditcatalog_js",
-      "community": 94,
+      "community": 96,
       "norm_label": "auditcatalog.js"
     },
     {
@@ -2439,7 +2439,7 @@
       "source_file": "functions/audit/auditCatalog.test.js",
       "source_location": "L1",
       "id": "functions_audit_auditcatalog_test_js",
-      "community": 95,
+      "community": 97,
       "norm_label": "auditcatalog.test.js"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L1",
       "id": "functions_audit_writeauditevent_js",
-      "community": 27,
+      "community": 28,
       "norm_label": "writeauditevent.js"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L14",
       "id": "audit_writeauditevent_db",
-      "community": 27,
+      "community": 28,
       "norm_label": "db()"
     },
     {
@@ -2466,7 +2466,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L23",
       "id": "audit_writeauditevent_interpolatetemplate",
-      "community": 27,
+      "community": 28,
       "norm_label": "interpolatetemplate()"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L34",
       "id": "audit_writeauditevent_buildsearchtext",
-      "community": 27,
+      "community": 28,
       "norm_label": "buildsearchtext()"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L45",
       "id": "audit_writeauditevent_stripundefined",
-      "community": 27,
+      "community": 28,
       "norm_label": "stripundefined()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L81",
       "id": "audit_writeauditevent_writeauditevent",
-      "community": 27,
+      "community": 28,
       "norm_label": "writeauditevent()"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_file": "functions/audit/writeAuditEvent.js",
       "source_location": "L233",
       "id": "audit_writeauditevent_setdb",
-      "community": 27,
+      "community": 28,
       "norm_label": "_setdb()"
     },
     {
@@ -2511,7 +2511,7 @@
       "source_file": "functions/audit/writeAuditEvent.test.js",
       "source_location": "L1",
       "id": "functions_audit_writeauditevent_test_js",
-      "community": 96,
+      "community": 98,
       "norm_label": "writeauditevent.test.js"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "functions/helpers/aiHomonym.test.js",
       "source_location": "L1",
       "id": "functions_helpers_aihomonym_test_js",
-      "community": 97,
+      "community": 99,
       "norm_label": "aihomonym.test.js"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_file": "functions/helpers/pdfHtml.js",
       "source_location": "L1",
       "id": "functions_helpers_pdfhtml_js",
-      "community": 35,
+      "community": 37,
       "norm_label": "pdfhtml.js"
     },
     {
@@ -3051,7 +3051,7 @@
       "source_file": "functions/helpers/pdfHtml.js",
       "source_location": "L13",
       "id": "helpers_pdfhtml_injectpdfexportcss",
-      "community": 35,
+      "community": 37,
       "norm_label": "injectpdfexportcss()"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_file": "functions/helpers/pdfHtml.js",
       "source_location": "L53",
       "id": "helpers_pdfhtml_injectpublicverificationbanner",
-      "community": 35,
+      "community": 37,
       "norm_label": "injectpublicverificationbanner()"
     },
     {
@@ -3069,7 +3069,7 @@
       "source_file": "functions/helpers/pdfHtml.js",
       "source_location": "L90",
       "id": "helpers_pdfhtml_buildpdfwatermarkcss",
-      "community": 35,
+      "community": 37,
       "norm_label": "buildpdfwatermarkcss()"
     },
     {
@@ -3078,7 +3078,7 @@
       "source_file": "functions/helpers/pdfHtml.js",
       "source_location": "L110",
       "id": "helpers_pdfhtml_escapehtml",
-      "community": 35,
+      "community": 37,
       "norm_label": "escapehtml()"
     },
     {
@@ -3087,7 +3087,7 @@
       "source_file": "functions/helpers/pdfRenderer.js",
       "source_location": "L1",
       "id": "functions_helpers_pdfrenderer_js",
-      "community": 58,
+      "community": 60,
       "norm_label": "pdfrenderer.js"
     },
     {
@@ -3096,7 +3096,7 @@
       "source_file": "functions/helpers/pdfRenderer.js",
       "source_location": "L14",
       "id": "helpers_pdfrenderer_renderhtmltopdfbuffer",
-      "community": 58,
+      "community": 60,
       "norm_label": "renderhtmltopdfbuffer()"
     },
     {
@@ -3105,7 +3105,7 @@
       "source_file": "functions/helpers/roleClassifier.js",
       "source_location": "L1",
       "id": "functions_helpers_roleclassifier_js",
-      "community": 36,
+      "community": 38,
       "norm_label": "roleclassifier.js"
     },
     {
@@ -3114,7 +3114,7 @@
       "source_file": "functions/helpers/roleClassifier.js",
       "source_location": "L52",
       "id": "helpers_roleclassifier_classifyrole",
-      "community": 36,
+      "community": 38,
       "norm_label": "classifyrole()"
     },
     {
@@ -3123,7 +3123,7 @@
       "source_file": "functions/helpers/roleClassifier.js",
       "source_location": "L128",
       "id": "helpers_roleclassifier_getrolescoreimpact",
-      "community": 36,
+      "community": 38,
       "norm_label": "getrolescoreimpact()"
     },
     {
@@ -3132,7 +3132,7 @@
       "source_file": "functions/helpers/roleClassifier.js",
       "source_location": "L163",
       "id": "helpers_roleclassifier_islowriskrole",
-      "community": 36,
+      "community": 38,
       "norm_label": "islowriskrole()"
     },
     {
@@ -3141,7 +3141,7 @@
       "source_file": "functions/helpers/roleClassifier.js",
       "source_location": "L174",
       "id": "helpers_roleclassifier_ishighriskrole",
-      "community": 36,
+      "community": 38,
       "norm_label": "ishighriskrole()"
     },
     {
@@ -3150,7 +3150,7 @@
       "source_file": "functions/helpers/roleClassifier.test.js",
       "source_location": "L1",
       "id": "functions_helpers_roleclassifier_test_js",
-      "community": 98,
+      "community": 100,
       "norm_label": "roleclassifier.test.js"
     },
     {
@@ -3159,7 +3159,7 @@
       "source_file": "functions/helpers/sanitizeAiOutput.test.js",
       "source_location": "L1",
       "id": "functions_helpers_sanitizeaioutput_test_js",
-      "community": 99,
+      "community": 101,
       "norm_label": "sanitizeaioutput.test.js"
     },
     {
@@ -3168,7 +3168,7 @@
       "source_file": "functions/helpers/textNormalize.js",
       "source_location": "L1",
       "id": "functions_helpers_textnormalize_js",
-      "community": 59,
+      "community": 61,
       "norm_label": "textnormalize.js"
     },
     {
@@ -3177,7 +3177,7 @@
       "source_file": "functions/helpers/textNormalize.js",
       "source_location": "L6",
       "id": "helpers_textnormalize_normalizetext",
-      "community": 59,
+      "community": 61,
       "norm_label": "normalizetext()"
     },
     {
@@ -3285,7 +3285,7 @@
       "source_file": "functions/normalizers/bigdatacorp.test.js",
       "source_location": "L1",
       "id": "functions_normalizers_bigdatacorp_test_js",
-      "community": 100,
+      "community": 102,
       "norm_label": "bigdatacorp.test.js"
     },
     {
@@ -3294,7 +3294,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L1",
       "id": "functions_normalizers_djen_js",
-      "community": 12,
+      "community": 11,
       "norm_label": "djen.js"
     },
     {
@@ -3303,7 +3303,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L42",
       "id": "normalizers_djen_classifyarea",
-      "community": 12,
+      "community": 11,
       "norm_label": "classifyarea()"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L59",
       "id": "normalizers_djen_findcandidatepolo",
-      "community": 12,
+      "community": 11,
       "norm_label": "findcandidatepolo()"
     },
     {
@@ -3321,7 +3321,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L81",
       "id": "normalizers_djen_normalizename",
-      "community": 12,
+      "community": 11,
       "norm_label": "normalizename()"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L90",
       "id": "normalizers_djen_normalizenamenoprep",
-      "community": 12,
+      "community": 11,
       "norm_label": "normalizenamenoprep()"
     },
     {
@@ -3339,7 +3339,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L96",
       "id": "normalizers_djen_truncatetext",
-      "community": 12,
+      "community": 11,
       "norm_label": "truncatetext()"
     },
     {
@@ -3348,7 +3348,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L107",
       "id": "normalizers_djen_cleandestinatarioname",
-      "community": 12,
+      "community": 11,
       "norm_label": "cleandestinatarioname()"
     },
     {
@@ -3357,7 +3357,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L119",
       "id": "normalizers_djen_computewordsimilarity",
-      "community": 12,
+      "community": 11,
       "norm_label": "computewordsimilarity()"
     },
     {
@@ -3366,7 +3366,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L137",
       "id": "normalizers_djen_extractcpffromtext",
-      "community": 12,
+      "community": 11,
       "norm_label": "extractcpffromtext()"
     },
     {
@@ -3375,7 +3375,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L159",
       "id": "normalizers_djen_determineconfirmation",
-      "community": 12,
+      "community": 11,
       "norm_label": "determineconfirmation()"
     },
     {
@@ -3384,7 +3384,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L237",
       "id": "normalizers_djen_filterandconfirmitems",
-      "community": 12,
+      "community": 11,
       "norm_label": "filterandconfirmitems()"
     },
     {
@@ -3393,7 +3393,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L277",
       "id": "normalizers_djen_computeprobabilityscore",
-      "community": 12,
+      "community": 11,
       "norm_label": "computeprobabilityscore()"
     },
     {
@@ -3402,7 +3402,7 @@
       "source_file": "functions/normalizers/djen.js",
       "source_location": "L309",
       "id": "normalizers_djen_normalizedjencomunicacoes",
-      "community": 12,
+      "community": 11,
       "norm_label": "normalizedjencomunicacoes()"
     },
     {
@@ -3411,7 +3411,7 @@
       "source_file": "functions/normalizers/djen.test.js",
       "source_location": "L1",
       "id": "functions_normalizers_djen_test_js",
-      "community": 42,
+      "community": 44,
       "norm_label": "djen.test.js"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_file": "functions/normalizers/djen.test.js",
       "source_location": "L86",
       "id": "normalizers_djen_test_makeitem",
-      "community": 42,
+      "community": 44,
       "norm_label": "makeitem()"
     },
     {
@@ -3429,7 +3429,7 @@
       "source_file": "functions/normalizers/djen.test.js",
       "source_location": "L646",
       "id": "normalizers_djen_test_makefilteritem",
-      "community": 42,
+      "community": 44,
       "norm_label": "makefilteritem()"
     },
     {
@@ -3591,7 +3591,7 @@
       "source_file": "scripts/check_encoding.py",
       "source_location": "L1",
       "id": "scripts_check_encoding_py",
-      "community": 101,
+      "community": 103,
       "norm_label": "check_encoding.py"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_file": "scripts/test_unicode_norm.py",
       "source_location": "L1",
       "id": "scripts_test_unicode_norm_py",
-      "community": 60,
+      "community": 62,
       "norm_label": "test_unicode_norm.py"
     },
     {
@@ -3609,7 +3609,7 @@
       "source_file": "scripts/test_unicode_norm.py",
       "source_location": "L3",
       "id": "scripts_test_unicode_norm_normalizeunicodetoascii",
-      "community": 60,
+      "community": 62,
       "norm_label": "normalizeunicodetoascii()"
     },
     {
@@ -3717,7 +3717,7 @@
       "source_file": "src/App.test.jsx",
       "source_location": "L1",
       "id": "src_app_test_jsx",
-      "community": 102,
+      "community": 104,
       "norm_label": "app.test.jsx"
     },
     {
@@ -3726,7 +3726,7 @@
       "source_file": "src/main.jsx",
       "source_location": "L1",
       "id": "src_main_jsx",
-      "community": 103,
+      "community": 105,
       "norm_label": "main.jsx"
     },
     {
@@ -4077,7 +4077,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L1",
       "id": "src_core_portalpaths_js",
-      "community": 21,
+      "community": 20,
       "norm_label": "portalpaths.js"
     },
     {
@@ -4086,7 +4086,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L1",
       "id": "core_portalpaths_normalizeleaf",
-      "community": 21,
+      "community": 20,
       "norm_label": "normalizeleaf()"
     },
     {
@@ -4095,7 +4095,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L6",
       "id": "core_portalpaths_isdemoportalpath",
-      "community": 21,
+      "community": 20,
       "norm_label": "isdemoportalpath()"
     },
     {
@@ -4104,7 +4104,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L10",
       "id": "core_portalpaths_getclientportalbasepath",
-      "community": 21,
+      "community": 20,
       "norm_label": "getclientportalbasepath()"
     },
     {
@@ -4113,7 +4113,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L14",
       "id": "core_portalpaths_getopsportalbasepath",
-      "community": 21,
+      "community": 20,
       "norm_label": "getopsportalbasepath()"
     },
     {
@@ -4122,7 +4122,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L18",
       "id": "core_portalpaths_buildclientportalpath",
-      "community": 21,
+      "community": 20,
       "norm_label": "buildclientportalpath()"
     },
     {
@@ -4131,7 +4131,7 @@
       "source_file": "src/core/portalPaths.js",
       "source_location": "L22",
       "id": "core_portalpaths_buildopsportalpath",
-      "community": 21,
+      "community": 20,
       "norm_label": "buildopsportalpath()"
     },
     {
@@ -4140,7 +4140,7 @@
       "source_file": "src/core/portalPaths.test.js",
       "source_location": "L1",
       "id": "src_core_portalpaths_test_js",
-      "community": 21,
+      "community": 20,
       "norm_label": "portalpaths.test.js"
     },
     {
@@ -4383,7 +4383,7 @@
       "source_file": "src/core/roleClassifier.js",
       "source_location": "L1",
       "id": "src_core_roleclassifier_js",
-      "community": 37,
+      "community": 39,
       "norm_label": "roleclassifier.js"
     },
     {
@@ -4392,7 +4392,7 @@
       "source_file": "src/core/roleClassifier.js",
       "source_location": "L53",
       "id": "core_roleclassifier_classifyrole",
-      "community": 37,
+      "community": 39,
       "norm_label": "classifyrole()"
     },
     {
@@ -4401,7 +4401,7 @@
       "source_file": "src/core/roleClassifier.js",
       "source_location": "L127",
       "id": "core_roleclassifier_getrolescoreimpact",
-      "community": 37,
+      "community": 39,
       "norm_label": "getrolescoreimpact()"
     },
     {
@@ -4410,7 +4410,7 @@
       "source_file": "src/core/roleClassifier.js",
       "source_location": "L162",
       "id": "core_roleclassifier_islowriskrole",
-      "community": 37,
+      "community": 39,
       "norm_label": "islowriskrole()"
     },
     {
@@ -4419,7 +4419,7 @@
       "source_file": "src/core/roleClassifier.js",
       "source_location": "L173",
       "id": "core_roleclassifier_ishighriskrole",
-      "community": 37,
+      "community": 39,
       "norm_label": "ishighriskrole()"
     },
     {
@@ -4428,7 +4428,7 @@
       "source_file": "src/core/validators.js",
       "source_location": "L1",
       "id": "src_core_validators_js",
-      "community": 17,
+      "community": 16,
       "norm_label": "validators.js"
     },
     {
@@ -4437,7 +4437,7 @@
       "source_file": "src/core/validators.js",
       "source_location": "L6",
       "id": "core_validators_validatecpf",
-      "community": 17,
+      "community": 16,
       "norm_label": "validatecpf()"
     },
     {
@@ -4446,7 +4446,7 @@
       "source_file": "src/core/validators.js",
       "source_location": "L19",
       "id": "core_validators_validateurl",
-      "community": 17,
+      "community": 16,
       "norm_label": "validateurl()"
     },
     {
@@ -4455,7 +4455,7 @@
       "source_file": "src/core/validators.test.js",
       "source_location": "L1",
       "id": "src_core_validators_test_js",
-      "community": 17,
+      "community": 16,
       "norm_label": "validators.test.js"
     },
     {
@@ -4581,7 +4581,7 @@
       "source_file": "src/core/auth/auth-context.js",
       "source_location": "L1",
       "id": "src_core_auth_auth_context_js",
-      "community": 104,
+      "community": 106,
       "norm_label": "auth-context.js"
     },
     {
@@ -4590,7 +4590,7 @@
       "source_file": "src/core/auth/AuthContext.jsx",
       "source_location": "L1",
       "id": "src_core_auth_authcontext_jsx",
-      "community": 26,
+      "community": 27,
       "norm_label": "authcontext.jsx"
     },
     {
@@ -4599,7 +4599,7 @@
       "source_file": "src/core/auth/AuthContext.jsx",
       "source_location": "L24",
       "id": "auth_authcontext_isunconfirmedmissingsnapshot",
-      "community": 26,
+      "community": 27,
       "norm_label": "isunconfirmedmissingsnapshot()"
     },
     {
@@ -4608,7 +4608,7 @@
       "source_file": "src/core/auth/AuthContext.jsx",
       "source_location": "L33",
       "id": "auth_authcontext_isconfirmedmissingsnapshot",
-      "community": 26,
+      "community": 27,
       "norm_label": "isconfirmedmissingsnapshot()"
     },
     {
@@ -4653,7 +4653,7 @@
       "source_file": "src/core/auth/authProfile.js",
       "source_location": "L1",
       "id": "src_core_auth_authprofile_js",
-      "community": 26,
+      "community": 27,
       "norm_label": "authprofile.js"
     },
     {
@@ -4662,7 +4662,7 @@
       "source_file": "src/core/auth/authProfile.js",
       "source_location": "L1",
       "id": "auth_authprofile_normalizestring",
-      "community": 26,
+      "community": 27,
       "norm_label": "normalizestring()"
     },
     {
@@ -4671,7 +4671,7 @@
       "source_file": "src/core/auth/authProfile.js",
       "source_location": "L10",
       "id": "auth_authprofile_getauthdisplayname",
-      "community": 26,
+      "community": 27,
       "norm_label": "getauthdisplayname()"
     },
     {
@@ -4680,7 +4680,7 @@
       "source_file": "src/core/auth/authProfile.js",
       "source_location": "L26",
       "id": "auth_authprofile_createauthfallbackprofile",
-      "community": 26,
+      "community": 27,
       "norm_label": "createauthfallbackprofile()"
     },
     {
@@ -4689,7 +4689,7 @@
       "source_file": "src/core/auth/authProfile.js",
       "source_location": "L39",
       "id": "auth_authprofile_mergeuserprofile",
-      "community": 26,
+      "community": 27,
       "norm_label": "mergeuserprofile()"
     },
     {
@@ -4716,7 +4716,7 @@
       "source_file": "src/core/contexts/tenant-context.js",
       "source_location": "L1",
       "id": "src_core_contexts_tenant_context_js",
-      "community": 105,
+      "community": 107,
       "norm_label": "tenant-context.js"
     },
     {
@@ -4851,7 +4851,7 @@
       "source_file": "src/core/copy/index.js",
       "source_location": "L1",
       "id": "src_core_copy_index_js",
-      "community": 106,
+      "community": 108,
       "norm_label": "index.js"
     },
     {
@@ -4860,7 +4860,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L1",
       "id": "src_core_copy_labels_js",
-      "community": 33,
+      "community": 35,
       "norm_label": "labels.js"
     },
     {
@@ -4869,7 +4869,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L174",
       "id": "copy_labels_getconcept",
-      "community": 33,
+      "community": 35,
       "norm_label": "getconcept()"
     },
     {
@@ -4878,7 +4878,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L179",
       "id": "copy_labels_gettechlabel",
-      "community": 33,
+      "community": 35,
       "norm_label": "gettechlabel()"
     },
     {
@@ -4887,7 +4887,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L184",
       "id": "copy_labels_getphaselabel",
-      "community": 33,
+      "community": 35,
       "norm_label": "getphaselabel()"
     },
     {
@@ -4896,7 +4896,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L189",
       "id": "copy_labels_getrolelabel",
-      "community": 33,
+      "community": 35,
       "norm_label": "getrolelabel()"
     },
     {
@@ -4905,7 +4905,7 @@
       "source_file": "src/core/copy/labels.js",
       "source_location": "L194",
       "id": "copy_labels_getroledescription",
-      "community": 33,
+      "community": 35,
       "norm_label": "getroledescription()"
     },
     {
@@ -4914,7 +4914,7 @@
       "source_file": "src/core/copy/messages.js",
       "source_location": "L1",
       "id": "src_core_copy_messages_js",
-      "community": 107,
+      "community": 109,
       "norm_label": "messages.js"
     },
     {
@@ -4923,7 +4923,7 @@
       "source_file": "src/core/copy/navigation.jsx",
       "source_location": "L1",
       "id": "src_core_copy_navigation_jsx",
-      "community": 108,
+      "community": 110,
       "norm_label": "navigation.jsx"
     },
     {
@@ -4932,7 +4932,7 @@
       "source_file": "src/core/copy/risk.js",
       "source_location": "L1",
       "id": "src_core_copy_risk_js",
-      "community": 43,
+      "community": 45,
       "norm_label": "risk.js"
     },
     {
@@ -4941,7 +4941,7 @@
       "source_file": "src/core/copy/risk.js",
       "source_location": "L117",
       "id": "copy_risk_getriskconfig",
-      "community": 43,
+      "community": 45,
       "norm_label": "getriskconfig()"
     },
     {
@@ -4950,7 +4950,7 @@
       "source_file": "src/core/copy/risk.js",
       "source_location": "L147",
       "id": "copy_risk_getrisklabel",
-      "community": 43,
+      "community": 45,
       "norm_label": "getrisklabel()"
     },
     {
@@ -4959,7 +4959,7 @@
       "source_file": "src/core/copy/status.js",
       "source_location": "L1",
       "id": "src_core_copy_status_js",
-      "community": 44,
+      "community": 46,
       "norm_label": "status.js"
     },
     {
@@ -4968,7 +4968,7 @@
       "source_file": "src/core/copy/status.js",
       "source_location": "L36",
       "id": "copy_status_getstatuslabel",
-      "community": 44,
+      "community": 46,
       "norm_label": "getstatuslabel()"
     },
     {
@@ -4977,7 +4977,7 @@
       "source_file": "src/core/copy/status.js",
       "source_location": "L67",
       "id": "copy_status_getshortstatuslabel",
-      "community": 44,
+      "community": 46,
       "norm_label": "getshortstatuslabel()"
     },
     {
@@ -4986,7 +4986,7 @@
       "source_file": "src/core/firebase/config.js",
       "source_location": "L1",
       "id": "src_core_firebase_config_js",
-      "community": 61,
+      "community": 63,
       "norm_label": "config.js"
     },
     {
@@ -4995,7 +4995,7 @@
       "source_file": "src/core/firebase/config.js",
       "source_location": "L22",
       "id": "firebase_config_createfirestore",
-      "community": 61,
+      "community": 63,
       "norm_label": "createfirestore()"
     },
     {
@@ -5011,7 +5011,7 @@
       "label": "mapProfilesToTenantDirectory()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L40",
+      "source_location": "L53",
       "id": "firebase_firestoreservice_mapprofilestotenantdirectory",
       "community": 6,
       "norm_label": "mapprofilestotenantdirectory()"
@@ -5020,7 +5020,7 @@
       "label": "decodeFirestoreValue()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L59",
+      "source_location": "L72",
       "id": "firebase_firestoreservice_decodefirestorevalue",
       "community": 6,
       "norm_label": "decodefirestorevalue()"
@@ -5029,7 +5029,7 @@
       "label": "decodeFirestoreFields()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L80",
+      "source_location": "L93",
       "id": "firebase_firestoreservice_decodefirestorefields",
       "community": 6,
       "norm_label": "decodefirestorefields()"
@@ -5038,7 +5038,7 @@
       "label": "withFirestoreTimeout()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L86",
+      "source_location": "L99",
       "id": "firebase_firestoreservice_withfirestoretimeout",
       "community": 6,
       "norm_label": "withfirestoretimeout()"
@@ -5047,16 +5047,16 @@
       "label": "loadFirebaseFunctionsModule()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L99",
+      "source_location": "L112",
       "id": "firebase_firestoreservice_loadfirebasefunctionsmodule",
-      "community": 40,
+      "community": 42,
       "norm_label": "loadfirebasefunctionsmodule()"
     },
     {
       "label": "formatFirestoreDate()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L107",
+      "source_location": "L120",
       "id": "firebase_firestoreservice_formatfirestoredate",
       "community": 6,
       "norm_label": "formatfirestoredate()"
@@ -5065,7 +5065,7 @@
       "label": "mapClientProfile()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L119",
+      "source_location": "L132",
       "id": "firebase_firestoreservice_mapclientprofile",
       "community": 6,
       "norm_label": "mapclientprofile()"
@@ -5074,7 +5074,7 @@
       "label": "mapCaseDocument()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L127",
+      "source_location": "L140",
       "id": "firebase_firestoreservice_mapcasedocument",
       "community": 6,
       "norm_label": "mapcasedocument()"
@@ -5083,7 +5083,7 @@
       "label": "mapCandidateDocument()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L137",
+      "source_location": "L150",
       "id": "firebase_firestoreservice_mapcandidatedocument",
       "community": 6,
       "norm_label": "mapcandidatedocument()"
@@ -5092,7 +5092,7 @@
       "label": "formatFirestoreDateTime()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L147",
+      "source_location": "L160",
       "id": "firebase_firestoreservice_formatfirestoredatetime",
       "community": 6,
       "norm_label": "formatfirestoredatetime()"
@@ -5101,7 +5101,7 @@
       "label": "formatFirestoreMinuteDateTime()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L161",
+      "source_location": "L174",
       "id": "firebase_firestoreservice_formatfirestoreminutedatetime",
       "community": 6,
       "norm_label": "formatfirestoreminutedatetime()"
@@ -5110,7 +5110,7 @@
       "label": "mapAuditLogDocument()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L175",
+      "source_location": "L188",
       "id": "firebase_firestoreservice_mapauditlogdocument",
       "community": 6,
       "norm_label": "mapauditlogdocument()"
@@ -5119,7 +5119,7 @@
       "label": "mapExportDocument()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L191",
+      "source_location": "L204",
       "id": "firebase_firestoreservice_mapexportdocument",
       "community": 6,
       "norm_label": "mapexportdocument()"
@@ -5128,7 +5128,7 @@
       "label": "createRestDocumentSnapshot()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L199",
+      "source_location": "L212",
       "id": "firebase_firestoreservice_createrestdocumentsnapshot",
       "community": 6,
       "norm_label": "createrestdocumentsnapshot()"
@@ -5137,7 +5137,7 @@
       "label": "runFirestoreRestQuery()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L207",
+      "source_location": "L220",
       "id": "firebase_firestoreservice_runfirestorerestquery",
       "community": 6,
       "norm_label": "runfirestorerestquery()"
@@ -5146,7 +5146,7 @@
       "label": "getFirestoreDocumentViaRest()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L235",
+      "source_location": "L248",
       "id": "firebase_firestoreservice_getfirestoredocumentviarest",
       "community": 6,
       "norm_label": "getfirestoredocumentviarest()"
@@ -5155,16 +5155,16 @@
       "label": "buildTenantCollectionQuery()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L267",
+      "source_location": "L280",
       "id": "firebase_firestoreservice_buildtenantcollectionquery",
-      "community": 34,
+      "community": 36,
       "norm_label": "buildtenantcollectionquery()"
     },
     {
       "label": "buildTenantStructuredQuery()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L273",
+      "source_location": "L286",
       "id": "firebase_firestoreservice_buildtenantstructuredquery",
       "community": 6,
       "norm_label": "buildtenantstructuredquery()"
@@ -5173,7 +5173,7 @@
       "label": "mapRestQueryDocuments()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L298",
+      "source_location": "L311",
       "id": "firebase_firestoreservice_maprestquerydocuments",
       "community": 6,
       "norm_label": "maprestquerydocuments()"
@@ -5182,7 +5182,7 @@
       "label": "fetchOrderedCollection()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L312",
+      "source_location": "L325",
       "id": "firebase_firestoreservice_fetchorderedcollection",
       "community": 6,
       "norm_label": "fetchorderedcollection()"
@@ -5191,7 +5191,7 @@
       "label": "fetchClients()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L352",
+      "source_location": "L365",
       "id": "firebase_firestoreservice_fetchclients",
       "community": 6,
       "norm_label": "fetchclients()"
@@ -5200,7 +5200,7 @@
       "label": "subscribeToTenantDirectory()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L395",
+      "source_location": "L408",
       "id": "firebase_firestoreservice_subscribetotenantdirectory",
       "community": 0,
       "norm_label": "subscribetotenantdirectory()"
@@ -5209,7 +5209,7 @@
       "label": "getTenantSettings()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L410",
+      "source_location": "L423",
       "id": "firebase_firestoreservice_gettenantsettings",
       "community": 1,
       "norm_label": "gettenantsettings()"
@@ -5218,7 +5218,7 @@
       "label": "getTenantUsage()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L432",
+      "source_location": "L445",
       "id": "firebase_firestoreservice_gettenantusage",
       "community": 1,
       "norm_label": "gettenantusage()"
@@ -5227,16 +5227,16 @@
       "label": "getEnabledPhases()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L446",
+      "source_location": "L459",
       "id": "firebase_firestoreservice_getenabledphases",
-      "community": 17,
+      "community": 16,
       "norm_label": "getenabledphases()"
     },
     {
       "label": "fetchTenantDirectory()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L452",
+      "source_location": "L465",
       "id": "firebase_firestoreservice_fetchtenantdirectory",
       "community": 6,
       "norm_label": "fetchtenantdirectory()"
@@ -5245,25 +5245,25 @@
       "label": "subscribeToCases()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L490",
+      "source_location": "L503",
       "id": "firebase_firestoreservice_subscribetocases",
-      "community": 34,
+      "community": 36,
       "norm_label": "subscribetocases()"
     },
     {
       "label": "subscribeToClientCases()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L502",
+      "source_location": "L515",
       "id": "firebase_firestoreservice_subscribetoclientcases",
-      "community": 34,
+      "community": 36,
       "norm_label": "subscribetoclientcases()"
     },
     {
       "label": "fetchCases()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L514",
+      "source_location": "L527",
       "id": "firebase_firestoreservice_fetchcases",
       "community": 6,
       "norm_label": "fetchcases()"
@@ -5272,7 +5272,7 @@
       "label": "fetchClientCases()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L525",
+      "source_location": "L538",
       "id": "firebase_firestoreservice_fetchclientcases",
       "community": 6,
       "norm_label": "fetchclientcases()"
@@ -5281,7 +5281,7 @@
       "label": "getCase()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L536",
+      "source_location": "L549",
       "id": "firebase_firestoreservice_getcase",
       "community": 6,
       "norm_label": "getcase()"
@@ -5290,7 +5290,7 @@
       "label": "subscribeToCaseDoc()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L563",
+      "source_location": "L576",
       "id": "firebase_firestoreservice_subscribetocasedoc",
       "community": 7,
       "norm_label": "subscribetocasedoc()"
@@ -5299,16 +5299,16 @@
       "label": "subscribeToCandidates()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L587",
+      "source_location": "L600",
       "id": "firebase_firestoreservice_subscribetocandidates",
-      "community": 34,
+      "community": 36,
       "norm_label": "subscribetocandidates()"
     },
     {
       "label": "fetchCandidates()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L599",
+      "source_location": "L612",
       "id": "firebase_firestoreservice_fetchcandidates",
       "community": 6,
       "norm_label": "fetchcandidates()"
@@ -5317,7 +5317,7 @@
       "label": "subscribeToAuditLogs()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L614",
+      "source_location": "L627",
       "id": "firebase_firestoreservice_subscribetoauditlogs",
       "community": 0,
       "norm_label": "subscribetoauditlogs()"
@@ -5326,7 +5326,7 @@
       "label": "fetchAuditLogs()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L626",
+      "source_location": "L639",
       "id": "firebase_firestoreservice_fetchauditlogs",
       "community": 6,
       "norm_label": "fetchauditlogs()"
@@ -5335,7 +5335,7 @@
       "label": "subscribeToCaseAuditLogs()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L637",
+      "source_location": "L650",
       "id": "firebase_firestoreservice_subscribetocaseauditlogs",
       "community": 7,
       "norm_label": "subscribetocaseauditlogs()"
@@ -5344,7 +5344,7 @@
       "label": "subscribeToTenantAuditLogs()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L655",
+      "source_location": "L668",
       "id": "firebase_firestoreservice_subscribetotenantauditlogs",
       "community": 9,
       "norm_label": "subscribetotenantauditlogs()"
@@ -5353,7 +5353,7 @@
       "label": "fetchPublicReports()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L680",
+      "source_location": "L693",
       "id": "firebase_firestoreservice_fetchpublicreports",
       "community": 0,
       "norm_label": "fetchpublicreports()"
@@ -5362,7 +5362,7 @@
       "label": "revokePublicReport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L688",
+      "source_location": "L701",
       "id": "firebase_firestoreservice_revokepublicreport",
       "community": 13,
       "norm_label": "revokepublicreport()"
@@ -5371,7 +5371,7 @@
       "label": "fetchClientPublicReports()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L692",
+      "source_location": "L705",
       "id": "firebase_firestoreservice_fetchclientpublicreports",
       "community": 13,
       "norm_label": "fetchclientpublicreports()"
@@ -5380,7 +5380,7 @@
       "label": "revokeClientPublicReport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L704",
+      "source_location": "L717",
       "id": "firebase_firestoreservice_revokeclientpublicreport",
       "community": 13,
       "norm_label": "revokeclientpublicreport()"
@@ -5389,16 +5389,16 @@
       "label": "subscribeToExports()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L712",
+      "source_location": "L725",
       "id": "firebase_firestoreservice_subscribetoexports",
-      "community": 34,
+      "community": 36,
       "norm_label": "subscribetoexports()"
     },
     {
       "label": "fetchExports()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L724",
+      "source_location": "L737",
       "id": "firebase_firestoreservice_fetchexports",
       "community": 6,
       "norm_label": "fetchexports()"
@@ -5407,7 +5407,7 @@
       "label": "savePublicReport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L739",
+      "source_location": "L752",
       "id": "firebase_firestoreservice_savepublicreport",
       "community": 7,
       "norm_label": "savepublicreport()"
@@ -5416,25 +5416,25 @@
       "label": "saveClientPublicReport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L747",
+      "source_location": "L760",
       "id": "firebase_firestoreservice_saveclientpublicreport",
-      "community": 20,
+      "community": 19,
       "norm_label": "saveclientpublicreport()"
     },
     {
       "label": "getPublicReport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L755",
+      "source_location": "L768",
       "id": "firebase_firestoreservice_getpublicreport",
-      "community": 20,
+      "community": 19,
       "norm_label": "getpublicreport()"
     },
     {
       "label": "subscribeToCasePublicResult()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L765",
+      "source_location": "L778",
       "id": "firebase_firestoreservice_subscribetocasepublicresult",
       "community": 6,
       "norm_label": "subscribetocasepublicresult()"
@@ -5443,43 +5443,43 @@
       "label": "getCasePublicResult()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L779",
+      "source_location": "L792",
       "id": "firebase_firestoreservice_getcasepublicresult",
-      "community": 20,
+      "community": 19,
       "norm_label": "getcasepublicresult()"
     },
     {
       "label": "callRerunEnrichmentPhase()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L789",
+      "source_location": "L802",
       "id": "firebase_firestoreservice_callrerunenrichmentphase",
-      "community": 40,
+      "community": 42,
       "norm_label": "callrerunenrichmentphase()"
     },
     {
       "label": "callRerunAiAnalysis()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L797",
+      "source_location": "L810",
       "id": "firebase_firestoreservice_callrerunaianalysis",
-      "community": 40,
+      "community": 42,
       "norm_label": "callrerunaianalysis()"
     },
     {
       "label": "callRerunFullEnrichment()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L801",
+      "source_location": "L814",
       "id": "firebase_firestoreservice_callrerunfullenrichment",
-      "community": 40,
+      "community": 42,
       "norm_label": "callrerunfullenrichment()"
     },
     {
       "label": "callBackendFunction()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L805",
+      "source_location": "L818",
       "id": "firebase_firestoreservice_callbackendfunction",
       "community": 13,
       "norm_label": "callbackendfunction()"
@@ -5488,7 +5488,7 @@
       "label": "callGetClientGeoIp()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L813",
+      "source_location": "L826",
       "id": "firebase_firestoreservice_callgetclientgeoip",
       "community": 13,
       "norm_label": "callgetclientgeoip()"
@@ -5497,7 +5497,7 @@
       "label": "callCreateClientSolicitation()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L817",
+      "source_location": "L830",
       "id": "firebase_firestoreservice_callcreateclientsolicitation",
       "community": 13,
       "norm_label": "callcreateclientsolicitation()"
@@ -5506,7 +5506,7 @@
       "label": "callSubmitClientCorrection()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L821",
+      "source_location": "L834",
       "id": "firebase_firestoreservice_callsubmitclientcorrection",
       "community": 13,
       "norm_label": "callsubmitclientcorrection()"
@@ -5515,7 +5515,7 @@
       "label": "callRegisterClientExport()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L825",
+      "source_location": "L838",
       "id": "firebase_firestoreservice_callregisterclientexport",
       "community": 13,
       "norm_label": "callregisterclientexport()"
@@ -5524,7 +5524,7 @@
       "label": "callCreateOpsClientUser()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L829",
+      "source_location": "L842",
       "id": "firebase_firestoreservice_callcreateopsclientuser",
       "community": 13,
       "norm_label": "callcreateopsclientuser()"
@@ -5533,34 +5533,34 @@
       "label": "callListTenantUsers()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L833",
+      "source_location": "L846",
       "id": "firebase_firestoreservice_calllisttenantusers",
-      "community": 30,
+      "community": 31,
       "norm_label": "calllisttenantusers()"
     },
     {
       "label": "callCreateTenantUser()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L837",
+      "source_location": "L850",
       "id": "firebase_firestoreservice_callcreatetenantuser",
-      "community": 30,
+      "community": 31,
       "norm_label": "callcreatetenantuser()"
     },
     {
       "label": "callUpdateTenantUser()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L841",
+      "source_location": "L854",
       "id": "firebase_firestoreservice_callupdatetenantuser",
-      "community": 30,
+      "community": 31,
       "norm_label": "callupdatetenantuser()"
     },
     {
       "label": "callUpdateOwnProfile()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L845",
+      "source_location": "L858",
       "id": "firebase_firestoreservice_callupdateownprofile",
       "community": 13,
       "norm_label": "callupdateownprofile()"
@@ -5569,7 +5569,7 @@
       "label": "callAssignCaseToCurrentAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L849",
+      "source_location": "L862",
       "id": "firebase_firestoreservice_callassigncasetocurrentanalyst",
       "community": 13,
       "norm_label": "callassigncasetocurrentanalyst()"
@@ -5578,7 +5578,7 @@
       "label": "callListOpsUsers()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L853",
+      "source_location": "L866",
       "id": "firebase_firestoreservice_calllistopsusers",
       "community": 13,
       "norm_label": "calllistopsusers()"
@@ -5587,7 +5587,7 @@
       "label": "callCreateOpsUser()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L856",
+      "source_location": "L869",
       "id": "firebase_firestoreservice_callcreateopsuser",
       "community": 13,
       "norm_label": "callcreateopsuser()"
@@ -5596,7 +5596,7 @@
       "label": "callUpdateOpsUser()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L859",
+      "source_location": "L872",
       "id": "firebase_firestoreservice_callupdateopsuser",
       "community": 13,
       "norm_label": "callupdateopsuser()"
@@ -5605,7 +5605,7 @@
       "label": "callAssignCaseToAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L862",
+      "source_location": "L875",
       "id": "firebase_firestoreservice_callassigncasetoanalyst",
       "community": 7,
       "norm_label": "callassigncasetoanalyst()"
@@ -5614,7 +5614,7 @@
       "label": "callUnassignCase()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L865",
+      "source_location": "L878",
       "id": "firebase_firestoreservice_callunassigncase",
       "community": 7,
       "norm_label": "callunassigncase()"
@@ -5623,7 +5623,7 @@
       "label": "callReturnCaseToClient()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L869",
+      "source_location": "L882",
       "id": "firebase_firestoreservice_callreturncasetoclient",
       "community": 7,
       "norm_label": "callreturncasetoclient()"
@@ -5632,7 +5632,7 @@
       "label": "callConcludeCaseByAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L873",
+      "source_location": "L886",
       "id": "firebase_firestoreservice_callconcludecasebyanalyst",
       "community": 7,
       "norm_label": "callconcludecasebyanalyst()"
@@ -5641,7 +5641,7 @@
       "label": "callUpdateTenantSettingsByAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L877",
+      "source_location": "L890",
       "id": "firebase_firestoreservice_callupdatetenantsettingsbyanalyst",
       "community": 13,
       "norm_label": "callupdatetenantsettingsbyanalyst()"
@@ -5650,7 +5650,7 @@
       "label": "callSaveCaseDraftByAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L881",
+      "source_location": "L894",
       "id": "firebase_firestoreservice_callsavecasedraftbyanalyst",
       "community": 7,
       "norm_label": "callsavecasedraftbyanalyst()"
@@ -5659,7 +5659,7 @@
       "label": "callSetAiDecisionByAnalyst()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L885",
+      "source_location": "L898",
       "id": "firebase_firestoreservice_callsetaidecisionbyanalyst",
       "community": 7,
       "norm_label": "callsetaidecisionbyanalyst()"
@@ -5668,7 +5668,7 @@
       "label": "callGetSystemHealth()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L889",
+      "source_location": "L902",
       "id": "firebase_firestoreservice_callgetsystemhealth",
       "community": 13,
       "norm_label": "callgetsystemhealth()"
@@ -5677,7 +5677,7 @@
       "label": "callGetClientQuotaStatus()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L893",
+      "source_location": "L906",
       "id": "firebase_firestoreservice_callgetclientquotastatus",
       "community": 13,
       "norm_label": "callgetclientquotastatus()"
@@ -5686,16 +5686,16 @@
       "label": "getClientCaseReportHtml()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L897",
+      "source_location": "L923",
       "id": "firebase_firestoreservice_getclientcasereporthtml",
-      "community": 20,
+      "community": 19,
       "norm_label": "getclientcasereporthtml()"
     },
     {
       "label": "getOpsCaseReportHtml()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L903",
+      "source_location": "L929",
       "id": "firebase_firestoreservice_getopscasereporthtml",
       "community": 7,
       "norm_label": "getopscasereporthtml()"
@@ -5704,7 +5704,7 @@
       "label": "getOpsCaseReportPreview()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L909",
+      "source_location": "L935",
       "id": "firebase_firestoreservice_getopscasereportpreview",
       "community": 7,
       "norm_label": "getopscasereportpreview()"
@@ -5713,16 +5713,16 @@
       "label": "getPublicReportView()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L915",
+      "source_location": "L941",
       "id": "firebase_firestoreservice_getpublicreportview",
-      "community": 20,
+      "community": 19,
       "norm_label": "getpublicreportview()"
     },
     {
       "label": "fetchOpsPublicReports()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L921",
+      "source_location": "L947",
       "id": "firebase_firestoreservice_fetchopspublicreports",
       "community": 13,
       "norm_label": "fetchopspublicreports()"
@@ -5731,54 +5731,54 @@
       "label": "generateClientCasePdf()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L926",
+      "source_location": "L952",
       "id": "firebase_firestoreservice_generateclientcasepdf",
-      "community": 20,
+      "community": 19,
       "norm_label": "generateclientcasepdf()"
     },
     {
       "label": "generatePublicReportPdf()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L932",
+      "source_location": "L958",
       "id": "firebase_firestoreservice_generatepublicreportpdf",
-      "community": 20,
+      "community": 19,
       "norm_label": "generatepublicreportpdf()"
     },
     {
       "label": "triggerPdfDownload()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L938",
+      "source_location": "L964",
       "id": "firebase_firestoreservice_triggerpdfdownload",
-      "community": 20,
+      "community": 19,
       "norm_label": "triggerpdfdownload()"
     },
     {
       "label": "subscribeToCaseMessages()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L976",
+      "source_location": "L1002",
       "id": "firebase_firestoreservice_subscribetocasemessages",
-      "community": 29,
+      "community": 30,
       "norm_label": "subscribetocasemessages()"
     },
     {
       "label": "callSendCaseMessage()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L1003",
+      "source_location": "L1035",
       "id": "firebase_firestoreservice_callsendcasemessage",
-      "community": 29,
+      "community": 30,
       "norm_label": "callsendcasemessage()"
     },
     {
       "label": "callMarkCaseCommunicationRead()",
       "file_type": "code",
       "source_file": "src/core/firebase/firestoreService.js",
-      "source_location": "L1007",
+      "source_location": "L1044",
       "id": "firebase_firestoreservice_callmarkcasecommunicationread",
-      "community": 29,
+      "community": 30,
       "norm_label": "callmarkcasecommunicationread()"
     },
     {
@@ -5787,7 +5787,7 @@
       "source_file": "src/core/firebase/firestoreService.test.js",
       "source_location": "L1",
       "id": "src_core_firebase_firestoreservice_test_js",
-      "community": 109,
+      "community": 111,
       "norm_label": "firestoreservice.test.js"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "src/core/notifications/notificationContext.js",
       "source_location": "L1",
       "id": "src_core_notifications_notificationcontext_js",
-      "community": 110,
+      "community": 112,
       "norm_label": "notificationcontext.js"
     },
     {
@@ -5812,7 +5812,7 @@
       "label": "NotificationProvider()",
       "file_type": "code",
       "source_file": "src/core/notifications/NotificationProvider.jsx",
-      "source_location": "L24",
+      "source_location": "L31",
       "id": "notifications_notificationprovider_notificationprovider",
       "community": 0,
       "norm_label": "notificationprovider()"
@@ -5976,7 +5976,7 @@
       "source_file": "src/core/notifications/notificationTypes.js",
       "source_location": "L1",
       "id": "src_core_notifications_notificationtypes_js",
-      "community": 111,
+      "community": 113,
       "norm_label": "notificationtypes.js"
     },
     {
@@ -5985,7 +5985,7 @@
       "source_file": "src/core/notifications/useNotifications.js",
       "source_location": "L1",
       "id": "src_core_notifications_usenotifications_js",
-      "community": 31,
+      "community": 32,
       "norm_label": "usenotifications.js"
     },
     {
@@ -5994,7 +5994,7 @@
       "source_file": "src/core/notifications/useNotifications.js",
       "source_location": "L4",
       "id": "notifications_usenotifications_usenotifications",
-      "community": 31,
+      "community": 32,
       "norm_label": "usenotifications()"
     },
     {
@@ -6066,7 +6066,7 @@
       "source_file": "src/data/mockCasesTenant1.js",
       "source_location": "L1",
       "id": "src_data_mockcasestenant1_js",
-      "community": 62,
+      "community": 64,
       "norm_label": "mockcasestenant1.js"
     },
     {
@@ -6075,7 +6075,7 @@
       "source_file": "src/data/mockCasesTenant1.js",
       "source_location": "L1",
       "id": "data_mockcasestenant1_basecase",
-      "community": 62,
+      "community": 64,
       "norm_label": "basecase()"
     },
     {
@@ -6084,7 +6084,7 @@
       "source_file": "src/data/mockCasesTenant2.js",
       "source_location": "L1",
       "id": "src_data_mockcasestenant2_js",
-      "community": 63,
+      "community": 65,
       "norm_label": "mockcasestenant2.js"
     },
     {
@@ -6093,7 +6093,7 @@
       "source_file": "src/data/mockCasesTenant2.js",
       "source_location": "L1",
       "id": "data_mockcasestenant2_basecase",
-      "community": 63,
+      "community": 65,
       "norm_label": "basecase()"
     },
     {
@@ -6219,7 +6219,7 @@
       "source_file": "src/hooks/useCases.js",
       "source_location": "L1",
       "id": "src_hooks_usecases_js",
-      "community": 34,
+      "community": 36,
       "norm_label": "usecases.js"
     },
     {
@@ -6255,7 +6255,7 @@
       "source_file": "src/hooks/useMediaQuery.js",
       "source_location": "L1",
       "id": "src_hooks_usemediaquery_js",
-      "community": 17,
+      "community": 16,
       "norm_label": "usemediaquery.js"
     },
     {
@@ -6264,7 +6264,7 @@
       "source_file": "src/hooks/useMediaQuery.js",
       "source_location": "L3",
       "id": "hooks_usemediaquery_usemediaquery",
-      "community": 17,
+      "community": 16,
       "norm_label": "usemediaquery()"
     },
     {
@@ -6381,7 +6381,7 @@
       "source_file": "src/pages/LoginPage.test.jsx",
       "source_location": "L1",
       "id": "src_pages_loginpage_test_jsx",
-      "community": 112,
+      "community": 114,
       "norm_label": "loginpage.test.jsx"
     },
     {
@@ -6408,7 +6408,7 @@
       "source_file": "src/pages/PerfilPage.test.jsx",
       "source_location": "L1",
       "id": "src_pages_perfilpage_test_jsx",
-      "community": 45,
+      "community": 47,
       "norm_label": "perfilpage.test.jsx"
     },
     {
@@ -6417,7 +6417,7 @@
       "source_file": "src/pages/PerfilPage.test.jsx",
       "source_location": "L10",
       "id": "pages_perfilpage_test_createmockuser",
-      "community": 45,
+      "community": 47,
       "norm_label": "createmockuser()"
     },
     {
@@ -6426,7 +6426,7 @@
       "source_file": "src/pages/PerfilPage.test.jsx",
       "source_location": "L22",
       "id": "pages_perfilpage_test_createmockprofile",
-      "community": 45,
+      "community": 47,
       "norm_label": "createmockprofile()"
     },
     {
@@ -6435,7 +6435,7 @@
       "source_file": "src/pages/PublicReportPage.jsx",
       "source_location": "L1",
       "id": "src_pages_publicreportpage_jsx",
-      "community": 20,
+      "community": 19,
       "norm_label": "publicreportpage.jsx"
     },
     {
@@ -6444,7 +6444,7 @@
       "source_file": "src/pages/PublicReportPage.jsx",
       "source_location": "L9",
       "id": "pages_publicreportpage_safefilenamepart",
-      "community": 20,
+      "community": 19,
       "norm_label": "safefilenamepart()"
     },
     {
@@ -6453,7 +6453,7 @@
       "source_file": "src/pages/PublicReportPage.jsx",
       "source_location": "L18",
       "id": "pages_publicreportpage_publicreportpage",
-      "community": 20,
+      "community": 19,
       "norm_label": "publicreportpage()"
     },
     {
@@ -6462,7 +6462,7 @@
       "source_file": "src/pages/PublicReportPage.test.jsx",
       "source_location": "L1",
       "id": "src_pages_publicreportpage_test_jsx",
-      "community": 46,
+      "community": 48,
       "norm_label": "publicreportpage.test.jsx"
     },
     {
@@ -6471,7 +6471,7 @@
       "source_file": "src/pages/PublicReportPage.test.jsx",
       "source_location": "L22",
       "id": "pages_publicreportpage_test_makeerror",
-      "community": 46,
+      "community": 48,
       "norm_label": "makeerror()"
     },
     {
@@ -6480,7 +6480,7 @@
       "source_file": "src/pages/PublicReportPage.test.jsx",
       "source_location": "L28",
       "id": "pages_publicreportpage_test_wrapper",
-      "community": 46,
+      "community": 48,
       "norm_label": "wrapper()"
     },
     {
@@ -6561,7 +6561,7 @@
       "source_file": "src/portals/client/AuditoriaClientePage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_auditoriaclientepage_test_jsx",
-      "community": 113,
+      "community": 115,
       "norm_label": "auditoriaclientepage.test.jsx"
     },
     {
@@ -6570,7 +6570,7 @@
       "source_file": "src/portals/client/ClientReportPage.jsx",
       "source_location": "L1",
       "id": "src_portals_client_clientreportpage_jsx",
-      "community": 20,
+      "community": 19,
       "norm_label": "clientreportpage.jsx"
     },
     {
@@ -6579,7 +6579,7 @@
       "source_file": "src/portals/client/ClientReportPage.jsx",
       "source_location": "L16",
       "id": "client_clientreportpage_shorttoken",
-      "community": 21,
+      "community": 20,
       "norm_label": "shorttoken()"
     },
     {
@@ -6588,7 +6588,7 @@
       "source_file": "src/portals/client/ClientReportPage.jsx",
       "source_location": "L21",
       "id": "client_clientreportpage_clientreportpage",
-      "community": 21,
+      "community": 20,
       "norm_label": "clientreportpage()"
     },
     {
@@ -6633,7 +6633,7 @@
       "source_file": "src/portals/client/EquipePage.jsx",
       "source_location": "L1",
       "id": "src_portals_client_equipepage_jsx",
-      "community": 30,
+      "community": 31,
       "norm_label": "equipepage.jsx"
     },
     {
@@ -6642,7 +6642,7 @@
       "source_file": "src/portals/client/EquipePage.jsx",
       "source_location": "L26",
       "id": "client_equipepage_getstatusconfig",
-      "community": 30,
+      "community": 31,
       "norm_label": "getstatusconfig()"
     },
     {
@@ -6651,7 +6651,7 @@
       "source_file": "src/portals/client/EquipePage.jsx",
       "source_location": "L30",
       "id": "client_equipepage_generatepassword",
-      "community": 30,
+      "community": 31,
       "norm_label": "generatepassword()"
     },
     {
@@ -6660,7 +6660,7 @@
       "source_file": "src/portals/client/EquipePage.jsx",
       "source_location": "L37",
       "id": "client_equipepage_equipepage",
-      "community": 30,
+      "community": 31,
       "norm_label": "equipepage()"
     },
     {
@@ -6669,7 +6669,7 @@
       "source_file": "src/portals/client/EquipePage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_equipepage_test_jsx",
-      "community": 22,
+      "community": 21,
       "norm_label": "equipepage.test.jsx"
     },
     {
@@ -6678,7 +6678,7 @@
       "source_file": "src/portals/client/EquipePage.test.jsx",
       "source_location": "L56",
       "id": "client_equipepage_test_renderpage",
-      "community": 22,
+      "community": 21,
       "norm_label": "renderpage()"
     },
     {
@@ -6795,7 +6795,7 @@
       "source_file": "src/portals/client/ExportacoesPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_exportacoespage_test_jsx",
-      "community": 114,
+      "community": 116,
       "norm_label": "exportacoespage.test.jsx"
     },
     {
@@ -6804,7 +6804,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPage.jsx",
       "source_location": "L1",
       "id": "src_portals_client_novasolicitacaopage_jsx",
-      "community": 21,
+      "community": 20,
       "norm_label": "novasolicitacaopage.jsx"
     },
     {
@@ -6813,7 +6813,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPage.jsx",
       "source_location": "L10",
       "id": "client_novasolicitacaopage_novasolicitacaopage",
-      "community": 21,
+      "community": 20,
       "norm_label": "novasolicitacaopage()"
     },
     {
@@ -6822,7 +6822,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_novasolicitacaopage_test_jsx",
-      "community": 22,
+      "community": 21,
       "norm_label": "novasolicitacaopage.test.jsx"
     },
     {
@@ -6831,7 +6831,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPage.test.jsx",
       "source_location": "L32",
       "id": "client_novasolicitacaopage_test_renderpage",
-      "community": 22,
+      "community": 21,
       "norm_label": "renderpage()"
     },
     {
@@ -6840,7 +6840,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPanel.jsx",
       "source_location": "L1",
       "id": "src_portals_client_novasolicitacaopanel_jsx",
-      "community": 17,
+      "community": 16,
       "norm_label": "novasolicitacaopanel.jsx"
     },
     {
@@ -6849,7 +6849,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPanel.jsx",
       "source_location": "L43",
       "id": "client_novasolicitacaopanel_formatcpf",
-      "community": 17,
+      "community": 16,
       "norm_label": "formatcpf()"
     },
     {
@@ -6858,7 +6858,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPanel.jsx",
       "source_location": "L51",
       "id": "client_novasolicitacaopanel_maskcpf",
-      "community": 17,
+      "community": 16,
       "norm_label": "maskcpf()"
     },
     {
@@ -6867,7 +6867,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPanel.jsx",
       "source_location": "L56",
       "id": "client_novasolicitacaopanel_normalizeupper",
-      "community": 17,
+      "community": 16,
       "norm_label": "normalizeupper()"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "src/portals/client/NovaSolicitacaoPanel.jsx",
       "source_location": "L68",
       "id": "client_novasolicitacaopanel_novasolicitacaopanel",
-      "community": 17,
+      "community": 16,
       "norm_label": "novasolicitacaopanel()"
     },
     {
@@ -6939,7 +6939,7 @@
       "source_file": "src/portals/client/RelatoriosClientePage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_relatoriosclientepage_test_jsx",
-      "community": 115,
+      "community": 117,
       "norm_label": "relatoriosclientepage.test.jsx"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_file": "src/portals/client/SolicitacoesPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_client_solicitacoespage_test_jsx",
-      "community": 22,
+      "community": 21,
       "norm_label": "solicitacoespage.test.jsx"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_file": "src/portals/client/SolicitacoesPage.test.jsx",
       "source_location": "L50",
       "id": "client_solicitacoespage_test_renderpage",
-      "community": 22,
+      "community": 21,
       "norm_label": "renderpage()"
     },
     {
@@ -7155,7 +7155,7 @@
       "source_file": "src/portals/ops/CasoPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_ops_casopage_test_jsx",
-      "community": 116,
+      "community": 118,
       "norm_label": "casopage.test.jsx"
     },
     {
@@ -7245,7 +7245,7 @@
       "source_file": "src/portals/ops/ClientesPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_ops_clientespage_test_jsx",
-      "community": 117,
+      "community": 119,
       "norm_label": "clientespage.test.jsx"
     },
     {
@@ -7317,7 +7317,7 @@
       "source_file": "src/portals/ops/FilaPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_ops_filapage_test_jsx",
-      "community": 118,
+      "community": 120,
       "norm_label": "filapage.test.jsx"
     },
     {
@@ -7488,7 +7488,7 @@
       "source_file": "src/portals/ops/RelatoriosPage.test.jsx",
       "source_location": "L1",
       "id": "src_portals_ops_relatoriospage_test_jsx",
-      "community": 119,
+      "community": 121,
       "norm_label": "relatoriospage.test.jsx"
     },
     {
@@ -7578,7 +7578,7 @@
       "source_file": "src/test/setupTests.js",
       "source_location": "L1",
       "id": "src_test_setuptests_js",
-      "community": 120,
+      "community": 122,
       "norm_label": "setuptests.js"
     },
     {
@@ -7587,7 +7587,7 @@
       "source_file": "src/ui/components/CaseCommunication/CaseCommunicationPanel.jsx",
       "source_location": "L1",
       "id": "src_ui_components_casecommunication_casecommunicationpanel_jsx",
-      "community": 29,
+      "community": 30,
       "norm_label": "casecommunicationpanel.jsx"
     },
     {
@@ -7596,7 +7596,7 @@
       "source_file": "src/ui/components/CaseCommunication/CaseCommunicationPanel.jsx",
       "source_location": "L6",
       "id": "casecommunication_casecommunicationpanel_formatmessagedate",
-      "community": 29,
+      "community": 30,
       "norm_label": "formatmessagedate()"
     },
     {
@@ -7605,7 +7605,7 @@
       "source_file": "src/ui/components/CaseCommunication/CaseCommunicationPanel.jsx",
       "source_location": "L18",
       "id": "casecommunication_casecommunicationpanel_getinitials",
-      "community": 29,
+      "community": 30,
       "norm_label": "getinitials()"
     },
     {
@@ -7614,7 +7614,7 @@
       "source_file": "src/ui/components/CaseCommunication/CaseCommunicationPanel.jsx",
       "source_location": "L23",
       "id": "casecommunication_casecommunicationpanel_casecommunicationpanel",
-      "community": 29,
+      "community": 30,
       "norm_label": "casecommunicationpanel()"
     },
     {
@@ -7623,7 +7623,7 @@
       "source_file": "src/ui/components/Drawer/Drawer.jsx",
       "source_location": "L1",
       "id": "src_ui_components_drawer_drawer_jsx",
-      "community": 47,
+      "community": 49,
       "norm_label": "drawer.jsx"
     },
     {
@@ -7632,7 +7632,7 @@
       "source_file": "src/ui/components/Drawer/Drawer.jsx",
       "source_location": "L14",
       "id": "drawer_drawer_getfocusableelements",
-      "community": 47,
+      "community": 49,
       "norm_label": "getfocusableelements()"
     },
     {
@@ -7641,7 +7641,7 @@
       "source_file": "src/ui/components/Drawer/Drawer.jsx",
       "source_location": "L20",
       "id": "drawer_drawer_drawer",
-      "community": 47,
+      "community": 49,
       "norm_label": "drawer()"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_file": "src/ui/components/Drawer/Drawer.test.jsx",
       "source_location": "L1",
       "id": "src_ui_components_drawer_drawer_test_jsx",
-      "community": 121,
+      "community": 123,
       "norm_label": "drawer.test.jsx"
     },
     {
@@ -7695,7 +7695,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L1",
       "id": "src_ui_components_errorboundary_errorboundary_jsx",
-      "community": 22,
+      "community": 21,
       "norm_label": "errorboundary.jsx"
     },
     {
@@ -7704,7 +7704,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L3",
       "id": "errorboundary_errorboundary_errorboundary",
-      "community": 22,
+      "community": 21,
       "norm_label": "errorboundary"
     },
     {
@@ -7713,7 +7713,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L4",
       "id": "errorboundary_errorboundary_errorboundary_constructor",
-      "community": 22,
+      "community": 21,
       "norm_label": ".constructor()"
     },
     {
@@ -7722,7 +7722,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L9",
       "id": "errorboundary_errorboundary_errorboundary_getderivedstatefromerror",
-      "community": 22,
+      "community": 21,
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -7731,7 +7731,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L13",
       "id": "errorboundary_errorboundary_errorboundary_componentdidcatch",
-      "community": 22,
+      "community": 21,
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -7740,7 +7740,7 @@
       "source_file": "src/ui/components/ErrorBoundary/ErrorBoundary.jsx",
       "source_location": "L17",
       "id": "errorboundary_errorboundary_errorboundary_render",
-      "community": 22,
+      "community": 21,
       "norm_label": ".render()"
     },
     {
@@ -7749,7 +7749,7 @@
       "source_file": "src/ui/components/FilterPanelMobile/FilterPanelMobile.jsx",
       "source_location": "L1",
       "id": "src_ui_components_filterpanelmobile_filterpanelmobile_jsx",
-      "community": 17,
+      "community": 16,
       "norm_label": "filterpanelmobile.jsx"
     },
     {
@@ -7758,7 +7758,7 @@
       "source_file": "src/ui/components/FilterPanelMobile/FilterPanelMobile.jsx",
       "source_location": "L15",
       "id": "filterpanelmobile_filterpanelmobile_filterpanelmobile",
-      "community": 17,
+      "community": 16,
       "norm_label": "filterpanelmobile()"
     },
     {
@@ -7767,7 +7767,7 @@
       "source_file": "src/ui/components/KpiCard/KpiCard.jsx",
       "source_location": "L1",
       "id": "src_ui_components_kpicard_kpicard_jsx",
-      "community": 64,
+      "community": 66,
       "norm_label": "kpicard.jsx"
     },
     {
@@ -7776,7 +7776,7 @@
       "source_file": "src/ui/components/KpiCard/KpiCard.jsx",
       "source_location": "L4",
       "id": "kpicard_kpicard_kpicard",
-      "community": 64,
+      "community": 66,
       "norm_label": "kpicard()"
     },
     {
@@ -7785,7 +7785,7 @@
       "source_file": "src/ui/components/MobileDataCardList/MobileDataCardList.jsx",
       "source_location": "L1",
       "id": "src_ui_components_mobiledatacardlist_mobiledatacardlist_jsx",
-      "community": 17,
+      "community": 16,
       "norm_label": "mobiledatacardlist.jsx"
     },
     {
@@ -7794,7 +7794,7 @@
       "source_file": "src/ui/components/MobileDataCardList/MobileDataCardList.jsx",
       "source_location": "L17",
       "id": "mobiledatacardlist_mobiledatacardlist_mobiledatacardlist",
-      "community": 17,
+      "community": 16,
       "norm_label": "mobiledatacardlist()"
     },
     {
@@ -7803,7 +7803,7 @@
       "source_file": "src/ui/components/Modal/Modal.jsx",
       "source_location": "L1",
       "id": "src_ui_components_modal_modal_jsx",
-      "community": 48,
+      "community": 50,
       "norm_label": "modal.jsx"
     },
     {
@@ -7812,7 +7812,7 @@
       "source_file": "src/ui/components/Modal/Modal.jsx",
       "source_location": "L14",
       "id": "modal_modal_getfocusableelements",
-      "community": 48,
+      "community": 50,
       "norm_label": "getfocusableelements()"
     },
     {
@@ -7821,7 +7821,7 @@
       "source_file": "src/ui/components/Modal/Modal.jsx",
       "source_location": "L20",
       "id": "modal_modal_modal",
-      "community": 48,
+      "community": 50,
       "norm_label": "modal()"
     },
     {
@@ -7830,7 +7830,7 @@
       "source_file": "src/ui/components/Modal/Modal.test.jsx",
       "source_location": "L1",
       "id": "src_ui_components_modal_modal_test_jsx",
-      "community": 122,
+      "community": 124,
       "norm_label": "modal.test.jsx"
     },
     {
@@ -7839,7 +7839,7 @@
       "source_file": "src/ui/components/NotificationBell/NotificationBell.jsx",
       "source_location": "L1",
       "id": "src_ui_components_notificationbell_notificationbell_jsx",
-      "community": 31,
+      "community": 32,
       "norm_label": "notificationbell.jsx"
     },
     {
@@ -7848,7 +7848,7 @@
       "source_file": "src/ui/components/NotificationBell/NotificationBell.jsx",
       "source_location": "L7",
       "id": "notificationbell_notificationbell_timeago",
-      "community": 31,
+      "community": 32,
       "norm_label": "timeago()"
     },
     {
@@ -7857,7 +7857,7 @@
       "source_file": "src/ui/components/NotificationBell/NotificationBell.jsx",
       "source_location": "L23",
       "id": "notificationbell_notificationbell_notificationbell",
-      "community": 31,
+      "community": 32,
       "norm_label": "notificationbell()"
     },
     {
@@ -7866,7 +7866,7 @@
       "source_file": "src/ui/components/NotificationToast/NotificationToast.jsx",
       "source_location": "L1",
       "id": "src_ui_components_notificationtoast_notificationtoast_jsx",
-      "community": 31,
+      "community": 32,
       "norm_label": "notificationtoast.jsx"
     },
     {
@@ -7875,7 +7875,7 @@
       "source_file": "src/ui/components/NotificationToast/NotificationToast.jsx",
       "source_location": "L7",
       "id": "notificationtoast_notificationtoast_notificationtoast",
-      "community": 31,
+      "community": 32,
       "norm_label": "notificationtoast()"
     },
     {
@@ -7884,7 +7884,7 @@
       "source_file": "src/ui/components/PageHeader/PageHeader.jsx",
       "source_location": "L1",
       "id": "src_ui_components_pageheader_pageheader_jsx",
-      "community": 65,
+      "community": 67,
       "norm_label": "pageheader.jsx"
     },
     {
@@ -7893,7 +7893,7 @@
       "source_file": "src/ui/components/PageHeader/PageHeader.jsx",
       "source_location": "L5",
       "id": "pageheader_pageheader_pageheader",
-      "community": 65,
+      "community": 67,
       "norm_label": "pageheader()"
     },
     {
@@ -7902,7 +7902,7 @@
       "source_file": "src/ui/components/PaginationControls/PaginationControls.jsx",
       "source_location": "L1",
       "id": "src_ui_components_paginationcontrols_paginationcontrols_jsx",
-      "community": 66,
+      "community": 68,
       "norm_label": "paginationcontrols.jsx"
     },
     {
@@ -7911,7 +7911,7 @@
       "source_file": "src/ui/components/PaginationControls/PaginationControls.jsx",
       "source_location": "L4",
       "id": "paginationcontrols_paginationcontrols_paginationcontrols",
-      "community": 66,
+      "community": 68,
       "norm_label": "paginationcontrols()"
     },
     {
@@ -7965,7 +7965,7 @@
       "source_file": "src/ui/components/RiskChip/RiskChip.jsx",
       "source_location": "L1",
       "id": "src_ui_components_riskchip_riskchip_jsx",
-      "community": 49,
+      "community": 51,
       "norm_label": "riskchip.jsx"
     },
     {
@@ -7974,7 +7974,7 @@
       "source_file": "src/ui/components/RiskChip/RiskChip.jsx",
       "source_location": "L4",
       "id": "riskchip_riskchip_buildconfig",
-      "community": 49,
+      "community": 51,
       "norm_label": "buildconfig()"
     },
     {
@@ -7983,7 +7983,7 @@
       "source_file": "src/ui/components/RiskChip/RiskChip.jsx",
       "source_location": "L48",
       "id": "riskchip_riskchip_riskchip",
-      "community": 49,
+      "community": 51,
       "norm_label": "riskchip()"
     },
     {
@@ -7992,7 +7992,7 @@
       "source_file": "src/ui/components/ScoreBar/ScoreBar.jsx",
       "source_location": "L1",
       "id": "src_ui_components_scorebar_scorebar_jsx",
-      "community": 67,
+      "community": 69,
       "norm_label": "scorebar.jsx"
     },
     {
@@ -8001,7 +8001,7 @@
       "source_file": "src/ui/components/ScoreBar/ScoreBar.jsx",
       "source_location": "L4",
       "id": "scorebar_scorebar_scorebar",
-      "community": 67,
+      "community": 69,
       "norm_label": "scorebar()"
     },
     {
@@ -8046,7 +8046,7 @@
       "source_file": "src/ui/components/SocialLinks/SocialLinks.jsx",
       "source_location": "L1",
       "id": "src_ui_components_sociallinks_sociallinks_jsx",
-      "community": 41,
+      "community": 43,
       "norm_label": "sociallinks.jsx"
     },
     {
@@ -8055,7 +8055,7 @@
       "source_file": "src/ui/components/SocialLinks/SocialLinks.jsx",
       "source_location": "L12",
       "id": "sociallinks_sociallinks_issafeurl",
-      "community": 41,
+      "community": 43,
       "norm_label": "issafeurl()"
     },
     {
@@ -8064,7 +8064,7 @@
       "source_file": "src/ui/components/SocialLinks/SocialLinks.jsx",
       "source_location": "L21",
       "id": "sociallinks_sociallinks_normalizeurl",
-      "community": 41,
+      "community": 43,
       "norm_label": "normalizeurl()"
     },
     {
@@ -8073,7 +8073,7 @@
       "source_file": "src/ui/components/SocialLinks/SocialLinks.jsx",
       "source_location": "L31",
       "id": "sociallinks_sociallinks_sociallinks",
-      "community": 41,
+      "community": 43,
       "norm_label": "sociallinks()"
     },
     {
@@ -8082,7 +8082,7 @@
       "source_file": "src/ui/components/StatusBadge/StatusBadge.jsx",
       "source_location": "L1",
       "id": "src_ui_components_statusbadge_statusbadge_jsx",
-      "community": 68,
+      "community": 70,
       "norm_label": "statusbadge.jsx"
     },
     {
@@ -8091,7 +8091,7 @@
       "source_file": "src/ui/components/StatusBadge/StatusBadge.jsx",
       "source_location": "L24",
       "id": "statusbadge_statusbadge_statusbadge",
-      "community": 68,
+      "community": 70,
       "norm_label": "statusbadge()"
     },
     {
@@ -8100,7 +8100,7 @@
       "source_file": "src/ui/layouts/AppLayout.jsx",
       "source_location": "L1",
       "id": "src_ui_layouts_applayout_jsx",
-      "community": 69,
+      "community": 71,
       "norm_label": "applayout.jsx"
     },
     {
@@ -8109,7 +8109,7 @@
       "source_file": "src/ui/layouts/AppLayout.jsx",
       "source_location": "L8",
       "id": "layouts_applayout_applayout",
-      "community": 69,
+      "community": 71,
       "norm_label": "applayout()"
     },
     {
@@ -8118,7 +8118,7 @@
       "source_file": "src/ui/layouts/PageShell.jsx",
       "source_location": "L1",
       "id": "src_ui_layouts_pageshell_jsx",
-      "community": 70,
+      "community": 72,
       "norm_label": "pageshell.jsx"
     },
     {
@@ -8127,7 +8127,7 @@
       "source_file": "src/ui/layouts/PageShell.jsx",
       "source_location": "L3",
       "id": "layouts_pageshell_pageshell",
-      "community": 70,
+      "community": 72,
       "norm_label": "pageshell()"
     },
     {
@@ -8154,7 +8154,7 @@
       "source_file": "src/ui/layouts/Sidebar.test.jsx",
       "source_location": "L1",
       "id": "src_ui_layouts_sidebar_test_jsx",
-      "community": 71,
+      "community": 73,
       "norm_label": "sidebar.test.jsx"
     },
     {
@@ -8163,7 +8163,7 @@
       "source_file": "src/ui/layouts/Sidebar.test.jsx",
       "source_location": "L29",
       "id": "layouts_sidebar_test_locationprobe",
-      "community": 71,
+      "community": 73,
       "norm_label": "locationprobe()"
     },
     {
@@ -8190,7 +8190,7 @@
       "source_file": "src/ui/layouts/Topbar.test.jsx",
       "source_location": "L1",
       "id": "src_ui_layouts_topbar_test_jsx",
-      "community": 123,
+      "community": 125,
       "norm_label": "topbar.test.jsx"
     }
   ],
@@ -21256,9 +21256,9 @@
       "source_file": "src/core/firebase/firestoreService.js",
       "source_location": "L909",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_core_firebase_firestoreservice_js",
-      "target": "firebase_firestoreservice_getopscasereportpreview",
-      "confidence_score": 1.0
+      "target": "firebase_firestoreservice_getopscasereportpreview"
     },
     {
       "relation": "contains",
@@ -22370,9 +22370,9 @@
       "source_file": "src/core/firebase/firestoreService.js",
       "source_location": "L910",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "firebase_firestoreservice_getopscasereportpreview",
-      "target": "firebase_firestoreservice_callbackendfunction",
-      "confidence_score": 1.0
+      "target": "firebase_firestoreservice_callbackendfunction"
     },
     {
       "relation": "calls",
@@ -22777,9 +22777,9 @@
       "source_file": "src/portals/ops/CasoPage.jsx",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_portals_ops_casopage_jsx",
-      "target": "firebase_firestoreservice_getopscasereportpreview",
-      "confidence_score": 1.0
+      "target": "firebase_firestoreservice_getopscasereportpreview"
     },
     {
       "relation": "imports",
@@ -26010,5 +26010,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "205301bc47b8025640028a7feae3d8f37f9bc0a2"
+  "built_at_commit": "10321252087769c2d781e00009a2182924ded4d2"
 }

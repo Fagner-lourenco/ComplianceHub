@@ -24,6 +24,46 @@ const MOCK_CASE_MESSAGES = {
         { id: 'msg-4', caseId: 'CASE-002', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Prezados, identificamos achados graves na analise do candidato Carlos Eduardo Santos. Recomendamos agendamento de call para discutir.', createdAt: new Date('2026-03-19T14:00:00') },
         { id: 'msg-5', caseId: 'CASE-002', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Vamos agendar sim. Obrigada pelo alerta.', createdAt: new Date('2026-03-19T14:30:00') },
     ],
+    'CASE-003': [
+        { id: 'msg-6', caseId: 'CASE-003', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'A candidata mudou de endereco recentemente. Precisam de alguma informacao adicional?', createdAt: new Date('2026-04-01T10:30:00') },
+        { id: 'msg-7', caseId: 'CASE-003', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Obrigada, Paula. Por enquanto nao e necessario. A consulta de mandados esta em andamento.', createdAt: new Date('2026-04-01T11:00:00') },
+    ],
+    'CASE-004': [
+        { id: 'msg-8', caseId: 'CASE-004', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'O tribunal de MG apresentou instabilidade. A consulta criminal ficou inconclusiva.', createdAt: new Date('2026-03-25T15:00:00') },
+        { id: 'msg-9', caseId: 'CASE-004', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Entendido. O candidato ja trabalhou conosco antes, entao podemos prosseguir.', createdAt: new Date('2026-03-25T15:30:00') },
+    ],
+    'CASE-011': [
+        { id: 'msg-10', caseId: 'CASE-011', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Identificamos divergencia no CPF informado. Podem confirmar o numero correto?', createdAt: new Date('2026-04-05T09:00:00') },
+        { id: 'msg-11', caseId: 'CASE-011', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Vou verificar com o RH e retorno assim que possivel.', createdAt: new Date('2026-04-05T09:30:00') },
+    ],
+    'CASE-012': [
+        { id: 'msg-12', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Caso concluido com sucesso. Patricia Vieira nao apresenta restricoes.', createdAt: new Date('2026-03-22T16:00:00') },
+        { id: 'msg-13', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Excelente noticia! Vamos prosseguir com a contratacao.', createdAt: new Date('2026-03-22T16:15:00') },
+    ],
+    'CASE-013': [
+        { id: 'msg-14', caseId: 'CASE-013', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Pedro tem varias publicacoes politicas nas redes. Recomendamos atencao.', createdAt: new Date('2026-04-08T11:00:00') },
+        { id: 'msg-15', caseId: 'CASE-013', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Vamos considerar isso na entrevista. Obrigada pelo alerta.', createdAt: new Date('2026-04-08T11:30:00') },
+    ],
+    'CASE-006': [
+        { id: 'msg-16', caseId: 'CASE-006', tenantId: 'TEN-002', senderRole: 'client', senderName: 'Felipe Duarte', content: 'Bruna e para a vaga de PLD. Precisamos de prioridade.', createdAt: new Date('2026-03-24T09:30:00') },
+        { id: 'msg-17', caseId: 'CASE-006', tenantId: 'TEN-002', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Entendido, Felipe. Caso marcado como prioridade.', createdAt: new Date('2026-03-24T10:00:00') },
+    ],
+    'CASE-007': [
+        { id: 'msg-18', caseId: 'CASE-007', tenantId: 'TEN-002', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Identificamos processo trabalhista em andamento. Detalhes no relatorio.', createdAt: new Date('2026-03-27T14:00:00') },
+        { id: 'msg-19', caseId: 'CASE-007', tenantId: 'TEN-002', senderRole: 'client', senderName: 'Felipe Duarte', content: 'Vamos analisar internamente antes de prosseguir.', createdAt: new Date('2026-03-27T14:30:00') },
+    ],
+    'CASE-008': [
+        { id: 'msg-20', caseId: 'CASE-008', tenantId: 'TEN-002', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Caso concluido. Sem restricoes identificadas.', createdAt: new Date('2026-04-02T10:00:00') },
+        { id: 'msg-21', caseId: 'CASE-008', tenantId: 'TEN-002', senderRole: 'client', senderName: 'Felipe Duarte', content: 'Otimas noticias! Pode liberar o relatorio?', createdAt: new Date('2026-04-02T10:15:00') },
+    ],
+    'CASE-009': [
+        { id: 'msg-22', caseId: 'CASE-009', tenantId: 'TEN-002', senderRole: 'client', senderName: 'Felipe Duarte', content: 'Fernando tem experiencia em outro banco. Podem verificar se ha conflito?', createdAt: new Date('2026-04-06T09:00:00') },
+        { id: 'msg-23', caseId: 'CASE-009', tenantId: 'TEN-002', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Verificamos e nao identificamos conflito de interesse. Relatorio em anexo.', createdAt: new Date('2026-04-06T09:30:00') },
+    ],
+    'CASE-010': [
+        { id: 'msg-24', caseId: 'CASE-010', tenantId: 'TEN-002', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Solicitamos correcao do CPF. O numero informado nao foi localizado.', createdAt: new Date('2026-04-10T10:00:00') },
+        { id: 'msg-25', caseId: 'CASE-010', tenantId: 'TEN-002', senderRole: 'client', senderName: 'Felipe Duarte', content: 'Vou confirmar com o candidato e retorno.', createdAt: new Date('2026-04-10T10:30:00') },
+    ],
 };
 
 const FIRESTORE_QUERY_TIMEOUT_MS = 5000;
@@ -1005,7 +1045,7 @@ export function subscribeToCaseMessages(caseId, tenantId, callback) {
         return () => {};
     }
     // Demo mode: return mock messages
-    if (caseId.startsWith('CASE-') && tenantId === 'TEN-001') {
+    if (caseId.startsWith('CASE-') && (tenantId === 'TEN-001' || tenantId === 'TEN-002')) {
         const mockMessages = MOCK_CASE_MESSAGES[caseId] || [];
         setTimeout(() => callback(mockMessages, null), 300);
         return () => {};
