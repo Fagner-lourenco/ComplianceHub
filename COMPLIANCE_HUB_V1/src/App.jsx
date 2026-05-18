@@ -356,7 +356,7 @@ function AppRoutes() {
                     <Route
                         path="relatorios"
                         element={(
-                            <RequirePermission permission={PERMISSIONS.REPORT_PUBLIC_VIEW}>
+                            <RequirePermission permission={PERMISSIONS.REPORT_PUBLIC_MANAGE}>
                                 <RelatoriosClientePage />
                             </RequirePermission>
                         )}

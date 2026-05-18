@@ -19,6 +19,7 @@ const {
     buildAiPrompt,
     buildAiHomonymPrompt,
     evaluateNegativePartialSafetyNet,
+    sanitizeAuditMetadataValue,
 } = __test;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -175,6 +176,34 @@ function buildDiegoJuditOnlyCase() {
     };
 }
 
+function buildCleanZeroEvidenceCase() {
+    return {
+        ...buildCaseBase({
+            candidateName: 'CANDIDATO SEM APONTAMENTO',
+            cpf: '12345678909',
+            hiringUf: 'SP',
+            city: 'SAO PAULO',
+            ddd: '11',
+        }),
+        juditEnrichmentStatus: 'DONE',
+        juditProcessTotal: 0,
+        juditCriminalCount: 0,
+        juditProcessos: [],
+        escavadorEnrichmentStatus: 'SKIPPED',
+        escavadorProcessTotal: 0,
+        escavadorCriminalCount: 0,
+        escavadorProcessos: [],
+        bigdatacorpEnrichmentStatus: 'DONE',
+        bigdatacorpProcessTotal: 0,
+        bigdatacorpCriminalCount: 0,
+        bigdatacorpCriminalFlag: 'NEGATIVE',
+        bigdatacorpProcessos: [],
+        djenEnrichmentStatus: 'DONE',
+        djenCriminalFlag: 'NEGATIVE',
+        enrichmentStatus: 'SKIPPED',
+    };
+}
+
 function buildRenanCase() {
     const cpf = '11819916766';
     const judit = normalizeJuditLawsuits(adaptJuditLawsuits(loadJson('results', 'judit_lawsuits_3_renan.json')), cpf);
@@ -296,11 +325,23 @@ describe('offline calibration with the 5 reference CPFs', () => {
         const classification = computeAutoClassification(caseData);
         const safetyNet = evaluateNegativePartialSafetyNet(caseData, classification);
 
-        expect(classification.criminalFlag).toBe('INCONCLUSIVE_LOW_COVERAGE');
+        expect(classification.criminalFlag).toBe('NEGATIVE_PARTIAL');
         expect(safetyNet.eligible).toBe(true);
         expect(safetyNet.action).toBe('RUN_ESCAVADOR');
         expect(safetyNet.reasons).toContain('LOW_COVERAGE');
         expect(safetyNet.reasons).toContain('JUDIT_ZERO_PROCESS');
+    });
+
+    it('classifies completed zero-evidence provider returns as no criminal finding', () => {
+        const caseData = buildCleanZeroEvidenceCase();
+        const classification = computeAutoClassification(caseData);
+        const safetyNet = evaluateNegativePartialSafetyNet(caseData, classification);
+
+        expect(classification.coverageLevel).toBe('LOW_COVERAGE');
+        expect(classification.coverageNotes).toContain('Nenhum provider retornou processo aproveitavel.');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('CONFIRMED_NEGATIVE');
+        expect(safetyNet.eligible).toBe(false);
     });
 
     it('safety net stays off when Escavador already ran or hard facts exist', () => {
@@ -325,6 +366,18 @@ describe('offline calibration with the 5 reference CPFs', () => {
         expect(matheusHomonymPrompt).toMatch(/AMBIGUOUS_EVIDENCE_ONLY/);
         expect(matheusHomonymPrompt).toMatch(/referenceCandidates/);
         expect(matheusHomonymPrompt).toMatch(/ambiguousCandidates/);
+    });
+});
+
+describe('audit metadata sanitization', () => {
+    it('removes Firestore sentinel-like values from nested metadata', () => {
+        const sentinel = { _methodName: 'FieldValue.delete' };
+
+        expect(sanitizeAuditMetadataValue(sentinel)).toBeNull();
+        expect(sanitizeAuditMetadataValue({ decision: sentinel, confidence: 'LOW' })).toEqual({
+            decision: null,
+            confidence: 'LOW',
+        });
     });
 });
 

@@ -11,6 +11,7 @@ import { getMockCaseById, getMockExports } from '../../data/mockData';
 import { useCases } from '../../hooks/useCases';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { ROLES } from '../../core/rbac/permissions';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import './ExportacoesPage.css';
@@ -894,6 +895,7 @@ function artifactLabel(item) {
 export default function ExportacoesPage() {
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
+    const isManager = userProfile?.role === ROLES.CLIENT_MANAGER;
     const tenantId = userProfile?.tenantId || null;
     const { cases, loading: casesLoading, error: casesError } = useCases();
     const [exportType, setExportType] = useState('CSV');
@@ -1077,6 +1079,18 @@ export default function ExportacoesPage() {
         if (!caseData) return;
         openHtmlBlob(buildBatchReportHtml([caseData], caseData.tenantName || 'Demo'));
     };
+
+    if (!isDemoMode && !isManager) {
+        return (
+            <PageShell size="default" className="export-page">
+                <PageHeader
+                    eyebrow="Acesso restrito"
+                    title="Exportações disponíveis apenas para gestores"
+                    description="Operadores e visualizadores podem acompanhar solicitações, mas não gerar arquivos ou gerenciar links compartilhados."
+                />
+            </PageShell>
+        );
+    }
 
     return (
         <PageShell size="default" className="export-page">

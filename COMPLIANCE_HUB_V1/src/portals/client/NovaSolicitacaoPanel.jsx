@@ -237,7 +237,6 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         if (!form.fullName.trim()) next.fullName = 'Nome obrigatório — é o identificador principal da solicitação.';
         if (!form.cpf.trim()) next.cpf = 'Informe o CPF para iniciar a análise.';
         else if (!validateCpf(form.cpf)) next.cpf = 'CPF inválido — verifique os dígitos.';
-        if (!form.hiringUf) next.hiringUf = 'UF de local de trabalho é obrigatória.';
         if (!form.candidateResidenceUf) next.candidateResidenceUf = 'UF de residência atual é obrigatória.';
         SOCIAL_FIELDS.forEach((field) => {
             if (form[field] && !validateUrl(form[field])) {
@@ -332,7 +331,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     };
 
     const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf)
-        && form.hiringUf && form.candidateResidenceUf;
+        && form.candidateResidenceUf;
     const quotaBlocked = quota?.hasLimits && (
         (quota.dailyLimit && quota.dailyCount >= quota.dailyLimit && !quota.allowDailyExceedance) ||
         (quota.monthlyLimit && quota.monthlyCount >= quota.monthlyLimit && !quota.allowMonthlyExceedance)
@@ -536,14 +535,13 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
                                     <div className="ns-field">
                                         <label className="ns-label">
-                                            UF de local de trabalho <span className="ns-required" aria-label="obrigatório">*</span>
+                                            UF de local de trabalho
                                         </label>
                                         <select
-                                            className={`ns-input${errors.hiringUf ? ' ns-input--error' : ''}`}
+                                            className="ns-input"
                                             value={form.hiringUf}
                                             onChange={(e) => update('hiringUf', e.target.value)}
-                                            aria-required="true"
-                                            aria-describedby={errors.hiringUf ? 'err-hiringUf' : 'help-hiringUf'}
+                                            aria-describedby="help-hiringUf"
                                         >
                                             <option value="">Selecione a UF...</option>
                                             {BRAZIL_UF_OPTIONS.map((uf) => (
@@ -551,7 +549,6 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             ))}
                                         </select>
                                         <span id="help-hiringUf" className="ns-help">Onde o candidato exercerá a função.</span>
-                                        {errors.hiringUf && <span id="err-hiringUf" className="ns-error" role="alert">{errors.hiringUf}</span>}
                                     </div>
 
                                     <div className="ns-field">
@@ -774,7 +771,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             >
                                                 Alta
                                             </button>
-                                            <span className="ns-priority-hint">Retorno em até 24 h úteis</span>
+                                            <span className="ns-priority-hint">Retorno em até 3 h úteis</span>
                                         </div>
                                     </div>
                                 </div>

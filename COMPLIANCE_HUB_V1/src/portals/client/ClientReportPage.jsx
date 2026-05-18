@@ -10,6 +10,7 @@ import { buildClientPortalPath } from '../../core/portalPaths';
 import { useCases } from '../../hooks/useCases';
 import { buildCaseReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { ROLES } from '../../core/rbac/permissions';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import './ClientReportPage.css';
 
@@ -24,6 +25,7 @@ export default function ClientReportPage() {
     const location = useLocation();
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
+    const isManager = userProfile?.role === ROLES.CLIENT_MANAGER;
     const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
     const { cases, loading, error } = useCases(clientTenantId);
     const [publicResult, setPublicResult] = useState(null);
@@ -213,7 +215,7 @@ export default function ClientReportPage() {
                                 {pdfState.message}
                             </span>
                         )}
-                        {reportAvailability.available && (
+                        {isManager && reportAvailability.available && (
                             <>
                                 <button
                                     type="button"
@@ -230,15 +232,17 @@ export default function ClientReportPage() {
                                 </button>
                             </>
                         )}
-                        <button
-                            type="button"
-                            className="crp-btn crp-btn--primary"
-                            onClick={() => setShareModalOpen(true)}
-                            disabled={!reportAvailability.available}
-                        >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                            Gerar link público
-                        </button>
+                        {isManager && (
+                            <button
+                                type="button"
+                                className="crp-btn crp-btn--primary"
+                                onClick={() => setShareModalOpen(true)}
+                                disabled={!reportAvailability.available}
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                Gerar link público
+                            </button>
+                        )}
                     </div>
                 }
             />

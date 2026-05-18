@@ -132,7 +132,7 @@ export function getMockPublicReports(tenantId) {
         .filter((caseData) => caseData.status === 'DONE')
         .map((caseData, index) => {
             const createdAt = new Date(Date.now() - (index + 2) * 24 * 60 * 60 * 1000);
-            const expiresAt = new Date(createdAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+            const expiresAt = new Date(createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
             const revoked = index % 5 === 3;
             const expired = index % 5 === 4;
             return {

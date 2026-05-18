@@ -74,8 +74,8 @@ function getMacroProgress(caseData) {
     const aiDone = !!caseData.aiStructured;
     if (aiDone) return { label: 'Análise finalizada', step: 5, color: 'var(--brand-600)' };
     if (classified) return { label: 'Classificando resultado', step: 4, color: 'var(--brand-600)' };
-    if (escDone) return { label: 'Consultando registros (Escavador)', step: 3, color: 'var(--brand-600)' };
-    if (juditDone) return { label: 'Consultando registros (Judit)', step: 3, color: 'var(--brand-600)' };
+    if (escDone) return { label: 'Consultando registros', step: 3, color: 'var(--brand-600)' };
+    if (juditDone) return { label: 'Consultando registros', step: 3, color: 'var(--brand-600)' };
     if (fonteDone) return { label: 'Consultando processos', step: 2, color: 'var(--brand-600)' };
     if (bdcDone) return { label: 'Verificando identidade', step: 2, color: 'var(--brand-600)' };
     return { label: 'Aguardando análise', step: 1, color: 'var(--text-tertiary)' };
@@ -584,7 +584,7 @@ export default function SolicitacoesPage() {
                 onPageChange={setCurrentPage}
             />
             <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
-            <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} />
+            <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} width={drawerTabs.length >= 6 ? 560 : undefined} />
             <NovaSolicitacaoPanel
                 open={novaPanelOpen}
                 onClose={() => setNovaPanelOpen(false)}

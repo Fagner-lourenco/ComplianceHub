@@ -57,7 +57,7 @@ describe('Sidebar', () => {
         expect(screen.getByTestId('location')).toHaveTextContent('/demo/ops/casos');
     });
 
-    it('exibe a navegacao de relatorios no portal cliente para perfil com permissao de exportacao', () => {
+    it('exibe a navegacao de relatorios no portal cliente para gestor', () => {
         sidebarMocks.authState = {
             logout: (...args) => sidebarMocks.logout(...args),
             userProfile: {
@@ -76,5 +76,27 @@ describe('Sidebar', () => {
         );
 
         expect(screen.getByRole('link', { name: /Links compartilhados/i })).toBeInTheDocument();
+    });
+
+    it('oculta exportacoes e links compartilhados para operador do cliente', () => {
+        sidebarMocks.authState = {
+            logout: (...args) => sidebarMocks.logout(...args),
+            userProfile: {
+                displayName: 'Operador RH',
+                email: 'operador.rh@madero.com.br',
+                role: 'client_operator',
+                tenantName: 'Madero Industria e Comercio S.A.',
+            },
+        };
+
+        render(
+            <MemoryRouter initialEntries={['/client/solicitacoes']}>
+                <Sidebar isOpen onClose={() => {}} />
+                <LocationProbe />
+            </MemoryRouter>,
+        );
+
+        expect(screen.queryByRole('link', { name: /Arquivos gerados/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Links compartilhados/i })).not.toBeInTheDocument();
     });
 });

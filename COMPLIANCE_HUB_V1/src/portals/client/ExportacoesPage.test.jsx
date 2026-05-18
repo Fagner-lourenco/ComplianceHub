@@ -113,6 +113,15 @@ describe('ExportacoesPage', () => {
         expect(screen.queryByRole('button', { name: /^PDF$/i })).not.toBeInTheDocument();
     });
 
+    it('bloqueia exportacoes para operador do cliente', () => {
+        exportacoesPageMocks.authState.userProfile.role = 'client_operator';
+
+        render(<ExportacoesPage />);
+
+        expect(screen.getByText(/Exportações disponíveis apenas para gestores/i)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Registrar e gerar/i })).not.toBeInTheDocument();
+    });
+
     it('bloqueia exportacao quando casos estao em erro', () => {
         exportacoesPageMocks.casesState = { loading: false, error: new Error('permission-denied'), cases: [] };
 

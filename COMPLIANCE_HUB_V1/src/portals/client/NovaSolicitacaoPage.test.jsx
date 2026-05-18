@@ -82,14 +82,13 @@ describe('NovaSolicitacaoPage', () => {
         expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
     });
 
-    it('chama createClientSolicitation com CPF valido e redireciona', async () => {
+    it('chama createClientSolicitation com CPF valido sem exigir UF de trabalho', async () => {
         solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
         renderPage();
 
         fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
         fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
         const ufSelects = screen.getAllByDisplayValue('Selecione a UF...');
-        fireEvent.change(ufSelects[0], { target: { value: 'SP' } });
         fireEvent.change(ufSelects[1], { target: { value: 'MG' } });
 
         fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
@@ -102,7 +101,7 @@ describe('NovaSolicitacaoPage', () => {
             expect.objectContaining({
                 fullName: 'MARIA SANTOS',
                 cpf: '529.982.247-25',
-                hiringUf: 'SP',
+                hiringUf: '',
                 candidateResidenceUf: 'MG',
             }),
         );

@@ -408,8 +408,8 @@
     "hash": "82d558b3e2899b2973cab3a1015bcba7"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\core\\firebase\\firestoreService.js": {
-    "mtime": 1778944598.087263,
-    "hash": "681857e5d7f696682edd3735f52c58dc"
+    "mtime": 1778952115.29882,
+    "hash": "d2f7bdcf02b65497f526c28ae32b6c3c"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\core\\firebase\\firestoreService.test.js": {
     "mtime": 1778893383.8934786,
@@ -420,8 +420,8 @@
     "hash": "c7525dcd5b068becbbcb36da9ca7a451"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\core\\notifications\\NotificationProvider.jsx": {
-    "mtime": 1778944489.3409183,
-    "hash": "30be66e11468e0f22e87eb8da60f32ac"
+    "mtime": 1778952307.5695784,
+    "hash": "2e56b8cec6b8c957714859999bdd8f2f"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\core\\notifications\\notificationService.js": {
     "mtime": 1777947613.1585686,
@@ -448,20 +448,20 @@
     "hash": "b1c622d84ccf9e4b6f80f2a3f2b71d7b"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\data\\mockCasesTenant1.js": {
-    "mtime": 1778944766.9171667,
-    "hash": "21c6a37d4bdd199e71120e9b458fc058"
+    "mtime": 1778952579.568801,
+    "hash": "fd0858a6608b7c352014ebdbaf3e7186"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\data\\mockCasesTenant2.js": {
-    "mtime": 1778943747.3833053,
-    "hash": "29fac8e1ef91fdebab5283693294dff5"
+    "mtime": 1778952749.1765807,
+    "hash": "eb567f43113cead483843447fbe54962"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\data\\mockData.js": {
     "mtime": 1777947613.1635716,
     "hash": "c0dd1c3f97c825ef4c4031e4be71f324"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\demo\\DemoProviders.jsx": {
-    "mtime": 1777947613.1635716,
-    "hash": "187ddb0a2ad637685222d5c25c1c5a85"
+    "mtime": 1778952794.034588,
+    "hash": "1f1aa51a51e3cbae41eb9baa919d4eaf"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\hooks\\useAuditLogs.js": {
     "mtime": 1778893383.8974838,
@@ -532,8 +532,8 @@
     "hash": "62c6e9769e5592af68d9bcbc935d40a9"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\portals\\client\\DashboardClientePage.jsx": {
-    "mtime": 1778893537.3558176,
-    "hash": "5d1e4e583b5799d7f70b99b06ee73dc1"
+    "mtime": 1778952181.571037,
+    "hash": "95e63a331d4749d61db4a2a668df5185"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\portals\\client\\DashboardClientePage.test.jsx": {
     "mtime": 1777947613.173571,
@@ -564,8 +564,8 @@
     "hash": "f839688b67e39c33ccd04e038ef4497a"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\portals\\client\\NovaSolicitacaoPanel.jsx": {
-    "mtime": 1778944659.7367215,
-    "hash": "85ca637419793f160b93310099582ce8"
+    "mtime": 1778952241.8746252,
+    "hash": "4770adffc9f402c13a4e8b47ec4f6d91"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\src\\portals\\client\\RelatoriosClientePage.jsx": {
     "mtime": 1777947613.1775713,
@@ -984,8 +984,8 @@
     "hash": "b5b03c3bbe4afce2abd81a9f74ffdc1d"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\playwright-report\\index.html": {
-    "mtime": 1778944865.8334327,
-    "hash": "0490e547d46fcedd6103c0a88ec0320c"
+    "mtime": 1778952866.6659272,
+    "hash": "3bac9f8240e772f1949bd5b7adefe83a"
   },
   "D:\\ComplianceHub\\COMPLIANCE_HUB_V1\\results\\report-4CO7nMGxiqxKsOySsUEI.html": {
     "mtime": 1777947613.1335642,

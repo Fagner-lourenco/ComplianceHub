@@ -26,6 +26,7 @@ const {
     selectTopProcessos,
     normCnj,
     formatCnj,
+    sanitizeNarrativesForFlags,
 } = __test;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -309,12 +310,12 @@ describe('Deterministic Prefill', () => {
             const caseData = classifyAndMerge(buildCleanCase());
             const result = buildDeterministicPrefill(caseData);
 
-            // Zero processes from all providers = LOW_COVERAGE = complex in the system's view.
-            // This is correct: the system can't confirm negatives without data.
+            // Zero process returns from completed providers are sem apontamento, not inconclusive.
             expect(result.criminalNotes).toBeTruthy();
             expect(result.laborNotes).toBeTruthy();
             expect(result.warrantNotes).toContain('Nenhum');
-            // Criminal should reflect no findings but with coverage caveat
+            expect(result.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
+            expect(result.executiveSummary).not.toMatch(/inconclusivo|baixa cobertura|cobertura insuficiente/i);
             expect(result.executiveSummary).toBeTruthy();
             // v6: verdict now shown via badge in Risk Box, not in text
             expect(result.finalJustification).toBeTruthy();
@@ -419,7 +420,7 @@ describe('Deterministic Prefill', () => {
 
             // Diego should have partial coverage
             if (caseData.coverageLevel !== 'HIGH_COVERAGE') {
-                const hasCovRef = /nenhum apontamento|análise identificou/i.test(result.executiveSummary);
+                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
                 expect(hasCovRef).toBe(true);
             }
         });
@@ -430,9 +431,9 @@ describe('Deterministic Prefill', () => {
 
             if (caseData.criminalFlag === 'NEGATIVE_PARTIAL') {
                 // v6: risk level shown in badge, text shows analysis content
-                const hasCovRef = /nenhum apontamento|análise identificou/i.test(result.executiveSummary);
+                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
                 expect(hasCovRef).toBe(true);
-                expect(result.finalJustification).toContain('validação manual');
+                expect(result.finalJustification).toContain('avaliacao operacional');
             }
         });
     });
@@ -470,12 +471,13 @@ describe('Deterministic Prefill', () => {
     });
 
     describe('evaluateComplexityTriggers', () => {
-        it('flags zero-evidence case as complex due to LOW_COVERAGE', () => {
+        it('does not flag completed zero-evidence case as complex only due to LOW_COVERAGE', () => {
             const caseData = classifyAndMerge(buildCleanCase());
             const result = evaluateComplexityTriggers(caseData);
-            // Zero processes = LOW_COVERAGE = complex (correct system behavior)
-            expect(result.isComplex).toBe(true);
-            expect(result.triggersActive).toContain('LOW_COVERAGE');
+            expect(caseData.coverageLevel).toBe('LOW_COVERAGE');
+            expect(caseData.criminalFlag).toBe('NEGATIVE');
+            expect(result.isComplex).toBe(false);
+            expect(result.triggersActive).not.toContain('LOW_COVERAGE');
         });
 
         it('returns not complex when flags are clean and coverage is high', () => {
@@ -567,7 +569,7 @@ describe('Deterministic Prefill', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const summary = buildDetExecutiveSummary(caseData);
             expect(summary).toContain(name);
-            expect(summary).toContain('análise identificou');
+            expect(summary).toContain('analise identificou');
         });
 
         it('buildDetFinalJustification derives verdict from flags', () => {
@@ -579,7 +581,7 @@ describe('Deterministic Prefill', () => {
                 coverageLevel: 'HIGH_COVERAGE',
                 providerDivergence: 'NONE',
             });
-            expect(justification).toContain('Não foram identificados impeditivos');
+            expect(justification).toContain('Nao foram identificados impeditivos');
         });
 
         it('buildDetFinalJustification uses NOT_RECOMMENDED for positive criminal', () => {
@@ -620,7 +622,7 @@ describe('Deterministic Prefill', () => {
                 if (hasLaborProcesses) {
                     expect(notes).toMatch(/Status:/);
                 } else {
-                    expect(notes).toContain('Último empregador');
+                    expect(notes).toContain('Ultimo empregador');
                 }
             }
         });
@@ -860,7 +862,7 @@ describe('Deterministic Prefill', () => {
             };
             const notes = buildDetLaborNotes(caseData);
             // v7: POSITIVE with zero processes — no header, straight to context
-            expect(notes).toContain('Dados profissionais não disponíveis');
+            expect(notes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
         });
 
         it('buildDetWarrantNotes shows BDC warrant processNumber and imprisonmentKind', () => {
@@ -946,6 +948,34 @@ describe('Deterministic Prefill', () => {
             expect(allTexts).not.toContain('mandado(s) BigDataCorp');
         });
 
+        it('sanitizes narrative text that contradicts NEGATIVE flags', () => {
+            const result = sanitizeNarrativesForFlags({
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+            }, {
+                criminalNotes: 'Criminal inconclusivo por baixa cobertura e apontamento criminal pendente.',
+                laborNotes: 'Processo(s) trabalhista(s) localizado(s).',
+                warrantNotes: 'Mandado ativo pendente de cumprimento.',
+            });
+
+            expect(result.narratives.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
+            expect(result.narratives.laborNotes).toContain('Nao foram identificados processos trabalhistas materiais');
+            expect(result.narratives.warrantNotes).toContain('Nenhum mandado de prisao ativo');
+            expect(result.warnings).toHaveLength(3);
+        });
+
+        it('NEGATIVE_PARTIAL uses operational warning text instead of client-facing inconclusive caveat', () => {
+            const result = sanitizeNarrativesForFlags({ criminalFlag: 'NEGATIVE_PARTIAL' }, {
+                criminalNotes: 'Resultado inconclusivo com apontamento criminal pendente de validacao.',
+            });
+
+            expect(result.narratives.criminalNotes).toContain('Nao houve apontamento criminal confirmado');
+            expect(result.narratives.criminalNotes).toContain('revisao operacional');
+            expect(result.narratives.criminalNotes).not.toMatch(/inconclusivo|baixa cobertura/i);
+            expect(result.warnings).toHaveLength(1);
+        });
+
         it('DEFAULT_JUDIT_CONFIG has entity OFF by default', () => {
             // Judit cadastro must be disabled by default — BDC is primary
             // This test validates the config is correct at code level
@@ -982,10 +1012,10 @@ describe('Deterministic Prefill', () => {
                 sanctionFlag: 'NEGATIVE',
             };
             const result = buildDeterministicPrefill(caseData);
-            expect(result.criminalNotes).toContain('Nenhum processo criminal');
-            expect(result.laborNotes).toContain('nenhum processo trabalhista');
+            expect(result.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
+            expect(result.laborNotes).toContain('Nao foram identificados processos trabalhistas materiais');
             expect(result.warrantNotes).toContain('Nenhum mandado');
-            expect(result.finalJustification).toContain('Não foram identificados impeditivos');
+            expect(result.finalJustification).toContain('Nao foram identificados impeditivos');
             expect(result.executiveSummary).toBeTruthy();
             expect(result.keyFindings.length).toBeGreaterThanOrEqual(0);
         });
@@ -1006,7 +1036,7 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetLaborNotes(caseData);
             expect(notes).toContain('Faixa salarial: Entre 3.000 e 5.000');
             expect(notes).not.toMatch(/Faixa salarial:\s{2}/); // no double space
-            expect(notes).toContain('Último empregador');
+            expect(notes).toContain('Ultimo empregador');
         });
 
         // 4. laborFlag=POSITIVE + 0 labor processes
@@ -1019,7 +1049,7 @@ describe('Deterministic Prefill', () => {
             };
             const notes = buildDetLaborNotes(caseData);
             // v7: POSITIVE with zero processes — no header, straight to context
-            expect(notes).toContain('Dados profissionais não disponíveis');
+            expect(notes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
             expect(notes).not.toContain('PROCESSOS TRABALHISTAS');
         });
 
@@ -1057,7 +1087,7 @@ describe('Deterministic Prefill', () => {
                 bigdatacorpActiveWarrants: [],
             };
             const notes = buildDetWarrantNotes(caseData);
-            expect(notes).toContain('indisponíveis');
+            expect(notes).toContain('dados detalhados indisponíveis');
         });
 
         // 7. pepFlag=POSITIVE only — no criminal, no warrant
@@ -1071,7 +1101,7 @@ describe('Deterministic Prefill', () => {
                 sanctionFlag: 'NEGATIVE',
             };
             const result = buildDeterministicPrefill(caseData);
-            expect(result.finalJustification).toContain('validação manual');
+            expect(result.finalJustification).toContain('avaliacao operacional');
             expect(result.finalJustification).toContain('pessoa politicamente exposta');
             expect(result.executiveSummary).toContain('PEP');
             expect(result.keyFindings).toContain('Pessoa politicamente exposta (PEP) detectada');
@@ -1119,7 +1149,7 @@ describe('Deterministic Prefill', () => {
             };
             const notes = buildDetCriminalNotes(caseData);
             expect(notes).toContain('homonímia');
-            expect(notes).toContain('indisponíveis');
+            expect(notes).toContain('Nao ha detalhamento processual estruturado suficiente');
         });
 
         // 11. criminalFlag=NOT_FOUND + 0 processes
@@ -1132,7 +1162,7 @@ describe('Deterministic Prefill', () => {
             };
             const notes = buildDetCriminalNotes(caseData);
             expect(notes).toContain('não localizado');
-            expect(notes).toContain('indisponíveis');
+            expect(notes).toContain('Nao ha detalhamento processual estruturado suficiente');
         });
 
         // 12. warrantFlag=INCONCLUSIVE + 0 warrants
@@ -1168,8 +1198,8 @@ describe('Deterministic Prefill', () => {
             expect(result.executiveSummary).toContain('sanção ativa');
             expect(result.warrantNotes).toMatch(/Status:/);
             // criminalNotes: POSITIVE with no processes → fallback message
-            expect(result.criminalNotes).toContain('indisponíveis');
-            expect(result.laborNotes).toContain('Dados profissionais não disponíveis');
+            expect(result.criminalNotes).toContain('Nao ha detalhamento processual estruturado suficiente');
+            expect(result.laborNotes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
             // Fix A1 — no double space after "prisão" in keyFindings items
             for (const finding of result.keyFindings) {
                 expect(finding).not.toMatch(/prisão {2}/);

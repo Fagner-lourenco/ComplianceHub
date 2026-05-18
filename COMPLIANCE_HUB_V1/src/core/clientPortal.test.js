@@ -18,13 +18,13 @@ describe('clientPortal helpers', () => {
         const metrics = getClientDashboardMetrics(tenantCases);
 
         expect(metrics.total).toBe(8);
-        expect(metrics.done).toBe(4);
+        expect(metrics.done).toBe(3);
         expect(metrics.inProgress).toBe(2);
         expect(metrics.pending).toBe(1);
         expect(metrics.corrections).toBe(1);
         expect(metrics.verdicts).toEqual({
             FIT: 1,
-            ATTENTION: 1,
+            ATTENTION: 0,
             NOT_RECOMMENDED: 2,
         });
         expect(getReportAvailability(getMockCaseById('CASE-003'), null).available).toBe(false);

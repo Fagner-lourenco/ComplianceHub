@@ -17,7 +17,7 @@ function getFocusableElements(container) {
         .filter((element) => !element.hasAttribute('disabled') && !element.getAttribute('aria-hidden'));
 }
 
-export default function Drawer({ open, onClose, title, subtitle, headerExtra, tabs, children }) {
+export default function Drawer({ open, onClose, title, subtitle, headerExtra, tabs, children, width }) {
     const [activeTab, setActiveTab] = useState(0);
     const closeRef = useRef(null);
     const drawerRef = useRef(null);
@@ -107,6 +107,7 @@ export default function Drawer({ open, onClose, title, subtitle, headerExtra, ta
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={subtitle ? `${titleId}-subtitle` : undefined}
+                style={width ? { '--drawer-width': `${width}px` } : undefined}
             >
                 <div className="drawer__header">
                     <div className="drawer__header-text">

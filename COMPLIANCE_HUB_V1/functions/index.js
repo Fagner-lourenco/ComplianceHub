@@ -516,6 +516,29 @@ function stripUndefined(obj) {
     return clean;
 }
 
+function isFirestoreSentinel(value) {
+    if (!value || typeof value !== 'object') return false;
+    const methodName = value._methodName || value.methodName;
+    if (typeof methodName === 'string' && /FieldValue|delete|serverTimestamp|increment/i.test(methodName)) return true;
+    const ctorName = value.constructor?.name || '';
+    return /FieldValue|Transform|Delete/i.test(ctorName) && Object.getPrototypeOf(value) !== Object.prototype;
+}
+
+function sanitizeAuditMetadataValue(value) {
+    if (value === undefined || isFirestoreSentinel(value)) return null;
+    if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) return value;
+    if (Array.isArray(value)) return value.map(sanitizeAuditMetadataValue);
+    if (typeof value === 'object') {
+        if (Object.getPrototypeOf(value) !== Object.prototype) return null;
+        const clean = {};
+        for (const [key, child] of Object.entries(value)) {
+            clean[key] = sanitizeAuditMetadataValue(child);
+        }
+        return clean;
+    }
+    return null;
+}
+
 function sanitizePublicStructuredValue(value) {
     if (typeof value === 'string') return sanitizeStructuredText(value, 1200);
     if (Array.isArray(value)) return value.slice(0, 50).map(sanitizePublicStructuredValue);
@@ -3859,10 +3882,15 @@ exports.enrichDjenOnCase = onDocumentUpdated(
         const after = event.data?.after?.data();
         if (!before || !after) return;
 
-        // Guard: only trigger when Judit enrichment completes and is truly settled
+        // Guard: trigger when Judit settles, or when Escavador settles after DJEN waited for it.
         const statusBefore = before.juditEnrichmentStatus;
         const statusAfter = after.juditEnrichmentStatus;
-        if (statusBefore === statusAfter) return;
+        const juditJustSettled = statusBefore !== statusAfter && isJuditSettled(after);
+        const escavadorJustSettled = before.escavadorEnrichmentStatus !== after.escavadorEnrichmentStatus
+            && after.juditNeedsEscavador === true
+            && isSettledProviderStatus(after.escavadorEnrichmentStatus)
+            && isJuditSettled(after);
+        if (!juditJustSettled && !escavadorJustSettled) return;
         if (!isJuditSettled(after)) return;
 
         // Guard: don't re-trigger if DJEN already ran
@@ -4375,15 +4403,18 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
             executiveSummary: detPrefill.executiveSummary,
             finalJustification: detPrefill.finalJustification,
         });
+        const consistency = sanitizeNarrativesForFlags({ ...caseDataForAi, ...updatePayload }, sanitized);
         const mergedPrefill = {
-            ...sanitized,
+            ...consistency.narratives,
             metadata: {
                 ...(currentPrefill.metadata || {}),
                 source: 'deterministic',
                 deterministicVersion: detPrefill.metadata.version,
                 mergedAt: new Date().toISOString(),
+                narrativeWarnings: consistency.warnings,
             },
         };
+        if (consistency.warnings.length > 0) updatePayload.narrativeConsistencyWarnings = consistency.warnings;
         updatePayload.prefillNarratives = mergedPrefill;
         console.log(`Case ${caseId} [PREFILL_MERGE]: source=${mergedPrefill.metadata.source}, aiOk=${aiOk}`);
     } catch (detErr) {
@@ -4494,6 +4525,7 @@ function computeAutoClassification(caseData) {
     const homonymInput = buildHomonymAnalysisInput(caseData);
     const coverage = homonymInput.providerCoverage || {};
     const overallCoverage = coverage.overall || {};
+    const coverageReasonCodes = overallCoverage.reasons || [];
     const referenceCandidates = homonymInput.referenceCandidates || [];
     const ambiguousCandidates = homonymInput.ambiguousCandidates || [];
     const hardFacts = new Set(homonymInput.hardFacts || []);
@@ -4602,6 +4634,16 @@ function computeAutoClassification(caseData) {
         && !bigdatacorpCriminal
         && !hardFacts.has('ACTIVE_WARRANT')
         && !hardFacts.has('PENAL_EXECUTION');
+    const onlyNoProcessEvidenceReturned = coverageReasonCodes.length > 0
+        && coverageReasonCodes.every((code) => code === 'NO_PROCESS_EVIDENCE_RETURNED');
+    const providerFailureReducesCoverage = coverageReasonCodes.includes('PROVIDER_FAILURE_REDUCES_COVERAGE')
+        || caseData.bigdatacorpEnrichmentStatus === 'FAILED'
+        || caseData.bigdatacorpEnrichmentStatus === 'BLOCKED';
+    const providerPendingReducesCoverage = [
+        caseData.juditEnrichmentStatus,
+        caseData.escavadorEnrichmentStatus,
+        caseData.bigdatacorpEnrichmentStatus,
+    ].some((status) => status === 'PENDING' || status === 'RUNNING');
 
     result.coverageLevel = overallCoverage.level || 'LOW_COVERAGE';
     result.coverageNotes = coverageNotes;
@@ -4650,16 +4692,23 @@ function computeAutoClassification(caseData) {
         pushUnique(criminalNotes, 'Nao ha evidencia criminal relevante; os matches exatos encontrados aparecem apenas em papel de baixo risco, como testemunha/informante.');
     } else if (
         result.coverageLevel === 'LOW_COVERAGE'
+        && !onlyNoProcessEvidenceReturned
         && (result.providerDivergence === 'HIGH' || coverageNotes.length > 0)
     ) {
         result.criminalFlag = 'INCONCLUSIVE_LOW_COVERAGE';
         result.criminalEvidenceQuality = 'LOW_COVERAGE_ONLY';
         pushUnique(criminalNotes, 'Criminal INCONCLUSIVO por baixa cobertura: as fontes nao sustentam leitura negativa forte nem evidenciam fato penal confirmatorio.');
         coverageNotes.forEach((note) => pushUnique(criminalNotes, note));
+    } else if (onlyNoProcessEvidenceReturned && !providerFailureReducesCoverage && !providerPendingReducesCoverage && result.providerDivergence === 'NONE') {
+        result.criminalFlag = 'NEGATIVE';
+        result.criminalEvidenceQuality = 'CONFIRMED_NEGATIVE';
+        pushUnique(criminalNotes, 'Criminal SEM APONTAMENTO: as fontes concluidas nao retornaram processos criminais aproveitaveis para o CPF/candidato.');
     } else if (
         escavadorFailed
         || juditFailed
         || fontedataFailed
+        || providerFailureReducesCoverage
+        || providerPendingReducesCoverage
         || result.coverageLevel !== 'HIGH_COVERAGE'
         || result.providerDivergence !== 'NONE'
     ) {
@@ -5705,7 +5754,7 @@ exports.createClientSolicitation = onCall(
         const VALID_UFS = new Set(['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']);
         const hiringUfClean = trimmedHiringUf;
         const residenceUfClean = trimmedResidenceUf;
-        if (!VALID_UFS.has(hiringUfClean)) {
+        if (hiringUfClean && !VALID_UFS.has(hiringUfClean)) {
             throw new HttpsError('invalid-argument', `UF de local de trabalho invalida: ${hiringUf}`);
         }
         if (!VALID_UFS.has(residenceUfClean)) {
@@ -6187,6 +6236,7 @@ exports.registerClientExport = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         const { type, scope, scopeCode = 'ALL', records = 0, artifactMode = 'download', filters = {}, containsPending = false } = request.data || {};
         if (!type || !scope) {
             throw new HttpsError('invalid-argument', 'Tipo e escopo da exportacao sao obrigatorios.');
@@ -6427,6 +6477,7 @@ exports.createClientPublicReport = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         const caseId = String(request.data?.caseId || '').trim();
         if (!caseId) {
             throw new HttpsError('invalid-argument', 'caseId ausente.');
@@ -6566,6 +6617,7 @@ exports.listClientPublicReports = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         // BUG-R5-007: Support server-side pagination.
         const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), 200);
         const lastCreatedAt = request.data?.lastCreatedAt || null;
@@ -6597,6 +6649,7 @@ exports.revokeClientPublicReport = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         const token = String(request.data?.token || '').trim();
         if (!token) throw new HttpsError('invalid-argument', 'Token do relatorio ausente.');
 
@@ -6708,6 +6761,7 @@ exports.getClientCaseReportHtml = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         const caseId = String(request.data?.caseId || '').trim();
         if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
 
@@ -6852,6 +6906,82 @@ async function getPublicReportViewInner(tokenInput) {
         reportBuildVersion: reportData.reportBuildVersion || REPORT_BUILD_VERSION,
         publicSnapshotHash: reportData.publicSnapshotHash || null,
     };
+}
+
+const SAFE_NARRATIVE_TEXTS = {
+    criminalNegative: 'Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.',
+    criminalNegativePartial: 'Nao houve apontamento criminal confirmado. A cobertura parcial exige revisao operacional antes da conclusao, sem incluir ressalva automatica no texto final ao cliente.',
+    criminalInconclusive: 'Ha indicios que exigem validacao operacional antes de uma conclusao definitiva sobre o apontamento criminal.',
+    criminalPositive: 'Foram identificados apontamentos criminais materiais que exigem avaliacao de risco antes da continuidade do processo.',
+    laborNegative: 'Nao foram identificados processos trabalhistas materiais associados ao candidato nas etapas analisadas.',
+    laborPositive: 'Foram identificados apontamentos trabalhistas materiais que exigem avaliacao antes da continuidade do processo.',
+    warrantNegative: 'Nenhum mandado de prisao ativo foi identificado nas etapas analisadas.',
+    warrantPositive: 'Foi identificado mandado de prisao ativo ou registro equivalente que exige tratativa operacional imediata.',
+};
+
+function normalizedNarrativeText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+}
+
+function narrativeMatches(value, patterns) {
+    const text = normalizedNarrativeText(Array.isArray(value) ? value.join('\n') : value);
+    return patterns.some((pattern) => pattern.test(text));
+}
+
+function buildSafeNarrativeReplacement(field, caseData = {}) {
+    if (field === 'criminalNotes') {
+        if (caseData.criminalFlag === 'POSITIVE') return SAFE_NARRATIVE_TEXTS.criminalPositive;
+        if (caseData.criminalFlag === 'NEGATIVE_PARTIAL') return SAFE_NARRATIVE_TEXTS.criminalNegativePartial;
+        if (['INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'INCONCLUSIVE'].includes(caseData.criminalFlag)) return SAFE_NARRATIVE_TEXTS.criminalInconclusive;
+        return SAFE_NARRATIVE_TEXTS.criminalNegative;
+    }
+    if (field === 'laborNotes') {
+        return caseData.laborFlag === 'POSITIVE' ? SAFE_NARRATIVE_TEXTS.laborPositive : SAFE_NARRATIVE_TEXTS.laborNegative;
+    }
+    if (field === 'warrantNotes') {
+        return caseData.warrantFlag === 'POSITIVE' ? SAFE_NARRATIVE_TEXTS.warrantPositive : SAFE_NARRATIVE_TEXTS.warrantNegative;
+    }
+    return '';
+}
+
+function sanitizeNarrativesForFlags(caseData = {}, narratives = {}) {
+    const clean = { ...(narratives || {}) };
+    const warnings = [];
+    const pushWarning = (field, reason) => warnings.push({ field, reason });
+
+    if (caseData.criminalFlag === 'NEGATIVE' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /cobertura insuficiente/, /baixa cobertura/, /apontamento criminal/, /processo\(s\) criminal/, /condenacao criminal/, /execucao penal/])) {
+        clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
+        pushWarning('criminalNotes', 'Texto criminal substituido por versao segura compativel com flag NEGATIVE.');
+    }
+    if (caseData.criminalFlag === 'NEGATIVE_PARTIAL' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /apontamento criminal/, /condenacao criminal/, /execucao penal/])) {
+        clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
+        pushWarning('criminalNotes', 'Texto criminal parcial substituido por versao operacional segura.');
+    }
+    if (caseData.criminalFlag === 'POSITIVE' && !narrativeMatches(clean.criminalNotes, [/apontamento/, /criminal/, /processo/, /condenacao/, /execucao penal/])) {
+        clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
+        pushWarning('criminalNotes', 'Texto criminal positivo estava pouco explicito e recebeu fallback seguro.');
+    }
+    if (caseData.laborFlag === 'NEGATIVE' && narrativeMatches(clean.laborNotes, [/trabalhista positivo/, /processo\(s\) trabalhista/, /comunicacoes trabalhistas localizadas/, /acao trabalhista/])) {
+        clean.laborNotes = buildSafeNarrativeReplacement('laborNotes', caseData);
+        pushWarning('laborNotes', 'Texto trabalhista substituido por versao segura compativel com flag NEGATIVE.');
+    }
+    if (caseData.laborFlag === 'POSITIVE' && !narrativeMatches(clean.laborNotes, [/trabalhista/, /processo/, /apontamento/])) {
+        clean.laborNotes = buildSafeNarrativeReplacement('laborNotes', caseData);
+        pushWarning('laborNotes', 'Texto trabalhista positivo estava pouco explicito e recebeu fallback seguro.');
+    }
+    if (caseData.warrantFlag === 'NEGATIVE' && narrativeMatches(clean.warrantNotes, [/mandado ativo/, /mandado detectado/, /pendente de cumprimento/, /prisao pendente/])) {
+        clean.warrantNotes = buildSafeNarrativeReplacement('warrantNotes', caseData);
+        pushWarning('warrantNotes', 'Texto de mandado substituido por versao segura compativel com flag NEGATIVE.');
+    }
+    if (caseData.warrantFlag === 'POSITIVE' && !narrativeMatches(clean.warrantNotes, [/mandado/, /prisao/])) {
+        clean.warrantNotes = buildSafeNarrativeReplacement('warrantNotes', caseData);
+        pushWarning('warrantNotes', 'Texto de mandado positivo estava pouco explicito e recebeu fallback seguro.');
+    }
+
+    return { narratives: clean, warnings };
 }
 
 exports.getPublicReportView = onCall(
@@ -7491,15 +7621,31 @@ function buildWarrantFindings(caseData) {
 
 function evaluateComplexityTriggers(caseData) {
     const triggers = [];
+    const coverageNotes = Array.isArray(caseData.coverageNotes) ? caseData.coverageNotes : [];
+    const hasOnlyNoProcessCoverageNote = coverageNotes.length > 0
+        && coverageNotes.every((note) => /nenhum provider retornou processo aproveitavel/i.test(String(note || '')));
+    const benignLowCoverageNegative = caseData.criminalFlag === 'NEGATIVE'
+        && caseData.coverageLevel === 'LOW_COVERAGE'
+        && caseData.providerDivergence !== 'HIGH'
+        && hasOnlyNoProcessCoverageNote;
     if (caseData.reviewRecommended) triggers.push('REVIEW_RECOMMENDED');
     if ((caseData.ambiguityNotes || []).length > 0) triggers.push('HOMONYM_AMBIGUITY');
     const eq = caseData.criminalEvidenceQuality || '';
     if (['MIXED_STRONG_AND_WEAK', 'WEAK_NAME_ONLY'].includes(eq)) triggers.push('CRIMINAL_EVIDENCE_UNCERTAIN');
     if (caseData.providerDivergence === 'HIGH') triggers.push('HIGH_PROVIDER_DIVERGENCE');
-    if (caseData.coverageLevel === 'LOW_COVERAGE') triggers.push('LOW_COVERAGE');
+    if (caseData.coverageLevel === 'LOW_COVERAGE' && !benignLowCoverageNegative) triggers.push('LOW_COVERAGE');
     if (['INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag)) triggers.push('CRIMINAL_FLAG_INCONCLUSIVE');
     if (caseData.warrantFlag === 'INCONCLUSIVE') triggers.push('WARRANT_FLAG_INCONCLUSIVE');
     return { isComplex: triggers.length > 0, triggersActive: triggers };
+}
+
+function hasBenignNoProcessCoverage(caseData = {}) {
+    const coverageNotes = Array.isArray(caseData.coverageNotes) ? caseData.coverageNotes : [];
+    return caseData.criminalFlag === 'NEGATIVE'
+        && caseData.coverageLevel === 'LOW_COVERAGE'
+        && caseData.providerDivergence !== 'HIGH'
+        && coverageNotes.length > 0
+        && coverageNotes.every((note) => /nenhum provider retornou processo aproveitavel/i.test(String(note || '')));
 }
 
 /**
@@ -7566,11 +7712,11 @@ function buildDetCriminalNotes(caseData) {
     } else if (cf === 'INCONCLUSIVE_LOW_COVERAGE') {
         parts.push('Cobertura insuficiente das bases consultadas — resultado pode não refletir a situação real.');
     } else if (cf === 'NEGATIVE_PARTIAL') {
-        parts.push('Consulta realizada com cobertura parcial das bases disponíveis.');
+        parts.push('Nao houve apontamento criminal confirmado nas etapas analisadas. Revisao operacional recomendada antes da conclusao.');
     } else if (cf === 'NOT_FOUND') {
         parts.push('Candidato não localizado nas bases criminais consultadas.');
     } else {
-        parts.push('Nenhum processo criminal identificado nas bases consultadas.');
+        parts.push(SAFE_NARRATIVE_TEXTS.criminalNegative);
         return parts.join('\n');
     }
 
@@ -7622,7 +7768,7 @@ function buildDetCriminalNotes(caseData) {
     // Fallback body when header exists but no processes to list
     if (cpfConfirmed.length === 0 && nameOnly.length === 0 && cf !== 'NEGATIVE') {
         parts.push('');
-        parts.push('Dados detalhados de processos indisponíveis — classificação baseada nos indicadores das fontes consultadas.');
+        parts.push('Nao ha detalhamento processual estruturado suficiente neste bloco. Revisao operacional recomendada.');
     }
 
     // Observations
@@ -7666,20 +7812,20 @@ function buildDetCriminalNotes(caseData) {
     const djenCriminalItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'criminal');
     if (djenCriminalItems.length > 0) {
         parts.push('');
-        parts.push(`Comunicacoes criminais localizadas no DJEN/DPJe (${djenCriminalItems.length}):`);
+        parts.push(`Comunicacoes judiciais de natureza criminal localizadas (${djenCriminalItems.length}):`);
         djenCriminalItems.slice(0, 5).forEach((item, index) => {
             parts.push(formatDjenComunicacao(item, index));
         });
         if (djenCriminalItems.length > 5) {
-            parts.push(`    ... e mais ${djenCriminalItems.length - 5} comunicacao(oes) criminal(is) (ver DJEN completo no painel).`);
+            parts.push(`    ... e mais ${djenCriminalItems.length - 5} comunicacao(oes) criminal(is) para revisao operacional.`);
         }
     }
 
     // FonteData criminal
     if (caseData.fontedataCriminalFlag === 'POSITIVE') {
         parts.push('');
-        parts.push('Achado criminal FonteData:');
-        parts.push(caseData.criminalNotes || 'FonteData indicou apontamento criminal, sem detalhamento adicional disponivel.');
+        parts.push('Achado criminal complementar:');
+        parts.push(caseData.criminalNotes || 'Foi indicado apontamento criminal, sem detalhamento adicional estruturado neste bloco.');
     }
 
     // Active warrant note
@@ -7691,7 +7837,7 @@ function buildDetCriminalNotes(caseData) {
     // KYC/Sanctions
     if (caseData.sanctionFlag === 'POSITIVE' || caseData.bigdatacorpIsSanctioned === true) {
         parts.push('');
-        parts.push('BigDataCorp KYC indicou sancao ativa ou alerta critico. Verificar fontes de sancao e detalhes KYC no relatorio.');
+        parts.push('Foi identificado alerta cadastral critico. Revisao operacional recomendada.');
     }
 
     return parts.join('\n');
@@ -7711,7 +7857,7 @@ function buildDetLaborNotes(caseData) {
     } else if (lf === 'NOT_FOUND') {
         parts.push('Candidato não localizado nas bases trabalhistas consultadas.');
     } else {
-        parts.push('Não possui, até a data da solicitação, nenhum processo trabalhista já distribuído em seu nome.');
+        parts.push(SAFE_NARRATIVE_TEXTS.laborNegative);
     }
 
     // Process listing (when POSITIVE)
@@ -7729,7 +7875,7 @@ function buildDetLaborNotes(caseData) {
         }
     }
 
-    // Professional context — ALWAYS shown
+    // Professional context — shown as cadastral context, not as a labor finding.
     parts.push('');
     const profHistory = caseData.bigdatacorpProfessionHistory;
     const employer = caseData.bigdatacorpEmployer;
@@ -7752,7 +7898,8 @@ function buildDetLaborNotes(caseData) {
             if (sectorType && sectorLabel) sectorLabel += ` (${sectorType})`;
         }
 
-        parts.push(`   Último empregador registrado: ${empName}`);
+        parts.push('Contexto profissional cadastral (nao se trata de apontamento trabalhista):');
+        parts.push(`   Ultimo empregador registrado: ${empName}`);
         if (cnpj) {
             const fmtCnpj = cnpj.length === 14 ? `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12,14)}` : cnpj;
             parts.push(`   CNPJ: ${fmtCnpj}`);
@@ -7780,33 +7927,33 @@ function buildDetLaborNotes(caseData) {
         const isPublic = /public/i.test(rawSector || '') || /servidor|concurs/i.test(prof?.level || '');
         parts.push(`   Servidor público: ${isPublic ? 'Sim' : 'Não'}`);
     } else {
-        parts.push('   Dados profissionais não disponíveis nas bases consultadas.');
+        parts.push('Contexto profissional cadastral: dados profissionais nao disponiveis.');
     }
 
     // DJEN/DPJe labor communications
     const djenLaborItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'trabalhista');
     if (djenLaborItems.length > 0) {
         parts.push('');
-        parts.push(`Comunicacoes trabalhistas localizadas no DJEN/DPJe (${djenLaborItems.length}):`);
+        parts.push(`Comunicacoes judiciais de natureza trabalhista localizadas (${djenLaborItems.length}):`);
         djenLaborItems.slice(0, 5).forEach((item, index) => {
             parts.push(formatDjenComunicacao(item, index));
         });
         if (djenLaborItems.length > 5) {
-            parts.push(`    ... e mais ${djenLaborItems.length - 5} comunicacao(oes) trabalhista(s) (ver DJEN completo no painel).`);
+            parts.push(`    ... e mais ${djenLaborItems.length - 5} comunicacao(oes) trabalhista(s) para revisao operacional.`);
         }
     }
 
     // FonteData labor
     if (caseData.fontedataLaborFlag === 'POSITIVE') {
         parts.push('');
-        parts.push('Achado trabalhista FonteData/TRT:');
-        parts.push(caseData.laborNotes || 'FonteData indicou apontamento trabalhista, sem detalhamento adicional disponivel.');
+        parts.push('Achado trabalhista complementar:');
+        parts.push(caseData.laborNotes || 'Foi indicado apontamento trabalhista, sem detalhamento adicional estruturado neste bloco.');
     }
 
     // Explain positive without structured processes
     if (lf === 'POSITIVE' && laborProcesses.length === 0 && djenLaborItems.length === 0 && caseData.fontedataLaborFlag !== 'POSITIVE') {
         parts.push('');
-        parts.push('O resultado trabalhista positivo decorre dos indicadores consolidados das fontes consultadas, mas nao ha processo detalhado estruturado disponivel para listagem neste bloco. Revisao manual recomendada.');
+        parts.push(SAFE_NARRATIVE_TEXTS.laborPositive + ' Nao ha processo detalhado estruturado disponivel para listagem neste bloco.');
     }
 
     return parts.join('\n');
@@ -7857,7 +8004,7 @@ function buildDetWarrantNotes(caseData) {
     } else if (wf === 'NOT_FOUND') {
         parts.push('Candidato não localizado nas bases de mandados consultadas.');
     } else {
-        parts.push('Nenhum mandado de prisão identificado nas bases consultadas.');
+        parts.push(SAFE_NARRATIVE_TEXTS.warrantNegative);
         return parts.join('\n');
     }
 
@@ -8066,6 +8213,10 @@ function buildDetExecutiveSummary(caseData) {
         findingsSentences.push(convictionText);
     } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
         findingsSentences.push('apontamento criminal inconclusivo pendente de confirmação');
+    } else if (cf === 'NEGATIVE_PARTIAL') {
+        findingsSentences.push('nenhum apontamento criminal confirmado');
+    } else {
+        findingsSentences.push('nenhum apontamento criminal material identificado');
     }
 
     const wf = caseData.warrantFlag;
@@ -8080,8 +8231,8 @@ function buildDetExecutiveSummary(caseData) {
     // Consolidated negatives
     const negatives = [];
     if (caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
-    if (caseData.pepFlag !== 'POSITIVE') negatives.push('exposição política (PEP)');
-    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanção internacional');
+    if (caseData.pepFlag !== 'POSITIVE') negatives.push('exposicao politica');
+    if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('alertas restritivos');
     if (negatives.length > 0) {
         findingsSentences.push(`nenhum apontamento ${negatives.join(', ')} identificado`);
     }
@@ -8092,7 +8243,7 @@ function buildDetExecutiveSummary(caseData) {
 
     if (findingsSentences.length > 0) {
         parts.push('');
-        parts.push(`A análise identificou ${findingsSentences.join('. Há ')}.`);
+        parts.push(`A analise identificou ${findingsSentences.join('. Ha ')}.`);
     }
 
     // Paragraph 3: Risk level
@@ -8183,6 +8334,9 @@ function buildDetFinalJustification(caseData) {
     } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
         parts.push('');
         parts.push('Foram identificados apontamentos criminais, porém sem confirmação inequívoca de identidade. Recomenda-se análise complementar.');
+    } else {
+        parts.push('');
+        parts.push(SAFE_NARRATIVE_TEXTS.criminalNegative);
     }
 
     // Paragraph 2: Warrant context
@@ -8221,14 +8375,14 @@ function buildDetFinalJustification(caseData) {
         secondaries.push('apontamentos trabalhistas');
     }
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') {
-        secondaries.push('sanções internacionais');
+        secondaries.push('alertas restritivos');
     }
     if (caseData.pepFlag !== 'POSITIVE') {
-        secondaries.push('exposição política');
+        secondaries.push('exposicao politica');
     }
     if (secondaries.length > 0) {
         parts.push('');
-        let secondaryLine = `Não foram identificados ${secondaries.join(', ')}.`;
+        let secondaryLine = `Nao foram identificados ${secondaries.join(', ')}.`;
         if (caseData.laborFlag === 'POSITIVE') secondaryLine += ' Há processos trabalhistas registrados.';
         parts.push(secondaryLine);
     }
@@ -8244,9 +8398,9 @@ function buildDetFinalJustification(caseData) {
     if (derivedVerdict === 'NOT_RECOMMENDED') {
         parts.push('O conjunto de evidências configura risco elevado para continuidade do processo.');
     } else if (derivedVerdict === 'ATTENTION') {
-        parts.push('Os apontamentos identificados exigem validação manual antes de qualquer decisão final.');
+        parts.push('Os apontamentos identificados exigem avaliacao operacional antes de qualquer decisao final.');
     } else {
-        parts.push('Não foram identificados impeditivos materiais, observados os limites das fontes consultadas.');
+        parts.push('Nao foram identificados impeditivos materiais para continuidade do fluxo interno.');
     }
 
     // Caveat: segredo de justiça + namesakeCount
@@ -8321,7 +8475,7 @@ function buildExecutiveSummary(caseData) {
 function buildExpandedKeyFindings(caseData, formPayload) {
     const findings = buildKeyFindings(caseData, formPayload);
 
-    if (caseData.coverageLevel === 'LOW_COVERAGE') {
+    if (caseData.coverageLevel === 'LOW_COVERAGE' && !hasBenignNoProcessCoverage(caseData)) {
         findings.push('Parte da leitura depende de validacao manual por cobertura reduzida das fontes consultadas.');
     }
     if (caseData.providerDivergence === 'HIGH') {
@@ -8361,7 +8515,7 @@ function buildExecutiveSummaryFallback(caseData) {
     if (caseData.laborFlag === 'POSITIVE') {
         parts.push('Tambem houve retorno positivo para processos trabalhistas relevantes.');
     }
-    if (caseData.coverageLevel === 'LOW_COVERAGE') {
+    if (caseData.coverageLevel === 'LOW_COVERAGE' && !hasBenignNoProcessCoverage(caseData)) {
         parts.push('A cobertura das fontes foi parcial e parte da leitura ainda depende de verificacao manual.');
     }
     if (caseData.providerDivergence === 'HIGH') {
@@ -8372,48 +8526,9 @@ function buildExecutiveSummaryFallback(caseData) {
 }
 
 function buildSourceSummary(caseData) {
-    const sources = [];
-    const pushUnique = (value) => {
-        const clean = sanitizeStructuredText(value, 120);
-        if (clean && !sources.includes(clean)) sources.push(clean);
-    };
-
-    Object.entries(caseData.enrichmentSources || {}).forEach(([phase, sourceData]) => {
-        if (sourceData?.source) pushUnique(`${phase}: ${sourceData.source}`);
-    });
-
-    const appendSourceBucket = (bucket) => {
-        if (!bucket) return;
-        if (typeof bucket === 'string') {
-            pushUnique(bucket);
-            return;
-        }
-        if (Array.isArray(bucket)) {
-            bucket.forEach((item) => pushUnique(item));
-            return;
-        }
-        if (typeof bucket === 'object') {
-            // BUG-R1-007: Read provider/endpoint/dataset instead of raw toString
-            const provider = bucket.provider || bucket.source || '';
-            const endpoint = bucket.endpoint || bucket.dataset || bucket.phase || '';
-            if (provider) {
-                const label = endpoint ? `${provider}:${endpoint}` : provider;
-                pushUnique(label);
-            } else {
-                Object.values(bucket).forEach((item) => {
-                    if (typeof item === 'string') pushUnique(item);
-                });
-            }
-        }
-    };
-
-    appendSourceBucket(caseData.juditSources);
-    appendSourceBucket(caseData.escavadorSources);
-    appendSourceBucket(caseData.bigdatacorpSources);
-    appendSourceBucket(caseData.djenSources);
-    appendSourceBucket(caseData.fontedataSources);
-
-    return sources.length > 0 ? sources.join(' | ') : 'Fontes automatizadas e revisao analitica.';
+    if (caseData.status === 'DONE') return 'Analise automatizada e revisao operacional concluidas.';
+    if (caseData.status === 'CORRECTION_NEEDED') return 'Analise pausada para correcao cadastral.';
+    return 'Analise automatizada e revisao operacional em andamento.';
 }
 
 function buildStatusSummary(caseData) {
@@ -8574,6 +8689,21 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
     merged.analystComment = resolveNarrativeField(merged, payload, 'analystComment', {
         prefillKey: 'finalJustification',
     });
+
+    const narrativeConsistency = sanitizeNarrativesForFlags(merged, {
+        criminalNotes: merged.criminalNotes,
+        laborNotes: merged.laborNotes,
+        warrantNotes: merged.warrantNotes,
+    });
+    merged.criminalNotes = narrativeConsistency.narratives.criminalNotes;
+    merged.laborNotes = narrativeConsistency.narratives.laborNotes;
+    merged.warrantNotes = narrativeConsistency.narratives.warrantNotes;
+    if (narrativeConsistency.warnings.length > 0) {
+        merged.narrativeConsistencyWarnings = [
+            ...(Array.isArray(merged.narrativeConsistencyWarnings) ? merged.narrativeConsistencyWarnings : []),
+            ...narrativeConsistency.warnings,
+        ];
+    }
 
     if (!hasMeaningfulValue(merged.sourceSummary)) {
         merged.sourceSummary = buildSourceSummary(merged);
@@ -8847,8 +8977,17 @@ exports.concludeCaseByAnalyst = onCall(
             prefillKey: 'finalJustification',
         });
 
-        // P07: Always recompute sourceSummary to reflect current enrichment state
-        updatePayload.sourceSummary = buildSourceSummary({ ...caseData, ...updatePayload });
+        const narrativeConsistency = sanitizeNarrativesForFlags({ ...caseData, ...updatePayload }, {
+            criminalNotes: updatePayload.criminalNotes,
+            laborNotes: updatePayload.laborNotes,
+            warrantNotes: updatePayload.warrantNotes,
+        });
+        updatePayload.criminalNotes = narrativeConsistency.narratives.criminalNotes;
+        updatePayload.laborNotes = narrativeConsistency.narratives.laborNotes;
+        updatePayload.warrantNotes = narrativeConsistency.narratives.warrantNotes;
+        if (narrativeConsistency.warnings.length > 0) {
+            updatePayload.narrativeConsistencyWarnings = narrativeConsistency.warnings;
+        }
 
         // Flags/severity: prefer payload, fallback to reviewDraft for fields not sent
         const reviewDraft = caseData?.reviewDraft || {};
@@ -8871,6 +9010,22 @@ exports.concludeCaseByAnalyst = onCall(
             }
         }
 
+        const finalNarrativeConsistency = sanitizeNarrativesForFlags({ ...caseData, ...updatePayload }, {
+            criminalNotes: updatePayload.criminalNotes,
+            laborNotes: updatePayload.laborNotes,
+            warrantNotes: updatePayload.warrantNotes,
+        });
+        updatePayload.criminalNotes = finalNarrativeConsistency.narratives.criminalNotes;
+        updatePayload.laborNotes = finalNarrativeConsistency.narratives.laborNotes;
+        updatePayload.warrantNotes = finalNarrativeConsistency.narratives.warrantNotes;
+        const allNarrativeWarnings = [
+            ...(updatePayload.narrativeConsistencyWarnings || []),
+            ...finalNarrativeConsistency.warnings,
+        ];
+        if (allNarrativeWarnings.length > 0) {
+            updatePayload.narrativeConsistencyWarnings = allNarrativeWarnings;
+        }
+
         // P02: Fallback riskScore — compute from flags if not in payload or draft
         if (!hasMeaningfulValue(updatePayload.riskScore) || updatePayload.riskScore === 0) {
             const scores = { POSITIVE: 90, INCONCLUSIVE: 50, NEGATIVE_PARTIAL: 40, CONCERN: 60, ALERT: 70, ATTENTION: 55, UNKNOWN: 30, NOT_FOUND: 0, NOT_CHECKED: 0, NEGATIVE: 0, CLEAN: 0, FIT: 0 };
@@ -8888,6 +9043,7 @@ exports.concludeCaseByAnalyst = onCall(
 
         // P18: Set reportReady based on content validation
         const derivedCaseForPublish = { ...caseData, ...updatePayload, status: 'DONE' };
+        updatePayload.sourceSummary = buildSourceSummary(derivedCaseForPublish);
         updatePayload.statusSummary = hasMeaningfulValue(updatePayload.statusSummary)
             ? updatePayload.statusSummary
             : buildStatusSummary(derivedCaseForPublish);
@@ -9287,6 +9443,12 @@ async function getClientUserProfile(uid, { requireRequester = false } = {}) {
     return profile;
 }
 
+function assertClientManager(profile) {
+    if (profile?.role !== 'client_manager') {
+        throw new HttpsError('permission-denied', 'Operacao disponivel apenas para gestores.');
+    }
+}
+
 /**
  * Validate CPF digits including check digits (same algorithm as frontend).
  * BUG-R1-010 fix: backend must reject invalid CPFs, not just check length.
@@ -9397,14 +9559,7 @@ async function buildCanonicalReportHtml(caseId, caseData, sanitizedPayload = nul
         ].filter(Boolean);
     }
 
-    // Compute sourceSummary fallback from enrichment sources (only if not set in publicResult)
-    let sourceSummaryFallback = '';
-    if (!publicResultData.sourceSummary) {
-        const sources = Object.entries(caseData.enrichmentSources || {})
-            .map(([phase, sourceData]) => sourceData?.source ? `${phase}: ${sourceData.source}` : null)
-            .filter(Boolean);
-        sourceSummaryFallback = sources.length > 0 ? sources.join(' | ') : 'Fontes automatizadas e revisao analitica.';
-    }
+    const sourceSummaryFallback = publicResultData.sourceSummary ? '' : buildSourceSummary(caseData);
 
     // publicResultData is the canonical source — candidate extras and safe case fields only supplement
     const reportData = {
@@ -9693,15 +9848,18 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
             executiveSummary: detPrefill.executiveSummary,
             finalJustification: detPrefill.finalJustification,
         });
+        const consistency = sanitizeNarrativesForFlags({ ...caseDataForAi, ...updatePayload }, sanitized);
         const mergedPrefill = {
-            ...sanitized,
+            ...consistency.narratives,
             metadata: {
                 ...(currentPrefill.metadata || {}),
                 source: 'deterministic',
                 deterministicVersion: detPrefill.metadata.version,
                 mergedAt: new Date().toISOString(),
+                narrativeWarnings: consistency.warnings,
             },
         };
+        if (consistency.warnings.length > 0) updatePayload.narrativeConsistencyWarnings = consistency.warnings;
         updatePayload.prefillNarratives = mergedPrefill;
         console.log(`Case ${caseId} [PREFILL_MERGE rerun]: source=${mergedPrefill.metadata.source}, aiOk=${aiOk}`);
     } catch (detErr) {
@@ -9732,17 +9890,17 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         source: SOURCE.PORTAL_OPS,
         ip: getClientIp(request),
         metadata: {
-            model: aiResult.model,
-            cost: updatePayload.aiCostUsd,
-            structuredOk: aiResult.structuredOk,
+            model: sanitizeAuditMetadataValue(aiResult.model),
+            cost: sanitizeAuditMetadataValue(updatePayload.aiCostUsd),
+            structuredOk: sanitizeAuditMetadataValue(aiResult.structuredOk),
             runNumber: aiRunCount + 1,
-            error: aiResult.error || null,
-            prefillOk: prefillResult?.structuredOk || false,
-            prefillError: prefillResult?.error || null,
-            homonymDecision: updatePayload.aiHomonymDecision || null,
-            homonymConfidence: updatePayload.aiHomonymConfidence || null,
-            homonymError: updatePayload.aiHomonymError || null,
-            deterministicVersion: updatePayload.deterministicPrefill?.metadata?.version || null,
+            error: sanitizeAuditMetadataValue(aiResult.error || null),
+            prefillOk: sanitizeAuditMetadataValue(prefillResult?.structuredOk || false),
+            prefillError: sanitizeAuditMetadataValue(prefillResult?.error || null),
+            homonymDecision: sanitizeAuditMetadataValue(updatePayload.aiHomonymDecision),
+            homonymConfidence: sanitizeAuditMetadataValue(updatePayload.aiHomonymConfidence),
+            homonymError: sanitizeAuditMetadataValue(updatePayload.aiHomonymError),
+            deterministicVersion: sanitizeAuditMetadataValue(updatePayload.deterministicPrefill?.metadata?.version || null),
         },
         templateVars: { candidateName: caseData.candidateName || caseId },
     });
@@ -10817,6 +10975,8 @@ exports.__test = {
     extractSentenceDetails,
     formatProcessBlock,
     sanitizeAiOutput,
+    sanitizeAuditMetadataValue,
+    sanitizeNarrativesForFlags,
     normalizeUnicodeToAscii,
     fixLatinMojibake,
     _setDb(mockDb) { db = mockDb; },
@@ -10933,6 +11093,7 @@ exports.generateClientCasePdf = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
         const caseId = String(request.data?.caseId || '').trim();
         if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
 

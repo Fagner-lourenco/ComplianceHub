@@ -1260,6 +1260,12 @@ export default function CasoPage() {
                 </div>
             )}
 
+            {Array.isArray(caseData?.narrativeConsistencyWarnings) && caseData.narrativeConsistencyWarnings.length > 0 && (
+                <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px' }}>
+                    <strong>Revisao operacional de narrativa:</strong> o sistema ajustou textos para ficarem coerentes com as flags finais. Revise os campos narrativos antes de concluir ou republicar.
+                </div>
+            )}
+
             {saveError && (
                 <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px' }}>
                     {saveError}

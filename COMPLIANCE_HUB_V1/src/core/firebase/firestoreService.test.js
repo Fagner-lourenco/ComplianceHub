@@ -152,6 +152,33 @@ describe('firestoreService ordered collection fetchers', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
+    it('preserva horario completo de createdAt para calculo de SLA', async () => {
+        firestoreServiceMocks.getDocs.mockResolvedValue({
+            docs: [
+                {
+                    id: 'case-1',
+                    data: () => ({
+                        tenantId: 'madero-br',
+                        candidateName: 'Candidato Teste',
+                        createdAt: {
+                            toDate: () => new Date('2026-05-18T20:07:09.710Z'),
+                        },
+                        updatedAt: {
+                            toDate: () => new Date('2026-05-18T20:10:00.000Z'),
+                        },
+                        createdDateKey: '2026-05-18',
+                        slaHours: 3,
+                    }),
+                },
+            ],
+        });
+
+        const cases = await fetchCases('madero-br');
+
+        expect(cases[0].createdAt).toBe('2026-05-18T20:07:09.710Z');
+        expect(cases[0].createdDateKey).toBe('2026-05-18');
+    });
+
     it('usa o fallback REST para exportacoes vazias quando o SDK falha', async () => {
         firestoreServiceMocks.getDocs.mockRejectedValue(new Error('sdk-timeout'));
         global.fetch.mockResolvedValue({

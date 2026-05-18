@@ -50,25 +50,25 @@ describe('permissions — RBAC', () => {
             expect(hasPermission(ROLES.CLIENT_MANAGER, PERMISSIONS.AUDIT_VIEW)).toBe(false);
         });
 
-        it('client_operator pode ler, criar solicitacoes e exportar — nao gerencia', () => {
+        it('client_operator pode ler e criar solicitacoes — nao exporta nem gerencia', () => {
             expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.CASE_READ)).toBe(true);
             expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.CASE_CREATE_REQUEST)).toBe(true);
-            expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.CASE_EXPORT)).toBe(true);
+            expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.CASE_EXPORT)).toBe(false);
             expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.USERS_MANAGE)).toBe(false);
             expect(hasPermission(ROLES.CLIENT_OPERATOR, PERMISSIONS.SETTINGS_MANAGE)).toBe(false);
         });
 
-        it('client_viewer so pode ler e exportar', () => {
+        it('client_viewer so pode ler', () => {
             expect(hasPermission(ROLES.CLIENT_VIEWER, PERMISSIONS.CASE_READ)).toBe(true);
-            expect(hasPermission(ROLES.CLIENT_VIEWER, PERMISSIONS.CASE_EXPORT)).toBe(true);
+            expect(hasPermission(ROLES.CLIENT_VIEWER, PERMISSIONS.CASE_EXPORT)).toBe(false);
             expect(hasPermission(ROLES.CLIENT_VIEWER, PERMISSIONS.CASE_CREATE_REQUEST)).toBe(false);
             expect(hasPermission(ROLES.CLIENT_VIEWER, PERMISSIONS.USERS_MANAGE)).toBe(false);
         });
 
-        it('LEGACY_CLIENT tem mesmas permissoes de client_operator (ler, criar, exportar)', () => {
+        it('LEGACY_CLIENT tem mesmas permissoes de client_operator (ler e criar)', () => {
             expect(hasPermission(ROLES.LEGACY_CLIENT, PERMISSIONS.CASE_READ)).toBe(true);
             expect(hasPermission(ROLES.LEGACY_CLIENT, PERMISSIONS.CASE_CREATE_REQUEST)).toBe(true);
-            expect(hasPermission(ROLES.LEGACY_CLIENT, PERMISSIONS.CASE_EXPORT)).toBe(true);
+            expect(hasPermission(ROLES.LEGACY_CLIENT, PERMISSIONS.CASE_EXPORT)).toBe(false);
             expect(hasPermission(ROLES.LEGACY_CLIENT, PERMISSIONS.USERS_MANAGE)).toBe(false);
         });
 

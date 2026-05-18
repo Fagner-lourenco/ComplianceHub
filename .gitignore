@@ -42,3 +42,7 @@ COMPLIANCE_HUB_V2/app/functions/service-account*.json
 *.sw?
 
 .vercel
+
+# Generated graphify AST caches
+graphify-out/cache/
+COMPLIANCE_HUB_V1/graphify-out/cache/

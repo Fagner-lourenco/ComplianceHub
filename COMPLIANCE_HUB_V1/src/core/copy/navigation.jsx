@@ -8,7 +8,7 @@ export const CLIENT_NAV = [
   { to: '/client/dashboard', icon: 'home', label: 'Início', permission: 'case.read' },
   { to: '/client/solicitacoes', icon: 'fileText', label: 'Minhas solicitações', permission: 'case.read' },
   { to: '/client/exportacoes', icon: 'download', label: 'Arquivos gerados', permission: 'case.export' },
-  { to: '/client/relatorios', icon: 'link', label: 'Links compartilhados', permission: 'case.export' },
+  { to: '/client/relatorios', icon: 'link', label: 'Links compartilhados', permission: 'report_public.manage' },
   { to: '/client/equipe', icon: 'users', label: 'Usuários', permission: 'users.manage' },
   { to: '/client/auditoria', icon: 'clock', label: 'Histórico', permission: 'tenant_audit.view' },
 ];

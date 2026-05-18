@@ -32,13 +32,17 @@ const MOCK_CASE_MESSAGES = {
         { id: 'msg-8', caseId: 'CASE-004', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'O tribunal de MG apresentou instabilidade. A consulta criminal ficou inconclusiva.', createdAt: new Date('2026-03-25T15:00:00') },
         { id: 'msg-9', caseId: 'CASE-004', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Entendido. O candidato ja trabalhou conosco antes, entao podemos prosseguir.', createdAt: new Date('2026-03-25T15:30:00') },
     ],
+    'CASE-005': [
+        { id: 'msg-5a', caseId: 'CASE-005', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Bom dia! Gostaria de incluir Lucas Henrique na fila de analise para a vaga de Analista Financeiro.', createdAt: new Date('2026-04-03T09:00:00') },
+        { id: 'msg-5b', caseId: 'CASE-005', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Bom dia, Paula! Recebemos a solicitacao. O caso sera analisado em breve.', createdAt: new Date('2026-04-03T09:30:00') },
+    ],
     'CASE-011': [
         { id: 'msg-10', caseId: 'CASE-011', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Identificamos divergencia no CPF informado. Podem confirmar o numero correto?', createdAt: new Date('2026-04-05T09:00:00') },
         { id: 'msg-11', caseId: 'CASE-011', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Vou verificar com o RH e retorno assim que possivel.', createdAt: new Date('2026-04-05T09:30:00') },
     ],
     'CASE-012': [
-        { id: 'msg-12', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Caso concluido com sucesso. Patricia Vieira nao apresenta restricoes.', createdAt: new Date('2026-03-22T16:00:00') },
-        { id: 'msg-13', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Excelente noticia! Vamos prosseguir com a contratacao.', createdAt: new Date('2026-03-22T16:15:00') },
+        { id: 'msg-12', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Analise concluida. Identificamos achados graves que impedem a aprovacao. Relatorio detalhado disponivel.', createdAt: new Date('2026-03-22T16:00:00') },
+        { id: 'msg-13', caseId: 'CASE-012', tenantId: 'TEN-001', senderRole: 'client', senderName: 'Paula Andrade', content: 'Agradecemos o retorno. Vamos analisar internamente antes de prosseguir.', createdAt: new Date('2026-03-22T16:15:00') },
     ],
     'CASE-013': [
         { id: 'msg-14', caseId: 'CASE-013', tenantId: 'TEN-001', senderRole: 'analyst', senderName: 'Analista Compliance', content: 'Pedro tem varias publicacoes politicas nas redes. Recomendamos atencao.', createdAt: new Date('2026-04-08T11:00:00') },
@@ -169,6 +173,14 @@ function formatFirestoreDate(value) {
     return value || '';
 }
 
+function formatFirestoreTimestamp(value) {
+    if (value?.toDate?.()) {
+        return value.toDate().toISOString();
+    }
+
+    return value || '';
+}
+
 function mapClientProfile(uid, profile) {
     return {
         uid,
@@ -181,9 +193,9 @@ function mapCaseDocument(id, data) {
     return {
         id,
         ...data,
-        createdAt: formatFirestoreDate(data.createdAt),
-        updatedAt: formatFirestoreDate(data.updatedAt),
-        concludedAt: formatFirestoreDate(data.concludedAt),
+        createdAt: formatFirestoreTimestamp(data.createdAt),
+        updatedAt: formatFirestoreTimestamp(data.updatedAt),
+        concludedAt: formatFirestoreTimestamp(data.concludedAt),
     };
 }
 
@@ -607,9 +619,9 @@ export async function getCase(caseId) {
     return {
         id: caseId,
         ...data,
-        createdAt: data.createdAt?.toDate?.()
-            ? data.createdAt.toDate().toISOString().split('T')[0]
-            : data.createdAt || '',
+        createdAt: formatFirestoreTimestamp(data.createdAt),
+        updatedAt: formatFirestoreTimestamp(data.updatedAt),
+        concludedAt: formatFirestoreTimestamp(data.concludedAt),
     };
 }
 
@@ -623,9 +635,9 @@ export function subscribeToCaseDoc(caseId, callback) {
         callback({
             id: caseId,
             ...data,
-            createdAt: data.createdAt?.toDate?.()
-                ? data.createdAt.toDate().toISOString().split('T')[0]
-                : data.createdAt || '',
+            createdAt: formatFirestoreTimestamp(data.createdAt),
+            updatedAt: formatFirestoreTimestamp(data.updatedAt),
+            concludedAt: formatFirestoreTimestamp(data.concludedAt),
         }, null);
     }, (error) => {
         console.error('Error subscribing to case doc:', error);
