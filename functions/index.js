@@ -2259,7 +2259,6 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
 
     const { enrichmentIdentity } = gateResult;
     const gateSource = gateResult._source;
-    const cpfStatus = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
     const nameFromAPI = enrichmentIdentity?.name || '';
     const nameProvided = caseData.candidateName || '';
     const minSim = enrichmentConfig.gate?.minNameSimilarity ?? 0.7;
