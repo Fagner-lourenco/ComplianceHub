@@ -393,24 +393,13 @@ export default function SolicitacoesPage() {
             const term = searchTerm.toLowerCase();
             result = result.filter((caseData) => {
                 const candidateName = String(caseData.candidateName || '').toLowerCase();
-                const cpfMasked = String(caseData.cpfMasked || '').toLowerCase();
-                const caseId = String(caseData.id || '').toLowerCase();
-
-                // CPF: suporte a busca por CPF completo/parcial formatado ou só dígitos.
-                // cpfMasked pode ser '***.***.***-45' ou '271.***.***-45' (14 chars).
-                // Extraímos o sufixo visível (2 dígitos finais) e o prefixo opcional (3 dígitos iniciais).
+                const cpfRaw = String(caseData.cpf || '').replace(/\D/g, '');
                 const termDigitsOnly = term.replace(/\D/g, '');
-                let cpfMatch = cpfMasked.includes(term); // cobre pesquisa direta ('45', '***')
-                if (!cpfMatch && termDigitsOnly.length >= 2 && cpfMasked.length >= 14) {
-                    const cpfSuffix = cpfMasked.slice(12, 14); // últimos 2 dígitos (sempre visíveis)
-                    if (/^\d{2}$/.test(cpfSuffix) && termDigitsOnly.endsWith(cpfSuffix)) {
-                        const prefixPart = cpfMasked.slice(0, 3); // primeiros 3: '***' ou '271'
-                        // Se o prefixo for visível (3 dígitos), verificar também o início
-                        cpfMatch = !/^\d{3}$/.test(prefixPart) || termDigitsOnly.startsWith(prefixPart);
-                    }
-                }
 
-                return candidateName.includes(term) || cpfMatch || caseId.includes(term);
+                const nameMatch = candidateName.includes(term);
+                const cpfMatch = termDigitsOnly.length >= 2 && cpfRaw.includes(termDigitsOnly);
+
+                return nameMatch || cpfMatch;
             });
         }
         result.sort((left, right) => {
@@ -577,11 +566,11 @@ export default function SolicitacoesPage() {
             <QuotaSummaryCard quota={quota} loading={quotaLoading} error={quotaError} />
             <FilterPanelMobile
                 searchElement={
-                    <div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div>
+                    <div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">🔍</span><input type="text" placeholder="Buscar por nome ou CPF..." aria-label="Buscar solicitacoes" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div>
                 }
                 activeFilterCount={(statusFilter !== 'ALL' ? 1 : 0) + (verdictFilter !== 'ALL' ? 1 : 0) + (heatmapMode ? 1 : 0)}
             >
-                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nas solicitações carregadas por nome, CPF ou ID..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
+                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nas solicitações carregadas por nome ou CPF..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
             </FilterPanelMobile>
             <MobileDataCardList
                 items={paginatedCases}

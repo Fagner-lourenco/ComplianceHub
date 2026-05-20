@@ -23,6 +23,28 @@ const solicitacoesMocks = vi.hoisted(() => ({
                 status: 'PENDING',
                 createdAt: '2026-04-30',
             },
+            {
+                id: 'case-001',
+                tenantId: 'tenant-1',
+                candidateName: 'Ana Paula Silva',
+                cpf: '27144599845',
+                cpfMasked: '***.***.***-45',
+                status: 'DONE',
+                createdAt: '2026-04-30',
+                finalVerdict: 'FIT',
+                riskScore: 10,
+            },
+            {
+                id: 'case-002',
+                tenantId: 'tenant-1',
+                candidateName: 'Carlos Eduardo Santos',
+                cpf: '18432165412',
+                cpfMasked: '***.***.***-12',
+                status: 'DONE',
+                createdAt: '2026-04-30',
+                finalVerdict: 'ATTENTION',
+                riskScore: 45,
+            },
         ],
     },
     quotaStatus: vi.fn(),
@@ -64,9 +86,54 @@ describe('SolicitacoesPage', () => {
     it('mantem a busca funcional quando documentos antigos nao possuem nome ou CPF', async () => {
         renderPage();
 
+        // Documento antigo sem nome/CPF nao deve aparecer em buscas por nome
         fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: 'case-sem-campos' } });
+        await waitFor(() => {
+            expect(screen.queryByText('case-sem-campos')).not.toBeInTheDocument();
+        });
 
+        // Mas a tabela continua renderizando normalmente
         expect(await screen.findByRole('table', { name: /solicitações de análise cadastral/i })).toBeInTheDocument();
+    });
+
+    it('filtra por nome completo ou parcial', async () => {
+        renderPage();
+
+        fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: 'Ana Paula' } });
+        await waitFor(() => {
+            expect(screen.getByText('Ana Paula Silva')).toBeInTheDocument();
+            expect(screen.queryByText('Carlos Eduardo Santos')).not.toBeInTheDocument();
+        });
+    });
+
+    it('filtra por CPF completo (11 digitos)', async () => {
+        renderPage();
+
+        fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: '27144599845' } });
+        await waitFor(() => {
+            expect(screen.getByText('Ana Paula Silva')).toBeInTheDocument();
+            expect(screen.queryByText('Carlos Eduardo Santos')).not.toBeInTheDocument();
+        });
+    });
+
+    it('filtra por trecho do CPF (3 digitos)', async () => {
+        renderPage();
+
+        fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: '445' } });
+        await waitFor(() => {
+            expect(screen.getByText('Ana Paula Silva')).toBeInTheDocument();
+            expect(screen.queryByText('Carlos Eduardo Santos')).not.toBeInTheDocument();
+        });
+    });
+
+    it('filtra por CPF formatado (com pontos e traco)', async () => {
+        renderPage();
+
+        fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: '271.445.998-45' } });
+        await waitFor(() => {
+            expect(screen.getByText('Ana Paula Silva')).toBeInTheDocument();
+            expect(screen.queryByText('Carlos Eduardo Santos')).not.toBeInTheDocument();
+        });
     });
 
     it('exibe aviso quando a quota nao pode ser carregada', async () => {
