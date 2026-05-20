@@ -206,19 +206,42 @@ function buildNotificationFunctions(db) {
     }
 
     async function findOpsNotificationRecipientsForTenant(tenantId) {
-        if (!tenantId) return [];
+        if (!tenantId) {
+            console.warn('[notifications] findOpsNotificationRecipientsForTenant called without tenantId');
+            return [];
+        }
 
-        const snapshot = await db.collection('userProfiles')
+        const recipients = [];
+        const seenUids = new Set();
+
+        // 1. Busca usuarios OPS do tenant especifico
+        const tenantSnapshot = await db.collection('userProfiles')
             .where('tenantId', '==', tenantId)
             .where('role', 'in', Array.from(OPS_ROLES))
             .get();
 
-        const recipients = [];
-        snapshot.docs.forEach((doc) => {
+        tenantSnapshot.docs.forEach((doc) => {
             const profile = doc.data();
             if (profile.status === 'inactive') return;
             recipients.push({ uid: doc.id, ...profile });
+            seenUids.add(doc.id);
         });
+
+        // 2. Busca admins/owners globais (sem tenantId vinculado)
+        const globalSnapshot = await db.collection('userProfiles')
+            .where('role', 'in', ['admin', 'owner'])
+            .get();
+
+        globalSnapshot.docs.forEach((doc) => {
+            const profile = doc.data();
+            if (profile.status === 'inactive') return;
+            if (profile.tenantId) return; // Skip se tem tenant especifico
+            if (seenUids.has(doc.id)) return; // Deduplicacao
+            recipients.push({ uid: doc.id, ...profile });
+            seenUids.add(doc.id);
+        });
+
+        console.log(`[notifications] findOpsNotificationRecipientsForTenant(${tenantId}): found ${recipients.length} recipients (${tenantSnapshot.size} tenant-specific, ${globalSnapshot.size} global admins)`);
 
         return recipients;
     }
@@ -307,6 +330,7 @@ function buildNotificationFunctions(db) {
             try {
                 if (portal === 'client') {
                     const opsRecipients = await findOpsNotificationRecipientsForTenant(caseData.tenantId);
+                    console.log(`[notifications] sendCaseMessage case=${caseId}: ${opsRecipients.length} OPS recipients for message notification`);
                     for (const recipient of opsRecipients) {
                         if (recipient.uid === uid) continue;
                         await createNotification({
@@ -323,6 +347,7 @@ function buildNotificationFunctions(db) {
                     }
                 } else {
                     const clientRecipients = await findClientNotificationRecipientsForCase(caseData);
+                    console.log(`[notifications] sendCaseMessage case=${caseId}: ${clientRecipients.length} CLIENT recipients for message notification`);
                     for (const recipient of clientRecipients) {
                         if (recipient.uid === uid) continue;
                         await createNotification({

@@ -9356,12 +9356,18 @@ const OPS_MANAGEABLE_ROLES = new Set(['analyst', 'supervisor', 'admin']);
 
 async function createCaseCompletedNotifications(caseId, caseData) {
     const recipients = await caseComm.findClientNotificationRecipientsForCase(caseData);
-    if (recipients.length === 0) return [];
+    console.log(`[notifications] createCaseCompletedNotifications case=${caseId}: ${recipients.length} client recipients found`);
+
+    if (recipients.length === 0) {
+        console.warn('[notifications] createCaseCompletedNotifications: no client recipients found, skipping');
+        return [];
+    }
 
     const candidateName = caseData?.candidateName || 'solicitação';
     const tenantId = caseData?.tenantId;
 
     const results = [];
+    const failedRecipients = [];
     for (const recipient of recipients) {
         try {
             const nid = await caseComm.createNotification({
@@ -9378,20 +9384,29 @@ async function createCaseCompletedNotifications(caseId, caseData) {
             results.push(nid);
         } catch (err) {
             console.warn('[notifications] failed to create CASE_COMPLETED for', recipient.uid, err.message);
+            failedRecipients.push(recipient.uid);
         }
     }
+    console.log(`[notifications] createCaseCompletedNotifications case=${caseId}: ${results.length} sent, ${failedRecipients.length} failed`);
     return results;
 }
 
 async function createNewSolicitationNotifications(caseId, caseData) {
     const tenantId = caseData?.tenantId;
+    console.log(`[notifications] createNewSolicitationNotifications case=${caseId} tenant=${tenantId}: starting`);
     const recipients = await caseComm.findOpsNotificationRecipientsForTenant(tenantId);
-    if (recipients.length === 0) return [];
+    console.log(`[notifications] createNewSolicitationNotifications case=${caseId}: ${recipients.length} OPS recipients found`);
+
+    if (recipients.length === 0) {
+        console.warn('[notifications] createNewSolicitationNotifications: no OPS recipients found, skipping');
+        return [];
+    }
 
     const candidateName = String(caseData?.candidateName || 'solicitação').replace(/[<>&"']/g, '');
     const tenantName = String(caseData?.tenantName || 'Uma empresa').replace(/[<>&"']/g, '');
 
     const results = [];
+    const failedRecipients = [];
     for (const recipient of recipients) {
         let lastErr = null;
         for (let attempt = 1; attempt <= 3; attempt++) {
@@ -9420,8 +9435,10 @@ async function createNewSolicitationNotifications(caseId, caseData) {
         }
         if (lastErr) {
             console.error('[notifications] exhausted retries for NEW_CLIENT_SOLICITATION recipient=', recipient.uid);
+            failedRecipients.push(recipient.uid);
         }
     }
+    console.log(`[notifications] createNewSolicitationNotifications case=${caseId}: ${results.length} sent, ${failedRecipients.length} failed, recipients=[${recipients.map(r => r.uid).join(', ')}]`);
     return results;
 }
 
