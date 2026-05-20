@@ -1,0 +1,93 @@
+{
+  "runAt": "2026-05-19T15:28:59.015Z",
+  "dryRun": true,
+  "projectId": "compliance-hub-br",
+  "scanned": 81,
+  "modified": 6,
+  "cases": [
+    {
+      "caseId": "5SMercDyih5vHWoT1vrt",
+      "candidateName": "PAULO JUNIO SCREMIN",
+      "finalVerdict": "ATTENTION",
+      "old": {
+        "riskScore": 90,
+        "riskLevel": "GREEN"
+      },
+      "new": {
+        "riskScore": 90,
+        "riskLevel": "RED",
+        "suggestedVerdict": "NOT_RECOMMENDED"
+      }
+    },
+    {
+      "caseId": "WhVxKbbASv9PWFu77y0t",
+      "candidateName": "GREGORIS JOSE MARIN GARCIA",
+      "finalVerdict": "ATTENTION",
+      "old": {
+        "riskScore": 0,
+        "riskLevel": "GREEN"
+      },
+      "new": {
+        "riskScore": 30,
+        "riskLevel": "YELLOW",
+        "suggestedVerdict": "ATTENTION"
+      }
+    },
+    {
+      "caseId": "ZTtc1mttgUbp9UHyObp1",
+      "candidateName": "JOSE DE OLIVEIRA RODRIGUES JUNIOR",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "old": {
+        "riskScore": 90,
+        "riskLevel": "GREEN"
+      },
+      "new": {
+        "riskScore": 95,
+        "riskLevel": "RED",
+        "suggestedVerdict": "NOT_RECOMMENDED"
+      }
+    },
+    {
+      "caseId": "d5NdfbeijdV33kxPPGVJ",
+      "candidateName": "JOHN WILIAN CARDOSO RAMOS",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "old": {
+        "riskScore": 90,
+        "riskLevel": "GREEN"
+      },
+      "new": {
+        "riskScore": 95,
+        "riskLevel": "RED",
+        "suggestedVerdict": "NOT_RECOMMENDED"
+      }
+    },
+    {
+      "caseId": "k9lou1CcZLn0gd7cuURK",
+      "candidateName": "RAIZA GONÇALVES BRAZ SANTOS",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "old": {
+        "riskScore": 90,
+        "riskLevel": "GREEN"
+      },
+      "new": {
+        "riskScore": 75,
+        "riskLevel": "RED",
+        "suggestedVerdict": "NOT_RECOMMENDED"
+      }
+    },
+    {
+      "caseId": "mNKArMpiESk60Flg49Th",
+      "candidateName": "RAIZA GONÇALVES BRAZ SANTOS",
+      "finalVerdict": "ATTENTION",
+      "old": {
+        "riskScore": 75,
+        "riskLevel": "YELLOW"
+      },
+      "new": {
+        "riskScore": 75,
+        "riskLevel": "RED",
+        "suggestedVerdict": "NOT_RECOMMENDED"
+      }
+    }
+  ]
+}
