@@ -56,8 +56,10 @@ export function NotificationProvider({ children }) {
         }
 
         if (isDemo) {
-            setNotifications(DEMO_NOTIFICATIONS);
-            setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
+            queueMicrotask(() => {
+                setNotifications(DEMO_NOTIFICATIONS);
+                setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
+            });
             initialLoadRef.current = false;
             return undefined;
         }
@@ -105,7 +107,7 @@ export function NotificationProvider({ children }) {
                 window.clearTimeout(toastTimerRef.current);
             }
         };
-    }, [uid]);
+    }, [uid, isDemo]);
 
     // Subscribe to unread count
     useEffect(() => {
@@ -117,7 +119,9 @@ export function NotificationProvider({ children }) {
         }
 
         if (isDemo) {
-            setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
+            queueMicrotask(() => {
+                setUnreadCount(DEMO_NOTIFICATIONS.filter(n => !n.read).length);
+            });
             return undefined;
         }
 
