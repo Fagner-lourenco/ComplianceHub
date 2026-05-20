@@ -80,6 +80,8 @@
     outline: none;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     background: var(--bg-input);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
 }
 
 .ns-input:focus {
@@ -126,6 +128,9 @@
     min-height: 60px;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     font-family: inherit;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
 }
 
 .ns-textarea:focus {

@@ -217,6 +217,14 @@ ol {
   --dot-orange: #f97316;
 }
 
+/* Previne conflito entre tema do Windows e tema do app em inputs nativos */
+:root {
+    color-scheme: light;
+}
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
 /* --- Dark Mode (controlled via data-theme attribute set by useTheme hook) --- */
 [data-theme="dark"] {
     --bg-app: #0f172a;
@@ -700,6 +708,9 @@ textarea:focus-visible {
     border-radius: var(--radius-md);
     font-size: .875rem;
     transition: var(--transition-fast);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
 }
 
 .form-input:focus {

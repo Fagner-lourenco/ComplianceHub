@@ -53,6 +53,8 @@
     outline: none;
     background: var(--bg-card);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
 }
 
 .filter-bar__search-input:focus {
@@ -68,6 +70,7 @@
     background: var(--bg-card);
     outline: none;
     cursor: pointer;
+    color: var(--text-primary);
 }
 
 .filter-bar__select:focus {
@@ -528,6 +531,9 @@
     border-radius: var(--radius-sm);
     font-size: .8125rem;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    caret-color: var(--text-primary);
 }
 
 .correction-form__input:focus {
