@@ -119,7 +119,7 @@ function normalizeJuditLawsuits(result, cpf) {
         const role = findPersonRole(parties, cpf);
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
-        const isWitness = role?.personType && WITNESS_TYPES.test(role.personType);
+        const isWitness = !!(role?.personType && WITNESS_TYPES.test(role.personType));
         const roleClassification = classifyRole(role?.personType, data.area);
 
         roleSummary.push({
@@ -155,6 +155,17 @@ function normalizeJuditLawsuits(result, cpf) {
             lastStep: data.last_step?.content || null,
             lastStepDate: data.last_step?.date || null,
             stepsCount: data.steps_count || 0,
+            // Full parties list for the Process Inspection Modal
+            parties: Array.isArray(data.parties)
+                ? data.parties.map((p) => ({
+                    name: p.name || null,
+                    personType: p.person_type || null,
+                    side: p.side || null,
+                    document: p.main_document
+                        || (Array.isArray(p.documents) && p.documents[0]?.document)
+                        || null,
+                }))
+                : [],
         });
     }
 

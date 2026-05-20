@@ -35,7 +35,9 @@ import { formatDateTimeBR } from '../../core/formatDate';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
+import { calculateRisk } from '../../core/riskCalculator';
 import './CasoPage.css';
+import ProcessInspectionModal from '../../ui/components/ProcessInspectionModal/ProcessInspectionModal';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -178,9 +180,22 @@ function resolveDraftField(caseData, field, options = {}) {
     const reviewDraft = caseData?.reviewDraft || {};
     const prefillNarratives = caseData?.prefillNarratives || {};
     const isDoneCase = caseData?.status === 'DONE';
+
+    // P2-012: quando prefill foi atualizado apos reviewDraft e diverge,
+    // priorizar prefill se caseData (backend) confirma o prefill
+    const prefillMergedAt = prefillNarratives?.metadata?.mergedAt;
+    const reviewDraftHasValue = isMeaningfulValue(reviewDraft?.[field]);
+    const prefillHasValue = isMeaningfulValue(prefillNarratives?.[prefillKey]);
+    const caseDataHasValue = isMeaningfulValue(caseData?.[field]);
+    const reviewDiffersFromCase = reviewDraftHasValue && caseDataHasValue
+        && String(reviewDraft[field]).trim() !== String(caseData[field]).trim();
+    const prefillMatchesCase = prefillHasValue && caseDataHasValue
+        && String(prefillNarratives[prefillKey]).trim() === String(caseData[field]).trim();
+    const prefillIsMoreRecent = prefillMergedAt && reviewDiffersFromCase && prefillMatchesCase;
+
     const candidates = [
         isDoneCase ? caseData?.[field] : undefined,
-        reviewDraft?.[field],
+        prefillIsMoreRecent ? undefined : reviewDraft?.[field],
         prefillNarratives?.[prefillKey],
         typeof fallbackValue === 'function' ? fallbackValue(caseData) : fallbackValue,
         isDoneCase ? undefined : caseData?.[field],
@@ -226,6 +241,8 @@ function createInitialForm(caseData) {
         digitalNotes: resolveDraftField(caseData, 'digitalNotes'),
         conflictInterest: resolveDraftField(caseData, 'conflictInterest'),
         conflictNotes: resolveDraftField(caseData, 'conflictNotes'),
+        // cpfPendingRegularization vem do pipeline de enriquecimento (read-only no form)
+        cpfPendingRegularization: caseData?.cpfPendingRegularization === true,
         keyFindings: resolveDraftField(caseData, 'keyFindings', {
             fallbackValue: (currentCase) => currentCase?.aiStructured?.evidencias || [],
             defaultValue: [],
@@ -238,81 +255,6 @@ function createInitialForm(caseData) {
     };
 }
 
-function calculateRisk(form, enabledPhases) {
-    const scores = {
-        NEGATIVE: 0,
-        NEGATIVE_PARTIAL: 18,
-        NOT_FOUND: 5,
-        INCONCLUSIVE: 40,
-        INCONCLUSIVE_HOMONYM: 45,
-        INCONCLUSIVE_LOW_COVERAGE: 38,
-        POSITIVE: 90,
-        LOW: 0,
-        UNKNOWN: 20,
-        MEDIUM: 50,
-        HIGH: 90,
-        APPROVED: 0,
-        NEUTRAL: 10,
-        CONCERN: 50,
-        CONTRAINDICATED: 90,
-        CLEAN: 0,
-        NOT_CHECKED: 10,
-        ALERT: 45,
-        CRITICAL: 85,
-        NO: 0,
-        YES: 60,
-    };
-
-    const ep = enabledPhases || LEGACY_PHASES;
-    const phaseScores = [];
-    if (ep.includes('criminal')) {
-        let criminalScore = scores[form.criminalFlag] || 0;
-        if (form.criminalFlag === 'POSITIVE') {
-            if (form.criminalSeverity === 'HIGH') criminalScore = 95;
-            else if (form.criminalSeverity === 'LOW') criminalScore = 75;
-        }
-        phaseScores.push(criminalScore);
-    }
-    if (ep.includes('labor')) phaseScores.push(scores[form.laborFlag] || 0);
-    if (ep.includes('warrant')) phaseScores.push(scores[form.warrantFlag] || 0);
-    if (ep.includes('osint')) phaseScores.push(scores[form.osintLevel] || 0);
-    if (ep.includes('social')) phaseScores.push(scores[form.socialStatus] || 0);
-    if (ep.includes('digital')) phaseScores.push(scores[form.digitalFlag] || 0);
-    if (ep.includes('conflictInterest')) phaseScores.push(scores[form.conflictInterest] || 0);
-    let riskScore = Math.max(...phaseScores, 0);
-
-    const yellowSignals = [
-        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE',
-        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_HOMONYM',
-        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE',
-        ep.includes('criminal') && form.criminalFlag === 'NEGATIVE_PARTIAL',
-        ep.includes('labor') && form.laborFlag === 'INCONCLUSIVE',
-        ep.includes('warrant') && form.warrantFlag === 'INCONCLUSIVE',
-        ep.includes('osint') && form.osintLevel === 'MEDIUM',
-        ep.includes('social') && form.socialStatus === 'CONCERN',
-        ep.includes('digital') && form.digitalFlag === 'ALERT',
-    ].filter(Boolean).length;
-
-    if (yellowSignals >= 2) {
-        riskScore = Math.min(100, riskScore + 15);
-    }
-
-    let riskLevel = 'GREEN';
-    if (phaseScores.some((s) => s >= 80)) {
-        riskLevel = 'RED';
-    } else if (riskScore >= 30) {
-        riskLevel = 'YELLOW';
-    }
-
-    let suggestedVerdict = 'FIT';
-    if (riskScore >= 70) {
-        suggestedVerdict = 'NOT_RECOMMENDED';
-    } else if (riskScore >= 30) {
-        suggestedVerdict = 'ATTENTION';
-    }
-
-    return { riskLevel, riskScore, suggestedVerdict };
-}
 
 export default function CasoPage() {
     const { caseId } = useParams();
@@ -349,9 +291,26 @@ export default function CasoPage() {
     const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
     const [caseTimeline, setCaseTimeline] = useState([]);
     const { opened: openedSections, onToggle: handleDetailsToggle } = useOpenedSections();
+    // Process Inspection Modal state
+    const [inspectedProcess, setInspectedProcess] = useState(null);
     const dirtyFieldsRef = useRef(new Set());
     const highRiskConfirmedRef = useRef(false);
     const initializedCaseIdRef = useRef(null);
+
+    // Process Inspection Modal: DJEN correlation
+    const parseCnj = useCallback((raw) => String(raw || '').replace(/\D/g, ''), []);
+    const djenRelatedTimeline = useMemo(() => {
+        if (!inspectedProcess?.cnj || !Array.isArray(caseData?.djenComunicacoes)) return [];
+        const targetCnj = parseCnj(inspectedProcess.cnj);
+        if (!targetCnj || targetCnj.length < 15) return [];
+        return caseData.djenComunicacoes
+            .filter((doc) => parseCnj(doc.numeroProcesso || doc.numeroProcessoMascara) === targetCnj)
+            .sort((a, b) => {
+                const da = a.dataDisponibilizacao || '';
+                const db = b.dataDisponibilizacao || '';
+                return db.localeCompare(da);
+            });
+    }, [inspectedProcess, caseData?.djenComunicacoes, parseCnj]);
 
     // Auto-save dirty fields as draft when switching steps
     const saveDraft = useCallback(async () => {
@@ -2400,8 +2359,8 @@ export default function CasoPage() {
                                         </thead>
                                         <tbody>
                                             {caseData.juditRoleSummary.map((r, i) => (
-                                                <tr key={i} className={`data-table__row ${r.isCriminal ? 'data-table__row--criminal' : ''} ${r.isWitness ? 'data-table__row--witness' : ''}`}>
-                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{r.code || '—'}</td>
+                                                <tr key={i} className={`data-table__row ${r.isCriminal ? 'data-table__row--criminal' : ''} ${r.isWitness ? 'data-table__row--witness' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{r.code || '—'}</td>
                                                     <td className="data-table__td">{r.area || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
                                                     <td className="data-table__td">{r.personType || '—'}</td>
@@ -2452,8 +2411,8 @@ export default function CasoPage() {
                                         </thead>
                                         <tbody>
                                             {caseData.bigdatacorpProcessos.filter((p) => p.isCriminal).map((proc, i) => (
-                                                <tr key={i} className="data-table__row data-table__row--criminal">
-                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{proc.numero || '—'}</td>
+                                                <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
                                                     <td className="data-table__td">{proc.assunto || proc.cnjSubject || '—'}</td>
                                                     <td className="data-table__td">{proc.polo || proc.partyType || '—'}</td>
@@ -2491,8 +2450,8 @@ export default function CasoPage() {
                                         </thead>
                                         <tbody>
                                             {caseData.bigdatacorpProcessos.filter((p) => !p.isCriminal).map((proc, i) => (
-                                                <tr key={i} className="data-table__row">
-                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{proc.numero || '—'}</td>
+                                                <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
                                                     <td className="data-table__td">{proc.assunto || proc.cnjSubject || '—'}</td>
                                                     <td className="data-table__td">{proc.polo || proc.partyType || '—'}</td>
@@ -2680,8 +2639,8 @@ export default function CasoPage() {
                                         </thead>
                                         <tbody>
                                             {caseData.juditRoleSummary.filter((r) => /trabalh|trt|reclamat/i.test(r.area || '')).map((r, i) => (
-                                                <tr key={i} className="data-table__row">
-                                                    <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{r.code || '—'}</td>
+                                                <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{r.code || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
                                                     <td className="data-table__td">{r.personType || '—'}</td>
                                                     <td className="data-table__td">{r.status || '—'}</td>
@@ -2711,8 +2670,8 @@ export default function CasoPage() {
                                         </thead>
                                         <tbody>
                                             {caseData.bigdatacorpProcessos.filter((p) => p.isLabor).map((proc, i) => (
-                                                <tr key={i} className="data-table__row">
-                                                    <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{proc.numero || '—'}</td>
+                                                <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
+                                                    <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtName || '—'}</td>
                                                     <td className="data-table__td">{proc.cnjSubject || proc.assunto || '—'}</td>
                                                     <td className="data-table__td">{proc.specificRole || proc.polo || '—'}</td>
@@ -3323,6 +3282,13 @@ export default function CasoPage() {
                     )}
                 </div>
             </Modal>
+
+            {/* Process Inspection Modal */}
+            <ProcessInspectionModal
+                process={inspectedProcess}
+                djenTimeline={djenRelatedTimeline}
+                onClose={() => setInspectedProcess(null)}
+            />
         </PageShell>
     );
 }

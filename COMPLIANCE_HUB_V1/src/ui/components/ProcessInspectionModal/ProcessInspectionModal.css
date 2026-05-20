@@ -1,0 +1,204 @@
+/* ═══════════════════════════════════════════════
+   ProcessInspectionModal — Premium inspection UI
+   ═══════════════════════════════════════════════ */
+
+.pim-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    animation: pim-fadeIn 0.15s ease-out;
+}
+
+@keyframes pim-fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pim-slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.pim-container {
+    background: #fff; border-radius: 12px;
+    width: 100%; max-width: 1100px;
+    max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+    animation: pim-slideUp 0.2s ease-out;
+}
+
+/* ── Header ── */
+.pim-header {
+    padding: 14px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+}
+
+.pim-close {
+    border: none; background: none; cursor: pointer;
+    color: #6b7280; font-size: 18px; line-height: 1;
+    padding: 4px 8px; border-radius: 6px;
+    transition: background 0.15s;
+}
+.pim-close:hover { background: #f3f4f6; color: #111; }
+
+.pim-cnj {
+    font-family: 'Courier New', monospace;
+    font-weight: 700; font-size: 1rem; color: #111;
+}
+
+.pim-badge {
+    font-size: .65rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+}
+.pim-badge--purple { background: #f3e8ff; color: #7c3aed; }
+.pim-badge--blue { background: #dbeafe; color: #1d4ed8; }
+.pim-badge--red { background: #fee2e2; color: #dc2626; }
+.pim-badge--yellow { background: #fef3c7; color: #92400e; }
+.pim-badge--gray { background: #f3f4f6; color: #374151; }
+
+/* ── Body Grid ── */
+.pim-body {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    flex: 1; overflow: hidden;
+}
+
+/* ── Left Column ── */
+.pim-col-left {
+    padding: 24px; overflow-y: auto;
+    border-right: 1px solid #e5e7eb;
+}
+
+.pim-section { margin-bottom: 18px; }
+.pim-section:last-child { margin-bottom: 0; }
+
+.pim-court-name { font-weight: 600; color: #374151; font-size: .95rem; }
+.pim-court-details { color: #6b7280; font-size: .8rem; margin-top: 2px; }
+
+.pim-label {
+    font-size: .72rem; font-weight: 600; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+.pim-label-sub { text-transform: none; font-weight: 400; }
+
+.pim-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pim-chip {
+    background: #eff6ff; color: #1d4ed8;
+    border-radius: 4px; padding: 2px 8px;
+    font-size: .73rem; font-weight: 500;
+}
+.pim-chip--subtle { background: #f3f4f6; color: #6b7280; }
+
+/* Parties list */
+.pim-parties-list {
+    border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;
+}
+.pim-party {
+    padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+    border-bottom: 1px solid #f3f4f6;
+}
+.pim-party:last-child { border-bottom: none; }
+.pim-party--alt { background: #f9fafb; }
+.pim-party-name { font-weight: 600; color: #111; font-size: .82rem; }
+.pim-party-role { font-size: .72rem; color: #6b7280; }
+.pim-party-doc { font-size: .68rem; color: #9ca3af; font-family: monospace; margin-left: auto; }
+
+/* Blockquote for Judit lastStep */
+.pim-blockquote {
+    margin: 0; padding: 8px 12px;
+    border-left: 3px solid #d1d5db;
+    color: #374151; font-size: .82rem; line-height: 1.5;
+    background: #fafafa; border-radius: 0 6px 6px 0;
+}
+
+/* Decisions (BDC) */
+.pim-decision-card {
+    margin-bottom: 8px; padding: 8px 12px;
+    background: #f9fafb; border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+.pim-decision-date { font-size: .7rem; color: #9ca3af; margin-bottom: 4px; }
+.pim-decision-content { font-size: .8rem; color: #374151; line-height: 1.5; }
+
+/* Movements (BDC Updates) */
+.pim-movement {
+    display: flex; gap: 10px; margin-bottom: 6px; font-size: .78rem;
+    padding: 4px 0; border-bottom: 1px solid #f9fafb;
+}
+.pim-movement-date { color: #9ca3af; white-space: nowrap; min-width: 80px; }
+.pim-movement-content { color: #374151; }
+
+.pim-meta-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; font-size: .8rem; color: #374151;
+}
+.pim-meta-grid .pim-label { display: block; margin-bottom: 2px; }
+
+/* ── Right Column (DJEN) ── */
+.pim-col-right {
+    padding: 24px; overflow-y: auto;
+    background: #f8fafc;
+}
+
+.pim-empty {
+    text-align: center; padding: 40px 20px; color: #9ca3af;
+}
+.pim-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+/* Timeline */
+.pim-timeline { position: relative; padding-left: 20px; }
+.pim-timeline-line {
+    position: absolute; left: 7px; top: 0; bottom: 0;
+    width: 2px; background: #e2e8f0;
+}
+
+.pim-timeline-node { position: relative; margin-bottom: 18px; }
+.pim-timeline-dot {
+    position: absolute; left: -20px; top: 8px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #3b82f6; border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #bfdbfe;
+}
+
+.pim-timeline-card {
+    background: #fff; border-radius: 8px;
+    border: 1px solid #e2e8f0; padding: 12px;
+}
+
+.pim-timeline-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.pim-timeline-date { font-size: .7rem; color: #64748b; font-weight: 600; }
+.pim-timeline-tipo {
+    font-size: .65rem; padding: 2px 6px; border-radius: 4px;
+    background: #eff6ff; color: #1d4ed8; font-weight: 600;
+}
+.pim-timeline-tribunal { font-size: .65rem; color: #94a3b8; }
+.pim-timeline-orgao { font-size: .72rem; font-weight: 600; color: #475569; margin-bottom: 4px; }
+.pim-timeline-classe { font-size: .7rem; color: #64748b; margin-bottom: 4px; }
+
+.pim-timeline-texto-details { margin-top: 6px; }
+.pim-timeline-texto-details summary {
+    font-size: .72rem; color: #3b82f6; cursor: pointer;
+    font-weight: 500;
+}
+.pim-timeline-texto {
+    font-size: .73rem; color: #64748b; line-height: 1.5;
+    margin-top: 6px; padding: 8px;
+    background: #f8fafc; border-radius: 6px;
+    max-height: 200px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-word;
+}
+
+.pim-timeline-advogados {
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+    font-size: .68rem; color: #94a3b8;
+    display: flex; flex-direction: column; gap: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .pim-body { grid-template-columns: 1fr; }
+    .pim-col-left { border-right: none; border-bottom: 1px solid #e5e7eb; max-height: 50vh; }
+    .pim-col-right { max-height: 50vh; }
+    .pim-container { max-width: 100%; }
+}

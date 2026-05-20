@@ -204,6 +204,17 @@ function buildCleanZeroEvidenceCase() {
     };
 }
 
+function buildCleanZeroEvidenceBdcBlockedCase() {
+    return {
+        ...buildCleanZeroEvidenceCase(),
+        bigdatacorpEnrichmentStatus: 'BLOCKED',
+        bigdatacorpProcessTotal: undefined,
+        bigdatacorpCriminalCount: undefined,
+        bigdatacorpCriminalFlag: undefined,
+        enrichmentStatus: 'PENDING',
+    };
+}
+
 function buildRenanCase() {
     const cpf = '11819916766';
     const judit = normalizeJuditLawsuits(adaptJuditLawsuits(loadJson('results', 'judit_lawsuits_3_renan.json')), cpf);
@@ -344,6 +355,21 @@ describe('offline calibration with the 5 reference CPFs', () => {
         expect(safetyNet.eligible).toBe(false);
     });
 
+    it('keeps zero-evidence cases negative when BigDataCorp is blocked but no process provider returned evidence', () => {
+        const caseData = buildCleanZeroEvidenceBdcBlockedCase();
+        const classification = computeAutoClassification(caseData);
+        const safetyNet = evaluateNegativePartialSafetyNet(caseData, classification);
+
+        expect(classification.coverageLevel).toBe('LOW_COVERAGE');
+        expect(classification.coverageNotes).toContain('Nenhum provider retornou processo aproveitavel.');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('CONFIRMED_NEGATIVE');
+        expect(classification.criminalNotes).toContain('Criminal SEM APONTAMENTO');
+        expect(classification.laborFlag).toBe('NEGATIVE');
+        expect(classification.laborNotes).toContain('Nao foram identificados processos trabalhistas materiais');
+        expect(safetyNet.eligible).toBe(false);
+    });
+
     it('safety net stays off when Escavador already ran or hard facts exist', () => {
         const diegoSafetyNet = evaluateNegativePartialSafetyNet(buildDiegoCase(), computeAutoClassification(buildDiegoCase()));
         const franciscoSafetyNet = evaluateNegativePartialSafetyNet(buildFranciscoCase(), computeAutoClassification(buildFranciscoCase()));
@@ -460,5 +486,79 @@ describe('DJEN integration in computeAutoClassification', () => {
         // 5 namesakes is within threshold — DJEN stays strong
         expect(classification.criminalFlag).toBe('POSITIVE');
         expect(classification.criminalNotes).toContain('DJEN');
+    });
+});
+
+function buildCpfPendingRegularizationCase() {
+    return {
+        ...buildCleanZeroEvidenceCase(),
+        enrichmentGateResult: {
+            passed: true,
+            cpfStatus: 'PENDENTE DE REGULARIZACAO',
+            cpfPendingRegularization: true,
+            nameSimilarity: 1.0,
+            nameProvided: 'CANDIDATO SEM APONTAMENTO',
+            nameFound: 'CANDIDATO SEM APONTAMENTO',
+            hasDeathRecord: false,
+            reason: null,
+            consultedAt: new Date().toISOString(),
+        },
+    };
+}
+
+function buildCpfPendingRegularizationBdcCase() {
+    return {
+        ...buildCleanZeroEvidenceCase(),
+        bigdatacorpGateResult: {
+            passed: true,
+            cpfStatus: 'PENDENTE DE REGULARIZACAO',
+            cpfPendingRegularization: true,
+            nameSimilarity: 1.0,
+            nameProvided: 'CANDIDATO SEM APONTAMENTO',
+            nameFound: 'CANDIDATO SEM APONTAMENTO',
+            hasDeathRecord: false,
+            reason: 'OK',
+            source: 'bigdatacorp-basicdata',
+            consultedAt: new Date().toISOString(),
+        },
+    };
+}
+
+describe('CPF PENDENTE DE REGULARIZACAO gate handling', () => {
+    it('FonteData gate passes for PENDENTE DE REGULARIZACAO and flags attention', () => {
+        const caseData = buildCpfPendingRegularizationCase();
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.cpfPendingRegularization).toBe(true);
+        expect(classification.cpfPendingNotes).toContain('pendente de regularizacao');
+        expect(classification.criminalNotes).toContain('pendente de regularizacao');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+    });
+
+    it('BigDataCorp gate passes for PENDENTE DE REGULARIZACAO and flags attention', () => {
+        const caseData = buildCpfPendingRegularizationBdcCase();
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.cpfPendingRegularization).toBe(true);
+        expect(classification.cpfPendingNotes).toContain('pendente de regularizacao');
+        expect(classification.criminalNotes).toContain('pendente de regularizacao');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+    });
+
+    it('buildExpandedKeyFindings includes CPF pending regularization alert', () => {
+        const caseData = buildCpfPendingRegularizationCase();
+        const { buildExpandedKeyFindings } = __test;
+        const findings = buildExpandedKeyFindings(caseData, {});
+
+        expect(findings).toContain('CPF com situacao cadastral pendente de regularizacao na Receita Federal.');
+    });
+
+    it('CPF pending regularization does not trigger reviewRecommended by itself', () => {
+        const caseData = buildCpfPendingRegularizationCase();
+        const classification = computeAutoClassification(caseData);
+
+        expect(classification.reviewRecommended).toBe(false);
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.laborFlag).toBe('NEGATIVE');
     });
 });

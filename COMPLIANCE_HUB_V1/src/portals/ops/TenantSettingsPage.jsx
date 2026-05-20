@@ -22,7 +22,7 @@ const DEFAULT_ENRICHMENT = {
     ai: { enabled: false },
     bigdatacorp: { enabled: true, phases: { basicData: true, processes: true, kyc: true, occupation: true }, processLimit: 100 },
     escavador: { enabled: false, phases: { processos: true }, filters: { incluirHomonimos: true } },
-    judit: { enabled: true, phases: { entity: false, lawsuits: true, warrant: true, execution: false }, filters: { useAsync: false } },
+    judit: { enabled: true, phases: { entity: false, lawsuits: true, warrant: true, execution: false }, filters: { useAsync: false }, nameSearchSupplement: { enabled: true, maxCpfsComNome: 3, preferSync: true } },
     djen: { enabled: true, phases: { comunicacoes: true }, searchStrategy: 'hybrid', maxPages: 3, filters: { siglaTribunal: '' } },
 };
 
@@ -75,6 +75,10 @@ function mergeEnrichment(saved) {
             ...(saved.judit || {}),
             phases: { ...DEFAULT_ENRICHMENT.judit.phases, ...(saved.judit?.phases || {}) },
             filters: { ...DEFAULT_ENRICHMENT.judit.filters, ...(saved.judit?.filters || {}) },
+            nameSearchSupplement: {
+                ...DEFAULT_ENRICHMENT.judit.nameSearchSupplement,
+                ...(saved.judit?.nameSearchSupplement || {}),
+            },
         },
         djen: {
             ...DEFAULT_ENRICHMENT.djen,
@@ -502,17 +506,76 @@ export default function TenantSettingsPage() {
                                                         <button
                                                             type="button"
                                                             className={`ts-toggle ${enrichment.judit?.phases?.[key] ? 'ts-toggle--on' : 'ts-toggle--off'}`}
-                                                            onClick={() => setEnrichment((prev) => ({
-                                                                ...prev,
-                                                                judit: { ...prev.judit, phases: { ...prev.judit?.phases, [key]: !prev.judit?.phases?.[key] } },
-                                                            }))}
-                                                            aria-label={`Toggle ${label}`}
-                                                        >
-                                                            <span className="ts-toggle__knob" />
-                                                        </button>
+                                                             onClick={() => setEnrichment((prev) => ({
+                                                                 ...prev,
+                                                                 judit: { ...prev.judit, phases: { ...prev.judit?.phases, [key]: !prev.judit?.phases?.[key] } },
+                                                             }))}
+                                                             aria-label={`Toggle ${label}`}
+                                                         >
+                                                             <span className="ts-toggle__knob" />
+                                                         </button>
+                                                     </div>
+                                                 ))}
+                                                {/* Busca Suplementar por Nome */}
+                                                <div className="ts-divider" style={{ margin: '12px 0' }} />
+                                                <div className="ts-toggle-row">
+                                                    <div>
+                                                        <span className="ts-toggle-label" style={{ fontWeight: 500 }}>Busca Suplementar por Nome</span>
+                                                        <p className="ts-hint" style={{ margin: 0 }}>
+                                                            Busca processos por nome quando CPF retorna zero processos. Requer Gate Cadastral ativo para validar limite de homônimos.
+                                                        </p>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                    <button
+                                                        type="button"
+                                                        className={`ts-toggle ${enrichment.judit?.nameSearchSupplement?.enabled ? 'ts-toggle--on' : 'ts-toggle--off'}`}
+                                                        onClick={() => setEnrichment((prev) => ({
+                                                            ...prev,
+                                                            judit: {
+                                                                ...prev.judit,
+                                                                nameSearchSupplement: {
+                                                                    ...prev.judit?.nameSearchSupplement,
+                                                                    enabled: !prev.judit?.nameSearchSupplement?.enabled,
+                                                                },
+                                                            },
+                                                        }))}
+                                                        aria-label="Toggle Busca Suplementar por Nome"
+                                                    >
+                                                        <span className="ts-toggle__knob" />
+                                                    </button>
+                                                </div>
+                                                {enrichment.judit?.nameSearchSupplement?.enabled && (
+                                                    <div className="ts-gate-card" style={{ marginTop: 8 }}>
+                                                        <div className="ts-gate-card__row">
+                                                            <div>
+                                                                <label className="ts-label">Limite de homônimos (CPFs com mesmo nome)</label>
+                                                                <p className="ts-hint" style={{ margin: 0 }}>
+                                                                    Bloqueia a busca por nome se o candidato tiver mais CPFs distintos do que este limite. Sem Gate Cadastral ativo, a busca é sempre bloqueada.
+                                                                </p>
+                                                            </div>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="50"
+                                                                className="ts-input ts-input--sm"
+                                                                value={enrichment.judit?.nameSearchSupplement?.maxCpfsComNome ?? 3}
+                                                                onChange={(e) => {
+                                                                    const val = parseInt(e.target.value, 10);
+                                                                    setEnrichment((prev) => ({
+                                                                        ...prev,
+                                                                        judit: {
+                                                                            ...prev.judit,
+                                                                            nameSearchSupplement: {
+                                                                                ...prev.judit?.nameSearchSupplement,
+                                                                                maxCpfsComNome: Math.max(1, Number.isFinite(val) ? val : 3),
+                                                                            },
+                                                                        },
+                                                                    }));
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                             </div>
                                         )}
                                     </div>
 

@@ -153,6 +153,23 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
             lastMovementDate: lawsuit.LastMovementDate || null,
             lawsuitAgeDays: lawsuit.LawSuitAge ?? null,
             decisions,
+            // Full parties list for the Process Inspection Modal
+            allParties: Array.isArray(lawsuit.Parties)
+                ? lawsuit.Parties.map((p) => ({
+                    name: p.Name || p.AlternativeName || null,
+                    side: p.Polarity || null,
+                    role: p.PartyDetails?.SpecificType || p.PartyType || p.Type || null,
+                    document: p.Doc ? p.Doc.replace(/\D/g, '') : null,
+                    isActive: p.IsPartyActive ?? null,
+                }))
+                : [],
+            // Movements/updates (Updates array from BDC JSON) for the Modal
+            movements: Array.isArray(lawsuit.Updates)
+                ? lawsuit.Updates.slice(0, 15).map((u) => ({
+                    content: u.Content || null,
+                    date: u.PublishDate || null,
+                }))
+                : [],
         });
     }
 

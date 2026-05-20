@@ -1,5 +1,6 @@
 ﻿/**
  * Cloud Functions: BigDataCorp-First Enrichment Pipeline
+ * @version 2026-05-20 — P-NS-01 homonym strict lock
  *
  * Flow (BigDataCorp-first — async DISABLED by default):
  * 1. GATE: BigDataCorp Basic Data (R$ 0,03) — validate CPF active + name similarity + death record
@@ -97,6 +98,7 @@ const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
 const { createSystemCaseMessage, buildNotificationFunctions } = require('./caseCommunication');
+const { calculateRisk: calculateRiskScore } = require('./shared/riskCalculator');
 
 initializeApp();
 let db = getFirestore();
@@ -2262,7 +2264,12 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
     const nameProvided = caseData.candidateName || '';
     const minSim = enrichmentConfig.gate?.minNameSimilarity ?? 0.7;
 
-    const cpfPasses = cpfStatus === 'REGULAR';
+    // P2-011: CPF PENDENTE DE REGULARIZACAO nao bloqueia — e atencao cadastral
+    const cpfStatusNormalized = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
+    const isCpfRegular = cpfStatusNormalized === 'REGULAR';
+    const isCpfPending = cpfStatusNormalized.includes('PENDENTE');
+    const isCpfCancelled = /CANCEL/.test(cpfStatusNormalized);
+    const cpfPasses = isCpfRegular || isCpfPending;
     const nameSim = computeNameSimilarity(nameFromAPI, nameProvided);
     const namePasses = minSim <= 0 || nameSim >= minSim;
     const gatePassed = cpfPasses && namePasses;
@@ -2270,13 +2277,15 @@ async function runFonteDataEnrichmentPhase(caseRef, caseId, caseData, enrichment
     const gatePassedFinal = gatePassed && !hasDeathRecord;
 
     let gateReason = null;
-    if (!cpfPasses) gateReason = `CPF com situacao "${cpfStatus}" (esperado: REGULAR).`;
+    if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatusNormalized}" (cancelado).`;
+    else if (!cpfPasses) gateReason = `CPF com situacao "${cpfStatusNormalized}" (esperado: REGULAR).`;
     else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
     else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
     const enrichmentGateResult = {
         passed: gatePassedFinal,
-        cpfStatus,
+        cpfStatus: cpfStatusNormalized,
+        cpfPendingRegularization: isCpfPending,
         nameSimilarity: parseFloat(nameSim.toFixed(4)),
         nameProvided,
         nameFound: nameFromAPI,
@@ -2682,18 +2691,23 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
 
         // â”€â”€â”€ GATE: BDC Basic Data (cpfStatus + name similarity + death record) â”€â”€â”€
         // P2-008: verifica fase habilitada em vez de truthy de cpfStatus
+        // P2-011: CPF PENDENTE DE REGULARIZACAO nao bloqueia — e atencao cadastral
         if (!options.skipGate && phases.basicData !== false && updatePayload.bigdatacorpCpfStatus !== undefined) {
             const nameFromBDC = updatePayload.bigdatacorpName || '';
             const nameProvided = caseData.candidateName || '';
             const minSim = bdcConfig.gate?.minNameSimilarity ?? 0.7;
             const cpfStatusBDC = (updatePayload.bigdatacorpCpfStatus || '').toUpperCase();
-            const cpfPasses = cpfStatusBDC === 'REGULAR';
+            const isCpfRegular = cpfStatusBDC === 'REGULAR';
+            const isCpfPending = cpfStatusBDC.includes('PENDENTE');
+            const isCpfCancelled = /CANCEL/.test(cpfStatusBDC);
+            const cpfPasses = isCpfRegular || isCpfPending;
             const nameSim = computeNameSimilarity(nameFromBDC, nameProvided);
             const namePasses = minSim <= 0 || nameSim >= minSim;
             const hasDeathRecord = updatePayload.bigdatacorpHasDeathRecord === true;
             const gatePassed = cpfPasses && namePasses && !hasDeathRecord;
 
-            const gateReason = !cpfPasses ? `CPF status ${cpfStatusBDC}`
+            const gateReason = isCpfCancelled ? `CPF status ${cpfStatusBDC} (cancelado)`
+                : !cpfPasses ? `CPF status ${cpfStatusBDC}`
                 : !namePasses ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
                 : hasDeathRecord ? 'Indicacao de obito'
                 : 'OK';
@@ -2701,6 +2715,7 @@ async function runBigDataCorpEnrichmentPhase(caseRef, caseId, caseData, bdcConfi
             const bigdatacorpGateResult = {
                 passed: gatePassed,
                 cpfStatus: cpfStatusBDC,
+                cpfPendingRegularization: isCpfPending,
                 nameSimilarity: nameSim,
                 nameProvided,
                 nameFound: nameFromBDC,
@@ -2921,6 +2936,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 passed: true,
                 cpfActive: true,
                 cpfStatus: bdcGate.cpfStatus || 'REGULAR',
+                cpfPendingRegularization: bdcGate.cpfPendingRegularization || false,
                 nameSimilarity: bdcGate.nameSimilarity,
                 nameProvided: bdcGate.nameProvided,
                 nameFound: bdcGate.nameFound,
@@ -3055,7 +3071,10 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                         const fdGate = normalizeReceitaFederal(await queryReceitaFederal(cpf, fdApiKey));
                         const { enrichmentIdentity } = fdGate;
                         const cpfStatus = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
-                        const cpfActive = cpfStatus === 'REGULAR';
+                        const isCpfRegular = cpfStatus === 'REGULAR';
+                        const isCpfPending = cpfStatus.includes('PENDENTE');
+                        const isCpfCancelled = /CANCEL/.test(cpfStatus);
+                        const cpfActive = isCpfRegular || isCpfPending;
                         const nameFromFD = enrichmentIdentity?.name || '';
                         const nameProvided = caseData.candidateName || '';
                         const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
@@ -3065,7 +3084,8 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                         const gatePassed = cpfActive && namePasses && !hasDeathRecord;
 
                         let gateReason = null;
-                        if (!cpfActive) gateReason = `CPF com situacao "${cpfStatus}" (esperado: REGULAR).`;
+                        if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatus}" (cancelado).`;
+                        else if (!cpfActive) gateReason = `CPF com situacao "${cpfStatus}" (esperado: REGULAR).`;
                         else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
                         else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
@@ -3073,6 +3093,7 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                             passed: gatePassed,
                             cpfActive,
                             cpfStatus,
+                            cpfPendingRegularization: isCpfPending,
                             nameSimilarity: parseFloat(nameSim.toFixed(4)),
                             nameProvided,
                             nameFound: nameFromFD,
@@ -3356,7 +3377,10 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
     ) {
         const maxCpfs = nameConfig.maxCpfsComNome ?? 3;
         const entityHomonymCount = gateEntityData?.juditIdentity?.cpfsComNome ?? null;
-        const shouldSearch = entityHomonymCount === null || entityHomonymCount <= maxCpfs;
+        // Trava estrita (P-NS-01): exige contagem de homônimos CONHECIDA (Gate cadastral ativo)
+        // E dentro do limite configurado. Se Gate inativo ou falhou (null), bloqueia
+        // preventivamente para evitar busca não autorizada e custo não controlado.
+        const shouldSearch = entityHomonymCount !== null && entityHomonymCount <= maxCpfs;
 
         if (shouldSearch) {
             try {
@@ -3414,9 +3438,13 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
                 juditSources.lawsuits_by_name = { error: nameErrMsg, consultedAt: new Date().toISOString() };
             }
         } else {
-            console.log(`Case ${caseId} [Judit]: name search skipped — ${entityHomonymCount} CPFs with same name exceeds max ${maxCpfs}.`);
+            if (entityHomonymCount === null) {
+                console.log(`Case ${caseId} [Judit]: name search skipped — homonym count unavailable (Gate cadastral inactive or failed). Set juditNameSearchFlag=SKIPPED_HOMONYMS.`);
+            } else {
+                console.log(`Case ${caseId} [Judit]: name search skipped — ${entityHomonymCount} CPFs with same name exceeds max ${maxCpfs}.`);
+            }
             updatePayload.juditNameSearchFlag = 'SKIPPED_HOMONYMS';
-            updatePayload.juditNameSearchCpfsComNome = entityHomonymCount;
+            updatePayload.juditNameSearchCpfsComNome = entityHomonymCount; // null = gate inactive/unavailable
         }
     }
 
@@ -4637,8 +4665,7 @@ function computeAutoClassification(caseData) {
     const onlyNoProcessEvidenceReturned = coverageReasonCodes.length > 0
         && coverageReasonCodes.every((code) => code === 'NO_PROCESS_EVIDENCE_RETURNED');
     const providerFailureReducesCoverage = coverageReasonCodes.includes('PROVIDER_FAILURE_REDUCES_COVERAGE')
-        || caseData.bigdatacorpEnrichmentStatus === 'FAILED'
-        || caseData.bigdatacorpEnrichmentStatus === 'BLOCKED';
+        || caseData.bigdatacorpEnrichmentStatus === 'FAILED';
     const providerPendingReducesCoverage = [
         caseData.juditEnrichmentStatus,
         caseData.escavadorEnrichmentStatus,
@@ -4798,7 +4825,7 @@ function computeAutoClassification(caseData) {
         pushUnique(laborNotes, 'Trabalhista NAO ENCONTRADO: consulta FonteData TRT falhou.');
     } else {
         result.laborFlag = 'NEGATIVE';
-        pushUnique(laborNotes, 'Nenhum processo trabalhista relevante detectado.');
+        pushUnique(laborNotes, SAFE_NARRATIVE_TEXTS.laborNegative);
     }
 
     result.reviewRecommended = [
@@ -4873,6 +4900,20 @@ function computeAutoClassification(caseData) {
         result.enrichmentOriginalValues.criminalNotes = result.criminalNotes;
     }
 
+    // P2-011: CPF pendente de regularizacao — atencao cadastral, nao bloqueio
+    const cpfPending = caseData.enrichmentGateResult?.cpfPendingRegularization === true
+        || caseData.bigdatacorpGateResult?.cpfPendingRegularization === true
+        || caseData.juditGateResult?.cpfPendingRegularization === true;
+    if (cpfPending) {
+        result.cpfPendingRegularization = true;
+        result.cpfPendingNotes = 'CPF com situacao cadastral pendente de regularizacao na Receita Federal.';
+        pushUnique(criminalNotes, result.cpfPendingNotes);
+        result.criminalNotes = criminalNotes.join('\n');
+        result.enrichmentOriginalValues.criminalNotes = result.criminalNotes;
+        result.enrichmentOriginalValues.cpfPendingRegularization = true;
+        result.enrichmentOriginalValues.cpfPendingNotes = result.cpfPendingNotes;
+    }
+
     return result;
 }
 
@@ -4911,13 +4952,15 @@ const RESULT_ONLY_FIELDS = [
     'socialStatus', 'socialReasons', 'socialNotes',
     'digitalFlag', 'digitalVectors', 'digitalNotes',
     'conflictInterest', 'conflictNotes',
-    'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
+    'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
     'warrantFindings',
     'processHighlights',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
+    'cpfPendingRegularization',
+    'cpfPendingNotes',
 ];
 
 const CLIENT_SAFE_PUBLICATION_FIELDS = [
@@ -6761,7 +6804,10 @@ exports.getClientCaseReportHtml = onCall(
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
 
         const profile = await getClientUserProfile(uid);
-        assertClientManager(profile);
+        // P2-013: viewer e operator tambem podem visualizar relatorio interno
+        if (!profile?.tenantId) {
+            throw new HttpsError('permission-denied', 'Perfil do cliente sem tenant.');
+        }
         const caseId = String(request.data?.caseId || '').trim();
         if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
 
@@ -6786,7 +6832,6 @@ exports.getClientCaseReportHtml = onCall(
         };
     },
 );
-
 exports.getOpsCaseReportHtml = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 60, cors: true },
     async (request) => {
@@ -8487,6 +8532,9 @@ function buildExpandedKeyFindings(caseData, formPayload) {
     if ((caseData.escavadorCriminalCount || 0) > (caseData.juditCriminalCount || 0) && (formPayload?.criminalFlag || caseData.criminalFlag) === 'POSITIVE') {
         findings.push(`${caseData.escavadorCriminalCount} registro(s) criminal(is) identificado(s) em bases complementares.`);
     }
+    if (caseData.cpfPendingRegularization === true || caseData.enrichmentGateResult?.cpfPendingRegularization === true || caseData.bigdatacorpGateResult?.cpfPendingRegularization === true || caseData.juditGateResult?.cpfPendingRegularization === true) {
+        findings.push('CPF com situacao cadastral pendente de regularizacao na Receita Federal.');
+    }
 
     return [...new Set(findings)].slice(0, 7);
 }
@@ -9026,19 +9074,26 @@ exports.concludeCaseByAnalyst = onCall(
             updatePayload.narrativeConsistencyWarnings = allNarrativeWarnings;
         }
 
-        // P02: Fallback riskScore — compute from flags if not in payload or draft
-        if (!hasMeaningfulValue(updatePayload.riskScore) || updatePayload.riskScore === 0) {
-            const scores = { POSITIVE: 90, INCONCLUSIVE: 50, NEGATIVE_PARTIAL: 40, CONCERN: 60, ALERT: 70, ATTENTION: 55, UNKNOWN: 30, NOT_FOUND: 0, NOT_CHECKED: 0, NEGATIVE: 0, CLEAN: 0, FIT: 0 };
-            const flagVals = [
-                scores[updatePayload.criminalFlag] || 0,
-                scores[updatePayload.laborFlag] || 0,
-                scores[updatePayload.warrantFlag] || 0,
-                scores[updatePayload.osintLevel] || 0,
-                scores[updatePayload.socialStatus] || 0,
-                scores[updatePayload.digitalFlag] || 0,
-            ];
-            const maxScore = Math.max(...flagVals, 0);
-            if (maxScore > 0) updatePayload.riskScore = maxScore;
+        // P02: Calcular riskScore + riskLevel + suggestedVerdict de forma atômica via módulo compartilhado.
+        // Garante consistência: nunca mais riskScore=90 com riskLevel='GREEN'.
+        {
+            const riskInput = {
+                criminalFlag:     updatePayload.criminalFlag     || caseData.criminalFlag,
+                criminalSeverity: updatePayload.criminalSeverity || caseData.criminalSeverity,
+                laborFlag:        updatePayload.laborFlag        || caseData.laborFlag,
+                warrantFlag:      updatePayload.warrantFlag      || caseData.warrantFlag,
+                osintLevel:       updatePayload.osintLevel       || caseData.osintLevel,
+                socialStatus:     updatePayload.socialStatus     || caseData.socialStatus,
+                digitalFlag:      updatePayload.digitalFlag      || caseData.digitalFlag,
+                conflictInterest: updatePayload.conflictInterest || caseData.conflictInterest,
+                // Campos do pipeline (não editáveis pelo analista)
+                cpfPendingRegularization: caseData.cpfPendingRegularization === true,
+            };
+            const phases = caseData.enabledPhases || updatePayload.enabledPhases;
+            const riskResult = calculateRiskScore(riskInput, phases);
+            updatePayload.riskScore      = riskResult.riskScore;
+            updatePayload.riskLevel      = riskResult.riskLevel;
+            updatePayload.suggestedVerdict = riskResult.suggestedVerdict;
         }
 
         // P18: Set reportReady based on content validation
@@ -10965,6 +11020,8 @@ exports.__test = {
     buildDetKeyFindings,
     buildDetExecutiveSummary,
     buildDetFinalJustification,
+    buildKeyFindings,
+    buildExpandedKeyFindings,
     selectTopProcessos,
     normCnj,
     formatCnj,

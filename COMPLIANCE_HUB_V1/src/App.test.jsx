@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { Outlet } from 'react-router-dom';
 import { vi } from 'vitest';
 
@@ -98,6 +98,7 @@ const { default: App } = await import('./App');
 
 describe('App routing guards', () => {
     beforeEach(() => {
+        vi.clearAllMocks();
         appTestMocks.authState = {
             loading: false,
             user: null,
@@ -105,6 +106,11 @@ describe('App routing guards', () => {
             profileStatus: 'idle',
             logout: vi.fn(),
         };
+    });
+
+    afterEach(() => {
+        cleanup();
+        window.history.replaceState({}, '', '/');
     });
 
     it('redireciona rota protegida para o login quando nao ha sessao', async () => {

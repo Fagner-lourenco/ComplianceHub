@@ -395,7 +395,22 @@ export default function SolicitacoesPage() {
                 const candidateName = String(caseData.candidateName || '').toLowerCase();
                 const cpfMasked = String(caseData.cpfMasked || '').toLowerCase();
                 const caseId = String(caseData.id || '').toLowerCase();
-                return candidateName.includes(term) || cpfMasked.includes(term) || caseId.includes(term);
+
+                // CPF: suporte a busca por CPF completo/parcial formatado ou só dígitos.
+                // cpfMasked pode ser '***.***.***-45' ou '271.***.***-45' (14 chars).
+                // Extraímos o sufixo visível (2 dígitos finais) e o prefixo opcional (3 dígitos iniciais).
+                const termDigitsOnly = term.replace(/\D/g, '');
+                let cpfMatch = cpfMasked.includes(term); // cobre pesquisa direta ('45', '***')
+                if (!cpfMatch && termDigitsOnly.length >= 2 && cpfMasked.length >= 14) {
+                    const cpfSuffix = cpfMasked.slice(12, 14); // últimos 2 dígitos (sempre visíveis)
+                    if (/^\d{2}$/.test(cpfSuffix) && termDigitsOnly.endsWith(cpfSuffix)) {
+                        const prefixPart = cpfMasked.slice(0, 3); // primeiros 3: '***' ou '271'
+                        // Se o prefixo for visível (3 dígitos), verificar também o início
+                        cpfMatch = !/^\d{3}$/.test(prefixPart) || termDigitsOnly.startsWith(prefixPart);
+                    }
+                }
+
+                return candidateName.includes(term) || cpfMatch || caseId.includes(term);
             });
         }
         result.sort((left, right) => {

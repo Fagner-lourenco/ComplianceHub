@@ -21,12 +21,14 @@ const PUBLIC_RESULT_FIELDS = [
     'socialStatus', 'socialReasons', 'socialNotes',
     'digitalFlag', 'digitalVectors', 'digitalNotes',
     'conflictInterest', 'conflictNotes',
-    'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
+    'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
     'warrantFindings',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
+    'cpfPendingRegularization',
+    'cpfPendingNotes',
 
     // Campos de publicação cliente (sincronizado com backend)
     'statusSummary',
