@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import useAutoResize from '../../hooks/useAutoResize';
 import { useNavigate, useParams } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
@@ -203,12 +204,15 @@ function resolveDraftField(caseData, field, options = {}) {
 
     for (const candidate of candidates) {
         if (!isMeaningfulValue(candidate)) continue;
-        if (field === 'keyFindings') return normalizeKeyFindings(candidate);
+        if (field === 'keyFindings') {
+            const arr = normalizeKeyFindings(candidate);
+            return arr.join('\n');
+        }
         if (field === 'finalVerdict' && candidate === 'PENDING') continue;
         return String(candidate).trim();
     }
 
-    return field === 'keyFindings' ? [] : defaultValue;
+    return field === 'keyFindings' ? '' : defaultValue;
 }
 
 function createInitialForm(caseData) {
@@ -244,8 +248,11 @@ function createInitialForm(caseData) {
         // cpfPendingRegularization vem do pipeline de enriquecimento (read-only no form)
         cpfPendingRegularization: caseData?.cpfPendingRegularization === true,
         keyFindings: resolveDraftField(caseData, 'keyFindings', {
-            fallbackValue: (currentCase) => currentCase?.aiStructured?.evidencias || [],
-            defaultValue: [],
+            fallbackValue: (currentCase) => {
+                const arr = currentCase?.aiStructured?.evidencias || [];
+                return arr.join('\n');
+            },
+            defaultValue: '',
         }),
         finalVerdict: resolveDraftField(caseData, 'finalVerdict', { defaultValue: '' }),
         analystComment: resolveDraftField(caseData, 'analystComment', {
@@ -266,6 +273,11 @@ export default function CasoPage() {
     const [loadingCase, setLoadingCase] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [form, setForm] = useState(createInitialForm(null));
+    const criminalNotesRef = useAutoResize();
+    const laborNotesRef = useAutoResize();
+    const warrantNotesRef = useAutoResize();
+    const executiveSummaryRef = useAutoResize();
+    const analystCommentRef = useAutoResize();
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -470,14 +482,7 @@ export default function CasoPage() {
         }
     }, [caseData, caseId, isDemoMode]);
 
-    // Auto-resize textareas with --autosize class to fit content
-    useEffect(() => {
-        const textareas = document.querySelectorAll('.caso-textarea--autosize');
-        for (const ta of textareas) {
-            ta.style.height = 'auto';
-            ta.style.height = `${Math.min(ta.scrollHeight, 480)}px`;
-        }
-    }, [form, activeStep]);
+
 
     const steps = useMemo(() => {
         const result = [{ key: 'identification', label: 'Identificacao' }];
@@ -841,7 +846,9 @@ export default function CasoPage() {
                     conflictInterest: form.conflictInterest,
                     conflictNotes: optionalNarrative('conflictNotes'),
                     finalVerdict: form.finalVerdict,
-                    keyFindings: dirty.has('keyFindings') ? form.keyFindings : (form.keyFindings?.length > 0 ? form.keyFindings : undefined),
+                    keyFindings: dirty.has('keyFindings')
+                        ? normalizeKeyFindings(form.keyFindings)
+                        : (form.keyFindings?.trim() ? normalizeKeyFindings(form.keyFindings) : undefined),
                     analystComment: optionalNarrative('analystComment'),
                     riskLevel: risk.riskLevel,
                     riskScore: risk.riskScore,
@@ -856,7 +863,7 @@ export default function CasoPage() {
                         || form.digitalNotes
                         || form.conflictNotes
                         || form.analystComment
-                        || form.keyFindings?.length
+                        || form.keyFindings?.trim()
                     ),
                 },
             });
@@ -2240,6 +2247,7 @@ export default function CasoPage() {
                         <div className="caso-field" style={{ marginTop: 16 }}>
                             <label>Resumo / notas <ApiBadge field="criminalNotes" /></label>
                             <textarea
+                                ref={criminalNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 value={form.criminalNotes}
                                 onChange={(event) => update('criminalNotes', event.target.value)}
@@ -2584,6 +2592,7 @@ export default function CasoPage() {
                         <div className="caso-field" style={{ marginTop: 16 }}>
                             <label>Resumo / notas <ApiBadge field="laborNotes" /></label>
                             <textarea
+                                ref={laborNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 value={form.laborNotes}
                                 onChange={(event) => update('laborNotes', event.target.value)}
@@ -2764,6 +2773,7 @@ export default function CasoPage() {
                         <div className="caso-field" style={{ marginTop: 16 }}>
                             <label>Resumo / notas <ApiBadge field="warrantNotes" /></label>
                             <textarea
+                                ref={warrantNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 value={form.warrantNotes}
                                 onChange={(event) => update('warrantNotes', event.target.value)}
@@ -3146,6 +3156,7 @@ export default function CasoPage() {
                         <div className="caso-field">
                             <label>Resumo executivo</label>
                             <textarea
+                                ref={executiveSummaryRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Resumo executivo"
                                 value={form.executiveSummary}
@@ -3159,12 +3170,12 @@ export default function CasoPage() {
                             <textarea
                                 className="caso-textarea"
                                 aria-label="Principais apontamentos"
-                                value={(form.keyFindings || []).join('\n')}
-                                onChange={(event) => update('keyFindings', normalizeKeyFindings(event.target.value))}
+                                value={form.keyFindings || ''}
+                                onChange={(event) => update('keyFindings', event.target.value)}
                                 rows={5}
                                 placeholder="Um apontamento por linha"
                             />
-                            {(form.keyFindings || []).length >= 7 && (
+                            {normalizeKeyFindings(form.keyFindings || '').length >= 7 && (
                                 <span style={{ fontSize: '.75rem', color: 'var(--orange-600, #ea580c)', marginTop: 4, display: 'block' }}>Máximo de 7 itens atingido — itens excedentes serão descartados.</span>
                             )}
                         </div>
@@ -3201,6 +3212,7 @@ export default function CasoPage() {
                         <div className="caso-field">
                             <label>Justificativa final do resultado</label>
                             <textarea
+                                ref={analystCommentRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Justificativa final do resultado"
                                 value={form.analystComment}
