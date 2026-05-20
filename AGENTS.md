@@ -86,7 +86,7 @@ Relatório disponível (frontend + backend reportBuilder)
 ## 3. Estrutura de Diretórios
 
 ```
-COMPLIANCE_HUB_V1/
+(raiz do projeto)
 ├── src/                          # Frontend React (ES modules)
 │   ├── App.jsx                   # Router principal, lazy loading, auth guards, demo routes
 │   ├── main.jsx                  # Entry point (StrictMode)
