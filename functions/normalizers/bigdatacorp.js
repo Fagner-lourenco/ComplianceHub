@@ -12,6 +12,7 @@
  */
 
 const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyProcessArea } = require('../helpers/processClassifier');
 const CRIMINAL_COURT_TYPES = /criminal|penal/i;
 const LABOR_COURT_TYPES = /trabalh/i;
 
@@ -87,8 +88,17 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
 
     for (const lawsuit of lawsuits) {
         const courtType = lawsuit.CourtType || '';
-        const isCriminal = CRIMINAL_COURT_TYPES.test(courtType);
-        const isLabor = LABOR_COURT_TYPES.test(courtType);
+        const processArea = classifyProcessArea({
+            courtType,
+            cnjBroadSubject: lawsuit.InferredBroadCNJSubjectName,
+            cnjSubject: lawsuit.InferredCNJSubjectName || lawsuit.MainSubject,
+            cnjProcedure: lawsuit.InferredCNJProcedureTypeName || lawsuit.Type,
+            subject: lawsuit.MainSubject,
+            procedure: lawsuit.Type,
+            tribunal: lawsuit.CourtName,
+        });
+        const isCriminal = processArea.area === 'CRIMINAL' || CRIMINAL_COURT_TYPES.test(courtType);
+        const isLabor = processArea.area === 'LABOR' || LABOR_COURT_TYPES.test(courtType);
 
         if (isCriminal) criminalCount++;
         if (isLabor) laborCount++;
@@ -112,7 +122,8 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
             }
         }
 
-        const roleClassification = classifyRole(specificRole || partyType, courtType);
+        const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : courtType;
+        const roleClassification = classifyRole(specificRole || partyType, areaForRole);
 
         // Extract decisions for criminal processes (top 3, 500 chars max each)
         let decisions = null;

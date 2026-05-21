@@ -10,7 +10,6 @@ const baseCase = (overrides) => ({
     escavadorEnrichmentStatus: 'DONE',
     juditEnrichmentStatus: 'DONE',
     keyFindings: [],
-    keyFindings: [],
     nextSteps: [],
     timelineEvents: [],
     socialProfiles: { instagram: '', linkedin: '', facebook: '', tiktok: '', twitter: '', youtube: '' },

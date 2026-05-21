@@ -64,6 +64,54 @@ describe('roleClassifier', () => {
             expect(classifyRole(null, 'Criminal').riskLevel).toBe('NEUTRAL');
             expect(classifyRole('', 'Criminal').riskLevel).toBe('NEUTRAL');
         });
+
+        it.each([
+            ['RÉU', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['REU/RE', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['ACUSADO(A)', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['DENUNCIADO(A)', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['AUTOR DO FATO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['AUTOR FATO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['AUTUADO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['FLAGRANTEADO(A)', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['SENTENCIADO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['APELANTE', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['APELADO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['RECORRENTE', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['RECORRIDO', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['PACIENTE', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['VÍTIMA', 'Criminal', 'VICTIM', 'LOW'],
+            ['VÍTIMA DO FATO', 'Criminal', 'VICTIM', 'LOW'],
+            ['OFENDIDO', 'Criminal', 'VICTIM', 'LOW'],
+            ['TESTEMUNHA DO JUÍZO', 'Criminal', 'WITNESS', 'IGNORE'],
+            ['TESTEMUNHA - POLO ATIVO', 'Criminal', 'WITNESS', 'IGNORE'],
+            ['REQUERENTE', 'Criminal', 'PLAINTIFF', 'LOW'],
+            ['IMPETRANTE', 'Criminal', 'PLAINTIFF', 'LOW'],
+        ])('classifies real criminal role %s', (role, area, category, riskLevel) => {
+            const result = classifyRole(role, area);
+            expect(result.category).toBe(category);
+            expect(result.riskLevel).toBe(riskLevel);
+        });
+
+        it.each([
+            ['RECLAMANTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['AUTOR', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['RECORRENTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['RECORRIDO', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['AGRAVANTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['AGRAVADO', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['POLO ATIVO (PRINCIPAL)', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['REQTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
+            ['RECLAMADO', 'Trabalhista', 'DEFENDANT', 'LOW'],
+            ['RÉU', 'Trabalhista', 'DEFENDANT', 'LOW'],
+            ['POLO PASSIVO', 'Trabalhista', 'DEFENDANT', 'LOW'],
+            ['REQDO', 'Trabalhista', 'DEFENDANT', 'LOW'],
+            ['TESTEMUNHA', 'Trabalhista', 'WITNESS', 'IGNORE'],
+        ])('classifies real labor role %s', (role, area, category, riskLevel) => {
+            const result = classifyRole(role, area);
+            expect(result.category).toBe(category);
+            expect(result.riskLevel).toBe(riskLevel);
+        });
     });
 
     describe('getRoleScoreImpact', () => {

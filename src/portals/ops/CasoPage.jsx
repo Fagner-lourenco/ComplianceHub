@@ -503,7 +503,12 @@ export default function CasoPage() {
         return result;
     }, [enabledPhases]);
 
-    const currentStepKey = steps[activeStep]?.key;
+    useEffect(() => {
+        setActiveStep((current) => Math.min(current, steps.length - 1));
+    }, [steps.length]);
+
+    const visibleActiveStep = Math.min(activeStep, steps.length - 1);
+    const currentStepKey = steps[visibleActiveStep]?.key;
     const canEditCase = !READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded;
     const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
@@ -1174,10 +1179,10 @@ export default function CasoPage() {
                 {steps.map((step, index) => (
                     <button
                         key={step.key}
-                        className={`stepper__step ${index === activeStep ? 'stepper__step--active' : ''} ${index < activeStep ? 'stepper__step--done' : ''} ${isStepAutoFilled(step.key) ? 'stepper__step--autofilled' : ''}`}
+                        className={`stepper__step ${index === visibleActiveStep ? 'stepper__step--active' : ''} ${index < visibleActiveStep ? 'stepper__step--done' : ''} ${isStepAutoFilled(step.key) ? 'stepper__step--autofilled' : ''}`}
                         onClick={() => setActiveStep(index)}
                     >
-                        <span className="stepper__number">{index < activeStep ? 'OK' : isStepAutoFilled(step.key) ? '✦' : index + 1}</span>
+                        <span className="stepper__number">{index < visibleActiveStep ? 'OK' : isStepAutoFilled(step.key) ? '✦' : index + 1}</span>
                         <span className="stepper__label">{step.label}</span>
                     </button>
                 ))}

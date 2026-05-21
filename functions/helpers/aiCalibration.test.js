@@ -215,6 +215,51 @@ function buildCleanZeroEvidenceBdcBlockedCase() {
     };
 }
 
+function buildCaseWithJuditRole({ role, area = 'DIREITO PENAL', isCriminal = true, isLabor = false }) {
+    return {
+        ...buildCleanZeroEvidenceCase(),
+        candidateName: `CASO JUDIT ${role}`,
+        juditProcessTotal: 1,
+        juditCriminalCount: isCriminal ? 1 : 0,
+        juditRoleSummary: [{
+            code: '0000000-00.2024.8.00.0000',
+            area,
+            personType: role,
+            side: 'PASSIVO',
+            hasExactCpfMatch: true,
+            hasDivergentCpf: false,
+            isCriminal,
+            isLabor,
+            isPossibleHomonym: false,
+            subjects: isCriminal ? ['Roubo'] : ['Horas Extras'],
+            classifications: isCriminal ? ['Ação Penal - Procedimento Ordinário'] : ['Ação Trabalhista - Rito Sumaríssimo'],
+        }],
+    };
+}
+
+function buildCaseWithBigDataCorpProcess({ role, courtType = 'CRIMINAL', isCriminal = true, isLabor = false }) {
+    return {
+        ...buildCleanZeroEvidenceCase(),
+        candidateName: `CASO BDC ${role}`,
+        bigdatacorpProcessTotal: 1,
+        bigdatacorpCriminalCount: isCriminal ? 1 : 0,
+        bigdatacorpLaborCount: isLabor ? 1 : 0,
+        bigdatacorpCriminalFlag: isCriminal ? 'POSITIVE' : 'NEGATIVE',
+        bigdatacorpLaborFlag: isLabor ? 'POSITIVE' : 'NEGATIVE',
+        bigdatacorpProcessos: [{
+            numero: '0000000-00.2024.8.00.0000',
+            courtType,
+            cnjBroadSubject: isCriminal ? 'DIREITO PENAL' : 'DIREITO DO TRABALHO',
+            cnjSubject: isCriminal ? 'Roubo' : 'Horas Extras',
+            cnjProcedure: isCriminal ? 'Apelação Criminal' : 'Recurso Ordinário Trabalhista',
+            specificRole: role,
+            isDirectCpfMatch: true,
+            isCriminal,
+            isLabor,
+        }],
+    };
+}
+
 function buildRenanCase() {
     const cpf = '11819916766';
     const judit = normalizeJuditLawsuits(adaptJuditLawsuits(loadJson('results', 'judit_lawsuits_3_renan.json')), cpf);
@@ -486,6 +531,59 @@ describe('DJEN integration in computeAutoClassification', () => {
         // 5 namesakes is within threshold — DJEN stays strong
         expect(classification.criminalFlag).toBe('POSITIVE');
         expect(classification.criminalNotes).toContain('DJEN');
+    });
+});
+
+describe('real role semantics for auto classification', () => {
+    it('classifies Judit criminal RÉU with exact CPF as positive', () => {
+        const classification = computeAutoClassification(buildCaseWithJuditRole({ role: 'RÉU' }));
+
+        expect(classification.criminalFlag).toBe('POSITIVE');
+        expect(classification.criminalEvidenceQuality).toBe('HARD_FACT');
+    });
+
+    it('keeps Judit criminal VÍTIMA with exact CPF as low-risk negative', () => {
+        const classification = computeAutoClassification(buildCaseWithJuditRole({ role: 'VÍTIMA' }));
+
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('LOW_RISK_ROLE_ONLY');
+    });
+
+    it('classifies BigDataCorp criminal APELANTE with exact CPF as positive', () => {
+        const classification = computeAutoClassification(buildCaseWithBigDataCorpProcess({ role: 'APELANTE' }));
+
+        expect(classification.criminalFlag).toBe('POSITIVE');
+    });
+
+    it('keeps BigDataCorp criminal TESTEMUNHA DO JUÍZO with exact CPF as low-risk negative', () => {
+        const classification = computeAutoClassification(buildCaseWithBigDataCorpProcess({ role: 'TESTEMUNHA DO JUÍZO' }));
+
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('LOW_RISK_ROLE_ONLY');
+    });
+
+    it('classifies BigDataCorp labor RECORRENTE with exact CPF as positive', () => {
+        const classification = computeAutoClassification(buildCaseWithBigDataCorpProcess({
+            role: 'RECORRENTE',
+            courtType: 'TRABALHISTA',
+            isCriminal: false,
+            isLabor: true,
+        }));
+
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.laborFlag).toBe('POSITIVE');
+    });
+
+    it('keeps BigDataCorp labor RECLAMADO with exact CPF as negative', () => {
+        const classification = computeAutoClassification(buildCaseWithBigDataCorpProcess({
+            role: 'RECLAMADO',
+            courtType: 'TRABALHISTA',
+            isCriminal: false,
+            isLabor: true,
+        }));
+
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.laborFlag).toBe('NEGATIVE');
     });
 });
 

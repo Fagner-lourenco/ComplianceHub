@@ -6,6 +6,7 @@
  */
 
 const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyProcessArea } = require('../helpers/processClassifier');
 const CRIMINAL_AREAS = /penal|criminal|crime|crim\.?|a[çc][aã]o\s*penal|inqu[ée]rito|inquerito|termo\s*circunstanciado|contraven[çc][aã]o|viol[eê]ncia\s*dom[eé]stica|maria\s*da\s*penha|medida\s*protetiva/i;
 
 /**
@@ -61,8 +62,14 @@ function normalizeEscavadorProcessos(result, cpf) {
         const capa = fonte?.capa || {};
         const area = capa.area || '';
         const classe = capa.classe || '';
-        const isCriminal = CRIMINAL_AREAS.test(area);
-        const isLabor = /trabalh|reclamat[oó]ria|diss[ií]dio/i.test(area) ||
+        const processArea = classifyProcessArea({
+            area,
+            className: classe,
+            subject: capa.assunto_principal_normalizado?.nome || capa.assunto,
+            tribunal: fonte?.sigla || item.unidade_origem?.tribunal_sigla,
+        });
+        const isCriminal = processArea.area === 'CRIMINAL' || CRIMINAL_AREAS.test(area);
+        const isLabor = processArea.area === 'LABOR' || /trabalh|reclamat[oó]ria|diss[ií]dio/i.test(area) ||
             /trabalh|reclamat[oó]ria|diss[ií]dio/i.test(classe) ||
             /\bTRT\d*\b|\bTST\b/i.test(fonte?.sigla || '');
         if (isCriminal) criminalCount++;
@@ -73,7 +80,8 @@ function normalizeEscavadorProcessos(result, cpf) {
         const role = findPersonRole(envolvidos, cpf);
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
-        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, area);
+        const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : area;
+        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole);
 
         processos.push({
             numeroCnj: item.numero_cnj || null,

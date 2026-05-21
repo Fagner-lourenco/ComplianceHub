@@ -71,6 +71,7 @@ const {
 const {
     buildHomonymAnalysisInput,
 } = require('./helpers/aiHomonym');
+const { classifyProcessArea } = require('./helpers/processClassifier');
 const {
     queryCombined: queryBigDataCorpCombined,
     BigDataCorpError,
@@ -1715,6 +1716,12 @@ function selectTopProcessos(caseData, limit = 10) {
     for (const p of juditRoleSummary) {
         const cnj = p.code || '';
         if (cnj) seen.add(normCnj(cnj));
+        const processArea = classifyProcessArea({
+            area: p.area,
+            subjects: p.subjects,
+            classifications: p.classifications,
+            tribunal: p.tribunalAcronym,
+        });
         all.push({
             cnj: cnj || 'N/A',
             area: p.area || 'N/A',
@@ -1727,8 +1734,8 @@ function selectTopProcessos(caseData, limit = 10) {
             comarca: p.city || null,
             data: p.distributionDate || 'N/A',
             fonte: 'Judit',
-            isCriminal: !!p.isCriminal,
-            isTrabalhista: /trabalh/i.test(p.area || ''),
+            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL',
+            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR' || /trabalh/i.test(p.area || ''),
             isActive: /ativo|em andamento/i.test(p.status || '') && !/finaliz|arquiv|encerr/i.test(p.status || ''),
             matchType: p.hasExactCpfMatch ? 'CPF confirmado' : (p.isPossibleHomonym ? 'possivel homonimo' : 'match por nome'),
             specificRole: p.personType || p.specificRole || null,
@@ -1749,6 +1756,12 @@ function selectTopProcessos(caseData, limit = 10) {
     for (const p of escavadorProcessos) {
         const cnj = p.numeroCnj || '';
         const nk = cnj ? normCnj(cnj) : null;
+        const processArea = classifyProcessArea({
+            area: p.area,
+            className: p.classe,
+            subject: p.assuntoPrincipal,
+            tribunal: p.tribunalSigla,
+        });
         if (nk && seen.has(nk)) {
             // Merge complementary fields into existing entry
             const existing = all.find((e) => normCnj(e.cnj) === nk);
@@ -1777,8 +1790,8 @@ function selectTopProcessos(caseData, limit = 10) {
             comarca: p.processCity || null,
             data: p.dataInicio || 'N/A',
             fonte: 'Escavador',
-            isCriminal: /penal|criminal|crime/i.test(p.area || ''),
-            isTrabalhista: /trabalh/i.test(p.area || ''),
+            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL' || /penal|criminal|crime/i.test(p.area || ''),
+            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR' || /trabalh/i.test(p.area || ''),
             isActive: /ativo|em andamento/i.test(p.status || '') && !/finaliz|arquiv|encerr|baixad/i.test(p.status || ''),
             matchType: p.hasExactCpfMatch || p.tipoMatch === 'CPF' ? 'CPF confirmado' : 'match por nome',
             specificRole: p.specificRole || p.tipoNormalizado || null,
@@ -1801,6 +1814,15 @@ function selectTopProcessos(caseData, limit = 10) {
     for (const p of bdcProcessos) {
         const cnj = p.numero || '';
         const nk = cnj ? normCnj(cnj) : null;
+        const processArea = classifyProcessArea({
+            courtType: p.courtType,
+            cnjBroadSubject: p.cnjBroadSubject,
+            cnjSubject: p.cnjSubject || p.assunto,
+            cnjProcedure: p.cnjProcedure || p.tipo,
+            subject: p.assunto,
+            procedure: p.tipo,
+            tribunal: p.courtName,
+        });
         if (nk && seen.has(nk)) {
             const existing = all.find((e) => normCnj(e.cnj) === nk);
             if (existing) {
@@ -1836,8 +1858,8 @@ function selectTopProcessos(caseData, limit = 10) {
             comarca: p.courtDistrict || null,
             data: p.lastMovementDate || 'N/A',
             fonte: 'BigDataCorp',
-            isCriminal: !!p.isCriminal,
-            isTrabalhista: !!p.isLabor,
+            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL',
+            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR',
             isActive: /\bativ/i.test(p.status || '') && !/inat/i.test(p.status || ''),
             matchType: p.isDirectCpfMatch ? 'CPF confirmado' : 'match por nome',
             specificRole: p.specificRole || null,
@@ -2040,20 +2062,6 @@ function buildAiPrompt(caseData) {
 }
 
 function buildAiPrefillPrompt(caseData) {
-    const topProcessos = selectTopProcessos(caseData, 12).map((item) => ({
-        cnj: item.cnj,
-        area: item.area,
-        status: item.status,
-        polo: item.polo,
-        tribunal: item.tribunal,
-        data: item.data,
-        fonte: item.fonte,
-        isCriminal: item.isCriminal,
-        isTrabalhista: item.isTrabalhista,
-        isActive: item.isActive,
-        specificRole: item.specificRole || null,
-        decisionSummary: item.decisionSummary || null,
-    }));
     const juditWarrants = (caseData.juditWarrants || []).slice(0, 6).map((item) => ({
         code: item.code || null,
         status: item.status || null,
@@ -4510,8 +4518,8 @@ function computeAutoClassification(caseData) {
     const fontedataCriminal = caseData.fontedataCriminalFlag === 'POSITIVE';
     const fontedataLabor = caseData.fontedataLaborFlag === 'POSITIVE';
     const fontedataWarrant = caseData.fontedataWarrantFlag === 'POSITIVE';
-    const bigdatacorpCriminal = bigdatacorpDone && caseData.bigdatacorpCriminalFlag === 'POSITIVE';
-    const bigdatacorpLabor = bigdatacorpDone && caseData.bigdatacorpLaborFlag === 'POSITIVE';
+    const bigdatacorpCriminalSignal = bigdatacorpDone && caseData.bigdatacorpCriminalFlag === 'POSITIVE';
+    const bigdatacorpLaborSignal = bigdatacorpDone && caseData.bigdatacorpLaborFlag === 'POSITIVE';
     const djenDone = caseData.djenEnrichmentStatus === 'DONE';
     const djenCriminal = djenDone && caseData.djenCriminalFlag === 'POSITIVE';
     const djenLabor = djenDone && caseData.djenLaborFlag === true;
@@ -4632,6 +4640,13 @@ function computeAutoClassification(caseData) {
     );
     const weakCriminalCandidates = ambiguousCandidates.filter((candidate) => candidate.isCriminal);
     const weakLaborCandidates = ambiguousCandidates.filter((candidate) => isLaborCandidate(candidate));
+    const hasBigDataCorpProcessDetails = Array.isArray(caseData.bigdatacorpProcessos) && caseData.bigdatacorpProcessos.length > 0;
+    const bigdatacorpCriminal = bigdatacorpCriminalSignal && (
+        !hasBigDataCorpProcessDetails || relevantCriminalCandidates.some((candidate) => candidate.source === 'BigDataCorp')
+    );
+    const bigdatacorpLabor = bigdatacorpLaborSignal && (
+        !hasBigDataCorpProcessDetails || relevantLaborCandidates.some((candidate) => candidate.source === 'BigDataCorp')
+    );
     const strongCriminalSources = [...new Set([
         ...(fontedataCriminal ? ['FonteData'] : []),
         ...(bigdatacorpCriminal ? ['BigDataCorp'] : []),
@@ -6986,7 +7001,7 @@ function sanitizeNarrativesForFlags(caseData = {}, narratives = {}) {
     const warnings = [];
     const pushWarning = (field, reason) => warnings.push({ field, reason });
 
-    if (caseData.criminalFlag === 'NEGATIVE' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /cobertura insuficiente/, /baixa cobertura/, /apontamento criminal/, /processo\(s\) criminal/, /condenacao criminal/, /execucao penal/])) {
+    if (caseData.criminalFlag === 'NEGATIVE' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /cobertura insuficiente/, /baixa cobertura/, /apontamento criminal/, /processo\(s\) criminal/, /processo criminal/, /comunicacoes judiciais de natureza criminal localizadas/, /comunicacao judicial criminal/, /comunicacoes criminais localizadas/, /achado criminal complementar/, /condenacao criminal/, /execucao penal/])) {
         clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
         pushWarning('criminalNotes', 'Texto criminal substituido por versao segura compativel com flag NEGATIVE.');
     }
@@ -6998,7 +7013,7 @@ function sanitizeNarrativesForFlags(caseData = {}, narratives = {}) {
         clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
         pushWarning('criminalNotes', 'Texto criminal positivo estava pouco explicito e recebeu fallback seguro.');
     }
-    if (caseData.laborFlag === 'NEGATIVE' && narrativeMatches(clean.laborNotes, [/trabalhista positivo/, /processo\(s\) trabalhista/, /comunicacoes trabalhistas localizadas/, /acao trabalhista/])) {
+    if (caseData.laborFlag === 'NEGATIVE' && narrativeMatches(clean.laborNotes, [/trabalhista positivo/, /processo\(s\) trabalhista/, /processo trabalhista/, /comunicacoes judiciais de natureza trabalhista localizadas/, /comunicacao judicial trabalhista/, /comunicacoes trabalhistas localizadas/, /achado trabalhista complementar/, /acao trabalhista/])) {
         clean.laborNotes = buildSafeNarrativeReplacement('laborNotes', caseData);
         pushWarning('laborNotes', 'Texto trabalhista substituido por versao segura compativel com flag NEGATIVE.');
     }
@@ -7792,7 +7807,7 @@ function buildDetLaborNotes(caseData) {
 
     // DJEN/DPJe labor communications
     const djenLaborItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'trabalhista');
-    if (djenLaborItems.length > 0) {
+    if (lf === 'POSITIVE' && djenLaborItems.length > 0) {
         parts.push('');
         parts.push(`Comunicacoes judiciais de natureza trabalhista localizadas (${djenLaborItems.length}):`);
         djenLaborItems.slice(0, 5).forEach((item, index) => {
@@ -8009,9 +8024,16 @@ function buildDetKeyFindings(caseData) {
         findings.push(`Sanção ativa detectada`);
     }
 
+    const laborProcesses = topProcessos.filter((p) => p.isTrabalhista);
+    if (caseData.laborFlag === 'POSITIVE') {
+        const laborText = laborProcesses.length > 1
+            ? 'Apontamentos trabalhistas materiais identificados.'
+            : 'Apontamento trabalhista material identificado.';
+        findings.push(laborText);
+    }
+
     // Priority 8: Consolidated negatives
     const negatives = [];
-    const laborProcesses = topProcessos.filter((p) => p.isTrabalhista);
     if (laborProcesses.length === 0 && caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanções');
     if (caseData.pepFlag !== 'POSITIVE') negatives.push('PEP');
@@ -8102,8 +8124,17 @@ function buildDetExecutiveSummary(caseData) {
     if (caseData.sanctionFlag === 'POSITIVE') findingsSentences.push('sanção ativa detectada');
 
     if (findingsSentences.length > 0) {
+        const clauses = findingsSentences.map((sentence) => {
+            if (sentence === 'nenhum apontamento criminal material identificado') {
+                return 'nao identificou apontamentos criminais materiais';
+            }
+            if (sentence.startsWith('nenhum apontamento ')) {
+                return sentence.replace(/^nenhum apontamento (.+) identificado$/, 'nao identificou apontamentos $1');
+            }
+            return `identificou ${sentence}`;
+        });
         parts.push('');
-        parts.push(`A analise identificou ${findingsSentences.join('. Ha ')}.`);
+        parts.push(`A analise ${clauses.join('. Tambem ')}.`);
     }
 
     // Paragraph 3: Risk level

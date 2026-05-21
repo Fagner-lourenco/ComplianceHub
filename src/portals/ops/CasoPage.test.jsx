@@ -197,10 +197,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
+        fireEvent.click(screen.getByText('Revisao'));
 
         expect(await screen.findByLabelText('Resumo executivo')).toHaveValue('Resumo consolidado com mandado ativo, processos criminais relevantes e ressalva de divergencia entre fontes de dados.');
         expect(screen.getByLabelText('Principais apontamentos')).toHaveValue('Mandado ativo pendente de cumprimento.\nHa processo criminal confirmado com suporte cruzado.');

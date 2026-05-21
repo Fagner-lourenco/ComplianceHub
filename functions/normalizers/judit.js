@@ -13,6 +13,7 @@
 
 const WITNESS_TYPES = /testemunha|informante/i;
 const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyProcessArea } = require('../helpers/processClassifier');
 
 function firstNumericValue(candidates = []) {
     for (const candidate of candidates) {
@@ -99,8 +100,19 @@ function normalizeJuditLawsuits(result, cpf) {
         const data = lawsuit.response_data || lawsuit;
         const tags = data.tags || {};
 
-        // Criminal detection: use tags.criminal OR heuristic for inquérito policial
-        let isCriminal = tags.criminal || false;
+        const subjects = Array.isArray(data.subjects) ? data.subjects.slice(0, 5).map((s) => s.name || s).filter(Boolean) : [];
+        const classifications = Array.isArray(data.classifications) ? data.classifications.slice(0, 3).map((c) => c.name || c).filter(Boolean) : [];
+        const processArea = classifyProcessArea({
+            area: data.area,
+            subjects,
+            classifications,
+            tags,
+            tribunal: data.tribunal_acronym,
+            justice: data.justice,
+        });
+
+        // Criminal detection: use tags/area/class/subject OR heuristic for inquérito policial
+        let isCriminal = processArea.area === 'CRIMINAL';
         if (!isCriminal) {
             const parties = data.parties || [];
             const hasAveriguado = parties.some((p) => /averiguado|investigado|indiciado/i.test(p.person_type || ''));
@@ -110,6 +122,7 @@ function normalizeJuditLawsuits(result, cpf) {
                 isCriminal = true;
             }
         }
+        const isLabor = processArea.area === 'LABOR';
 
         if (isCriminal) criminalCount++;
         if (tags.possible_homonym) homonymCount++;
@@ -120,7 +133,8 @@ function normalizeJuditLawsuits(result, cpf) {
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const isWitness = !!(role?.personType && WITNESS_TYPES.test(role.personType));
-        const roleClassification = classifyRole(role?.personType, data.area);
+        const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : data.area;
+        const roleClassification = classifyRole(role?.personType, areaForRole);
 
         roleSummary.push({
             code: data.code || null,
@@ -149,9 +163,10 @@ function normalizeJuditLawsuits(result, cpf) {
             isLawyer: roleClassification.category === 'LAWYER',
             roleClassification,
             isCriminal,
+            isLabor,
             isPossibleHomonym: tags.possible_homonym || false,
-            subjects: Array.isArray(data.subjects) ? data.subjects.slice(0, 5).map((s) => s.name || s).filter(Boolean) : [],
-            classifications: Array.isArray(data.classifications) ? data.classifications.slice(0, 3).map((c) => c.name || c).filter(Boolean) : [],
+            subjects,
+            classifications,
             lastStep: data.last_step?.content || null,
             lastStepDate: data.last_step?.date || null,
             stepsCount: data.steps_count || 0,

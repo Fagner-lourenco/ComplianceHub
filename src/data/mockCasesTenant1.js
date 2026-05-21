@@ -13,7 +13,6 @@ const baseCase = (overrides) => ({
     riskLevel: null,
     finalVerdict: 'PENDING',
     keyFindings: [],
-    keyFindings: [],
     nextSteps: [],
     timelineEvents: [],
     socialProfiles: { instagram: '', linkedin: '', facebook: '', tiktok: '', twitter: '', youtube: '' },

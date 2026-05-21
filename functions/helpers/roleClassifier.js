@@ -19,29 +19,42 @@
  *   - Ignorar: Advogado
  */
 
+function normalizeLegalText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toUpperCase()
+        .replace(/[()]/g, ' ')
+        .replace(/\./g, '')
+        .replace(/\//g, ' ')
+        .replace(/-/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 // Roles que cometem crime ou são processados criminalmente
-const HIGH_RISK_CRIMINAL_ROLES = /^(reu|indiciado|autor\s+do\s+fato|condenado|acusado|investigado|averiguado|executado|reeducando|beneficiario|suje?to|agente)$/i;
+const HIGH_RISK_CRIMINAL_ROLES = /^(REU|REU RE|INDICIADO|INDICIADA|AUTOR\s+DO\s+FATO|AUTOR\s+FATO|CONDENADO|CONDENADA|ACUSADO|ACUSADA|ACUSADO\s+A|INVESTIGADO|INVESTIGADA|AVERIGUADO|AVERIGUADA|EXECUTADO|REEDUCANDO|BENEFICIARIO|SUJE?TO|AGENTE|DENUNCIADO|DENUNCIADA|DENUNCIADO\s+A|AUTUADO|FLAGRANTEADO|FLAGRANTEADA|FLAGRANTEADO\s+A|SENTENCIADO|NOTICIADO|EM\s+APURACAO|POLO\s+PASSIVO|PACIENTE|APELANTE|APELADO|RECORRENTE|RECORRIDO|AGRAVANTE|AGRAVADO)$/i;
 
 // Roles que processaram empregadores (trabalhista) - ALTO RISCO para nova empresa
-const HIGH_RISK_LABOR_PLAINTIFF = /^(autor|reclamante|exequente|querelante|impetrante|requerente)$/i;
+const HIGH_RISK_LABOR_PLAINTIFF = /^(AUTOR|AUTORA|RECLAMANTE|EXEQUENTE|QUERELANTE|IMPETRANTE|REQUERENTE|RECORRENTE|RECORRIDO|AGRAVANTE|AGRAVADO|APELANTE|APELADO|POLO\s+ATIVO|POLO\s+ATIVO\s+PRINCIPAL|REQTE|EXEQTE|PROMOVENTE)$/i;
 
 // Roles que foram processados pelo empregado (trabalhista) - BAIXO RISCO
-const LOW_RISK_LABOR_DEFENDANT = /^(reclamado|reu\s+trabalhista|executado|requerido)$/i;
+const LOW_RISK_LABOR_DEFENDANT = /^(RECLAMADO|REU\s+TRABALHISTA|REU|EXECUTADO|REQUERIDO|POLO\s+PASSIVO|REQDO|REQDA|EXECTDO|EXECTDA|EXECDO)$/i;
 
 // Vítimas - sempre baixo risco
-const VICTIM_ROLES = /^(vitima|ofendido|prejudicado|lesado|damnificado|agraviado|ofendida|prejudicada)$/i;
+const VICTIM_ROLES = /^(VITIMA|VITIMA\s+DO\s+FATO|OFENDIDO|OFENDIDA|OFENDIDO\s+DO\s+FATO|OFENDIDA\s+DO\s+FATO|PREJUDICADO|LESADO|DAMNIFICADO|AGRAVIADO|PREJUDICADA|LESADA|DAMNIFICADA|AGRAVIADA)$/i;
 
 // Profissionais - ignorar
-const LAWYER_ROLES = /^(advogad[oa]|lawyer|procurador|defensor|procuradoria|defensoria|patrono|representante\s+legal|doutor[a]?)$/i;
+const LAWYER_ROLES = /^(ADVOGAD[OA]|LAWYER|PROCURADOR|DEFENSOR|PROCURADORIA|DEFENSORIA|PATRONO|REPRESENTANTE\s+LEGAL|DOUTOR[A]?)$/i;
 
 // Testemunhas - ignorar
-const WITNESS_ROLES = /^(testemunha|informante|informado|informada)$/i;
+const WITNESS_ROLES = /^(TESTEMUNHA|TESTEMUNHA\s+DO\s+JUIZO|TESTEMUNHA\s+POLO\s+ATIVO|INFORMANTE|INFORMADO|INFORMADA)$/i;
 
 // Instituições - ignorar
-const AUTHORITY_ROLES = /^(autoridade|ministerio\s+publico|mp|justica|delegacia|orgao|instituicao|instituicao|juizo|vara|tribunal|fazenda|uniao|estado|municipio|inss|receita\s+federal|caixa|banco|instituto|prefeitura|secretaria)$/i;
+const AUTHORITY_ROLES = /^(AUTORIDADE|MINISTERIO\s+PUBLICO|MP|JUSTICA|DELEGACIA|ORGAO|INSTITUICAO|JUIZO|VARA|TRIBUNAL|FAZENDA|UNIAO|ESTADO|MUNICIPIO|INSS|RECEITA\s+FEDERAL|CAIXA|BANCO|INSTITUTO|PREFEITURA|SECRETARIA)$/i;
 
 // Outros neutros
-const OTHER_NEUTRAL_ROLES = /^(outro|outros(\s+participantes?)?|desconhecido|nao\s+informado|terceiro|interessado|assistencia|curador|tutor|pupilo|sucessor|terceiro\s+interessado|nao\s+aplicavel|n\/a|indefinido)$/i;
+const OTHER_NEUTRAL_ROLES = /^(OUTRO|OUTROS(\s+PARTICIPANTES?)?|DESCONHECIDO|NAO\s+INFORMADO|TERCEIRO|INTERESSADO|ASSISTENCIA|CURADOR|TUTOR|PUPILO|SUCESSOR|TERCEIRO\s+INTERESSADO|NAO\s+APLICAVEL|N\s*A|INDEFINIDO)$/i;
 
 /**
  * Classifica um papel em uma categoria de risco
@@ -50,8 +63,8 @@ const OTHER_NEUTRAL_ROLES = /^(outro|outros(\s+participantes?)?|desconhecido|nao
  * @returns {Object} { category, riskLevel, reason }
  */
 function classifyRole(role, area = '') {
-    const normalizedRole = String(role || '').trim().toUpperCase();
-    const normalizedArea = String(area || '').trim().toUpperCase();
+    const normalizedRole = normalizeLegalText(role);
+    const normalizedArea = normalizeLegalText(area);
 
     if (!normalizedRole) {
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao informado' };
@@ -86,7 +99,7 @@ function classifyRole(role, area = '') {
             return { category: 'DEFENDANT', riskLevel: 'HIGH', reason: 'Reu/Indiciado em processo criminal' };
         }
         // Autor em criminal (não "autor do fato") = geralmente querelante/vitima = BAIXO
-        if (/^AUTOR$/.test(normalizedRole)) {
+        if (/^(AUTOR|REQUERENTE|IMPETRANTE)$/.test(normalizedRole)) {
             return { category: 'PLAINTIFF', riskLevel: 'LOW', reason: 'Autor/Querelante em processo criminal' };
         }
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao classificado em processo criminal' };
@@ -98,7 +111,7 @@ function classifyRole(role, area = '') {
             return { category: 'PLAINTIFF', riskLevel: 'HIGH', reason: 'Autor/Reclamante em acao trabalhista (processou empregador)' };
         }
         // Trabalhista: Reclamado/Réu (foi processado pelo empregado) = BAIXO RISCO
-        if (LOW_RISK_LABOR_DEFENDANT.test(normalizedRole) || /^(REU|PASSIVO|DEFENDANT)$/.test(normalizedRole)) {
+        if (LOW_RISK_LABOR_DEFENDANT.test(normalizedRole) || /^(PASSIVO|DEFENDANT)$/.test(normalizedRole)) {
             return { category: 'DEFENDANT', riskLevel: 'LOW', reason: 'Reclamado/Reu em acao trabalhista (processado pelo empregado)' };
         }
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao classificado em processo trabalhista' };
@@ -107,11 +120,11 @@ function classifyRole(role, area = '') {
     // Cível e outras áreas (quando area é desconhecida, ser conservador)
     if (normalizedArea) {
         // Réu/Passivo/Executado = MEDIO
-        if (/^(REU|PASSIVO|DEFENDANT|EXECUTADO|REQUERIDO)$/.test(normalizedRole)) {
+        if (/^(REU|PASSIVO|DEFENDANT|EXECUTADO|REQUERIDO|POLO\s+PASSIVO)$/.test(normalizedRole)) {
             return { category: 'DEFENDANT', riskLevel: 'MEDIUM', reason: 'Reu/Passivo em processo cível' };
         }
         // Autor/Ativo = BAIXO
-        if (/^(AUTOR|ATIVO|ACTIVE|REQUERENTE)$/.test(normalizedRole)) {
+        if (/^(AUTOR|ATIVO|ACTIVE|REQUERENTE|POLO\s+ATIVO)$/.test(normalizedRole)) {
             return { category: 'PLAINTIFF', riskLevel: 'LOW', reason: 'Autor/Ativo em processo cível' };
         }
     }
@@ -181,6 +194,7 @@ module.exports = {
     getRoleScoreImpact,
     isLowRiskRole,
     isHighRiskRole,
+    normalizeLegalText,
     HIGH_RISK_CRIMINAL_ROLES,
     HIGH_RISK_LABOR_PLAINTIFF,
     LOW_RISK_LABOR_DEFENDANT,

@@ -565,6 +565,47 @@ describe('Deterministic Prefill', () => {
             findings.forEach((f) => expect(typeof f).toBe('string'));
         });
 
+        it('buildDetKeyFindings includes labor finding when laborFlag is POSITIVE', () => {
+            const findings = buildDetKeyFindings({
+                laborFlag: 'POSITIVE',
+                criminalFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                pepFlag: 'NEGATIVE',
+                sanctionFlag: 'NEGATIVE',
+                escavadorProcessos: [
+                    {
+                        numeroCnj: '0001225-88.2023.5.10.0020',
+                        area: 'Trabalhista',
+                        classe: 'Acao Trabalhista',
+                        assuntoPrincipal: 'Rescisao indireta',
+                        status: 'Ativo',
+                        tribunalSigla: 'TRT10',
+                        tipoMatch: 'CPF',
+                    },
+                ],
+                juditRoleSummary: [],
+                bigdatacorpProcessos: [],
+            });
+
+            expect(findings).toContain('Apontamento trabalhista material identificado.');
+            expect(findings.join('\n')).not.toMatch(/0001225|TRT10|Escavador|Judit|BigDataCorp|FonteData/i);
+        });
+
+        it('buildDetKeyFindings includes generic labor finding when laborFlag is POSITIVE without structured processes', () => {
+            const findings = buildDetKeyFindings({
+                laborFlag: 'POSITIVE',
+                criminalFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                pepFlag: 'NEGATIVE',
+                sanctionFlag: 'NEGATIVE',
+                escavadorProcessos: [],
+                juditRoleSummary: [],
+                bigdatacorpProcessos: [],
+            });
+
+            expect(findings).toContain('Apontamento trabalhista material identificado.');
+        });
+
         it('buildDetExecutiveSummary covers all dimensions', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const summary = buildDetExecutiveSummary(caseData);
@@ -677,11 +718,13 @@ describe('Deterministic Prefill', () => {
                         courtType: 'TRABALHISTA',
                         area: 'TRABALHISTA',
                         status: 'ATIVO',
-                        polo: 'Reclamado',
+                        polo: 'Recorrente',
                         courtName: 'TRT-1',
                         isCriminal: false,
                         isLabor: true,
-                        partyType: 'Reclamado',
+                        isDirectCpfMatch: true,
+                        partyType: 'Recorrente',
+                        specificRole: 'Recorrente',
                     },
                 ],
                 bigdatacorpLaborFlag: 'POSITIVE',
@@ -701,11 +744,13 @@ describe('Deterministic Prefill', () => {
                         numero: '0001234-56.2020.5.01.0001',
                         courtType: 'TRABALHISTA',
                         status: 'ATIVO',
-                        polo: 'Reclamado',
+                        polo: 'Recorrente',
                         courtName: 'TRT-1',
                         isCriminal: false,
                         isLabor: true,
-                        partyType: 'Reclamado',
+                        isDirectCpfMatch: true,
+                        partyType: 'Recorrente',
+                        specificRole: 'Recorrente',
                     },
                 ],
                 bigdatacorpLaborFlag: 'POSITIVE',
@@ -963,6 +1008,43 @@ describe('Deterministic Prefill', () => {
             expect(result.narratives.laborNotes).toContain('Nao foram identificados processos trabalhistas materiais');
             expect(result.narratives.warrantNotes).toContain('Nenhum mandado de prisao ativo');
             expect(result.warnings).toHaveLength(3);
+        });
+
+        it('sanitizes DJEN communication text that contradicts NEGATIVE flags', () => {
+            const result = sanitizeNarrativesForFlags({
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+            }, {
+                criminalNotes: 'Comunicacoes judiciais de natureza criminal localizadas (2): revisar itens.',
+                laborNotes: 'Comunicacoes judiciais de natureza trabalhista localizadas (3): revisar itens.',
+            });
+
+            expect(result.narratives.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
+            expect(result.narratives.laborNotes).toContain('Nao foram identificados processos trabalhistas materiais');
+            expect(result.warnings).toHaveLength(2);
+        });
+
+        it('buildDetLaborNotes does not expose DJEN labor communications for NEGATIVE labor flag', () => {
+            const notes = buildDetLaborNotes({
+                laborFlag: 'NEGATIVE',
+                djenComunicacoes: [{ area: 'trabalhista', tribunal: 'TRT10', probabilityScore: 40 }],
+            });
+
+            expect(notes).toContain('Nao foram identificados processos trabalhistas materiais');
+            expect(notes).not.toMatch(/Comunicacoes judiciais|comunicacoes trabalhistas|TRT10/i);
+        });
+
+        it('buildDetExecutiveSummary never produces Ha nenhum grammar', () => {
+            const summary = buildDetExecutiveSummary({
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                pepFlag: 'NEGATIVE',
+                sanctionFlag: 'NEGATIVE',
+            });
+
+            expect(summary).toBeTruthy();
+            expect(summary).not.toMatch(/Ha nenhum|Há nenhum|Ha nao|Há nao/i);
         });
 
         it('NEGATIVE_PARTIAL uses operational warning text instead of client-facing inconclusive caveat', () => {

@@ -1,0 +1,2 @@
+# Artefatos locais de auditoria/backfill que nao fazem parte do pacote deployado.
+functions/extract_done_cases.cjs
