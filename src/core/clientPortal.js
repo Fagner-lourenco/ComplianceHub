@@ -23,7 +23,6 @@ const PUBLIC_RESULT_FIELDS = [
     'conflictInterest', 'conflictNotes',
     'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
-    'warrantFindings',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
@@ -250,8 +249,6 @@ export function getReportAvailability(caseData, publicResult) {
     const hasNarrative =
         Boolean(resolved.executiveSummary) ||
         (Array.isArray(resolved.keyFindings) && resolved.keyFindings.length > 0) ||
-        (Array.isArray(resolved.warrantFindings) && resolved.warrantFindings.length > 0) ||
-        (Array.isArray(resolved.processHighlights) && resolved.processHighlights.length > 0) ||
         Boolean(resolved.analystComment);
 
     if (!resolved.finalVerdict || !hasNarrative) {

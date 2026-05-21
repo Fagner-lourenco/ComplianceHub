@@ -155,18 +155,6 @@ const DrawerDetalhesTab = memo(function DrawerDetalhesTab({ selectedCase, select
                     </div>
                 </div>
             )}
-            {(selectedCaseView?.processHighlights || []).map((group) => (
-                <div key={group.title || group.area} className="case-detail__section">
-                    <h4>{group.title || group.area}</h4>
-                    {group.summary && <p>{group.summary}</p>}
-                    {(group.items || []).map((item) => (
-                        <p key={item.processNumber || item.reference || item.classification} className="case-detail__finding">
-                            <strong>{item.processNumber || item.reference || item.classification}:</strong>{' '}
-                            {[item.court, item.classification, item.stage, item.status].filter(Boolean).join(' · ')}
-                        </p>
-                    ))}
-                </div>
-            ))}
             {selectedCase.status === 'CORRECTION_NEEDED' && (
                 <div className="case-detail__section case-detail__section--alert">
                     <h4>Correção Solicitada</h4>

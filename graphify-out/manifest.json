@@ -52,8 +52,12 @@
     "hash": "ab404aa1e2d2fb916703b7ae8a4e527b"
   },
   "D:\\ComplianceHub\\functions\\caseCommunication.js": {
-    "mtime": 1777947612.876989,
-    "hash": "6077e8627e553fba871e44e0416a67dc"
+    "mtime": 1779315605.7671092,
+    "hash": "b1c9de0babfc90ee355caa1e70fc82b3"
+  },
+  "D:\\ComplianceHub\\functions\\caseCommunication.test.js": {
+    "mtime": 1779315922.1919954,
+    "hash": "98a28641c176719ed8b485c914b54ed6"
   },
   "D:\\ComplianceHub\\functions\\debug-case.js": {
     "mtime": 1777947612.8779886,
@@ -76,8 +80,8 @@
     "hash": "f4834d98cc1ba0a681a472e6a30e2344"
   },
   "D:\\ComplianceHub\\functions\\index.js": {
-    "mtime": 1779246854.2954924,
-    "hash": "6fbd9999bfb0779897007e3a55d1b411"
+    "mtime": 1779315564.9054382,
+    "hash": "1bbfc349ef68a049c7ee69588aaddbd0"
   },
   "D:\\ComplianceHub\\functions\\repair-all-claims.js": {
     "mtime": 1777947612.8879972,
@@ -443,6 +447,10 @@
     "mtime": 1777947613.1645706,
     "hash": "09ddf60b51903f083e249bd3b1132854"
   },
+  "D:\\ComplianceHub\\src\\hooks\\useAutoResize.js": {
+    "mtime": 1779321050.5330226,
+    "hash": "b42a7b27b2e2697f1c6b6a48fd1e3f1e"
+  },
   "D:\\ComplianceHub\\src\\hooks\\useCandidates.js": {
     "mtime": 1778893383.8974838,
     "hash": "5bb22aad9924a158591dfd332fdc3620"
@@ -548,20 +556,20 @@
     "hash": "e112486dd2be18c90937bb654deb4de2"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\SolicitacoesPage.jsx": {
-    "mtime": 1779237246.3003852,
-    "hash": "5497da42a54240ec86a59aeb66c09379"
+    "mtime": 1779317831.4770927,
+    "hash": "06ffc0017038881b5f013dadd5873f43"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\SolicitacoesPage.test.jsx": {
-    "mtime": 1777947613.179571,
-    "hash": "fe39c2743631161b4f9c9eb2f50c9768"
+    "mtime": 1779317871.8321917,
+    "hash": "dadaff891877ff9ce45845fc3b72e9f9"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\AuditoriaPage.jsx": {
     "mtime": 1778893383.9065738,
     "hash": "8291853224aee6583c52e72526680455"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\CasoPage.jsx": {
-    "mtime": 1779238868.6116807,
-    "hash": "4c3d9c9fcf4d2ef2c85438b6c8340fc6"
+    "mtime": 1779321327.848791,
+    "hash": "eea88cb28f0870e635d87c2e0fc59e35"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\CasoPage.test.jsx": {
     "mtime": 1779149997.4544792,

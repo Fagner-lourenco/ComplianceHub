@@ -147,46 +147,6 @@ function listBlock(title, items) {
     return `<div class="sec"><div class="sec__t">${esc(title)}</div><ul class="blist">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul></div>`;
 }
 
-function processHighlightsHtml(items) {
-    if (!Array.isArray(items) || items.length === 0) return '';
-    return `<div class="sec"><div class="sec__t">Apontamentos Relevantes</div><div class="hlist">${items.map((group) => `
-        <div class="hcard">
-            <div class="hcard__top">
-                <div>
-                    <strong>${esc(group.title || group.area || 'Achado')}</strong>
-                    ${group.source ? `<span class="hcard__meta">${esc(group.source)}</span>` : ''}
-                </div>
-                ${group.total !== undefined ? `<span class="hcard__count">${esc(group.total)}</span>` : ''}
-            </div>
-            ${group.summary ? `<p class="hcard__summary">${esc(group.summary)}</p>` : ''}
-            ${Array.isArray(group.items) && group.items.length > 0 ? `<div class="hcard__items">${group.items.map((item) => `
-                <div class="hcard__item">
-                    <div class="hcard__item-top">
-                        <span>${esc(item.processNumber || item.reference || item.classification || 'Registro')}</span>
-                        ${item.status ? `<span class="tag">${esc(item.status)}</span>` : ''}
-                    </div>
-                    <div class="hcard__item-body">${[item.court, item.classification, item.stage].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>
-                    ${item.impact ? `<div class="hcard__impact">${esc(item.impact)}</div>` : ''}
-                </div>
-            `).join('')}</div>` : ''}
-        </div>
-    `).join('')}</div></div>`;
-}
-
-function warrantFindingsHtml(items) {
-    if (!Array.isArray(items) || items.length === 0) return '';
-    return `<div class="sec"><div class="sec__t">Situação de Mandados</div><div class="hlist">${items.map((item) => `
-        <div class="hcard">
-            <div class="hcard__top">
-                <strong>${esc(item.status || 'Sem status')}</strong>
-                ${item.source ? `<span class="hcard__meta">${esc(item.source)}</span>` : ''}
-            </div>
-            ${[item.court, item.reference].filter(Boolean).length > 0 ? `<div class="hcard__item-body">${[item.court, item.reference].filter(Boolean).map((part) => esc(part)).join(' · ')}</div>` : ''}
-            ${item.summary ? `<p class="hcard__summary">${esc(item.summary)}</p>` : ''}
-        </div>
-    `).join('')}</div></div>`;
-}
-
 function timelineHtml(items) {
     if (!Array.isArray(items) || items.length === 0) return '';
     return `<div class="sec"><div class="sec__t">Histórico do Andamento</div><div class="tlist">${items.map((item) => `
@@ -297,8 +257,6 @@ function buildCaseBody(c, generatedAt) {
         : '';
     const findingsSec = listBlock('Principais Apontamentos', c.keyFindings);
     const nextStepsSec = listBlock('Próximos Passos', c.nextSteps);
-    const processSec = processHighlightsHtml(c.processHighlights);
-    const warrantSec = warrantFindingsHtml(c.warrantFindings);
     const timelineSec = timelineHtml(c.timelineEvents);
 
     return `
@@ -312,8 +270,6 @@ function buildCaseBody(c, generatedAt) {
   ${executiveSec}
   ${findingsSec}
   ${phasesSec}
-  ${processSec}
-  ${warrantSec}
   ${commentSec}
   ${nextStepsSec}
   ${timelineSec}

@@ -12,8 +12,7 @@ const baseCase = (overrides) => ({
     riskScore: 0,
     riskLevel: null,
     finalVerdict: 'PENDING',
-    processHighlights: [],
-    warrantFindings: [],
+    keyFindings: [],
     keyFindings: [],
     nextSteps: [],
     timelineEvents: [],
@@ -153,7 +152,6 @@ const sharedCases = [
         keyFindings: ['Nenhum processo criminal ou trabalhista relevante.', 'Mandado de prisao nao localizado.', 'Presenca digital compativel com o cargo.'],
         nextSteps: ['Prosseguir com a etapa final de admissao.', 'Arquivar relatorio no dossie do candidato.'],
         clientNotes: 'Caso referencia de perfil apto no portal do cliente.',
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Nenhum mandado ativo ou historico localizado.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao enviada', description: 'RH registrou a analise para admissao no Financeiro.', at: '2026-03-20T08:15:00-03:00' },
             { type: 'validation', status: 'done', title: 'Identidade validada', description: 'CPF regular e nome com alta similaridade.', at: '2026-03-20T09:20:00-03:00' },
@@ -248,29 +246,6 @@ const sharedCases = [
         keyFindings: ['3 apontamentos criminais relevantes, sendo 2 ativos.', 'Mandado de prisao ativo localizado via Judit.', 'Processo trabalhista com reflexo reputacional e financeiro.', 'Sinais comportamentais inadequados nas redes sociais.'],
         nextSteps: ['Interromper a admissao para o cargo.', 'Registrar parecer no comite interno de risco.', 'Manter relatorio apenas para consulta controlada.'],
         clientNotes: 'Caso utilizado na demo para representar classificacao "Nao recomendado" por combinacao de criminal + mandado.',
-        processHighlights: [
-            {
-                area: 'criminal',
-                title: 'Criminal',
-                source: 'Escavador + Judit',
-                total: 3,
-                summary: 'Tres processos relevantes, dois ativos e um em fase recursal.',
-                items: [
-                    { processNumber: '0012345-67.2025.8.26.0100', court: 'TJSP - 2a Vara Criminal', classification: 'Fraude financeira', stage: 'Instrucao', status: 'Ativo', impact: 'Alta aderencia com risco do cargo por acesso a pagamentos e fornecedores.' },
-                    { processNumber: '0027788-41.2024.8.26.0050', court: 'TJSP - 5a Vara Criminal', classification: 'Estelionato', stage: 'Audiencia designada', status: 'Ativo', impact: 'Eleva risco reputacional e de confianca.' },
-                    { processNumber: '0051234-02.2022.8.26.0008', court: 'TJSP - 8a Vara Criminal', classification: 'Falsidade ideologica', stage: 'Apelacao', status: 'Recursal', impact: 'Mantem historico sensivel para cargo de gestao.' },
-                ],
-            },
-            {
-                area: 'labor',
-                title: 'Trabalhista',
-                source: 'Escavador',
-                total: 1,
-                summary: 'Reclamacao trabalhista ativa por verbas e jornada.',
-                items: [{ processNumber: '0009876-54.2024.5.02.0001', court: 'TRT 2 - 1a Vara do Trabalho', classification: 'Verbas rescisorias e FGTS', stage: 'Conciliacao', status: 'Ativo', impact: 'Risco moderado de passivo reputacional.' }],
-            },
-        ],
-        warrantFindings: [{ status: 'POSITIVE', source: 'Judit', court: 'TRF3', reference: '0034567-89.2024.6.00.0000', summary: 'Mandado de prisao preventiva ativo vinculado a investigacao por fraude.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao prioritaria recebida', description: 'RH marcou o caso como alta prioridade para cargo de lideranca.', at: '2026-03-18T09:05:00-03:00' },
             { type: 'identity', status: 'done', title: 'Identidade validada', description: 'CPF regular e nome homologado com pequena variacao nominal.', at: '2026-03-18T09:15:00-03:00' },
@@ -352,7 +327,6 @@ const sharedCases = [
         keyFindings: ['Sem processos criminais ou trabalhistas ate o momento.', 'Consulta de mandados ainda em execucao.', 'Camada digital aguardando consolidacao final.'],
         nextSteps: ['Concluir retorno da base Judit.', 'Emitir parecer final apos revisao digital.'],
         clientNotes: 'Exemplo de caso em andamento com pipeline parcialmente concluido.',
-        warrantFindings: [{ status: 'IN_PROGRESS', source: 'Judit', summary: 'Consulta aguardando retorno do provedor.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao criada', description: 'Equipe de Engenharia solicitou due diligence para posicao tecnica.', at: '2026-04-01T10:00:00-03:00' },
             { type: 'automation', status: 'done', title: 'Triagem cadastral concluida', description: 'CPF regular e dados de contato homologados.', at: '2026-04-01T10:12:00-03:00' },
@@ -437,17 +411,6 @@ const sharedCases = [
         keyFindings: ['Camada criminal inconclusiva por indisponibilidade externa.', 'Processo trabalhista antigo encerrado sem sinal ativo.', 'Presenca digital com alerta moderado.'],
         nextSteps: ['Revalidar consulta criminal em nova janela.', 'Registrar aprovacao condicionada no fluxo de RH.'],
         clientNotes: 'Caso utilizado na demo para representar "Atencao" com necessidade de segunda checagem.',
-        processHighlights: [
-            {
-                area: 'labor',
-                title: 'Trabalhista',
-                source: 'Escavador',
-                total: 1,
-                summary: 'Historico trabalhista encerrado em 2019 sem desdobramento atual.',
-                items: [{ processNumber: '0001122-08.2019.5.03.0007', court: 'TRT 3 - 7a Vara do Trabalho', classification: 'Horas extras', stage: 'Arquivado', status: 'Encerrado', impact: 'Baixo impacto atual para decisao de contratacao.' }],
-            },
-        ],
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Sem mandados ativos localizados.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao enviada', description: 'RH iniciou due diligence para lideranca de RH.', at: '2026-03-25T11:00:00-03:00' },
             { type: 'automation', status: 'risk', title: 'Retorno parcial da camada judicial', description: 'Tribunal estadual ficou indisponivel durante a coleta criminal.', at: '2026-03-25T13:10:00-03:00' },
@@ -606,21 +569,6 @@ const additionalCases = [
         ],
         nextSteps: ['Nao seguir com a contratacao para area de Compras.', 'Registrar o conflito no comite de risco e compliance.'],
         clientNotes: 'Caso de demo para risco reputacional e conflito de interesse sem dependencia de apontamento criminal.',
-        processHighlights: [
-            {
-                area: 'digital',
-                title: 'Digital',
-                source: 'OSINT + revisao analitica',
-                total: 3,
-                summary: 'Tres evidencias relevantes de conflito e exposicao digital.',
-                items: [
-                    { processNumber: 'OSINT-2026-001', court: 'Monitoramento publico', classification: 'Vinculo com fornecedor', stage: 'Confirmado', status: 'Ativo', impact: 'Risco direto para funcao com aprovacao de compras.' },
-                    { processNumber: 'OSINT-2026-002', court: 'Monitoramento publico', classification: 'Exposicao de documento interno', stage: 'Confirmado', status: 'Ativo', impact: 'Fragilidade grave de confidencialidade.' },
-                    { processNumber: 'OSINT-2026-003', court: 'Monitoramento publico', classification: 'Hostilidade a ex-empregador', stage: 'Confirmado', status: 'Ativo', impact: 'Aumenta risco reputacional para lideranca.' },
-                ],
-            },
-        ],
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Nenhum mandado ou alerta de captura localizado.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao prioritaria recebida', description: 'Caso marcado como urgente para lideranca de Compras.', at: '2026-03-17T08:45:00-03:00' },
             { type: 'osint', status: 'risk', title: 'Vinculo com fornecedor identificado', description: 'Registros publicos conectaram a candidata a fornecedor da base homologada.', at: '2026-03-17T14:35:00-03:00' },

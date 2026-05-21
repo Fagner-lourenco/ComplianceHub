@@ -2070,8 +2070,6 @@ function buildAiPrefillPrompt(caseData) {
         phase: item.phase || null,
         source: item.source || 'Judit',
     }));
-    const preliminaryProcessHighlights = buildProcessHighlights(caseData).slice(0, 8);
-    const preliminaryWarrantFindings = buildWarrantFindings(caseData).slice(0, 6);
     const promptPayload = {
         candidate: {
             name: caseData.candidateName || null,
@@ -2144,11 +2142,6 @@ function buildAiPrefillPrompt(caseData) {
             activeWarrants: (caseData.bigdatacorpActiveWarrants || []).slice(0, 5),
             processos: (caseData.bigdatacorpProcessos || []).slice(0, 10),
             professionNotes: caseData.bigdatacorpProfessionNotes || null,
-        },
-        preliminaryHighlights: {
-            processHighlights: preliminaryProcessHighlights,
-            warrantFindings: preliminaryWarrantFindings,
-            topProcessos,
         },
     };
 
@@ -4929,7 +4922,7 @@ function computeAutoClassification(caseData) {
    ========================================================= */
 
 const IDENTITY_FIELDS = [
-    'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+    'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
     'requestedBy', 'requestedByName', 'requestedByEmail',
     'slaHours',
 
@@ -4953,8 +4946,6 @@ const RESULT_ONLY_FIELDS = [
     'conflictInterest', 'conflictNotes',
     'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
-    'warrantFindings',
-    'processHighlights',
     'keyFindings',
     'executiveSummary',
     'publicReportToken',
@@ -4987,7 +4978,7 @@ const CLIENT_CASE_FIELDS = [
     'concludedAt',
     'updatedAt',
     'correctedAt',
-    // executiveSummary, keyFindings, processHighlights, warrantFindings already in PUBLIC_RESULT_FIELDS
+    // executiveSummary, keyFindings already in PUBLIC_RESULT_FIELDS
     'statusSummary',
     'sourceSummary',
     'nextSteps',
@@ -5018,8 +5009,7 @@ function buildClientCasePayload(caseId, caseData) {
     if (payload.hasNotes === undefined) payload.hasNotes = Boolean(caseData.analystComment || caseData.executiveSummary || caseData.clientNotes);
     if (payload.hasEvidence === undefined) {
         payload.hasEvidence = Boolean(
-            (Array.isArray(caseData.warrantFindings) && caseData.warrantFindings.length > 0)
-            || (Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0)
+            (Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0)
             || (Array.isArray(caseData.timelineEvents) && caseData.timelineEvents.some((event) => event.status === 'risk'))
         );
     }
@@ -7483,180 +7473,6 @@ exports.returnCaseToClient = onCall(
 
 /**
  * Build a source label for a process group based on the actual providers present.
- * BUG-R1-003 fix: replaces generic "Judit / Escavador / BigDataCorp" with real sources.
- */
-function buildProcessGroupSource(items) {
-    const providers = new Set();
-    for (const item of items) {
-        if (item.source) providers.add(item.source);
-    }
-    if (providers.size === 0) return 'Fontes consultadas';
-    return Array.from(providers).join(' / ');
-}
-
-function buildProcessHighlights(caseData) {
-    const juditItems = caseData.juditRoleSummary || [];
-    const escItems = caseData.escavadorProcessos || [];
-    const seenCnj = new Set();
-    const relevant = [];
-
-    for (const p of juditItems) {
-        if ((p.secrecyLevel || 0) > 0) continue;
-        if (!p.isCriminal && !p.hasExactCpfMatch && p.status !== 'ATIVO') continue;
-        if (p.isPossibleHomonym && !p.hasExactCpfMatch) continue;
-        // BUG-R1-005: Normalize CNJ for deduplication.
-        const juditCnj = normCnj(p.code);
-        if (juditCnj) seenCnj.add(juditCnj);
-        relevant.push({
-            processNumber: p.code,
-            area: p.area,
-            status: p.status,
-            court: p.tribunalAcronym,
-            classification: (p.classifications || [])[0] || null,
-            stage: p.phase,
-            source: 'Judit',
-            isCriminal: p.isCriminal,
-        });
-    }
-    for (const p of escItems) {
-        const cnj = normCnj(p.numeroCnj || '');
-        // P04: When same CNJ exists in Judit, merge complementary data instead of discarding
-        // BUG-R1-005: Normalize CNJ for deduplication.
-        if (cnj && seenCnj.has(cnj)) {
-            const existing = relevant.find((r) => normCnj(r.processNumber) === cnj);
-            if (existing) {
-                if (!existing.classification && p.assuntoPrincipal) existing.classification = p.assuntoPrincipal;
-                if (!existing.stage && p.grauFormatado) existing.stage = p.grauFormatado;
-                if (!existing.status && p.status) existing.status = p.status;
-                if (existing.source === 'Judit') existing.source = 'Judit / Escavador';
-            }
-            continue;
-        }
-        // AUD-005: Filter segredoJustica in Escavador (parity with Judit secrecyLevel filter)
-        if (p.segredoJustica) continue;
-        const isCriminal = /penal|criminal/i.test(p.area || '');
-        const isActive = /ativo/i.test(p.status || '');
-        if (!isCriminal && !isActive) continue;
-        if (cnj) seenCnj.add(cnj);
-        relevant.push({
-            processNumber: p.numeroCnj || null,
-            area: p.area,
-            status: p.status,
-            court: p.tribunalSigla,
-            classification: p.assuntoPrincipal || null,
-            stage: p.grauFormatado || null,
-            source: 'Escavador',
-            isCriminal,
-        });
-    }
-
-    // BigDataCorp processes
-    // BUG-R1-004: BDC may return CNJ in .numeroCnj, .Number, or .number fields.
-    const bdcItems = caseData.bigdatacorpProcessos || [];
-    for (const p of bdcItems) {
-        const cnjRaw = p.numeroCnj || p.Number || p.number || p.cnj || '';
-        const cnj = normCnj(cnjRaw);
-        if (cnj && seenCnj.has(cnj)) {
-            const existing = relevant.find((r) => normCnj(r.processNumber) === cnj);
-            if (existing) {
-                if (!existing.classification && p.assunto) existing.classification = p.assunto;
-                if (!existing.court && p.tribunal) existing.court = p.tribunal;
-                if (existing.source && !existing.source.includes('BigDataCorp')) existing.source += ' / BigDataCorp';
-            }
-            continue;
-        }
-        if (cnj) seenCnj.add(cnj);
-        const isCriminal = /penal|criminal/i.test(p.area || '');
-        const isActive = /ativo|tramitando/i.test(p.status || '');
-        if (!isCriminal && !isActive) continue;
-        relevant.push({
-            processNumber: cnjRaw || null,
-            area: p.area || null,
-            status: p.status || null,
-            court: p.tribunal || null,
-            classification: p.assunto || null,
-            stage: p.grau || null,
-            source: 'BigDataCorp',
-            isCriminal,
-        });
-    }
-
-    const byArea = {};
-    for (const p of relevant.slice(0, 30)) {
-        const area = p.area || 'Outros';
-        if (!byArea[area]) byArea[area] = [];
-        byArea[area].push(p);
-    }
-    return Object.entries(byArea).map(([area, items]) => ({
-        title: area,
-        area,
-        source: buildProcessGroupSource(items),
-        total: items.length,
-        summary: `${items.length} registro(s) identificado(s) na área ${area}.`,
-        items: items.map((p) => ({
-            processNumber: p.processNumber || 'NÂº não disponível',
-            status: p.status,
-            court: p.court,
-            classification: p.classification,
-            stage: p.stage,
-        })),
-    }));
-}
-
-function buildWarrantFindings(caseData) {
-    const seenCnjs = new Set();
-    const findings = [];
-    for (const w of (caseData.juditWarrants || [])) {
-        const cnj = normCnj(w.code || '');
-        if (cnj) seenCnjs.add(cnj);
-        findings.push({
-            status: w.status || 'Status não informado',
-            court: w.court || w.tribunalAcronym || null,
-            reference: w.code || null,
-            source: 'Judit',
-            summary: [
-                w.warrantType,
-                w.arrestType,
-                w.issueDate ? `Emitido em ${w.issueDate}` : null,
-                w.regime ? `Regime: ${w.regime}` : null,
-            ].filter(Boolean).join('. '),
-        });
-    }
-    // BUG-R1-006: Include BigDataCorp active warrants
-    const bdcWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants) ? caseData.bigdatacorpActiveWarrants : [];
-    for (const w of bdcWarrants) {
-        if (!w) continue;
-        const cnj = normCnj(w.number || w.processNumber || '');
-        if (cnj && seenCnjs.has(cnj)) continue;
-        if (cnj) seenCnjs.add(cnj);
-        findings.push({
-            status: w.isActive !== false ? 'Ativo' : 'Inativo',
-            court: w.court || w.tribunal || null,
-            reference: w.number || w.processNumber || null,
-            source: 'BigDataCorp',
-            summary: [
-                w.type || 'Mandado de prisao',
-                w.court ? `Tribunal: ${w.court}` : null,
-                w.issuedAt ? `Emitido em ${w.issuedAt}` : null,
-            ].filter(Boolean).join('. '),
-        });
-    }
-    // FonteData is a reserve provider — only include its warrant finding when Judit returned nothing
-    if (findings.length === 0 && caseData.enrichmentSources?.warrant && !caseData.enrichmentSources.warrant.error) {
-        const ws = caseData.enrichmentSources.warrant;
-        if (ws.result === 'POSITIVE' || caseData.warrantFlag === 'POSITIVE') {
-            findings.push({
-                status: 'Mandado detectado',
-                court: null,
-                reference: null,
-                source: 'FonteData (cnj-mandados-prisao)',
-                summary: ws.detail || 'Mandado de prisao detectado via consulta CNJ-Mandados (FonteData).',
-            });
-        }
-    }
-    return findings;
-}
-
 /* =========================================================
    DETERMINISTIC PREFILL: parallel generation for comparison.
    These helpers produce fully deterministic narratives using
@@ -8712,13 +8528,6 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
     const snapshot = {};
     const concludedAtFallback = options.concludedAtOverride || merged.concludedAt || merged.updatedAt || null;
 
-    if (!Array.isArray(merged.processHighlights) || merged.processHighlights.length === 0) {
-        merged.processHighlights = buildProcessHighlights(merged);
-    }
-    if (!Array.isArray(merged.warrantFindings) || merged.warrantFindings.length === 0) {
-        merged.warrantFindings = buildWarrantFindings(merged);
-    }
-
     merged.executiveSummary = resolveNarrativeField(merged, payload, 'executiveSummary', {
         fallbackValue: () => buildExecutiveSummaryFallback(merged),
     });
@@ -8777,7 +8586,6 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
             (
                 hasMeaningfulValue(merged.executiveSummary)
                 || (Array.isArray(merged.keyFindings) && merged.keyFindings.length > 0)
-                || (Array.isArray(merged.warrantFindings) && merged.warrantFindings.length > 0)
                 || hasMeaningfulValue(merged.analystComment)
             );
     }
@@ -8828,8 +8636,6 @@ function buildResetPublishedCaseFields(caseData, options = {}) {
         reportSlug: FieldValue.delete(),
         concludedAt: FieldValue.delete(),
         turnaroundHours: FieldValue.delete(),
-        processHighlights: FieldValue.delete(),
-        warrantFindings: FieldValue.delete(),
         keyFindings: FieldValue.delete(),
         executiveSummary: FieldValue.delete(),
         analystComment: FieldValue.delete(),
@@ -8889,7 +8695,6 @@ function hasPublicReportMinimumContent(caseData, publicSnapshot = {}) {
         (
             hasMeaningfulValue(reportData.executiveSummary) ||
             (Array.isArray(reportData.keyFindings) && reportData.keyFindings.length > 0) ||
-            (Array.isArray(reportData.warrantFindings) && reportData.warrantFindings.length > 0) ||
             hasMeaningfulValue(reportData.analystComment)
         );
 }
@@ -8958,6 +8763,11 @@ exports.concludeCaseByAnalyst = onCall(
             }
         }
 
+        // BUG-R4-007: analystComment is mandatory for all cases
+        if (!hasMeaningfulValue(updatePayload.analystComment)) {
+            throw new HttpsError('invalid-argument', 'Justificativa final (analystComment) é obrigatória para conclusão do caso.');
+        }
+
         // Hard facts validation: block conclusion if any provider found active warrants but warrantFlag is unresolved
         // BUG-R4-005: Include BigDataCorp warrants in the validation.
         const juditActiveWarrants = caseData.juditActiveWarrantCount || 0;
@@ -9004,8 +8814,6 @@ exports.concludeCaseByAnalyst = onCall(
         }
 
         const conclusionTimestamp = new Date();
-        updatePayload.processHighlights = buildProcessHighlights(caseData);
-        updatePayload.warrantFindings = buildWarrantFindings(caseData);
         updatePayload.executiveSummary = resolveNarrativeField(caseData, payload, 'executiveSummary', {
             fallbackValue: () => buildExecutiveSummaryFallback({ ...caseData, ...updatePayload }),
         });
@@ -9119,7 +8927,6 @@ exports.concludeCaseByAnalyst = onCall(
             (
                 hasMeaningfulValue(updatePayload.executiveSummary)
                 || (Array.isArray(updatePayload.keyFindings) && updatePayload.keyFindings.length > 0)
-                || (Array.isArray(updatePayload.warrantFindings) && updatePayload.warrantFindings.length > 0)
                 || hasMeaningfulValue(updatePayload.analystComment)
             );
         updatePayload.reportReady = hasMinContent;
@@ -10142,7 +9949,7 @@ exports.rerunEnrichmentPhase = onCall(
                 'aiHomonymCostUsd', 'aiHomonymTokens', 'aiHomonymExecutedAt', 'aiHomonymError',
                 'prefillNarratives', 'deterministicPrefill',
                 'riskScore', 'riskLevel', 'finalVerdict', 'publicReportToken', 'reportSlug', 'reportReady',
-                'sourceSummary', 'statusSummary', 'nextSteps', 'processHighlights', 'warrantFindings',
+                'sourceSummary', 'statusSummary', 'nextSteps',
                 'criminalFlag', 'criminalSeverity', 'criminalEvidenceQuality', 'criminalNotes',
                 'warrantFlag', 'warrantNotes', 'laborFlag', 'laborSeverity', 'laborNotes',
                 'coverageLevel', 'coverageNotes', 'providerDivergence', 'ambiguityNotes', 'reviewRecommended',
@@ -10226,7 +10033,7 @@ exports.rerunEnrichmentPhase = onCall(
             'aiHomonymCostUsd', 'aiHomonymTokens', 'aiHomonymExecutedAt', 'aiHomonymError',
             'prefillNarratives', 'deterministicPrefill',
             'riskScore', 'riskLevel', 'finalVerdict', 'publicReportToken', 'reportSlug', 'reportReady',
-            'sourceSummary', 'statusSummary', 'nextSteps', 'processHighlights', 'warrantFindings',
+            'sourceSummary', 'statusSummary', 'nextSteps',
         ];
         const classificationDerivedFields = [
             'criminalFlag', 'criminalSeverity', 'criminalEvidenceQuality', 'criminalNotes',

@@ -28,8 +28,6 @@ Este script migra os dados **já existentes** no Firestore para aplicar a mesma 
 - `warrantNotes`
 - `analystComment`
 - `finalJustification`
-- `processHighlights`
-- `warrantFindings`
 - `prefillNarratives.*` (executiveSummary, keyFindings, etc.)
 - `reviewDraft.*` (mesmos campos)
 - `aiStructured.*` (resumo, justificativa, recomendacao)

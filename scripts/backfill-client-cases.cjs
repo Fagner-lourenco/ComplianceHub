@@ -113,7 +113,7 @@ const CLIENT_CASE_FIELDS = [
     'correctionReason', 'correctionNotes', 'correctionRequestedAt', 'correctionRequestedBy',
     'executiveSummary', 'statusSummary', 'sourceSummary',
     'keyFindings', 'nextSteps', 'clientNotes',
-    'processHighlights', 'warrantFindings', 'timelineEvents',
+    'timelineEvents',
     'reportReady', 'reportSlug',
     'hasNotes', 'hasEvidence', 'turnaroundHours',
 ];
@@ -154,12 +154,10 @@ function buildPayloadFields(caseId, rawFields) {
     const clientNotes = fromFV(rawFields.clientNotes);
     payload.hasNotes = toFV(Boolean(analystComment || executiveSummary || clientNotes));
 
-    const processHighlights = fromFV(rawFields.processHighlights);
-    const warrantFindings = fromFV(rawFields.warrantFindings);
     const timelineEvents = fromFV(rawFields.timelineEvents);
+    const keyFindings = fromFV(rawFields.keyFindings);
     payload.hasEvidence = toFV(Boolean(
-        (Array.isArray(processHighlights) && processHighlights.length > 0)
-        || (Array.isArray(warrantFindings) && warrantFindings.length > 0)
+        (Array.isArray(keyFindings) && keyFindings.length > 0)
         || (Array.isArray(timelineEvents) && timelineEvents.some((e) => e.status === 'risk'))
     ));
 

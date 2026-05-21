@@ -208,7 +208,7 @@ async function main() {
         const htmlSize = Buffer.byteLength(html, 'utf-8');
         console.log(`   📄 HTML gerado: ${(htmlSize / 1024).toFixed(1)} KB`);
         console.log(`   📊 Dados: riskScore=${caseData.riskScore || 0}, verdict=${caseData.finalVerdict || '—'}, phases=${caseData.enabledPhases?.length || 0}`);
-        console.log(`   📝 Seções: exec=${!!caseData.executiveSummary}, findings=${(caseData.keyFindings || []).length}, highlights=${(caseData.processHighlights || []).length}, warrants=${(caseData.warrantFindings || []).length}`);
+        console.log(`   📝 Seções: exec=${!!caseData.executiveSummary}, findings=${(caseData.keyFindings || []).length}`);
 
         // Update publicReport if it exists
         const reportToken = caseData.publicReportToken;
@@ -247,8 +247,7 @@ async function main() {
             'digitalFlag', 'digitalVectors', 'digitalNotes',
             'conflictInterest', 'conflictNotes',
             'riskScore', 'riskLevel', 'finalVerdict', 'analystComment',
-            'enabledPhases', 'processHighlights', 'warrantFindings',
-            'keyFindings', 'executiveSummary', 'publicReportToken',
+            'enabledPhases', 'keyFindings', 'executiveSummary', 'publicReportToken',
         ];
 
         const prFields = {};

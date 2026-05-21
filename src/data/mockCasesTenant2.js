@@ -9,8 +9,7 @@ const baseCase = (overrides) => ({
     enrichmentStatus: 'DONE',
     escavadorEnrichmentStatus: 'DONE',
     juditEnrichmentStatus: 'DONE',
-    processHighlights: [],
-    warrantFindings: [],
+    keyFindings: [],
     keyFindings: [],
     nextSteps: [],
     timelineEvents: [],
@@ -111,7 +110,6 @@ export const TEN_002_CASES = [
         keyFindings: ['Sem antecedentes ou mandados.', 'Presenca digital aderente ao ambiente corporativo.', 'Sem conflito de interesse identificado.'],
         nextSteps: ['Seguir com a etapa final de admissao.'],
         clientNotes: 'Caso limpo do tenant demo financeiro.',
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Sem mandados ativos.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao aberta', description: 'Due diligence iniciada pelo time de compliance.', at: '2026-03-24T09:00:00-03:00' },
             { type: 'review', status: 'done', title: 'Parecer emitido', description: 'Caso aprovado sem ressalvas.', at: '2026-03-25T13:10:00-03:00' },
@@ -210,19 +208,6 @@ export const TEN_002_CASES = [
         keyFindings: ['Processo criminal em fase recursal.', 'Sinal de inconsistencias em perfis digitais.', 'Exposicao publica moderada em noticias regionais.'],
         nextSteps: ['Bloquear a contratacao para a funcao comercial.'],
         clientNotes: 'Caso de alto risco do tenant Banco Atlantico.',
-        processHighlights: [
-            {
-                area: 'criminal',
-                title: 'Criminal',
-                source: 'Escavador',
-                total: 1,
-                summary: 'Um processo criminal relevante em fase recursal.',
-                items: [
-                    { processNumber: '0034561-02.2024.8.13.0024', court: 'TJMG - 3a Vara Criminal', classification: 'Apropriacao indebita', stage: 'Apelacao', status: 'Recursal', impact: 'Incompativel com carteira de relacionamento financeiro.' },
-                ],
-            },
-        ],
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Sem mandados ativos.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Solicitacao prioritaria aberta', description: 'Analise iniciada para posicao comercial PJ.', at: '2026-03-19T08:20:00-03:00' },
             { type: 'judicial', status: 'risk', title: 'Processo criminal consolidado', description: 'Achado criminal em fase recursal classificado como relevante.', at: '2026-03-19T13:30:00-03:00' },
@@ -274,7 +259,6 @@ export const TEN_002_CASES = [
         keyFindings: ['Sem passivos relevantes.', 'Boa aderencia reputacional para a funcao.'],
         nextSteps: ['Prosseguir com a admissao.'],
         clientNotes: 'Segundo caso apto do tenant financeiro.',
-        warrantFindings: [{ status: 'NEGATIVE', source: 'Judit', summary: 'Sem mandados.' }],
         timelineEvents: [
             { type: 'created', status: 'done', title: 'Caso aberto', description: 'Solicitacao enviada para coordenacao de riscos.', at: '2026-03-22T11:30:00-03:00' },
             { type: 'review', status: 'done', title: 'Caso concluido', description: 'Parecer final apto emitido.', at: '2026-03-23T16:00:00-03:00' },

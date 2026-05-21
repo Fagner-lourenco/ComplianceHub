@@ -11,7 +11,7 @@
  * 
  * Campos verificados:
  * - executiveSummary, keyFindings, criminalNotes, laborNotes, warrantNotes
- * - analystComment, finalJustification, processHighlights, warrantFindings
+ * - analystComment, finalJustification
  * - prefillNarratives.* (executiveSummary, keyFindings, etc.)
  * - reviewDraft.* (mesmos campos)
  * - aiStructured.resumo, aiStructured.evidencias
@@ -125,8 +125,6 @@ const ROOT_TEXT_FIELDS = [
     'warrantNotes',
     'analystComment',
     'finalJustification',
-    'processHighlights',
-    'warrantFindings',
 ];
 
 // Campos textuais dentro de objetos aninhados

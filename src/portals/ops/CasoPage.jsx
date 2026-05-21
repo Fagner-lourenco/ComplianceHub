@@ -602,6 +602,7 @@ export default function CasoPage() {
         enabledPhases.includes('digital') && { label: 'Perfil digital definido', ok: Boolean(form.digitalFlag) },
         enabledPhases.includes('conflictInterest') && { label: 'Conflito de interesse definido', ok: Boolean(form.conflictInterest) },
         { label: 'Resultado final definido', ok: Boolean(form.finalVerdict) },
+        { label: 'Justificativa final preenchida', ok: Boolean(form.analystComment?.trim()?.length >= 20), block: !form.analystComment?.trim() },
         // ── Data quality warnings (non-blocking) ──
         form.criminalFlag === 'NEGATIVE' && (caseData?.juditCriminalCount || 0) > 0 && {
             label: `Flag criminal NEGATIVE mas ${caseData.juditCriminalCount} processo(s) criminal(is) encontrado(s)`,

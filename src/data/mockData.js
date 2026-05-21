@@ -8,8 +8,7 @@ function withPublicResult(caseData) {
         reportReady: caseData.reportReady ?? caseData.status === 'DONE',
         hasNotes: caseData.hasNotes ?? Boolean(caseData.analystComment || caseData.executiveSummary || caseData.clientNotes),
         hasEvidence: caseData.hasEvidence ?? Boolean(
-            (Array.isArray(caseData.processHighlights) && caseData.processHighlights.length > 0)
-            || (Array.isArray(caseData.warrantFindings) && caseData.warrantFindings.length > 0)
+            (Array.isArray(caseData.keyFindings) && caseData.keyFindings.length > 0)
             || (Array.isArray(caseData.timelineEvents) && caseData.timelineEvents.some((event) => event.status === 'risk'))
         ),
         exportHistory: caseData.exportHistory || [],
@@ -94,8 +93,6 @@ export const MOCK_CASE_DETAILS = Object.fromEntries(
             keyFindings: caseData.keyFindings,
             nextSteps: caseData.nextSteps,
             clientNotes: caseData.clientNotes,
-            processHighlights: caseData.processHighlights,
-            warrantFindings: caseData.warrantFindings,
             timelineEvents: caseData.timelineEvents,
             reportReady: caseData.reportReady,
             reportSlug: caseData.reportSlug,
