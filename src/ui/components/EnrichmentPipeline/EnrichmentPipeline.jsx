@@ -7,7 +7,7 @@ const PROVIDERS = [
     { key: 'escavador', label: 'Escavador', statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', costField: null },
     { key: 'djen', label: 'DJEN', statusField: 'djenEnrichmentStatus', errorField: 'djenError', costField: null, free: true },
     { key: 'autoclass', label: 'Auto-classificação', statusField: null, errorField: null, costField: null },
-    { key: 'ai', label: 'Análise IA', statusField: null, errorField: 'aiError', costField: 'aiCostUsd' },
+    { key: 'ai', label: 'Análise assistida', statusField: null, errorField: 'aiClassificationReviewError', costField: 'aiClassificationReviewCostUsd' },
     { key: 'fontedata', label: 'FonteData', statusField: 'enrichmentStatus', errorField: 'enrichmentError', costField: null, fallback: true },
 ];
 
@@ -34,9 +34,9 @@ function getProviderStatus(caseData, provider) {
     }
     if (provider.key === 'ai') {
         if (caseData.aiStatus) return caseData.aiStatus;
-        const hasGeneralResult = caseData.aiRawResponse || caseData.aiAnalysis || caseData.aiStructured;
+        const hasGeneralResult = caseData.aiClassificationReview || caseData.aiClassificationReviewRawResponse;
         const hasHomonymResult = Boolean(caseData.aiHomonymStructured);
-        const hasGeneralError = Boolean(caseData.aiError);
+        const hasGeneralError = Boolean(caseData.aiClassificationReviewError || caseData.aiError);
         const hasHomonymError = Boolean(caseData.aiHomonymError);
         // BUG-7 fix: If homonym succeeded but general AI failed (or vice versa), show PARTIAL.
         // Also check aiHomonymError for FAILED status.

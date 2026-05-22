@@ -71,7 +71,7 @@ function getMacroProgress(caseData) {
     const juditDone = ['DONE', 'PARTIAL', 'SKIPPED'].includes(caseData.juditEnrichmentStatus);
     const escDone = ['DONE', 'PARTIAL', 'SKIPPED'].includes(caseData.escavadorEnrichmentStatus);
     const classified = !!caseData.autoClassifiedAt;
-    const aiDone = !!caseData.aiStructured;
+    const aiDone = !!(caseData.aiClassificationReview || caseData.aiStructured);
     if (aiDone) return { label: 'Análise finalizada', step: 5, color: 'var(--brand-600)' };
     if (classified) return { label: 'Classificando resultado', step: 4, color: 'var(--brand-600)' };
     if (escDone) return { label: 'Consultando registros', step: 3, color: 'var(--brand-600)' };

@@ -85,7 +85,7 @@ describe('CasoPage', () => {
         expect(screen.queryByText('TechCorp Inc.')).not.toBeInTheDocument();
     });
 
-    it('exibe analise especializada de homonimos quando presente no caso', async () => {
+    it('exibe detalhes tecnicos de homonimos quando presentes no caso', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -119,13 +119,13 @@ describe('CasoPage', () => {
 
         render(<CasoPage />);
 
-        expect(await screen.findByText('Análise de Homônimos (automática)')).toBeInTheDocument();
+        expect(await screen.findByText('Detalhes técnicos de homônimos')).toBeInTheDocument();
         expect(screen.getByText('Geografia distante e ausencia de CPF exato reduzem a aderencia do vinculo.')).toBeInTheDocument();
         expect(screen.getByText('Leitura por processo')).toBeInTheDocument();
         expect(screen.getByText('Processo encontrado apenas por nome em UF distante.')).toBeInTheDocument();
     });
 
-    it('exibe cobertura, evidencias ambiguas e safety net no card geral da analise automatica', async () => {
+    it('exibe analise assistida, cobertura, evidencias ambiguas e safety net', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -134,6 +134,9 @@ describe('CasoPage', () => {
                 cpf: '10794180329',
                 createdAt: '2026-04-04',
                 enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE_PARTIAL',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
                 coverageLevel: 'LOW_COVERAGE',
                 criminalEvidenceQuality: 'NEGATIVE_WITH_PARTIAL_COVERAGE',
                 coverageNotes: ['Nenhum provider retornou processo aproveitavel.'],
@@ -160,12 +163,186 @@ describe('CasoPage', () => {
 
         render(<CasoPage />);
 
-        expect(await screen.findByText('Análise automática')).toBeInTheDocument();
-        expect(screen.getByText('Evidencias ambiguas')).toBeInTheDocument();
-        expect(screen.getByText('Ha ruído residual por nome em fonte secundaria.')).toBeInTheDocument();
-        expect(screen.getByText('Revisao manual: Sim')).toBeInTheDocument();
+        expect(await screen.findByText('Análise assistida da autoclassificação')).toBeInTheDocument();
+        expect(screen.getByText('Achados ambiguos')).toBeInTheDocument();
+        expect(screen.getAllByText('A cobertura geral das fontes ficou reduzida.').length).toBeGreaterThan(0);
+        expect(screen.getByText(/Sugestão consultiva: Revisar antes de concluir/i)).toBeInTheDocument();
         expect(screen.getByText('Safety net de cobertura parcial')).toBeInTheDocument();
         expect(screen.getByText(/Rodar Escavador/i)).toBeInTheDocument();
+    });
+
+    it('nao mostra conclusao assistida enquanto a autoclassificacao ainda esta pendente', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Fagner Lourenço',
+                cpf: '08405241965',
+                createdAt: '2026-05-18',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                bigdatacorpEnrichmentStatus: 'DONE',
+                juditEnrichmentStatus: 'RUNNING',
+                enrichmentStatus: 'PENDING',
+                bigdatacorpProcessos: [{ cnj: '0001234-55.2025.8.26.0001', isDirectCpfMatch: true }],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
+        expect(screen.getByText(/Aguardando a autoclassificacao deterministica/i)).toBeInTheDocument();
+        expect(screen.getByText(/Nao conclua o caso enquanto a consulta automatica/i)).toBeInTheDocument();
+        expect(screen.queryByText(/nao indica achado criminal material/i)).not.toBeInTheDocument();
+    });
+
+    it('oculta JSON bruto e termos tecnicos da analise assistida contaminada', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Fagner Lourenço',
+                cpf: '08405241965',
+                createdAt: '2026-05-18',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                autoClassifiedAt: '2026-05-22T00:47:59.994Z',
+                criminalFlag: 'NEGATIVE',
+                juditCriminalFlag: 'POSITIVE',
+                juditCriminalCount: 1,
+                bigdatacorpCriminalFlag: 'NEGATIVE',
+                bigdatacorpCriminalCount: 0,
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                coverageLevel: 'HIGH_COVERAGE',
+                providerDivergence: 'MEDIUM',
+                aiClassificationReviewOk: true,
+                aiClassificationReview: {
+                    summary: '{"summary":"Pessoa fisica com criminalFlag NEGATIVE"}',
+                    identityAssessment: {
+                        status: 'UNKNOWN',
+                        rationale: 'hasExactCpfMatch=true no payload.',
+                        homonymRisk: 'UNKNOWN',
+                    },
+                    classificationValidation: {
+                        criminal: { autoFlag: null, assessment: 'INSUFFICIENT_DATA', evidenceStrength: 'INSUFFICIENT', rationale: 'isCriminal=true.', possibleErrors: [] },
+                        labor: { autoFlag: null, assessment: 'INSUFFICIENT_DATA', evidenceStrength: 'INSUFFICIENT', rationale: '', possibleErrors: [] },
+                        warrant: { autoFlag: null, assessment: 'INSUFFICIENT_DATA', evidenceStrength: 'INSUFFICIENT', rationale: '', possibleErrors: [] },
+                    },
+                    inconsistencies: ['providerDivergence=MEDIUM'],
+                    manualReviewPoints: ['Confirmar leitura operacional antes de concluir.'],
+                    consultativeSuggestion: {
+                        action: 'REVIEW_BEFORE_CONCLUDING',
+                        rationale: '{"summary":"payload bruto"}',
+                    },
+                    confidence: 'MEDIUM',
+                },
+                socialProfiles: {},
+                otherSocialUrls: [],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
+        expect(screen.getAllByText('Cobertura alta').length).toBeGreaterThan(0);
+        expect(screen.getByText('Divergência moderada')).toBeInTheDocument();
+        expect(screen.queryByText(/\{"summary"/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/criminalFlag|hasExactCpfMatch|isCriminal|providerDivergence/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('Redes sociais fornecidas')).not.toBeInTheDocument();
+    });
+
+    it('abre modal com todas as comunicacoes DJEN do mesmo processo', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Fagner Lourenço',
+                cpf: '08405241965',
+                createdAt: '2026-05-18',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                djenComunicacaoTotal: 2,
+                djenComunicacoes: [
+                    {
+                        id: 'djen-1',
+                        dataDisponibilizacao: '2026-05-01',
+                        tribunal: 'TJPR',
+                        classe: 'Ação Penal',
+                        area: 'criminal',
+                        numeroProcesso: '00012345620258160001',
+                        numeroProcessoMascara: '0001234-56.2025.8.16.0001',
+                        tipoComunicacao: 'Intimação',
+                        confirmationLevel: 'PROCESS_CONFIRMED',
+                        textoCompleto: 'Primeira comunicação do processo.',
+                    },
+                    {
+                        id: 'djen-2',
+                        dataDisponibilizacao: '2026-05-02',
+                        tribunal: 'TJPR',
+                        classe: 'Ação Penal',
+                        area: 'criminal',
+                        numeroProcesso: '00012345620258160001',
+                        numeroProcessoMascara: '0001234-56.2025.8.16.0001',
+                        tipoComunicacao: 'Despacho',
+                        confirmationLevel: 'PROCESS_CONFIRMED',
+                        textoCompleto: 'Segunda comunicação do processo.',
+                    },
+                ],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
+        fireEvent.click(screen.getAllByText('Criminal')[0]);
+        fireEvent.click(screen.getByText(/Comunicações judiciais DJEN \(2\)/));
+        fireEvent.click(screen.getAllByRole('button', { name: '0001234-56.2025.8.16.0001' })[0]);
+
+        expect(screen.getAllByText('DJEN').length).toBeGreaterThan(0);
+        expect(screen.getByText('Publicações no Diário (DJEN) · 2 ocorrência(s)')).toBeInTheDocument();
+        expect(screen.getAllByText('Intimação').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Despacho').length).toBeGreaterThan(0);
+    });
+
+    it('mostra comunicacoes DJEN trabalhistas clicaveis na aba trabalhista', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'PENDING',
+                candidateName: 'Maria Silva',
+                cpf: '08405241965',
+                createdAt: '2026-05-18',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                djenComunicacoes: [{
+                    id: 'djen-labor-1',
+                    dataDisponibilizacao: '2026-05-03',
+                    tribunal: 'TRT9',
+                    classe: 'Reclamação Trabalhista',
+                    area: 'trabalhista',
+                    numeroProcesso: '00099998820255090001',
+                    numeroProcessoMascara: '0009999-88.2025.5.09.0001',
+                    tipoComunicacao: 'Notificação',
+                    confirmationLevel: 'NAME_EXACT',
+                }],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Maria Silva')).toBeInTheDocument();
+        fireEvent.click(screen.getAllByText('Trabalhista')[0]);
+        expect(screen.getByText(/Comunicações judiciais DJEN \(1\)/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: '0009999-88.2025.5.09.0001' }));
+        expect(screen.getByText('Publicações no Diário (DJEN) · 1 ocorrência(s)')).toBeInTheDocument();
+        expect(screen.getAllByText('Notificação').length).toBeGreaterThan(0);
     });
 
     it('usa prefillNarratives para resumo executivo, apontamentos e justificativa final', async () => {
@@ -229,11 +406,9 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
+        fireEvent.click(screen.getByText('Mandado de Prisao'));
 
-        const warrantTextarea = screen.getByDisplayValue('Nenhum mandado confirmado ate o momento.');
+        const warrantTextarea = await screen.findByDisplayValue('Nenhum mandado confirmado ate o momento.');
         fireEvent.change(warrantTextarea, { target: { value: 'Analista revisando o mandado com cautela.' } });
 
         await act(async () => {
@@ -352,7 +527,33 @@ describe('CasoPage', () => {
         expect(screen.getByRole('button', { name: /Concluir caso/i })).toBeDisabled();
     });
 
-    it('aplica apenas o resultado sugerido pela analise automatica sem sobrescrever o nivel de atencao calculado', async () => {
+    it('bloqueia conclusao quando resultado criminal ainda e consultivo', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Andressa de Souza Pereira',
+                cpf: '12345678901',
+                tenantId: 'tenant-1',
+                createdAt: '2026-05-22',
+                enabledPhases: ['criminal'],
+                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalNotes: 'Sem apontamento criminal.',
+                finalVerdict: 'FIT',
+                analystComment: 'Nao foram identificados apontamentos criminais nas fontes consultadas.',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Andressa de Souza Pereira')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /^Concluir$/i })).toBeDisabled();
+        fireEvent.click(screen.getByRole('button', { name: /^Concluir$/i }));
+        expect(casoPageMocks.callConcludeCaseByAnalyst).not.toHaveBeenCalled();
+    });
+
+    it('exibe revisao consultiva da autoclassificacao sem alterar o nivel de atencao calculado', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -364,15 +565,44 @@ describe('CasoPage', () => {
                 enabledPhases: ['criminal'],
                 criminalFlag: 'NEGATIVE',
                 finalVerdict: '',
-                aiStructuredOk: true,
-                aiStructured: {
-                    resumo: 'Sugestao da analise automatica com risco moderado.',
-                    sugestaoScore: 92,
-                    sugestaoVeredito: 'REVIEW',
-                    evidencias: ['Cobertura parcial exige revisao humana.'],
-                    inconsistencias: [],
-                    incertezas: [],
-                    alertas: [],
+                aiClassificationReviewOk: true,
+                aiClassificationReview: {
+                    summary: 'Autoclassificacao negativa com cobertura parcial e revisao humana recomendada.',
+                    identityAssessment: {
+                        status: 'CONFIRMED',
+                        rationale: 'Identidade confirmada nos dados disponiveis.',
+                        homonymRisk: 'LOW',
+                    },
+                    classificationValidation: {
+                        criminal: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE_WITH_CAUTION',
+                            evidenceStrength: 'WEAK',
+                            rationale: 'Negativo coerente, mas com cobertura parcial.',
+                            possibleErrors: ['Cobertura parcial pode esconder achados.'],
+                        },
+                        labor: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE',
+                            evidenceStrength: 'INSUFFICIENT',
+                            rationale: 'Sem evidencia trabalhista material.',
+                            possibleErrors: [],
+                        },
+                        warrant: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE',
+                            evidenceStrength: 'INSUFFICIENT',
+                            rationale: 'Sem mandado ativo confirmado.',
+                            possibleErrors: [],
+                        },
+                    },
+                    inconsistencies: [],
+                    manualReviewPoints: ['Validar cobertura antes da conclusao.'],
+                    consultativeSuggestion: {
+                        action: 'REVIEW_BEFORE_CONCLUDING',
+                        rationale: 'Revisar antes de concluir.',
+                    },
+                    confidence: 'MEDIUM',
                 },
             }, null), 0);
             return () => {};
@@ -381,15 +611,89 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Helena Prado')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /Aplicar resultado sugerido/i }));
+        expect(screen.getByText('Concorda com ressalva')).toBeInTheDocument();
+        expect(screen.getByText(/Sugestão consultiva: Revisar antes de concluir/i)).toBeInTheDocument();
+        expect(casoPageMocks.callSetAiDecisionByAnalyst).not.toHaveBeenCalled();
+    });
 
-        await waitFor(() => expect(casoPageMocks.callSetAiDecisionByAnalyst).toHaveBeenCalledWith({
-            caseId: 'CASE-999',
-            decision: 'ACCEPTED',
-        }));
-        fireEvent.click(screen.getByRole('button', { name: /Salvar rascunho/i }));
-        await waitFor(() => expect(casoPageMocks.callSaveCaseDraftByAnalyst).toHaveBeenCalled());
-        expect(casoPageMocks.callSaveCaseDraftByAnalyst.mock.calls.at(-1)[0].payload.riskScore).not.toBe(92);
-        expect(screen.getByText('REVIEW')).toBeInTheDocument();
+    it('nao propaga ressalva criminal para eixos trabalhista e mandado negativos bem cobertos', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Marcos Lima',
+                cpf: '11122233344',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                coverageLevel: 'HIGH_COVERAGE',
+                providerDivergence: 'MEDIUM',
+                reviewRecommended: true,
+                bigdatacorpEnrichmentStatus: 'DONE',
+                bigdatacorpCriminalFlag: 'NEGATIVE',
+                bigdatacorpCriminalCount: 0,
+                bigdatacorpLaborCount: 0,
+                bigdatacorpActiveWarrants: [],
+                juditEnrichmentStatus: 'DONE',
+                juditCriminalFlag: 'POSITIVE',
+                juditCriminalCount: 1,
+                juditActiveWarrantCount: 0,
+                juditWarrants: [],
+                djenEnrichmentStatus: 'DONE',
+                djenLaborFlag: 'NEGATIVE',
+                djenComunicacoes: [],
+                finalVerdict: '',
+                aiClassificationReviewOk: true,
+                aiClassificationReview: {
+                    summary: 'Negativo criminal com divergencia pontual; demais eixos sem achados materiais.',
+                    identityAssessment: {
+                        status: 'CONFIRMED',
+                        rationale: 'Identidade confirmada nos dados disponiveis.',
+                        homonymRisk: 'LOW',
+                    },
+                    classificationValidation: {
+                        criminal: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE_WITH_CAUTION',
+                            evidenceStrength: 'MIXED',
+                            rationale: 'Divergencia criminal exige confirmar papel processual.',
+                            possibleErrors: ['Confirmar papel processual criminal.'],
+                        },
+                        labor: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE',
+                            evidenceStrength: 'STRONG',
+                            rationale: 'Fontes consultadas nao retornaram achado trabalhista material.',
+                            possibleErrors: [],
+                        },
+                        warrant: {
+                            autoFlag: 'NEGATIVE',
+                            assessment: 'AGREE',
+                            evidenceStrength: 'STRONG',
+                            rationale: 'Fontes consultadas nao retornaram mandado ativo.',
+                            possibleErrors: [],
+                        },
+                    },
+                    inconsistencies: ['Divergencia criminal entre fontes.'],
+                    manualReviewPoints: ['Confirmar papel processual criminal.'],
+                    consultativeSuggestion: {
+                        action: 'REVIEW_BEFORE_CONCLUDING',
+                        rationale: 'Revisar apenas a divergencia criminal antes de concluir.',
+                    },
+                    confidence: 'MEDIUM',
+                },
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Marcos Lima')).toBeInTheDocument();
+        expect(screen.getAllByText('Concorda com ressalva')).toHaveLength(1);
+        expect(screen.getAllByText('Concorda').length).toBeGreaterThanOrEqual(2);
+        expect(screen.queryByText('Cobertura parcial pode esconder achados.')).not.toBeInTheDocument();
     });
 });

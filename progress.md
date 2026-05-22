@@ -1,6 +1,147 @@
 # Progress Log
 
+## 2026-05-22
+
+### Incidente: Tag Criminal Consultiva Em Caso Concluido
+- Carregadas skills `systematic-debugging` e `test-driven-development` para conduzir a correcao como bug fix com causa raiz e testes antes de codigo.
+- Consulta Firestore MCP falhou/ficou instavel; usado REST Firestore com token da Firebase CLI. `firebase login:list --json` tambem teve timeouts intermitentes, entao os comandos passaram a usar retry.
+- Caso `v5ef9RJ0wBmQLUz4HLf0` confirmado com `criminalFlag=INCONCLUSIVE_HOMONYM`, `riskScore=45`, `riskLevel=YELLOW`, `suggestedVerdict=ATTENTION`, `finalVerdict=FIT`.
+- Evidencia do caso real: Judit criminal negativo count 0, BigDataCorp criminal negativo count 0, trabalhista negativo, mandado negativo, DJEN criminal count 1 com evidencia fraca por nome/comunicacao (`WEAK_NAME_ONLY`).
+- Snapshots afetados confirmados: `cases/v5ef9RJ0wBmQLUz4HLf0/publicResult/latest` e `clientCases/v5ef9RJ0wBmQLUz4HLf0` tambem carregavam `INCONCLUSIVE_HOMONYM` e risco amarelo.
+- TDD backend: adicionado teste em `functions/helpers/aiCalibration.test.js` para `validateConcludeFinalFlags()` rejeitar `INCONCLUSIVE_HOMONYM` e aceitar `NEGATIVE`, `POSITIVE`, `INCONCLUSIVE`; falhou primeiro porque o helper nao existia.
+- TDD frontend: adicionado teste em `src/portals/ops/CasoPage.test.jsx` para bloquear conclusao quando `criminalFlag=INCONCLUSIVE_HOMONYM`; falhou primeiro porque o botao `Concluir` estava habilitado.
+- Backend: criado `FINAL_CRIMINAL_FLAGS` e `validateConcludeFinalFlags()` em `functions/index.js`; `concludeCaseByAnalyst` agora valida a flag efetiva apos fallback de `reviewDraft` e rejeita estados consultivos com `invalid-argument`.
+- Backend: validacao de execucao penal tambem deixou de aceitar `INCONCLUSIVE_HOMONYM`/`INCONCLUSIVE_LOW_COVERAGE` como estado final; aceita apenas `POSITIVE` ou `INCONCLUSIVE`.
+- Frontend: `CasoPage.jsx` agora considera final criminal apenas `NEGATIVE`, `POSITIVE` ou `INCONCLUSIVE`; checklist bloqueia estados consultivos e o botao de conclusao fica desabilitado.
+- Teste frontend ajustado para validar o bloqueio imediato no botao do header, pois o checklist so aparece na etapa de revisao.
+- Verificacao focada backend: `cd functions && npm test -- helpers/aiCalibration.test.js` passou com 35/35.
+- Verificacao focada frontend: `npm test -- src/portals/ops/CasoPage.test.jsx` passou com 15/15.
+- Correcao de dados aplicada via REST Firestore nos tres documentos: `cases/v5ef9RJ0wBmQLUz4HLf0`, `cases/v5ef9RJ0wBmQLUz4HLf0/publicResult/latest`, `clientCases/v5ef9RJ0wBmQLUz4HLf0`.
+- Verificacao pos-correcao: os tres documentos retornam `criminalFlag=NEGATIVE`, `riskScore=0`, `riskLevel=GREEN`, `suggestedVerdict=FIT`, `finalVerdict=FIT` e justificativa sem ressalva generica.
+- Suite completa raiz: `npm test` passou com 52 arquivos, 775/775 testes.
+- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 476/476 testes.
+- `npm run lint` e `cd functions && npm run lint` passaram.
+- `npm run build` passou.
+- `git diff --check` sem erros; apenas avisos LF/CRLF.
+- `graphify update .` executado; grafo atualizado para 999 nodes, 1868 edges, 143 communities.
+- Deploy Firebase Functions: concluido. 55 funcoes atualizadas com sucesso, incluindo `concludeCaseByAnalyst` com `validateConcludeFinalFlags`.
+- Deploy Vercel: concluido. Aliased `https://compliance-hub-hazel.vercel.app`.
+
+### DJEN Consultivo Sem Impacto Isolado
+- Adicionados testes de regressao em `functions/helpers/aiCalibration.test.js` cobrindo DJEN criminal isolado, DJEN trabalhista isolado, DJEN positivo com muitos homonimos e DJEN positivo com poucos homonimos.
+- Adicionados testes em `functions/helpers/deterministicPrefill.test.js` para impedir listagem de DJEN isolado sem CNJ confirmado e permitir DJEN correlacionado ao mesmo CNJ confirmado por BigDataCorp.
+- RED confirmado: `aiCalibration.test.js` falhou em 4 testes porque DJEN ainda alterava `criminalFlag`/`laborFlag`; `deterministicPrefill.test.js` falhou porque `criminalNotes` ainda listava comunicacao DJEN isolada.
+- Backend: criados helpers `getDjenProcessNumber()`, `getConfirmedProviderProcessNumbers()` e `filterDjenComunicacoesByConfirmedProcess()` em `functions/index.js`.
+- Backend: `computeAutoClassification()` deixou de usar confianca por homonimos/geo-score do DJEN isolado e so considera DJEN quando ha CNJ confirmado por Judit/BigDataCorp no mesmo eixo.
+- Backend: `buildDetCriminalNotes()` e `buildDetLaborNotes()` agora filtram DJEN por CNJ confirmado antes de listar comunicacoes em textos finais.
+- Testes focados passaram: `cd functions && npm test -- helpers/aiCalibration.test.js` com 35/35 e `cd functions && npm test -- helpers/deterministicPrefill.test.js` com 79/79.
+- Suite completa raiz: `npm test` passou com 52 arquivos, 778/778 testes.
+- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 479/479 testes.
+- `cd functions && npm run lint` passou.
+- `npm run lint` na raiz falhou uma vez por artefato temporario `vite.config.js.timestamp-...mjs`; rerun passou.
+- `npm run build` passou.
+- `git diff --check` sem erros; apenas avisos LF/CRLF.
+- Deploy nao executado nesta fase.
+
 ## 2026-05-21
+
+### Incidente: Tag Criminal Consultiva Em Caso Concluido
+- Usuario reportou caso `/ops/caso/v5ef9RJ0wBmQLUz4HLf0` concluido com tag criminal `Precisa de revisao manual`, quando deveria ser `Sem apontamento`.
+- Rodado `session-catchup.py`; sem output.
+- `git diff --stat` mostra mudancas locais extensas da fase anterior ainda nao deployadas.
+- Lidos `task_plan.md`, `findings.md`, `progress.md` e `graphify-out/GRAPH_REPORT.md` antes de investigar.
+- Nova Phase 11 registrada para corrigir dado real e impedir conclusao com tag criminal consultiva.
+
+### IA Revisora Especializada Por Eixo
+- Usuario pediu implementacao passo a passo com garantia de nao regressao.
+- Rodado `session-catchup.py` pelo caminho real em `~/.config/opencode`; sem output.
+- `git diff --stat` mostra mudancas locais extensas da rodada anterior ja verificadas, incluindo backend/frontend/testes/planning/graphify.
+- Lidos `task_plan.md`, `findings.md`, `progress.md` e inspecionados pontos atuais do backend/UI/testes.
+- Achado principal: `applyClassificationReviewGuardrails()` promovia todos os eixos `AGREE` para `AGREE_WITH_CAUTION` com base em cautela global; isso explica ressalvas genericas em trabalhista/mandado.
+- Planejamento atualizado para Phase 10 antes de novas alteracoes de codigo.
+- TDD backend: adicionados testes em `functions/helpers/aiCalibration.test.js` para contexto por eixo e remocao de cautela generica em trabalhista/mandado negativos bem cobertos.
+- TDD frontend: adicionado teste em `src/portals/ops/CasoPage.test.jsx` garantindo que ressalva criminal nao contamina trabalhista/mandado.
+- Backend: criado `buildAiClassificationReviewContext()` com cobertura por eixo, fontes zeradas, conflitos, materialidade e motivo objetivo de cautela.
+- Backend: `buildAiClassificationReviewPrompt()` agora inclui `reviewContext` e regra explicita de que fonte concluida com zero achados sustenta negativo.
+- Backend: `runAiClassificationReviewAnalysis()` aplica `applyAiClassificationReviewGuardrails()` antes de retornar/persistir resposta estruturada.
+- Frontend: `CasoPage.jsx` ganhou contexto por eixo para display/fallback; `applyClassificationReviewGuardrails()` deixou de promover cautela global para todos os eixos.
+- Frontend: fallback de trabalhista/mandado negativo bem coberto agora usa evidencia forte quando fontes consultadas retornaram zero achados.
+- Erro de teste 1: novo teste frontend encontrou 3 ocorrencias de `Concorda com ressalva`; corrigido com guardrail por eixo.
+- Erro de teste 2: fixture novo nao trazia conflito criminal real e a cautela criminal foi removida; corrigido adicionando Judit criminal positivo e BigDataCorp criminal negativo.
+- Verificacao focada: `cd functions && npm test -- helpers/aiCalibration.test.js` passou com 34/34.
+- Verificacao focada: `npm test -- src/portals/ops/CasoPage.test.jsx` passou com 14/14.
+- Suite completa raiz: `npm test` passou com 52 arquivos, 773/773 testes.
+- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 475/475 testes.
+- `npm run lint` e `cd functions && npm run lint` passaram.
+- `npm run build` passou.
+- `git diff --check` sem erros; apenas avisos LF/CRLF.
+- `graphify update .` executado; grafo atualizado para 997 nodes, 1865 edges, 137 communities.
+- Deploy nao executado nesta fase.
+
+### AI Review Hardening + DJEN Modal
+- Usuario pediu implementacao passo a passo, com planning files, evitando regressao, e deploy final de Functions + Vercel.
+- Carregada skill `planning-with-files`.
+- Primeira tentativa de catchup com `~/.opencode` falhou; caminho correto e `~/.config/opencode`.
+- Catchup pelo caminho correto nao retornou output.
+- `git diff --stat` mostra alteracoes extensas da rodada anterior ja em working tree, incluindo `functions/index.js`, `CasoPage.jsx`, testes, planning files e `graphify-out`.
+- Lidos `task_plan.md`, `findings.md`, `progress.md`.
+- Atualizados `task_plan.md` e `findings.md` com novo escopo: endurecer IA revisora contra JSON bruto/termos tecnicos, melhorar prompt/parser/UI e tornar DJEN clicavel com modal de movimentacoes.
+- Backend AI hardening iniciado: prompt da IA revisora reforcado para portugues operacional, sem nomes internos em textos livres, com semantica clara de `evidenceStrength`.
+- Backend: `runStructuredAiAnalysis()` ganhou `responseFormat` opt-in e `runAiClassificationReviewAnalysis()` passa `response_format: { type: 'json_object' }`, com fallback automatico sem response_format se a API rejeitar.
+- Backend: removido fallback bruto de `extractFallbackAiClassificationReviewResponse()`; schema quebrado nao vira `summary` valido.
+- Backend: adicionada sanitizacao contra caracteres de controle e textos com JSON/schema/nomes internos em narrativas da IA revisora.
+- Backend: `buildAiClassificationReviewUpdatePayload()` nao persiste `aiClassificationReview` estruturado quando `structuredOk=false`.
+- Teste focado `cd functions && npm test -- helpers/aiCalibration.test.js`: 32/32 passando.
+- Frontend: `CasoPage.jsx` agora sanitiza a analise assistida antes de renderizar, cai em fallback deterministico quando o Firestore tem payload bruto, humaniza cobertura/divergencia e oculta redes sociais vazias na identificacao.
+- `npm test -- src/portals/ops/CasoPage.test.jsx` falhou na primeira tentativa por texto duplicado `Cobertura alta`; teste ajustado para `getAllByText`.
+- `npm test -- src/portals/ops/CasoPage.test.jsx`: 11/11 passando.
+- DJEN modal: `ProcessInspectionModal` agora aceita fonte `DJEN`, badge verde e mostra detalhes da comunicacao selecionada.
+- `CasoPage.jsx`: processo DJEN na aba criminal agora e botao clicavel; abre modal com todas as comunicacoes do mesmo CNJ pela timeline existente.
+- `CasoPage.jsx`: adicionada tabela de comunicacoes DJEN trabalhistas na aba trabalhista, com processo clicavel e mesmo modal.
+- Removido lazy render apenas do bloco DJEN criminal porque o conteudo clicavel dependia de `openedSections` e podia nao renderizar apos abrir `<details>`.
+- `npm test -- src/portals/ops/CasoPage.test.jsx` teve falhas de seletor por textos duplicados (`Criminal`, `Trabalhista`, `DJEN`, tipos); testes ajustados para seletores nao-unicos.
+- `npm test -- src/portals/ops/CasoPage.test.jsx`: 13/13 passando.
+- Proximo passo: rodar suites completas, lint, build, diff-check, graphify e deploy.
+- `npm test`: 52 arquivos, 770/770 testes passando.
+- `cd functions && npm test`: 17 arquivos, 473/473 testes passando.
+- `npm run lint` e `cd functions && npm run lint` falharam inicialmente por `no-control-regex` nas regexes de caracteres de controle.
+- Corrigido `no-control-regex` trocando regex por filtragem `charCodeAt` no backend e frontend.
+- `npm run lint`: passou.
+- `cd functions && npm run lint`: passou.
+- `npm run build`: passou.
+- Como houve alteracao apos suites completas (filtragem charCode), proximo passo e rerodar suites completas antes do deploy.
+- Suites completas rerodadas apos a correcao de lint:
+- `npm test`: 52 arquivos, 770/770 testes passando.
+- `cd functions && npm test`: 17 arquivos, 473/473 testes passando.
+- `git diff --check`: sem erros; apenas avisos LF/CRLF.
+- `git status --short`: confirma mudancas esperadas em backend/frontend/tests/planning/graphify e arquivo untracked preexistente `functions/extract_done_cases.cjs`.
+- `graphify update .`: executado; grafo atualizado para 977 nodes, 1817 edges, 139 communities.
+- Proximo passo: deploy Firebase Functions e Vercel.
+
+### IA Revisora Da Autoclassificacao
+- Usuario aprovou reorganizacao da aba `Identificacao do candidato` e solicitou implementacao da nova IA revisora da autoclassificacao.
+- Carregada skill `planning-with-files`.
+- Tentativa inicial de `session-catchup.py` com caminho `~/.opencode` falhou porque a instalacao real esta em `~/.config/opencode`.
+- Repetido `session-catchup.py` com caminho real; sem output.
+- `git diff --stat` antes da implementacao mostrou apenas alteracoes geradas em `graphify-out/`.
+- `task_plan.md` reescrito para o novo escopo: backend `aiClassificationReview`, UI de identificacao reorganizada e testes anti-regressao.
+- Backend: criado schema/parser/sanitizacao/prompt `aiClassificationReview`; integrado em `runAutoClassifyAndAi()` e `rerunAiAnalysis()`.
+- Backend: `npm test -- helpers/aiCalibration.test.js` passou com 30 testes.
+- Frontend: removido bloco global `Síntese da análise automática`; adicionada `Análise assistida da autoclassificação` na aba Identificacao; antigo bloco principal `Análise automática GPT-5.4-nano JSON` removido da experiencia principal.
+- Frontend: homonimos rebaixados para `Detalhes técnicos de homônimos`; `EnrichmentPipeline` agora chama a fase de `Análise assistida` e usa custo/erro de `aiClassificationReview`.
+- `npm test -- src/portals/ops/CasoPage.test.jsx` falhou em 2 testes por expectativas antigas; testes atualizados para a nova UX.
+- `npm test -- src/portals/ops/CasoPage.test.jsx` passou: 9/9.
+- Ajustado portal cliente para considerar `aiClassificationReview` como analise finalizada no macro progresso.
+- Ajustada pagina de metricas de IA para contar `aiClassificationReview*` em total, sucesso/falha, cache, tokens e custo, preservando fallback para campos legados.
+- Ajustado fallback de budget mensal no backend para somar `aiClassificationReviewCostUsd` junto com custos legados e homonimos.
+- `npm test -- src/portals/client/SolicitacoesPage.test.jsx src/portals/ops/CasoPage.test.jsx`: 15/15 passando.
+- `npm test`: 52 arquivos, 764/764 testes passando.
+- `npm run lint`: passou apos ignorar `.vercel` e `graphify-out` no ESLint; erro anterior vinha de bundles gerados em `.vercel/output/static`.
+- `npm run build`: passou.
+- `cd functions && npm test`: 17 arquivos, 471/471 testes passando.
+- `cd functions && npm run lint`: passou.
+- `git diff --check`: sem erros; apenas avisos de conversao LF para CRLF.
+- `graphify update .`: executado; grafo atualizado para 965 nodes, 1790 edges, 137 communities.
 
 ### Started
 - Iniciada implementacao das correcoes de classificacao processual e narrativas seguras.

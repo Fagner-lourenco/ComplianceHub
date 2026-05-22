@@ -100,14 +100,17 @@ export default function MetricasIAPage() {
         prov.fontedata.costBRL = fdTotalBRL;
 
         /* AI metrics */
-        const aiCases = pc.filter(c => c.aiRawResponse || c.aiStructured);
-        const structOk = aiCases.filter(c => c.aiStructuredOk === true).length;
-        const structFail = aiCases.filter(c => c.aiStructuredOk === false).length;
-        const aiErrors = pc.filter(c => c.aiError && !c.aiRawResponse).length;
-        const cached = aiCases.filter(c => c.aiFromCache).length;
-        const aiCostUSD = aiCases.reduce((s, c) => s + (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0), 0);
-        const tokIn = aiCases.reduce((s, c) => s + (c.aiTokens?.input || 0), 0);
-        const tokOut = aiCases.reduce((s, c) => s + (c.aiTokens?.output || 0), 0);
+        const aiCases = pc.filter(c => c.aiClassificationReviewRawResponse || c.aiClassificationReview || c.aiRawResponse || c.aiStructured);
+        const structOk = aiCases.filter(c => (c.aiClassificationReviewOk ?? c.aiStructuredOk) === true).length;
+        const structFail = aiCases.filter(c => (c.aiClassificationReviewOk ?? c.aiStructuredOk) === false).length;
+        const aiErrors = pc.filter(c => (c.aiClassificationReviewError || c.aiError) && !(c.aiClassificationReviewRawResponse || c.aiRawResponse)).length;
+        const cached = aiCases.filter(c => c.aiClassificationReviewFromCache || c.aiFromCache).length;
+        const aiCostUSD = aiCases.reduce((s, c) => s
+            + (c.aiCostUsd || 0)
+            + (c.aiHomonymCostUsd || 0)
+            + (c.aiClassificationReviewCostUsd || 0), 0);
+        const tokIn = aiCases.reduce((s, c) => s + (c.aiClassificationReviewTokens?.input || c.aiTokens?.input || 0), 0);
+        const tokOut = aiCases.reduce((s, c) => s + (c.aiClassificationReviewTokens?.output || c.aiTokens?.output || 0), 0);
 
         /* AI decisions */
         const decisions = { ACCEPTED: 0, ADJUSTED: 0, IGNORED: 0, none: 0 };
@@ -121,7 +124,7 @@ export default function MetricasIAPage() {
                 if (!byTenant[t]) byTenant[t] = { total: 0, done: 0, fdCost: 0, aiCost: 0 };
                 byTenant[t].total++;
                 if (c.status === 'DONE') byTenant[t].done++;
-                byTenant[t].aiCost += (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0);
+                byTenant[t].aiCost += (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0) + (c.aiClassificationReviewCostUsd || 0);
                 const src = c.enrichmentSources;
                 if (src) for (const info of Object.values(src)) byTenant[t].fdCost += parseFloat(info?.cost) || 0;
             }

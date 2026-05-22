@@ -30,6 +30,24 @@
     gap: var(--space-2);
 }
 
+.caso-link-button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--blue-600, #2563eb);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+    text-decoration: underline;
+}
+
+.caso-link-button:hover,
+.caso-link-button:focus-visible {
+    color: var(--blue-700, #1d4ed8);
+    outline: none;
+}
+
 .caso-readonly-banner,
 .caso-draft-bar {
     display: flex;
@@ -767,6 +785,189 @@
 .caso-section-header__note {
     font-size: .75rem;
     color: var(--text-secondary);
+}
+
+.caso-assisted-review,
+.caso-evidence-summary {
+    margin-top: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--bg-card), var(--gray-50));
+    box-shadow: var(--shadow-xs);
+}
+
+.caso-assisted-review__header,
+.caso-assisted-review__axis-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+}
+
+.caso-assisted-review__header h4,
+.caso-evidence-summary h4 {
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.caso-assisted-review__header p,
+.caso-assisted-review__summary p,
+.caso-assisted-review__identity p,
+.caso-assisted-review__axis p,
+.caso-assisted-review__suggestion p {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.caso-assisted-review__confidence,
+.caso-assisted-review__axis-head span,
+.caso-assisted-review__chips span,
+.caso-assisted-review__axis-meta span,
+.caso-assisted-review__suggestion span {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: .75rem;
+    font-weight: 700;
+    background: var(--gray-100);
+    color: var(--text-secondary);
+}
+
+.caso-assisted-review__confidence--high {
+    background: var(--green-100);
+    color: var(--green-700);
+}
+
+.caso-assisted-review__confidence--medium {
+    background: var(--yellow-100);
+    color: var(--yellow-700);
+}
+
+.caso-assisted-review__confidence--low {
+    background: var(--red-100);
+    color: var(--red-700);
+}
+
+.caso-assisted-review__summary,
+.caso-assisted-review__identity,
+.caso-assisted-review__suggestion {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-light);
+}
+
+.caso-assisted-review__summary strong,
+.caso-assisted-review__identity strong,
+.caso-assisted-review__review-grid strong,
+.caso-assisted-review__suggestion strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+
+.caso-assisted-review__chips,
+.caso-assisted-review__axis-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.caso-assisted-review__axes,
+.caso-assisted-review__review-grid,
+.caso-evidence-summary__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.caso-assisted-review__axis,
+.caso-evidence-summary__grid > div {
+    min-width: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+}
+
+.caso-assisted-review__axis--disagree {
+    border-color: var(--red-200);
+    background: var(--red-50);
+}
+
+.caso-assisted-review__axis--agree_with_caution,
+.caso-assisted-review__axis--insufficient_data {
+    border-color: var(--yellow-200);
+    background: var(--yellow-50);
+}
+
+.caso-assisted-review__axis ul,
+.caso-assisted-review__review-grid ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    color: var(--text-primary);
+    font-size: .8125rem;
+    line-height: 1.5;
+}
+
+.caso-assisted-review__review-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.caso-assisted-review__suggestion {
+    background: rgba(29, 111, 229, .06);
+    border: 1px solid var(--brand-100);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+}
+
+.caso-assisted-review__suggestion span {
+    margin-top: 8px;
+    font-weight: 600;
+}
+
+.caso-evidence-summary__grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.caso-evidence-summary__grid strong {
+    font-size: .75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+.caso-evidence-summary__grid span {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.caso-technical-details-title {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-light);
+}
+
+.caso-technical-summary {
+    cursor: pointer;
+    color: var(--brand-700);
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .caso-assisted-review__axes,
+    .caso-assisted-review__review-grid,
+    .caso-evidence-summary__grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .caso-identity-consulted {

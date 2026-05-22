@@ -302,6 +302,7 @@ const AI_PROMPT_VERSION = 'v3-evidence-based';
 const AI_HOMONYM_PROMPT_VERSION = 'v1-homonym-dedicated';
 const AI_HOMONYM_CONTEXT_VERSION = 'v1-derived-geo';
 const AI_PREFILL_PROMPT_VERSION = 'v1-report-prefill';
+const AI_CLASSIFICATION_REVIEW_PROMPT_VERSION = 'v1-autoclassification-review';
 const AI_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Cost per 1M tokens (USD)
@@ -357,6 +358,45 @@ const AI_PREFILL_JSON_SCHEMA = {
     warrantNotes: 'string (max 1500 chars)',
     keyFindings: ['string (max 12 items, each max 300 chars)'],
     finalJustification: 'string (max 900 chars)',
+};
+
+const AI_CLASSIFICATION_REVIEW_JSON_SCHEMA = {
+    summary: 'string (max 700 chars)',
+    identityAssessment: {
+        status: 'CONFIRMED|ATTENTION|BLOCKED|UNKNOWN',
+        rationale: 'string (max 350 chars)',
+        homonymRisk: 'LOW|MEDIUM|HIGH|UNKNOWN',
+    },
+    classificationValidation: {
+        criminal: {
+            autoFlag: 'NEGATIVE|NEGATIVE_PARTIAL|POSITIVE|INCONCLUSIVE|INCONCLUSIVE_HOMONYM|INCONCLUSIVE_LOW_COVERAGE|NOT_FOUND',
+            assessment: 'AGREE|AGREE_WITH_CAUTION|DISAGREE|INSUFFICIENT_DATA',
+            evidenceStrength: 'STRONG|MIXED|WEAK|INSUFFICIENT',
+            rationale: 'string (max 400 chars)',
+            possibleErrors: ['string'],
+        },
+        labor: {
+            autoFlag: 'NEGATIVE|POSITIVE|INCONCLUSIVE|NOT_FOUND',
+            assessment: 'AGREE|AGREE_WITH_CAUTION|DISAGREE|INSUFFICIENT_DATA',
+            evidenceStrength: 'STRONG|MIXED|WEAK|INSUFFICIENT',
+            rationale: 'string (max 400 chars)',
+            possibleErrors: ['string'],
+        },
+        warrant: {
+            autoFlag: 'NEGATIVE|POSITIVE|INCONCLUSIVE|NOT_FOUND',
+            assessment: 'AGREE|AGREE_WITH_CAUTION|DISAGREE|INSUFFICIENT_DATA',
+            evidenceStrength: 'STRONG|MIXED|WEAK|INSUFFICIENT',
+            rationale: 'string (max 400 chars)',
+            possibleErrors: ['string'],
+        },
+    },
+    inconsistencies: ['string'],
+    manualReviewPoints: ['string'],
+    consultativeSuggestion: {
+        action: 'MAINTAIN_AUTOCLASSIFICATION|REVIEW_BEFORE_CONCLUDING|CONTEST_AUTOCLASSIFICATION',
+        rationale: 'string (max 400 chars)',
+    },
+    confidence: 'HIGH|MEDIUM|LOW',
 };
 
 const AI_SYSTEM_MESSAGE = `Voce e um analista de compliance especializado em due diligence de pessoas fisicas no Brasil.
@@ -472,6 +512,30 @@ Regras:
 - quando houver dados de profissao, PEP ou sancoes, inclua essas informacoes nos campos pertinentes
 - O CPF do candidato aparece parcialmente mascarado por privacidade. Os digitos visiveis SAO confirmados. Quando os dados indicarem match por CPF exato (hasExactCpfMatch, matchType='CPF confirmado'), o sistema ja verificou a correspondencia completa — trate como fato duro. NAO trate o mascaramento como ausencia ou incerteza de CPF.`;
 
+const AI_CLASSIFICATION_REVIEW_SYSTEM_MESSAGE = `Voce e um analista senior de compliance revisando a autoclassificacao deterministica de um caso de due diligence de pessoa fisica no Brasil.
+Sua funcao NAO e substituir a autoclassificacao nem concluir o caso. Sua funcao e auditar a coerencia das flags, apontar possiveis erros, separar fatos fortes de evidencias fracas e orientar a revisao do analista humano.
+Responda EXCLUSIVAMENTE em JSON valido conforme o schema abaixo. Nao inclua texto fora do JSON.
+Baseie-se APENAS nos dados estruturados fornecidos. Nao invente fatos, processos, CPFs, datas, tribunais ou conclusoes ausentes.
+
+Schema de resposta (JSON):
+${JSON.stringify(AI_CLASSIFICATION_REVIEW_JSON_SCHEMA, null, 2)}
+
+Regras:
+- Audite separadamente criminal, trabalhista e mandado.
+- Use os valores controlados do schema apenas nos campos JSON. Nunca escreva esses codigos nos textos livres.
+- Em textos livres, escreva portugues operacional para outro analista. Nao use nomes internos como criminalFlag, laborFlag, warrantFlag, hasExactCpfMatch, isDirectCpfMatch, matchType, isCriminal, isDefendant, providerDivergence, autoFlag, evidenceStrength ou nomes de campos do payload.
+- Nao copie JSON, schema, payload de entrada ou chaves tecnicas para summary, rationale, inconsistencies ou manualReviewPoints.
+- Evite aspas duplas dentro de textos livres. Quando precisar destacar uma palavra, use apostrofo simples.
+- assessment: AGREE quando a flag parecer coerente; AGREE_WITH_CAUTION quando estiver coerente mas exigir revisao; DISAGREE quando os dados contradisserem a flag; INSUFFICIENT_DATA quando faltar base.
+- evidenceStrength mede a forca da validacao da flag, nao a quantidade de achados. Exemplo: uma flag negativa pode ter evidenceStrength STRONG se fontes relevantes consultadas nao trouxeram achado material.
+- Match por CPF confirmado, correspondencia direta por documento e mandado ativo confirmado sao fatos fortes.
+- Achados apenas por nome, DJEN fraco/comunicacao isolada, baixa probabilidade, risco de homonimo ou divergencia entre fontes sao evidencias fracas/ambiguas.
+- Fatos fortes prevalecem sobre ruido por nome.
+- A analise de homonimos, quando fornecida, e consultiva e deve ser usada para interpretar apenas evidencias ambiguas.
+- Nao altere flags, score ou veredito. Apenas valide a coerencia da autoclassificacao.
+- Nao use linguagem de debug, nomes de implementacao ou tokens. Escreva como um analista falando com outro analista.
+- Se identificar possivel erro de classificacao, registre em possibleErrors e inconsistencies.`;
+
 function isStringArray(value) {
     return !value || (Array.isArray(value) && value.every((item) => typeof item === 'string'));
 }
@@ -493,6 +557,29 @@ function sanitizeStructuredText(value, maxLength = 500) {
         .trim();
     if (!normalized) return '';
     return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
+}
+
+function stripInvalidControlChars(text) {
+    if (typeof text !== 'string') return text;
+    return Array.from(text, (char) => {
+        const code = char.charCodeAt(0);
+        return (code < 32 && code !== 9 && code !== 10 && code !== 13) || code === 127 ? ' ' : char;
+    }).join('');
+}
+
+function looksLikeRawJsonOrTechnicalPayload(text) {
+    if (typeof text !== 'string') return false;
+    const normalized = text.trim();
+    if (!normalized) return false;
+    if (/^[{[]/.test(normalized)) return true;
+    return /"?(summary|identityAssessment|classificationValidation|consultativeSuggestion|autoFlag|possibleErrors|manualReviewPoints|providerDivergence|hasExactCpfMatch|isDirectCpfMatch|matchType|isCriminal|isDefendant|criminalFlag|laborFlag|warrantFlag)"?\s*[:=]/i.test(normalized)
+        || /\b(identityAssessment|classificationValidation|consultativeSuggestion|autoFlag|possibleErrors|manualReviewPoints|providerDivergence|hasExactCpfMatch|isDirectCpfMatch|matchType|isCriminal|isDefendant|criminalFlag|laborFlag|warrantFlag)\b/i.test(normalized)
+        || /\b(HIGH_COVERAGE|PARTIAL_COVERAGE|LOW_COVERAGE|LOW_RISK_ROLE_ONLY|AGREE_WITH_CAUTION|INSUFFICIENT_DATA|MAINTAIN_AUTOCLASSIFICATION|REVIEW_BEFORE_CONCLUDING|CONTEST_AUTOCLASSIFICATION)\b/.test(normalized);
+}
+
+function sanitizeClassificationReviewText(value, maxLength = 500) {
+    const text = sanitizeStructuredText(value, maxLength);
+    return looksLikeRawJsonOrTechnicalPayload(text) ? '' : text;
 }
 
 function sanitizeProcessAssessments(items) {
@@ -600,6 +687,44 @@ function sanitizeAiPrefillStructured(structured) {
     };
 }
 
+function sanitizeClassificationReviewAxis(axis) {
+    if (!axis || typeof axis !== 'object') return null;
+    return {
+        autoFlag: typeof axis.autoFlag === 'string' ? axis.autoFlag.toUpperCase() : (axis.autoFlag ?? null),
+        assessment: typeof axis.assessment === 'string' ? axis.assessment.toUpperCase() : (axis.assessment ?? null),
+        evidenceStrength: typeof axis.evidenceStrength === 'string' ? axis.evidenceStrength.toUpperCase() : (axis.evidenceStrength ?? null),
+        rationale: sanitizeClassificationReviewText(axis.rationale, 400),
+        possibleErrors: sanitizeStructuredList(axis.possibleErrors, 6, 220).filter((item) => !looksLikeRawJsonOrTechnicalPayload(item)),
+    };
+}
+
+function sanitizeAiClassificationReviewStructured(structured) {
+    if (!structured || typeof structured !== 'object') return structured;
+    const validation = structured.classificationValidation || {};
+    const identity = structured.identityAssessment || {};
+    const suggestion = structured.consultativeSuggestion || {};
+    return {
+        summary: sanitizeClassificationReviewText(structured.summary, 700),
+        identityAssessment: {
+            status: typeof identity.status === 'string' ? identity.status.toUpperCase() : (identity.status ?? null),
+            rationale: sanitizeClassificationReviewText(identity.rationale, 350),
+            homonymRisk: typeof identity.homonymRisk === 'string' ? identity.homonymRisk.toUpperCase() : (identity.homonymRisk ?? null),
+        },
+        classificationValidation: {
+            criminal: sanitizeClassificationReviewAxis(validation.criminal),
+            labor: sanitizeClassificationReviewAxis(validation.labor),
+            warrant: sanitizeClassificationReviewAxis(validation.warrant),
+        },
+        inconsistencies: sanitizeStructuredList(structured.inconsistencies, 8, 240).filter((item) => !looksLikeRawJsonOrTechnicalPayload(item)),
+        manualReviewPoints: sanitizeStructuredList(structured.manualReviewPoints, 10, 240).filter((item) => !looksLikeRawJsonOrTechnicalPayload(item)),
+        consultativeSuggestion: {
+            action: typeof suggestion.action === 'string' ? suggestion.action.toUpperCase() : (suggestion.action ?? null),
+            rationale: sanitizeClassificationReviewText(suggestion.rationale, 400),
+        },
+        confidence: typeof structured.confidence === 'string' ? structured.confidence.toUpperCase() : (structured.confidence ?? null),
+    };
+}
+
 /**
  * Parse AI response with 4-layer fallback:
  * 1. Direct JSON.parse
@@ -697,6 +822,13 @@ function extractFallbackAiPrefillResponse(content) {
     return Object.keys(extracted).length > 0 ? extracted : null;
 }
 
+function extractFallbackAiClassificationReviewResponse(content) {
+    // A classificacao revisora alimenta a UI principal. Se o JSON vier quebrado,
+    // nao podemos transformar payload bruto em resumo operacional.
+    void content;
+    return null;
+}
+
 function parseAiResponse(content) {
     return parseJsonSchemaResponse(content, validateAiSchema, extractFallbackAiResponse, sanitizeAiStructured);
 }
@@ -707,6 +839,10 @@ function parseAiHomonymResponse(content) {
 
 function parseAiPrefillResponse(content) {
     return parseJsonSchemaResponse(content, validateAiPrefillSchema, extractFallbackAiPrefillResponse, sanitizeAiPrefillStructured);
+}
+
+function parseAiClassificationReviewResponse(content) {
+    return parseJsonSchemaResponse(stripInvalidControlChars(content), validateAiClassificationReviewSchema, extractFallbackAiClassificationReviewResponse, sanitizeAiClassificationReviewStructured);
 }
 
 function validateAiSchema(obj) {
@@ -769,6 +905,47 @@ function validateAiPrefillSchema(obj) {
     return true;
 }
 
+function validateClassificationReviewAxis(axis, validFlags) {
+    const validAssessments = ['AGREE', 'AGREE_WITH_CAUTION', 'DISAGREE', 'INSUFFICIENT_DATA'];
+    const validStrength = ['STRONG', 'MIXED', 'WEAK', 'INSUFFICIENT'];
+    if (!axis || typeof axis !== 'object') return false;
+    if (axis.autoFlag && !validFlags.includes(axis.autoFlag)) return false;
+    if (!validAssessments.includes(axis.assessment)) return false;
+    if (!validStrength.includes(axis.evidenceStrength)) return false;
+    if (typeof axis.rationale !== 'string') return false;
+    if (!isStringArray(axis.possibleErrors)) return false;
+    return true;
+}
+
+function validateAiClassificationReviewSchema(obj) {
+    if (!obj || typeof obj !== 'object') return false;
+    const validIdentityStatus = ['CONFIRMED', 'ATTENTION', 'BLOCKED', 'UNKNOWN'];
+    const validHomonymRisk = ['LOW', 'MEDIUM', 'HIGH', 'UNKNOWN'];
+    const validSuggestionActions = ['MAINTAIN_AUTOCLASSIFICATION', 'REVIEW_BEFORE_CONCLUDING', 'CONTEST_AUTOCLASSIFICATION'];
+    const validConfidence = ['HIGH', 'MEDIUM', 'LOW'];
+    const validCriminalFlags = ['NEGATIVE', 'NEGATIVE_PARTIAL', 'POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'NOT_FOUND'];
+    const validSimpleFlags = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
+
+    if (typeof obj.summary !== 'string') return false;
+    if (!obj.identityAssessment || typeof obj.identityAssessment !== 'object') return false;
+    if (!validIdentityStatus.includes(obj.identityAssessment.status)) return false;
+    if (typeof obj.identityAssessment.rationale !== 'string') return false;
+    if (!validHomonymRisk.includes(obj.identityAssessment.homonymRisk)) return false;
+
+    const validation = obj.classificationValidation;
+    if (!validation || typeof validation !== 'object') return false;
+    if (!validateClassificationReviewAxis(validation.criminal, validCriminalFlags)) return false;
+    if (!validateClassificationReviewAxis(validation.labor, validSimpleFlags)) return false;
+    if (!validateClassificationReviewAxis(validation.warrant, validSimpleFlags)) return false;
+    if (!isStringArray(obj.inconsistencies)) return false;
+    if (!isStringArray(obj.manualReviewPoints)) return false;
+    if (!obj.consultativeSuggestion || typeof obj.consultativeSuggestion !== 'object') return false;
+    if (!validSuggestionActions.includes(obj.consultativeSuggestion.action)) return false;
+    if (typeof obj.consultativeSuggestion.rationale !== 'string') return false;
+    if (!validConfidence.includes(obj.confidence)) return false;
+    return true;
+}
+
 /**
  * P2-016: Detecta e corrige mojibake comum de ISO-8859-1 decodificado como UTF-8.
  * Ex: "Ã§" -> "Ã§", "Ã£" -> "Ã£", "Ã¡" -> "Ã¡".
@@ -824,7 +1001,7 @@ function normalizeUnicodeToAscii(text) {
  */
 function sanitizeAiOutput(text) {
     if (!text) return text;
-    return fixLatinMojibake(normalizeUnicodeToAscii(text))
+    return stripInvalidControlChars(fixLatinMojibake(normalizeUnicodeToAscii(text)))
         .replace(/<[^>]*>/g, '')
         .replace(/(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)/g, '[CPF_REMOVIDO]')
         .replace(/(?<!\d)\(?\d{2}\)?\s?\d{4,5}-?\d{4}(?!\d)/g, '[TEL_REMOVIDO]');
@@ -1110,6 +1287,42 @@ function buildAiUpdatePayload(caseData, aiResult, options = {}) {
     return stripUndefined(payload);
 }
 
+function buildAiClassificationReviewUpdatePayload(aiResult, options = {}) {
+    const payload = {
+        aiClassificationReviewModel: aiResult.model || AI_MODEL,
+        aiClassificationReviewPromptVersion: AI_CLASSIFICATION_REVIEW_PROMPT_VERSION,
+        aiClassificationReviewExecutedAt: FieldValue.serverTimestamp(),
+        aiClassificationReviewFromCache: !!aiResult.fromCache,
+        aiClassificationReviewError: aiResult.error || null,
+        aiClassificationReviewStatus: aiResult.error
+            ? 'FAILED'
+            : aiResult.structuredOk
+                ? 'DONE'
+                : 'FAILED_SCHEMA',
+        aiStatus: aiResult.error
+            ? 'FAILED'
+            : aiResult.structuredOk
+                ? 'DONE'
+                : 'FAILED_SCHEMA',
+        updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (options.aiRunCount !== undefined) {
+        payload.aiRunCount = options.aiRunCount;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(aiResult, 'analysis')) {
+        payload.aiClassificationReviewRawResponse = aiResult.analysis || null;
+        payload.aiClassificationReview = aiResult.structuredOk ? (aiResult.structured || null) : null;
+        payload.aiClassificationReviewOk = aiResult.structuredOk || false;
+    }
+
+    const costUsd = aiResult.fromCache ? 0 : estimateAiCostUsd(aiResult.inputTokens || 0, aiResult.outputTokens || 0);
+    payload.aiClassificationReviewCostUsd = parseFloat(costUsd.toFixed(6));
+    payload.aiClassificationReviewTokens = { input: aiResult.inputTokens || 0, output: aiResult.outputTokens || 0 };
+    return stripUndefined(payload);
+}
+
 function buildAiHomonymResetPayload(homonymInput = null) {
     return {
         aiHomonymTriggered: false,
@@ -1169,7 +1382,9 @@ function buildAiHomonymUpdatePayload(caseData, homonymInput, aiResult) {
 
 async function recordAiCostLedger(tenantId, updatePayload = {}) {
     if (!tenantId) return;
-    const totalCost = Number(updatePayload.aiCostUsd || 0) + Number(updatePayload.aiHomonymCostUsd || 0);
+    const totalCost = Number(updatePayload.aiCostUsd || 0)
+        + Number(updatePayload.aiHomonymCostUsd || 0)
+        + Number(updatePayload.aiClassificationReviewCostUsd || 0);
     if (!Number.isFinite(totalCost) || totalCost <= 0) return;
     const now = new Date();
     const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -1379,13 +1594,18 @@ function computeSimpleHash(value) {
 
 function computeAiCacheKey(caseData, options = {}) {
     const { kind = 'general', context = null, prompt = null } = options;
+    const promptVersion = kind === 'homonym'
+        ? AI_HOMONYM_PROMPT_VERSION
+        : kind === 'classificationReview'
+            ? AI_CLASSIFICATION_REVIEW_PROMPT_VERSION
+            : kind === 'prefill'
+                ? AI_PREFILL_PROMPT_VERSION
+                : AI_PROMPT_VERSION;
 
     const basePayload = {
         model: AI_MODEL,
         kind,
-        promptVersion: kind === 'homonym'
-            ? AI_HOMONYM_PROMPT_VERSION
-            : AI_PROMPT_VERSION,
+        promptVersion,
         contextVersion: kind === 'homonym' ? AI_HOMONYM_CONTEXT_VERSION : null,
         prompt: prompt || '',
         context: context || null,
@@ -1404,6 +1624,7 @@ async function runStructuredAiAnalysis({
     parser,
     skipCache = false,
     maxTokens = AI_MAX_TOKENS,
+    responseFormat = null,
 }) {
     if (Date.now() < _aiCircuitOpenUntil) {
         console.warn('AI circuit breaker OPEN - skipping analysis.');
@@ -1439,6 +1660,7 @@ async function runStructuredAiAnalysis({
 
     let lastError = null;
     let shouldTripCircuit = false;
+    let disableResponseFormat = false;
     for (let attempt = 0; attempt < 2; attempt++) {
         if (attempt > 0) {
             await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -1448,21 +1670,26 @@ async function runStructuredAiAnalysis({
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 30000);
 
+            const requestBody = {
+                model: AI_MODEL,
+                max_completion_tokens: maxTokens,
+                temperature: 0.1,
+                messages: [
+                    { role: 'system', content: systemMessage },
+                    { role: 'user', content: prompt },
+                ],
+            };
+            if (responseFormat && !disableResponseFormat) {
+                requestBody.response_format = responseFormat;
+            }
+
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    model: AI_MODEL,
-                    max_completion_tokens: maxTokens,
-                    temperature: 0.1,
-                    messages: [
-                        { role: 'system', content: systemMessage },
-                        { role: 'user', content: prompt },
-                    ],
-                }),
+                body: JSON.stringify(requestBody),
                 signal: controller.signal,
             });
 
@@ -1472,6 +1699,10 @@ async function runStructuredAiAnalysis({
                 const body = await response.text().catch(() => '');
                 lastError = formatOpenAiError(response.status, body);
                 console.error(`AI analysis attempt ${attempt + 1} failed (${cacheDocId}): ${response.status} ${body}`);
+                if (response.status === 400 && responseFormat && !disableResponseFormat && /response_format|json_object|json schema/i.test(body)) {
+                    disableResponseFormat = true;
+                    continue;
+                }
                 if (response.status === 429 || response.status >= 500) {
                     shouldTripCircuit = true;
                     continue;
@@ -1539,11 +1770,72 @@ async function runAiAnalysis(caseData, apiKey, options = {}) {
     });
 }
 
+async function runAiClassificationReviewAnalysis(caseData, apiKey, options = {}) {
+    const prompt = buildAiClassificationReviewPrompt(caseData);
+    const result = await runStructuredAiAnalysis({
+        caseData,
+        apiKey,
+        prompt,
+        systemMessage: AI_CLASSIFICATION_REVIEW_SYSTEM_MESSAGE,
+        cacheDocId: 'classification_review',
+        cacheKey: computeAiCacheKey(caseData, { kind: 'classificationReview', prompt }),
+        parser: parseAiClassificationReviewResponse,
+        skipCache: options.skipCache === true,
+        maxTokens: AI_MAX_TOKENS_PREFILL,
+        responseFormat: { type: 'json_object' },
+    });
+    if (result?.structuredOk && result.structured) {
+        result.structured = applyAiClassificationReviewGuardrails(result.structured, caseData);
+    }
+    return result;
+}
+
 /**
  * Normalize CNJ to digits-only for dedup across providers.
  * E.g. "0202743-72.2022.8.06.0167" and "02027437220228060167" → same key.
  */
 function normCnj(cnj) { return (cnj || '').replace(/\D/g, ''); }
+
+function getDjenProcessNumber(item = {}) {
+    return normCnj(item.numeroProcesso || item.numeroProcessoMascara || item.numero_processo || item.processNumber || item.cnj);
+}
+
+function getConfirmedProviderProcessNumbers(caseData = {}, kind) {
+    const numbers = new Set();
+    const isCriminalKind = kind === 'criminal';
+    const isLaborKind = kind === 'labor';
+
+    for (const item of caseData.juditRoleSummary || []) {
+        const matchesKind = (isCriminalKind && item?.isCriminal) || (isLaborKind && item?.isLabor);
+        if (item?.hasExactCpfMatch && matchesKind) {
+            const value = normCnj(item.code || item.cnj || item.numero || item.numeroProcesso);
+            if (value) numbers.add(value);
+        }
+    }
+
+    for (const item of caseData.bigdatacorpProcessos || []) {
+        const matchesKind = (isCriminalKind && item?.isCriminal) || (isLaborKind && item?.isLabor);
+        if (item?.isDirectCpfMatch && matchesKind) {
+            const value = normCnj(item.numero || item.processNumber || item.cnj || item.numeroProcesso);
+            if (value) numbers.add(value);
+        }
+    }
+
+    return numbers;
+}
+
+function filterDjenComunicacoesByConfirmedProcess(caseData = {}, kind) {
+    const confirmedProcessNumbers = getConfirmedProviderProcessNumbers(caseData, kind);
+    if (confirmedProcessNumbers.size === 0) return [];
+    const areaPattern = kind === 'labor' ? /trabalh/i : /criminal|penal/i;
+
+    return (caseData.djenComunicacoes || []).filter((item) => {
+        const itemNumber = getDjenProcessNumber(item);
+        if (!itemNumber || !confirmedProcessNumbers.has(itemNumber)) return false;
+        const areaText = [item.area, item.inferredArea, item.classe, item.tribunal].filter(Boolean).join(' ');
+        return areaPattern.test(areaText);
+    });
+}
 
 /**
  * Format raw digits-only CNJ into standard NNNNNNN-DD.YYYY.J.TR.OOOO notation.
@@ -2059,6 +2351,441 @@ function buildAiPrompt(caseData) {
     parts.push('', 'Analise todos os dados acima e responda EXCLUSIVAMENTE no JSON conforme o schema solicitado.');
     parts.push('Sempre justifique com fatos observaveis, registre evidencias e incertezas, e nao invente dados ausentes.');
     return parts.join('\n');
+}
+
+function maskCpfForAi(cpf, fallback = null) {
+    const d = String(cpf || '').replace(/\D/g, '');
+    if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.***-$4');
+    return fallback || null;
+}
+
+function compactJuditRoleSummary(items = []) {
+    return (Array.isArray(items) ? items : []).slice(0, 12).map((item) => stripUndefined({
+        code: item.code || null,
+        area: item.area || null,
+        status: item.status || null,
+        phase: item.phase || null,
+        tribunal: item.tribunalAcronym || item.tribunal || null,
+        personType: item.personType || null,
+        side: item.side || null,
+        hasExactCpfMatch: item.hasExactCpfMatch === true,
+        hasDivergentCpf: item.hasDivergentCpf === true,
+        isCriminal: item.isCriminal === true,
+        isLabor: item.isLabor === true,
+        isDefendant: item.isDefendant === true,
+        isPlaintiff: item.isPlaintiff === true,
+        isVictim: item.isVictim === true,
+        isWitness: item.isWitness === true,
+        isPossibleHomonym: item.isPossibleHomonym === true,
+        subjects: Array.isArray(item.subjects) ? item.subjects.slice(0, 4) : [],
+        classifications: Array.isArray(item.classifications) ? item.classifications.slice(0, 3) : [],
+        lastStepDate: item.lastStepDate || null,
+        lastStep: item.lastStep ? String(item.lastStep).slice(0, 220) : null,
+    }));
+}
+
+function compactBigDataCorpProcessos(items = []) {
+    return (Array.isArray(items) ? items : []).slice(0, 12).map((item) => stripUndefined({
+        numero: item.numero || null,
+        tipo: item.tipo || null,
+        assunto: item.assunto || item.cnjSubject || null,
+        courtType: item.courtType || null,
+        courtName: item.courtName || null,
+        status: item.status || null,
+        isDirectCpfMatch: item.isDirectCpfMatch === true,
+        matchType: item.matchType || null,
+        polo: item.polo || null,
+        partyType: item.partyType || null,
+        specificRole: item.specificRole || null,
+        isCriminal: item.isCriminal === true,
+        isLabor: item.isLabor === true,
+        isDefendant: item.isDefendant === true,
+        isPlaintiff: item.isPlaintiff === true,
+        isVictim: item.isVictim === true,
+        isLawyer: item.isLawyer === true,
+        cnjProcedure: item.cnjProcedure || null,
+        decisions: Array.isArray(item.decisions)
+            ? item.decisions.slice(0, 2).map((decision) => ({
+                date: decision.date || null,
+                content: decision.content ? String(decision.content).slice(0, 220) : null,
+            }))
+            : [],
+    }));
+}
+
+function compactEscavadorProcessos(items = []) {
+    return (Array.isArray(items) ? items : []).slice(0, 10).map((item) => stripUndefined({
+        numeroCnj: item.numeroCnj || item.cnj || null,
+        area: item.area || null,
+        tribunal: item.tribunalSigla || item.tribunal || null,
+        tipoNormalizado: item.tipoNormalizado || null,
+        polo: item.polo || null,
+        hasExactCpfMatch: item.hasExactCpfMatch === true,
+        matchDocumentoPor: item.matchDocumentoPor || item.matchType || null,
+        isCriminal: item.isCriminal === true,
+        isLabor: item.isLabor === true,
+    }));
+}
+
+function compactDjenComunicacoes(items = []) {
+    return (Array.isArray(items) ? items : []).slice(0, 10).map((item) => stripUndefined({
+        area: item.area || item.inferredArea || null,
+        classe: item.classe || null,
+        tribunal: item.tribunal || null,
+        polo: item.polo || null,
+        isDefendant: item.isDefendant === true,
+        confirmationLevel: item.confirmationLevel || null,
+        probabilityScore: item.probabilityScore ?? null,
+        geoMatch: item.geoMatch ?? null,
+        matchType: item.matchType || null,
+        numeroProcessoMascara: item.numeroProcessoMascara || null,
+    }));
+}
+
+function countItems(value) {
+    return Array.isArray(value) ? value.length : Number(value || 0);
+}
+
+function isNegativeFlag(flag) {
+    return ['NEGATIVE', 'NOT_FOUND'].includes(String(flag || '').toUpperCase());
+}
+
+function isPositiveFlag(flag) {
+    return String(flag || '').toUpperCase() === 'POSITIVE';
+}
+
+function buildReviewSource(name, status, findingCount, options = {}) {
+    const normalizedStatus = status || null;
+    const count = countItems(findingCount);
+    return stripUndefined({
+        name,
+        status: normalizedStatus,
+        findingCount: count,
+        isWeak: options.isWeak === true,
+        isDone: normalizedStatus === 'DONE',
+        isPartial: normalizedStatus === 'PARTIAL',
+        isFailed: ['FAILED', 'BLOCKED'].includes(normalizedStatus),
+        isSkipped: normalizedStatus === 'SKIPPED',
+        isZeroFinding: normalizedStatus === 'DONE' && count === 0,
+        hasFinding: count > 0,
+    });
+}
+
+function summarizeAxisCoverage(sources) {
+    const queriedSources = sources.filter((source) => source.status && !['PENDING', 'RUNNING'].includes(source.status));
+    const successfulSources = queriedSources.filter((source) => source.isDone);
+    const partialSources = queriedSources.filter((source) => source.isPartial);
+    const failedSources = queriedSources.filter((source) => source.isFailed);
+    const zeroFindingSources = successfulSources
+        .filter((source) => source.isZeroFinding)
+        .map((source) => source.name);
+    const materialFindingSources = queriedSources
+        .filter((source) => source.hasFinding && !source.isWeak)
+        .map((source) => source.name);
+    const weakFindingSources = queriedSources
+        .filter((source) => source.hasFinding && source.isWeak)
+        .map((source) => source.name);
+    const sourceCoverageStatus = failedSources.length > 0 || partialSources.length > 0
+        ? 'PARTIAL'
+        : successfulSources.length > 0
+            ? 'COMPLETE'
+            : 'UNKNOWN';
+
+    return {
+        sourceCoverageStatus,
+        queriedSources: queriedSources.map((source) => source.name),
+        zeroFindingSources,
+        failedSources: failedSources.map((source) => source.name),
+        partialSources: partialSources.map((source) => source.name),
+        materialFindingSources,
+        weakFindingSources,
+    };
+}
+
+function buildAxisReviewContext(axis, autoFlag, sources, options = {}) {
+    const coverage = summarizeAxisCoverage(sources);
+    const hasMaterialFinding = coverage.materialFindingSources.length > 0 || options.hasMaterialFinding === true;
+    const hasWeakNameOnlyFinding = coverage.weakFindingSources.length > 0 || options.hasWeakNameOnlyFinding === true;
+    const hasProviderConflict = options.hasProviderConflict === true;
+    const reasons = [
+        coverage.sourceCoverageStatus === 'PARTIAL' ? 'Fonte relevante falhou ou retornou resultado parcial.' : null,
+        coverage.sourceCoverageStatus === 'UNKNOWN' ? 'Nenhuma fonte concluida para este eixo.' : null,
+        hasProviderConflict ? 'Fontes divergem sobre achado material deste eixo.' : null,
+        options.hasAmbiguousRole ? 'Papel processual exige confirmacao manual.' : null,
+        options.hasHomonymRisk ? 'Achado por nome ou risco de homonimo exige revisao.' : null,
+        String(autoFlag || '').includes('INCONCLUSIVE') ? 'A flag final esta inconclusiva.' : null,
+    ].filter(Boolean);
+
+    return stripUndefined({
+        axis,
+        autoFlag: autoFlag || null,
+        sourceCoverageStatus: coverage.sourceCoverageStatus,
+        queriedSources: coverage.queriedSources,
+        zeroFindingSources: coverage.zeroFindingSources,
+        failedSources: coverage.failedSources,
+        partialSources: coverage.partialSources,
+        hasMaterialFinding,
+        hasWeakNameOnlyFinding,
+        hasProviderConflict,
+        hasAmbiguousRole: options.hasAmbiguousRole === true,
+        hasHomonymRisk: options.hasHomonymRisk === true,
+        shouldRequireCaution: reasons.length > 0,
+        cautionReason: reasons[0] || null,
+    });
+}
+
+function hasCriminalLowRiskRoleOnly(caseData = {}) {
+    const roles = Array.isArray(caseData.juditRoleSummary) ? caseData.juditRoleSummary : [];
+    const criminalRoles = roles.filter((item) => item?.isCriminal === true || /penal|criminal/i.test(String(item?.area || '')));
+    if (criminalRoles.length === 0) return false;
+    return criminalRoles.every((item) => item?.isVictim === true || item?.isWitness === true || item?.isDefendant === false);
+}
+
+function buildAiClassificationReviewContext(caseData = {}) {
+    const criminalJuditCount = countItems(caseData.juditCriminalCount);
+    const criminalBdcCount = countItems(caseData.bigdatacorpCriminalCount || caseData.bigdatacorpDirectCriminalCount);
+    const criminalEscavadorCount = countItems(caseData.escavadorCriminalCount);
+    const criminalDjenCount = (Array.isArray(caseData.djenComunicacoes) ? caseData.djenComunicacoes : [])
+        .filter((item) => isPositiveFlag(caseData.djenCriminalFlag) || /penal|criminal/i.test(String(item?.area || item?.inferredArea || '')))
+        .length;
+    const laborBdcCount = countItems(caseData.bigdatacorpLaborCount || caseData.bigdatacorpDirectLaborCount);
+    const laborEscavadorCount = (Array.isArray(caseData.escavadorProcessos) ? caseData.escavadorProcessos : [])
+        .filter((item) => item?.isLabor === true || /trabalh/i.test(String(item?.area || item?.tribunal || '')))
+        .length;
+    const laborDjenCount = (Array.isArray(caseData.djenComunicacoes) ? caseData.djenComunicacoes : [])
+        .filter((item) => isPositiveFlag(caseData.djenLaborFlag) || /trabalh/i.test(String(item?.area || item?.inferredArea || item?.classe || '')))
+        .length;
+    const bdcWarrantCount = countItems(caseData.bigdatacorpActiveWarrants);
+    const juditWarrantCount = countItems(caseData.juditActiveWarrantCount || (caseData.juditWarrants || []).filter((item) => /ativo|active/i.test(String(item?.status || ''))));
+
+    const criminalConflict = (isPositiveFlag(caseData.juditCriminalFlag) && isNegativeFlag(caseData.bigdatacorpCriminalFlag))
+        || (isPositiveFlag(caseData.bigdatacorpCriminalFlag) && isNegativeFlag(caseData.juditCriminalFlag));
+    const laborConflict = isPositiveFlag(caseData.bigdatacorpLaborFlag) && isNegativeFlag(caseData.laborFlag);
+    const warrantConflict = (bdcWarrantCount > 0 || juditWarrantCount > 0) && isNegativeFlag(caseData.warrantFlag);
+    const lowRiskCriminalOnly = hasCriminalLowRiskRoleOnly(caseData);
+
+    return {
+        criminal: buildAxisReviewContext('criminal', caseData.criminalFlag, [
+            buildReviewSource('Judit', caseData.juditEnrichmentStatus, criminalJuditCount),
+            buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, criminalBdcCount),
+            buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, criminalEscavadorCount),
+            buildReviewSource('DJEN', caseData.djenEnrichmentStatus, criminalDjenCount, { isWeak: true }),
+        ], {
+            hasMaterialFinding: (criminalJuditCount > 0 || criminalBdcCount > 0 || criminalEscavadorCount > 0) && !lowRiskCriminalOnly,
+            hasProviderConflict: criminalConflict,
+            hasAmbiguousRole: lowRiskCriminalOnly && criminalConflict,
+            hasHomonymRisk: caseData.aiHomonymRisk === 'HIGH' || caseData.aiHomonymStructured?.homonymRisk === 'HIGH',
+        }),
+        labor: buildAxisReviewContext('labor', caseData.laborFlag, [
+            buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, laborBdcCount),
+            buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, laborEscavadorCount),
+            buildReviewSource('DJEN', caseData.djenEnrichmentStatus, laborDjenCount, { isWeak: true }),
+        ], {
+            hasProviderConflict: laborConflict,
+        }),
+        warrant: buildAxisReviewContext('warrant', caseData.warrantFlag, [
+            buildReviewSource('Judit', caseData.juditEnrichmentStatus, juditWarrantCount),
+            buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, bdcWarrantCount),
+        ], {
+            hasProviderConflict: warrantConflict,
+        }),
+        identity: {
+            status: caseData.bigdatacorpGateResult?.passed === false || caseData.juditGateResult?.passed === false || caseData.enrichmentGateResult?.passed === false
+                ? 'BLOCKED'
+                : caseData.juditIdentity || caseData.enrichmentIdentity || caseData.bigdatacorpName ? 'CONFIRMED' : 'UNKNOWN',
+            hasHomonymRisk: ['HIGH', 'MEDIUM'].includes(caseData.aiHomonymRisk || caseData.aiHomonymStructured?.homonymRisk),
+        },
+    };
+}
+
+function isGenericCautionText(text) {
+    const normalized = String(text || '').toLowerCase();
+    return /cobertura parcial|detalhamento alem do retornado|pode esconder achados|outra base|revisar cobertura|dados insuficientes/.test(normalized);
+}
+
+function applyAxisReviewGuardrail(axis, context) {
+    if (!axis || typeof axis !== 'object') return axis;
+    const next = { ...axis };
+    const negativeWellSupported = isNegativeFlag(next.autoFlag)
+        && context?.sourceCoverageStatus === 'COMPLETE'
+        && context?.hasMaterialFinding !== true
+        && context?.shouldRequireCaution !== true;
+
+    if (negativeWellSupported) {
+        next.assessment = 'AGREE';
+        next.evidenceStrength = context.zeroFindingSources?.length > 0 ? 'STRONG' : 'MIXED';
+        next.possibleErrors = [];
+        if (!next.rationale || isGenericCautionText(next.rationale)) {
+            const sourceText = context.zeroFindingSources?.length > 0
+                ? ` nas fontes consultadas (${context.zeroFindingSources.join(', ')})`
+                : ' nas fontes consultadas';
+            next.rationale = `Nao ha achado material${sourceText}. A ausencia de retorno nessas fontes sustenta a flag negativa.`;
+        }
+    }
+
+    if (!context?.shouldRequireCaution && Array.isArray(next.possibleErrors)) {
+        next.possibleErrors = next.possibleErrors.filter((item) => !isGenericCautionText(item));
+    }
+
+    return next;
+}
+
+function applyAiClassificationReviewGuardrails(review, caseData = {}) {
+    if (!review || typeof review !== 'object') return review;
+    const context = buildAiClassificationReviewContext(caseData);
+    const validation = review.classificationValidation || {};
+    const guarded = {
+        ...review,
+        classificationValidation: {
+            ...validation,
+            criminal: applyAxisReviewGuardrail(validation.criminal, context.criminal),
+            labor: applyAxisReviewGuardrail(validation.labor, context.labor),
+            warrant: applyAxisReviewGuardrail(validation.warrant, context.warrant),
+        },
+    };
+    const axes = Object.values(guarded.classificationValidation || {});
+    const needsReview = axes.some((axis) => ['AGREE_WITH_CAUTION', 'DISAGREE', 'INSUFFICIENT_DATA'].includes(axis?.assessment));
+    if (!needsReview && guarded.consultativeSuggestion?.action === 'REVIEW_BEFORE_CONCLUDING') {
+        guarded.consultativeSuggestion = {
+            action: 'MAINTAIN_AUTOCLASSIFICATION',
+            rationale: 'Nao ha ressalva material por eixo nos dados estruturados disponiveis.',
+        };
+    }
+    return guarded;
+}
+
+function buildAiClassificationReviewPrompt(caseData) {
+    const reviewContext = buildAiClassificationReviewContext(caseData);
+    const promptPayload = {
+        promptVersion: AI_CLASSIFICATION_REVIEW_PROMPT_VERSION,
+        candidate: {
+            name: caseData.candidateName || null,
+            cpfMasked: maskCpfForAi(caseData.cpf, caseData.cpfMasked),
+            position: caseData.candidatePosition || null,
+            hiringUf: caseData.hiringUf || null,
+        },
+        identity: {
+            judit: caseData.juditIdentity ? {
+                name: caseData.juditIdentity.name || null,
+                cpfActive: caseData.juditIdentity.cpfActive ?? null,
+                birthDate: caseData.juditIdentity.birthDate || null,
+                primaryUf: caseData.juditPrimaryUf || null,
+            } : null,
+            receitaFederal: caseData.enrichmentIdentity ? {
+                name: caseData.enrichmentIdentity.name || null,
+                cpfStatus: caseData.enrichmentIdentity.cpfStatus || null,
+                birthDate: caseData.enrichmentIdentity.birthDate || null,
+                hasDeathRecord: caseData.enrichmentIdentity.hasDeathRecord || false,
+            } : null,
+            bigdatacorp: {
+                name: caseData.bigdatacorpName || null,
+                cpfStatus: caseData.bigdatacorpCpfStatus || null,
+                birthDate: caseData.bigdatacorpBirthDate || null,
+                nameUniqueness: caseData.bigdatacorpNameUniqueness ?? null,
+                namesakeCount: caseData.bigdatacorpNamesakeCount ?? null,
+                hasDeathRecord: caseData.bigdatacorpHasDeathRecord || false,
+            },
+            gate: {
+                bigdatacorp: caseData.bigdatacorpGateResult || null,
+                judit: caseData.juditGateResult || null,
+                fallback: caseData.enrichmentGateResult || null,
+            },
+        },
+        autoClassification: {
+            criminalFlag: caseData.criminalFlag || null,
+            criminalSeverity: caseData.criminalSeverity || null,
+            laborFlag: caseData.laborFlag || null,
+            laborSeverity: caseData.laborSeverity || null,
+            warrantFlag: caseData.warrantFlag || null,
+            pepFlag: caseData.pepFlag || null,
+            sanctionFlag: caseData.sanctionFlag || null,
+            riskScore: caseData.riskScore ?? null,
+            riskLevel: caseData.riskLevel || null,
+            reviewRecommended: caseData.reviewRecommended || false,
+        },
+        coverage: {
+            coverageLevel: caseData.coverageLevel || null,
+            providerDivergence: caseData.providerDivergence || null,
+            criminalEvidenceQuality: caseData.criminalEvidenceQuality || null,
+            coverageNotes: caseData.coverageNotes || [],
+            ambiguityNotes: caseData.ambiguityNotes || [],
+            negativePartialSafetyNetTriggered: caseData.negativePartialSafetyNetTriggered || false,
+            negativePartialSafetyNetReasons: caseData.negativePartialSafetyNetReasons || [],
+            negativePartialSafetyNetAction: caseData.negativePartialSafetyNetAction || null,
+        },
+        reviewContext,
+        evidence: {
+            judit: {
+                processTotal: caseData.juditProcessTotal || 0,
+                criminalFlag: caseData.juditCriminalFlag || null,
+                criminalCount: caseData.juditCriminalCount || 0,
+                warrantFlag: caseData.juditWarrantFlag || null,
+                activeWarrantCount: caseData.juditActiveWarrantCount || 0,
+                executionFlag: caseData.juditExecutionFlag || null,
+                executionCount: caseData.juditExecutionCount || 0,
+                roleSummary: compactJuditRoleSummary(caseData.juditRoleSummary),
+                warrants: (caseData.juditWarrants || []).slice(0, 5).map((item) => stripUndefined({
+                    code: item.code || null,
+                    status: item.status || null,
+                    court: item.court || item.tribunalAcronym || null,
+                    issueDate: item.issueDate || null,
+                    warrantType: item.warrantType || null,
+                    arrestType: item.arrestType || null,
+                })),
+                executions: (caseData.juditExecutions || []).slice(0, 4).map((item) => stripUndefined({
+                    processNumber: item.processNumber || item.code || null,
+                    status: item.status || null,
+                    court: item.court || item.tribunalAcronym || null,
+                    phase: item.phase || null,
+                })),
+            },
+            bigdatacorp: {
+                processTotal: caseData.bigdatacorpProcessTotal || 0,
+                criminalFlag: caseData.bigdatacorpCriminalFlag || null,
+                criminalCount: caseData.bigdatacorpCriminalCount || 0,
+                directCriminalCount: caseData.bigdatacorpDirectCriminalCount || 0,
+                laborFlag: caseData.bigdatacorpLaborFlag || null,
+                laborCount: caseData.bigdatacorpLaborCount || 0,
+                directLaborCount: caseData.bigdatacorpDirectLaborCount || 0,
+                activeWarrants: (caseData.bigdatacorpActiveWarrants || []).slice(0, 5),
+                isPep: caseData.bigdatacorpIsPep || false,
+                isSanctioned: caseData.bigdatacorpIsSanctioned || false,
+                sanctionTypes: caseData.bigdatacorpSanctionTypes || [],
+                processos: compactBigDataCorpProcessos(caseData.bigdatacorpProcessos),
+            },
+            escavador: {
+                processTotal: caseData.escavadorProcessTotal || 0,
+                criminalFlag: caseData.escavadorCriminalFlag || null,
+                criminalCount: caseData.escavadorCriminalCount || 0,
+                cpfsComEsseNome: caseData.escavadorCpfsComEsseNome ?? null,
+                notes: caseData.escavadorNotes ? String(caseData.escavadorNotes).slice(0, 500) : null,
+                processos: compactEscavadorProcessos(caseData.escavadorProcessos),
+            },
+            djen: {
+                comunicacaoTotal: caseData.djenComunicacaoTotal || 0,
+                confirmedTotal: caseData.djenConfirmedTotal || 0,
+                criminalFlag: caseData.djenCriminalFlag || null,
+                laborFlag: caseData.djenLaborFlag || null,
+                notes: caseData.djenNotes ? String(caseData.djenNotes).slice(0, 500) : null,
+                comunicacoes: compactDjenComunicacoes(caseData.djenComunicacoes),
+            },
+        },
+        homonymReview: caseData.aiHomonymStructuredOk ? caseData.aiHomonymStructured : null,
+    };
+
+    return [
+        'Revise a autoclassificacao deterministica abaixo como segundo analista consultivo.',
+        'Tarefas:',
+        '1. Resuma o caso em linguagem operacional.',
+        '2. Valide cada flag da autoclassificacao: criminal, trabalhista e mandado.',
+        '3. Aponte possiveis erros ou inconsistencias.',
+        '4. Liste pontos que o analista humano deve revisar antes de concluir.',
+        '5. Dê uma sugestao consultiva: manter, revisar antes de concluir ou contestar a autoclassificacao.',
+        '6. Nao altere flags. Apenas avalie a coerencia delas.',
+        '7. Use reviewContext como regra operacional: fonte concluida com zero achados sustenta negativo; ressalva exige shouldRequireCaution=true no eixo.',
+        '',
+        JSON.stringify(promptPayload, null, 2),
+    ].join('\n');
 }
 
 function buildAiPrefillPrompt(caseData) {
@@ -4226,10 +4953,13 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                         const costSnapshot = await db.collection('cases')
                             .where('tenantId', '==', tenantId)
                             .where('aiExecutedAt', '>=', monthStart)
-                            .select('aiCostUsd', 'aiHomonymCostUsd')
+                            .select('aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd')
                             .get();
                         costSnapshot.forEach((docSnap) => {
-                            totalCost += (docSnap.data().aiCostUsd || 0) + (docSnap.data().aiHomonymCostUsd || 0);
+                            const data = docSnap.data();
+                            totalCost += (data.aiCostUsd || 0)
+                                + (data.aiHomonymCostUsd || 0)
+                                + (data.aiClassificationReviewCostUsd || 0);
                         });
                     }
                     if (totalCost >= budget) {
@@ -4331,13 +5061,14 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                     }).catch((auditErr) => console.warn('Audit log write failed:', auditErr.message));
                 }
 
-                const aiResult = await runAiAnalysis(caseDataForAi, aiKey);
-                Object.assign(updatePayload, buildAiUpdatePayload({ ...freshData, ...autoClassification }, aiResult));
+                const reviewResult = await runAiClassificationReviewAnalysis(caseDataForAi, aiKey);
+                Object.assign(updatePayload, buildAiClassificationReviewUpdatePayload(reviewResult));
+                updatePayload.aiProvidersIncluded = getAiProvidersIncluded({ ...freshData, ...autoClassification });
                 Object.assign(caseDataForAi, {
-                    aiStructured: aiResult.structured || null,
-                    aiStructuredOk: aiResult.structuredOk || false,
+                    aiClassificationReview: reviewResult.structured || null,
+                    aiClassificationReviewOk: reviewResult.structuredOk || false,
                 });
-                console.log(`Case ${caseId} [AI]: ${aiResult.error ? 'ERROR' : 'OK'} (${aiResult.fromCache ? 'cached' : 'fresh'}, $${(updatePayload.aiCostUsd || 0).toFixed(4)}, structured=${aiResult.structuredOk})`);
+                console.log(`Case ${caseId} [AI_CLASSIFICATION_REVIEW]: ${reviewResult.error ? 'ERROR' : 'OK'} (${reviewResult.fromCache ? 'cached' : 'fresh'}, $${(updatePayload.aiClassificationReviewCostUsd || 0).toFixed(4)}, structured=${reviewResult.structuredOk})`);
 
                 await writeAuditEvent({
                     action: 'AI_ANALYSIS_RUN',
@@ -4347,34 +5078,15 @@ async function runAutoClassifyAndAi(caseRef, caseId, freshData) {
                     related: { caseId },
                     source: SOURCE.CLOUD_FUNCTION,
                     metadata: {
-                        model: aiResult.model,
-                        tokens: updatePayload.aiTokens,
-                        cost: updatePayload.aiCostUsd,
-                        structuredOk: aiResult.structuredOk,
-                        promptVersion: AI_PROMPT_VERSION,
-                        fromCache: !!aiResult.fromCache,
+                        model: reviewResult.model,
+                        tokens: updatePayload.aiClassificationReviewTokens,
+                        cost: updatePayload.aiClassificationReviewCostUsd,
+                        structuredOk: reviewResult.structuredOk,
+                        promptVersion: AI_CLASSIFICATION_REVIEW_PROMPT_VERSION,
+                        fromCache: !!reviewResult.fromCache,
                     },
                     templateVars: { candidateName: freshData.candidateName || caseId },
                 }).catch((auditErr) => console.warn('Audit log write failed:', auditErr.message));
-
-                // P08: Only run prefill if AI general analysis succeeded
-                if (aiResult.structuredOk && !aiResult.error) {
-                    const prefillResult = await runAiPrefillAnalysis(caseDataForAi, aiKey);
-                    Object.assign(updatePayload, buildAiPrefillUpdatePayload(prefillResult));
-                    console.log(`Case ${caseId} [AI_PREFILL]: ${prefillResult.error ? 'ERROR' : 'OK'} (${prefillResult.fromCache ? 'cached' : 'fresh'}, structured=${prefillResult.structuredOk})`);
-                } else {
-                    console.log(`Case ${caseId} [AI_PREFILL]: Skipped — AI general analysis failed or not structured.`);
-                    updatePayload.prefillNarratives = {
-                        metadata: {
-                            model: AI_MODEL,
-                            promptVersion: AI_PREFILL_PROMPT_VERSION,
-                            executedAt: new Date().toISOString(),
-                            ok: false,
-                            fromCache: false,
-                            error: 'Skipped: AI general analysis failed.',
-                        },
-                    };
-                }
             } else if (homonymInput.needsAnalysis) {
                 updatePayload.aiHomonymError = 'Chave OpenAI nao configurada.';
             }
@@ -4521,31 +5233,13 @@ function computeAutoClassification(caseData) {
     const bigdatacorpCriminalSignal = bigdatacorpDone && caseData.bigdatacorpCriminalFlag === 'POSITIVE';
     const bigdatacorpLaborSignal = bigdatacorpDone && caseData.bigdatacorpLaborFlag === 'POSITIVE';
     const djenDone = caseData.djenEnrichmentStatus === 'DONE';
-    const djenCriminal = djenDone && caseData.djenCriminalFlag === 'POSITIVE';
-    const djenLabor = djenDone && caseData.djenLaborFlag === true;
-    // DJEN searches by name only — unreliable as strong evidence for common names
-    // BUT: if most criminal comunicações geo-match candidate UFs, confidence increases
+    const djenConfirmedCriminalItems = djenDone ? filterDjenComunicacoesByConfirmedProcess(caseData, 'criminal') : [];
+    const djenConfirmedLaborItems = djenDone ? filterDjenComunicacoesByConfirmedProcess(caseData, 'labor') : [];
+    const djenCriminalStrong = caseData.djenCriminalFlag === 'POSITIVE' && djenConfirmedCriminalItems.length > 0;
+    const djenCriminalWeak = false;
+    const djenLaborStrong = (caseData.djenLaborFlag === true || caseData.djenLaborFlag === 'POSITIVE') && djenConfirmedLaborItems.length > 0;
+    const djenLaborWeak = false;
     const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
-    const djenComunicacoes = caseData.djenComunicacoes || [];
-    const djenCriminalItems = djenComunicacoes.filter((i) => i.area === 'criminal');
-    const djenCriminalGeoMatched = djenCriminalItems.filter((i) => i.geoMatch === true).length;
-    const djenCriminalGeoMatchRatio = djenCriminalItems.length > 0
-        ? djenCriminalGeoMatched / djenCriminalItems.length
-        : 0;
-    const djenHighScoreCount = djenComunicacoes.filter((i) => (i.probabilityScore || 0) >= 80).length;
-
-    // DJEN is strong evidence when:
-    // 1. Few homonyms (â‰¤10), OR
-    // 2. Moderate homonyms (â‰¤50) with strong geo-match (â‰¥70% criminais na UF), OR
-    // 3. High probability scores (â‰¥5 items with score â‰¥80)
-    const djenReliableAsStrongEvidence = namesakeCount <= 10
-        || (namesakeCount <= 50 && djenCriminalGeoMatchRatio >= 0.7)
-        || (djenHighScoreCount >= 5);
-
-    const djenCriminalStrong = djenCriminal && djenReliableAsStrongEvidence;
-    const djenCriminalWeak = djenCriminal && !djenReliableAsStrongEvidence;
-    const djenLaborStrong = djenLabor && djenReliableAsStrongEvidence;
-    const djenLaborWeak = djenLabor && !djenReliableAsStrongEvidence;
     const bigdatacorpPep = bigdatacorpHasKycData && caseData.bigdatacorpIsPep === true;
     const bigdatacorpSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpIsSanctioned === true;
     const bigdatacorpWasSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpWasSanctioned === true;
@@ -7128,6 +7822,17 @@ const ALLOWED_DRAFT_FIELDS = new Set([
     'riskScore',
 ]);
 
+const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
+
+function validateConcludeFinalFlags(payload = {}) {
+    if (hasMeaningfulValue(payload.criminalFlag) && !FINAL_CRIMINAL_FLAGS.has(payload.criminalFlag)) {
+        throw new HttpsError(
+            'invalid-argument',
+            'Selecione um resultado criminal final para concluir: Sem apontamento, Com apontamento ou Inconclusivo.',
+        );
+    }
+}
+
 const REVIEW_DRAFT_ARRAY_FIELDS = new Set([
     'keyFindings',
     'osintVectors',
@@ -7684,7 +8389,7 @@ function buildDetCriminalNotes(caseData) {
     }
 
     // DJEN/DPJe criminal communications
-    const djenCriminalItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'criminal');
+    const djenCriminalItems = filterDjenComunicacoesByConfirmedProcess(caseData, 'criminal');
     if (djenCriminalItems.length > 0) {
         parts.push('');
         parts.push(`Comunicacoes judiciais de natureza criminal localizadas (${djenCriminalItems.length}):`);
@@ -7806,7 +8511,7 @@ function buildDetLaborNotes(caseData) {
     }
 
     // DJEN/DPJe labor communications
-    const djenLaborItems = (caseData.djenComunicacoes || []).filter((item) => item.area === 'trabalhista');
+    const djenLaborItems = filterDjenComunicacoesByConfirmedProcess(caseData, 'labor');
     if (lf === 'POSITIVE' && djenLaborItems.length > 0) {
         parts.push('');
         parts.push(`Comunicacoes judiciais de natureza trabalhista localizadas (${djenLaborItems.length}):`);
@@ -8836,7 +9541,7 @@ exports.concludeCaseByAnalyst = onCall(
 
         if (
             hasPenalExecution &&
-            !['POSITIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(effectiveCriminalFlag)
+            !['POSITIVE', 'INCONCLUSIVE'].includes(effectiveCriminalFlag)
         ) {
             throw new HttpsError(
                 'failed-precondition',
@@ -8887,6 +9592,7 @@ exports.concludeCaseByAnalyst = onCall(
                 updatePayload[ff] = reviewDraft[ff];
             }
         }
+        validateConcludeFinalFlags(updatePayload);
 
         // Array fields: prefer payload, fallback to reviewDraft
         const arrayFlagFields = ['osintVectors', 'socialReasons', 'digitalVectors'];
@@ -9716,30 +10422,13 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         });
     }
 
-    const aiResult = await runAiAnalysis(caseDataForAi, aiKey, { skipCache: true });
-    Object.assign(updatePayload, buildAiUpdatePayload(caseDataForAi, aiResult, { aiRunCount: aiRunCount + 1 }));
+    const reviewResult = await runAiClassificationReviewAnalysis(caseDataForAi, aiKey, { skipCache: true });
+    Object.assign(updatePayload, buildAiClassificationReviewUpdatePayload(reviewResult, { aiRunCount: aiRunCount + 1 }));
+    updatePayload.aiProvidersIncluded = getAiProvidersIncluded(caseDataForAi);
     Object.assign(caseDataForAi, {
-        aiStructured: aiResult.structured || null,
-        aiStructuredOk: aiResult.structuredOk || false,
+        aiClassificationReview: reviewResult.structured || null,
+        aiClassificationReviewOk: reviewResult.structuredOk || false,
     });
-    // P08: Only run prefill if AI general analysis succeeded
-    let prefillResult = null;
-    if (aiResult.structuredOk && !aiResult.error) {
-        prefillResult = await runAiPrefillAnalysis(caseDataForAi, aiKey, { skipCache: true });
-        Object.assign(updatePayload, buildAiPrefillUpdatePayload(prefillResult));
-    } else {
-        console.log(`Case ${caseId} [AI_PREFILL rerun]: Skipped — AI general analysis failed.`);
-        updatePayload.prefillNarratives = {
-            metadata: {
-                model: AI_MODEL,
-                promptVersion: AI_PREFILL_PROMPT_VERSION,
-                executedAt: new Date().toISOString(),
-                ok: false,
-                fromCache: false,
-                error: 'Skipped: AI general analysis failed.',
-            },
-        };
-    }
 
     // Deterministic prefill: generate rich content for all narrative fields (v5)
     try {
@@ -9799,13 +10488,12 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         source: SOURCE.PORTAL_OPS,
         ip: getClientIp(request),
         metadata: {
-            model: sanitizeAuditMetadataValue(aiResult.model),
-            cost: sanitizeAuditMetadataValue(updatePayload.aiCostUsd),
-            structuredOk: sanitizeAuditMetadataValue(aiResult.structuredOk),
+            model: sanitizeAuditMetadataValue(reviewResult.model),
+            cost: sanitizeAuditMetadataValue(updatePayload.aiClassificationReviewCostUsd),
+            structuredOk: sanitizeAuditMetadataValue(reviewResult.structuredOk),
             runNumber: aiRunCount + 1,
-            error: sanitizeAuditMetadataValue(aiResult.error || null),
-            prefillOk: sanitizeAuditMetadataValue(prefillResult?.structuredOk || false),
-            prefillError: sanitizeAuditMetadataValue(prefillResult?.error || null),
+            error: sanitizeAuditMetadataValue(reviewResult.error || null),
+            promptVersion: sanitizeAuditMetadataValue(AI_CLASSIFICATION_REVIEW_PROMPT_VERSION),
             homonymDecision: sanitizeAuditMetadataValue(updatePayload.aiHomonymDecision),
             homonymConfidence: sanitizeAuditMetadataValue(updatePayload.aiHomonymConfidence),
             homonymError: sanitizeAuditMetadataValue(updatePayload.aiHomonymError),
@@ -9815,16 +10503,14 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
     });
 
     return {
-        success: !aiResult.error,
+        success: !reviewResult.error,
         phase: 'ai',
-        status: aiResult.error ? 'FAILED' : 'DONE',
-        structured: aiResult.structured || null,
-        structuredOk: aiResult.structuredOk || false,
-        prefillNarratives: prefillResult?.structured || null,
-        prefillNarrativesOk: prefillResult?.structuredOk || false,
+        status: reviewResult.error ? 'FAILED' : 'DONE',
+        aiClassificationReview: reviewResult.structured || null,
+        aiClassificationReviewOk: reviewResult.structuredOk || false,
         homonymStructured: homonymResult?.structured || null,
         homonymStructuredOk: homonymResult?.structuredOk || false,
-        error: aiResult.error || null,
+        error: reviewResult.error || null,
     };
 }
 
@@ -10858,7 +11544,17 @@ exports.juditAsyncFallback = onSchedule(
 exports.__test = {
     computeAutoClassification,
     buildAiPrompt,
+    buildAiUpdatePayload,
+    buildAiClassificationReviewPrompt,
+    buildAiClassificationReviewContext,
+    applyAiClassificationReviewGuardrails,
     buildAiHomonymPrompt,
+    buildAiPrefillUpdatePayload,
+    runAiAnalysis,
+    runAiPrefillAnalysis,
+    parseAiClassificationReviewResponse,
+    validateAiClassificationReviewSchema,
+    sanitizeAiClassificationReviewStructured,
     evaluateEscavadorNeed,
     evaluateNegativePartialSafetyNet,
     enforceTenantSubmissionLimits,
@@ -10888,6 +11584,7 @@ exports.__test = {
     sanitizeAiOutput,
     sanitizeAuditMetadataValue,
     sanitizeNarrativesForFlags,
+    validateConcludeFinalFlags,
     normalizeUnicodeToAscii,
     fixLatinMojibake,
     _setDb(mockDb) { db = mockDb; },

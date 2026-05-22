@@ -12,6 +12,7 @@ import './ProcessInspectionModal.css';
 export default function ProcessInspectionModal({ process, djenTimeline, onClose }) {
     if (!process) return null;
     const { source, cnj, data } = process;
+    const sourceColor = source === 'JUDIT' ? 'purple' : source === 'DJEN' ? 'green' : 'blue';
 
     // Determine parties array (Judit uses `parties`, BDC uses `allParties`)
     const parties = data.parties || data.allParties || [];
@@ -23,7 +24,7 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                 <div className="pim-header">
                     <button className="pim-close" onClick={onClose} aria-label="Fechar">✕</button>
                     <span className="pim-cnj">{cnj || '—'}</span>
-                    <span className={`pim-badge pim-badge--${source === 'JUDIT' ? 'purple' : 'blue'}`}>{source}</span>
+                    <span className={`pim-badge pim-badge--${sourceColor}`}>{source}</span>
                     {data.isCriminal && <span className="pim-badge pim-badge--red">CRIMINAL</span>}
                     {data.isLabor && <span className="pim-badge pim-badge--yellow">TRABALHISTA</span>}
                     {data.status && <span className="pim-badge pim-badge--gray">{data.status}</span>}
@@ -38,13 +39,14 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                         {/* Tribunal / Court */}
                         <div className="pim-section">
                             <div className="pim-court-name">
-                                {data.tribunalAcronym || data.courtName || '—'}
+                                {data.tribunalAcronym || data.courtName || data.tribunal || '—'}
                             </div>
                             <div className="pim-court-details">
-                                {[data.county || data.courtDistrict || data.city, data.judgingBody, data.area || data.courtType].filter(Boolean).join(' · ')}
+                                {[data.county || data.courtDistrict || data.city, data.orgao || data.judgingBody, data.area || data.courtType].filter(Boolean).join(' · ')}
                             </div>
                             {data.instance && <div className="pim-court-details">Instância: {data.instance}</div>}
                             {data.distributionDate && <div className="pim-court-details">Distribuição: {data.distributionDate}</div>}
+                            {data.dataDisponibilizacao && <div className="pim-court-details">Publicação: {data.dataDisponibilizacao}</div>}
                         </div>
 
                         {/* Subjects */}
@@ -71,6 +73,18 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                                     {data.classifications.map((c, i) => (
                                         <span key={i} className="pim-chip pim-chip--subtle">{c}</span>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {source === 'DJEN' && (data.classe || data.tipoComunicacao || data.numeroProcessoMascara || data.numeroProcesso) && (
+                            <div className="pim-section">
+                                <div className="pim-label">Comunicação DJEN selecionada</div>
+                                <div className="pim-meta-grid">
+                                    {(data.numeroProcessoMascara || data.numeroProcesso) && <div><span className="pim-label">Processo</span> {data.numeroProcessoMascara || data.numeroProcesso}</div>}
+                                    {data.classe && <div><span className="pim-label">Classe</span> {data.classe}</div>}
+                                    {data.tipoComunicacao && <div><span className="pim-label">Tipo</span> {data.tipoComunicacao}</div>}
+                                    {data.polo && <div><span className="pim-label">Polo</span> {data.polo}</div>}
                                 </div>
                             </div>
                         )}

@@ -1234,6 +1234,62 @@ describe('Deterministic Prefill', () => {
             expect(notes).toContain('Nao ha detalhamento processual estruturado suficiente');
         });
 
+        it('criminalNotes nao lista DJEN isolado sem CNJ confirmado por Judit ou BigDataCorp', () => {
+            const notes = buildDetCriminalNotes({
+                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                candidateName: 'NOME COMUM',
+                bigdatacorpNamesakeCount: 200,
+                juditRoleSummary: [],
+                bigdatacorpProcessos: [],
+                djenComunicacoes: [{
+                    area: 'criminal',
+                    numeroProcesso: '0000731-16.2026.8.26.0509',
+                    classe: 'Ação Penal - Procedimento Ordinário',
+                }],
+            });
+
+            expect(notes).not.toContain('Comunicacoes judiciais de natureza criminal');
+            expect(notes).not.toContain('0000731-16.2026.8.26.0509');
+        });
+
+        it('criminalNotes pode listar DJEN correlacionado ao mesmo CNJ confirmado por BigDataCorp', () => {
+            const notes = buildDetCriminalNotes({
+                criminalFlag: 'POSITIVE',
+                bigdatacorpProcessos: [{
+                    numero: '0000731-16.2026.8.26.0509',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    specificRole: 'RÉU',
+                    courtType: 'CRIMINAL',
+                    cnjBroadSubject: 'DIREITO PENAL',
+                }],
+                djenComunicacoes: [{
+                    area: 'criminal',
+                    numeroProcesso: '0000731-16.2026.8.26.0509',
+                    classe: 'Ação Penal - Procedimento Ordinário',
+                }],
+            });
+
+            expect(notes).toContain('Comunicacoes judiciais de natureza criminal');
+            expect(notes).toContain('0000731-16.2026.8.26.0509');
+        });
+
+        it('laborNotes nao lista DJEN trabalhista isolado sem CNJ confirmado por Judit ou BigDataCorp', () => {
+            const notes = buildDetLaborNotes({
+                laborFlag: 'INCONCLUSIVE',
+                bigdatacorpProcessos: [],
+                juditRoleSummary: [],
+                djenComunicacoes: [{
+                    area: 'trabalhista',
+                    numeroProcesso: '0000672-32.2019.5.12.0018',
+                    classe: 'Ação Trabalhista - Rito Ordinário',
+                }],
+            });
+
+            expect(notes).not.toContain('Comunicacoes judiciais trabalhistas');
+            expect(notes).not.toContain('0000672-32.2019.5.12.0018');
+        });
+
         // 11. criminalFlag=NOT_FOUND + 0 processes
         it('criminalNotes NOT_FOUND with 0 processes has explanatory body', () => {
             const caseData = {
