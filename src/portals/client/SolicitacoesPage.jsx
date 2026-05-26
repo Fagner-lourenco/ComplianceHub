@@ -5,7 +5,6 @@ import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import NovaSolicitacaoPanel from './NovaSolicitacaoPanel';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
-import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import Drawer from '../../ui/components/Drawer/Drawer';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
@@ -105,7 +104,19 @@ const DrawerResumoTab = memo(function DrawerResumoTab({ publicResultLoading, sel
             {selectedCaseView && (
                 <>
                     <div className="case-detail__risk-grid">
-                        {[has('criminal') && { label: 'Criminal', value: selectedCaseView.criminalFlag }, has('labor') && { label: 'Trabalhista', value: selectedCaseView.laborFlag }, has('warrant') && { label: 'Mandado', value: selectedCaseView.warrantFlag }, has('osint') && { label: 'Perfis públicos', value: selectedCaseView.osintLevel }, has('social') && { label: 'Social', value: selectedCaseView.socialStatus }, has('digital') && { label: 'Digital', value: selectedCaseView.digitalFlag }, { label: 'Nível de atenção', value: null, score: selectedCaseView.riskScore || 0 }].filter(Boolean).map((item) => <div key={item.label} className="case-detail__risk-card"><div className="case-detail__risk-label">{item.label}</div>{item.score !== undefined && item.value === null ? <ScoreBar score={item.score} /> : <RiskChip value={item.value} size="md" />}</div>)}
+                        {[
+                            has('criminal') && { label: 'Criminal', value: selectedCaseView.criminalFlag },
+                            has('labor') && { label: 'Trabalhista', value: selectedCaseView.laborFlag },
+                            has('warrant') && { label: 'Mandado', value: selectedCaseView.warrantFlag },
+                            has('osint') && { label: 'Perfis públicos', value: selectedCaseView.osintLevel },
+                            has('social') && { label: 'Social', value: selectedCaseView.socialStatus },
+                            has('digital') && { label: 'Digital', value: selectedCaseView.digitalFlag }
+                        ].filter(Boolean).map((item) => (
+                            <div key={item.label} className="case-detail__risk-card">
+                                <div className="case-detail__risk-label">{item.label}</div>
+                                <RiskChip value={item.value} size="md" />
+                            </div>
+                        ))}
                     </div>
                     {selectedCaseView.executiveSummary && <div className="case-detail__section"><h4>Resumo Executivo</h4><p>{selectedCaseView.executiveSummary}</p></div>}
                     {selectedCaseView.keyFindings?.length > 0 && <div className="case-detail__section"><h4>Principais Apontamentos</h4>{selectedCaseView.keyFindings.map((item) => <p key={item} className="case-detail__finding">• {item}</p>)}</div>}
@@ -527,7 +538,6 @@ export default function SolicitacoesPage() {
             {caseData.status === 'DONE' && (
                 <div className="mobile-card__badges">
                     <RiskChip value={caseData.finalVerdict} bold size="md" />
-                    <ScoreBar score={caseData.riskScore || 0} />
                     {caseData.hasNotes && <span>📝</span>}
                     {caseData.hasEvidence && <span>📎</span>}
                 </div>

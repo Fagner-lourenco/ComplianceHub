@@ -1,5 +1,44 @@
 # Progress Log
 
+## 2026-05-25
+
+### Remover Contexto Profissional Do Resumo Trabalhista
+- Usuario pediu remover de `laborNotes` tanto o bloco `Contexto profissional cadastral (nao se trata de apontamento trabalhista):` quanto o fallback `Contexto profissional cadastral: dados profissionais nao disponiveis.`.
+- Revisao de escopo: manter dados BigDataCorp de profissao no banco e manter eventual uso em resumo executivo/areas tecnicas; remover apenas da narrativa trabalhista deterministica.
+- Planejamento atualizado como Phase 14 antes de alterar codigo.
+- RED confirmado em `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 4 falhas esperadas porque `buildDetLaborNotes()` ainda inseria contexto profissional e fallback de dados indisponiveis.
+- Removido de `buildDetLaborNotes()` o bloco morto que montava empregador, CNPJ, setor, vinculo, faixa salarial, servidor publico e fallback de dados profissionais indisponiveis.
+- Teste focado `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 82/82 passando.
+- Suite functions `cd functions; npm test`: 17 arquivos, 482/482 testes passando.
+- Lint functions `cd functions; npm run lint`: passou.
+- Suite raiz `npm test`: 52 arquivos, 781/781 testes passando.
+- Lint raiz `npm run lint`: passou.
+- Build `npm run build`: passou.
+- `git diff --check`: sem erros; apenas avisos LF/CRLF.
+- `graphify update .`: executado; grafo atualizado para 1015 nodes, 1910 edges, 137 communities.
+
+### Resumo Trabalhista Com Contraparte E Status Inteligente
+- Usuario aprovou o novo padrao de resumo trabalhista e pediu implementacao passo a passo sem regressao.
+- Auditoria somente leitura executada antes da implementacao: 68 casos reais com `laborFlag=POSITIVE`, 118 processos trabalhistas, 66 processos com parte passiva bruta e apenas 3 resumos atuais com parte passiva exibida.
+- Confirmado que `Status: N/A` aparece por perda de status melhor durante o merge: BigDataCorp tem status em 116/118 processos, mas `selectTopProcessos()` fixa `N/A` cedo demais quando Judit nao traz status.
+- Confirmado que Judit e BigDataCorp ja preservam partes nos normalizers (`parties[]` e `allParties[]`), mas `selectTopProcessos()` descarta esses arrays no objeto intermediario usado pelo prefill.
+- Risco identificado: alguns fornecedores retornam o proprio candidato em papel passivo recursal ou tecnico; o resumo deve filtrar candidato antes de listar `Parte reclamada/passiva`.
+- Carregada skill `test-driven-development`; a implementacao seguira RED/GREEN com testes em `functions/helpers/deterministicPrefill.test.js` antes de alterar producao.
+- RED confirmado em `cd functions; npm test -- helpers/deterministicPrefill.test.js`: os testes novos falharam porque o resumo ainda exibia `Status: N/A`, `Papel:` e nao exibia contraparte.
+- Backend: `selectTopProcessos()` agora preserva `parties`, `allParties` e `movements`, mescla status/datas/ultimo andamento por CNJ e evita fixar `N/A` cedo demais.
+- Backend: criado formato trabalhista especifico com `Status processual`, `Papel do candidato`, contraparte, `Distribuição | Última movimentação` e `Último andamento`, mantendo o formato generico para criminal.
+- Backend: contraparte trabalhista filtra candidato, nomes menores que 4 caracteres e papeis neutros/tecnicos como advogado/perito/testemunha.
+- Teste focado `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 82/82 passando.
+- Suite functions `cd functions; npm test`: 17 arquivos, 482/482 testes passando.
+- Lint functions `cd functions; npm run lint`: passou.
+- Suite raiz `npm test`: 52 arquivos, 781/781 testes passando.
+- Lint raiz `npm run lint`: passou.
+- Build `npm run build`: passou.
+- Ajuste pos-revisao: quando houver apenas ultima movimentacao sem distribuicao confiavel, o bloco trabalhista nao imprime `Distribuição: data não informada`.
+- Revalidacao apos ajuste: `cd functions; npm test` passou com 17 arquivos e 482/482 testes; `cd functions; npm run lint` passou; `npm test` passou com 52 arquivos e 781/781 testes; `npm run build` passou; `npm run lint` passou.
+- `git diff --check`: sem erros; apenas avisos LF/CRLF.
+- `graphify update .`: executado; grafo atualizado para 1015 nodes, 1910 edges, 136 communities.
+
 ## 2026-05-22
 
 ### Incidente: Tag Criminal Consultiva Em Caso Concluido

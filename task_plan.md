@@ -182,3 +182,23 @@ Criar e endurecer a analise assistida que atua como segundo analista consultivo:
 - Phase 11 concluida localmente: bloqueio frontend/backend para flag criminal consultiva implementado, caso real corrigido nos documentos `cases`, `publicResult/latest` e `clientCases`, testes/lint/build/diff-check/graphify passaram.
 - Phase 12 concluida localmente: DJEN isolado ficou consultivo e nao impacta flags/prefill; testes/lint/build/diff-check passaram.
 - Deploy das mudancas Phase 12 segue pendente; nao foi executado nesta fase.
+
+### Phase 13: Resumo Trabalhista Com Contraparte E Status Inteligente
+- [x] Auditar todos os casos reais com `laborFlag=POSITIVE` em modo somente leitura.
+- [x] Confirmar formatos normalizados de Judit, BigDataCorp e Escavador para processos trabalhistas.
+- [x] Definir padrao final aprovado para bloco trabalhista: `Status processual`, `Papel do candidato`, `Parte reclamada/passiva`, datas e `Ultimo andamento`.
+- [x] Adicionar testes de regressao antes da implementacao.
+- [x] Preservar `parties`/`allParties`/`movements` em `selectTopProcessos()`.
+- [x] Implementar merge inteligente por CNJ para status, datas, ultimo andamento e partes.
+- [x] Implementar formatacao trabalhista especifica sem alterar formato criminal/mandado.
+- [x] Filtrar contraparte para remover candidato, nomes curtos e papeis neutros/tecnicos.
+- [x] Rodar testes focados e suites completas.
+- [x] Atualizar graphify apos alteracoes de codigo.
+
+### Phase 14: Remover Contexto Profissional Do Resumo Trabalhista
+- [x] Confirmar que o bloco profissional cadastral e gerado em `buildDetLaborNotes()` a partir de campos BigDataCorp `occupation_data`.
+- [x] Decidir escopo: remover apenas de `laborNotes`, preservando dados profissionais e resumo executivo.
+- [x] Atualizar testes para garantir ausencia de `Contexto profissional cadastral`, `Ultimo empregador` e `dados profissionais nao disponiveis` em `laborNotes`.
+- [x] Remover bloco morto de contexto profissional em `buildDetLaborNotes()`.
+- [x] Rodar testes focados, suites completas, lint, build e diff-check.
+- [x] Atualizar graphify apos alteracoes de codigo.

@@ -107,3 +107,19 @@
 - Correlacao forte para prefill/autoclassificacao: comunicacao DJEN com mesmo CNJ de processo confirmado por CPF em Judit (`hasExactCpfMatch`) ou BigDataCorp (`isDirectCpfMatch`).
 - `computeAutoClassification()` agora usa DJEN apenas quando `filterDjenComunicacoesByConfirmedProcess()` encontra CNJ confirmado para o eixo criminal/trabalhista.
 - `buildDetCriminalNotes()` e `buildDetLaborNotes()` nao listam DJEN isolado; comunicacoes correlacionadas ao mesmo CNJ confirmado continuam podendo aparecer como contexto adicional.
+
+## Resumo Trabalhista Com Contraparte
+- Auditoria real em producao encontrou 68 casos com `laborFlag=POSITIVE` e 118 processos trabalhistas unificados por CNJ.
+- BigDataCorp trouxe status em 116/118 processos; Judit trouxe status em 44/118. O status atual `N/A` aparece porque `selectTopProcessos()` fixa `N/A` cedo demais e nao troca por status melhor no merge por CNJ.
+- Judit normaliza `parties[]` com `name`, `personType`, `side` e `document`; BigDataCorp normaliza `allParties[]` com `name`, `role`, `side`, `document` e `isActive`.
+- `selectTopProcessos()` perde `parties[]` e `allParties[]`, por isso o resumo atual nao consegue exibir parte reclamada/passiva mesmo quando ela existe no raw normalizado.
+- Dos 415 nomes brutos detectados como passivos, 57 eram o proprio candidato em algum contexto recursal/processual; portanto o merge deve filtrar nome igual ao candidato antes de exibir contraparte.
+- Tambem existem ruidos curtos como `L` e abreviacoes como `A B`; nomes com menos de 4 caracteres devem ser descartados.
+- Padrao aprovado: para candidato no polo ativo, exibir `Parte reclamada/passiva`; para candidato no polo passivo, exibir `Parte autora/ativa`; para testemunha/neutro/ambiguo, nao exibir contraparte automaticamente.
+- `INDEFINIDO`, `N/A`, `NAO INFORMADO` e vazios sao status fracos. Quando houver ultimo andamento claro, inferir status conservador como `ARQUIVADO`, `TRANSITADO EM JULGADO`, `DISTRIBUIDO` ou `EM ANDAMENTO`.
+
+## Contexto Profissional Em `laborNotes`
+- O bloco `Contexto profissional cadastral (nao se trata de apontamento trabalhista):` e montado em `buildDetLaborNotes()` usando `bigdatacorpEmployer`, `bigdatacorpEmployerCnpj`, `bigdatacorpSector`, `bigdatacorpIsEmployed` e `bigdatacorpProfessionHistory`.
+- O fallback `Contexto profissional cadastral: dados profissionais nao disponiveis.` tambem e montado dentro de `buildDetLaborNotes()`.
+- Esses dados vêm do normalizer `normalizeBigDataCorpProfession()` e devem continuar persistidos para auditoria/identificacao; a remocao solicitada e apenas da narrativa trabalhista.
+- Escopo definido: remover o bloco profissional de `laborNotes` sem alterar flags, score, coleta BigDataCorp, `buildDetExecutiveSummary()` ou exibicao tecnica dos dados profissionais em outras areas.

@@ -408,7 +408,7 @@ describe('CasoPage', () => {
 
         fireEvent.click(screen.getByText('Mandado de Prisao'));
 
-        const warrantTextarea = await screen.findByDisplayValue('Nenhum mandado confirmado ate o momento.');
+        const warrantTextarea = await screen.findByDisplayValue('Nenhum mandado confirmado ate o momento.', {}, { timeout: 3000 });
         fireEvent.change(warrantTextarea, { target: { value: 'Analista revisando o mandado com cautela.' } });
 
         await act(async () => {

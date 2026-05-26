@@ -183,7 +183,6 @@ function buildCsvContent(rows) {
         'Cobertura',
         'Prioridade',
         'Risco',
-        'Nível de atenção',
         'Resultado',
         'Alertas principais',
         'Observação operacional',
@@ -206,7 +205,6 @@ function buildCsvContent(rows) {
             getCoverageLabel(c),
             PRI_MAP[c.priority] || c.priority || '',
             RISK_MAP[c.riskLevel] || c.riskLevel || '',
-            c.riskScore ?? '',
             VERDICT_MAP[c.finalVerdict] || c.finalVerdict || '',
             buildMainAlerts(c),
             buildOperationalNote(c),
@@ -306,7 +304,6 @@ function buildPrintableHtml(rows, scopeLabel, tenantName) {
         <td>${statusBadge(c.status)}</td>
         <td><span class="coverage">${esc(coverageLabel(c))}</span></td>
         <td>${riskBadge(c.riskLevel)}</td>
-        <td class="score">${esc(c.riskScore ?? '-')}</td>
         <td>${verdictBadge(c.finalVerdict)}</td>
         <td>${esc(c.createdAt || '-')}</td>
     </tr>`).join('');
@@ -839,7 +836,6 @@ tr{
                         <th>Situação</th>
                         <th>Cobertura</th>
                         <th>Risco</th>
-                        <th>Nível de atenção</th>
                         <th>Resultado</th>
                         <th>Data</th>
                     </tr>

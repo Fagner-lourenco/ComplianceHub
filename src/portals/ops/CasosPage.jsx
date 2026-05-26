@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
-import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
@@ -143,7 +142,6 @@ export default function CasosPage() {
                 <SlaBadge caseData={currentCase} />
                 <RiskChip value={currentCase.riskLevel} />
                 <RiskChip value={currentCase.finalVerdict} bold />
-                <ScoreBar score={currentCase.riskScore} />
                 <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
             </div>
             <div className="mobile-card__divider" />
@@ -264,7 +262,6 @@ export default function CasosPage() {
                                 <th className="data-table__th" scope="col">Prazo</th>
                                 <th className="data-table__th" scope="col" style={{ width: 40 }} title="Consulta automática">⚡</th>
                                 <th className="data-table__th" scope="col">Criminal</th>
-                                <th className="data-table__th" scope="col">Score</th>
                                 <th className="data-table__th" scope="col">Resultado</th>
                                 <th className="data-table__th" scope="col">Acoes</th>
                             </tr>
@@ -296,7 +293,6 @@ export default function CasosPage() {
                                     <td className="data-table__td"><SlaBadge caseData={currentCase} /></td>
                                     <td className="data-table__td" style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                     <td className="data-table__td"><RiskChip value={currentCase.criminalFlag} /></td>
-                                    <td className="data-table__td"><ScoreBar score={currentCase.riskScore} /></td>
                                     <td className="data-table__td"><RiskChip value={currentCase.finalVerdict} bold /></td>
                                     <td className="data-table__td">
                                         <button

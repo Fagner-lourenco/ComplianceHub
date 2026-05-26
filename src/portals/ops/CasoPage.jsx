@@ -3,7 +3,6 @@ import useAutoResize from '../../hooks/useAutoResize';
 import { useNavigate, useParams } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
-import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import EnrichmentPipeline from '../../ui/components/EnrichmentPipeline/EnrichmentPipeline';
 import Modal from '../../ui/components/Modal/Modal';
@@ -663,23 +662,12 @@ function resolveDraftField(caseData, field, options = {}) {
     const reviewDraft = caseData?.reviewDraft || {};
     const prefillNarratives = caseData?.prefillNarratives || {};
     const isDoneCase = caseData?.status === 'DONE';
-
-    // P2-012: quando prefill foi atualizado apos reviewDraft e diverge,
-    // priorizar prefill se caseData (backend) confirma o prefill
-    const prefillMergedAt = prefillNarratives?.metadata?.mergedAt;
-    const reviewDraftHasValue = isMeaningfulValue(reviewDraft?.[field]);
-    const prefillHasValue = isMeaningfulValue(prefillNarratives?.[prefillKey]);
-    const caseDataHasValue = isMeaningfulValue(caseData?.[field]);
-    const reviewDiffersFromCase = reviewDraftHasValue && caseDataHasValue
-        && String(reviewDraft[field]).trim() !== String(caseData[field]).trim();
-    const prefillMatchesCase = prefillHasValue && caseDataHasValue
-        && String(prefillNarratives[prefillKey]).trim() === String(caseData[field]).trim();
-    const prefillIsMoreRecent = prefillMergedAt && reviewDiffersFromCase && prefillMatchesCase;
+    const reviewDraftIsAnalystEdit = reviewDraft?.__source === 'analyst';
 
     const candidates = [
         isDoneCase ? caseData?.[field] : undefined,
-        prefillIsMoreRecent ? undefined : reviewDraft?.[field],
-        prefillNarratives?.[prefillKey],
+        reviewDraftIsAnalystEdit ? reviewDraft?.[field] : prefillNarratives?.[prefillKey],
+        reviewDraftIsAnalystEdit ? prefillNarratives?.[prefillKey] : reviewDraft?.[field],
         typeof fallbackValue === 'function' ? fallbackValue(caseData) : fallbackValue,
         isDoneCase ? undefined : caseData?.[field],
     ];
@@ -1138,7 +1126,7 @@ export default function CasoPage() {
             ok: true, warn: true,
         },
         risk.riskScore >= 50 && risk.riskScore < 70 && form.finalVerdict === 'FIT' && {
-            label: `Nível de atenção ${risk.riskScore} (médio-alto) com resultado FIT`,
+            label: 'Nível de risco médio-alto com resultado FIT',
             ok: true, warn: true,
         },
     ].filter(Boolean), [enabledPhases, form, caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore]);
@@ -1582,10 +1570,7 @@ export default function CasoPage() {
                     ) : null;
                 })()}
                 {caseData.riskLevel && caseData.status === 'DONE' && (
-                    <>
-                        <RiskChip value={caseData.riskLevel} size="sm" />
-                        <span style={{ fontSize: '.72rem', color: 'var(--text-secondary)' }}>{caseData.riskScore} pts</span>
-                    </>
+                    <RiskChip value={caseData.riskLevel} size="sm" />
                 )}
             </div>
 
@@ -2623,7 +2608,7 @@ export default function CasoPage() {
                         )}
                     >
                         <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                            O nível de atenção calculado é <strong>{risk.riskScore} pts</strong> ({risk.riskLevel}), mas o resultado selecionado é <strong>FIT</strong>.
+                            O nível de risco calculado é <strong>{risk.riskLevel === 'RED' ? 'Alto' : risk.riskLevel === 'YELLOW' ? 'Médio' : 'Baixo'}</strong>, mas o resultado selecionado é <strong>FIT</strong>.
                         </p>
                         <p style={{ fontSize: '.875rem', color: 'var(--text-secondary)', marginTop: 10, lineHeight: 1.5 }}>
                             Deseja concluir o caso mesmo assim? Esta ação ficará registrada no log de auditoria.
@@ -3560,10 +3545,6 @@ export default function CasoPage() {
                             <div className="caso-risk-item">
                                 <span className="caso-risk-label">Nivel de risco</span>
                                 <RiskChip value={risk.riskLevel} size="lg" bold />
-                            </div>
-                            <div className="caso-risk-item">
-                                <span className="caso-risk-label">Nível de atenção</span>
-                                <ScoreBar score={risk.riskScore} />
                             </div>
                             <div className="caso-risk-item">
                                 <span className="caso-risk-label">Resultado sugerido</span>

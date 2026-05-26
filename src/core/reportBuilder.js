@@ -228,16 +228,10 @@ function buildCaseBody(c, cd, generatedAt) {
     const socialSec = sLinks.length > 0
         ? `<div class="sec"><div class="sec__t">Perfis em Redes Sociais</div><div class="slinks">${sLinks.join('')}</div></div>` : '';
 
-    const score = typeof c.riskScore === 'number' ? c.riskScore : 0;
     const riskLevel = c.riskLevel || 'GREEN';
     const verdict = c.finalVerdict;
 
     const riskSec = `<div class="rbox">
-  <div class="rbox__score"><div class="rbox__sl">Score de Risco</div>
-    <div class="rbox__bw"><div class="rbox__bar"><div class="rbox__fill" style="width:${score}%;background:${sbColor(score)}"></div></div>
-    <span class="rbox__num">${score}<span class="rbox__den">/100</span></span></div>
-  </div>
-  <div class="rbox__div"></div>
   <div class="rbox__pg"><div class="rbox__pl">Nível de Risco</div><span class="b b--lg b--${rlColor(riskLevel)}">${esc(RISK_LEVEL_LABEL[riskLevel]||riskLevel)}</span></div>
   <div class="rbox__div"></div>
   <div class="rbox__pg"><div class="rbox__pl">Veredito Final</div><span class="b b--lg b--${flagColor(verdict)}">${esc(VERDICT_LABEL[verdict]||verdict||'—')}</span></div>
@@ -311,13 +305,6 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .f__l{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
 .f__v{font-size:12px;color:#1e293b;margin-top:2px;font-weight:500;word-break:break-word}
 .rbox{background:linear-gradient(135deg,#f8fafc 0%,#f0f4ff 100%);border-radius:10px;padding:18px 24px;display:flex;align-items:center;gap:0;border:1px solid #e2e8f0}
-.rbox__score{flex:1;min-width:160px}
-.rbox__sl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.rbox__bw{display:flex;align-items:center;gap:12px}
-.rbox__bar{flex:1;height:10px;background:#e2e8f0;border-radius:99px;overflow:hidden;max-width:140px}
-.rbox__fill{height:100%;border-radius:99px}
-.rbox__num{font-size:28px;font-weight:800;color:#1e293b;line-height:1}
-.rbox__den{font-size:13px;font-weight:400;color:#94a3b8}
 .rbox__div{width:1px;background:#e2e8f0;align-self:stretch;margin:0 24px}
 .rbox__pg{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .rbox__pl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px}
@@ -391,7 +378,7 @@ p,li{orphans:3;widows:3}
 }
 @page{size:A4;margin:14mm 12mm}
 body::before{content:"CONFIDENCIAL";position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-45deg);z-index:9999;pointer-events:none;white-space:nowrap;font-size:86px;line-height:1;font-weight:900;letter-spacing:.12em;color:rgba(15,23,42,.04);text-transform:uppercase;user-select:none}
-@media screen and (max-width:720px){body{background:#fff;font-size:13px}.page{width:100%;max-width:none;padding:24px 18px 32px}.hdr{flex-direction:column;gap:10px}.hdr__right{text-align:left}.fgrid{grid-template-columns:1fr;gap:10px}.rbox{flex-direction:column;align-items:stretch;gap:16px;padding:16px}.rbox__div{width:100%;height:1px;margin:0}.rbox__bar{max-width:none}.pr__top,.hcard__top,.hcard__item-top,.titem__row,.ftr{flex-direction:column;align-items:flex-start}.slinks{flex-direction:column}.slink{width:100%;justify-content:center}body::before{font-size:48px;letter-spacing:.08em;color:rgba(15,23,42,.035)}}
+@media screen and (max-width:720px){body{background:#fff;font-size:13px}.page{width:100%;max-width:none;padding:24px 18px 32px}.hdr{flex-direction:column;gap:10px}.hdr__right{text-align:left}.fgrid{grid-template-columns:1fr;gap:10px}.rbox{flex-direction:column;align-items:stretch;gap:16px;padding:16px}.rbox__div{width:100%;height:1px;margin:0}.pr__top,.hcard__top,.hcard__item-top,.titem__row,.ftr{flex-direction:column;align-items:flex-start}.slinks{flex-direction:column}.slink{width:100%;justify-content:center}body::before{font-size:48px;letter-spacing:.08em;color:rgba(15,23,42,.035)}}
 `;
 
 export function buildCaseReportHtml(caseData, candidateData) {

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Modal from '../../ui/components/Modal/Modal';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
-import ScoreBar from '../../ui/components/ScoreBar/ScoreBar';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
@@ -170,7 +169,6 @@ export default function FilaPage() {
                 <SlaBadge caseData={currentCase} />
                 <RiskChip value={currentCase.riskLevel} />
                 <RiskChip value={currentCase.criminalFlag} />
-                <ScoreBar score={currentCase.riskScore ?? null} />
                 <EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} />
             </div>
             <div className="mobile-card__divider" />
@@ -344,7 +342,6 @@ export default function FilaPage() {
                                 <th scope="col">Prazo</th>
                                 <th scope="col" style={{ width: 40 }} title="Consulta automática">⚡</th>
                                 <th scope="col">Criminal</th>
-                                <th scope="col">Score</th>
                                 <th scope="col">Risco</th>
                                 <th scope="col">Responsavel</th>
                                 <th scope="col">Acoes</th>
@@ -363,14 +360,13 @@ export default function FilaPage() {
                                     <td><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 99 }} /></td>
                                     <td />
                                     <td><div className="skeleton" style={{ width: 72, height: 22, borderRadius: 99 }} /></td>
-                                    <td><div className="skeleton skeleton--text" style={{ width: 48 }} /></td>
                                     <td><div className="skeleton" style={{ width: 56, height: 22, borderRadius: 99 }} /></td>
                                     <td />
                                 </tr>
                             ))}
                             {!loading && error && (
                                 <tr>
-                                    <td colSpan={14} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
+                                    <td colSpan={13} style={{ textAlign: 'center', padding: '48px', color: 'var(--red-700)' }}>
                                         {extractErrorMessage(error, 'Nao foi possivel carregar a fila de trabalho agora.')}
                                     </td>
                                 </tr>
@@ -396,7 +392,6 @@ export default function FilaPage() {
                                     <td><SlaBadge caseData={currentCase} audience="ops" /></td>
                                     <td style={{ textAlign: 'center' }}><EnrichmentIcon status={getOverallEnrichmentStatus(currentCase)} /></td>
                                     <td><RiskChip value={currentCase.criminalFlag} /></td>
-                                    <td><ScoreBar score={currentCase.riskScore} /></td>
                                     <td><RiskChip value={currentCase.riskLevel} /></td>
                                     <td style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', maxWidth: 120 }}>
                                         {currentCase.assigneeName || currentCase.assigneeEmail || (currentCase.assigneeId ? 'Atribuido' : '—')}

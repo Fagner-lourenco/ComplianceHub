@@ -1860,6 +1860,147 @@ function formatDateBR(isoStr) {
     return `${dd}/${mm}/${yyyy}`;
 }
 
+function normalizePartyName(name) {
+    return String(name || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+}
+
+function isSamePersonName(a, b) {
+    const left = normalizePartyName(a);
+    const right = normalizePartyName(b);
+    if (!left || !right) return false;
+    return left === right || left.includes(right) || right.includes(left);
+}
+
+function isWeakProcessStatus(status) {
+    const normalized = normalizePartyName(status);
+    return !normalized || ['N A', 'NA', 'NAO INFORMADO', 'NÃO INFORMADO', 'INDEFINIDO'].includes(normalized);
+}
+
+function inferStatusFromLastStep(lastStep) {
+    const text = normalizePartyName(lastStep);
+    if (!text) return null;
+    if (/ARQUIVAD/.test(text)) return 'ARQUIVADO';
+    if (/TRANSITAD/.test(text)) return 'TRANSITADO EM JULGADO';
+    if (/DISTRIBU/.test(text)) return 'DISTRIBUIDO';
+    if (/CONCLUS|REMETID|AUDIENCIA|JUNTADA|DECORRIDO/.test(text)) return 'EM ANDAMENTO';
+    return null;
+}
+
+function resolveProcessStatus(proc) {
+    if (proc && !isWeakProcessStatus(proc.status)) return proc.status;
+    return inferStatusFromLastStep(firstMovementContent(proc)) || proc?.status || null;
+}
+
+function isPassiveLaborParty(party) {
+    const role = normalizePartyName(party?.role || party?.personType);
+    const side = normalizePartyName(party?.side);
+    if (/ADVOGAD|PROCURADOR|PERITO|RELATOR|CUSTOS LEGIS|TESTEMUNH/.test(role)) return false;
+    return /PASSIVE|PASSIVO|DEFENDANT/.test(side) ||
+        /RECLAMAD|REU|REQUERID|EXECUTAD|POLO PASSIVO|PASSIVO|RECORRIDO|CONSIGNATARIO/.test(role);
+}
+
+function isActiveLaborParty(party) {
+    const role = normalizePartyName(party?.role || party?.personType);
+    const side = normalizePartyName(party?.side);
+    if (/ADVOGAD|PROCURADOR|PERITO|RELATOR|CUSTOS LEGIS|TESTEMUNH/.test(role)) return false;
+    return /ACTIVE|ATIVO|PLAINTIFF/.test(side) ||
+        /RECLAMANTE|AUTOR|REQUERENTE|EXEQUENTE|RECORRENTE|POLO ATIVO/.test(role);
+}
+
+function dedupePartyNames(names) {
+    const seen = new Set();
+    const result = [];
+    for (const name of names) {
+        const raw = String(name || '').trim();
+        const normalized = normalizePartyName(raw);
+        if (!normalized || normalized.length < 4 || seen.has(normalized)) continue;
+        seen.add(normalized);
+        result.push(raw);
+    }
+    return result;
+}
+
+function getProcessParties(proc) {
+    return [
+        ...(Array.isArray(proc?.parties) ? proc.parties : []),
+        ...(Array.isArray(proc?.allParties) ? proc.allParties : []),
+    ];
+}
+
+function resolveCounterpartyNames(proc, candidateName) {
+    const role = normalizePartyName(proc?.specificRole || proc?.polo);
+    const parties = getProcessParties(proc);
+    if (/TESTEMUNH|ADVOGAD|PROCURADOR|PERITO|RELATOR/.test(role)) return { label: null, names: [] };
+
+    const candidateIsPassive = /RECLAMAD|REU|REQUERID|EXECUTAD|POLO PASSIVO|PASSIVO|RECORRIDO/.test(role);
+    const predicate = candidateIsPassive ? isActiveLaborParty : isPassiveLaborParty;
+    const names = dedupePartyNames(
+        parties
+            .filter(predicate)
+            .map((party) => party.name)
+            .filter((name) => !isSamePersonName(name, candidateName)),
+    );
+
+    return {
+        label: candidateIsPassive ? 'Parte autora/ativa' : 'Parte reclamada/passiva',
+        names,
+    };
+}
+
+function firstMovementContent(proc) {
+    if (proc?.lastStep) return proc.lastStep;
+    const movement = Array.isArray(proc?.movements) ? proc.movements.find((item) => item?.content) : null;
+    return movement?.content || null;
+}
+
+function mergeProcessParties(existing, incoming) {
+    const incomingParties = Array.isArray(incoming.parties) ? incoming.parties : [];
+    const incomingAllParties = Array.isArray(incoming.allParties) ? incoming.allParties : [];
+    if (incomingParties.length > 0) existing.parties = [...(existing.parties || []), ...incomingParties];
+    if (incomingAllParties.length > 0) existing.allParties = [...(existing.allParties || []), ...incomingAllParties];
+}
+
+function formatLaborProcessBlock(proc, options = {}) {
+    const indent = '   ';
+    const lines = [];
+    lines.push(`${indent}Processo: ${formatCnj(proc.cnj)}`);
+    if (proc.classe) lines.push(`${indent}Tipo: ${proc.classe}`);
+    if (proc.assunto) lines.push(`${indent}Assunto: ${proc.assunto}`);
+    lines.push(`${indent}Status processual: ${resolveProcessStatus(proc) || 'N/A'}`);
+    if (proc.tribunal && proc.tribunal !== 'N/A') {
+        const varaStr = proc.vara ? ` | Vara: ${proc.vara}` : '';
+        lines.push(`${indent}Tribunal: ${proc.tribunal}${varaStr}`);
+    }
+    if (proc.comarca) lines.push(`${indent}Comarca: ${proc.comarca}`);
+    const roleStr = proc.specificRole || proc.polo;
+    if (roleStr && roleStr !== 'N/A') lines.push(`${indent}Papel do candidato: ${roleStr}`);
+    const counterparty = resolveCounterpartyNames(proc, options.candidateName);
+    if (counterparty.label && counterparty.names.length > 0) {
+        const visibleNames = counterparty.names.slice(0, 5);
+        const suffix = counterparty.names.length > visibleNames.length ? '; ...' : '';
+        lines.push(`${indent}${counterparty.label}: ${visibleNames.join('; ')}${suffix}`);
+    }
+    const distributionSource = proc.fonte === 'BigDataCorp' ? null : proc.data;
+    const distDate = formatDateBR(proc.distributionDate || distributionSource);
+    const lastDate = proc.lastMovementDate ? formatDateBR(proc.lastMovementDate) : null;
+    if (distDate !== 'data não informada') {
+        let dateStr = `${indent}Distribuição: ${distDate}`;
+        if (lastDate) dateStr += ` | Última movimentação: ${lastDate}`;
+        lines.push(dateStr);
+    } else if (lastDate) {
+        lines.push(`${indent}Última movimentação: ${lastDate}`);
+    }
+    const lastStep = firstMovementContent(proc);
+    if (lastStep) lines.push(`${indent}Último andamento: ${lastStep}`);
+    return lines.join('\n');
+}
+
 /**
  * Classify a warrant as CIVIL or CRIMINAL based on structured data.
  * BDC `imprisonmentKind` is primary; Judit / decision text is fallback.
@@ -1966,12 +2107,15 @@ function extractSentenceDetails(decisions) {
  * Uses 3-space indentation. Options: showPenalty, showCartaDeGuia, showLastStep.
  */
 function formatProcessBlock(proc, options = {}) {
+    if (proc.isTrabalhista) return formatLaborProcessBlock(proc, options);
+
     const indent = '   ';
     const lines = [];
     lines.push(`${indent}Processo: ${formatCnj(proc.cnj)}`);
     if (proc.classe) lines.push(`${indent}Tipo: ${proc.classe}`);
     if (proc.assunto) lines.push(`${indent}Assunto: ${proc.assunto}`);
-    const statusStr = proc.phase ? `${proc.status} (fase: ${proc.phase})` : proc.status;
+    const resolvedStatus = resolveProcessStatus(proc);
+    const statusStr = proc.phase ? `${resolvedStatus} (fase: ${proc.phase})` : resolvedStatus;
     lines.push(`${indent}Status: ${statusStr || 'N/A'}`);
     if (options.penalty) lines.push(`${indent}Pena: ${options.penalty}`);
     if (options.regime) lines.push(`${indent}Regime: ${options.regime}`);
@@ -1992,6 +2136,8 @@ function formatProcessBlock(proc, options = {}) {
         lines.push(dateStr);
     }
     if (options.cartaDeGuia) lines.push(`${indent}Obs.: ${options.cartaDeGuia}`);
+    const lastStepText = firstMovementContent(proc);
+    if (lastStepText) lines.push(`${indent}Último andamento: ${lastStepText}`);
     return lines.join('\n');
 }
 
@@ -2019,7 +2165,7 @@ function selectTopProcessos(caseData, limit = 10) {
             area: p.area || 'N/A',
             classe: (p.classifications || [])[0] || null,
             assunto: (p.subjects || []).slice(0, 2).join(', ') || null,
-            status: p.status || 'N/A',
+            status: p.status || null,
             polo: p.side || p.personType || 'N/A',
             tribunal: p.tribunalAcronym || 'N/A',
             vara: p.county || null,
@@ -2037,11 +2183,18 @@ function selectTopProcessos(caseData, limit = 10) {
             distributionDate: p.distributionDate || null,
             phase: p.phase || null,
             instance: p.instance || null,
-            lastMovementDate: null,
+            lastMovementDate: p.lastStepDate || null,
+            lastStepDate: p.lastStepDate || null,
             lawsuitAgeDays: null,
             courtLevel: null,
             judgingBody: null,
             allDecisions: null,
+            isVictim: !!p.isVictim,
+            isDefendant: !!p.isDefendant,
+            isWitness: !!p.isWitness,
+            parties: Array.isArray(p.parties) ? p.parties : [],
+            allParties: [],
+            movements: [],
         });
     }
 
@@ -2063,8 +2216,10 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
                 if (!existing.specificRole && (p.specificRole || p.tipoNormalizado)) existing.specificRole = p.specificRole || p.tipoNormalizado;
                 if (!existing.comarca && p.processCity) existing.comarca = p.processCity;
+                if (isWeakProcessStatus(existing.status) && p.status) existing.status = p.status;
                 // v5 enrichment
                 if (!existing.lastStep && p.lastStep) existing.lastStep = p.lastStep;
+                if (!existing.lastMovementDate && p.dataUltimaMovimentacao) existing.lastMovementDate = p.dataUltimaMovimentacao;
                 existing.fonte = `${existing.fonte}+Escavador`;
             }
             continue;
@@ -2075,7 +2230,7 @@ function selectTopProcessos(caseData, limit = 10) {
             area: p.area || 'N/A',
             classe: p.classe || null,
             assunto: p.assuntoPrincipal || null,
-            status: p.status || 'N/A',
+            status: p.status || null,
             polo: p.polo || p.tipoNormalizado || 'N/A',
             tribunal: p.tribunalSigla || 'N/A',
             vara: null,
@@ -2093,11 +2248,14 @@ function selectTopProcessos(caseData, limit = 10) {
             distributionDate: p.dataInicio || null,
             phase: null,
             instance: null,
-            lastMovementDate: null,
+            lastMovementDate: p.dataUltimaMovimentacao || null,
             lawsuitAgeDays: null,
             courtLevel: null,
             judgingBody: null,
             allDecisions: p.decisions || null,
+            parties: [],
+            allParties: [],
+            movements: [],
         });
     }
 
@@ -2123,6 +2281,7 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
                 if (!existing.specificRole && p.specificRole) existing.specificRole = p.specificRole;
                 if (!existing.comarca && p.courtDistrict) existing.comarca = p.courtDistrict;
+                if (p.status && isWeakProcessStatus(existing.status)) existing.status = p.status;
                 if (p.isDirectCpfMatch && existing.matchType !== 'CPF confirmado') existing.matchType = 'CPF confirmado';
                 if (p.isCriminal && !existing.isCriminal) existing.isCriminal = true;
                 if (p.isLabor && !existing.isTrabalhista) existing.isTrabalhista = true;
@@ -2132,7 +2291,14 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.judgingBody && p.judgingBody) existing.judgingBody = p.judgingBody;
                 if (!existing.lastMovementDate && p.lastMovementDate) existing.lastMovementDate = p.lastMovementDate;
                 if (!existing.lawsuitAgeDays && p.lawsuitAgeDays) existing.lawsuitAgeDays = p.lawsuitAgeDays;
+                if (p.isVictim && !existing.isVictim) existing.isVictim = true;
+                if (p.isDefendant && !existing.isDefendant) existing.isDefendant = true;
                 if (!existing.allDecisions && p.decisions) existing.allDecisions = p.decisions;
+                if (!existing.lastStep && Array.isArray(p.movements) && p.movements[0]?.content) existing.lastStep = p.movements[0].content;
+                if (!existing.classe && (p.cnjProcedure || p.tipo)) existing.classe = p.cnjProcedure || p.tipo;
+                if (!existing.assunto && (p.assunto || p.cnjSubject)) existing.assunto = p.assunto || p.cnjSubject;
+                mergeProcessParties(existing, { allParties: p.allParties || [], movements: p.movements || [] });
+                if (Array.isArray(p.movements) && p.movements.length > 0) existing.movements = [...(existing.movements || []), ...p.movements];
                 existing.fonte = `${existing.fonte}+BigDataCorp`;
             }
             continue;
@@ -2143,7 +2309,7 @@ function selectTopProcessos(caseData, limit = 10) {
             area: p.courtType || p.cnjBroadSubject || 'N/A',
             classe: p.cnjProcedure || p.tipo || null,
             assunto: p.assunto || p.cnjSubject || null,
-            status: p.status || 'N/A',
+            status: p.status || null,
             polo: p.polo || p.partyType || 'N/A',
             tribunal: p.courtName || 'N/A',
             vara: null,
@@ -2166,6 +2332,12 @@ function selectTopProcessos(caseData, limit = 10) {
             courtLevel: p.courtLevel || null,
             judgingBody: p.judgingBody || null,
             allDecisions: p.decisions || null,
+            isVictim: !!p.isVictim,
+            isDefendant: !!p.isDefendant,
+            isWitness: false,
+            parties: [],
+            allParties: Array.isArray(p.allParties) ? p.allParties : [],
+            movements: Array.isArray(p.movements) ? p.movements : [],
         });
     }
 
@@ -7888,8 +8060,8 @@ function resolveNarrativeField(caseData, payload, field, options = {}) {
     const candidates = [
         payload?.[field],
         isDoneCase ? caseData?.[field] : undefined,
-        reviewDraft?.[field],
         prefillNarratives?.[prefillKey],
+        reviewDraft?.[field],
         typeof fallbackValue === 'function' ? fallbackValue(caseData, payload) : fallbackValue,
         isDoneCase ? undefined : caseData?.[field],
     ];
@@ -7929,6 +8101,7 @@ function pickDraftPayload(payload = {}, existingReviewDraft = {}) {
             reviewDraft[key] = normalizeNarrativeValue(key, value);
         }
     }
+    reviewDraft.__source = 'analyst';
     return {
         reviewDraft: stripUndefined(reviewDraft),
         draftSavedAt: new Date().toISOString(),
@@ -8033,7 +8206,7 @@ exports.assignCaseToAnalyst = onCall(
                 assignedByEmail: callerProfile.email || '',
                 updatedAt: FieldValue.serverTimestamp(),
             };
-            if (data.status === 'PENDING' && !data.reviewDraft) {
+            if (data.status === 'PENDING') {
                 updateFields.status = 'IN_PROGRESS';
             }
             t.update(caseRef, updateFields);
@@ -8303,7 +8476,15 @@ function buildDetCriminalNotes(caseData) {
     // CPF-confirmed processes
     if (cpfConfirmed.length > 0) {
         parts.push('');
-        // no header — go straight to listing
+
+        const victimRolePattern = /v[ií]tima|ofendid[oa]|prejudicad[oa]|agraviad[oa]/i;
+        const allDirectAreVictim = cpfConfirmed.every(
+            (p) => p.isVictim === true || victimRolePattern.test(p.specificRole || ''),
+        );
+        if (allDirectAreVictim) {
+            parts.push('Todos os registros criminais localizados com CPF confirmado indicam o candidato exclusivamente como vítima ou ofendido — não há apontamento de autoria de ato ilícito com confirmação documental.');
+        }
+
         for (let i = 0; i < cpfConfirmed.length; i++) {
             const p = cpfConfirmed[i];
             // Extract sentence details from decisions
@@ -8322,6 +8503,11 @@ function buildDetCriminalNotes(caseData) {
             parts.push('');
             parts.push(`${i + 1}. ${formatCnj(p.cnj)}`);
             parts.push(formatProcessBlock(p, opts));
+
+            const isProcessVictim = p.isVictim === true || victimRolePattern.test(p.specificRole || '');
+            if (isProcessVictim) {
+                parts.push(`   Nota: candidato figura como vítima/ofendido neste registro — este apontamento não indica autoria de ato ilícito pelo candidato.`);
+            }
         }
     }
 
@@ -8448,66 +8634,11 @@ function buildDetLaborNotes(caseData) {
             const p = laborProcesses[i];
             parts.push('');
             parts.push(`${i + 1}. ${formatCnj(p.cnj)}`);
-            parts.push(formatProcessBlock(p, {}));
+            parts.push(formatProcessBlock(p, { candidateName: caseData.candidateName }));
         }
         if (laborProcesses.length > 6) {
             parts.push(`... e mais ${laborProcesses.length - 6} processo(s) trabalhista(s).`);
         }
-    }
-
-    // Professional context — shown as cadastral context, not as a labor finding.
-    parts.push('');
-    const profHistory = caseData.bigdatacorpProfessionHistory;
-    const employer = caseData.bigdatacorpEmployer;
-    const employerCnpj = caseData.bigdatacorpEmployerCnpj;
-    const sector = caseData.bigdatacorpSector;
-    const isEmployed = caseData.bigdatacorpIsEmployed;
-
-    if (employer || (profHistory && profHistory.length > 0)) {
-        const prof = profHistory?.[0];
-        const empName = employer || prof?.companyName || 'não informado';
-        const cnpj = employerCnpj || prof?.companyCnpj || null;
-        const rawSector = sector || prof?.sector || null;
-        // Clean sector: "PRIVATE - 6204000 - CONSULTORIA EM TI" → "Consultoria em Tecnologia da Informação (Privado)"
-        let sectorLabel = null;
-        if (rawSector) {
-            const sectorParts = rawSector.split(' - ');
-            const sectorType = /private/i.test(sectorParts[0] || '') ? 'Privado' : /public/i.test(sectorParts[0] || '') ? 'Público' : null;
-            const sectorDesc = sectorParts.length >= 3 ? sectorParts.slice(2).join(' - ') : sectorParts[sectorParts.length - 1];
-            sectorLabel = sectorDesc ? `${sectorDesc.charAt(0).toUpperCase()}${sectorDesc.slice(1).toLowerCase()}` : null;
-            if (sectorType && sectorLabel) sectorLabel += ` (${sectorType})`;
-        }
-
-        parts.push('Contexto profissional cadastral (nao se trata de apontamento trabalhista):');
-        parts.push(`   Ultimo empregador registrado: ${empName}`);
-        if (cnpj) {
-            const fmtCnpj = cnpj.length === 14 ? `${cnpj.slice(0,2)}.${cnpj.slice(2,5)}.${cnpj.slice(5,8)}/${cnpj.slice(8,12)}-${cnpj.slice(12,14)}` : cnpj;
-            parts.push(`   CNPJ: ${fmtCnpj}`);
-        }
-        if (sectorLabel) parts.push(`   Setor: ${sectorLabel}`);
-        // Employment status and start date
-        const startDate = prof?.startDate;
-        if (isEmployed || /active/i.test(prof?.status || '')) {
-              parts.push(`   Vínculo: Registrado${startDate ? ` desde ${formatDateBR(startDate)}` : ''} (última atualização na base)`);
-        } else if (startDate) {
-            const endDate = prof?.endDate && !prof.endDate.startsWith('9999') ? formatDateBR(prof.endDate) : null;
-            parts.push(`   Vínculo: Encerrado${endDate ? ` em ${endDate}` : ''}`);
-        }
-        // Salary range
-        const incomeRange = prof?.incomeRange;
-        const income = prof?.income;
-        if (incomeRange && income) {
-            parts.push(`   Faixa salarial: R$ ${income.toLocaleString('pt-BR')} (${incomeRange})`);
-        } else if (incomeRange) {
-            parts.push(`   Faixa salarial: ${incomeRange}`);
-        } else if (income) {
-            parts.push(`   Faixa salarial: R$ ${income.toLocaleString('pt-BR')}`);
-        }
-        // Public servant check
-        const isPublic = /public/i.test(rawSector || '') || /servidor|concurs/i.test(prof?.level || '');
-        parts.push(`   Servidor público: ${isPublic ? 'Sim' : 'Não'}`);
-    } else {
-        parts.push('Contexto profissional cadastral: dados profissionais nao disponiveis.');
     }
 
     // DJEN/DPJe labor communications
@@ -9359,6 +9490,7 @@ function buildReviewDraftSeed(caseData) {
         if (!hasMeaningfulValue(value)) continue;
         reviewDraft[field] = normalizeNarrativeValue(field, value);
     }
+    reviewDraft.__source = 'auto-seed';
     return stripUndefined(reviewDraft);
 }
 

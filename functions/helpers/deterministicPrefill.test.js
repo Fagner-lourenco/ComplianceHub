@@ -26,6 +26,7 @@ const {
     selectTopProcessos,
     normCnj,
     formatCnj,
+    formatProcessBlock,
     sanitizeNarrativesForFlags,
 } = __test;
 
@@ -658,12 +659,13 @@ describe('Deterministic Prefill', () => {
             // Should NOT contain the generic "Trabalhista POSITIVO confirmado por: ."
             expect(notes).not.toContain('confirmado por:');
             if (caseData.laborFlag === 'POSITIVE') {
-                // v7: headers removed — check for process listing or professional context
+                // v7: headers removed — professional context is not part of labor notes
                 const hasLaborProcesses = (caseData.laborProcesses || []).length > 0;
                 if (hasLaborProcesses) {
-                    expect(notes).toMatch(/Status:/);
+                    expect(notes).toMatch(/Status:|Status processual:/);
                 } else {
-                    expect(notes).toContain('Ultimo empregador');
+                    expect(notes).not.toContain('Contexto profissional cadastral');
+                    expect(notes).not.toContain('Ultimo empregador');
                 }
             }
         });
@@ -732,8 +734,141 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetLaborNotes(caseData);
             if (caseData.laborFlag === 'POSITIVE') {
                 // v7: no headers, go straight to listing
-                expect(notes).toMatch(/Papel:/);
+                expect(notes).toMatch(/Papel do candidato:/);
             }
+        });
+
+        it('buildDetLaborNotes includes passive labor party and resolved status from merged BigDataCorp data', () => {
+            const caseData = classifyAndMerge({
+                ...buildCleanCase(),
+                candidateName: 'ANDRE LUIZ VAZ',
+                cpf: '38607910876',
+                juditRoleSummary: [
+                    {
+                        code: '0000218-13.2021.5.09.0003',
+                        area: 'Trabalhista',
+                        status: null,
+                        phase: null,
+                        tribunalAcronym: 'TRT9',
+                        city: 'CURITIBA',
+                        county: '3ª VARA DO TRABALHO DE CURITIBA',
+                        justice: '5',
+                        distributionDate: '2021-03-23',
+                        personType: 'RECLAMANTE',
+                        side: 'Active',
+                        hasExactCpfMatch: true,
+                        isLabor: true,
+                        subjects: ['INTERVALO INTRAJORNADA'],
+                        classifications: ['AÇÃO TRABALHISTA - RITO SUMARÍSSIMO'],
+                        lastStep: 'Arquivados os autos definitivamente',
+                        lastStepDate: '2022-02-21',
+                        parties: [
+                            { name: 'ANDRE LUIZ VAZ', personType: 'RECLAMANTE', side: 'Active', document: '38607910876' },
+                            { name: 'MADERO INDUSTRIA E COMERCIO S.A.', personType: 'RECLAMADO', side: 'Passive', document: '13783221001601' },
+                        ],
+                    },
+                ],
+                bigdatacorpProcessos: [
+                    {
+                        numero: '00002181320215090003',
+                        courtType: 'TRABALHISTA',
+                        courtName: 'TRT9',
+                        courtDistrict: 'CURITIBA',
+                        status: 'ARQUIVADO',
+                        cnjProcedure: 'AÇÃO TRABALHISTA - RITO SUMARÍSSIMO',
+                        cnjSubject: 'INTERVALO INTRAJORNADA',
+                        isLabor: true,
+                        isDirectCpfMatch: true,
+                        polo: 'ACTIVE',
+                        partyType: 'RECLAMANTE',
+                        specificRole: 'RECLAMANTE',
+                        lastMovementDate: '2022-02-21',
+                        allParties: [
+                            { name: 'ANDRE LUIZ VAZ', role: 'RECLAMANTE', side: 'ACTIVE', document: '38607910876' },
+                            { name: 'MADERO INDUSTRIA E COMERCIO S A', role: 'RECLAMADO', side: 'PASSIVE', document: '13783221000125' },
+                            { name: 'DIOGO FADEL BRAZ', role: 'ADVOGADO', side: 'NEUTRAL', document: null },
+                        ],
+                        movements: [
+                            { content: 'Arquivados os autos definitivamente', date: '2022-02-21' },
+                        ],
+                    },
+                ],
+                bigdatacorpLaborFlag: 'POSITIVE',
+            });
+
+            const notes = buildDetLaborNotes(caseData);
+
+            expect(notes).toContain('Status processual: ARQUIVADO');
+            expect(notes).toContain('Papel do candidato: RECLAMANTE');
+            expect(notes).toContain('Parte reclamada/passiva: MADERO INDUSTRIA E COMERCIO S.A.');
+            expect(notes).toContain('Distribuição: 23/03/2021 | Última movimentação: 21/02/2022');
+            expect(notes).toContain('Último andamento: Arquivados os autos definitivamente');
+            expect(notes).not.toContain('Parte reclamada/passiva: ANDRE LUIZ VAZ');
+            expect(notes).not.toContain('DIOGO FADEL BRAZ');
+        });
+
+        it('buildDetLaborNotes filters noisy passive parties and infers status from last step', () => {
+            const caseData = classifyAndMerge({
+                ...buildCleanCase(),
+                candidateName: 'LAUAN ALBUQUERQUE BELO',
+                cpf: '11122233344',
+                juditRoleSummary: [
+                    {
+                        code: '0000361-75.2026.5.08.0125',
+                        area: 'Trabalhista',
+                        status: null,
+                        tribunalAcronym: 'TRT8',
+                        justice: '5',
+                        distributionDate: '2026-01-10',
+                        personType: 'RECLAMANTE',
+                        side: 'Active',
+                        hasExactCpfMatch: true,
+                        isLabor: true,
+                        subjects: ['VERBAS RESCISÓRIAS'],
+                        classifications: ['AÇÃO TRABALHISTA'],
+                        lastStep: 'Arquivados os autos definitivamente',
+                        lastStepDate: '2026-03-01',
+                        parties: [
+                            { name: 'LAUAN ALBUQUERQUE BELO', personType: 'RECLAMANTE', side: 'Active', document: '11122233344' },
+                            { name: 'L', personType: 'RECLAMADO', side: 'Passive', document: null },
+                            { name: 'EMPRESA LIMPA LTDA', personType: 'RECLAMADO', side: 'Passive', document: '12345678000190' },
+                        ],
+                    },
+                ],
+                bigdatacorpProcessos: [],
+            });
+
+            const notes = buildDetLaborNotes(caseData);
+
+            expect(notes).toContain('Status processual: ARQUIVADO');
+            expect(notes).toContain('Parte reclamada/passiva: EMPRESA LIMPA LTDA');
+            expect(notes).not.toContain('Parte reclamada/passiva: L');
+            expect(notes).not.toContain('Status: N/A');
+        });
+
+        it('buildDetCriminalNotes keeps the generic process status label', () => {
+            const caseData = classifyAndMerge({
+                ...buildCleanCase(),
+                juditRoleSummary: [
+                    {
+                        code: '0000001-22.2020.8.26.0001',
+                        area: 'Criminal',
+                        status: 'Ativo',
+                        tribunalAcronym: 'TJSP',
+                        personType: 'RÉU',
+                        side: 'Passive',
+                        hasExactCpfMatch: true,
+                        isCriminal: true,
+                        subjects: ['Furto'],
+                        classifications: ['Ação Penal'],
+                    },
+                ],
+            });
+
+            const notes = buildDetCriminalNotes(caseData);
+
+            expect(notes).toContain('Status: Ativo');
+            expect(notes).not.toContain('Status processual:');
         });
 
         it('labor sources bug is fixed — BigDataCorp candidates included', () => {
@@ -760,7 +895,7 @@ describe('Deterministic Prefill', () => {
             expect(caseData.laborNotes).toContain('BigDataCorp');
             // The det helper should also generate proper content
             const notes = buildDetLaborNotes(caseData);
-            expect(notes).toMatch(/Papel:/);
+            expect(notes).toMatch(/Papel do candidato:/);
         });
     });
 
@@ -906,8 +1041,9 @@ describe('Deterministic Prefill', () => {
                 bigdatacorpProcessos: [],
             };
             const notes = buildDetLaborNotes(caseData);
-            // v7: POSITIVE with zero processes — no header, straight to context
-            expect(notes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
+            // v7: POSITIVE with zero processes — professional context is not part of labor notes
+            expect(notes).not.toContain('Contexto profissional cadastral');
+            expect(notes).not.toContain('dados profissionais nao disponiveis');
         });
 
         it('buildDetWarrantNotes shows BDC warrant processNumber and imprisonmentKind', () => {
@@ -1102,8 +1238,8 @@ describe('Deterministic Prefill', () => {
             expect(result.keyFindings.length).toBeGreaterThanOrEqual(0);
         });
 
-        // 3. income=null + incomeRange present — no double space
-        it('laborNotes formats salary correctly when income is null', () => {
+        // 3. professional data stays out of labor notes
+        it('laborNotes does not include professional cadastral context', () => {
             const caseData = {
                 laborFlag: 'NEGATIVE',
                 bigdatacorpEmployer: 'EMPRESA XYZ',
@@ -1116,9 +1252,10 @@ describe('Deterministic Prefill', () => {
                 }],
             };
             const notes = buildDetLaborNotes(caseData);
-            expect(notes).toContain('Faixa salarial: Entre 3.000 e 5.000');
-            expect(notes).not.toMatch(/Faixa salarial:\s{2}/); // no double space
-            expect(notes).toContain('Ultimo empregador');
+            expect(notes).not.toContain('Contexto profissional cadastral');
+            expect(notes).not.toContain('Ultimo empregador');
+            expect(notes).not.toContain('Faixa salarial');
+            expect(notes).not.toContain('EMPRESA XYZ');
         });
 
         // 4. laborFlag=POSITIVE + 0 labor processes
@@ -1130,8 +1267,9 @@ describe('Deterministic Prefill', () => {
                 bigdatacorpProcessos: [],
             };
             const notes = buildDetLaborNotes(caseData);
-            // v7: POSITIVE with zero processes — no header, straight to context
-            expect(notes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
+            // v7: POSITIVE with zero processes — no professional fallback
+            expect(notes).not.toContain('Contexto profissional cadastral');
+            expect(notes).not.toContain('dados profissionais nao disponiveis');
             expect(notes).not.toContain('PROCESSOS TRABALHISTAS');
         });
 
@@ -1337,7 +1475,8 @@ describe('Deterministic Prefill', () => {
             expect(result.warrantNotes).toMatch(/Status:/);
             // criminalNotes: POSITIVE with no processes → fallback message
             expect(result.criminalNotes).toContain('Nao ha detalhamento processual estruturado suficiente');
-            expect(result.laborNotes).toContain('Contexto profissional cadastral: dados profissionais nao disponiveis');
+            expect(result.laborNotes).not.toContain('Contexto profissional cadastral');
+            expect(result.laborNotes).not.toContain('dados profissionais nao disponiveis');
             // Fix A1 — no double space after "prisão" in keyFindings items
             for (const finding of result.keyFindings) {
                 expect(finding).not.toMatch(/prisão {2}/);
@@ -1382,6 +1521,447 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetWarrantNotes(caseData);
             expect(notes).not.toContain('dias dias');
             expect(notes).toContain('30 dias');
+        });
+    });
+
+    describe('v5: criminal notes quality improvements', () => {
+        // T1: BDC status fills Judit null for criminal
+        it('selectTopProcessos: BDC status ARQUIVADO preenche Judit status null em criminal', () => {
+            const caseData = {
+                juditRoleSummary: [{
+                    code: '0600170-63.2021.8.04.5800',
+                    area: 'Criminal',
+                    status: null,
+                    personType: 'RÉU',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isVictim: false,
+                    isDefendant: true,
+                    distributionDate: '2021-02-19',
+                    lastStepDate: '2025-11-11',
+                    tribunalAcronym: 'TJAM',
+                }],
+                bigdatacorpProcessos: [{
+                    numero: '06001706320218045800',
+                    status: 'ARQUIVADO',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isLabor: false,
+                    specificRole: 'AUTOR DO FATO',
+                    courtName: 'TJAM',
+                    courtDistrict: 'MAUES',
+                    lastMovementDate: '2025-11-11',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            expect(top.filter((p) => p.isCriminal)).toHaveLength(1);
+            const criminal = top.find((p) => p.isCriminal);
+            expect(criminal.status).toBe('ARQUIVADO');
+            expect(criminal.fonte).toContain('BigDataCorp');
+            expect(criminal.specificRole).toBe('RÉU');
+        });
+
+        // T2: Strong Judit status not overwritten by BDC
+        it('selectTopProcessos: status forte Judit ATIVO nao e sobrescrito por BDC ARQUIVADO', () => {
+            const caseData = {
+                juditRoleSummary: [{
+                    code: '0001234-56.2023.8.26.0100',
+                    area: 'Criminal',
+                    status: 'ATIVO',
+                    personType: 'RÉU',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                }],
+                bigdatacorpProcessos: [{
+                    numero: '00012345620238260100',
+                    status: 'ARQUIVADO',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isLabor: false,
+                    specificRole: 'REU',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            const criminal = top.find((p) => p.isCriminal);
+            expect(criminal.status).toBe('ATIVO');
+        });
+
+        // T3: isVictim propagated from Judit
+        it('selectTopProcessos: isVictim propagado do Judit', () => {
+            const caseData = {
+                juditRoleSummary: [{
+                    code: '0801282-25.2021.8.15.0741',
+                    area: 'Criminal',
+                    status: 'Ativo',
+                    personType: 'VÍTIMA',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isVictim: true,
+                    isDefendant: false,
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            const criminal = top.find((p) => p.isCriminal);
+            expect(criminal.isVictim).toBe(true);
+            expect(criminal.isDefendant).toBe(false);
+        });
+
+        // T4: isDefendant propagated from BDC
+        it('selectTopProcessos: isDefendant propagado do BDC', () => {
+            const caseData = {
+                bigdatacorpProcessos: [{
+                    numero: '00066684520138260482',
+                    status: 'SUSPENSO',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                    isVictim: false,
+                    specificRole: 'REU',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            const criminal = top.find((p) => p.isCriminal);
+            expect(criminal.isDefendant).toBe(true);
+            expect(criminal.isVictim).toBe(false);
+        });
+
+        // T5: BDC merge propagates isVictim into existing Judit entry
+        it('selectTopProcessos: merge BDC propaga isVictim para entry Judit existente', () => {
+            const caseData = {
+                juditRoleSummary: [{
+                    code: '0000376-80.2003.8.06.0052',
+                    area: 'Criminal',
+                    status: null,
+                    personType: 'OFENDIDO',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isVictim: true,
+                    isDefendant: false,
+                    distributionDate: '2003-08-14',
+                }],
+                bigdatacorpProcessos: [{
+                    numero: '00003768020038060052',
+                    status: null,
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                    isVictim: false,
+                    specificRole: 'INDICIADO',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            const criminal = top.find((p) => p.isCriminal);
+            // isVictim was set by Judit, BDC added isDefendant
+            expect(criminal.isVictim).toBe(true);
+            expect(criminal.isDefendant).toBe(true);
+        });
+
+        // T6: resolveProcessStatus — lastStep "Arquivados..." resolves to ARQUIVADO when status null
+        it('formatProcessBlock: resolveProcessStatus resolve ARQUIVADO via lastStep quando status null', () => {
+            const proc = {
+                cnj: '0600170-63.2021.8.04.5800',
+                classe: 'TERMO CIRCUNSTANCIADO',
+                assunto: 'INFRAÇÃO DE MEDIDA SANITÁRIA PREVENTIVA',
+                status: null,
+                polo: 'RÉU',
+                tribunal: 'TJAM',
+                lastStep: 'Arquivados os autos definitivamente',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).toContain('Status: ARQUIVADO');
+            expect(block).not.toContain('Status: N/A');
+        });
+
+        // T7: formatProcessBlock shows lastStep text
+        it('formatProcessBlock: mostra Último andamento quando lastStep presente', () => {
+            const proc = {
+                cnj: '0600170-63.2021.8.04.5800',
+                status: 'ATIVO',
+                classe: 'AÇÃO PENAL',
+                assunto: 'APROPRIAÇÃO INDÉBITA',
+                polo: 'RÉU',
+                tribunal: 'TJBA',
+                comarca: 'UBATA',
+                lastStep: 'Juntada de petição de defesa prévia',
+                distributionDate: '2025-10-27',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).toContain('Último andamento: Juntada de petição de defesa prévia');
+        });
+
+        // T8: criminal preserves Status: label (not Status processual:)
+        it('formatProcessBlock: criminal preserva prefixo Status: (não Status processual:)', () => {
+            const proc = {
+                cnj: '0600170-63.2021.8.04.5800',
+                status: 'ATIVO',
+                classe: 'AÇÃO PENAL',
+                assunto: 'CRIME',
+                polo: 'RÉU',
+                tribunal: 'TJSP',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).toMatch(/Status:\s+ATIVO/);
+            expect(block).not.toContain('Status processual:');
+        });
+
+        // T9: buildDetCriminalNotes victim note for isVictim=true
+        it('buildDetCriminalNotes: nota vítima aparece para processo com isVictim=true', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'WELLINGTON JOSE OLIVEIRA NASCIMENTO',
+                cpf: '11111111111',
+                hiringUf: 'SP',
+                city: 'SAO PAULO',
+                ddd: '11',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [{
+                code: '0801282-25.2021.8.15.0741',
+                area: 'Criminal',
+                status: 'Ativo',
+                phase: 'Inicial',
+                personType: 'VÍTIMA',
+                hasExactCpfMatch: true,
+                isCriminal: true,
+                isVictim: true,
+                isDefendant: false,
+                subjects: ['Estupro'],
+                classifications: ['Inquérito Policial'],
+                distributionDate: null,
+            }];
+            caseData.bigdatacorpProcessos = [{
+                numero: '08012822520218150741',
+                isDirectCpfMatch: true,
+                isCriminal: true,
+                isDefendant: false,
+                isVictim: true,
+                specificRole: 'VITIMA',
+                status: 'REDISTRIBUIDO',
+            }];
+            caseData.bigdatacorpNamesakeCount = null;
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).toContain('vítima/ofendido neste registro');
+            expect(notes).toContain('Todos os registros criminais localizados com CPF confirmado');
+            expect(notes).toContain('exclusivamente como vítima');
+        });
+
+        // T10: victim note via specificRole text
+        it('buildDetCriminalNotes: nota vítima aparece via specificRole=OFENDIDO', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'CARLOS OFENDIDO',
+                cpf: '22222222222',
+                hiringUf: 'SP',
+                city: 'SAO PAULO',
+                ddd: '11',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [{
+                code: '0000376-80.2003.8.06.0052',
+                area: 'Criminal',
+                status: null,
+                personType: 'OFENDIDO',
+                hasExactCpfMatch: true,
+                isCriminal: true,
+                isVictim: true,
+                isDefendant: false,
+                subjects: [],
+                classifications: ['Petição Criminal'],
+                distributionDate: '2003-08-14',
+            }];
+            caseData.bigdatacorpProcessos = [];
+            caseData.bigdatacorpNamesakeCount = null;
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).toContain('vítima/ofendido neste registro');
+        });
+
+        // T11: header all-victim when all confirmed are victim
+        it('buildDetCriminalNotes: header all-victim quando todos confirmados são vítima', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'VITIMA RECORRENTE',
+                cpf: '33333333333',
+                hiringUf: 'RJ',
+                city: 'RIO DE JANEIRO',
+                ddd: '21',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [
+                {
+                    code: '0001234-56.2023.8.19.0001',
+                    area: 'Criminal',
+                    status: 'Ativo',
+                    personType: 'VÍTIMA',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isVictim: true,
+                    isDefendant: false,
+                    subjects: ['Lesão Corporal'],
+                    classifications: ['Ação Penal'],
+                    distributionDate: '2023-01-15',
+                },
+                {
+                    code: '0005678-90.2023.8.19.0001',
+                    area: 'Criminal',
+                    status: 'Ativo',
+                    personType: 'OFENDIDO',
+                    hasExactCpfMatch: true,
+                    isCriminal: true,
+                    isVictim: true,
+                    isDefendant: false,
+                    subjects: ['Ameaça'],
+                    classifications: ['Termo Circunstanciado'],
+                    distributionDate: '2023-03-20',
+                },
+            ];
+            caseData.bigdatacorpProcessos = [];
+            caseData.bigdatacorpNamesakeCount = null;
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).toContain('exclusivamente como vítima ou ofendido');
+            expect(notes).toContain('não há apontamento de autoria');
+        });
+
+        // T12: no victim note for defendant process
+        it('buildDetCriminalNotes: sem nota vítima para processo com isDefendant=true', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'REU CONFIRMADO',
+                cpf: '44444444444',
+                hiringUf: 'SP',
+                city: 'SAO PAULO',
+                ddd: '11',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [{
+                code: '0009999-99.2023.8.26.0100',
+                area: 'Criminal',
+                status: 'ATIVO',
+                personType: 'RÉU',
+                hasExactCpfMatch: true,
+                isCriminal: true,
+                isVictim: false,
+                isDefendant: true,
+                subjects: ['Furto'],
+                classifications: ['Ação Penal'],
+                distributionDate: '2023-06-10',
+            }];
+            caseData.bigdatacorpProcessos = [{
+                numero: '00099999920238260100',
+                isDirectCpfMatch: true,
+                isCriminal: true,
+                isDefendant: true,
+                isVictim: false,
+                specificRole: 'REU',
+                status: 'ATIVO',
+            }];
+            caseData.bigdatacorpNamesakeCount = null;
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).not.toContain('vítima/ofendido neste registro');
+            expect(notes).not.toContain('exclusivamente como vítima');
+        });
+
+        // T13: DJEN not shown when no confirmed process numbers
+        it('buildDetCriminalNotes: DJEN NÃO aparece quando nenhum confirmed process number', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'JOSE LUCIVANIO DA SILVA',
+                cpf: '55555555555',
+                hiringUf: 'SP',
+                city: 'SAO PAULO',
+                ddd: '11',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [];
+            caseData.bigdatacorpProcessos = [];
+            caseData.djenComunicacoes = [{
+                numeroProcesso: '0202743-72.2022.8.06.0167',
+                area: 'criminal',
+                classe: 'APELAÇÃO CRIMINAL',
+                confirmationLevel: 'NAME_EXACT',
+                tribunal: 'TJCE',
+            }];
+            caseData.djenCriminalCount = 1;
+            caseData.djenCriminalFlag = 'POSITIVE';
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).not.toMatch(/Comunicacoes judiciais de natureza criminal|Comunicacoes criminais localizadas/i);
+        });
+
+        // T14: DJEN shown when CNJ matches confirmed process
+        it('buildDetCriminalNotes: DJEN aparece quando CNJ do DJEN bate com Judit confirmado', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'ARTHUR SILVA DE OLIVEIRA',
+                cpf: '66666666666',
+                hiringUf: 'BA',
+                city: 'UBATA',
+                ddd: '73',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.juditRoleSummary = [{
+                code: '8002101-63.2025.8.05.0265',
+                area: 'Criminal',
+                status: null,
+                personType: 'RÉU',
+                hasExactCpfMatch: true,
+                isCriminal: true,
+                isVictim: false,
+                isDefendant: true,
+                subjects: ['Apropriação Indébita'],
+                classifications: ['Ação Penal - Procedimento Ordinário'],
+                distributionDate: '2025-10-27',
+            }];
+            caseData.bigdatacorpProcessos = [];
+            caseData.djenComunicacoes = [{
+                numeroProcesso: '8002101-63.2025.8.05.0265',
+                area: 'criminal',
+                classe: 'AÇÃO PENAL',
+                confirmationLevel: 'NAME_EXACT',
+                tribunal: 'TJBA',
+                dataPublicacao: '2026-01-21',
+                polo: 'reu',
+                orgaoJulgador: 'VARA CRIMINAL DE UBATÃ',
+            }];
+            caseData.djenCriminalCount = 1;
+            caseData.djenCriminalFlag = 'POSITIVE';
+            const notes = buildDetCriminalNotes(caseData);
+            expect(notes).toMatch(/Comunicacoes judiciais de natureza criminal localizadas/);
+            expect(notes).toContain('8002101-63.2025.8.05.0265');
+        });
+
+        // T8b: resolveProcessStatus fallback for criminal via movements content
+        it('formatProcessBlock: resolveProcessStatus resolve EM ANDAMENTO via lastStep "Conclusos para sentenca" quando status null', () => {
+            const proc = {
+                cnj: '0005555-55.2023.8.26.0100',
+                classe: 'AÇÃO PENAL',
+                assunto: 'FURTO',
+                status: null,
+                polo: 'RÉU',
+                tribunal: 'TJSP',
+                lastStep: 'Conclusos para sentença',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).toContain('Status: EM ANDAMENTO');
+        });
+
+        // T8c: respect existing strong status even when lastStep present
+        it('formatProcessBlock: status forte existente nao é sobrescrito por último andamento', () => {
+            const proc = {
+                cnj: '0006666-66.2023.8.19.0001',
+                classe: 'AÇÃO PENAL',
+                assunto: 'ROUBO',
+                status: 'ATIVO',
+                polo: 'RÉU',
+                tribunal: 'TJRJ',
+                lastStep: 'Arquivados os autos',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).toContain('Status: ATIVO');
+            expect(block).not.toContain('Status: ARQUIVADO');
         });
     });
 });
