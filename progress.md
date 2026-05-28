@@ -1,5 +1,35 @@
 # Progress Log
 
+## 2026-05-27
+
+### Politica Cliente, Checklist Local E Modais De Conclusao
+- Usuario saiu de modo planejamento e autorizou implementacao com garantia de nao regressao, testes e deploy ao final.
+- Carregada skill `planning-with-files`.
+- Catchup inicial com `~/.opencode` falhou: arquivo `session-catchup.py` nao existe nesse caminho.
+- Catchup pelo caminho correto `~/.config/opencode/skills/planning-with-files/scripts/session-catchup.py` executou sem output.
+- `git diff --stat` mostrou mudancas preexistentes em `functions/index.js`, `functions/helpers/deterministicPrefill.test.js` e `graphify-out`; essas alteracoes nao devem ser revertidas.
+- Lidos planning files e `graphify-out/GRAPH_REPORT.md` antes de editar.
+- Auditoria do codigo real confirmou `concludeCaseByAnalyst`, `riskCalculator`, stepper de `CasoPage`, `Modal` reutilizavel e testes existentes.
+- Planejamento persistente atualizado com Phase 15 antes de alterar codigo.
+- Fase 15.1 RED: adicionados testes backend/frontend para `laborFlag: POSITIVE` com `laborSeverity LOW/MEDIUM/HIGH`; LOW e HIGH falharam como esperado porque o score ficava sempre 90.
+- Fase 15.1 GREEN: `functions/shared/riskCalculator.js` e `src/core/riskCalculator.js` agora aplicam `laborSeverity`: LOW=50, MEDIUM/ausente=90, HIGH=95.
+- Verificacao focada Fase 15.1 passou: `npm test -- shared/riskCalculator.test.js` em `functions` e `npm test -- src/core/riskCalculator.test.js` na raiz.
+- Fase 15.2 RED: adicionados testes em `functions/helpers/aiCalibration.test.js` para politica de veredito do cliente; falharam porque `buildClientVerdictPolicy` e `validateClientVerdictPolicy` ainda nao existiam.
+- Fase 15.2 GREEN: adicionados helpers backend para politica trabalhista/criminal, data de corte `CLIENT_VERDICT_POLICY_EFFECTIVE_AT`, validacao de override com `details.code = CLIENT_VERDICT_OVERRIDE_REQUIRED`, export em `__test` e integracao em `concludeCaseByAnalyst`.
+- Fase 15.2 tambem corrigiu `riskInput` de conclusao para incluir `laborSeverity`.
+- Verificacao focada Fase 15.2 passou: `npm test -- helpers/aiCalibration.test.js` em `functions`.
+- Fase 15.3 RED/GREEN: criado `useChecklistSession` com testes para persistencia por caso em `sessionStorage` e isolamento entre casos.
+- Fase 15.4 RED/GREEN: criado `ChecklistModal` reutilizando `Modal`, com teste de renderizacao e toggle.
+- Fase 15.5: `CasoPage.jsx` agora mostra progresso do checklist, bloqueia conclusao localmente quando incompleto, abre modal final de confirmacao e trata `CLIENT_VERDICT_OVERRIDE_REQUIRED` com justificativa de override.
+- Verificacao focada frontend passou: `useChecklistSession.test.jsx`, `ChecklistModal.test.jsx` e `CasoPage.test.jsx`.
+- Verificacao completa passou: `functions npm test` (513), `functions npm run lint`, `npm test` (818), `npm run lint`, `npm run build`.
+- Primeiro `npm run lint` frontend falhou por arquivo temporario de Vite durante execucao paralela; repetido isolado, revelou `sbColor` nao usado em `src/core/reportBuilder.js`. Removido tambem do mirror `functions/reportBuilder.cjs`; lint passou.
+- `graphify update .` executado com sucesso: 1038 nodes, 1953 edges, 140 communities.
+- Deploy backend concluido para Firebase `compliance-hub-br` via CLI depois que o job MCP ficou sem logs; o job MCP tambem terminou como `success` posteriormente.
+- Deploy frontend concluido na Vercel: production `https://compliance-2t2hrw8tx-fagner-alexandro-s-projects.vercel.app`, alias `https://compliance-hub-hazel.vercel.app`.
+- Pos-deploy: consulta de logs `ERROR` para `concludeCaseByAnalyst` nao retornou entradas.
+
+
 ## 2026-05-25
 
 ### Remover Contexto Profissional Do Resumo Trabalhista

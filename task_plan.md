@@ -183,6 +183,30 @@ Criar e endurecer a analise assistida que atua como segundo analista consultivo:
 - Phase 12 concluida localmente: DJEN isolado ficou consultivo e nao impacta flags/prefill; testes/lint/build/diff-check passaram.
 - Deploy das mudancas Phase 12 segue pendente; nao foi executado nesta fase.
 
+### Phase 15: Politica Cliente, Checklist Local E Modais De Conclusao
+- [x] Carregar skill `planning-with-files`.
+- [x] Rodar catchup inicial; caminho `~/.opencode` falhou porque a skill real esta em `~/.config/opencode`.
+- [x] Rodar catchup pelo caminho correto; sem output.
+- [x] Ler `task_plan.md`, `findings.md`, `progress.md` e `graphify-out/GRAPH_REPORT.md`.
+- [x] Auditar codigo real antes de implementar: `riskCalculator`, `concludeCaseByAnalyst`, `selectTopProcessos`, `CasoPage`, `Modal`, testes existentes.
+- [x] Fase 15.1: Corrigir `laborSeverity` no `riskCalculator` backend/frontend com testes espelhados.
+- [x] Fase 15.2: Implementar politica obrigatoria do cliente no backend com data de corte, override confirmado e justificativa.
+- [x] Fase 15.3: Implementar checklist manual local por fase usando `sessionStorage` e hook dedicado.
+- [x] Fase 15.4: Implementar modais reutilizando `Modal`: checklist por fase, conclusao final e veredito divergente.
+- [x] Fase 15.5: Integrar bloqueio local nos dois botoes de conclusao e atalho `Ctrl+Enter`.
+- [x] Fase 15.6: Adicionar testes backend/frontend e validar que checklist local nao substitui regras backend.
+- [x] Fase 15.7: Rodar suites, lint, build, diff-check e `graphify update .`.
+- [x] Fase 15.8: Deploy backend primeiro e frontend depois, se todas as verificacoes passarem.
+
+#### Phase 15 Decisions
+- Checklist manual sera local por fase/aba usando `sessionStorage` com chave `compliancehub:case-checklist:{caseId}`.
+- Checklist manual nao sera persistido no backend e nao criara AuditLog nesta etapa.
+- Checklist manual bloqueia apenas visualmente/localmente a conclusao.
+- Regras criticas de veredito/override continuam obrigatorias no backend.
+- Casos antigos nao serao reprocessados; novas regras valem apenas apos data de corte do deploy.
+- Nao havera feature flag nesta etapa.
+- Execucao sera passo a passo, com testes depois de cada fase relevante.
+
 ### Phase 13: Resumo Trabalhista Com Contraparte E Status Inteligente
 - [x] Auditar todos os casos reais com `laborFlag=POSITIVE` em modo somente leitura.
 - [x] Confirmar formatos normalizados de Judit, BigDataCorp e Escavador para processos trabalhistas.

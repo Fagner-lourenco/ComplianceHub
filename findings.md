@@ -123,3 +123,16 @@
 - O fallback `Contexto profissional cadastral: dados profissionais nao disponiveis.` tambem e montado dentro de `buildDetLaborNotes()`.
 - Esses dados vêm do normalizer `normalizeBigDataCorpProfession()` e devem continuar persistidos para auditoria/identificacao; a remocao solicitada e apenas da narrativa trabalhista.
 - Escopo definido: remover o bloco profissional de `laborNotes` sem alterar flags, score, coleta BigDataCorp, `buildDetExecutiveSummary()` ou exibicao tecnica dos dados profissionais em outras areas.
+
+## Politica Cliente, Checklist Local E Modais De Conclusao
+- Codigo real usa stepper em `CasoPage.jsx`, nao abas puras. Fases reais: `identification`, `criminal`, `labor`, `warrant`, `osint_social`, `digital`, `review`.
+- Modal reutilizavel existente: `src/ui/components/Modal/Modal.jsx`; novos modais devem reaproveitar esse componente, nao criar overlay paralelo.
+- `concludeCaseByAnalyst` fica em `functions/index.js` e atualmente valida acesso, status, comentario, mandados ativos, execucao penal e flags finais, mas nao valida coerencia entre `finalVerdict` e politica obrigatoria do cliente.
+- `validateConcludeFinalFlags()` hoje valida apenas `criminalFlag` final (`NEGATIVE`, `POSITIVE`, `INCONCLUSIVE`).
+- `riskCalculator` backend e frontend ja tem testes espelhados; a correcao de `laborSeverity` deve alterar ambos os arquivos e ambos os testes.
+- `selectTopProcessos()` ja preserva `parties` e `allParties`, e `resolveCounterpartyNames()` ja sabe inferir contraparte trabalhista. A politica trabalhista deve reaproveitar essas funcoes ou helpers proximos.
+- Empresa reclamada nao existe como campo unico confiavel; deve ser inferida a partir de `parties`/`allParties` e papeis passivos.
+- Checklist manual deve ficar restrito ao frontend e `sessionStorage`; nao deve entrar em `payload` backend, Firestore, audit log ou relatorio.
+- A regra criminal material precisa ser implementada com cuidado: `isCriminal` sozinho nao basta; deve considerar papel material (`isDefendant`/reu/investigado/acusado) e excluir vitima/testemunha.
+- Termos de veredito exibidos ao analista devem ser em portugues: `Apto`, `Atencao`, `Nao Recomendado`.
+- `concludeCaseByAnalyst` calculava `riskInput.laborFlag`, mas nao passava `laborSeverity`; isso foi corrigido junto com a politica backend para manter consistencia com o calculador.
