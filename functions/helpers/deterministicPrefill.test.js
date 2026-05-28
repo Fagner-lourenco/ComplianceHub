@@ -1483,6 +1483,34 @@ describe('Deterministic Prefill', () => {
             }
         });
 
+        it('criminalNotes POSITIVE falls back to top-level notes when structured process list is stale', () => {
+            const caseData = {
+                candidateName: 'JOAO MARCOS DE LIMA MACHADO',
+                cpf: '11105714454',
+                criminalFlag: 'POSITIVE',
+                criminalSeverity: 'HIGH',
+                criminalNotes: '00006745020238174810 CRIMINAL DIREITO PENAL - FURTO QUALIFICADO DIREITO PROCESSUAL PENAL - PRISAO EM FLAGRANTE',
+                juditCriminalFlag: 'POSITIVE',
+                juditCriminalCount: 1,
+                bigdatacorpCriminalFlag: 'POSITIVE',
+                bigdatacorpCriminalCount: 1,
+                bigdatacorpDirectCriminalCount: 1,
+                juditRoleSummary: [],
+                bigdatacorpProcessos: [],
+                escavadorProcessos: [],
+                enrichmentOriginalValues: {
+                    criminalFlag: 'NEGATIVE',
+                    criminalNotes: 'Nao ha evidencia criminal relevante; os matches exatos encontrados aparecem apenas em papel de baixo risco, como testemunha/informante.',
+                },
+            };
+
+            const result = buildDeterministicPrefill(caseData);
+
+            expect(result.criminalNotes).toContain('FURTO QUALIFICADO');
+            expect(result.criminalNotes).toContain('PRISAO EM FLAGRANTE');
+            expect(result.criminalNotes).not.toContain('Nao foram identificados apontamentos criminais materiais');
+        });
+
         // 14. namesakeCount=0
         it('namesakeCount=0 produces valid caveat text', () => {
             const caseData = {
@@ -1823,6 +1851,136 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetCriminalNotes(caseData);
             expect(notes).toContain('exclusivamente como vítima ou ofendido');
             expect(notes).toContain('não há apontamento de autoria');
+        });
+
+        it('buildDetKeyFindings: não conta vítima/testemunha como apontamento criminal material', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'EWERTON LEONARDO BASTOS SENA',
+                cpf: '01253408262',
+                hiringUf: 'PA',
+                city: 'ANANINDEUA',
+                ddd: '91',
+            });
+            caseData.criminalFlag = 'NEGATIVE';
+            caseData.criminalEvidenceQuality = 'LOW_RISK_ROLE_ONLY';
+            caseData.laborFlag = 'POSITIVE';
+            caseData.bigdatacorpProcessos = [
+                {
+                    numero: '08090304120238140006',
+                    courtType: 'ESPECIAL CRIMINAL',
+                    cnjProcedure: 'TERMO CIRCUNSTANCIADO',
+                    assunto: 'VIOLACAO DE DOMICILIO',
+                    courtDistrict: 'ANANINDEUA',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: false,
+                    isWitness: true,
+                    specificRole: 'TESTEMUNHA',
+                    status: 'ATIVO',
+                },
+                {
+                    numero: '00024830320178140952',
+                    courtType: 'ESPECIAL CRIMINAL',
+                    cnjProcedure: 'TERMO CIRCUNSTANCIADO',
+                    assunto: 'INJURIA, AMEACA',
+                    courtDistrict: 'ANANINDEUA',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: false,
+                    isVictim: true,
+                    specificRole: 'VITIMA',
+                    status: 'ATIVO',
+                },
+            ];
+
+            const findings = buildDetKeyFindings(caseData);
+
+            expect(findings.join('\n')).not.toMatch(/processo\(s\) criminal\(is\) com CPF confirmado/i);
+            expect(findings).toContain('Apontamento trabalhista material identificado.');
+        });
+
+        it('buildDetKeyFindings: em caso misto conta apenas processo criminal material', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'CASO MISTO',
+                cpf: '55555555555',
+                hiringUf: 'PE',
+                city: 'RECIFE',
+                ddd: '81',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.bigdatacorpProcessos = [
+                {
+                    numero: '00099408420138170001',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'LEVE',
+                    courtDistrict: 'RECIFE',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: false,
+                    isVictim: true,
+                    specificRole: 'VITIMA',
+                },
+                {
+                    numero: '00054115220198170990',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'RECEPTACAO',
+                    courtDistrict: 'OLINDA',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                    specificRole: 'INVESTIGADO',
+                },
+            ];
+
+            const findings = buildDetKeyFindings(caseData);
+
+            expect(findings).toContain('1 processo(s) criminal(is) com CPF confirmado (OLINDA)');
+            expect(findings.join('\n')).not.toContain('2 processo(s) criminal(is)');
+        });
+
+        it('buildDetCriminalNotes: em caso positivo misto não detalha vítima/testemunha como apontamento', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'CASO MISTO NOTAS',
+                cpf: '66666666666',
+                hiringUf: 'PE',
+                city: 'RECIFE',
+                ddd: '81',
+            });
+            caseData.criminalFlag = 'POSITIVE';
+            caseData.bigdatacorpProcessos = [
+                {
+                    numero: '00099408420138170001',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'LEVE',
+                    courtDistrict: 'RECIFE',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: false,
+                    isVictim: true,
+                    specificRole: 'VITIMA',
+                },
+                {
+                    numero: '00054115220198170990',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'RECEPTACAO',
+                    courtDistrict: 'OLINDA',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                    specificRole: 'INVESTIGADO',
+                },
+            ];
+
+            const notes = buildDetCriminalNotes(caseData);
+
+            expect(notes).toContain('0005411-52.2019.8.17.0990');
+            expect(notes).toContain('RECEPTACAO');
+            expect(notes).not.toContain('0009940-84.2013.8.17.0001');
+            expect(notes).not.toContain('Papel do candidato: VITIMA');
         });
 
         // T12: no victim note for defendant process
