@@ -104,7 +104,6 @@ function flagColor(v) {
     return 'gray';
 }
 function rlColor(l) { return l === 'RED' ? 'red' : l === 'YELLOW' ? 'yellow' : l === 'GREEN' ? 'green' : 'gray'; }
-function sbColor(s) { return s >= 70 ? '#ef4444' : s >= 30 ? '#f59e0b' : '#22c55e'; }
 
 function fieldHtml(label, value) {
     if (!value && value !== 0) return '';
