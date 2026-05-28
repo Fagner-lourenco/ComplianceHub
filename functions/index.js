@@ -2292,6 +2292,7 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.lastMovementDate && p.lastMovementDate) existing.lastMovementDate = p.lastMovementDate;
                 if (!existing.lawsuitAgeDays && p.lawsuitAgeDays) existing.lawsuitAgeDays = p.lawsuitAgeDays;
                 if (p.isVictim && !existing.isVictim) existing.isVictim = true;
+                if (p.isWitness && !existing.isWitness) existing.isWitness = true;
                 if (p.isDefendant && !existing.isDefendant) existing.isDefendant = true;
                 if (!existing.allDecisions && p.decisions) existing.allDecisions = p.decisions;
                 if (!existing.lastStep && Array.isArray(p.movements) && p.movements[0]?.content) existing.lastStep = p.movements[0].content;
@@ -2334,7 +2335,7 @@ function selectTopProcessos(caseData, limit = 10) {
             allDecisions: p.decisions || null,
             isVictim: !!p.isVictim,
             isDefendant: !!p.isDefendant,
-            isWitness: false,
+            isWitness: !!p.isWitness,
             parties: [],
             allParties: Array.isArray(p.allParties) ? p.allParties : [],
             movements: Array.isArray(p.movements) ? p.movements : [],
@@ -7964,6 +7965,7 @@ const ALLOWED_CONCLUDE_FIELDS = new Set([
     'keyFindings',
     'analystComment',
     'enabledPhases',
+    'clientVerdictOverride',
 ]);
 
 const ALLOWED_DRAFT_FIELDS = new Set([
@@ -7995,6 +7997,13 @@ const ALLOWED_DRAFT_FIELDS = new Set([
 ]);
 
 const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
+const CLIENT_VERDICT_POLICY_EFFECTIVE_AT = new Date('2026-05-27T00:00:00.000Z');
+const CLIENT_VERDICT_RANK = { FIT: 0, ATTENTION: 1, NOT_RECOMMENDED: 2 };
+const CLIENT_VERDICT_LABELS = {
+    FIT: 'Apto',
+    ATTENTION: 'Atencao',
+    NOT_RECOMMENDED: 'Nao recomendado',
+};
 
 function validateConcludeFinalFlags(payload = {}) {
     if (hasMeaningfulValue(payload.criminalFlag) && !FINAL_CRIMINAL_FLAGS.has(payload.criminalFlag)) {
@@ -8003,6 +8012,143 @@ function validateConcludeFinalFlags(payload = {}) {
             'Selecione um resultado criminal final para concluir: Sem apontamento, Com apontamento ou Inconclusivo.',
         );
     }
+}
+
+function normalizeVerdict(value) {
+    const normalized = String(value || '').trim().toUpperCase();
+    if (normalized === 'FIT' || normalized === 'ATTENTION' || normalized === 'NOT_RECOMMENDED') return normalized;
+    return null;
+}
+
+function isVerdictAtLeast(submittedVerdict, requiredVerdict) {
+    const submitted = normalizeVerdict(submittedVerdict);
+    const required = normalizeVerdict(requiredVerdict) || 'FIT';
+    return (CLIENT_VERDICT_RANK[submitted] ?? -1) >= CLIENT_VERDICT_RANK[required];
+}
+
+function toDateOrNull(value) {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value.toDate === 'function') return value.toDate();
+    if (typeof value === 'string' || typeof value === 'number') {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+    return null;
+}
+
+function shouldEnforceClientVerdictPolicy(caseData = {}) {
+    if (caseData.status === 'DONE') return false;
+    const createdAt = toDateOrNull(caseData.createdAt || caseData.submittedAt || caseData.requestedAt);
+    if (!createdAt) return true;
+    return createdAt >= CLIENT_VERDICT_POLICY_EFFECTIVE_AT;
+}
+
+function getProcessRoleText(process = {}) {
+    return normalizePartyName(process.specificRole || process.polo || process.role || process.personType || '');
+}
+
+function isCandidateActiveLaborProcess(process = {}, candidateName = '') {
+    if (!process.isTrabalhista) return false;
+    const role = getProcessRoleText(process);
+    if (/RECLAMANTE|AUTOR|REQUERENTE|EXEQUENTE|RECORRENTE|POLO ATIVO|ATIVO/.test(role)) return true;
+    if (/RECLAMAD|REU|REQUERID|EXECUTAD|POLO PASSIVO|PASSIVO|RECORRIDO/.test(role)) return false;
+
+    const parties = getProcessParties(process);
+    return parties.some((party) => isSamePersonName(party?.name, candidateName) && isActiveLaborParty(party));
+}
+
+function classifyClientCriminalCategory(process = {}) {
+    const text = normalizePartyName([
+        process.area,
+        process.classe,
+        process.assunto,
+        process.subject,
+        process.cnjSubject,
+        process.cnjBroadSubject,
+    ].filter(Boolean).join(' '));
+    if (/TRANSITO|CTB|EMBRIAGUEZ|DIRECAO|DIRIGIR/.test(text)) return 'TRAFFIC';
+    if (/AMBIENTAL|MEIO AMBIENTE|LEI 9605|CRIME AMBIENT/.test(text)) return 'ENVIRONMENTAL';
+    return 'OTHER';
+}
+
+function isClientMaterialCriminalProcess(process = {}) {
+    if (!process.isCriminal || isLowRiskCriminalProcess(process)) return false;
+    const role = getProcessRoleText(process);
+    return process.isDefendant === true || /REU|INVESTIGAD|ACUSAD|INDICIAD|AUTOR DO FATO|EXECUTAD|DENUNCIAD/.test(role);
+}
+
+function buildClientVerdictPolicy(caseData = {}) {
+    const reasons = [];
+    const evidence = [];
+    let requiredVerdict = 'FIT';
+    const requireVerdict = (verdict, reason, item = {}) => {
+        if (CLIENT_VERDICT_RANK[verdict] > CLIENT_VERDICT_RANK[requiredVerdict]) requiredVerdict = verdict;
+        reasons.push(reason);
+        evidence.push({ verdict, reason, ...item });
+    };
+
+    const topProcessos = selectTopProcessos(caseData, 50);
+    const activeLaborProcesses = topProcessos.filter((process) => isCandidateActiveLaborProcess(process, caseData.candidateName));
+    const counterpartyNames = new Set();
+    let hasMaderoLabor = false;
+
+    for (const process of activeLaborProcesses) {
+        const counterparty = resolveCounterpartyNames(process, caseData.candidateName);
+        for (const name of counterparty.names) {
+            const normalized = normalizePartyName(name);
+            if (!normalized) continue;
+            counterpartyNames.add(normalized);
+            if (/MADERO/.test(normalized)) hasMaderoLabor = true;
+        }
+    }
+
+    if (hasMaderoLabor) {
+        requireVerdict('NOT_RECOMMENDED', 'Processo trabalhista contra Madero exige Nao recomendado.', { area: 'labor' });
+    } else if (counterpartyNames.size >= 2) {
+        requireVerdict('NOT_RECOMMENDED', 'Dois ou mais processos trabalhistas contra empresas diferentes exigem Nao recomendado.', { area: 'labor' });
+    } else if (activeLaborProcesses.length >= 1) {
+        requireVerdict('ATTENTION', 'Processo trabalhista do candidato como autor/reclamante exige Atencao.', { area: 'labor' });
+    }
+
+    const criminalCategories = topProcessos
+        .filter(isClientMaterialCriminalProcess)
+        .map(classifyClientCriminalCategory);
+    const uniqueCriminalCategories = new Set(criminalCategories);
+    if (criminalCategories.length > 0) {
+        const onlyTraffic = uniqueCriminalCategories.size === 1 && uniqueCriminalCategories.has('TRAFFIC');
+        const onlyEnvironmental = uniqueCriminalCategories.size === 1 && uniqueCriminalCategories.has('ENVIRONMENTAL');
+        if (onlyTraffic || onlyEnvironmental) {
+            requireVerdict('ATTENTION', 'Processo criminal material somente de transito ou ambiental exige Atencao.', { area: 'criminal' });
+        } else {
+            requireVerdict('NOT_RECOMMENDED', 'Processo criminal material diferente de transito/ambiental isolado exige Nao recomendado.', { area: 'criminal' });
+        }
+    }
+
+    return { requiredVerdict, reasons, evidence };
+}
+
+function hasValidClientVerdictOverride(override) {
+    return override?.confirmed === true && typeof override.justification === 'string' && override.justification.trim().length >= 20;
+}
+
+function validateClientVerdictPolicy({ submittedVerdict, policy, override } = {}) {
+    const requiredVerdict = normalizeVerdict(policy?.requiredVerdict) || 'FIT';
+    if (isVerdictAtLeast(submittedVerdict, requiredVerdict)) return;
+    if (hasValidClientVerdictOverride(override)) return;
+
+    const requiredLabel = CLIENT_VERDICT_LABELS[requiredVerdict] || requiredVerdict;
+    throw new HttpsError(
+        'failed-precondition',
+        `A politica do cliente exige veredito minimo: ${requiredLabel}. Confirme o override e informe justificativa para concluir com veredito inferior.`,
+        {
+            code: 'CLIENT_VERDICT_OVERRIDE_REQUIRED',
+            requiredVerdict,
+            requiredLabel,
+            submittedVerdict: normalizeVerdict(submittedVerdict),
+            reasons: policy?.reasons || [],
+        },
+    );
 }
 
 const REVIEW_DRAFT_ARRAY_FIELDS = new Set([
@@ -8450,12 +8596,18 @@ function buildDetCriminalNotes(caseData) {
     const cf = caseData.criminalFlag || 'NEGATIVE';
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
+    const materialCriminalProcesses = criminalProcesses.filter(isMaterialCriminalProcess);
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const namesakeCount = caseData.bigdatacorpNamesakeCount;
+    const topLevelCriminalNotes = String(caseData.criminalNotes || '').trim();
 
     // Separate by CPF confirmation
-    const cpfConfirmed = criminalProcesses.filter((p) => p.matchType === 'CPF confirmado');
-    const nameOnly = criminalProcesses.filter((p) => p.matchType !== 'CPF confirmado');
+    const hasMaterialCriminalProcess = materialCriminalProcesses.length > 0;
+    const renderedCriminalProcesses = cf === 'POSITIVE' && hasMaterialCriminalProcess
+        ? materialCriminalProcesses
+        : criminalProcesses;
+    const cpfConfirmed = renderedCriminalProcesses.filter((p) => p.matchType === 'CPF confirmado');
+    const nameOnly = renderedCriminalProcesses.filter((p) => p.matchType !== 'CPF confirmado');
 
     // Header context (no redundant status — badge already in report)
     if (cf === 'POSITIVE') {
@@ -8534,7 +8686,11 @@ function buildDetCriminalNotes(caseData) {
     // Fallback body when header exists but no processes to list
     if (cpfConfirmed.length === 0 && nameOnly.length === 0 && cf !== 'NEGATIVE') {
         parts.push('');
-        parts.push('Nao ha detalhamento processual estruturado suficiente neste bloco. Revisao operacional recomendada.');
+        if (cf === 'POSITIVE' && topLevelCriminalNotes && !narrativeMatches(topLevelCriminalNotes, [/nao foram identificados/, /nao ha evidencia criminal relevante/, /sem apontamento/])) {
+            parts.push(topLevelCriminalNotes);
+        } else {
+            parts.push('Nao ha detalhamento processual estruturado suficiente neste bloco. Revisao operacional recomendada.');
+        }
     }
 
     // Observations
@@ -8607,6 +8763,18 @@ function buildDetCriminalNotes(caseData) {
     }
 
     return parts.join('\n');
+}
+
+function isLowRiskCriminalProcess(process = {}) {
+    if (!process.isCriminal) return false;
+    const role = String(process.specificRole || process.polo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    return process.isVictim === true
+        || process.isWitness === true
+        || /\b(VITIMA|OFENDID[OA]|PREJUDICAD[OA]|AGRAVIAD[OA]|LESAD[OA]|TESTEMUNHA|INFORMANTE)\b/.test(role);
+}
+
+function isMaterialCriminalProcess(process = {}) {
+    return process.isCriminal === true && !isLowRiskCriminalProcess(process);
 }
 
 function buildDetLaborNotes(caseData) {
@@ -8796,12 +8964,13 @@ function buildDetKeyFindings(caseData) {
     const findings = [];
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
+    const materialCriminalProcesses = criminalProcesses.filter(isMaterialCriminalProcess);
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const juditActiveWarrants = Number(caseData.juditActiveWarrantCount) || 0;
     const bdcWarrants = caseData.bigdatacorpActiveWarrants || [];
 
     // Priority 1: Criminal conviction with sentence details
-    for (const p of criminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
+    for (const p of materialCriminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
         const sentence = extractSentenceDetails(p.allDecisions);
         if (sentence.isConviction) {
             let txt = `Condenação criminal definitiva`;
@@ -8813,7 +8982,7 @@ function buildDetKeyFindings(caseData) {
     }
 
     // Priority 2: Carta de guia
-    for (const p of criminalProcesses) {
+    for (const p of materialCriminalProcesses) {
         const cg = detectCartaDeGuia(juditRoleSummary, p.cnj);
         if (cg.found) {
             const cgLabel = cg.tipo ? `Carta de Guia ${cg.tipo}` : 'Carta de Guia';
@@ -8836,7 +9005,7 @@ function buildDetKeyFindings(caseData) {
     }
 
     // Priority 4: Criminal processes count
-    const cpfConfirmed = criminalProcesses.filter((p) => p.matchType === 'CPF confirmado');
+    const cpfConfirmed = materialCriminalProcesses.filter((p) => p.matchType === 'CPF confirmado');
     if (cpfConfirmed.length > 0 && findings.length < 5) {
         const comarcas = [...new Set(cpfConfirmed.map((p) => p.comarca).filter(Boolean))];
         let txt = `${cpfConfirmed.length} processo(s) criminal(is) com CPF confirmado`;
@@ -8884,6 +9053,7 @@ function buildDetExecutiveSummary(caseData) {
     const parts = [];
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
+    const materialCriminalProcesses = criminalProcesses.filter(isMaterialCriminalProcess);
     const juditRoleSummary = caseData.juditRoleSummary || [];
 
     // Paragraph 1: Professional context
@@ -8913,7 +9083,7 @@ function buildDetExecutiveSummary(caseData) {
     if (cf === 'POSITIVE') {
         // Look for conviction
         let convictionText = 'processo(s) criminal(is) identificado(s)';
-        for (const p of criminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
+        for (const p of materialCriminalProcesses.filter((pr) => pr.matchType === 'CPF confirmado')) {
             const sentence = extractSentenceDetails(p.allDecisions);
             if (sentence.isConviction) {
                 convictionText = `condenação criminal definitiva`;
@@ -8996,6 +9166,7 @@ function buildDetFinalJustification(caseData) {
     const name = caseData.candidateName || 'Candidato';
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
+    const materialCriminalProcesses = criminalProcesses.filter(isMaterialCriminalProcess);
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const namesakeCount = caseData.bigdatacorpNamesakeCount;
 
@@ -9042,15 +9213,15 @@ function buildDetFinalJustification(caseData) {
             }
         }
         if (!crimParagraph) {
-            if (criminalProcesses.length > 0) {
-                const cpfCount = criminalProcesses.filter((p) => p.matchType === 'CPF confirmado').length;
-                const nameOnlyCount = criminalProcesses.length - cpfCount;
+            if (materialCriminalProcesses.length > 0) {
+                const cpfCount = materialCriminalProcesses.filter((p) => p.matchType === 'CPF confirmado').length;
+                const nameOnlyCount = materialCriminalProcesses.length - cpfCount;
                 if (cpfCount > 0 && nameOnlyCount === 0) {
                     crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.`;
                 } else if (cpfCount > 0) {
                     crimParagraph = `${cpfCount} processo(s) criminal(is) com CPF confirmado e ${nameOnlyCount} adicional(is) sem confirmação documental. Recomenda-se validação complementar.`;
                 } else {
-                    crimParagraph = `${criminalProcesses.length} processo(s) criminal(is) identificado(s) — sem confirmação documental de CPF. Recomenda-se validação complementar.`;
+                    crimParagraph = `${materialCriminalProcesses.length} processo(s) criminal(is) identificado(s) — sem confirmação documental de CPF. Recomenda-se validação complementar.`;
                 }
             } else {
                 crimParagraph = 'Indicadores criminais positivos nas fontes consultadas, porém sem processos detalhados disponíveis.';
@@ -11717,6 +11888,9 @@ exports.__test = {
     sanitizeAuditMetadataValue,
     sanitizeNarrativesForFlags,
     validateConcludeFinalFlags,
+    buildClientVerdictPolicy,
+    validateClientVerdictPolicy,
+    shouldEnforceClientVerdictPolicy,
     normalizeUnicodeToAscii,
     fixLatinMojibake,
     _setDb(mockDb) { db = mockDb; },
