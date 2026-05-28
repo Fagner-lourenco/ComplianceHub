@@ -77,6 +77,27 @@ describe('calculateRisk — flags POSITIVE', () => {
         expect(r.suggestedVerdict).toBe('NOT_RECOMMENDED');
     });
 
+    it('labor POSITIVE (severity LOW) → score 50, YELLOW, ATTENTION', () => {
+        const r = calculateRisk({ laborFlag: 'POSITIVE', laborSeverity: 'LOW' });
+        expect(r.riskScore).toBe(50);
+        expect(r.riskLevel).toBe('YELLOW');
+        expect(r.suggestedVerdict).toBe('ATTENTION');
+    });
+
+    it('labor POSITIVE (severity MEDIUM) → score 90, RED, NOT_RECOMMENDED', () => {
+        const r = calculateRisk({ laborFlag: 'POSITIVE', laborSeverity: 'MEDIUM' });
+        expect(r.riskScore).toBe(90);
+        expect(r.riskLevel).toBe('RED');
+        expect(r.suggestedVerdict).toBe('NOT_RECOMMENDED');
+    });
+
+    it('labor POSITIVE (severity HIGH) → score 95, RED, NOT_RECOMMENDED', () => {
+        const r = calculateRisk({ laborFlag: 'POSITIVE', laborSeverity: 'HIGH' });
+        expect(r.riskScore).toBe(95);
+        expect(r.riskLevel).toBe('RED');
+        expect(r.suggestedVerdict).toBe('NOT_RECOMMENDED');
+    });
+
     // Regressão crítica: o bug da imagem (score 90 + riskLevel GREEN nunca pode ocorrer)
     it('NUNCA produz riskScore >= 80 com riskLevel GREEN', () => {
         const positiveInputs = [

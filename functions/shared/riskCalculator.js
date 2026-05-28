@@ -38,6 +38,7 @@ const BASE_SCORES = {
  * Regras de score:
  *  - Cada fase habilitada contribui com um score base (BASE_SCORES[flag]).
  *  - Criminal POSITIVE com severity override: HIGH=95, LOW=75, MEDIUM=90.
+ *  - Trabalhista POSITIVE com severity override: HIGH=95, LOW=50, MEDIUM=90.
  *  - riskScore = máximo dos scores de fase.
  *  - Sinais amarelos (ambiguidade/atenção): se >= 2, adiciona +15 ao score (cap 100).
  *  - CPF pendente de regularização (P2-011): conta como 1 sinal amarelo.
@@ -49,6 +50,7 @@ const BASE_SCORES = {
  *   @param {string} [form.criminalFlag]
  *   @param {string} [form.criminalSeverity]   HIGH | MEDIUM | LOW
  *   @param {string} [form.laborFlag]
+ *   @param {string} [form.laborSeverity]      HIGH | MEDIUM | LOW
  *   @param {string} [form.warrantFlag]
  *   @param {string} [form.osintLevel]
  *   @param {string} [form.socialStatus]
@@ -75,7 +77,15 @@ function calculateRisk(form, enabledPhases) {
         }
         phaseScores.push(criminalScore);
     }
-    if (ep.includes('labor'))            phaseScores.push(BASE_SCORES[form.laborFlag]        || 0);
+    if (ep.includes('labor')) {
+        let laborScore = BASE_SCORES[form.laborFlag] || 0;
+        if (form.laborFlag === 'POSITIVE') {
+            if (form.laborSeverity === 'HIGH') laborScore = 95;
+            else if (form.laborSeverity === 'LOW') laborScore = 50;
+            // MEDIUM e ausencia de severity mantem 90
+        }
+        phaseScores.push(laborScore);
+    }
     if (ep.includes('warrant'))          phaseScores.push(BASE_SCORES[form.warrantFlag]      || 0);
     if (ep.includes('osint'))            phaseScores.push(BASE_SCORES[form.osintLevel]       || 0);
     if (ep.includes('social'))           phaseScores.push(BASE_SCORES[form.socialStatus]     || 0);
