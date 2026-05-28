@@ -7826,7 +7826,7 @@ async function getPublicReportViewInner(tokenInput) {
 
 const SAFE_NARRATIVE_TEXTS = {
     criminalNegative: 'Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.',
-    criminalNegativePartial: 'Nao houve apontamento criminal confirmado. A cobertura parcial exige revisao operacional antes da conclusao, sem incluir ressalva automatica no texto final ao cliente.',
+    criminalNegativePartial: 'Nao houve apontamento criminal confirmado. A cobertura parcial exige revisao operacional antes da conclusao.',
     criminalInconclusive: 'Ha indicios que exigem validacao operacional antes de uma conclusao definitiva sobre o apontamento criminal.',
     criminalPositive: 'Foram identificados apontamentos criminais materiais que exigem avaliacao de risco antes da continuidade do processo.',
     laborNegative: 'Nao foram identificados processos trabalhistas materiais associados ao candidato nas etapas analisadas.',

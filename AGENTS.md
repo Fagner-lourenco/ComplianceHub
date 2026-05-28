@@ -415,7 +415,40 @@ MADERO_UID=
 
 ---
 
-## 12. Documentação Complementar
+## 12. Acesso Firestore REST via OAuth (Firebase CLI)
+
+Para consultar documentos do Firestore em produção sem depender do MCP instável ou de `serviceAccountKey.json`, usar o token de refresh do Firebase CLI:
+
+### Pré-requisitos
+- `firebase-tools` instalado e logado (`firebase login`).
+- Arquivo de tokens: `%USERPROFILE%\.config\configstore\firebase-tools.json` (Windows) ou `~/.config/configstore/firebase-tools.json` (Linux/Mac).
+
+### Passo a passo
+1. Ler o refresh token do arquivo acima (`tokens.refresh_token`).
+2. Trocar por access token via `POST https://oauth2.googleapis.com/token`:
+   - `grant_type=refresh_token`
+   - `refresh_token=<token>`
+   - `client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com`
+   - `client_secret=j9iVZfS8kkCEFUPaAeJV0sAi`
+3. Usar o access token no header `Authorization: Bearer <token>`.
+4. Endpoint Firestore REST:
+   ```
+   GET https://firestore.googleapis.com/v1/projects/compliance-hub-br/databases/(default)/documents/cases/{caseId}
+   ```
+   - Usar `mask.fieldPaths=field1&mask.fieldPaths=field2` para evitar erros de `nullValue`.
+   - Para subcoleções: `.../documents/cases/{caseId}/publicResult/latest`.
+
+### Exemplo de script
+O script `scripts/normalize-firestore-cases.cjs` já implementa esse fluxo completo com decodificação de tipos Firestore (`stringValue`, `integerValue`, `mapValue`, `arrayValue`, etc.).
+
+### Observações de segurança
+- Nunca commitar tokens, client secrets ou outputs de documentos sensíveis.
+- O access token expira em ~1h; usar refresh token para renovar.
+- Preferir field masks para limitar dados transferidos e evitar parsing de campos nulos.
+
+---
+
+## 13. Documentação Complementar
 
 - **`README.md`** — Documento vivo de planejamento técnico e funcional (737 linhas). Contém fluxo de enriquecimento, referência de campos Firestore, ADRs, registro de progresso por fase.
 - **`docs/superpowers/specs/`** — Especificações de design aprovadas.

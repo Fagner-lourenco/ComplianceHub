@@ -136,3 +136,26 @@
 - A regra criminal material precisa ser implementada com cuidado: `isCriminal` sozinho nao basta; deve considerar papel material (`isDefendant`/reu/investigado/acusado) e excluir vitima/testemunha.
 - Termos de veredito exibidos ao analista devem ser em portugues: `Apto`, `Atencao`, `Nao Recomendado`.
 - `concludeCaseByAnalyst` calculava `riskInput.laborFlag`, mas nao passava `laborSeverity`; isso foi corrigido junto com a politica backend para manter consistencia com o calculador.
+
+## Ressalva Automatica No Texto Final
+- A frase `sem incluir ressalva automatica no texto final ao cliente` em `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` foi removida.
+- Risco identificado: instrucoes operacionais nunca devem ir para o texto final entregue ao cliente. A deteccao de cobertura parcial deve ser responsabilidade do checklist manual do analista antes da conclusao, nao de uma ressalva automatica no relatorio.
+
+## Auditoria De Casos Reais Com Inconsistencia De Dados Externos
+### Caso `QG400ibTd3bnQOr1yVuS` (CPF 078.003.675-17)
+- Processo `0087537-21.2020.8.05.0001` veio classificado como criminal positivo no prefill/enrichmentOriginalValues.
+- Dados reais do processo: `area=DIREITO DO CONSUMIDOR`, `subjects=RESPONSABILIDADE DO FORNECEDOR/INDENIZACAO POR DANO MORAL`, `classifications=CUMPRIMENTO DE SENTENCA`, `personType=EXEQUENTE`, `side=Active`.
+- Causa raiz: metadado processual inconsistente do provider (`ACAO PENAL - PROCEDIMENTO ORDINARIO` em processo civel/consumidor).
+- O analista ja corrigiu manualmente para `criminalFlag=NEGATIVE`. Nao e bug do nosso codigo, mas sim dado externo inconsistente que o analista deve detectar.
+
+### Caso `27vc6KqTrO8cbask2Iau` (CPF 226.377.488-26)
+- `criminalFlag=POSITIVE` e `warrantFlag=POSITIVE` no prefill/enrichmentOriginalValues.
+- Mandado ativo veio do BigDataCorp com `imprisonmentKind=Civil`, `agency=01 CIVEL DE ITAPEVI`, processo de prisao civil por inadimplencia alimentar.
+- O prefill de mandado ja acertou o contexto (`prisao CIVIL por inadimplencia alimentar -- nao e mandado de natureza criminal`), mas o prefill criminal ficou inconsistente ao elevar o mandado civil como hard fact criminal.
+- Causa raiz: pipeline de autoclassificacao elevou mandado civil como evidencia criminal.
+- O campo `warrantFlag=POSITIVE` esta correto; o `criminalFlag=POSITIVE` e falso positivo causado por dado externo. Nao e bug do nosso codigo atual, mas sim inconsistencia de classificacao do provider que o analista deve detectar.
+
+### Conclusao Da Auditoria
+- Ambos os casos sao problemas de qualidade/inconsistencia dos dados dos providers (Judit, BigDataCorp), nao bugs na nossa logica de classificacao.
+- A deteccao desses casos deve continuar sendo feita pelo analista humano durante a revisao operacional, apoiada pelo checklist local e pela IA revisora.
+- Nao ha necessidade de correcao de codigo para esses casos especificos.

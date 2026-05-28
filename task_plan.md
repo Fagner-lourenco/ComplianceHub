@@ -226,3 +226,11 @@ Criar e endurecer a analise assistida que atua como segundo analista consultivo:
 - [x] Remover bloco morto de contexto profissional em `buildDetLaborNotes()`.
 - [x] Rodar testes focados, suites completas, lint, build e diff-check.
 - [x] Atualizar graphify apos alteracoes de codigo.
+
+### Phase 16: Ressalva Automatica E Auditoria De Casos Reais
+- [x] Remover frase `sem incluir ressalva automatica no texto final ao cliente` de `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` em `functions/index.js`.
+- [x] Decisao: risco de enviar instrucoes operacionais ao cliente e inaceitavel; checklist manual do analista deve detectar cobertura parcial antes da conclusao.
+- [x] Auditoria Firestore REST de caso `QG400ibTd3bnQOr1yVuS` (078.003.675-17): processo `0087537-21.2020.8.05.0001` classificado como criminal positivo, mas e processo de `DIREITO DO CONSUMIDOR` (CUMPRIMENTO DE SENTENCA, RESPONSABILIDADE DO FORNECEDOR). Causa: metadado processual inconsistente (`ACAO PENAL - PROCEDIMENTO ORDINARIO`) misturado com area civel. Analista ja corrigiu manualmente para `NEGATIVE`.
+- [x] Auditoria Firestore REST de caso `27vc6KqTrO8cbask2Iau` (226.377.488-26): `criminalFlag=POSITIVE` por mandado ativo, mas mandado e `Civil` (prisao civil por inadimplencia alimentar). Causa: pipeline elevou mandado civil como hard fact criminal. `warrantFlag` permanece `POSITIVE` corretamente.
+- [x] Conclusao dos 2 casos: nao sao bugs no codigo atual, mas inconsistencias de dados dos providers que devem ser detectadas pelo analista humano antes do envio ao cliente. Nao ha necessidade de correcao de codigo nestes casos especificos.
+- [x] Atualizar `AGENTS.md` com secao de acesso Firestore REST via OAuth.

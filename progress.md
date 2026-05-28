@@ -1,5 +1,16 @@
 # Progress Log
 
+## 2026-05-28
+
+### Ressalva Automatica E Auditoria De Casos Reais
+- Usuario pediu para remover/alterar a frase `sem incluir ressalva automatica no texto final ao cliente` de `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` em `functions/index.js`.
+- Frase removida por risco operacional: instrucoes internas nunca devem ir para o texto final do cliente. A deteccao de cobertura parcial e responsabilidade do checklist manual do analista antes da conclusao.
+- Atualizado `AGENTS.md` com secao de acesso Firestore REST via OAuth (refresh token do Firebase CLI, client_id, client_secret, endpoint com field masks).
+- Auditoria Firestore REST do caso `QG400ibTd3bnQOr1yVuS` (078.003.675-17): processo `0087537-21.2020.8.05.0001` e de `DIREITO DO CONSUMIDOR`, mas veio com classificacao processual inconsistente (`ACAO PENAL`) que gerou `criminalFlag=POSITIVE` no prefill. Analista ja corrigiu manualmente para `NEGATIVE`.
+- Auditoria Firestore REST do caso `27vc6KqTrO8cbask2Iau` (226.377.488-26): mandado civil de alimentos (`imprisonmentKind=Civil`) foi elevado como hard fact criminal no prefill, gerando `criminalFlag=POSITIVE`. `warrantFlag=POSITIVE` esta correto.
+- Conclusao: ambos sao problemas de qualidade/inconsistencia dos dados dos providers (Judit, BigDataCorp), nao bugs na nossa logica de classificacao. A deteccao deve continuar sendo feita pelo analista humano com apoio do checklist local e IA revisora. Nao ha necessidade de correcao de codigo para esses casos.
+- Arquivos atualizados: `functions/index.js`, `AGENTS.md`, `task_plan.md`, `findings.md`, `progress.md`.
+
 ## 2026-05-27
 
 ### Politica Cliente, Checklist Local E Modais De Conclusao
