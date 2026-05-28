@@ -37,6 +37,8 @@ import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCo
 import { calculateRisk } from '../../core/riskCalculator';
 import './CasoPage.css';
 import ProcessInspectionModal from '../../ui/components/ProcessInspectionModal/ProcessInspectionModal';
+import ChecklistModal from './components/ChecklistModal';
+import { useChecklistSession } from './hooks/useChecklistSession';
 
 function formatFullCpf(cpf) {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -64,6 +66,12 @@ const SOCIAL_OPTIONS = ['APPROVED', 'NEUTRAL', 'CONCERN', 'CONTRAINDICATED'];
 const DIGITAL_OPTIONS = ['CLEAN', 'ALERT', 'CRITICAL', 'NOT_CHECKED'];
 const CONFLICT_OPTIONS = ['YES', 'NO', 'UNKNOWN'];
 const VERDICT_OPTIONS = ['FIT', 'ATTENTION', 'NOT_RECOMMENDED'];
+const VERDICT_LABELS = {
+    FIT: 'Apto',
+    ATTENTION: 'Atenção',
+    NOT_RECOMMENDED: 'Não recomendado',
+};
+const REQUIRED_MANUAL_CHECKLIST_STEPS = new Set(['identification', 'criminal', 'labor', 'warrant', 'review']);
 
 const CORRECTION_REASONS = [
     'CPF incorreto',
@@ -767,6 +775,10 @@ export default function CasoPage() {
     const [returning, setReturning] = useState(false);
     const [returnError, setReturnError] = useState(null);
     const [showHighRiskConfirm, setShowHighRiskConfirm] = useState(false);
+    const [showChecklistModal, setShowChecklistModal] = useState(false);
+    const [showFinalConclusionModal, setShowFinalConclusionModal] = useState(false);
+    const [overrideRequest, setOverrideRequest] = useState(null);
+    const [overrideJustification, setOverrideJustification] = useState('');
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [pendingNavigationTarget, setPendingNavigationTarget] = useState(null);
     const [draftStatus, setDraftStatus] = useState('idle');
@@ -996,6 +1008,14 @@ export default function CasoPage() {
 
     const visibleActiveStep = Math.min(activeStep, steps.length - 1);
     const currentStepKey = steps[visibleActiveStep]?.key;
+    const manualChecklistItems = useMemo(() => steps
+        .filter((step) => REQUIRED_MANUAL_CHECKLIST_STEPS.has(step.key))
+        .map((step) => ({
+            key: step.key,
+            label: step.label,
+            description: 'Confirme que esta fase foi revisada manualmente antes da conclusão.',
+        })), [steps]);
+    const manualChecklist = useChecklistSession(caseData?.id || caseId, manualChecklistItems);
     const canEditCase = !READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded;
     const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
@@ -1291,7 +1311,7 @@ export default function CasoPage() {
         }
     };
 
-    const handleConclude = async () => {
+    const submitConclusion = async ({ override = null } = {}) => {
         if (!caseData || !allOk || saving || !canEditCase) {
             return;
         }
@@ -1303,21 +1323,10 @@ export default function CasoPage() {
             return;
         }
 
-        if (isDemoMode) {
-            setConcluded(true);
-            return;
-        }
-
         if (!user) {
             setSaveError('Sua sessao nao esta disponivel para concluir o caso.');
             return;
         }
-
-        if (!highRiskConfirmedRef.current && risk.riskScore >= 70 && form.finalVerdict === 'FIT') {
-            setShowHighRiskConfirm(true);
-            return;
-        }
-        highRiskConfirmedRef.current = false;
 
         setSaving(true);
 
@@ -1361,6 +1370,7 @@ export default function CasoPage() {
                         ? normalizeKeyFindings(form.keyFindings)
                         : (form.keyFindings?.trim() ? normalizeKeyFindings(form.keyFindings) : undefined),
                     analystComment: optionalNarrative('analystComment'),
+                    clientVerdictOverride: override,
                     riskLevel: risk.riskLevel,
                     riskScore: risk.riskScore,
                     enabledPhases: caseData.enabledPhases || enabledPhases,
@@ -1390,12 +1400,56 @@ export default function CasoPage() {
                 reviewDraft: undefined,
             }));
             setConcluded(true);
+            setShowFinalConclusionModal(false);
+            setOverrideRequest(null);
+            setOverrideJustification('');
         } catch (error) {
             console.error('Error concluding case:', error);
+            if (error?.details?.code === 'CLIENT_VERDICT_OVERRIDE_REQUIRED') {
+                setOverrideRequest(error.details);
+                setShowFinalConclusionModal(false);
+                return;
+            }
             setSaveError(getUserFriendlyMessage(error, 'concluir o caso'));
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleConclude = async () => {
+        if (!caseData || !allOk || saving || !canEditCase) {
+            return;
+        }
+
+        setSaveError(null);
+
+        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(form.criminalFlag)) {
+            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
+            return;
+        }
+
+        if (isDemoMode) {
+            setConcluded(true);
+            return;
+        }
+
+        if (!manualChecklist.isComplete) {
+            setShowChecklistModal(true);
+            return;
+        }
+
+        if (!user) {
+            setSaveError('Sua sessao nao esta disponivel para concluir o caso.');
+            return;
+        }
+
+        if (!highRiskConfirmedRef.current && risk.riskScore >= 70 && form.finalVerdict === 'FIT') {
+            setShowHighRiskConfirm(true);
+            return;
+        }
+        highRiskConfirmedRef.current = false;
+
+        setShowFinalConclusionModal(true);
     };
 
     if (loadingCase) {
@@ -1479,6 +1533,11 @@ export default function CasoPage() {
                     {canEditCase && (
                         <button className="caso-btn caso-btn--ghost" onClick={saveDraft} disabled={!hasDirtyDraft || draftStatus === 'saving'}>
                             {draftStatus === 'saving' ? 'Salvando...' : 'Salvar rascunho'}
+                        </button>
+                    )}
+                    {canEditCase && (
+                        <button className="caso-btn caso-btn--ghost" onClick={() => setShowChecklistModal(true)}>
+                            Checklist {manualChecklist.completedCount}/{manualChecklist.totalCount}
                         </button>
                     )}
                     {!isCorrectionNeeded && canEditCase && (
@@ -2615,6 +2674,88 @@ export default function CasoPage() {
                         </p>
                     </Modal>
                 )}
+
+                <ChecklistModal
+                    open={showChecklistModal}
+                    onClose={() => setShowChecklistModal(false)}
+                    items={manualChecklist.items}
+                    completedCount={manualChecklist.completedCount}
+                    totalCount={manualChecklist.totalCount}
+                    onToggleItem={manualChecklist.setItemChecked}
+                />
+
+                <Modal
+                    open={showFinalConclusionModal}
+                    onClose={() => setShowFinalConclusionModal(false)}
+                    title="Confirmar conclusão"
+                    maxWidth={520}
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => setShowFinalConclusionModal(false)}>Revisar</button>
+                            <button type="button" className="btn-primary" disabled={saving} onClick={() => submitConclusion()}>
+                                {saving ? 'Concluindo...' : 'Confirmar conclusão'}
+                            </button>
+                        </>
+                    )}
+                >
+                    <div className="caso-critical-modal">
+                        <p>Revise a decisão final antes de publicar o resultado para o cliente.</p>
+                        <dl>
+                            <div><dt>Veredito</dt><dd>{VERDICT_LABELS[form.finalVerdict] || form.finalVerdict || 'Não definido'}</dd></div>
+                            <div><dt>Risco calculado</dt><dd>{risk.riskScore} / {risk.riskLevel}</dd></div>
+                            <div><dt>Checklist local</dt><dd>{manualChecklist.completedCount}/{manualChecklist.totalCount} fases</dd></div>
+                        </dl>
+                    </div>
+                </Modal>
+
+                <Modal
+                    open={Boolean(overrideRequest)}
+                    onClose={() => setOverrideRequest(null)}
+                    title="Override de veredito exigido"
+                    maxWidth={560}
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => setOverrideRequest(null)}>Revisar veredito</button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                disabled={saving || overrideJustification.trim().length < 20}
+                                onClick={() => submitConclusion({
+                                    override: {
+                                        confirmed: true,
+                                        requiredVerdict: overrideRequest?.requiredVerdict,
+                                        submittedVerdict: form.finalVerdict,
+                                        justification: overrideJustification.trim(),
+                                        confirmedAt: new Date().toISOString(),
+                                    },
+                                })}
+                            >
+                                {saving ? 'Concluindo...' : 'Confirmar override'}
+                            </button>
+                        </>
+                    )}
+                >
+                    <div className="caso-critical-modal">
+                        <p>
+                            A política do cliente exige veredito mínimo <strong>{VERDICT_LABELS[overrideRequest?.requiredVerdict] || overrideRequest?.requiredLabel || 'Não recomendado'}</strong>.
+                        </p>
+                        {overrideRequest?.reasons?.length > 0 && (
+                            <ul className="caso-override-reasons">
+                                {overrideRequest.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                            </ul>
+                        )}
+                        <label className="caso-field">
+                            Justificativa do override <span className="caso-req">*</span>
+                            <textarea
+                                className="caso-textarea"
+                                value={overrideJustification}
+                                onChange={(event) => setOverrideJustification(event.target.value)}
+                                rows={4}
+                                placeholder="Explique por que o caso será concluído com veredito inferior à política do cliente."
+                            />
+                        </label>
+                    </div>
+                </Modal>
 
                 {currentStepKey === 'criminal' && (
                     <div className="caso-section">
