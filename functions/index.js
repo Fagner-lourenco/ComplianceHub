@@ -5968,11 +5968,46 @@ exports.syncClientCaseOnCreate = onDocumentCreated(
     },
 );
 
+function isAutoClassifyOnlyChange(before, after) {
+    const autoClassifyFields = new Set([
+        'autoClassifySignature', 'autoClassifiedAt', 'autoClassifyLock',
+        'autoClassifyRerunRequested', 'criminalFlag', 'warrantFlag', 'laborFlag',
+        'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict',
+        'negativePartialSafetyNetEligible', 'negativePartialSafetyNetReasons',
+        'negativePartialSafetyNetAction', 'negativePartialSafetyNetTriggered',
+        'prefillNarratives', 'deterministicPrefill', 'aiHomonymTriggered',
+        'aiHomonymDecision', 'aiHomonymConfidence', 'aiHomonymRisk',
+        'aiHomonymRecommendedAction', 'aiClassificationReview',
+        'aiClassificationReviewOk', 'aiProvidersIncluded', 'aiStatus', 'aiError',
+        'aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd',
+        'executiveSummary', 'keyFindings', 'clientNotes',
+    ]);
+
+    const beforeKeys = Object.keys(before);
+    const afterKeys = Object.keys(after);
+    const allKeys = new Set([...beforeKeys, ...afterKeys]);
+
+    for (const key of allKeys) {
+        if (before[key] !== after[key]) {
+            if (!autoClassifyFields.has(key)) {
+                return false; // Mudança NÃO relacionada a auto-classify
+            }
+        }
+    }
+
+    return true; // Todas as mudanças são de auto-classify
+}
+
 exports.syncClientCaseOnUpdate = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1' },
     async (event) => {
+        const before = event.data?.before?.data() || {};
         const after = event.data?.after?.data();
         if (!after) return;
+
+        // GUARD: skip se a única mudança foi auto-classificação
+        if (isAutoClassifyOnlyChange(before, after)) return;
+
         const caseId = event.params.caseId;
         await writeClientCaseMirror(caseId, after);
     },
@@ -12676,6 +12711,7 @@ exports.__test = {
     fetchTenantCaseDocuments,
     repairAllClaimsInner,
     clientPayloadChanged,
+    isAutoClassifyOnlyChange,
     _setDb(mockDb) { db = mockDb; },
     _setGetAuth(mockFn) { getAuth = mockFn; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },

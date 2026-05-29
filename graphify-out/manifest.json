@@ -63,6 +63,10 @@
     "mtime": 1779315922.1919954,
     "hash": "98a28641c176719ed8b485c914b54ed6"
   },
+  "D:\\ComplianceHub\\functions\\clientPayloadChanged.test.js": {
+    "mtime": 1780089652.1204817,
+    "hash": "e84b09840823cfae38971f8d7e67fa5d"
+  },
   "D:\\ComplianceHub\\functions\\debug-case.js": {
     "mtime": 1777947612.8779886,
     "hash": "315f577c01a855a2cf45eaebb26c18cd"
@@ -88,8 +92,8 @@
     "hash": "f4834d98cc1ba0a681a472e6a30e2344"
   },
   "D:\\ComplianceHub\\functions\\index.js": {
-    "mtime": 1780089112.2157712,
-    "hash": "b9bc34a88f9a701b9e66072f62774fee"
+    "mtime": 1780089692.6100812,
+    "hash": "9772faf400cf22f4ab429a722a00a499"
   },
   "D:\\ComplianceHub\\functions\\repair-all-claims.js": {
     "mtime": 1777947612.8879972,
