@@ -10832,19 +10832,21 @@ const OPS_CASE_LIST_FIELDS = [
     'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus', 'aiStatus',
 ];
 
-async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [] }) {
+const CASE_QUERY_MAX_DOCS = 10000;
+
+async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [], maxDocs = CASE_QUERY_MAX_DOCS }) {
     let lastDoc = null;
     let pageCount = 0;
     let scannedRecords = 0;
     const docs = [];
 
-    while (true) {
+    while (scannedRecords < maxDocs) {
         let q = db.collection(collectionId);
         if (tenantId) q = q.where('tenantId', '==', tenantId);
         q = q.orderBy('createdAt', 'desc');
         if (fields.length > 0) q = q.select(...fields);
         if (lastDoc) q = q.startAfter(lastDoc);
-        q = q.limit(CASE_QUERY_PAGE_SIZE);
+        q = q.limit(Math.min(CASE_QUERY_PAGE_SIZE, maxDocs - scannedRecords));
         const snap = await q.get();
         pageCount += 1;
         const currentDocs = snap.docs || [];
@@ -10854,7 +10856,7 @@ async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields 
         lastDoc = currentDocs[currentDocs.length - 1];
     }
 
-    return { docs, pageCount, scannedRecords };
+    return { docs, pageCount, scannedRecords, capped: scannedRecords >= maxDocs };
 }
 
 exports.getOpsCaseMetrics = onCall(
@@ -10943,7 +10945,7 @@ exports.listOpsCases = onCall(
         const sortField = String(request.data?.sortField || 'createdAt');
         const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
 
-        const { docs, pageCount, scannedRecords } = await fetchTenantCaseDocuments({
+        const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
             collectionId: 'cases',
             tenantId,
             fields: OPS_CASE_LIST_FIELDS,
@@ -10969,6 +10971,7 @@ exports.listOpsCases = onCall(
                 source: 'server',
                 scannedRecords,
                 pageCount,
+                capped,
                 tenantId,
                 queueOnly,
             },
@@ -10991,6 +10994,7 @@ exports.listClientCases = onCall(
         let lastDoc = null;
         let scannedRecords = 0;
         let pageCount = 0;
+        let capped = false;
 
         while (true) {
             let q = db.collection('clientCases')
@@ -11007,7 +11011,10 @@ exports.listClientCases = onCall(
                 if (matchesClientCaseFilters(serialized, filters)) allMatches.push(serialized);
             });
             if (docs.length < CASE_QUERY_PAGE_SIZE) break;
-            if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) break;
+            if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) {
+                capped = true;
+                break;
+            }
             lastDoc = docs[docs.length - 1];
         }
 
@@ -11036,7 +11043,7 @@ exports.listClientCases = onCall(
                 source: 'server',
                 scannedRecords,
                 pageCount,
-                capped: scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT,
+                capped,
             },
         };
     },
@@ -11055,7 +11062,7 @@ exports.getClientExportCases = onCall(
         const allowedScopes = new Set(['ALL', 'DONE', 'PENDING', 'RED']);
         if (!allowedScopes.has(scopeCode)) throw new HttpsError('invalid-argument', 'Escopo de exportacao invalido.');
 
-        const { docs, pageCount, scannedRecords } = await fetchTenantCaseDocuments({
+        const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
             collectionId: 'clientCases',
             tenantId: profile.tenantId,
         });
@@ -11078,6 +11085,7 @@ exports.getClientExportCases = onCall(
                 source: 'server',
                 scannedRecords,
                 pageCount,
+                capped,
             },
         };
     },
@@ -12610,6 +12618,7 @@ exports.__test = {
     normalizeUnicodeToAscii,
     fixLatinMojibake,
     backfillClientCasesMirrorInner,
+    fetchTenantCaseDocuments,
     _setDb(mockDb) { db = mockDb; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },
 };

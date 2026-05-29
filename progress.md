@@ -13,6 +13,9 @@
 | 2026-05-29 | Varredura paralela em 4 frentes | Frontend, Backend, Segurança, Arquitetura |
 | 2026-05-29 | Análise profunda dos 15 itens | Leitura de código real, quantificação de impacto, correções precisas |
 | 2026-05-29 | Planejamento ultradetalhado criado | task_plan.md, findings.md, progress.md |
+| 2026-05-29 | Fase 0 concluída | rateLimiter.js criado com 9 testes, todos passando |
+| 2026-05-29 | Fase 1 concluída | backfillClientCasesMirror corrigido: permissões, tenant filter, lock |
+| 2026-05-29 | Início Fase 2 | Performance backend: fetchTenantCaseDocuments, repairAllClaims, PDF, etc. |
 
 ---
 
@@ -32,7 +35,7 @@
 | # | Item | Severidade | Status | Notas |
 |---|------|------------|--------|-------|
 | 1.1 | fetchTenantCaseDocuments sem limite | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
-| 1.3 | backfillClientCasesMirror sem permissões | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
+| 1.3 | backfillClientCasesMirror sem permissões | CRÍTICO | ✅ Concluído | Committed: 319a6b2 |
 | 2.1 | repairAllClaims sem paginação | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
 | 2.2 | PDF Puppeteer cold start | ALTO | 🔲 Planejado | Aguardando aprovação |
 | 2.3 | DJEN trigger sem timeout | ALTO | 🔲 Planejado | Aguardando aprovação |
@@ -46,10 +49,10 @@
 
 ## Próximos Passos
 
-1. **Aprovação do usuário** sobre o plano detalhado
-2. **Execução da Fase 0** (infraestrutura/helpers)
-3. **Execução da Fase 1** (segurança crítica)
-4. **Execução da Fase 2** (performance backend)
+1. ~~Aprovação do usuário~~ ✅ Concluído
+2. ~~Execução da Fase 0~~ ✅ Concluído
+3. ~~Execução da Fase 1~~ ✅ Concluído
+4. **Execução da Fase 2** (performance backend) — EM ANDAMENTO
 5. **Execução da Fase 3** (performance frontend)
 6. **Execução da Fase 4** (remoção de código morto)
 7. **Execução da Fase 5** (validação e deploy)
