@@ -19,7 +19,7 @@ import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDat
 import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
 import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
-import { VERDICT_LABELS } from '../../core/copy';
+
 import './SolicitacoesPage.css';
 
 const PAGE_SIZE = 50;

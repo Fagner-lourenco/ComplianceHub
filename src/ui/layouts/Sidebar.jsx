@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
-import { formatRoleLabel, hasPermission, PERMISSIONS } from '../../core/rbac/permissions';
+import { formatRoleLabel, hasPermission } from '../../core/rbac/permissions';
 import { CLIENT_NAV, OPS_NAV, ICONS, CONTEXT_LABELS } from '../../core/copy/navigation.jsx';
 import './Sidebar.css';
 

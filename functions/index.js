@@ -5804,7 +5804,7 @@ function computeAutoClassification(caseData) {
    ========================================================= */
 
 const IDENTITY_FIELDS = [
-    'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
+    'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
     'requestedBy', 'requestedByName', 'requestedByEmail',
     'slaHours',
 

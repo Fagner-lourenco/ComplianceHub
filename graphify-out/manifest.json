@@ -507,6 +507,14 @@
     "mtime": 1780072817.4563713,
     "hash": "b8149895cedca3835f5aee492f59a88c"
   },
+  "D:\\ComplianceHub\\src\\hooks\\useDebouncedField.js": {
+    "mtime": 1780092378.0583403,
+    "hash": "85f7a34607e03a041d5a31214429f5ce"
+  },
+  "D:\\ComplianceHub\\src\\hooks\\useDebouncedField.test.js": {
+    "mtime": 1780092581.1855602,
+    "hash": "8500fba59ea7a7f456c56a5f9a363931"
+  },
   "D:\\ComplianceHub\\src\\hooks\\useMediaQuery.js": {
     "mtime": 1777947613.1655703,
     "hash": "be89b0b66cca520a72a7069e8ad8064c"
@@ -616,8 +624,8 @@
     "hash": "8291853224aee6583c52e72526680455"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\CasoPage.jsx": {
-    "mtime": 1779877388.7094493,
-    "hash": "dc256c71d23512ac1b4d57b88e77cd4b"
+    "mtime": 1780092434.147572,
+    "hash": "1600da4ad16ca1d0dc2b7561d904782b"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\CasoPage.test.jsx": {
     "mtime": 1779756999.0915287,

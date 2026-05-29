@@ -1,7 +1,7 @@
 # Progress Log — Correção de Gargalos ComplianceHub
 
 > **Sessão iniciada:** 2026-05-29
-> **Fase atual:** Planejamento concluído. Aguardando aprovação para execução.
+> **Fase atual:** Fase 3 completa. Aguardando decisão do usuário para Fase 4 ou deploy.
 
 ---
 
@@ -16,7 +16,7 @@
 | 2026-05-29 | Fase 0 concluída | rateLimiter.js criado com 9 testes, todos passando |
 | 2026-05-29 | Fase 1 concluída | backfillClientCasesMirror corrigido: permissões, tenant filter, lock |
 | 2026-05-29 | Fase 2 concluída | 5 itens backend: fetchTenantCaseDocuments, repairAllClaims, PDF, JSON.stringify, triggers |
-| 2026-05-29 | Início Fase 3 | Performance frontend: CasoPage, subscriptions, exportação |
+| 2026-05-29 | Fase 3 concluída | 3 itens frontend: CasoPage debounce, subscriptions 5k, exportação asyncPool |
 
 ---
 
@@ -42,9 +42,9 @@
 | 2.3 | DJEN trigger sem timeout | ALTO | 🔲 Excluído | Decisão do usuário |
 | 2.5 | writeClientCaseMirror JSON.stringify | ALTO | ✅ Concluído | Committed: 6a1ed1f |
 | 2.6 | Cascata de triggers | MÉDIO | ✅ Concluído | Committed: 3e03681 |
-| 3.1 | CasoPage.jsx recálculos | CRÍTICO | 🔲 Planejado | Próximo |
-| 3.2 | Subscriptions limit 500 | CRÍTICO | 🔲 Planejado | Próximo |
-| 3.3 | Exportação síncrona frontend | CRÍTICO | 🔲 Planejado | Próximo |
+| 3.1 | CasoPage.jsx recálculos | CRÍTICO | ✅ Concluído | Committed: a241449 |
+| 3.2 | Subscriptions limit 500 | CRÍTICO | ✅ Concluído | Committed: b6bdc0c |
+| 3.3 | Exportação síncrona frontend | CRÍTICO | ✅ Concluído | Committed: b6bdc0c |
 
 ---
 
@@ -54,21 +54,45 @@
 2. ~~Execução da Fase 0~~ ✅ Concluído
 3. ~~Execução da Fase 1~~ ✅ Concluído
 4. ~~Execução da Fase 2~~ ✅ Concluído
-5. **Execução da Fase 3** (performance frontend) — PRÓXIMO
-6. **Execução da Fase 4** (remoção de código morto)
+5. ~~Execução da Fase 3~~ ✅ Concluído
+6. **Execução da Fase 4** (remoção de código morto) — AGUARDANDO DECISÃO
 7. **Execução da Fase 5** (validação e deploy)
 
 ---
 
-## Métricas Baseline
+## Métricas Atuais
 
-| Métrica | Valor Atual | Target |
-|---------|-------------|--------|
-| Testes frontend | 820 passando | Manter 820+ |
-| Testes backend | 513 passando | Manter 513+ |
-| Lint frontend | 0 erros | Manter 0 |
-| Lint backend | 0 erros | Manter 0 |
-| Build | Sucesso | Manter sucesso |
-| Cold start PDF | 10-20s | <3s (warm) |
-| Casos carregados | 500 (truncado) | 5.000 |
-| Tempo listOpsCases (10k) | Timeout/OOM | <3s |
+| Métrica | Valor Atual | Target | Status |
+|---------|-------------|--------|--------|
+| Testes frontend | 885 passando | Manter 820+ | ✅ Superou |
+| Testes backend | 565 passando | Manter 513+ | ✅ Superou |
+| Lint frontend | 0 erros, 0 warnings | Manter 0 | ✅ Limpo |
+| Lint backend | 0 erros, 0 warnings | Manter 0 | ✅ Limpo |
+| Build | Sucesso | Manter sucesso | ✅ Sucesso |
+| Cold start PDF | 10-20s | <3s (warm) | 🔄 Aguardando deploy para medir |
+| Casos carregados | 500 (truncado) | 5.000 | ✅ Implementado (5.000) |
+| Tempo listOpsCases (10k) | Timeout/OOM | <3s | ✅ Implementado (limit + paginação) |
+
+---
+
+## Commits Recentes
+
+| Commit | Mensagem | Fase |
+|--------|----------|------|
+| a241449 | perf(frontend): debounce CasoPage text fields, memoize risk calc, fix 3 flaky tests | 3.1 |
+| b6bdc0c | perf(frontend): increase query limits and limit export concurrency | 3.2 + 3.3 |
+| 3e03681 | perf(backend): skip syncClientCaseOnUpdate when only auto-classify fields changed | 2.6 |
+| 6a1ed1f | fix(backend): replace JSON.stringify comparison with field-by-field diff | 2.5 |
+| 27b680a | perf(backend): reuse Puppeteer browser instance | 2.2 |
+| 7270e82 | perf(backend): paginate repairAllClaims | 2.1 |
+| db58cce | perf(backend): add hard limit to fetchTenantCaseDocuments | 1.1 |
+| 319a6b2 | fix(security): add permissions, tenant filter, and lock to backfillClientCasesMirror | 1.3 |
+
+---
+
+## Notas Técnicas
+
+- **Hook useDebouncedField**: Criado com sincronização externa via queueMicrotask, preservação de edições locais, callback onDirty, e função flush para commit forçado. 9 testes passando.
+- **CasoPage.jsx**: 8 campos de texto com debounce 400ms, activeWarrantCount memoizado, calculateRisk com dependências granulares e formRef para leitura síncrona. 3 testes flaky resolvidos.
+- **ExportacoesPage.jsx**: asyncPool com concorrência limitada a 5 para evitar sobrecarga do browser.
+- **Firestore subscriptions**: DEFAULT_QUERY_LIMIT aumentado para 5.000 (era 500), MESSAGE_QUERY_LIMIT = 50.
