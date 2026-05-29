@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { asyncPool } from '../../utils/asyncPool';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
@@ -1014,20 +1015,18 @@ export default function ExportacoesPage() {
             });
         }
 
-        const enriched = await Promise.all(
-            casesToEnrich.map(async (c) => {
-                if (c.status !== 'DONE') return c;
-                try {
-                    const publicResult = await getCasePublicResult(c.id);
-                    if (publicResult) {
-                        return { ...c, ...publicResult };
-                    }
-                } catch {
-                    // Fallback to caseData if publicResult unavailable
+        const enriched = await asyncPool(5, casesToEnrich, async (c) => {
+            if (c.status !== 'DONE') return c;
+            try {
+                const publicResult = await getCasePublicResult(c.id);
+                if (publicResult) {
+                    return { ...c, ...publicResult };
                 }
-                return c;
-            }),
-        );
+            } catch {
+                // Fallback to caseData if publicResult unavailable
+            }
+            return c;
+        });
         return enriched;
     };
 

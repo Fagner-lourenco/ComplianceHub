@@ -15,7 +15,8 @@
 | 2026-05-29 | Planejamento ultradetalhado criado | task_plan.md, findings.md, progress.md |
 | 2026-05-29 | Fase 0 concluída | rateLimiter.js criado com 9 testes, todos passando |
 | 2026-05-29 | Fase 1 concluída | backfillClientCasesMirror corrigido: permissões, tenant filter, lock |
-| 2026-05-29 | Início Fase 2 | Performance backend: fetchTenantCaseDocuments, repairAllClaims, PDF, etc. |
+| 2026-05-29 | Fase 2 concluída | 5 itens backend: fetchTenantCaseDocuments, repairAllClaims, PDF, JSON.stringify, triggers |
+| 2026-05-29 | Início Fase 3 | Performance frontend: CasoPage, subscriptions, exportação |
 
 ---
 
@@ -34,16 +35,16 @@
 
 | # | Item | Severidade | Status | Notas |
 |---|------|------------|--------|-------|
-| 1.1 | fetchTenantCaseDocuments sem limite | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
+| 1.1 | fetchTenantCaseDocuments sem limite | CRÍTICO | ✅ Concluído | Committed: db58cce |
 | 1.3 | backfillClientCasesMirror sem permissões | CRÍTICO | ✅ Concluído | Committed: 319a6b2 |
-| 2.1 | repairAllClaims sem paginação | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
-| 2.2 | PDF Puppeteer cold start | ALTO | 🔲 Planejado | Aguardando aprovação |
-| 2.3 | DJEN trigger sem timeout | ALTO | 🔲 Planejado | Aguardando aprovação |
-| 2.5 | writeClientCaseMirror JSON.stringify | ALTO | 🔲 Planejado | Aguardando aprovação |
-| 2.6 | Cascata de triggers | MÉDIO | 🔲 Planejado | Aguardando aprovação |
-| 3.1 | CasoPage.jsx recálculos | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
-| 3.2 | Subscriptions limit 500 | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
-| 3.3 | Exportação síncrona frontend | CRÍTICO | 🔲 Planejado | Aguardando aprovação |
+| 2.1 | repairAllClaims sem paginação | CRÍTICO | ✅ Concluído | Committed: 7270e82 |
+| 2.2 | PDF Puppeteer cold start | ALTO | ✅ Concluído | Committed: 27b680a |
+| 2.3 | DJEN trigger sem timeout | ALTO | 🔲 Excluído | Decisão do usuário |
+| 2.5 | writeClientCaseMirror JSON.stringify | ALTO | ✅ Concluído | Committed: 6a1ed1f |
+| 2.6 | Cascata de triggers | MÉDIO | ✅ Concluído | Committed: 3e03681 |
+| 3.1 | CasoPage.jsx recálculos | CRÍTICO | 🔲 Planejado | Próximo |
+| 3.2 | Subscriptions limit 500 | CRÍTICO | 🔲 Planejado | Próximo |
+| 3.3 | Exportação síncrona frontend | CRÍTICO | 🔲 Planejado | Próximo |
 
 ---
 
@@ -52,8 +53,8 @@
 1. ~~Aprovação do usuário~~ ✅ Concluído
 2. ~~Execução da Fase 0~~ ✅ Concluído
 3. ~~Execução da Fase 1~~ ✅ Concluído
-4. **Execução da Fase 2** (performance backend) — EM ANDAMENTO
-5. **Execução da Fase 3** (performance frontend)
+4. ~~Execução da Fase 2~~ ✅ Concluído
+5. **Execução da Fase 3** (performance frontend) — PRÓXIMO
 6. **Execução da Fase 4** (remoção de código morto)
 7. **Execução da Fase 5** (validação e deploy)
 

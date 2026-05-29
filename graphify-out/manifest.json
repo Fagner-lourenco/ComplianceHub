@@ -92,8 +92,12 @@
     "hash": "f4834d98cc1ba0a681a472e6a30e2344"
   },
   "D:\\ComplianceHub\\functions\\index.js": {
-    "mtime": 1780089692.6100812,
-    "hash": "9772faf400cf22f4ab429a722a00a499"
+    "mtime": 1780089821.9647877,
+    "hash": "441563ac7c21e3c62ba429249fbe63a9"
+  },
+  "D:\\ComplianceHub\\functions\\isAutoClassifyOnlyChange.test.js": {
+    "mtime": 1780089845.4734464,
+    "hash": "a1ce0b4407e0bd6fa7e0fc311dbdb1e8"
   },
   "D:\\ComplianceHub\\functions\\repair-all-claims.js": {
     "mtime": 1777947612.8879972,
