@@ -12,8 +12,7 @@ import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
 import { useAuth } from '../../core/auth/useAuth';
 import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildClientInternalReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
-import { useCases } from '../../hooks/useCases';
-import { getCaseStats } from '../../core/caseUtils';
+import { useClientCasesQuery } from '../../hooks/useClientCasesQuery';
 import { formatDate } from '../../core/formatDate';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
@@ -300,7 +299,6 @@ export default function SolicitacoesPage() {
     const isDemoMode = !user || userProfile?.source === 'demo';
     // Pass tenantId explicitly to ensure query is scoped to this client's tenant only
     const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
-    const { cases, error, loading } = useCases(clientTenantId);
     const [selectedCase, setSelectedCase] = useState(null);
     const [publicResult, setPublicResult] = useState(null);
     const [publicResultLoading, setPublicResultLoading] = useState(false);
@@ -320,6 +318,32 @@ export default function SolicitacoesPage() {
     const [correctionSaving, setCorrectionSaving] = useState(false);
     const [novaPanelOpen, setNovaPanelOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const queryFilters = useMemo(() => ({
+        status: statusFilter,
+        verdict: verdictFilter,
+        searchTerm,
+    }), [searchTerm, statusFilter, verdictFilter]);
+    const {
+        cases,
+        error,
+        loading,
+        total,
+        totalPages,
+        stats,
+        meta,
+    } = useClientCasesQuery({
+        tenantId: clientTenantId,
+        isDemoMode,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        filters: queryFilters,
+        sortField,
+        sortDir,
+    });
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [queryFilters, sortField, sortDir]);
 
     useEffect(() => {
         if (!userProfile?.tenantId || isDemoMode) return;
@@ -380,48 +404,10 @@ export default function SolicitacoesPage() {
         return union.size > 0 ? [...union] : tenantPhases;
     }, [cases, tenantPhases]);
     const has = useCallback((phase) => visiblePhases.includes(phase), [visiblePhases]);
-    const stats = useMemo(() => getCaseStats(cases), [cases]);
     const selectedCaseView = useMemo(() => (selectedCase ? resolveClientCaseView(selectedCase, publicResult) : null), [publicResult, selectedCase]);
     const reportAvailability = useMemo(() => getReportAvailability(selectedCase, publicResult), [publicResult, selectedCase]);
 
-    const filteredCases = useMemo(() => {
-        let result = [...cases];
-        if (statusFilter !== 'ALL') result = result.filter((caseData) => caseData.status === statusFilter);
-        if (verdictFilter !== 'ALL') result = result.filter((caseData) => caseData.finalVerdict === verdictFilter);
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            result = result.filter((caseData) => {
-                const candidateName = String(caseData.candidateName || '').toLowerCase();
-                const cpfRaw = String(caseData.cpf || '').replace(/\D/g, '');
-                const termDigitsOnly = term.replace(/\D/g, '');
-
-                const nameMatch = candidateName.includes(term);
-                const cpfMatch = termDigitsOnly.length >= 2 && cpfRaw.includes(termDigitsOnly);
-
-                return nameMatch || cpfMatch;
-            });
-        }
-        result.sort((left, right) => {
-            let leftValue = left[sortField] ?? '';
-            let rightValue = right[sortField] ?? '';
-            if (sortField === 'createdAt') {
-                leftValue = leftValue?.seconds ? leftValue.seconds : (leftValue ? new Date(leftValue).getTime() || 0 : 0);
-                rightValue = rightValue?.seconds ? rightValue.seconds : (rightValue ? new Date(rightValue).getTime() || 0 : 0);
-            }
-            if (leftValue < rightValue) return sortDir === 'asc' ? -1 : 1;
-            if (leftValue > rightValue) return sortDir === 'asc' ? 1 : -1;
-            return 0;
-        });
-        return result;
-    }, [cases, searchTerm, sortDir, sortField, statusFilter, verdictFilter]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredCases.length / PAGE_SIZE));
     const safeCurrentPage = Math.min(currentPage, totalPages);
-
-    const paginatedCases = useMemo(() => {
-        const start = (safeCurrentPage - 1) * PAGE_SIZE;
-        return filteredCases.slice(start, start + PAGE_SIZE);
-    }, [filteredCases, safeCurrentPage]);
 
     const handleSort = (field) => {
         if (sortField === field) setSortDir((current) => (current === 'asc' ? 'desc' : 'asc'));
@@ -548,6 +534,10 @@ export default function SolicitacoesPage() {
         </div>
     ), []);
 
+    // Compatibilidade com a tabela existente: a paginação e filtros agora vêm do servidor.
+    const filteredCases = cases;
+    const paginatedCases = cases;
+
     return (
         <PageShell size="default" className="solicitacoes-page">
             <PageHeader
@@ -568,10 +558,10 @@ export default function SolicitacoesPage() {
                 }
                 activeFilterCount={(statusFilter !== 'ALL' ? 1 : 0) + (verdictFilter !== 'ALL' ? 1 : 0) + (heatmapMode ? 1 : 0)}
             >
-                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar nas solicitações carregadas por nome ou CPF..." aria-label="Buscar solicitações carregadas" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
+                <div className="solicitacoes-page__filters"><div className="filter-bar"><div className="filter-bar__search"><span className="filter-bar__search-icon" aria-hidden="true">⌕</span><input type="text" placeholder="Buscar por nome, CPF ou ID..." aria-label="Buscar solicitações" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="filter-bar__search-input" /></div><select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filtrar por status"><option value="ALL">Todos os status</option><option value="PENDING">Pendente</option><option value="IN_PROGRESS">Em análise</option><option value="WAITING_INFO">Aguardando informações</option><option value="CORRECTION_NEEDED">Correção necessária</option><option value="DONE">Concluído</option></select><select className="filter-bar__select" value={verdictFilter} onChange={(event) => setVerdictFilter(event.target.value)} aria-label="Filtrar por resultado"><option value="ALL">Todos os resultados</option><option value="FIT">Apto</option><option value="ATTENTION">Atenção</option><option value="NOT_RECOMMENDED">Não recomendado</option><option value="PENDING">Pendente</option></select><button type="button" className={`filter-bar__toggle ${heatmapMode ? 'filter-bar__toggle--active' : ''}`} onClick={() => setHeatmapMode((current) => !current)} aria-pressed={heatmapMode}>Mapa de atenção</button></div></div>
             </FilterPanelMobile>
             <MobileDataCardList
-                items={paginatedCases}
+                items={cases}
                 loading={loading}
                 emptyMessage={error ? extractErrorMessage(error, 'Não foi possível carregar suas solicitações agora.') : 'Nenhuma solicitação encontrada.'}
                 renderCard={renderCard}
@@ -581,11 +571,11 @@ export default function SolicitacoesPage() {
             <PaginationControls
                 page={safeCurrentPage}
                 pageSize={PAGE_SIZE}
-                totalItems={filteredCases.length}
+                totalItems={total}
                 itemLabel="registros"
                 onPageChange={setCurrentPage}
             />
-            <div className="solicitacoes-page__pagination">Mostrando {filteredCases.length} de {cases.length} registros</div>
+            <div className="solicitacoes-page__pagination">Mostrando {cases.length} de {total} registro(s){meta?.source === 'server' ? ' encontrados no servidor' : ''}</div>
             <Drawer open={Boolean(selectedCase)} onClose={() => setSelectedCase(null)} title={selectedCase?.candidateName} subtitle={`${selectedCase?.candidatePosition || ''} · ${selectedCase?.cpfMasked || ''}`} headerExtra={selectedCaseView?.finalVerdict ? <RiskChip value={selectedCaseView.finalVerdict} bold size="lg" /> : null} tabs={drawerTabs} width={drawerTabs.length >= 6 ? 560 : undefined} />
             <NovaSolicitacaoPanel
                 open={novaPanelOpen}

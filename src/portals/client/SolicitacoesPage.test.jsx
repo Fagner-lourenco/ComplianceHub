@@ -54,14 +54,39 @@ vi.mock('../../core/auth/useAuth', () => ({
     useAuth: () => solicitacoesMocks.authState,
 }));
 
-vi.mock('../../hooks/useCases', () => ({
-    useCases: () => solicitacoesMocks.casesState,
-}));
-
 vi.mock('../../core/firebase/firestoreService', () => ({
     ANALYSIS_PHASE_LABELS: {},
     callSubmitClientCorrection: vi.fn(),
     callGetClientQuotaStatus: (...args) => solicitacoesMocks.quotaStatus(...args),
+    callListClientCases: vi.fn((payload = {}) => {
+        const filters = payload.filters || {};
+        let cases = [...solicitacoesMocks.casesState.cases];
+        if (filters.status && filters.status !== 'ALL') cases = cases.filter((caseData) => caseData.status === filters.status);
+        if (filters.verdict && filters.verdict !== 'ALL') cases = cases.filter((caseData) => caseData.finalVerdict === filters.verdict);
+        if (filters.searchTerm) {
+            const term = String(filters.searchTerm).toLowerCase();
+            const digits = term.replace(/\D/g, '');
+            cases = cases.filter((caseData) => {
+                const name = String(caseData.candidateName || '').toLowerCase();
+                const cpf = String(caseData.cpf || '').replace(/\D/g, '');
+                return name.includes(term) || (digits.length >= 3 && cpf.includes(digits));
+            });
+        }
+        return Promise.resolve({
+            cases,
+            total: cases.length,
+            totalPages: 1,
+            stats: cases.reduce((acc, caseData) => {
+                acc.total += 1;
+                if (caseData.status === 'DONE') acc.done += 1;
+                if (caseData.status === 'PENDING') acc.pending += 1;
+                if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
+                if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
+                return acc;
+            }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 }),
+            meta: { source: 'server' },
+        });
+    }),
     getCasePublicResult: vi.fn(),
     getEnabledPhases: () => [],
     getTenantSettings: vi.fn().mockResolvedValue({ analysisConfig: {} }),

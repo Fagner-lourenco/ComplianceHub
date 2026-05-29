@@ -1,16 +1,16 @@
-# Graph Report - ComplianceHub  (2026-05-28)
+# Graph Report - ComplianceHub  (2026-05-29)
 
 ## Corpus Check
-- 190 files · ~223,057 words
+- 191 files · ~252,053 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1038 nodes · 1953 edges · 50 communities detected
-- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 182 edges (avg confidence: 0.8)
+- 1061 nodes · 1995 edges · 56 communities detected
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 184 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f18dea31`
+- Built from commit: `33e63634`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -56,19 +56,25 @@
 - [[_COMMUNITY_Community 38|Community 38]]
 - [[_COMMUNITY_Community 39|Community 39]]
 - [[_COMMUNITY_Community 40|Community 40]]
+- [[_COMMUNITY_Community 41|Community 41]]
 - [[_COMMUNITY_Community 42|Community 42]]
 - [[_COMMUNITY_Community 43|Community 43]]
 - [[_COMMUNITY_Community 44|Community 44]]
 - [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 46|Community 46]]
 - [[_COMMUNITY_Community 47|Community 47]]
-- [[_COMMUNITY_Community 48|Community 48]]
+- [[_COMMUNITY_Community 49|Community 49]]
 - [[_COMMUNITY_Community 50|Community 50]]
+- [[_COMMUNITY_Community 51|Community 51]]
+- [[_COMMUNITY_Community 52|Community 52]]
 - [[_COMMUNITY_Community 54|Community 54]]
-- [[_COMMUNITY_Community 60|Community 60]]
+- [[_COMMUNITY_Community 55|Community 55]]
+- [[_COMMUNITY_Community 59|Community 59]]
+- [[_COMMUNITY_Community 65|Community 65]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `useAuth()` - 58 edges
-2. `callBackendFunction()` - 38 edges
+2. `callBackendFunction()` - 42 edges
 3. `extractErrorMessage()` - 37 edges
 4. `runAutoClassifyAndAi()` - 25 edges
 5. `CasoPage()` - 24 edges
@@ -85,205 +91,225 @@
   functions/index.js → functions/helpers/tribunalMap.js
 - `runJuditEnrichmentPhase()` --calls--> `getJuditTribunais()`  [INFERRED]
   functions/index.js → functions/helpers/tribunalMap.js
-- `PublicReportPage()` --calls--> `formatDateTimeBR()`  [INFERRED]
-  src/pages/PublicReportPage.jsx → src/core/formatDate.js
-- `LoginPage()` --calls--> `useAuth()`  [INFERRED]
-  src/pages/LoginPage.jsx → src/core/auth/useAuth.js
+- `getAuthErrorMessage()` --calls--> `extractErrorMessage()`  [INFERRED]
+  src/pages/LoginPage.jsx → src/core/errorUtils.js
+- `RelatoriosClientePage()` --calls--> `useAuth()`  [INFERRED]
+  src/portals/client/RelatoriosClientePage.jsx → src/core/auth/useAuth.js
 
-## Communities (140 total, 5 thin omitted)
+## Communities (145 total, 6 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.05
-Nodes (42): getActionBadgeStyle(), getActionFilterOptions(), getActionLabel(), getCategoryColor(), getCategoryFilterOptions(), getCategoryLabel(), AuthProvider(), AuthProbe() (+34 more)
+Cohesion: 0.04
+Nodes (51): applyCascadeReset(), applyDeleteFields(), assertCanAssignCase(), assertOpsManager(), buildExecutiveSummary(), buildExecutiveSummaryFallback(), buildExpandedKeyFindings(), buildKeyFindings() (+43 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.04
-Nodes (43): applyCascadeReset(), applyDeleteFields(), assertCanAssignCase(), assertOpsManager(), buildExecutiveSummary(), buildExecutiveSummaryFallback(), buildExpandedKeyFindings(), buildKeyFindings() (+35 more)
-
-### Community 2 - "Community 2"
 Cohesion: 0.05
 Nodes (49): formatDuration(), getSlaColor(), getSlaDeadline(), getSlaStatus(), parseDate(), getOverallEnrichmentStatus(), calculateRisk(), subscribeToCaseAuditLogs() (+41 more)
 
-### Community 3 - "Community 3"
+### Community 2 - "Community 2"
 Cohesion: 0.07
 Nodes (46): callEndpoint(), FonteDataError, queryCriminal(), queryIdentity(), queryLabor(), queryProcessosAgrupada(), queryProcessosCompleta(), queryReceitaFederal() (+38 more)
 
-### Community 4 - "Community 4"
+### Community 3 - "Community 3"
 Cohesion: 0.11
 Nodes (42): adaptEscavador(), adaptJuditExecution(), adaptJuditLawsuits(), adaptJuditWarrants(), buildAndreCase(), buildCaseBase(), buildCaseWithBigDataCorpProcess(), buildCaseWithJuditRole() (+34 more)
 
-### Community 5 - "Community 5"
+### Community 4 - "Community 4"
 Cohesion: 0.1
-Nodes (28): buildPrintableHtml(), esc(), ExportacoesPage(), badge(), buildBatchReportHtml(), buildCaseBody(), buildCaseReportHtml(), esc() (+20 more)
+Nodes (34): acquireAutoClassifyRun(), buildAiClassificationReviewUpdatePayload(), buildAiHomonymPrompt(), buildAiHomonymResetPayload(), buildAiHomonymUpdatePayload(), buildAiPrefillUpdatePayload(), buildAiPrompt(), buildAiUpdatePayload() (+26 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.12
+Nodes (31): buildTenantStructuredQuery(), callRerunAiAnalysis(), callRerunEnrichmentPhase(), callRerunFullEnrichment(), createRestDocumentSnapshot(), decodeFirestoreFields(), decodeFirestoreValue(), fetchAuditLogs() (+23 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.09
-Nodes (25): getReportStatus(), isReportAvailable(), RelatoriosClientePage(), buildCaseReportPath(), buildClientInternalReportPath(), countCasesByMonth(), countCompletedCasesByMonth(), diffHours() (+17 more)
-
-### Community 7 - "Community 7"
-Cohesion: 0.12
-Nodes (31): acquireAutoClassifyRun(), buildAiClassificationReviewUpdatePayload(), buildAiHomonymPrompt(), buildAiHomonymResetPayload(), buildAiHomonymUpdatePayload(), buildAiPrefillUpdatePayload(), buildAiPrompt(), buildAiUpdatePayload() (+23 more)
-
-### Community 8 - "Community 8"
-Cohesion: 0.12
-Nodes (29): callBackendFunction(), callConcludeCaseByAnalyst(), callCreateClientSolicitation(), callCreateOpsClientUser(), callGetClientGeoIp(), callGetClientQuotaStatus(), callGetSystemHealth(), callRegisterClientExport() (+21 more)
-
-### Community 9 - "Community 9"
 Cohesion: 0.13
 Nodes (24): callGet(), DjenError, queryComunicacoesByName(), queryComunicacoesByProcesso(), queryTribunais(), extractKnownProcessNumbers(), runDjenEnrichmentPhase(), buildCandidateUfs() (+16 more)
 
-### Community 10 - "Community 10"
+### Community 7 - "Community 7"
 Cohesion: 0.18
 Nodes (27): buildDetCriminalNotes(), buildDeterministicPrefill(), buildDetExecutiveSummary(), buildDetFinalJustification(), buildDetKeyFindings(), buildDetLaborNotes(), buildDetWarrantNotes(), classifyWarrantType() (+19 more)
 
+### Community 8 - "Community 8"
+Cohesion: 0.18
+Nodes (24): badge(), buildBatchReportHtml(), buildCaseBody(), buildCaseReportHtml(), esc(), fieldHtml(), flagColor(), formatBirthAndAge() (+16 more)
+
+### Community 9 - "Community 9"
+Cohesion: 0.12
+Nodes (10): getActionBadgeStyle(), getActionFilterOptions(), getActionLabel(), getCategoryColor(), getCategoryFilterOptions(), getCategoryLabel(), AuditoriaClientePage(), getErrorMessage() (+2 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.12
+Nodes (14): AuthProvider(), AuthProbe(), useAuth(), DemoProviders(), callGetClientGeoIp(), NotificationProvider(), getAuthErrorMessage(), LoginPage() (+6 more)
+
 ### Community 11 - "Community 11"
 Cohesion: 0.1
-Nodes (25): asDate(), buildAiPrefillPrompt(), buildCanonicalReportHtml(), buildProcessHighlights(), buildReportSlug(), buildSanitizedPublicResultSnapshot(), buildSourceSummary(), buildStatusSummary() (+17 more)
+Nodes (19): callBackendFunction(), callConcludeCaseByAnalyst(), callCreateOpsUser(), callGetClientCaseById(), callListClientCases(), callListOpsUsers(), callReturnCaseToClient(), callSaveCaseDraftByAnalyst() (+11 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.15
-Nodes (18): computeAutoClassification(), buildBigDataCorpProcessCandidates(), buildCandidateProfile(), buildCoverageAssessment(), buildEscavadorProcessCandidates(), buildHardFacts(), buildHomonymAnalysisInput(), buildJuditProcessCandidates() (+10 more)
+Cohesion: 0.17
+Nodes (16): buildBigDataCorpProcessCandidates(), buildCandidateProfile(), buildCoverageAssessment(), buildEscavadorProcessCandidates(), buildHardFacts(), buildHomonymAnalysisInput(), buildJuditProcessCandidates(), dedupCandidatesByCnj() (+8 more)
 
 ### Community 13 - "Community 13"
+Cohesion: 0.19
+Nodes (16): buildCaseReportPath(), buildClientInternalReportPath(), countCasesByMonth(), countCompletedCasesByMonth(), diffHours(), getAttentionReasons(), getCaseTimeline(), getClientDashboardMetrics() (+8 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.13
+Nodes (18): applyAiClassificationReviewGuardrails(), applyAxisReviewGuardrail(), buildAiClassificationReviewContext(), buildAiClassificationReviewPrompt(), buildAxisReviewContext(), buildReviewSource(), compactBigDataCorpProcessos(), compactDjenComunicacoes() (+10 more)
+
+### Community 15 - "Community 15"
+Cohesion: 0.16
+Nodes (18): buildNextSteps(), buildResetPublishedCaseFields(), buildReviewDraftSeed(), extractFallbackAiClassificationReviewResponse(), looksLikeRawJsonOrTechnicalPayload(), normalizeKeyFindingsValue(), normalizeNarrativeValue(), pickConcludePayload() (+10 more)
+
+### Community 16 - "Community 16"
 Cohesion: 0.24
 Nodes (14): callBackendFunction(), markAllNotificationsAsRead(), markNotificationAsRead(), subscribeToMyNotifications(), subscribeToUnreadNotifications(), getAudioContext(), isAudioUnlocked(), isSoundEnabled() (+6 more)
 
-### Community 14 - "Community 14"
-Cohesion: 0.17
-Nodes (17): buildNextSteps(), buildResetPublishedCaseFields(), buildReviewDraftSeed(), extractFallbackAiClassificationReviewResponse(), looksLikeRawJsonOrTechnicalPayload(), normalizeKeyFindingsValue(), normalizeNarrativeValue(), pickConcludePayload() (+9 more)
-
-### Community 15 - "Community 15"
-Cohesion: 0.13
-Nodes (17): applyAiClassificationReviewGuardrails(), applyAxisReviewGuardrail(), buildAiClassificationReviewContext(), buildAiClassificationReviewPrompt(), buildAxisReviewContext(), buildReviewSource(), compactBigDataCorpProcessos(), compactDjenComunicacoes() (+9 more)
-
-### Community 16 - "Community 16"
-Cohesion: 0.18
-Nodes (8): maskCpf(), NovaSolicitacaoPanel(), validateCpf(), validateUrl(), FilterPanelMobile(), getEnabledPhases(), useMediaQuery(), MobileDataCardList()
-
 ### Community 17 - "Community 17"
+Cohesion: 0.15
+Nodes (17): buildAiPrefillPrompt(), buildCanonicalReportHtml(), buildProcessHighlights(), buildReportSlug(), buildSanitizedPublicResultSnapshot(), buildSourceSummary(), buildStatusSummary(), buildTimelineEvents() (+9 more)
+
+### Community 18 - "Community 18"
+Cohesion: 0.17
+Nodes (9): maskCpf(), NovaSolicitacaoPanel(), validateCpf(), validateUrl(), FilterPanelMobile(), callCreateClientSolicitation(), getEnabledPhases(), useMediaQuery() (+1 more)
+
+### Community 19 - "Community 19"
+Cohesion: 0.14
+Nodes (7): getCaseStats(), callAssignCaseToAnalyst(), callAssignCaseToCurrentAnalyst(), TestConsumer(), useCases(), CasosPage(), FilaPage()
+
+### Community 20 - "Community 20"
 Cohesion: 0.16
 Nodes (15): buildClientVerdictPolicy(), classifyClientCriminalCategory(), dedupePartyNames(), getProcessParties(), getProcessRoleText(), inferStatusFromLastStep(), isActiveLaborParty(), isCandidateActiveLaborProcess() (+7 more)
 
-### Community 18 - "Community 18"
+### Community 21 - "Community 21"
 Cohesion: 0.18
 Nodes (14): buildClientCasePayload(), enforceTenantSubmissionLimits(), formatDateKey(), formatMonthKey(), getClientQuotaStatusInner(), getClientUserProfile(), getTenantSettingsData(), loadBigDataCorpConfig() (+6 more)
 
-### Community 19 - "Community 19"
-Cohesion: 0.16
-Nodes (14): buildTenantStructuredQuery(), fetchAuditLogs(), fetchCandidates(), fetchCases(), fetchClientCases(), fetchClients(), fetchExports(), fetchOrderedCollection() (+6 more)
-
-### Community 20 - "Community 20"
-Cohesion: 0.19
-Nodes (5): DashboardClientePage(), getCaseStats(), TestConsumer(), useCases(), CasosPage()
-
-### Community 21 - "Community 21"
-Cohesion: 0.21
-Nodes (7): callUpdateTenantSettingsByAnalyst(), getTenantUsage(), handleSave(), validateLimits(), getZone(), QuotaBar(), QuotaSummaryCard()
-
 ### Community 22 - "Community 22"
-Cohesion: 0.17
-Nodes (4): renderPage(), renderPage(), renderPage(), ErrorBoundary
+Cohesion: 0.16
+Nodes (5): buildPrintableHtml(), esc(), ExportacoesPage(), getMockExports(), callRegisterClientExport()
 
 ### Community 23 - "Community 23"
-Cohesion: 0.2
-Nodes (7): callAssignCaseToAnalyst(), callAssignCaseToCurrentAnalyst(), callCreateOpsUser(), callListOpsUsers(), callUpdateOpsUser(), EquipeOpsPage(), getStatusConfig()
+Cohesion: 0.16
+Nodes (8): TenantProbe(), useTenant(), callCreateOpsClientUser(), AuditoriaPage(), ClientesPage(), EquipeOpsPage(), getStatusConfig(), RelatoriosPage()
 
 ### Community 24 - "Community 24"
-Cohesion: 0.22
-Nodes (5): TenantProbe(), useTenant(), getTenantSettings(), ClientesPage(), FilaPage()
+Cohesion: 0.23
+Nodes (7): ClientReportPage(), shortToken(), classifyError(), cleanMessage(), extractErrorMessage(), getUserFriendlyMessage(), isSafeForUser()
 
 ### Community 25 - "Community 25"
 Cohesion: 0.27
-Nodes (5): fmtBRL(), fmtUSD(), MetricasIAPage(), pct(), QualityBar()
+Nodes (10): getMacroProgress(), hasAnySocialProfile(), hasMeaningfulSocialAnalysis(), SolicitacoesPage(), formatDate(), formatDateTimeBR(), toDate(), callSubmitClientCorrection() (+2 more)
 
 ### Community 26 - "Community 26"
-Cohesion: 0.36
-Nodes (7): classifyError(), cleanMessage(), extractErrorMessage(), getUserFriendlyMessage(), isSafeForUser(), getAuthErrorMessage(), LoginPage()
+Cohesion: 0.17
+Nodes (4): renderPage(), renderPage(), renderPage(), ErrorBoundary
 
 ### Community 27 - "Community 27"
+Cohesion: 0.24
+Nodes (6): callGetOpsCaseMetrics(), fmtBRL(), fmtUSD(), MetricasIAPage(), pct(), QualityBar()
+
+### Community 28 - "Community 28"
+Cohesion: 0.35
+Nodes (8): TenantProvider(), canAccessAllTenants(), dedupeTenants(), getSelectedTenantLabel(), normalizeTenantEntry(), resolveSelectedTenantId(), resolveTenantOptions(), subscribeToTenantDirectory()
+
+### Community 29 - "Community 29"
+Cohesion: 0.38
+Nodes (6): Sidebar(), PerfilPage(), formatRoleLabel(), getPortal(), hasPermission(), isOpsRole()
+
+### Community 30 - "Community 30"
+Cohesion: 0.24
+Nodes (7): fetchOpsPublicReports(), fetchPublicReports(), revokePublicReport(), getReportCandidateName(), getReportStatus(), isExpired(), RevokeModal()
+
+### Community 31 - "Community 31"
 Cohesion: 0.42
 Nodes (6): buildClientPortalPath(), buildOpsPortalPath(), getClientPortalBasePath(), getOpsPortalBasePath(), isDemoPortalPath(), normalizeLeaf()
 
-### Community 28 - "Community 28"
+### Community 32 - "Community 32"
+Cohesion: 0.28
+Nodes (9): asDate(), asIsoOrNull(), calculateTurnaroundHours(), diffHoursBackend(), getMetricCaseDate(), getPublicReportViewInner(), resolvePublicReportStatus(), serializeClientCaseDocument() (+1 more)
+
+### Community 33 - "Community 33"
 Cohesion: 0.36
 Nodes (7): BigDataCorpError, buildCombinedDatasets(), callPost(), delay(), queryCombined(), queryKyc(), queryProcesses()
 
-### Community 29 - "Community 29"
-Cohesion: 0.39
-Nodes (7): getMacroProgress(), hasAnySocialProfile(), hasMeaningfulSocialAnalysis(), SolicitacoesPage(), formatDate(), formatDateTimeBR(), toDate()
+### Community 34 - "Community 34"
+Cohesion: 0.25
+Nodes (6): DashboardClientePage(), callGetClientDashboardMetrics(), callGetClientQuotaStatus(), getZone(), QuotaBar(), QuotaSummaryCard()
 
-### Community 30 - "Community 30"
+### Community 35 - "Community 35"
 Cohesion: 0.25
 Nodes (3): resolveTheme(), useTheme(), Topbar()
 
-### Community 31 - "Community 31"
+### Community 36 - "Community 36"
+Cohesion: 0.32
+Nodes (5): callUpdateTenantSettingsByAnalyst(), getTenantSettings(), getTenantUsage(), handleSave(), validateLimits()
+
+### Community 37 - "Community 37"
 Cohesion: 0.5
 Nodes (6): isConfirmedMissingSnapshot(), isUnconfirmedMissingSnapshot(), createAuthFallbackProfile(), getAuthDisplayName(), mergeUserProfile(), normalizeString()
 
-### Community 32 - "Community 32"
+### Community 38 - "Community 38"
+Cohesion: 0.29
+Nodes (5): getReportStatus(), isReportAvailable(), RelatoriosClientePage(), fetchClientPublicReports(), revokeClientPublicReport()
+
+### Community 39 - "Community 39"
 Cohesion: 0.48
 Nodes (5): buildSearchText(), db(), interpolateTemplate(), stripUndefined(), writeAuditEvent()
 
-### Community 33 - "Community 33"
+### Community 40 - "Community 40"
 Cohesion: 0.43
 Nodes (5): callGet(), EscavadorError, queryMovimentacoes(), queryProcessoByCnj(), queryProcessosByPerson()
 
-### Community 34 - "Community 34"
-Cohesion: 0.29
-Nodes (5): generatePublicReportPdf(), getPublicReport(), getPublicReportView(), triggerPdfDownload(), PublicReportPage()
+### Community 41 - "Community 41"
+Cohesion: 0.43
+Nodes (4): TestConsumer(), useAuditLogs(), useCandidates(), isClientRole()
 
-### Community 35 - "Community 35"
-Cohesion: 0.33
-Nodes (5): EquipePage(), getStatusConfig(), callCreateTenantUser(), callListTenantUsers(), callUpdateTenantUser()
-
-### Community 36 - "Community 36"
+### Community 42 - "Community 42"
 Cohesion: 0.29
 Nodes (4): CaseCommunicationPanel(), callMarkCaseCommunicationRead(), callSendCaseMessage(), subscribeToCaseMessages()
 
-### Community 37 - "Community 37"
+### Community 43 - "Community 43"
 Cohesion: 0.33
-Nodes (6): ClientReportPage(), shortToken(), generateClientCasePdf(), getCasePublicResult(), getClientCaseReportHtml(), saveClientPublicReport()
+Nodes (5): EquipePage(), getStatusConfig(), callCreateTenantUser(), callListTenantUsers(), callUpdateTenantUser()
 
-### Community 38 - "Community 38"
+### Community 44 - "Community 44"
+Cohesion: 0.33
+Nodes (6): buildTenantCollectionQuery(), subscribeToAuditLogs(), subscribeToCandidates(), subscribeToCases(), subscribeToClientCases(), subscribeToExports()
+
+### Community 45 - "Community 45"
 Cohesion: 0.38
 Nodes (3): NotificationBell(), useNotifications(), NotificationToast()
 
-### Community 40 - "Community 40"
+### Community 47 - "Community 47"
 Cohesion: 0.6
 Nodes (5): classifyRole(), getRoleScoreImpact(), isHighRiskRole(), isLowRiskRole(), normalizeLegalText()
 
-### Community 42 - "Community 42"
-Cohesion: 0.4
-Nodes (5): buildTenantCollectionQuery(), subscribeToCandidates(), subscribeToCases(), subscribeToClientCases(), subscribeToExports()
+### Community 49 - "Community 49"
+Cohesion: 0.33
+Nodes (4): generatePublicReportPdf(), getPublicReport(), getPublicReportView(), triggerPdfDownload()
 
-### Community 43 - "Community 43"
+### Community 50 - "Community 50"
 Cohesion: 0.6
 Nodes (4): buildPdfWatermarkCss(), escapeHtml(), injectPdfExportCss(), injectPublicVerificationBanner()
 
-### Community 44 - "Community 44"
+### Community 51 - "Community 51"
 Cohesion: 0.7
 Nodes (4): classifyRole(), getRoleScoreImpact(), isHighRiskRole(), isLowRiskRole()
 
-### Community 45 - "Community 45"
-Cohesion: 0.4
-Nodes (5): formatFirestoreDate(), formatFirestoreTimestamp(), mapCandidateDocument(), mapCaseDocument(), mapClientProfile()
-
-### Community 48 - "Community 48"
-Cohesion: 0.5
-Nodes (4): createRestDocumentSnapshot(), decodeFirestoreFields(), decodeFirestoreValue(), getFirestoreDocumentViaRest()
-
 ## Knowledge Gaps
-- **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `buildCaseReportHtml()` connect `Community 5` to `Community 34`, `Community 11`, `Community 37`?**
-  _High betweenness centrality (0.344) - this node is a cross-community bridge._
-- **Why does `buildCanonicalReportHtml()` connect `Community 11` to `Community 1`, `Community 5`?**
-  _High betweenness centrality (0.339) - this node is a cross-community bridge._
-- **Why does `useAuth()` connect `Community 0` to `Community 2`, `Community 35`, `Community 36`, `Community 37`, `Community 5`, `Community 6`, `Community 42`, `Community 13`, `Community 16`, `Community 20`, `Community 23`, `Community 24`, `Community 26`, `Community 29`?**
-  _High betweenness centrality (0.180) - this node is a cross-community bridge._
+- **Why does `buildCaseReportHtml()` connect `Community 8` to `Community 49`, `Community 11`, `Community 17`?**
+  _High betweenness centrality (0.371) - this node is a cross-community bridge._
+- **Why does `buildCanonicalReportHtml()` connect `Community 17` to `Community 0`, `Community 8`?**
+  _High betweenness centrality (0.349) - this node is a cross-community bridge._
+- **Why does `useAuth()` connect `Community 10` to `Community 1`, `Community 9`, `Community 11`, `Community 16`, `Community 18`, `Community 19`, `Community 22`, `Community 23`, `Community 24`, `Community 25`, `Community 28`, `Community 29`, `Community 30`, `Community 34`, `Community 38`, `Community 41`, `Community 42`, `Community 43`, `Community 44`, `Community 52`?**
+  _High betweenness centrality (0.182) - this node is a cross-community bridge._
 - **Are the 31 inferred relationships involving `useAuth()` (e.g. with `AccessState()` and `ProfileResolutionState()`) actually correct?**
   _`useAuth()` has 31 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 12 inferred relationships involving `extractErrorMessage()` (e.g. with `getAuthErrorMessage()` and `getErrorMessage()`) actually correct?**

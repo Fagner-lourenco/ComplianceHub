@@ -1,17 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import DashboardClientePage from './DashboardClientePage';
-import { useCases } from '../../hooks/useCases';
 
-const mockNavigate = vi.fn();
+const dashboardMocks = vi.hoisted(() => ({
+    navigate: vi.fn(),
+    quotaStatus: vi.fn(),
+    metrics: vi.fn(),
+}));
 
 vi.mock('react-router-dom', async () => {
     const actual = await vi.importActual('react-router-dom');
-    return {
-        ...actual,
-        useNavigate: () => mockNavigate,
-    };
+    return { ...actual, useNavigate: () => dashboardMocks.navigate };
 });
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -21,19 +20,31 @@ vi.mock('../../core/auth/useAuth', () => ({
     }),
 }));
 
-vi.mock('../../hooks/useCases');
-
 vi.mock('../../core/firebase/firestoreService', () => ({
-    callGetClientQuotaStatus: vi.fn(() => Promise.resolve({
-        hasLimits: true,
-        dailyCount: 5,
-        dailyLimit: 10,
-        monthlyCount: 20,
-        monthlyLimit: 50,
-        allowDailyExceedance: false,
-        allowMonthlyExceedance: true,
-    })),
+    callGetClientDashboardMetrics: (...args) => dashboardMocks.metrics(...args),
+    callGetClientQuotaStatus: (...args) => dashboardMocks.quotaStatus(...args),
 }));
+
+const { default: DashboardClientePage } = await import('./DashboardClientePage');
+
+function metric(overrides = {}) {
+    return {
+        total: 5,
+        done: 1,
+        inProgress: 2,
+        pending: 1,
+        corrections: 1,
+        waitingInfo: 1,
+        completionRate: 20,
+        avgTurnaroundHours: null,
+        verdicts: { FIT: 1, ATTENTION: 0, NOT_RECOMMENDED: 0 },
+        months: [],
+        maxMonthCount: 1,
+        topFlags: [],
+        recentCompletedCases: [],
+        ...overrides,
+    };
+}
 
 function wrap(ui) {
     return <MemoryRouter>{ui}</MemoryRouter>;
@@ -42,49 +53,40 @@ function wrap(ui) {
 describe('DashboardClientePage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        dashboardMocks.quotaStatus.mockResolvedValue({
+            hasLimits: true,
+            dailyCount: 5,
+            dailyLimit: 10,
+            monthlyCount: 20,
+            monthlyLimit: 50,
+            allowDailyExceedance: false,
+            allowMonthlyExceedance: true,
+        });
+        dashboardMocks.metrics.mockResolvedValue(metric());
     });
 
-    it('renderiza loading inicial', async () => {
-        useCases.mockReturnValue({ cases: [], loading: true, error: null });
+    it('renderiza loading inicial', () => {
+        dashboardMocks.metrics.mockReturnValue(new Promise(() => {}));
         render(wrap(<DashboardClientePage />));
-        // PageShell does not forward ARIA props; check that KPI skeleton cards are present
         const skeletons = document.querySelectorAll('.dashboard-cliente__kpis .skeleton');
         expect(skeletons.length).toBeGreaterThan(0);
     });
 
-    it('renderiza erro de casos', () => {
-        useCases.mockReturnValue({ cases: [], loading: false, error: new Error('Falha') });
+    it('renderiza erro de métricas', async () => {
+        dashboardMocks.metrics.mockRejectedValue(new Error('Falha'));
         render(wrap(<DashboardClientePage />));
-        expect(screen.getByText(/Não foi possível carregar os dados agora/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Não foi possível carregar os dados agora/i)).toBeInTheDocument();
     });
 
-    it('renderiza KPIs com valores corretos', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'DONE', finalVerdict: 'FIT', createdAt: '2024-06-01', concludedAt: '2024-06-02', candidateName: 'A' },
-                { id: '2', status: 'IN_PROGRESS', createdAt: '2024-06-01', candidateName: 'B' },
-                { id: '3', status: 'PENDING', createdAt: '2024-06-01', candidateName: 'C' },
-                { id: '4', status: 'CORRECTION_NEEDED', createdAt: '2024-06-01', candidateName: 'D' },
-                { id: '5', status: 'WAITING_INFO', createdAt: '2024-06-01', candidateName: 'E' },
-            ],
-            loading: false,
-            error: null,
-        });
+    it('renderiza KPIs com valores do servidor', async () => {
+        dashboardMocks.metrics.mockResolvedValue(metric({ total: 650, done: 520 }));
         render(wrap(<DashboardClientePage />));
         await screen.findByRole('heading', { name: 'Início' });
-        const totalCards = screen.getAllByLabelText(/:/i);
-        expect(totalCards.length).toBeGreaterThanOrEqual(5);
+        expect(screen.getByText('650')).toBeInTheDocument();
+        expect(screen.getAllByText('520').length).toBeGreaterThanOrEqual(1);
     });
 
     it('exibe secao de acoes necessarias quando ha correcoes', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'CORRECTION_NEEDED', createdAt: '2024-06-01', candidateName: 'A' },
-                { id: '2', status: 'WAITING_INFO', createdAt: '2024-06-01', candidateName: 'B' },
-            ],
-            loading: false,
-            error: null,
-        });
         render(wrap(<DashboardClientePage />));
         await screen.findByText('Ações necessárias');
         expect(screen.getAllByText('Aguardando correção').length).toBeGreaterThanOrEqual(1);
@@ -92,71 +94,28 @@ describe('DashboardClientePage', () => {
     });
 
     it('nao exibe secao de acoes quando nao ha pendencias', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'DONE', finalVerdict: 'FIT', createdAt: '2024-06-01', concludedAt: '2024-06-02', candidateName: 'A' },
-            ],
-            loading: false,
-            error: null,
-        });
+        dashboardMocks.metrics.mockResolvedValue(metric({ corrections: 0, waitingInfo: 0 }));
         render(wrap(<DashboardClientePage />));
         await screen.findByRole('heading', { name: 'Início' });
         expect(screen.queryByText('Ações necessárias')).not.toBeInTheDocument();
     });
 
     it('navega para solicitacoes ao clicar em acao', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'CORRECTION_NEEDED', createdAt: '2024-06-01', candidateName: 'A' },
-            ],
-            loading: false,
-            error: null,
-        });
         render(wrap(<DashboardClientePage />));
         await screen.findByText('Ações necessárias');
-        fireEvent.click(screen.getByRole('button', { name: /Ver solicitações/i }));
-        expect(mockNavigate).toHaveBeenCalledWith('/client/solicitacoes?filter=correction');
+        fireEvent.click(screen.getAllByRole('button', { name: /Ver solicitações/i })[0]);
+        expect(dashboardMocks.navigate).toHaveBeenCalledWith('/client/solicitacoes?filter=correction');
     });
 
-    it('exibe aviso de recorte honesto', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'DONE', finalVerdict: 'FIT', createdAt: '2024-06-01', concludedAt: '2024-06-02', candidateName: 'A' },
-            ],
-            loading: false,
-            error: null,
-        });
+    it('exibe aviso de métrica server-side', async () => {
         render(wrap(<DashboardClientePage />));
         await waitFor(() => {
-            expect(screen.getByText(/solicitação\(ões\) carregada\(s\)/i)).toBeInTheDocument();
+            expect(screen.getByText(/solicitação\(ões\) considerada\(s\)/i)).toBeInTheDocument();
         });
-        expect(screen.getByText(/indicadores refletem apenas os registros disponíveis/i)).toBeInTheDocument();
-    });
-
-    it('KpiCards sem onClick renderizam como div', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'DONE', finalVerdict: 'FIT', createdAt: '2024-06-01', concludedAt: '2024-06-02', candidateName: 'A' },
-            ],
-            loading: false,
-            error: null,
-        });
-        render(wrap(<DashboardClientePage />));
-        await screen.findByRole('heading', { name: 'Início' });
-        const cards = screen.getAllByLabelText(/:/i);
-        cards.forEach((card) => {
-            expect(card.tagName.toLowerCase()).toBe('div');
-        });
+        expect(screen.getByText(/Indicadores calculados no servidor/i)).toBeInTheDocument();
     });
 
     it('exibe quota quando disponivel', async () => {
-        useCases.mockReturnValue({
-            cases: [
-                { id: '1', status: 'DONE', finalVerdict: 'FIT', createdAt: '2024-06-01', concludedAt: '2024-06-02', candidateName: 'A' },
-            ],
-            loading: false,
-            error: null,
-        });
         render(wrap(<DashboardClientePage />));
         await screen.findByText('Consumo de Consultas');
         expect(screen.getByText('5/10')).toBeInTheDocument();

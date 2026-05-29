@@ -972,6 +972,23 @@ export async function callGetClientQuotaStatus() {
     return callBackendFunction('getClientQuotaStatus', {});
 }
 
+export async function callGetOpsCaseMetrics(payload = {}) {
+    return callBackendFunction('getOpsCaseMetrics', payload);
+}
+
+export async function callGetClientDashboardMetrics() {
+    return callBackendFunction('getClientDashboardMetrics', {});
+}
+
+export async function callListClientCases(payload = {}) {
+    return callBackendFunction('listClientCases', payload);
+}
+
+export async function callGetClientCaseById(caseId) {
+    const result = await callBackendFunction('getClientCaseById', { caseId });
+    return result?.case || null;
+}
+
 export async function getClientCaseReportHtml(caseId) {
     const result = await callBackendFunction('getClientCaseReportHtml', { caseId });
     if (!result?.html) throw new Error('Backend nao retornou HTML do relatorio.');

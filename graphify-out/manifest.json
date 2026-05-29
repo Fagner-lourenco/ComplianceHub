@@ -80,8 +80,8 @@
     "hash": "f4834d98cc1ba0a681a472e6a30e2344"
   },
   "D:\\ComplianceHub\\functions\\index.js": {
-    "mtime": 1779976057.8903818,
-    "hash": "24b06f12f93449a35d3aa4ecb748c646"
+    "mtime": 1780072407.2658732,
+    "hash": "757f61f21ce772f4c01ef326f6d76e07"
   },
   "D:\\ComplianceHub\\functions\\repair-all-claims.js": {
     "mtime": 1777947612.8879972,
@@ -392,8 +392,8 @@
     "hash": "82d558b3e2899b2973cab3a1015bcba7"
   },
   "D:\\ComplianceHub\\src\\core\\firebase\\firestoreService.js": {
-    "mtime": 1779143342.3747034,
-    "hash": "1a45a09cd5e3fa3eb715bfd95e3e22b3"
+    "mtime": 1780072263.9635851,
+    "hash": "01a8d5b1106928a9e19fdd78dd8c42ec"
   },
   "D:\\ComplianceHub\\src\\core\\firebase\\firestoreService.test.js": {
     "mtime": 1779143173.7537801,
@@ -471,6 +471,10 @@
     "mtime": 1777947613.1655703,
     "hash": "bdb543641cd92f6dc313ddf36a26ff3b"
   },
+  "D:\\ComplianceHub\\src\\hooks\\useClientCasesQuery.js": {
+    "mtime": 1780072817.4563713,
+    "hash": "b8149895cedca3835f5aee492f59a88c"
+  },
   "D:\\ComplianceHub\\src\\hooks\\useMediaQuery.js": {
     "mtime": 1777947613.1655703,
     "hash": "be89b0b66cca520a72a7069e8ad8064c"
@@ -516,16 +520,16 @@
     "hash": "7b3989d22c13b06efd6ae7f35c150683"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\ClientReportPage.jsx": {
-    "mtime": 1779126220.145276,
-    "hash": "8f36174787a8d1b132279d4345c347d1"
+    "mtime": 1780072880.7436278,
+    "hash": "c6bbb5b0c6886bb1dbfed6f87f6b9ac4"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\DashboardClientePage.jsx": {
-    "mtime": 1778952181.571037,
-    "hash": "95e63a331d4749d61db4a2a668df5185"
+    "mtime": 1780072843.1817405,
+    "hash": "412817dd998631275ff123e5bd56d393"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\DashboardClientePage.test.jsx": {
-    "mtime": 1777947613.173571,
-    "hash": "ecbc8af643bc4a22b3a789d09dfc4862"
+    "mtime": 1780073000.66766,
+    "hash": "60aa533d1887ae80019a8e090fc9f5c7"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\EquipePage.jsx": {
     "mtime": 1777947613.1745708,
@@ -564,12 +568,12 @@
     "hash": "e112486dd2be18c90937bb654deb4de2"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\SolicitacoesPage.jsx": {
-    "mtime": 1779753390.5194194,
-    "hash": "05c006c263fc7c32d137a4331ab0f4b7"
+    "mtime": 1780072789.0017536,
+    "hash": "2537a1bafdab347930a0c2ac3ccb9fb0"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\SolicitacoesPage.test.jsx": {
-    "mtime": 1779317871.8321917,
-    "hash": "dadaff891877ff9ce45845fc3b72e9f9"
+    "mtime": 1780072972.5200355,
+    "hash": "e5656dc591d0c8efba84f74630e7c925"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\AuditoriaPage.jsx": {
     "mtime": 1778893383.9065738,
@@ -608,8 +612,8 @@
     "hash": "04f3868cad4c0580cb675273d9df68ab"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\MetricasIAPage.jsx": {
-    "mtime": 1779408749.7869449,
-    "hash": "9cfad7938fd0503a76ca28865102858a"
+    "mtime": 1780072852.4096124,
+    "hash": "2601347a21e3a676b64952e26bba9587"
   },
   "D:\\ComplianceHub\\src\\portals\\ops\\RelatoriosPage.jsx": {
     "mtime": 1778885122.7218907,
@@ -787,6 +791,14 @@
     "mtime": 1777947612.8689897,
     "hash": "ca76b889e20fc806a477bc639570f53e"
   },
+  "D:\\ComplianceHub\\docs\\audits\\audit-judit-bdc-confrontation.md": {
+    "mtime": 1779984819.4080043,
+    "hash": "3fbd933ad64f6b1b9e5151c3bcb55d9a"
+  },
+  "D:\\ComplianceHub\\docs\\audits\\audit-judit-only-criminal-impact.md": {
+    "mtime": 1779999788.7012925,
+    "hash": "c7836f5027065171c138b439384567c8"
+  },
   "D:\\ComplianceHub\\docs\\superpowers\\plans\\2026-05-03-layout-standardization.md": {
     "mtime": 1777947612.8699894,
     "hash": "d84014bbf5967ed652ada7200dd5e599"
@@ -810,6 +822,14 @@
   "D:\\ComplianceHub\\functions\\temp_tab.txt": {
     "mtime": 1777947612.8901033,
     "hash": "b5b03c3bbe4afce2abd81a9f74ffdc1d"
+  },
+  "D:\\ComplianceHub\\results\\audit-judit-only-criminal-patterns.txt": {
+    "mtime": 1779999810.3233597,
+    "hash": "98647b50aee2443428e09fcea5d296cf"
+  },
+  "D:\\ComplianceHub\\results\\lista-casos-bdc-nao-detectou.txt": {
+    "mtime": 1780002376.9314759,
+    "hash": "a1c6f71fd05d2d7f04491472e5e8a988"
   },
   "D:\\ComplianceHub\\results\\report-4CO7nMGxiqxKsOySsUEI.html": {
     "mtime": 1777947613.1335642,

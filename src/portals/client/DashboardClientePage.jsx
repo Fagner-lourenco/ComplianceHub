@@ -4,13 +4,13 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import KpiCard from '../../ui/components/KpiCard/KpiCard';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
-import { useCases } from '../../hooks/useCases';
 import { useAuth } from '../../core/auth/useAuth';
 import { formatDate } from '../../core/formatDate';
 import { getClientDashboardMetrics } from '../../core/clientPortal';
-import { callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
+import { callGetClientDashboardMetrics, callGetClientQuotaStatus } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
 import { VERDICT_LABELS } from '../../core/copy';
+import { MOCK_CASES } from '../../data/mockData';
 import './DashboardClientePage.css';
 
 const VERDICT_DISPLAY = {
@@ -23,14 +23,37 @@ export default function DashboardClientePage() {
     const navigate = useNavigate();
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
-    const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
-    const { cases, loading, error } = useCases(clientTenantId);
+    const [metricsState, setMetricsState] = useState({ metrics: null, loading: !isDemoMode, error: null });
     const [quota, setQuota] = useState(null);
     const [quotaLoading, setQuotaLoading] = useState(true);
     const [quotaError, setQuotaError] = useState(null);
 
-    const metrics = useMemo(() => getClientDashboardMetrics(cases), [cases]);
+    const demoMetrics = useMemo(() => {
+        if (!isDemoMode) return null;
+        const tenantId = userProfile?.tenantId || null;
+        const demoCases = tenantId ? MOCK_CASES.filter((caseData) => caseData.tenantId === tenantId) : MOCK_CASES;
+        return getClientDashboardMetrics(demoCases);
+    }, [isDemoMode, userProfile?.tenantId]);
+    const metrics = demoMetrics || metricsState.metrics || getClientDashboardMetrics([]);
     const maxMonthCount = metrics.maxMonthCount || 1;
+
+    useEffect(() => {
+        if (isDemoMode) {
+            return undefined;
+        }
+        let cancelled = false;
+        Promise.resolve().then(() => {
+            if (!cancelled) setMetricsState((current) => ({ ...current, loading: true, error: null }));
+        });
+        callGetClientDashboardMetrics()
+            .then((serverMetrics) => {
+                if (!cancelled) setMetricsState({ metrics: serverMetrics, loading: false, error: null });
+            })
+            .catch((currentError) => {
+                if (!cancelled) setMetricsState({ metrics: null, loading: false, error: currentError });
+            });
+        return () => { cancelled = true; };
+    }, [isDemoMode, userProfile?.tenantId]);
 
     useEffect(() => {
         if (!user && !isDemoMode) return undefined;
@@ -74,7 +97,7 @@ export default function DashboardClientePage() {
         }] : []),
     ], [metrics.corrections, metrics.waitingInfo]);
 
-    if (loading) {
+    if (metricsState.loading) {
         return (
             <PageShell size="default" className="dashboard-cliente" role="status" aria-live="polite" aria-label="Carregando painel">
                 <div className="dashboard-cliente__hero" aria-hidden="true">
@@ -95,11 +118,11 @@ export default function DashboardClientePage() {
         );
     }
 
-    if (error) {
+    if (metricsState.error) {
         return (
             <PageShell size="default" className="dashboard-cliente" role="alert">
                 <h2 className="dashboard-cliente__title">Acompanhamento das solicitações</h2>
-                <p className="dashboard-cliente__error">{extractErrorMessage(error, 'Não foi possível carregar os dados agora.')}</p>
+                <p className="dashboard-cliente__error">{extractErrorMessage(metricsState.error, 'Não foi possível carregar os dados agora.')}</p>
             </PageShell>
         );
     }
@@ -229,7 +252,7 @@ export default function DashboardClientePage() {
             )}
 
             <p className="dashboard-cliente__recorte" aria-live="polite">
-                {cases.length} solicitação(ões) carregada(s). Os indicadores refletem apenas os registros disponíveis no painel.
+                {metrics.total} solicitação(ões) considerada(s). Indicadores calculados no servidor.
             </p>
         </PageShell>
     );

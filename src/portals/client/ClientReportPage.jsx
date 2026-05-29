@@ -4,14 +4,14 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import Modal from '../../ui/components/Modal/Modal';
 import { useAuth } from '../../core/auth/useAuth';
-import { getCasePublicResult, saveClientPublicReport, generateClientCasePdf, triggerPdfDownload, getClientCaseReportHtml } from '../../core/firebase/firestoreService';
+import { callGetClientCaseById, getCasePublicResult, saveClientPublicReport, generateClientCasePdf, triggerPdfDownload, getClientCaseReportHtml } from '../../core/firebase/firestoreService';
 import { getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { buildClientPortalPath } from '../../core/portalPaths';
-import { useCases } from '../../hooks/useCases';
 import { buildCaseReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
 import { ROLES } from '../../core/rbac/permissions';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
+import { MOCK_CASES } from '../../data/mockData';
 import './ClientReportPage.css';
 
 function shortToken(token) {
@@ -26,8 +26,7 @@ export default function ClientReportPage() {
     const { user, userProfile } = useAuth();
     const isDemoMode = !user || userProfile?.source === 'demo';
     const isManager = userProfile?.role === ROLES.CLIENT_MANAGER;
-    const clientTenantId = isDemoMode ? undefined : (userProfile?.tenantId ?? undefined);
-    const { cases, loading, error } = useCases(clientTenantId);
+    const [caseState, setCaseState] = useState({ caseData: null, loading: !isDemoMode, error: null });
     const [publicResult, setPublicResult] = useState(null);
     const [publicResultError, setPublicResultError] = useState(null);
     const [reportPayload, setReportPayload] = useState(null);
@@ -36,7 +35,8 @@ export default function ClientReportPage() {
     const [pdfState, setPdfState] = useState({ status: 'idle', message: '' });
     const iframeRef = useRef(null);
 
-    const caseData = useMemo(() => cases.find((item) => item.id === caseId) || null, [caseId, cases]);
+    const demoCaseData = useMemo(() => (isDemoMode ? MOCK_CASES.find((item) => item.id === caseId) || null : null), [caseId, isDemoMode]);
+    const caseData = isDemoMode ? demoCaseData : caseState.caseData;
     const effectivePublicResult = caseData?.status === 'DONE'
         ? (isDemoMode ? caseData.publicResultMock || null : publicResult)
         : null;
@@ -48,6 +48,24 @@ export default function ClientReportPage() {
         () => getReportAvailability(caseData, effectivePublicResult),
         [caseData, effectivePublicResult],
     );
+
+    useEffect(() => {
+        if (isDemoMode) {
+            return undefined;
+        }
+        let cancelled = false;
+        Promise.resolve().then(() => {
+            if (!cancelled) setCaseState({ caseData: null, loading: true, error: null });
+        });
+        callGetClientCaseById(caseId)
+            .then((loadedCase) => {
+                if (!cancelled) setCaseState({ caseData: loadedCase, loading: false, error: null });
+            })
+            .catch((currentError) => {
+                if (!cancelled) setCaseState({ caseData: null, loading: false, error: currentError });
+            });
+        return () => { cancelled = true; };
+    }, [caseId, isDemoMode]);
 
     useEffect(() => {
         if (!caseData || caseData.status !== 'DONE' || isDemoMode) return;
@@ -163,7 +181,7 @@ export default function ClientReportPage() {
         }
     };
 
-    if (loading) {
+    if (caseState.loading) {
         return (
             <div className="crp-state" role="status" aria-live="polite">
                 <div className="crp-state__card">
@@ -174,14 +192,14 @@ export default function ClientReportPage() {
         );
     }
 
-    if (error || !caseData) {
+    if (caseState.error || !caseData) {
         return (
             <div className="crp-state">
                 <div className="crp-state__card">
                     <h2>Dossiê não encontrado</h2>
                     <p>
-                        {error
-                            ? extractErrorMessage(error, 'Não foi possível carregar o caso.')
+                        {caseState.error
+                            ? extractErrorMessage(caseState.error, 'Não foi possível carregar o caso.')
                             : 'Esta solicitação não está disponível para a sua empresa ou não existe nos registros carregados.'}
                     </p>
                     <button type="button" className="crp-btn crp-btn--primary" onClick={handleBack}>

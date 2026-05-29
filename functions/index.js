@@ -10367,6 +10367,459 @@ function assertClientManager(profile) {
     }
 }
 
+const CASE_METRICS_PERIODS = new Set([0, 7, 30, 90, 365]);
+const CASE_QUERY_PAGE_SIZE = 500;
+const CLIENT_CASE_PAGE_SIZE_MAX = 100;
+const CLIENT_CASE_SEARCH_SCAN_LIMIT = 10000;
+
+function normalizeMetricsPeriod(value) {
+    const periodDays = Number(value);
+    if (!CASE_METRICS_PERIODS.has(periodDays)) {
+        throw new HttpsError('invalid-argument', 'Periodo de metricas invalido.');
+    }
+    return periodDays;
+}
+
+function isGlobalOpsProfile(profile) {
+    return !profile?.tenantId && ['admin', 'owner'].includes(profile?.role);
+}
+
+function resolveOpsMetricsTenant(profile, requestedTenantId) {
+    const normalizedTenantId = String(requestedTenantId || '').trim() || null;
+    if (isGlobalOpsProfile(profile)) return normalizedTenantId;
+    return profile.tenantId || null;
+}
+
+function asIsoOrNull(value) {
+    const date = asDate(value);
+    return date ? date.toISOString() : null;
+}
+
+function serializeClientCaseDocument(docSnap) {
+    const data = docSnap.data ? (docSnap.data() || {}) : (docSnap || {});
+    return {
+        id: docSnap.id || data.caseId || null,
+        ...data,
+        createdAt: asIsoOrNull(data.createdAt) || data.createdAt || null,
+        updatedAt: asIsoOrNull(data.updatedAt) || data.updatedAt || null,
+        concludedAt: asIsoOrNull(data.concludedAt) || data.concludedAt || null,
+        correctedAt: asIsoOrNull(data.correctedAt) || data.correctedAt || null,
+        lastMessageAt: asIsoOrNull(data.lastMessageAt) || data.lastMessageAt || null,
+    };
+}
+
+function normalizeSearchText(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function matchesClientCaseSearch(caseData, rawTerm) {
+    const term = normalizeSearchText(rawTerm);
+    if (!term) return true;
+    const digits = String(rawTerm || '').replace(/\D/g, '');
+    const candidateName = normalizeSearchText(caseData.candidateName);
+    const cpfDigits = String(caseData.cpf || caseData.cpfMasked || '').replace(/\D/g, '');
+    const caseId = normalizeSearchText(caseData.caseId || caseData.id);
+
+    if (candidateName.includes(term)) return true;
+    if (caseId.includes(term)) return true;
+    return digits.length >= 3 && cpfDigits.includes(digits);
+}
+
+function matchesClientCaseFilters(caseData, filters) {
+    const status = String(filters?.status || 'ALL');
+    const verdict = String(filters?.verdict || 'ALL');
+    const dateFrom = String(filters?.dateFrom || '');
+    const dateTo = String(filters?.dateTo || '');
+    const createdDate = String(caseData.createdAt || '').slice(0, 10);
+
+    if (status !== 'ALL' && caseData.status !== status) return false;
+    if (verdict !== 'ALL' && caseData.finalVerdict !== verdict) return false;
+    if (dateFrom && createdDate && createdDate < dateFrom) return false;
+    if (dateTo && createdDate && createdDate > dateTo) return false;
+    if (filters?.searchTerm && !matchesClientCaseSearch(caseData, filters.searchTerm)) return false;
+    return true;
+}
+
+function compareClientCases(left, right, sortField, sortDir) {
+    const field = ['candidateName', 'createdAt', 'status', 'finalVerdict'].includes(sortField) ? sortField : 'createdAt';
+    const direction = sortDir === 'asc' ? 1 : -1;
+    let leftValue = left[field] || '';
+    let rightValue = right[field] || '';
+    if (field === 'candidateName') {
+        leftValue = normalizeSearchText(leftValue);
+        rightValue = normalizeSearchText(rightValue);
+    }
+    if (leftValue < rightValue) return -1 * direction;
+    if (leftValue > rightValue) return 1 * direction;
+    return String(left.id || '').localeCompare(String(right.id || ''));
+}
+
+function getMetricCaseDate(caseData, field) {
+    return asDate(caseData?.[field]);
+}
+
+function diffHoursBackend(startValue, endValue) {
+    const start = getMetricCaseDate({ value: startValue }, 'value');
+    const end = getMetricCaseDate({ value: endValue }, 'value');
+    if (!start || !end) return null;
+    const hours = (end.getTime() - start.getTime()) / 36e5;
+    return Number.isFinite(hours) && hours >= 0 ? hours : null;
+}
+
+function pctBackend(value, total) {
+    return total > 0 ? Math.round((value / total) * 100) : 0;
+}
+
+const METRIC_PROVIDERS = [
+    { key: 'judit', field: 'juditEnrichmentStatus' },
+    { key: 'escavador', field: 'escavadorEnrichmentStatus' },
+    { key: 'fontedata', field: 'enrichmentStatus' },
+    { key: 'bigdatacorp', field: 'bigdatacorpEnrichmentStatus' },
+    { key: 'djen', field: 'djenEnrichmentStatus' },
+];
+
+function buildOpsMetricsFromCases(cases, { showAllTenants = false } = {}) {
+    const done = cases.filter((caseData) => caseData.status === 'DONE');
+    const running = cases.filter((caseData) => caseData.status !== 'DONE' && caseData.status !== 'CORRECTION_NEEDED');
+    const corrections = cases.filter((caseData) => caseData.status === 'CORRECTION_NEEDED');
+    const verdicts = { FIT: 0, ATTENTION: 0, NOT_RECOMMENDED: 0, INCONCLUSIVE: 0 };
+    done.forEach((caseData) => {
+        const key = caseData.finalVerdict || 'INCONCLUSIVE';
+        verdicts[key] = (verdicts[key] || 0) + 1;
+    });
+
+    const prov = {};
+    METRIC_PROVIDERS.forEach((provider) => {
+        const stats = { calls: 0, done: 0, partial: 0, failed: 0, running: 0, costBRL: 0 };
+        cases.forEach((caseData) => {
+            const status = caseData[provider.field];
+            if (!status || status === 'SKIPPED') return;
+            stats.calls += 1;
+            if (status === 'DONE') stats.done += 1;
+            else if (status === 'PARTIAL') stats.partial += 1;
+            else if (status === 'FAILED') stats.failed += 1;
+            else if (status === 'RUNNING') stats.running += 1;
+        });
+        prov[provider.key] = stats;
+    });
+
+    let fdTotalBRL = 0;
+    const fdPhaseCosts = {};
+    cases.forEach((caseData) => {
+        const sources = caseData.enrichmentSources || {};
+        Object.entries(sources).forEach(([phase, info]) => {
+            const cost = Number.parseFloat(info?.cost) || 0;
+            fdTotalBRL += cost;
+            fdPhaseCosts[phase] = (fdPhaseCosts[phase] || 0) + cost;
+        });
+    });
+    prov.fontedata.costBRL = fdTotalBRL;
+
+    const aiCases = cases.filter((caseData) => caseData.aiClassificationReviewRawResponse || caseData.aiClassificationReview || caseData.aiRawResponse || caseData.aiStructured);
+    const structOk = aiCases.filter((caseData) => (caseData.aiClassificationReviewOk ?? caseData.aiStructuredOk) === true).length;
+    const structFail = aiCases.filter((caseData) => (caseData.aiClassificationReviewOk ?? caseData.aiStructuredOk) === false).length;
+    const aiErrors = cases.filter((caseData) => (caseData.aiClassificationReviewError || caseData.aiError) && !(caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse)).length;
+    const cached = aiCases.filter((caseData) => caseData.aiClassificationReviewFromCache || caseData.aiFromCache).length;
+    const aiCostUSD = aiCases.reduce((sum, caseData) => sum + (caseData.aiCostUsd || 0) + (caseData.aiHomonymCostUsd || 0) + (caseData.aiClassificationReviewCostUsd || 0), 0);
+    const tokIn = aiCases.reduce((sum, caseData) => sum + (caseData.aiClassificationReviewTokens?.input || caseData.aiTokens?.input || 0), 0);
+    const tokOut = aiCases.reduce((sum, caseData) => sum + (caseData.aiClassificationReviewTokens?.output || caseData.aiTokens?.output || 0), 0);
+    const decisions = { ACCEPTED: 0, ADJUSTED: 0, IGNORED: 0, none: 0 };
+    aiCases.forEach((caseData) => {
+        const key = caseData.aiDecision || 'none';
+        decisions[key] = (decisions[key] || 0) + 1;
+    });
+
+    const turnaroundHours = done
+        .map((caseData) => (typeof caseData.turnaroundHours === 'number' ? caseData.turnaroundHours : diffHoursBackend(caseData.createdAt, caseData.concludedAt || caseData.updatedAt)))
+        .filter((value) => typeof value === 'number' && Number.isFinite(value));
+    const avgDays = turnaroundHours.length
+        ? (turnaroundHours.reduce((sum, value) => sum + value, 0) / turnaroundHours.length / 24).toFixed(1)
+        : null;
+
+    const byTenant = {};
+    if (showAllTenants) {
+        cases.forEach((caseData) => {
+            const tenant = caseData.tenantName || caseData.tenantId || '?';
+            if (!byTenant[tenant]) byTenant[tenant] = { total: 0, done: 0, fdCost: 0, aiCost: 0 };
+            byTenant[tenant].total += 1;
+            if (caseData.status === 'DONE') byTenant[tenant].done += 1;
+            byTenant[tenant].aiCost += (caseData.aiCostUsd || 0) + (caseData.aiHomonymCostUsd || 0) + (caseData.aiClassificationReviewCostUsd || 0);
+            Object.values(caseData.enrichmentSources || {}).forEach((info) => {
+                byTenant[tenant].fdCost += Number.parseFloat(info?.cost) || 0;
+            });
+        });
+    }
+
+    return {
+        total: cases.length,
+        done: done.length,
+        running: running.length,
+        corrections: corrections.length,
+        verdicts,
+        prov,
+        fdPhaseCosts: Object.entries(fdPhaseCosts).sort((left, right) => right[1] - left[1]),
+        fdTotalBRL,
+        ai: { total: aiCases.length, structOk, structFail, errors: aiErrors, cached, costUSD: aiCostUSD, tokIn, tokOut, decisions },
+        avgDays,
+        completionRate: pctBackend(done.length, cases.length),
+        structuredRate: pctBackend(structOk, aiCases.length),
+        cacheRate: pctBackend(cached, aiCases.length),
+        reviewRate: pctBackend((decisions.ADJUSTED || 0) + (decisions.IGNORED || 0), aiCases.length),
+        byTenant: Object.entries(byTenant).sort((left, right) => (right[1].fdCost + right[1].aiCost) - (left[1].fdCost + left[1].aiCost)),
+    };
+}
+
+function buildClientDashboardMetricsFromCases(cases, now = new Date()) {
+    const doneCases = cases.filter((caseData) => caseData.status === 'DONE');
+    const inProgressCases = cases.filter((caseData) => ['IN_PROGRESS', 'WAITING_INFO'].includes(caseData.status));
+    const pendingCases = cases.filter((caseData) => caseData.status === 'PENDING');
+    const correctionCases = cases.filter((caseData) => caseData.status === 'CORRECTION_NEEDED');
+    const waitingInfoCases = cases.filter((caseData) => caseData.status === 'WAITING_INFO');
+    const verdicts = {
+        FIT: doneCases.filter((caseData) => caseData.finalVerdict === 'FIT').length,
+        ATTENTION: doneCases.filter((caseData) => caseData.finalVerdict === 'ATTENTION').length,
+        NOT_RECOMMENDED: doneCases.filter((caseData) => caseData.finalVerdict === 'NOT_RECOMMENDED').length,
+    };
+    const turnaroundHours = doneCases
+        .map((caseData) => (typeof caseData.turnaroundHours === 'number' ? caseData.turnaroundHours : diffHoursBackend(caseData.createdAt, caseData.concludedAt)))
+        .filter((value) => typeof value === 'number' && Number.isFinite(value));
+    const avgTurnaroundHours = turnaroundHours.length
+        ? turnaroundHours.reduce((sum, value) => sum + value, 0) / turnaroundHours.length
+        : null;
+    const months = [];
+    for (let offset = 5; offset >= 0; offset -= 1) {
+        const currentMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        const key = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
+        const monthCases = cases.filter((caseData) => String(caseData.createdMonthKey || caseData.createdAt || '').startsWith(key));
+        months.push({
+            key,
+            label: currentMonth.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+            count: monthCases.length,
+            doneCount: monthCases.filter((caseData) => caseData.status === 'DONE').length,
+        });
+    }
+    const recentCompletedCases = [...doneCases]
+        .filter((caseData) => caseData.concludedAt)
+        .sort((left, right) => String(right.concludedAt).localeCompare(String(left.concludedAt)))
+        .slice(0, 4);
+    const attentionRules = [
+        { label: 'Antecedentes criminais', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag) },
+        { label: 'Processos trabalhistas', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag) },
+        { label: 'Mandados de prisao', match: (caseData) => caseData.warrantFlag === 'POSITIVE' },
+        { label: 'Exposicao OSINT', match: (caseData) => ['MEDIUM', 'HIGH'].includes(caseData.osintLevel) },
+        { label: 'Redes sociais', match: (caseData) => ['CONCERN', 'CONTRAINDICATED'].includes(caseData.socialStatus) },
+        { label: 'Perfil digital', match: (caseData) => ['ALERT', 'CRITICAL'].includes(caseData.digitalFlag) },
+        { label: 'Conflito de interesse', match: (caseData) => caseData.conflictInterest === 'YES' },
+    ];
+    const topFlagCounts = {};
+    doneCases
+        .filter((caseData) => ['ATTENTION', 'NOT_RECOMMENDED'].includes(caseData.finalVerdict))
+        .forEach((caseData) => {
+            attentionRules.forEach((rule) => {
+                if (rule.match(caseData)) topFlagCounts[rule.label] = (topFlagCounts[rule.label] || 0) + 1;
+            });
+        });
+
+    return {
+        total: cases.length,
+        done: doneCases.length,
+        inProgress: inProgressCases.length,
+        pending: pendingCases.length,
+        corrections: correctionCases.length,
+        waitingInfo: waitingInfoCases.length,
+        completionRate: cases.length > 0 ? Math.round((doneCases.length / cases.length) * 100) : 0,
+        avgTurnaroundHours,
+        verdicts,
+        months,
+        maxMonthCount: Math.max(...months.map((month) => month.count), 1),
+        topFlags: Object.entries(topFlagCounts)
+            .sort((left, right) => right[1] - left[1])
+            .slice(0, 6)
+            .map(([label, count]) => ({ label, count })),
+        recentCompletedCases,
+    };
+}
+
+async function fetchCaseMetricDocuments({ collectionId = 'cases', tenantId = null, periodDays = 0, fields = [] }) {
+    const cutoff = periodDays > 0 ? new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000) : null;
+    let lastDoc = null;
+    let pageCount = 0;
+    const docs = [];
+
+    while (true) {
+        let q = db.collection(collectionId);
+        if (tenantId) q = q.where('tenantId', '==', tenantId);
+        if (cutoff) q = q.where('createdAt', '>=', cutoff);
+        q = q.orderBy('createdAt', 'desc');
+        if (fields.length > 0) q = q.select(...fields);
+        if (lastDoc) q = q.startAfter(lastDoc);
+        q = q.limit(CASE_QUERY_PAGE_SIZE);
+        const snapshot = await q.get();
+        pageCount += 1;
+        docs.push(...snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        if (snapshot.docs.length < CASE_QUERY_PAGE_SIZE) break;
+        lastDoc = snapshot.docs[snapshot.docs.length - 1];
+    }
+
+    return { docs, pageCount };
+}
+
+const OPS_METRIC_FIELDS = [
+    'tenantId', 'tenantName', 'status', 'finalVerdict', 'createdAt', 'concludedAt', 'updatedAt', 'turnaroundHours',
+    'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus', 'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus',
+    'enrichmentSources', 'aiClassificationReviewRawResponse', 'aiClassificationReview', 'aiRawResponse', 'aiStructured',
+    'aiClassificationReviewOk', 'aiStructuredOk', 'aiClassificationReviewError', 'aiError', 'aiClassificationReviewFromCache', 'aiFromCache',
+    'aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd', 'aiClassificationReviewTokens', 'aiTokens', 'aiDecision',
+];
+
+const CLIENT_DASHBOARD_FIELDS = [
+    'caseId', 'tenantId', 'candidateName', 'candidatePosition', 'status', 'finalVerdict', 'createdAt', 'createdMonthKey',
+    'concludedAt', 'updatedAt', 'turnaroundHours', 'criminalFlag', 'laborFlag', 'warrantFlag', 'osintLevel', 'socialStatus',
+    'digitalFlag', 'conflictInterest',
+];
+
+exports.getOpsCaseMetrics = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getOpsUserProfile(uid);
+        const periodDays = normalizeMetricsPeriod(request.data?.periodDays ?? 30);
+        const tenantId = resolveOpsMetricsTenant(profile, request.data?.tenantId);
+        const { docs, pageCount } = await fetchCaseMetricDocuments({
+            collectionId: 'cases',
+            tenantId,
+            periodDays,
+            fields: OPS_METRIC_FIELDS,
+        });
+        const metrics = buildOpsMetricsFromCases(docs, { showAllTenants: !tenantId && isGlobalOpsProfile(profile) });
+        return {
+            ...metrics,
+            meta: {
+                source: 'server',
+                scannedRecords: docs.length,
+                pageCount,
+                generatedAt: new Date().toISOString(),
+                periodDays,
+                tenantId,
+            },
+        };
+    },
+);
+
+exports.getClientDashboardMetrics = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getClientUserProfile(uid);
+        const { docs, pageCount } = await fetchCaseMetricDocuments({
+            collectionId: 'clientCases',
+            tenantId: profile.tenantId,
+            periodDays: 0,
+            fields: CLIENT_DASHBOARD_FIELDS,
+        });
+        const serialized = docs.map((docData) => serializeClientCaseDocument(docData));
+        const metrics = buildClientDashboardMetricsFromCases(serialized);
+        return {
+            ...metrics,
+            meta: {
+                source: 'server',
+                scannedRecords: docs.length,
+                pageCount,
+                generatedAt: new Date().toISOString(),
+            },
+        };
+    },
+);
+
+exports.getClientCaseById = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 30, cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getClientUserProfile(uid);
+        const caseId = String(request.data?.caseId || '').trim();
+        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+        const snap = await db.collection('clientCases').doc(caseId).get();
+        if (!snap.exists) throw new HttpsError('not-found', 'Solicitacao nao encontrada.');
+        const data = snap.data() || {};
+        if (data.tenantId !== profile.tenantId) throw new HttpsError('permission-denied', 'Sem acesso a esta solicitacao.');
+        return { case: serializeClientCaseDocument(snap) };
+    },
+);
+
+exports.listClientCases = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getClientUserProfile(uid);
+        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
+        const page = Math.max(Number(request.data?.page) || 1, 1);
+        const filters = request.data?.filters || {};
+        const sortField = String(request.data?.sortField || 'createdAt');
+        const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
+        const allMatches = [];
+        let lastDoc = null;
+        let scannedRecords = 0;
+        let pageCount = 0;
+
+        while (true) {
+            let q = db.collection('clientCases')
+                .where('tenantId', '==', profile.tenantId)
+                .orderBy('createdAt', 'desc')
+                .limit(CASE_QUERY_PAGE_SIZE);
+            if (lastDoc) q = q.startAfter(lastDoc);
+            const snap = await q.get();
+            pageCount += 1;
+            const docs = snap.docs || [];
+            docs.forEach((docSnap) => {
+                scannedRecords += 1;
+                const serialized = serializeClientCaseDocument(docSnap);
+                if (matchesClientCaseFilters(serialized, filters)) allMatches.push(serialized);
+            });
+            if (docs.length < CASE_QUERY_PAGE_SIZE) break;
+            if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) break;
+            lastDoc = docs[docs.length - 1];
+        }
+
+        allMatches.sort((left, right) => compareClientCases(left, right, sortField, sortDir));
+        const start = (page - 1) * pageSize;
+        const pageCases = allMatches.slice(start, start + pageSize);
+        const stats = allMatches.reduce((acc, caseData) => {
+            acc.total += 1;
+            if (caseData.status === 'DONE') acc.done += 1;
+            if (caseData.status === 'PENDING') acc.pending += 1;
+            if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
+            if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
+            if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
+            if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
+            return acc;
+        }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 });
+        return {
+            cases: pageCases,
+            total: allMatches.length,
+            stats,
+            page,
+            pageSize,
+            totalPages: Math.max(1, Math.ceil(allMatches.length / pageSize)),
+            hasMore: start + pageSize < allMatches.length,
+            meta: {
+                source: 'server',
+                scannedRecords,
+                pageCount,
+                capped: scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT,
+            },
+        };
+    },
+);
+
 /**
  * Validate CPF digits including check digits (same algorithm as frontend).
  * BUG-R1-010 fix: backend must reject invalid CPFs, not just check length.

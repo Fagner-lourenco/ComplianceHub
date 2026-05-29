@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
-import { useCases } from '../../hooks/useCases';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { callGetOpsCaseMetrics } from '../../core/firebase/firestoreService';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './MetricasIAPage.css';
@@ -31,119 +31,53 @@ const PERIOD_OPTIONS = [
     { value: 0, label: 'Tudo' },
 ];
 
-function avgDays(doneCases) {
-    const d = doneCases
-        .map(c => {
-            const s = c.createdAt ? new Date(c.createdAt) : null;
-            const e = c.concludedAt ? new Date(c.concludedAt) : (c.updatedAt ? new Date(c.updatedAt) : null);
-            return s && e && !isNaN(s) && !isNaN(e) ? (e - s) / 86400000 : null;
-        }).filter(v => v !== null && v >= 0);
-    return d.length ? (d.reduce((a, b) => a + b, 0) / d.length).toFixed(1) : null;
-}
-
 function fmtBRL(v) { return `R$ ${v.toFixed(2)}`; }
 function fmtUSD(v) { return `$ ${v.toFixed(4)}`; }
 function pct(n, total) { return total > 0 ? Math.round((n / total) * 100) : 0; }
+
+const EMPTY_METRICS = {
+    total: 0,
+    done: 0,
+    running: 0,
+    corrections: 0,
+    verdicts: { FIT: 0, ATTENTION: 0, NOT_RECOMMENDED: 0, INCONCLUSIVE: 0 },
+    prov: PROVIDERS.reduce((acc, provider) => ({ ...acc, [provider.key]: { calls: 0, done: 0, partial: 0, failed: 0, running: 0, costBRL: 0 } }), {}),
+    fdPhaseCosts: [],
+    fdTotalBRL: 0,
+    ai: { total: 0, structOk: 0, structFail: 0, errors: 0, cached: 0, costUSD: 0, tokIn: 0, tokOut: 0, decisions: { ACCEPTED: 0, ADJUSTED: 0, IGNORED: 0, none: 0 } },
+    avgDays: null,
+    completionRate: 0,
+    structuredRate: 0,
+    cacheRate: 0,
+    reviewRate: 0,
+    byTenant: [],
+    meta: null,
+};
 
 /* ── Component ── */
 export default function MetricasIAPage() {
     const { selectedTenantId } = useTenant();
     const tenantOverride = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
-    const { cases, loading, error } = useCases(tenantOverride);
     const [periodDays, setPeriodDays] = useState(30);
+    const [state, setState] = useState({ metrics: EMPTY_METRICS, loading: true, error: null });
     const showAllTenants = selectedTenantId === ALL_TENANTS_ID;
 
-    const [now] = useState(() => Date.now());
-    const m = useMemo(() => {
-        const cutoff = periodDays > 0
-            ? new Date(now - periodDays * 86400000).toISOString().slice(0, 10)
-            : '0000';
-        const pc = cases.filter(c => (c.createdAt || '') >= cutoff);
+    useEffect(() => {
+        let cancelled = false;
+        Promise.resolve().then(() => {
+            if (!cancelled) setState((current) => ({ ...current, loading: true, error: null }));
+        });
+        callGetOpsCaseMetrics({ tenantId: tenantOverride, periodDays })
+            .then((metrics) => {
+                if (!cancelled) setState({ metrics: { ...EMPTY_METRICS, ...metrics }, loading: false, error: null });
+            })
+            .catch((currentError) => {
+                if (!cancelled) setState({ metrics: EMPTY_METRICS, loading: false, error: currentError });
+            });
+        return () => { cancelled = true; };
+    }, [tenantOverride, periodDays]);
 
-        /* Volume */
-        const done = pc.filter(c => c.status === 'DONE');
-        const running = pc.filter(c => c.status !== 'DONE' && c.status !== 'CORRECTION_NEEDED');
-        const corrections = pc.filter(c => c.status === 'CORRECTION_NEEDED');
-
-        /* Verdicts */
-        const verdicts = { FIT: 0, ATTENTION: 0, NOT_RECOMMENDED: 0, INCONCLUSIVE: 0 };
-        for (const c of done) verdicts[c.finalVerdict || 'INCONCLUSIVE']++;
-
-        /* Provider stats */
-        const prov = {};
-        for (const p of PROVIDERS) {
-            const stats = { calls: 0, done: 0, partial: 0, failed: 0, running: 0, costBRL: 0 };
-            for (const c of pc) {
-                const st = c[p.field];
-                if (!st || st === 'SKIPPED') continue;
-                stats.calls++;
-                if (st === 'DONE') stats.done++;
-                else if (st === 'PARTIAL') stats.partial++;
-                else if (st === 'FAILED') stats.failed++;
-                else if (st === 'RUNNING') stats.running++;
-            }
-            prov[p.key] = stats;
-        }
-
-        /* FonteData cost breakdown (enrichmentSources) */
-        let fdTotalBRL = 0;
-        const fdPhaseCosts = {};
-        for (const c of pc) {
-            const src = c.enrichmentSources;
-            if (!src) continue;
-            for (const [phase, info] of Object.entries(src)) {
-                const cost = parseFloat(info?.cost) || 0;
-                fdTotalBRL += cost;
-                fdPhaseCosts[phase] = (fdPhaseCosts[phase] || 0) + cost;
-            }
-        }
-        prov.fontedata.costBRL = fdTotalBRL;
-
-        /* AI metrics */
-        const aiCases = pc.filter(c => c.aiClassificationReviewRawResponse || c.aiClassificationReview || c.aiRawResponse || c.aiStructured);
-        const structOk = aiCases.filter(c => (c.aiClassificationReviewOk ?? c.aiStructuredOk) === true).length;
-        const structFail = aiCases.filter(c => (c.aiClassificationReviewOk ?? c.aiStructuredOk) === false).length;
-        const aiErrors = pc.filter(c => (c.aiClassificationReviewError || c.aiError) && !(c.aiClassificationReviewRawResponse || c.aiRawResponse)).length;
-        const cached = aiCases.filter(c => c.aiClassificationReviewFromCache || c.aiFromCache).length;
-        const aiCostUSD = aiCases.reduce((s, c) => s
-            + (c.aiCostUsd || 0)
-            + (c.aiHomonymCostUsd || 0)
-            + (c.aiClassificationReviewCostUsd || 0), 0);
-        const tokIn = aiCases.reduce((s, c) => s + (c.aiClassificationReviewTokens?.input || c.aiTokens?.input || 0), 0);
-        const tokOut = aiCases.reduce((s, c) => s + (c.aiClassificationReviewTokens?.output || c.aiTokens?.output || 0), 0);
-
-        /* AI decisions */
-        const decisions = { ACCEPTED: 0, ADJUSTED: 0, IGNORED: 0, none: 0 };
-        for (const c of aiCases) decisions[c.aiDecision || 'none']++;
-
-        /* Per-tenant */
-        const byTenant = {};
-        if (showAllTenants) {
-            for (const c of pc) {
-                const t = c.tenantName || c.tenantId || '?';
-                if (!byTenant[t]) byTenant[t] = { total: 0, done: 0, fdCost: 0, aiCost: 0 };
-                byTenant[t].total++;
-                if (c.status === 'DONE') byTenant[t].done++;
-                byTenant[t].aiCost += (c.aiCostUsd || 0) + (c.aiHomonymCostUsd || 0) + (c.aiClassificationReviewCostUsd || 0);
-                const src = c.enrichmentSources;
-                if (src) for (const info of Object.values(src)) byTenant[t].fdCost += parseFloat(info?.cost) || 0;
-            }
-        }
-
-        return {
-            total: pc.length, done: done.length, running: running.length,
-            corrections: corrections.length, verdicts, prov,
-            fdPhaseCosts: Object.entries(fdPhaseCosts).sort((a, b) => b[1] - a[1]),
-            fdTotalBRL,
-            ai: { total: aiCases.length, structOk, structFail, errors: aiErrors, cached, costUSD: aiCostUSD, tokIn, tokOut, decisions },
-            avgDays: avgDays(done),
-            completionRate: pct(done.length, pc.length),
-            structuredRate: pct(structOk, aiCases.length),
-            cacheRate: pct(cached, aiCases.length),
-            reviewRate: pct(decisions.ADJUSTED + decisions.IGNORED, aiCases.length),
-            byTenant: Object.entries(byTenant).sort((a, b) => (b[1].fdCost + b[1].aiCost) - (a[1].fdCost + a[1].aiCost)),
-        };
-    }, [cases, periodDays, showAllTenants, now]);
+    const { metrics: m, loading, error } = state;
 
     if (loading) return (
         <PageShell size="default" className="ops-dash" role="status" aria-live="polite" aria-label="Carregando metricas de IA">
@@ -227,6 +161,9 @@ export default function MetricasIAPage() {
 
             {/* ── Row 4: Custo APIs (FonteData breakdown + AI) ── */}
             <h3 className="ops-dash__group-title">Consumo & Custos</h3>
+            {m.meta?.source === 'server' && (
+                <p className="ops-dash__empty">Métricas calculadas no servidor sobre {m.meta.scannedRecords} registro(s).</p>
+            )}
             <div className="ops-dash__grid-2">
                 <Section title="FonteData — Custo por Fase" icon="R$">
                     <div className="ops-dash__cost-total">{fmtBRL(m.fdTotalBRL)}</div>
