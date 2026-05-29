@@ -5849,8 +5849,13 @@ const CLIENT_SAFE_PUBLICATION_FIELDS = [
 
 const PUBLIC_RESULT_FIELDS = [...IDENTITY_FIELDS, ...RESULT_ONLY_FIELDS, ...CLIENT_SAFE_PUBLICATION_FIELDS];
 
+const CLIENT_CASE_PRIVATE_FIELDS = [
+    'cpf',
+];
+
 const CLIENT_CASE_FIELDS = [
     ...PUBLIC_RESULT_FIELDS,
+    ...CLIENT_CASE_PRIVATE_FIELDS,
     'candidateId',
     'tenantName',
     'status',
@@ -5880,7 +5885,9 @@ function buildClientCasePayload(caseId, caseData) {
     for (const field of fieldsToSync) {
         const value = caseData[field];
         if (value !== undefined && value !== null) {
-            payload[field] = sanitizePublicStructuredValue(value);
+            payload[field] = field === 'cpf'
+                ? sanitizeCpf(value)
+                : sanitizePublicStructuredValue(value);
         }
     }
 
@@ -5998,6 +6005,10 @@ function isAutoClassifyOnlyChange(before, after) {
     return true; // Todas as mudanças são de auto-classify
 }
 
+function shouldSkipClientCaseMirrorSync(before, after) {
+    return after?.status !== 'DONE' && isAutoClassifyOnlyChange(before, after);
+}
+
 exports.syncClientCaseOnUpdate = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1' },
     async (event) => {
@@ -6005,8 +6016,9 @@ exports.syncClientCaseOnUpdate = onDocumentUpdated(
         const after = event.data?.after?.data();
         if (!after) return;
 
-        // GUARD: skip se a única mudança foi auto-classificação
-        if (isAutoClassifyOnlyChange(before, after)) return;
+        // GUARD: antes de DONE, campos de auto-classificacao ainda nao sao visiveis ao cliente.
+        // Depois de DONE, qualquer mudanca nesses campos precisa atualizar clientCases.
+        if (shouldSkipClientCaseMirrorSync(before, after)) return;
 
         const caseId = event.params.caseId;
         await writeClientCaseMirror(caseId, after);
@@ -7327,14 +7339,29 @@ async function backfillClientCasesMirrorInner(request) {
     if (!targetTenant) {
         throw new HttpsError('invalid-argument', 'tenantId e obrigatorio.');
     }
+    if (profile.role !== 'owner' && profile.tenantId && targetTenant !== profile.tenantId) {
+        throw new HttpsError('permission-denied', 'Administradores de tenant so podem executar backfill do proprio tenant.');
+    }
 
     // BUG-R5-004: Distributed lock to prevent concurrent backfill for the same tenant.
     const lockRef = db.collection('systemLocks').doc(`backfill-${targetTenant}`);
-    const lockSnap = await lockRef.get();
-    if (lockSnap.exists) {
-        throw new HttpsError('resource-exhausted', 'Backfill ja em execucao para este tenant.');
+    try {
+        if (typeof lockRef.create === 'function') {
+            await lockRef.create({ startedAt: FieldValue.serverTimestamp() });
+        } else {
+            const lockSnap = await lockRef.get();
+            if (lockSnap.exists) {
+                throw new HttpsError('resource-exhausted', 'Backfill ja em execucao para este tenant.');
+            }
+            await lockRef.set({ startedAt: FieldValue.serverTimestamp() });
+        }
+    } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        if (error?.code === 6 || error?.code === 'already-exists') {
+            throw new HttpsError('resource-exhausted', 'Backfill ja em execucao para este tenant.');
+        }
+        throw error;
     }
-    await lockRef.set({ startedAt: FieldValue.serverTimestamp() });
 
     try {
         // BUG-R5-004: Paginate backfill to avoid loading all cases into memory.
@@ -7356,7 +7383,6 @@ async function backfillClientCasesMirrorInner(request) {
                 batch.set(
                     db.collection('clientCases').doc(docSnap.id),
                     buildClientCasePayload(docSnap.id, docSnap.data() || {}),
-                    { merge: true },
                 );
                 count += 1;
             });
@@ -12708,10 +12734,13 @@ exports.__test = {
     normalizeUnicodeToAscii,
     fixLatinMojibake,
     backfillClientCasesMirrorInner,
+    buildClientCasePayload,
+    buildSanitizedPublicResultSnapshot,
     fetchTenantCaseDocuments,
     repairAllClaimsInner,
     clientPayloadChanged,
     isAutoClassifyOnlyChange,
+    shouldSkipClientCaseMirrorSync,
     _setDb(mockDb) { db = mockDb; },
     _setGetAuth(mockFn) { getAuth = mockFn; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },

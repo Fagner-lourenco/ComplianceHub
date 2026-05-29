@@ -71,4 +71,18 @@ describe('pdfRenderer', () => {
         await expect(renderHtmlToPdfBuffer('<html><body></body></html>'))
             .rejects.toThrow('Launch failed');
     });
+
+    it('tenta relancar browser depois de erro transiente de launch', async () => {
+        mockPuppeteer.launch
+            .mockRejectedValueOnce(new Error('Launch failed'))
+            .mockResolvedValueOnce(mockBrowser);
+
+        await expect(renderHtmlToPdfBuffer('<html><body></body></html>'))
+            .rejects.toThrow('Launch failed');
+
+        const result = await renderHtmlToPdfBuffer('<html><body>Retry</body></html>');
+
+        expect(result).toBeInstanceOf(Buffer);
+        expect(mockPuppeteer.launch).toHaveBeenCalledTimes(2);
+    });
 });

@@ -3,17 +3,12 @@ const puppeteer = require('puppeteer-core');
 
 // Cache global na instância da function (persiste entre warm starts)
 let browserPromise = null;
-let lastLaunchError = null;
 
 // Injeção para testes
 let _puppeteer = puppeteer;
 let _chromium = Chromium;
 
 async function getBrowser() {
-    if (lastLaunchError) {
-        throw new Error(`[pdfRenderer] Browser launch previously failed: ${lastLaunchError.message}`);
-    }
-
     if (browserPromise) {
         try {
             const browser = await browserPromise;
@@ -45,7 +40,7 @@ async function getBrowser() {
 
         return await browserPromise;
     } catch (err) {
-        lastLaunchError = err;
+        browserPromise = null;
         throw err;
     }
 }
@@ -112,6 +107,6 @@ module.exports = {
     __test: {
         _setPuppeteer(mock) { _puppeteer = mock; },
         _setChromium(mock) { _chromium = mock; },
-        _resetBrowser() { browserPromise = null; lastLaunchError = null; },
+        _resetBrowser() { browserPromise = null; },
     },
 };

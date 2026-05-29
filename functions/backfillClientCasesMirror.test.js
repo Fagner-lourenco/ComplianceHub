@@ -187,6 +187,18 @@ describe('backfillClientCasesMirrorInner', () => {
         expect(result.synced).toBe(1);
     });
 
+    it('rejeita admin escopado tentando executar backfill de outro tenant', async () => {
+        _setDb(buildMockDb({
+            profile: { uid: 'user-1', role: 'admin', tenantId: 'tenant-1' },
+            cases: [],
+        }));
+
+        await expect(backfillClientCasesMirrorInner({
+            auth: { uid: 'user-1' },
+            data: { tenantId: 'tenant-2' },
+        })).rejects.toThrow('proprio tenant');
+    });
+
     it('nao sincroniza casos de outros tenants', async () => {
         const cases = [
             { id: 'case-1', tenantId: 'tenant-1', status: 'DONE', candidateName: 'A' },

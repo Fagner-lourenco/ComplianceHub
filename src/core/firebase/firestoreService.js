@@ -4,6 +4,7 @@ import {
     getDoc,
     getDocs,
     limit,
+    limitToLast,
     onSnapshot,
     orderBy,
     query,
@@ -327,7 +328,8 @@ export async function getFirestoreDocumentViaRest(collectionId, documentId, erro
     return createRestDocumentSnapshot(decodeFirestoreFields(payload.fields || {}));
 }
 
-const DEFAULT_QUERY_LIMIT = 5000;
+const DEFAULT_QUERY_LIMIT = 500;
+const CASE_QUERY_LIMIT = 5000;
 const MESSAGE_QUERY_LIMIT = 50;
 
 function buildTenantCollectionQuery(collectionId, tenantId, orderField, queryLimit = DEFAULT_QUERY_LIMIT) {
@@ -554,7 +556,7 @@ export async function fetchTenantDirectory() {
    ========================================================= */
 
 export function subscribeToCases(tenantId, callback) {
-    const q = buildTenantCollectionQuery('cases', tenantId, 'createdAt');
+    const q = buildTenantCollectionQuery('cases', tenantId, 'createdAt', CASE_QUERY_LIMIT);
 
     return onSnapshot(q, (snapshot) => {
         const cases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
@@ -566,7 +568,7 @@ export function subscribeToCases(tenantId, callback) {
 }
 
 export function subscribeToClientCases(tenantId, callback) {
-    const q = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt');
+    const q = buildTenantCollectionQuery('clientCases', tenantId, 'createdAt', CASE_QUERY_LIMIT);
 
     return onSnapshot(q, (snapshot) => {
         const cases = snapshot.docs.map((documentSnapshot) => mapCaseDocument(documentSnapshot.id, documentSnapshot.data()));
@@ -1093,7 +1095,7 @@ export function subscribeToCaseMessages(caseId, tenantId, callback) {
         where('caseId', '==', caseId),
         where('tenantId', '==', tenantId),
         orderBy('createdAt', 'asc'),
-        limit(MESSAGE_QUERY_LIMIT)
+        limitToLast(MESSAGE_QUERY_LIMIT)
     );
     return onSnapshot(q, (snapshot) => {
         const messages = snapshot.docs.map((doc) => {

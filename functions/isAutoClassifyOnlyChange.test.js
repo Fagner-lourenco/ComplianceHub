@@ -7,7 +7,7 @@ process.env.FIREBASE_CONFIG = process.env.FIREBASE_CONFIG || '{}';
 const require = createRequire(import.meta.url);
 const mod = require('./index');
 
-const { isAutoClassifyOnlyChange } = mod.__test;
+const { isAutoClassifyOnlyChange, shouldSkipClientCaseMirrorSync } = mod.__test;
 
 describe('isAutoClassifyOnlyChange', () => {
     it('retorna true quando apenas riskScore muda', () => {
@@ -50,5 +50,19 @@ describe('isAutoClassifyOnlyChange', () => {
         const before = { name: 'John', analystComment: 'Note' };
         const after = { name: 'John' };
         expect(isAutoClassifyOnlyChange(before, after)).toBe(false);
+    });
+});
+
+describe('shouldSkipClientCaseMirrorSync', () => {
+    it('pula sync antes de DONE quando apenas campos auto mudam', () => {
+        const before = { status: 'IN_PROGRESS', riskScore: 30 };
+        const after = { status: 'IN_PROGRESS', riskScore: 50 };
+        expect(shouldSkipClientCaseMirrorSync(before, after)).toBe(true);
+    });
+
+    it('nao pula sync em DONE mesmo quando apenas campos visiveis de classificacao mudam', () => {
+        const before = { status: 'DONE', riskScore: 30, finalVerdict: 'ATTENTION' };
+        const after = { status: 'DONE', riskScore: 50, finalVerdict: 'NOT_RECOMMENDED' };
+        expect(shouldSkipClientCaseMirrorSync(before, after)).toBe(false);
     });
 });

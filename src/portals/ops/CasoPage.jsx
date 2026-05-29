@@ -1162,12 +1162,14 @@ export default function CasoPage() {
         dirtyFieldsRef.current.add(field);
         setForm((previous) => {
             const current = Array.isArray(previous[field]) ? previous[field] : [];
-            return {
+            const next = {
                 ...previous,
                 [field]: current.includes(value)
                     ? current.filter((currentValue) => currentValue !== value)
                     : [...current, value],
             };
+            formRef.current = next;
+            return next;
         });
     };
 
@@ -1404,8 +1406,11 @@ export default function CasoPage() {
         }
 
         setSaveError(null);
+        flushAllDebouncedFields();
+        const latestForm = formRef.current;
+        const latestRisk = calculateRisk(latestForm, enabledPhases);
 
-        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(form.criminalFlag)) {
+        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
             setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
             return;
         }
@@ -1421,8 +1426,8 @@ export default function CasoPage() {
         // Empty non-dirty narratives are omitted so backend cascade (resolveNarrativeField) can generate better values.
         const dirty = dirtyFieldsRef.current;
         const optionalNarrative = (field) => {
-            if (dirty.has(field)) return form[field];
-            const val = form[field];
+            if (dirty.has(field)) return latestForm[field];
+            const val = latestForm[field];
             if (!val || (typeof val === 'string' && !val.trim())) return undefined;
             return val;
         };
@@ -1433,56 +1438,56 @@ export default function CasoPage() {
                 payload: {
                     assigneeId: caseData.assigneeId || user.uid,
                     executiveSummary: optionalNarrative('executiveSummary'),
-                    criminalFlag: form.criminalFlag,
-                    criminalSeverity: form.criminalSeverity || null,
+                    criminalFlag: latestForm.criminalFlag,
+                    criminalSeverity: latestForm.criminalSeverity || null,
                     criminalNotes: optionalNarrative('criminalNotes'),
-                    laborFlag: form.laborFlag || null,
-                    laborSeverity: form.laborSeverity || null,
+                    laborFlag: latestForm.laborFlag || null,
+                    laborSeverity: latestForm.laborSeverity || null,
                     laborNotes: optionalNarrative('laborNotes'),
-                    warrantFlag: form.warrantFlag || null,
+                    warrantFlag: latestForm.warrantFlag || null,
                     warrantNotes: optionalNarrative('warrantNotes'),
-                    osintLevel: form.osintLevel,
-                    osintVectors: form.osintVectors,
+                    osintLevel: latestForm.osintLevel,
+                    osintVectors: latestForm.osintVectors,
                     osintNotes: optionalNarrative('osintNotes'),
-                    socialStatus: form.socialStatus,
-                    socialReasons: form.socialReasons,
+                    socialStatus: latestForm.socialStatus,
+                    socialReasons: latestForm.socialReasons,
                     socialNotes: optionalNarrative('socialNotes'),
-                    digitalFlag: form.digitalFlag,
-                    digitalVectors: form.digitalVectors,
+                    digitalFlag: latestForm.digitalFlag,
+                    digitalVectors: latestForm.digitalVectors,
                     digitalNotes: optionalNarrative('digitalNotes'),
-                    conflictInterest: form.conflictInterest,
+                    conflictInterest: latestForm.conflictInterest,
                     conflictNotes: optionalNarrative('conflictNotes'),
-                    finalVerdict: form.finalVerdict,
+                    finalVerdict: latestForm.finalVerdict,
                     keyFindings: dirty.has('keyFindings')
-                        ? normalizeKeyFindings(form.keyFindings)
-                        : (form.keyFindings?.trim() ? normalizeKeyFindings(form.keyFindings) : undefined),
+                        ? normalizeKeyFindings(latestForm.keyFindings)
+                        : (latestForm.keyFindings?.trim() ? normalizeKeyFindings(latestForm.keyFindings) : undefined),
                     analystComment: optionalNarrative('analystComment'),
                     clientVerdictOverride: override,
-                    riskLevel: risk.riskLevel,
-                    riskScore: risk.riskScore,
+                    riskLevel: latestRisk.riskLevel,
+                    riskScore: latestRisk.riskScore,
                     enabledPhases: caseData.enabledPhases || enabledPhases,
                     hasNotes: Boolean(
-                        form.executiveSummary
-                        || form.criminalNotes
-                        || form.laborNotes
-                        || form.warrantNotes
-                        || form.osintNotes
-                        || form.socialNotes
-                        || form.digitalNotes
-                        || form.conflictNotes
-                        || form.analystComment
-                        || form.keyFindings?.trim()
+                        latestForm.executiveSummary
+                        || latestForm.criminalNotes
+                        || latestForm.laborNotes
+                        || latestForm.warrantNotes
+                        || latestForm.osintNotes
+                        || latestForm.socialNotes
+                        || latestForm.digitalNotes
+                        || latestForm.conflictNotes
+                        || latestForm.analystComment
+                        || latestForm.keyFindings?.trim()
                     ),
                 },
             });
 
             setCaseData((currentCase) => ({
                 ...currentCase,
-                ...form,
+                ...latestForm,
                 status: 'DONE',
                 assigneeId: currentCase.assigneeId || user.uid,
-                riskLevel: risk.riskLevel,
-                riskScore: risk.riskScore,
+                riskLevel: latestRisk.riskLevel,
+                riskScore: latestRisk.riskScore,
                 hasNotes: true,
                 reviewDraft: undefined,
             }));
@@ -1509,8 +1514,10 @@ export default function CasoPage() {
         }
 
         setSaveError(null);
+        flushAllDebouncedFields();
+        const latestForm = formRef.current;
 
-        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(form.criminalFlag)) {
+        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
             setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
             return;
         }

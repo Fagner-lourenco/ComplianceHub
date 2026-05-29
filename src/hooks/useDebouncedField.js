@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useLayoutEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useLayoutEffect } from 'react';
 
 /**
  * Hook para debounce de campos de formulário.
@@ -18,13 +18,21 @@ export function useDebouncedField(externalValue, onCommit, delay = 400, onDirty 
     const currentValueRef = useRef(externalValue);
 
     useLayoutEffect(() => {
+        let cancelled = false;
         if (externalValue !== lastExternalValue.current && !hasLocalChanges.current) {
             lastExternalValue.current = externalValue;
             currentValueRef.current = externalValue;
             // Defer setState to avoid synchronous setState in effect lint error
-            queueMicrotask(() => setLocalValue(externalValue));
+            queueMicrotask(() => {
+                if (!cancelled) setLocalValue(externalValue);
+            });
         }
+        return () => { cancelled = true; };
     }, [externalValue]);
+
+    useEffect(() => () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+    }, []);
 
     const handleChange = useCallback((value) => {
         hasLocalChanges.current = true;
