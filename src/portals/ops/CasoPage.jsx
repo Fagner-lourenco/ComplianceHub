@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebouncedField } from '../../hooks/useDebouncedField';
 import useAutoResize from '../../hooks/useAutoResize';
 import { useNavigate, useParams } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
@@ -751,6 +752,10 @@ export default function CasoPage() {
     const [loadingCase, setLoadingCase] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [form, setForm] = useState(createInitialForm(null));
+    const formRef = useRef(form);
+    useEffect(() => {
+        formRef.current = form;
+    }, [form]);
     const criminalNotesRef = useAutoResize();
     const laborNotesRef = useAutoResize();
     const warrantNotesRef = useAutoResize();
@@ -781,6 +786,74 @@ export default function CasoPage() {
     const [overrideJustification, setOverrideJustification] = useState('');
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [pendingNavigationTarget, setPendingNavigationTarget] = useState(null);
+
+    // BUG-R3-001: Debounce text fields to reduce recalculations on keystroke
+    const [localExecutiveSummary, handleExecutiveSummaryChange, flushExecutiveSummary] = useDebouncedField(
+        form.executiveSummary || '',
+        (value) => update('executiveSummary', value),
+        400,
+        () => dirtyFieldsRef.current.add('executiveSummary')
+    );
+    const [localAnalystComment, handleAnalystCommentChange, flushAnalystComment] = useDebouncedField(
+        form.analystComment || '',
+        (value) => update('analystComment', value),
+        400,
+        () => dirtyFieldsRef.current.add('analystComment')
+    );
+    const [localCriminalNotes, handleCriminalNotesChange, flushCriminalNotes] = useDebouncedField(
+        form.criminalNotes || '',
+        (value) => update('criminalNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('criminalNotes')
+    );
+    const [localLaborNotes, handleLaborNotesChange, flushLaborNotes] = useDebouncedField(
+        form.laborNotes || '',
+        (value) => update('laborNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('laborNotes')
+    );
+    const [localWarrantNotes, handleWarrantNotesChange, flushWarrantNotes] = useDebouncedField(
+        form.warrantNotes || '',
+        (value) => update('warrantNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('warrantNotes')
+    );
+    const [localOsintNotes, handleOsintNotesChange, flushOsintNotes] = useDebouncedField(
+        form.osintNotes || '',
+        (value) => update('osintNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('osintNotes')
+    );
+    const [localSocialNotes, handleSocialNotesChange, flushSocialNotes] = useDebouncedField(
+        form.socialNotes || '',
+        (value) => update('socialNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('socialNotes')
+    );
+    const [localDigitalNotes, handleDigitalNotesChange, flushDigitalNotes] = useDebouncedField(
+        form.digitalNotes || '',
+        (value) => update('digitalNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('digitalNotes')
+    );
+    const [localConflictNotes, handleConflictNotesChange, flushConflictNotes] = useDebouncedField(
+        form.conflictNotes || '',
+        (value) => update('conflictNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('conflictNotes')
+    );
+
+    const flushAllDebouncedFields = useCallback(() => {
+        flushExecutiveSummary();
+        flushAnalystComment();
+        flushCriminalNotes();
+        flushLaborNotes();
+        flushWarrantNotes();
+        flushOsintNotes();
+        flushSocialNotes();
+        flushDigitalNotes();
+        flushConflictNotes();
+    }, [flushExecutiveSummary, flushAnalystComment, flushCriminalNotes, flushLaborNotes, flushWarrantNotes, flushOsintNotes, flushSocialNotes, flushDigitalNotes, flushConflictNotes]);
     const [draftStatus, setDraftStatus] = useState('idle');
     const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
     const [caseTimeline, setCaseTimeline] = useState([]);
@@ -825,6 +898,7 @@ export default function CasoPage() {
 
     // Auto-save dirty fields as draft when switching steps
     const saveDraft = useCallback(async () => {
+        flushAllDebouncedFields();
         if (isDemoMode || !caseData?.id || dirtyFieldsRef.current.size === 0 || concluded) return false;
         if (READ_ONLY_CASE_STATUSES.has(caseData.status)) {
             setSaveError('Este caso está em modo leitura. Rascunhos não podem ser salvos neste status.');
@@ -834,9 +908,9 @@ export default function CasoPage() {
         const dirty = dirtyFieldsRef.current;
         const payload = {};
         for (const field of dirty) {
-            if (form[field] !== undefined) payload[field] = form[field];
+            if (formRef.current[field] !== undefined) payload[field] = formRef.current[field];
         }
-        const draftRisk = calculateRisk(form, enabledPhases);
+        const draftRisk = calculateRisk(formRef.current, enabledPhases);
         payload.riskLevel = draftRisk.riskLevel;
         payload.riskScore = draftRisk.riskScore;
         if (Object.keys(payload).length === 0) return;
@@ -863,7 +937,7 @@ export default function CasoPage() {
             setDraftStatus('error');
             return false;
         }
-    }, [caseData?.id, caseData?.status, form, isDemoMode, concluded, enabledPhases]);
+    }, [caseData?.id, caseData?.status, isDemoMode, concluded, enabledPhases, flushAllDebouncedFields]);
 
     const handleRetryPhase = useCallback(async (phase, scope = 'cascade') => {
         if (isDemoMode || !caseData?.id) return;
@@ -1068,19 +1142,19 @@ export default function CasoPage() {
     const update = (field, value) => {
         if (!canEditCase) return;
         dirtyFieldsRef.current.add(field);
-        setForm((previous) => {
-            const next = { ...previous, [field]: value };
-            // P09: Clear severity when flag leaves POSITIVE (criminal/labor)
-            if (field === 'criminalFlag' && value !== 'POSITIVE') {
-                next.criminalSeverity = '';
-                dirtyFieldsRef.current.add('criminalSeverity');
-            }
-            if (field === 'laborFlag' && value !== 'POSITIVE' && value !== 'INCONCLUSIVE') {
-                next.laborSeverity = '';
-                dirtyFieldsRef.current.add('laborSeverity');
-            }
-            return next;
-        });
+        const previous = formRef.current;
+        const next = { ...previous, [field]: value };
+        // P09: Clear severity when flag leaves POSITIVE (criminal/labor)
+        if (field === 'criminalFlag' && value !== 'POSITIVE') {
+            next.criminalSeverity = '';
+            dirtyFieldsRef.current.add('criminalSeverity');
+        }
+        if (field === 'laborFlag' && value !== 'POSITIVE' && value !== 'INCONCLUSIVE') {
+            next.laborSeverity = '';
+            dirtyFieldsRef.current.add('laborSeverity');
+        }
+        formRef.current = next;
+        setForm(next);
     };
 
     const toggleVector = (field, value) => {
@@ -1097,7 +1171,20 @@ export default function CasoPage() {
         });
     };
 
-    const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
+    const risk = useMemo(() => calculateRisk(formRef.current, enabledPhases), // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+        enabledPhases,
+        form.criminalFlag,
+        form.criminalSeverity,
+        form.laborFlag,
+        form.laborSeverity,
+        form.warrantFlag,
+        form.osintLevel,
+        form.socialStatus,
+        form.digitalFlag,
+        form.conflictInterest,
+        form.cpfPendingRegularization,
+    ]);
     const classificationReview = useMemo(() => {
         const fallbackReview = buildFallbackClassificationReview(caseData || {});
         const sourceReview = caseData?.aiClassificationReviewOk && caseData?.aiClassificationReview
@@ -1106,12 +1193,12 @@ export default function CasoPage() {
         const sanitizedReview = sanitizeClassificationReviewForDisplay(sourceReview, fallbackReview);
         return applyClassificationReviewGuardrails(sanitizedReview, caseData || {});
     }, [caseData]);
-    const activeWarrantCount = (
+    const activeWarrantCount = useMemo(() => (
         (caseData?.juditActiveWarrantCount || 0) +
         (Array.isArray(caseData?.bigdatacorpActiveWarrants)
             ? caseData.bigdatacorpActiveWarrants.filter((warrant) => warrant?.isActive !== false).length
             : 0)
-    );
+    ), [caseData?.juditActiveWarrantCount, caseData?.bigdatacorpActiveWarrants]);
 
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
@@ -2802,8 +2889,8 @@ export default function CasoPage() {
                             <textarea
                                 ref={criminalNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.criminalNotes}
-                                onChange={(event) => update('criminalNotes', event.target.value)}
+                                value={localCriminalNotes}
+                                onChange={(event) => handleCriminalNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Descreva os achados desta etapa."
                             />
@@ -3154,8 +3241,8 @@ export default function CasoPage() {
                             <textarea
                                 ref={laborNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.laborNotes}
-                                onChange={(event) => update('laborNotes', event.target.value)}
+                                value={localLaborNotes}
+                                onChange={(event) => handleLaborNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Descreva os achados trabalhistas."
                             />
@@ -3384,8 +3471,8 @@ export default function CasoPage() {
                             <textarea
                                 ref={warrantNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.warrantNotes}
-                                onChange={(event) => update('warrantNotes', event.target.value)}
+                                value={localWarrantNotes}
+                                onChange={(event) => handleWarrantNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Informacoes sobre mandado de prisao."
                             />
@@ -3554,7 +3641,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo de perfis públicos</label>
-                            <textarea className="caso-textarea" value={form.osintNotes} onChange={(event) => update('osintNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localOsintNotes} onChange={(event) => handleOsintNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3594,7 +3681,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo social</label>
-                            <textarea className="caso-textarea" value={form.socialNotes} onChange={(event) => update('socialNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localSocialNotes} onChange={(event) => handleSocialNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3644,7 +3731,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo da analise digital</label>
-                            <textarea className="caso-textarea" value={form.digitalNotes} onChange={(event) => update('digitalNotes', event.target.value)} rows={4} />
+                            <textarea className="caso-textarea" value={localDigitalNotes} onChange={(event) => handleDigitalNotesChange(event.target.value)} rows={4} />
                         </div>
                         </>)}
 
@@ -3667,7 +3754,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Notas de conflito</label>
-                            <textarea className="caso-textarea" value={form.conflictNotes} onChange={(event) => update('conflictNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localConflictNotes} onChange={(event) => handleConflictNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3764,8 +3851,8 @@ export default function CasoPage() {
                                 ref={executiveSummaryRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Resumo executivo"
-                                value={form.executiveSummary}
-                                onChange={(event) => update('executiveSummary', event.target.value)}
+                                value={localExecutiveSummary}
+                                onChange={(event) => handleExecutiveSummaryChange(event.target.value)}
                                 rows={5}
                             />
                         </div>
@@ -3820,13 +3907,13 @@ export default function CasoPage() {
                                 ref={analystCommentRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Justificativa final do resultado"
-                                value={form.analystComment}
-                                onChange={(event) => update('analystComment', event.target.value)}
+                                value={localAnalystComment}
+                                onChange={(event) => handleAnalystCommentChange(event.target.value)}
                                 rows={4}
                             />
-                            {form.analystComment && (
-                                <span style={{ fontSize: '.75rem', color: form.analystComment.length > 1500 ? 'var(--red-600, #dc2626)' : 'var(--text-tertiary, #94a3b8)', marginTop: 4, display: 'block', textAlign: 'right' }}>
-                                    {form.analystComment.length} / 1500
+                            {localAnalystComment && (
+                                <span style={{ fontSize: '.75rem', color: localAnalystComment.length > 1500 ? 'var(--red-600, #dc2626)' : 'var(--text-tertiary, #94a3b8)', marginTop: 4, display: 'block', textAlign: 'right' }}>
+                                    {localAnalystComment.length} / 1500
                                 </span>
                             )}
                         </div>

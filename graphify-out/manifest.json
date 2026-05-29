@@ -424,8 +424,8 @@
     "hash": "82d558b3e2899b2973cab3a1015bcba7"
   },
   "D:\\ComplianceHub\\src\\core\\firebase\\firestoreService.js": {
-    "mtime": 1780074371.6868463,
-    "hash": "e3322c371e726a52150785f069c29fef"
+    "mtime": 1780090130.0854268,
+    "hash": "d35c476858f5f6038a26c377bef1a76a"
   },
   "D:\\ComplianceHub\\src\\core\\firebase\\firestoreService.test.js": {
     "mtime": 1779143173.7537801,
@@ -576,8 +576,8 @@
     "hash": "cb1b563713b6a5015c2e79794f1e8e7b"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\ExportacoesPage.jsx": {
-    "mtime": 1780074497.1356082,
-    "hash": "1e3a0814ee4828fcf8a199bad3eb3491"
+    "mtime": 1780090217.6075127,
+    "hash": "e1e04cb301c2f9aa59309c5092cee07d"
   },
   "D:\\ComplianceHub\\src\\portals\\client\\ExportacoesPage.test.jsx": {
     "mtime": 1780074584.994254,
@@ -803,6 +803,14 @@
     "mtime": 1777947613.2005782,
     "hash": "10e8695f35124f1e03fc4064b3950272"
   },
+  "D:\\ComplianceHub\\src\\utils\\asyncPool.js": {
+    "mtime": 1780090158.4070804,
+    "hash": "48140ac9f4d367324aaa136788fce5b2"
+  },
+  "D:\\ComplianceHub\\src\\utils\\asyncPool.test.js": {
+    "mtime": 1780090236.8170395,
+    "hash": "5eb36f74276b0071d02bce18b07fd352"
+  },
   "D:\\ComplianceHub\\AGENTS.md": {
     "mtime": 1779975983.7915168,
     "hash": "13eb3e23b6abb4da2bc7b54d3a3bc0f7"
@@ -816,8 +824,8 @@
     "hash": "7fe30664baa47b3a3ad473a8855c3211"
   },
   "D:\\ComplianceHub\\progress.md": {
-    "mtime": 1780081408.1815782,
-    "hash": "26ff963c7d9d4278738747c93b4b5f77"
+    "mtime": 1780089946.626771,
+    "hash": "4158204a3a532aa64bf9526d162e74b8"
   },
   "D:\\ComplianceHub\\README.md": {
     "mtime": 1777947612.8659892,
