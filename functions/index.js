@@ -5906,6 +5906,41 @@ function buildClientCasePayload(caseId, caseData) {
     return payload;
 }
 
+function clientPayloadChanged(payload, existing) {
+    const ignoreKeys = new Set([
+        'updatedAt', 'createdAt', 'concludedAt', 'correctedAt',
+        'djenEnrichedAt', 'autoClassifiedAt', 'enrichedAt',
+    ]);
+
+    const allKeys = new Set([
+        ...Object.keys(payload),
+        ...Object.keys(existing),
+    ]);
+    const keysToCompare = [...allKeys].filter((k) => !ignoreKeys.has(k));
+
+    for (const key of keysToCompare) {
+        const a = payload[key];
+        const b = existing[key];
+
+        if (Array.isArray(a) && Array.isArray(b)) {
+            if (a.length !== b.length) return true;
+            for (let i = 0; i < a.length; i++) {
+                if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return true;
+            }
+            continue;
+        }
+
+        if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+            if (JSON.stringify(a) !== JSON.stringify(b)) return true;
+            continue;
+        }
+
+        if (a !== b) return true;
+    }
+
+    return false;
+}
+
 async function writeClientCaseMirror(caseId, caseData) {
     const payload = buildClientCasePayload(caseId, caseData);
     // BUG-R5-001: Only write if payload actually changed to reduce write amplification.
@@ -5913,9 +5948,7 @@ async function writeClientCaseMirror(caseId, caseData) {
     const existingSnap = await existingRef.get();
     if (existingSnap.exists) {
         const existing = existingSnap.data() || {};
-        const payloadJson = JSON.stringify(payload);
-        const existingJson = JSON.stringify(existing);
-        if (payloadJson === existingJson) {
+        if (!clientPayloadChanged(payload, existing)) {
             console.log(`[clientCases] case ${caseId}: no visible change, skipping mirror write.`);
             return;
         }
@@ -12642,6 +12675,7 @@ exports.__test = {
     backfillClientCasesMirrorInner,
     fetchTenantCaseDocuments,
     repairAllClaimsInner,
+    clientPayloadChanged,
     _setDb(mockDb) { db = mockDb; },
     _setGetAuth(mockFn) { getAuth = mockFn; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },

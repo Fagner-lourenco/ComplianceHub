@@ -168,8 +168,12 @@
     "hash": "dfd9cd5a3ec131f1930fb56be85a6a25"
   },
   "D:\\ComplianceHub\\functions\\helpers\\pdfRenderer.js": {
-    "mtime": 1778631382.2006366,
-    "hash": "4940ef2b11140940489d8b210c36c80f"
+    "mtime": 1780089447.8730712,
+    "hash": "6ea1b4ea844a108e132fc9b87c3640ea"
+  },
+  "D:\\ComplianceHub\\functions\\helpers\\pdfRenderer.test.js": {
+    "mtime": 1780089502.3602495,
+    "hash": "4e94f8b44c379c2c461bec8a685798b6"
   },
   "D:\\ComplianceHub\\functions\\helpers\\processClassifier.js": {
     "mtime": 1779372375.9016216,
