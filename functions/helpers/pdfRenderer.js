@@ -1,6 +1,55 @@
 const Chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
+// Cache global na instância da function (persiste entre warm starts)
+let browserPromise = null;
+let lastLaunchError = null;
+
+// Injeção para testes
+let _puppeteer = puppeteer;
+let _chromium = Chromium;
+
+async function getBrowser() {
+    if (lastLaunchError) {
+        throw new Error(`[pdfRenderer] Browser launch previously failed: ${lastLaunchError.message}`);
+    }
+
+    if (browserPromise) {
+        try {
+            const browser = await browserPromise;
+            // Health check: verificar se o processo ainda existe
+            if (browser.process() != null) {
+                return browser;
+            }
+        } catch {
+            // Browser morreu, recriar
+        }
+        browserPromise = null;
+    }
+
+    console.log('[pdfRenderer] Launching Chromium (persistent instance)...');
+    _chromium.graphicsMode = false;
+
+    try {
+        const executablePath = await _chromium.executablePath();
+        browserPromise = _puppeteer.launch({
+            args: [
+                ..._chromium.args,
+                '--disable-gpu',
+                '--font-render-hinting=none',
+            ],
+            defaultViewport: { width: 1240, height: 1754, deviceScaleFactor: 1 },
+            executablePath,
+            headless: 'shell',
+        });
+
+        return await browserPromise;
+    } catch (err) {
+        lastLaunchError = err;
+        throw err;
+    }
+}
+
 /**
  * Renderiza HTML para um buffer PDF usando Puppeteer + Chromium.
  *
@@ -16,30 +65,10 @@ async function renderHtmlToPdfBuffer(html, options = {}) {
         throw new Error('renderHtmlToPdfBuffer: html obrigatorio.');
     }
 
-    let browser = null;
+    const browser = await getBrowser();
+    const page = await browser.newPage();
+
     try {
-        console.log('[pdfRenderer] Resolving Chromium executable path...');
-        // Disable graphics to avoid swiftshader extraction issues in serverless
-        Chromium.graphicsMode = false;
-        const executablePath = await Chromium.executablePath();
-        console.log(`[pdfRenderer] Chromium path resolved: ${executablePath}`);
-
-        const launchArgs = [
-            ...Chromium.args,
-            '--disable-gpu',
-            '--font-render-hinting=none',
-        ];
-
-        console.log(`[pdfRenderer] Launching Puppeteer with ${launchArgs.length} args, headless=shell...`);
-        browser = await puppeteer.launch({
-            args: launchArgs,
-            defaultViewport: { width: 1240, height: 1754, deviceScaleFactor: 1 },
-            executablePath,
-            headless: 'shell',
-        });
-        console.log('[pdfRenderer] Browser launched successfully');
-
-        const page = await browser.newPage();
         page.setDefaultTimeout(options.timeoutMs || 60000);
         console.log('[pdfRenderer] New page created, setting content...');
 
@@ -73,11 +102,16 @@ async function renderHtmlToPdfBuffer(html, options = {}) {
         console.error('[pdfRenderer] Fatal error during PDF rendering:', launchErr.message, launchErr.stack);
         throw launchErr;
     } finally {
-        if (browser) {
-            console.log('[pdfRenderer] Closing browser...');
-            await browser.close().catch((err) => console.warn('[pdfRenderer] Browser close error (non-critical):', err.message));
-        }
+        // Fechar a página, mas NÃO o browser (reutilização)
+        await page.close().catch((err) => console.warn('[pdfRenderer] Page close error (non-critical):', err.message));
     }
 }
 
-module.exports = { renderHtmlToPdfBuffer };
+module.exports = {
+    renderHtmlToPdfBuffer,
+    __test: {
+        _setPuppeteer(mock) { _puppeteer = mock; },
+        _setChromium(mock) { _chromium = mock; },
+        _resetBrowser() { browserPromise = null; lastLaunchError = null; },
+    },
+};
