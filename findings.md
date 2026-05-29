@@ -1,161 +1,310 @@
-# Findings: Classificacao Processual e Narrativas Seguras
+# Findings — Análise de Gargalos ComplianceHub
 
-## Auditoria De Fontes
-- Judit retorna `juditRoleSummary` com `area`, `subjects`, `classifications`, `personType`, `side`, `hasExactCpfMatch`, `hasDivergentCpf`, `isCriminal`, `isPossibleHomonym` e `roleClassification`.
-- BigDataCorp retorna `bigdatacorpProcessos` com `courtType`, `cnjBroadSubject`, `cnjSubject`, `cnjProcedure`, `specificRole`, `partyType`, `polo`, `isDirectCpfMatch`, `isCriminal`, `isLabor` e `roleClassification`.
-- DJEN retorna `djenComunicacoes` com `area`, `polo`, `roleClassification`, `geoMatch`, `probabilityScore` e texto resumido. DJEN e busca por nome/comunicacao, portanto deve ser tratado com cautela.
-- Escavador normalizer ja usa `area`, `classe` e tribunal (`TRT`/`TST`) de forma mais robusta que Judit/BDC.
+> **Data:** 2026-05-29
+> **Scope:** Frontend, Backend, Segurança, Arquitetura
+> **Método:** Análise estática de código + trace de dependências + quantificação de impacto
 
-## Problemas Confirmados
-- `roleClassifier.js` nao normaliza acentos: `RÉU`, `VÍTIMA`, `VÍTIMA DO FATO`, `TESTEMUNHA DO JUÍZO` caem como `UNKNOWN/NEUTRAL`.
-- Papeis criminais recursais/procedurais reais (`APELANTE`, `APELADO`, `RECORRENTE`, `RECORRIDO`, `FLAGRANTEADO(A)`, `DENUNCIADO(A)`, `AUTUADO`, `NOTICIADO`, `PACIENTE`) estao submapeados.
-- Papeis trabalhistas recursais reais (`RECORRENTE`, `RECORRIDO`, `AGRAVANTE`, `AGRAVADO`, `POLO ATIVO (PRINCIPAL)`) estao submapeados.
-- Judit tem muitos processos com `area = NÃO INFORMADO`; nesses casos, `subjects` e `classifications` precisam ajudar a inferir esfera.
-- BigDataCorp usa `CourtType` para `isCriminal`/`isLabor`, mas `cnjBroadSubject`, `cnjSubject` e `cnjProcedure` trazem sinais fortes que devem ser considerados.
-- `buildDetLaborNotes()` lista comunicacoes DJEN trabalhistas mesmo quando `laborFlag = NEGATIVE`.
-- `buildDetExecutiveSummary()` usa `findingsSentences.join('. Ha ')`, gerando `Ha nenhum`.
-- `sanitizeNarrativesForFlags()` precisa capturar frases reais como `Comunicacoes judiciais de natureza trabalhista localizadas`.
+---
 
-## Taxonomia Proposta
+## Executive Summary
 
-### Criminal Material
-- `REU`, `REU/RE`, `ACUSADO`, `ACUSADO(A)`, `INDICIADO`, `INDICIADA`, `INVESTIGADO`, `INVESTIGADA`, `DENUNCIADO`, `DENUNCIADO(A)`, `AUTOR DO FATO`, `AUTOR FATO`, `AUTUADO`, `FLAGRANTEADO`, `FLAGRANTEADO(A)`, `SENTENCIADO`, `CONDENADO`, `AVERIGUADO`, `AVERIGUADA`, `NOTICIADO`, `EM APURACAO`, `POLO PASSIVO`, `PACIENTE`, `APELANTE`, `APELADO`, `RECORRENTE`, `RECORRIDO`, `AGRAVANTE`, `AGRAVADO`.
+Foram identificados **15 problemas** distribuídos em 4 categorias. Destes, **11 estão no escopo de correção** (4 excluídos por decisão do usuário: 1.2, 1.4, 1.5, 2.4).
 
-### Criminal Baixo Risco/Ignorar
-- `VITIMA`, `VITIMA DO FATO`, `OFENDIDO`, `OFENDIDA`, `TESTEMUNHA`, `TESTEMUNHA DO JUIZO`, `TESTEMUNHA - POLO ATIVO`, `INFORMANTE`, `TERCEIRO`, `TERCEIRO INTERESSADO`, `ADVOGADO`, `PROCURADOR`, `DEFENSOR`.
+| Categoria | Crítico | Alto | Médio | Baixo | Total |
+|-----------|---------|------|-------|-------|-------|
+| Segurança | 1 | 0 | 0 | 0 | 1 |
+| Performance Backend | 2 | 3 | 1 | 0 | 6 |
+| Performance Frontend | 3 | 0 | 0 | 0 | 3 |
+| Arquitetura/Dívida | — | — | — | — | (fora do escopo) |
 
-### Criminal Parte Ativa Baixo Risco
-- `AUTOR`, `REQUERENTE`, `IMPETRANTE`, desde que nao seja `AUTOR DO FATO` nem `PACIENTE`.
+---
 
-### Trabalhista Material
-- `AUTOR`, `AUTORA`, `RECLAMANTE`, `EXEQUENTE`, `REQUERENTE`, `RECORRENTE`, `RECORRIDO`, `AGRAVANTE`, `AGRAVADO`, `APELANTE`, `APELADO`, `POLO ATIVO`, `POLO ATIVO PRINCIPAL`, `POLO ATIVO (PRINCIPAL)`, `REQTE`, `EXEQTE`, `EXEQTE.`, `PROMOVENTE`.
+## Discovery 1: `fetchTenantCaseDocuments` — Leitura Ilimitada (CRÍTICO)
 
-### Trabalhista Baixo Risco/Ignorar
-- `RECLAMADO`, `REU`, `EXECUTADO`, `REQUERIDO`, `POLO PASSIVO`, `REQDO`, `REQDA`, `EXECTDO`, `EXECTDA`, `EXECDO.`, `TESTEMUNHA`, `ADVOGADO`, `PROCURADOR`, `REPRESENTANTE LEGAL`.
+### Localização
+- **Arquivo:** `functions/index.js:10809`
+- **Função:** `fetchTenantCaseDocuments`
+- **Constante:** `CASE_QUERY_PAGE_SIZE = 500` (linha 10372)
 
-### Ambiguos
-- `V`, `DEPRECADO(A)`, `DEPRECADO`, `D`, `T`, `HERDEIRO`, `CONSIGNATARIO`, ausentes.
+### Código atual
+```javascript
+async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [] }) {
+    let lastDoc = null;
+    let pageCount = 0;
+    let scannedRecords = 0;
+    const docs = [];
 
-## Sinais De Esfera Criminal
-- `tags.criminal = true`, `CourtType` criminal/especial criminal, `DIREITO PENAL`, `DIREITO PROCESSUAL PENAL`, `DIREITO PENAL MILITAR`.
-- Classes/procedimentos: `AÇÃO PENAL`, `APELAÇÃO CRIMINAL`, `CARTA PRECATÓRIA CRIMINAL`, `TERMO CIRCUNSTANCIADO`, `INQUÉRITO POLICIAL`, `AUTO DE PRISÃO EM FLAGRANTE`, `MEDIDAS PROTETIVAS ... CRIMINAL`, `HABEAS CORPUS CRIMINAL`, `EXECUÇÃO DA PENA`, `REPRESENTAÇÃO CRIMINAL/NOTÍCIA DE CRIME`, `PETIÇÃO CRIMINAL`, `PROCEDIMENTO INVESTIGATÓRIO CRIMINAL`.
-- Assuntos fortes: `ROUBO`, `FURTO`, `TRÁFICO DE DROGAS`, `HOMICÍDIO`, `AMEAÇA`, `ESTELIONATO`, `VIOLÊNCIA DOMÉSTICA`, `MARIA DA PENHA`, `CONTRA A MULHER`, `POSSE DE DROGAS`, `RECEPTAÇÃO`, `DESACATO`, `CALÚNIA`, `INJÚRIA`, `EXTORSÃO`, `PENA PRIVATIVA DE LIBERDADE`, `PRISÃO EM FLAGRANTE`.
-- `INTIMAÇÃO`, `CITAÇÃO`, `LEVE`, `GRAVE` sozinhos nao bastam.
+    while (true) {  // ← SEM LIMITE
+        let q = db.collection(collectionId);
+        if (tenantId) q = q.where('tenantId', '==', tenantId);
+        q = q.orderBy('createdAt', 'desc');
+        if (fields.length > 0) q = q.select(...fields);
+        if (lastDoc) q = q.startAfter(lastDoc);
+        q = q.limit(CASE_QUERY_PAGE_SIZE);
+        const snap = await q.get();
+        // ...
+        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
+        lastDoc = currentDocs[currentDocs.length - 1];
+    }
+    return { docs, pageCount, scannedRecords };
+}
+```
 
-## Sinais De Esfera Trabalhista
-- `CourtType = TRABALHISTA`, `DIREITO DO TRABALHO`, `TRT`, `TST`.
-- Classes/procedimentos: `AÇÃO TRABALHISTA`, `RECURSO ORDINÁRIO TRABALHISTA`, `RECURSO ORDINÁRIO - RITO SUMARÍSSIMO`, `RITO ORDINARIO`, `RITO SUMARISSIMO`, `AGRAVO DE INSTRUMENTO EM RECURSO DE REVISTA`, `RECLAMAÇÃO TRABALHISTA`, `DISSÍDIO`.
-- Assuntos fortes: `HORAS EXTRAS`, `ADICIONAL DE INSALUBRIDADE`, `ADICIONAL DE PERICULOSIDADE`, `FGTS`, `RESCISÃO INDIRETA`, `VERBAS RESCISÓRIAS`, `ACÚMULO DE FUNÇÃO`, `DESVIO DE FUNÇÃO`, `DOENÇA OCUPACIONAL`, `ASSÉDIO MORAL`, `RECONHECIMENTO DE RELAÇÃO DE EMPREGO`, `VALE TRANSPORTE`, `AVISO PRÉVIO`, `MULTA DO ARTIGO 477 DA CLT`.
-- `DIREITO PROCESSUAL CIVIL E DO TRABALHO` sozinho nao deve classificar como trabalhista.
+### Callers
+- `listOpsCases` (linha 10920)
+- `getClientExportCases` (linha 11032)
+- `fetchCaseMetricDocuments` (linha 10764) — função quase idêntica
 
-## IA Revisora Da Autoclassificacao
-- O fluxo atual tem tres usos de IA: `aiStructured` (analise geral), `aiHomonymStructured` (homonimos) e `prefillNarratives` (textos finais, hoje sobrescritos pelo prefill deterministico).
-- `buildAiPrompt()` ja inclui candidato, identidade, Judit, BigDataCorp, Escavador, mandados, execucoes, autoclassificacao, cobertura, divergencia e homonimos, mas pede uma analise geral e nao uma auditoria explicita da autoclassificacao.
-- O caso real `ARTHUR SILVA DE OLIVEIRA` mostrou utilidade e limitacao da IA atual: ela percebeu criminal positivo, divergencia media e sem mandado ativo, mas misturou trabalhista inconclusivo enquanto a flag final era negativa e nao retornou score.
-- A nova IA deve receber payload estruturado e responder por eixo: criminal, trabalhista e mandado, com `assessment`, `evidenceStrength`, `rationale` e `possibleErrors`.
-- Campos essenciais para alimentar a nova IA: flags finais, cobertura/divergencia, `juditRoleSummary`, `bigdatacorpProcessos`, `escavadorProcessos`, `djenComunicacoes`, mandados/execucoes e resultado consultivo de homonimos.
-- A nova UI deve usar `aiClassificationReview` como fonte principal da analise assistida; dados legados devem ficar tecnicos ou invisiveis na experiencia principal.
-- Consumidores secundarios tambem precisam migrar: portal cliente usa `aiClassificationReview || aiStructured` para progresso, metricas somam `aiClassificationReviewCostUsd` e tokens novos, e budget fallback do backend inclui o novo custo.
-- `prefillNarratives` continua sendo sobrescrito pelo prefill deterministico e permanece util para campos finais/review draft, mas nao deve voltar como bloco principal de identificacao.
+### Impacto quantitativo
+- **Memória:** 50.000 docs × 2KB = **100 MB** de payload + overhead Node.js
+- **Tempo:** 100 páginas × 100ms = **10 segundos** de I/O
+- **Risco:** OOM kill (limite 1GiB) ou timeout de 120s
 
-## IA Revisora: Achados Do Caso Real `mpvC4pwktOZ8iyL2KXWR`
-- A resposta real da IA foi conceitualmente util: identificou CPF/match forte, processos majoritariamente civeis/administrativos, ausencia de mandado ativo e divergencia Judit vs BigDataCorp no eixo criminal.
-- A IA detectou corretamente o ponto operacional principal: Judit marcou criminal positivo por uma acao penal arquivada, mas o papel do candidato aparece como vitima e `isDefendant=false`; isso justifica revisao antes de concluir, nao positivo automatico.
-- A resposta quebrou o contrato tecnico: JSON invalido por aspas nao escapadas dentro de strings (`"vitima"`, `"isCriminal"`, `"criminalFlag"`) e caractere de controle em `papel\u001Aflag`.
-- O parser atual caiu em `extractFallbackAiClassificationReviewResponse()` e persistiu o JSON bruto inteiro em `summary` e `consultativeSuggestion.rationale`, ainda com `aiClassificationReviewOk=true`.
-- O prompt atual diz para nao usar nomes de implementacao, mas tambem expõe termos como `hasExactCpfMatch`, `isDirectCpfMatch`, `criminalFlag`, `assessment=AGREE`; a IA copiou esses termos para textos narrativos.
-- `evidenceStrength` ficou semanticamente ambigua: para um negativo trabalhista coerente a IA marcou `INSUFFICIENT`, embora o texto explique ausencia de evidencia trabalhista nas fontes. O prompt deve dizer que o campo mede a forca da validacao da flag, nao a quantidade de achados negativos.
-- UI precisa de defesa propria: mesmo que exista dado contaminado antigo no Firestore, `CasoPage` nao pode renderizar JSON bruto, enums internos ou redes sociais vazias para o analista.
+### Cenário de falha
+Tenant com 50.000 casos (ex: cliente enterprise com histórico de 2 anos) invoca `listOpsCases`. A function carrega todos os casos em memória antes de filtrar. A instância é morta pelo Firebase antes de retornar.
 
-## DJEN Clickable Modal
-- Usuario pediu que `Comunicacoes judiciais DJEN (17)` nas abas criminal e trabalhista seja clicavel.
-- Ao clicar em um processo DJEN, deve abrir modal semelhante ao comportamento de BigDataCorp/Judit.
-- O modal DJEN deve agrupar/listar todas as movimentacoes/comunicacoes daquele mesmo processo, em vez de abrir apenas uma comunicacao isolada.
-- Mudanca deve ser de inspecao/navegacao e nao deve alterar flags, classificacao deterministica ou narrativas finais.
+### Correção ideal
+Hard limit de 10.000 documentos com flag `capped` no retorno.
 
-## Inspecao De Implementacao Para Hardening
-- `runStructuredAiAnalysis()` monta body OpenAI sem `response_format`; a opcao pode ser adicionada de forma opt-in para nao afetar outras IAs.
-- `runAiClassificationReviewAnalysis()` e o ponto seguro para passar `responseFormat`/JSON mode apenas para a IA revisora.
-- `extractFallbackAiClassificationReviewResponse()` sempre preenche `summary` e `consultativeSuggestion.rationale` com o conteudo bruto; este e o bug direto que permite `ok=true` com payload invalido.
-- `sanitizeStructuredText()` remove HTML/CPF/telefone, mas nao remove caracteres de controle nem detecta JSON/schema/nome interno em texto narrativo.
-- `CasoPage.jsx` renderiza `classificationReview.summary`, rationales e listas diretamente; precisa de blindagem para dados contaminados ja persistidos.
+---
 
-## IA Revisora Especializada Por Eixo
-- Causa direta de ressalvas indevidas na UI: `applyClassificationReviewGuardrails()` em `CasoPage.jsx` promove todos os eixos `AGREE` para `AGREE_WITH_CAUTION` quando existe `reviewRecommended`, divergencia, ambiguidade ou baixa cobertura global.
-- Esse comportamento contamina trabalhista e mandado mesmo quando a cautela real e apenas criminal.
-- `buildFallbackClassificationReview()` marca `laborFlag=NEGATIVE` e `warrantFlag=NEGATIVE` com `evidenceStrength=INSUFFICIENT`, mesmo quando fontes consultadas retornaram zero achados; isso reforca a leitura errada de dado insuficiente.
-- Regra operacional definida: fonte consultada com sucesso e zero achados sustenta negativo para aquele eixo; so existe ressalva quando ha falha/parcialidade da fonte, divergencia material, homonimo, papel ambiguo ou achado conflitante.
-- DJEN por nome/comunicacao isolada e evidencia fraca; nao deve gerar ressalva material sozinho se as flags finais e fontes principais estao negativas.
-- Implementado contexto deterministico por eixo no backend e na UI. O prompt agora recebe `reviewContext` e os guardrails pos-IA removem cautelas genericas de eixos negativos bem cobertos.
-- O backend aplica `applyAiClassificationReviewGuardrails()` depois da resposta estruturada da IA, antes de persistir `aiClassificationReview`.
-- A UI aplica guardrails equivalentes para dados ja persistidos e fallback, mantendo cautela apenas no eixo afetado.
+## Discovery 2: `repairAllClaims` — Query Unbounded (CRÍTICO)
 
-## Incidente: Tag Criminal Consultiva Em Caso Concluido
-- Caso informado: `/ops/caso/v5ef9RJ0wBmQLUz4HLf0`.
-- Sintoma: caso concluido exibiu tag criminal `Precisa de revisao manual`, mas deveria estar como `Sem apontamento`.
-- Regra de negocio definida: `Precisa de revisao manual` nao e resultado final criminal; e estado consultivo/operacional. Conclusao deve aceitar apenas estados finais como `Sem apontamento`, `Com apontamento` ou `Inconclusivo`.
-- Risco: cliente interpreta `Precisa de revisao manual` como achado criminal, gerando questionamento indevido no relatorio/portal.
-- Estado encontrado no Firestore: `criminalFlag=INCONCLUSIVE_HOMONYM`, `riskScore=45`, `riskLevel=YELLOW`, `suggestedVerdict=ATTENTION`, `finalVerdict=FIT`.
-- Evidencia consultada do caso: Judit criminal negativo com count 0, BigDataCorp criminal negativo com count 0, mandado negativo, trabalhista negativo. O unico sinal criminal positivo era DJEN com 1 item em contexto de comunicacao/nome, marcado como `criminalEvidenceQuality=WEAK_NAME_ONLY`.
-- `RiskChip`/copy do cliente traduz `INCONCLUSIVE_HOMONYM` como `Precisa de revisao manual`, por isso a tag consultiva vazou como resultado final no portal/relatorio.
-- Causa de produto: `CRIMINAL_OPTIONS` permitia selecionar `INCONCLUSIVE_HOMONYM`, `INCONCLUSIVE_LOW_COVERAGE`, `NEGATIVE_PARTIAL` e `NOT_FOUND` no campo final criminal; `concludeCaseByAnalyst` aceitava a flag efetiva vinda do payload ou `reviewDraft`.
-- Correcao de dados aplicada nos documentos `cases/v5ef9RJ0wBmQLUz4HLf0`, `cases/v5ef9RJ0wBmQLUz4HLf0/publicResult/latest` e `clientCases/v5ef9RJ0wBmQLUz4HLf0`: `criminalFlag=NEGATIVE`, `riskScore=0`, `riskLevel=GREEN`, `suggestedVerdict=FIT`, `finalVerdict=FIT`, justificativa final sem ressalva generica de homonimia.
+### Localização
+- **Arquivo:** `functions/index.js:6325`
+- **Função:** `exports.repairAllClaims`
 
-## DJEN Como Fonte Consultiva
-- Casos reais mostraram que DJEN isolado por nome/comunicacao pode gerar falso positivo/inconclusivo criminal quando Judit e BigDataCorp retornam negativo por CPF.
-- Regra operacional consolidada: DJEN nao e motor de decisao sozinho; permanece visivel para inspeção do analista, mas nao deve alterar `criminalFlag`, `laborFlag`, `riskScore`, `finalVerdict` ou textos finais sem correlacao forte.
-- Correlacao forte para prefill/autoclassificacao: comunicacao DJEN com mesmo CNJ de processo confirmado por CPF em Judit (`hasExactCpfMatch`) ou BigDataCorp (`isDirectCpfMatch`).
-- `computeAutoClassification()` agora usa DJEN apenas quando `filterDjenComunicacoesByConfirmedProcess()` encontra CNJ confirmado para o eixo criminal/trabalhista.
-- `buildDetCriminalNotes()` e `buildDetLaborNotes()` nao listam DJEN isolado; comunicacoes correlacionadas ao mesmo CNJ confirmado continuam podendo aparecer como contexto adicional.
+### Código atual
+```javascript
+const snapshot = await db.collection('userProfiles').get();  // ← SEM LIMITE
+for (const doc of snapshot.docs) {
+    await getAuth().setCustomUserClaims(targetUid, {...});  // Sequencial, ~100ms cada
+}
+```
 
-## Resumo Trabalhista Com Contraparte
-- Auditoria real em producao encontrou 68 casos com `laborFlag=POSITIVE` e 118 processos trabalhistas unificados por CNJ.
-- BigDataCorp trouxe status em 116/118 processos; Judit trouxe status em 44/118. O status atual `N/A` aparece porque `selectTopProcessos()` fixa `N/A` cedo demais e nao troca por status melhor no merge por CNJ.
-- Judit normaliza `parties[]` com `name`, `personType`, `side` e `document`; BigDataCorp normaliza `allParties[]` com `name`, `role`, `side`, `document` e `isActive`.
-- `selectTopProcessos()` perde `parties[]` e `allParties[]`, por isso o resumo atual nao consegue exibir parte reclamada/passiva mesmo quando ela existe no raw normalizado.
-- Dos 415 nomes brutos detectados como passivos, 57 eram o proprio candidato em algum contexto recursal/processual; portanto o merge deve filtrar nome igual ao candidato antes de exibir contraparte.
-- Tambem existem ruidos curtos como `L` e abreviacoes como `A B`; nomes com menos de 4 caracteres devem ser descartados.
-- Padrao aprovado: para candidato no polo ativo, exibir `Parte reclamada/passiva`; para candidato no polo passivo, exibir `Parte autora/ativa`; para testemunha/neutro/ambiguo, nao exibir contraparte automaticamente.
-- `INDEFINIDO`, `N/A`, `NAO INFORMADO` e vazios sao status fracos. Quando houver ultimo andamento claro, inferir status conservador como `ARQUIVADO`, `TRANSITADO EM JULGADO`, `DISTRIBUIDO` ou `EM ANDAMENTO`.
+### Impacto quantitativo
+- 5.000 usuários × 100ms = **500 segundos** > timeout de 300s
+- Snapshot consome **5-10 MB** de memória
+- Falha silenciosa na metade → claims inconsistentes
 
-## Contexto Profissional Em `laborNotes`
-- O bloco `Contexto profissional cadastral (nao se trata de apontamento trabalhista):` e montado em `buildDetLaborNotes()` usando `bigdatacorpEmployer`, `bigdatacorpEmployerCnpj`, `bigdatacorpSector`, `bigdatacorpIsEmployed` e `bigdatacorpProfessionHistory`.
-- O fallback `Contexto profissional cadastral: dados profissionais nao disponiveis.` tambem e montado dentro de `buildDetLaborNotes()`.
-- Esses dados vêm do normalizer `normalizeBigDataCorpProfession()` e devem continuar persistidos para auditoria/identificacao; a remocao solicitada e apenas da narrativa trabalhista.
-- Escopo definido: remover o bloco profissional de `laborNotes` sem alterar flags, score, coleta BigDataCorp, `buildDetExecutiveSummary()` ou exibicao tecnica dos dados profissionais em outras areas.
+### Código duplicado
+- `functions/repair-all-claims.js` (duplica a lógica)
+- `scripts/repair-all-claims.cjs` (duplica a lógica)
 
-## Politica Cliente, Checklist Local E Modais De Conclusao
-- Codigo real usa stepper em `CasoPage.jsx`, nao abas puras. Fases reais: `identification`, `criminal`, `labor`, `warrant`, `osint_social`, `digital`, `review`.
-- Modal reutilizavel existente: `src/ui/components/Modal/Modal.jsx`; novos modais devem reaproveitar esse componente, nao criar overlay paralelo.
-- `concludeCaseByAnalyst` fica em `functions/index.js` e atualmente valida acesso, status, comentario, mandados ativos, execucao penal e flags finais, mas nao valida coerencia entre `finalVerdict` e politica obrigatoria do cliente.
-- `validateConcludeFinalFlags()` hoje valida apenas `criminalFlag` final (`NEGATIVE`, `POSITIVE`, `INCONCLUSIVE`).
-- `riskCalculator` backend e frontend ja tem testes espelhados; a correcao de `laborSeverity` deve alterar ambos os arquivos e ambos os testes.
-- `selectTopProcessos()` ja preserva `parties` e `allParties`, e `resolveCounterpartyNames()` ja sabe inferir contraparte trabalhista. A politica trabalhista deve reaproveitar essas funcoes ou helpers proximos.
-- Empresa reclamada nao existe como campo unico confiavel; deve ser inferida a partir de `parties`/`allParties` e papeis passivos.
-- Checklist manual deve ficar restrito ao frontend e `sessionStorage`; nao deve entrar em `payload` backend, Firestore, audit log ou relatorio.
-- A regra criminal material precisa ser implementada com cuidado: `isCriminal` sozinho nao basta; deve considerar papel material (`isDefendant`/reu/investigado/acusado) e excluir vitima/testemunha.
-- Termos de veredito exibidos ao analista devem ser em portugues: `Apto`, `Atencao`, `Nao Recomendado`.
-- `concludeCaseByAnalyst` calculava `riskInput.laborFlag`, mas nao passava `laborSeverity`; isso foi corrigido junto com a politica backend para manter consistencia com o calculador.
+---
 
-## Ressalva Automatica No Texto Final
-- A frase `sem incluir ressalva automatica no texto final ao cliente` em `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` foi removida.
-- Risco identificado: instrucoes operacionais nunca devem ir para o texto final entregue ao cliente. A deteccao de cobertura parcial deve ser responsabilidade do checklist manual do analista antes da conclusao, nao de uma ressalva automatica no relatorio.
+## Discovery 3: `CasoPage.jsx` — Componente Monolítico (CRÍTICO)
 
-## Auditoria De Casos Reais Com Inconsistencia De Dados Externos
-### Caso `QG400ibTd3bnQOr1yVuS` (CPF 078.003.675-17)
-- Processo `0087537-21.2020.8.05.0001` veio classificado como criminal positivo no prefill/enrichmentOriginalValues.
-- Dados reais do processo: `area=DIREITO DO CONSUMIDOR`, `subjects=RESPONSABILIDADE DO FORNECEDOR/INDENIZACAO POR DANO MORAL`, `classifications=CUMPRIMENTO DE SENTENCA`, `personType=EXEQUENTE`, `side=Active`.
-- Causa raiz: metadado processual inconsistente do provider (`ACAO PENAL - PROCEDIMENTO ORDINARIO` em processo civel/consumidor).
-- O analista ja corrigiu manualmente para `criminalFlag=NEGATIVE`. Nao e bug do nosso codigo, mas sim dado externo inconsistente que o analista deve detectar.
+### Localização
+- **Arquivo:** `src/portals/ops/CasoPage.jsx`
+- **Tamanho:** 3.911 linhas, ~256 KB
+- **Estados:** 30+ useState declarations
 
-### Caso `27vc6KqTrO8cbask2Iau` (CPF 226.377.488-26)
-- `criminalFlag=POSITIVE` e `warrantFlag=POSITIVE` no prefill/enrichmentOriginalValues.
-- Mandado ativo veio do BigDataCorp com `imprisonmentKind=Civil`, `agency=01 CIVEL DE ITAPEVI`, processo de prisao civil por inadimplencia alimentar.
-- O prefill de mandado ja acertou o contexto (`prisao CIVIL por inadimplencia alimentar -- nao e mandado de natureza criminal`), mas o prefill criminal ficou inconsistente ao elevar o mandado civil como hard fact criminal.
-- Causa raiz: pipeline de autoclassificacao elevou mandado civil como evidencia criminal.
-- O campo `warrantFlag=POSITIVE` esta correto; o `criminalFlag=POSITIVE` e falso positivo causado por dado externo. Nao e bug do nosso codigo atual, mas sim inconsistencia de classificacao do provider que o analista deve detectar.
+### Código problemático
+```javascript
+const update = (field, value) => {
+    setForm((previous) => ({ ...previous, [field]: value }));
+};
 
-### Conclusao Da Auditoria
-- Ambos os casos sao problemas de qualidade/inconsistencia dos dados dos providers (Judit, BigDataCorp), nao bugs na nossa logica de classificacao.
-- A deteccao desses casos deve continuar sendo feita pelo analista humano durante a revisao operacional, apoiada pelo checklist local e pela IA revisora.
-- Nao ha necessidade de correcao de codigo para esses casos especificos.
+const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
+const checklist = useMemo(() => [/* 15 regras */], [enabledPhases, form, caseData, activeWarrantCount, risk]);
+```
+
+### Impacto
+- Cada keystroke dispara recálculo de risk + checklist + allOk
+- Componente de 3.911 linhas re-renderiza inteiro
+- `activeWarrantCount` não memoizado (filtra array a cada render)
+
+---
+
+## Discovery 4: Subscriptions Firestore — Limite 500 (CRÍTICO)
+
+### Localização
+- **Arquivo:** `src/core/firebase/firestoreService.js`
+- **Constante:** `DEFAULT_QUERY_LIMIT = 500` (linha 330)
+
+### Funções afetadas
+- `subscribeToCases` (500 docs)
+- `subscribeToClientCases` (500 docs)
+- `subscribeToAuditLogs` (500 docs)
+- `subscribeToExports` (500 docs)
+- `subscribeToCaseMessages` (**SEM LIMITE**)
+
+### Impacto
+- Dados truncados silenciosamente (sem alerta ao usuário)
+- 500 leituras Firestore por subscriber
+- 10 analistas = 5.000 leituras simultâneas
+
+---
+
+## Discovery 5: Exportação Frontend — Processamento Síncrono (CRÍTICO)
+
+### Localização
+- **Arquivo:** `src/portals/client/ExportacoesPage.jsx`
+- **Funções:** `enrichCasesForExport` (linha 1007), `handleExport` (linha 1034)
+
+### Código problemático
+```javascript
+const enriched = await Promise.all(casesToEnrich.map(async (c) => {
+    return getCasePublicResult(c.id);  // Ilimitado paralelismo
+}));
+// buildPrintableHtml monolítico no main thread
+```
+
+### Impacto
+- 50 casos = 50 requisições paralelas ao Firestore
+- UI congela por 1-3s durante `buildPrintableHtml`
+- Sem feedback visual ao usuário
+
+---
+
+## Discovery 6: PDF Puppeteer — Cold Start Extremo (ALTO)
+
+### Localização
+- **Arquivo:** `functions/helpers/pdfRenderer.js`
+- **Função:** `renderHtmlToPdfBuffer` (linha 14)
+
+### Código problemático
+```javascript
+browser = await puppeteer.launch({...});  // Novo browser a cada chamada
+// ... renderiza ...
+await browser.close();  // Fecha tudo
+```
+
+### Impacto
+- Cold start: **10-20s** só para abrir Chromium
+- Renderização: +30-60s para casos complexos
+- Memory: **2GiB** alocada, Chromium consome 300-600MB
+- Custo: cada PDF gera ~500-1000 vCPU-seconds desnecessários
+
+---
+
+## Discovery 7: DJEN Trigger — Timeout Default (ALTO)
+
+### Localização
+- **Arquivo:** `functions/index.js:4807`
+- **Função:** `exports.enrichDjenOnCase`
+
+### Código atual
+```javascript
+exports.enrichDjenOnCase = onDocumentUpdated(
+    { document: 'cases/{caseId}', region: 'southamerica-east1', secrets: [openaiApiKey] },
+    async (event) => { ... }  // Sem timeoutSeconds → 60s default
+);
+```
+
+### Impacto
+- Loop com 500ms de delay por processo
+- 20 processos = 10s só de espera + latência HTTP
+- Timeout em casos complexos → pipeline travado
+
+---
+
+## Discovery 8: `writeClientCaseMirror` — JSON.stringify Não-Determinístico (ALTO)
+
+### Localização
+- **Arquivo:** `functions/index.js:5910`
+- **Função:** `writeClientCaseMirror`
+
+### Código problemático
+```javascript
+const payloadJson = JSON.stringify(payload);
+const existingJson = JSON.stringify(existing);
+if (payloadJson === existingJson) return;  // Problemas:
+// 1. Ordem das chaves não garantida
+// 2. Timestamps serializam como "{}"
+// 3. CPU excessiva para docs grandes
+```
+
+### Impacto
+- Skips writes legítimos quando timestamps mudam
+- CPU spikes a cada update do case (10-20 updates por pipeline)
+- Leitura extra no Firestore antes de decidir skipar
+
+---
+
+## Discovery 9: Cascata de Triggers (MÉDIO)
+
+### Localização
+- **Arquivo:** `functions/index.js`
+- **Função:** `maybeRunAutoClassifyAndAi` → `runAutoClassifyAndAi` → `caseRef.update()`
+
+### Cadeia de eventos
+1. Judit completa → autoClassify → update case
+2. Update dispara: syncClientCaseOnUpdate, publishResultOnCaseDone, enrichEscavadorOnCase
+3. Escavador completa → autoClassify → update case
+4. ... ciclo repete para DJEN
+
+### Impacto
+- ~12 invocações de trigger por caso
+- Custo Firebase multiplicado
+- `syncClientCaseOnUpdate` executa mesmo quando só campos derivados mudaram
+
+---
+
+## Discovery 10: `backfillClientCasesMirror` — Sem Permissões (CRÍTICO)
+
+### Localização
+- **Arquivo:** `functions/index.js:7227`
+- **Função:** `exports.backfillClientCasesMirror`
+
+### Código problemático
+```javascript
+await getOpsUserProfile(uid);  // Retorno descartado — não verifica role!
+let q = db.collection('cases').limit(pageSize);  // Sem filtro de tenant
+```
+
+### Impacto
+- Qualquer usuário autenticado pode invocar
+- Lê cases de **todos os tenants**
+- Escreve em `clientCases` de todos os tenants
+- Vazamento de dados cross-tenant
+
+---
+
+## Discovery 11: Duplicação `reportBuilder.js` / `reportBuilder.cjs`
+
+### Localização
+- **Frontend:** `src/core/reportBuilder.js` (425 linhas)
+- **Backend:** `functions/reportBuilder.cjs` (317 linhas)
+
+### Funções duplicadas
+- `esc()`, `formatDateBR()`, `formatCpfStatus()`
+- `flagColor()`, `badge()`, `maskCpfValue()`
+- `phaseRow()`, `listBlock()`, `timelineHtml()`
+
+### Impacto
+- Bug em um não corrige no outro
+- Cada mudança de design requer 2 implementações
+- Divergência silenciosa de versão
+
+---
+
+## Métricas de Impacto
+
+| Métrica | Valor Atual | Após Correções |
+|---------|-------------|----------------|
+| Tempo de `listOpsCases` (10k docs) | 10s+ / OOM | <3s com cap |
+| Tempo de `repairAllClaims` (5k users) | Timeout 300s | <60s |
+| Cold start PDF | 10-20s | <3s (warm) |
+| Invocações trigger por caso | ~12 | ~4 |
+| UI freeze exportação (50 casos) | 1-3s | <500ms |
+| Casos carregados no frontend | 500 (truncado) | 5.000 |
+
+---
+
+## Referências Cruzadas
+
+| Descoberta | Arquivos Relacionados | Testes Afetados |
+|------------|----------------------|-----------------|
+| fetchTenantCaseDocuments | `index.js`, `firestoreService.js` | Nenhum direto |
+| repairAllClaims | `index.js`, `repair-all-claims.js`, `scripts/repair-all-claims.cjs` | Nenhum |
+| CasoPage.jsx | `CasoPage.jsx`, `CasoPage.test.jsx` | `CasoPage.test.jsx` |
+| Subscriptions 500 | `firestoreService.js`, `useCases.js`, hooks | `firestoreService.test.js` |
+| Exportação síncrona | `ExportacoesPage.jsx`, `ExportacoesPage.test.jsx` | `ExportacoesPage.test.jsx` |
+| PDF cold start | `pdfRenderer.js`, `index.js` | Nenhum |
+| DJEN timeout | `index.js`, `djen.js` | `djen.test.js` |
+| JSON.stringify mirror | `index.js`, `clientPortal.js` | Nenhum |
+| Cascata triggers | `index.js` (múltiplos triggers) | Nenhum |
+| backfill permissions | `index.js` | Nenhum |
+| reportBuilder duplicado | `src/core/reportBuilder.js`, `functions/reportBuilder.cjs` | Ambos |

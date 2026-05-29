@@ -1,0 +1,594 @@
+{
+  "totalCases": 15,
+  "byImpact": {
+    "NAO_MUDARIA_VEREDITO_CRIMINAL": 8,
+    "PODERIA_NAO_MUDAR_VEREDITO_FINAL": 4,
+    "PROVAVELMENTE_MUDARIA_VEREDITO_FINAL": 3
+  },
+  "processStats": {
+    "totalProcesses": 44,
+    "materialProcesses": 19,
+    "byState": [
+      [
+        "MS",
+        15
+      ],
+      [
+        "SP",
+        9
+      ],
+      [
+        "PA",
+        7
+      ],
+      [
+        "PR",
+        4
+      ],
+      [
+        "RIO DE JANEIRO",
+        3
+      ],
+      [
+        "PB",
+        2
+      ],
+      [
+        "AM",
+        1
+      ],
+      [
+        "DF",
+        1
+      ],
+      [
+        "GO",
+        1
+      ],
+      [
+        "RJ",
+        1
+      ]
+    ],
+    "byTribunal": [
+      [
+        "TJMS",
+        15
+      ],
+      [
+        "TJSP",
+        8
+      ],
+      [
+        "TJPA",
+        4
+      ],
+      [
+        "TJPR",
+        4
+      ],
+      [
+        "TJRJ",
+        3
+      ],
+      [
+        "TRT8",
+        3
+      ],
+      [
+        "TRT1",
+        2
+      ],
+      [
+        "TJAM",
+        1
+      ],
+      [
+        "TJDF",
+        1
+      ],
+      [
+        "TJGO",
+        1
+      ],
+      [
+        "TJPB",
+        1
+      ],
+      [
+        "TRT2",
+        1
+      ]
+    ],
+    "byYear": [
+      [
+        "2023",
+        8
+      ],
+      [
+        "2024",
+        8
+      ],
+      [
+        "2022",
+        6
+      ],
+      [
+        "2019",
+        5
+      ],
+      [
+        "2016",
+        3
+      ],
+      [
+        "2017",
+        3
+      ],
+      [
+        "2015",
+        2
+      ],
+      [
+        "2020",
+        2
+      ],
+      [
+        "2021",
+        2
+      ],
+      [
+        "2025",
+        2
+      ],
+      [
+        "2013",
+        1
+      ],
+      [
+        "2018",
+        1
+      ],
+      [
+        "N/A",
+        1
+      ]
+    ],
+    "byRole": [
+      [
+        "EXECUTADO",
+        6
+      ],
+      [
+        "RÉU",
+        6
+      ],
+      [
+        "RECLAMANTE",
+        5
+      ],
+      [
+        "REQUERIDO",
+        5
+      ],
+      [
+        "VÍTIMA",
+        5
+      ],
+      [
+        "PASSIVO",
+        3
+      ],
+      [
+        "REQUERENTE",
+        3
+      ],
+      [
+        "AVERIGUADO",
+        2
+      ],
+      [
+        "N/A",
+        2
+      ],
+      [
+        "APELADO",
+        1
+      ],
+      [
+        "INVESTIGADO",
+        1
+      ],
+      [
+        "RECORRENTE",
+        1
+      ],
+      [
+        "REPRESENTADO",
+        1
+      ],
+      [
+        "TESTEMUNHA - PARTE ATIVA",
+        1
+      ],
+      [
+        "TESTEMUNHA DO JUÍZO",
+        1
+      ],
+      [
+        "VÍTIMA DO FATO",
+        1
+      ]
+    ],
+    "byClass": [
+      [
+        "Ação Trabalhista - Rito Sumaríssimo",
+        3
+      ],
+      [
+        "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO",
+        2
+      ],
+      [
+        "AÇÃO PENAL - PROCEDIMENTO SUMÁRIO",
+        2
+      ],
+      [
+        "AÇÃO TRABALHISTA - RITO SUMARÍSSIMO",
+        2
+      ],
+      [
+        "CUMPRIMENTO DE SENTENÇA",
+        2
+      ],
+      [
+        "Cumprimento de Sentença contra a Fazenda Pública",
+        2
+      ],
+      [
+        "TERMO CIRCUNSTANCIADO",
+        2
+      ],
+      [
+        "Ação Penal - Procedimento Ordinário",
+        1
+      ],
+      [
+        "Apelação Criminal",
+        1
+      ],
+      [
+        "CARTA PRECATÓRIA CRIMINAL",
+        1
+      ],
+      [
+        "COMUNICADO DE MANDADO DE PRISÃO",
+        1
+      ],
+      [
+        "EXECUÇÃO FISCAL",
+        1
+      ],
+      [
+        "INQUÉRITO POLICIAL",
+        1
+      ],
+      [
+        "MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA)  - CRIMINAL",
+        1
+      ],
+      [
+        "Procedimento Investigatório Criminal (PIC-MP) ",
+        1
+      ],
+      [
+        "RITO ORDINARIO",
+        1
+      ],
+      [
+        "Termo Circunstanciado",
+        1
+      ]
+    ],
+    "bySubject": [
+      [
+        "Acúmulo de Função",
+        3
+      ],
+      [
+        "Adicional de Insalubridade",
+        3
+      ],
+      [
+        "Desconfiguração de Justa Causa",
+        3
+      ],
+      [
+        "Integração em Verbas Rescisórias",
+        3
+      ],
+      [
+        "Rescisão Indireta",
+        3
+      ],
+      [
+        "Custas",
+        2
+      ],
+      [
+        "DECORRENTE DE VIOLÊNCIA DOMÉSTICA",
+        2
+      ],
+      [
+        "ESTUPRO",
+        2
+      ],
+      [
+        "ADICIONAL DE HORAS EXTRAS",
+        1
+      ],
+      [
+        "AMEAÇA",
+        1
+      ],
+      [
+        "AVISO PRÉVIO",
+        1
+      ],
+      [
+        "CITAÇÃO",
+        1
+      ],
+      [
+        "Comunicação falsa de crime ou de contravenção ",
+        1
+      ],
+      [
+        "DÍVIDA ATIVA (EXECUÇÃO FISCAL)",
+        1
+      ],
+      [
+        "EXTORSÃO",
+        1
+      ],
+      [
+        "Furto de coisa comum ",
+        1
+      ],
+      [
+        "HORAS EXTRAS",
+        1
+      ],
+      [
+        "INCONSISTENTE",
+        1
+      ],
+      [
+        "INTEGRAÇÃO EM VERBAS RESCISÓRIAS",
+        1
+      ],
+      [
+        "INTOLERÂNCIA POR ORIENTAÇÃO SEXUAL",
+        1
+      ],
+      [
+        "MULTA DE 40% DO FGTS",
+        1
+      ],
+      [
+        "OBJETOS DE CARTAS PRECATÓRIAS CRIMINAIS",
+        1
+      ],
+      [
+        "Posse de Drogas para Consumo Pessoal",
+        1
+      ],
+      [
+        "RECEPTAÇÃO CULPOSA",
+        1
+      ],
+      [
+        "RESCISÃO INDIRETA",
+        1
+      ],
+      [
+        "REVISÃO DO SALDO DEVEDOR",
+        1
+      ],
+      [
+        "Roubo ",
+        1
+      ],
+      [
+        "TERCEIRIZAÇÃO/TOMADOR DE SERVIÇOS",
+        1
+      ],
+      [
+        "VALOR DA EXECUÇÃO / CÁLCULO / ATUALIZAÇÃO",
+        1
+      ]
+    ],
+    "materialByState": [
+      [
+        "SP",
+        7
+      ],
+      [
+        "MS",
+        3
+      ],
+      [
+        "PA",
+        3
+      ],
+      [
+        "PR",
+        2
+      ],
+      [
+        "AM",
+        1
+      ],
+      [
+        "GO",
+        1
+      ],
+      [
+        "PB",
+        1
+      ],
+      [
+        "RIO DE JANEIRO",
+        1
+      ]
+    ],
+    "materialByYear": [
+      [
+        "2024",
+        6
+      ],
+      [
+        "2023",
+        4
+      ],
+      [
+        "2022",
+        3
+      ],
+      [
+        "2019",
+        2
+      ],
+      [
+        "2015",
+        1
+      ],
+      [
+        "2017",
+        1
+      ],
+      [
+        "2021",
+        1
+      ],
+      [
+        "2025",
+        1
+      ]
+    ]
+  },
+  "casesByState": {
+    "SP": 5,
+    "PA": 2,
+    "AM": 1,
+    "PB": 2,
+    "RIO DE JANEIRO": 1,
+    "RJ": 1,
+    "MS": 2,
+    "PR": 2,
+    "GO": 1,
+    "DF": 1
+  },
+  "criticalCases": [
+    {
+      "id": "7Fn2ipprrqZdy8PnkWQs",
+      "candidateName": "RAFAEL HENRIQUE APARECIDO SILVA FERNANDES",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "finalCriminalFlag": "POSITIVE",
+      "processes": [
+        {
+          "cnj": "1511669-54.2024.8.26.0577",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunal": "TJSP",
+          "distributionDate": "2024-07-03T20:23:08.000Z",
+          "year": "2024",
+          "class": [],
+          "subjects": [],
+          "lastStep": "---"
+        },
+        {
+          "cnj": "1509042-77.2024.8.26.0577",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunal": "TJSP",
+          "distributionDate": "2024-04-23T18:04:41.000Z",
+          "year": "2024",
+          "class": [
+            "INQUÉRITO POLICIAL"
+          ],
+          "subjects": [
+            "ESTUPRO"
+          ],
+          "lastStep": "---"
+        },
+        {
+          "cnj": "1511305-19.2023.8.26.0577",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunal": "TJSP",
+          "distributionDate": "2023-10-20T19:10:51.000Z",
+          "year": "2023",
+          "class": [
+            "MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA)  - CRIMINAL"
+          ],
+          "subjects": [
+            "ESTUPRO"
+          ],
+          "lastStep": "---"
+        }
+      ]
+    },
+    {
+      "id": "KxjzfKU3wWSm15UYod90",
+      "candidateName": "FABÍOLA CARDOSO DOS SANTOS",
+      "finalVerdict": "ATTENTION",
+      "finalCriminalFlag": "POSITIVE",
+      "processes": [
+        {
+          "cnj": "0801290-87.2023.8.15.0981",
+          "state": "PB",
+          "city": "QUEIMADAS",
+          "county": "1ª VARA MISTA DE QUEIMADAS",
+          "tribunal": "TJPB",
+          "distributionDate": "2023-07-26T09:43:50.293Z",
+          "year": "2023",
+          "class": [
+            "Procedimento Investigatório Criminal (PIC-MP) "
+          ],
+          "subjects": [
+            "Comunicação falsa de crime ou de contravenção "
+          ],
+          "lastStep": "Arquivado Definitivamente"
+        }
+      ]
+    },
+    {
+      "id": "pj6iZrA2inoRMhEyI0WU",
+      "candidateName": "VITOR AUGUSTO ALMEIDA DE LIMA",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "finalCriminalFlag": "POSITIVE",
+      "processes": [
+        {
+          "cnj": "0000454-96.2023.8.16.0116",
+          "state": "PR",
+          "city": "MATINHOS",
+          "county": "MATINHOS - VARA CÍVEL, DA FAZENDA PÚBLICA, ACIDENTES DO TRABALHO, REGISTROS PÚBLICOS E CORREGEDORIA DO FORO EXTRAJUDICIAL, JUIZADO ESPECIAL CÍVEL E JUIZADO ESPECIAL DA FAZENDA PÚBLICA",
+          "tribunal": "TJPR",
+          "distributionDate": "2023-01-26T13:29:45.438Z",
+          "year": "2023",
+          "class": [
+            "Termo Circunstanciado"
+          ],
+          "subjects": [
+            "Posse de Drogas para Consumo Pessoal"
+          ],
+          "lastStep": "ARQUIVADO DEFINITIVAMENTE"
+        }
+      ]
+    }
+  ]
+}

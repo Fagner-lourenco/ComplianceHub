@@ -1,0 +1,142 @@
+const admin = require('firebase-admin');
+
+// Inicializa o app com as credenciais padrão
+admin.initializeApp({
+  projectId: 'compliance-hub-br'
+});
+
+const db = admin.firestore();
+
+async function auditCases() {
+  try {
+    console.log('Iniciando auditoria de casos...');
+    
+    // Busca todos os casos (limitado a 200)
+    const allSnapshot = await db.collection('cases')
+      .limit(200)
+      .get();
+    
+    console.log(`Total de casos: ${allSnapshot.size}`);
+    
+    // Conta por status
+    const statusCounts = {};
+    const verdictCounts = {};
+    allSnapshot.forEach(doc => {
+      const data = doc.data();
+      const status = data.status || 'N/A';
+      const verdict = data.finalVerdict || 'N/A';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+      verdictCounts[verdict] = (verdictCounts[verdict] || 0) + 1;
+    });
+    console.log('Distribuição de status:', statusCounts);
+    console.log('Distribuição de finalVerdict:', verdictCounts);
+    
+    // Busca casos que não estão com status=done mas têm finalVerdict
+    const snapshot = await db.collection('cases')
+      .where('finalVerdict', '==', 'FIT')
+      .limit(200)
+      .get();
+    
+    console.log(`\nTotal de casos com finalVerdict=FIT: ${snapshot.size}`);
+    
+    const suspiciousCases = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const caseId = doc.id;
+      const displayName = data.displayName || 'N/A';
+      const finalVerdict = data.finalVerdict;
+      const status = data.status || 'N/A';
+      
+      // Verifica enrichmentOriginalValues
+      const enrichmentValues = data.enrichmentOriginalValues || {};
+      const criminalFlag = enrichmentValues.criminalFlag;
+      const laborFlag = enrichmentValues.laborFlag;
+      const warrantFlag = enrichmentValues.warrantFlag;
+      
+      // Verifica topProcessos
+      const topProcessos = data.topProcessos || [];
+      const hasCriminalOrLaborProcesses = topProcessos.some(proc => {
+        const tipo = (proc.tipo || '').toLowerCase();
+        const classification = (proc.classification || '').toLowerCase();
+        const courtType = (proc.courtType || '').toLowerCase();
+        const cnjBroadSubject = (proc.cnjBroadSubject || '').toLowerCase();
+        const assunto = (proc.assunto || '').toLowerCase();
+        
+        return tipo.includes('criminal') || 
+               tipo.includes('trabalhista') ||
+               tipo.includes('labor') ||
+               classification.includes('criminal') ||
+               classification.includes('trabalhista') ||
+               courtType.includes('trabalhista') ||
+               courtType.includes('criminal') ||
+               cnjBroadSubject.includes('trabalhista') ||
+               cnjBroadSubject.includes('criminal') ||
+               assunto.includes('trabalhista') ||
+               assunto.includes('criminal');
+      });
+      
+      // Verifica divergência
+      const hasPositiveFlags = criminalFlag === 'POSITIVE' || laborFlag === 'POSITIVE' || warrantFlag === 'POSITIVE';
+      
+      if (hasPositiveFlags || hasCriminalOrLaborProcesses) {
+        const divergence = [];
+        
+        if (criminalFlag === 'POSITIVE') divergence.push('criminalFlag=POSITIVE');
+        if (laborFlag === 'POSITIVE') divergence.push('laborFlag=POSITIVE');
+        if (warrantFlag === 'POSITIVE') divergence.push('warrantFlag=POSITIVE');
+        if (hasCriminalOrLaborProcesses) divergence.push('processos criminais/trabalhistas encontrados');
+        
+        suspiciousCases.push({
+          caseId,
+          displayName,
+          status,
+          finalVerdict,
+          enrichmentFlags: {
+            criminalFlag: criminalFlag || 'N/A',
+            laborFlag: laborFlag || 'N/A',
+            warrantFlag: warrantFlag || 'N/A'
+          },
+          divergence: divergence.join(', '),
+          topProcessosCount: topProcessos.length,
+          recommendation: status === 'done' 
+            ? 'Revisar caso - veredicto FIT com indicadores positivos de risco'
+            : 'Caso em andamento - verificar se será aprovado indevidamente'
+        });
+      }
+    });
+    
+    console.log('\n=== RESULTADOS DA AUDITORIA ===');
+    console.log(`Casos suspeitos encontrados: ${suspiciousCases.length}\n`);
+    
+    if (suspiciousCases.length === 0) {
+      console.log('Nenhum caso suspeito encontrado.');
+    } else {
+      suspiciousCases.forEach((item, index) => {
+        console.log(`\n--- Caso ${index + 1} ---`);
+        console.log(`caseId: ${item.caseId}`);
+        console.log(`displayName: ${item.displayName}`);
+        console.log(`status: ${item.status}`);
+        console.log(`finalVerdict: ${item.finalVerdict}`);
+        console.log(`enrichmentOriginalValues:`);
+        console.log(`  - criminalFlag: ${item.enrichmentFlags.criminalFlag}`);
+        console.log(`  - laborFlag: ${item.enrichmentFlags.laborFlag}`);
+        console.log(`  - warrantFlag: ${item.enrichmentFlags.warrantFlag}`);
+        console.log(`Divergência: ${item.divergence}`);
+        console.log(`TopProcessos: ${item.topProcessosCount} processos`);
+        console.log(`Recomendação: ${item.recommendation}`);
+      });
+    }
+    
+    // Retorna JSON para processamento posterior
+    console.log('\n=== JSON OUTPUT ===');
+    console.log(JSON.stringify(suspiciousCases, null, 2));
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('Erro na auditoria:', error);
+    process.exit(1);
+  }
+}
+
+auditCases();

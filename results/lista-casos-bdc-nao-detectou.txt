@@ -1,0 +1,608 @@
+LISTA DE CASOS JUDIT CRIMINAL POSITIVO / BIGDATACORP NEGATIVO
+
+---
+1. AILTON FELIPE LAZARO DE OLIVEIRA
+   CPF: 48244079827
+   Case ID: 23UzfJAJ4MOW1FWFNlIj
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 1525164-19.2022.8.26.0228
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO PAULO, Comarca: 14 CRIMINAL DE CENTRAL
+   Data distribuicao: 2022-11-08T08:11:31.000Z
+   Classe: AÇÃO PENAL - PROCEDIMENTO SUMÁRIO
+   Assunto: DECORRENTE DE VIOLÊNCIA DOMÉSTICA
+   Papel: VÍTIMA, Lado: Unknown
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+2. RODRIGO DANTAS
+   CPF: 22637748826
+   Case ID: 27vc6KqTrO8cbask2Iau
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0000774-23.2022.8.26.0628
+   Tribunal: TJSP, UF: SP
+   Cidade: COTIA, Comarca: CRIMINAL DE COTIA
+   Data distribuicao: 2022-07-14T17:07:21.000Z
+   Classe: COMUNICADO DE MANDADO DE PRISÃO
+   Assunto: INCONSISTENTE
+   Papel: REQUERIDO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 1006583-88.2016.8.26.0271
+   Tribunal: TJSP, UF: SP
+   Cidade: ITAPEVI, Comarca: VARA JUIZADO ESP. CIVEL CRIM. DE ITAPEVI
+   Data distribuicao: 2016-11-16T22:08:33.613Z
+   Classe: CUMPRIMENTO DE SENTENÇA
+   Assunto: VALOR DA EXECUÇÃO / CÁLCULO / ATUALIZAÇÃO
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: Baixa Definitiva
+   CPF exato: SIM
+
+---
+3. RAFAEL HENRIQUE APARECIDO SILVA FERNANDES
+   CPF: 46302426863
+   Case ID: 7Fn2ipprrqZdy8PnkWQs
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 3)
+   CNJ: 1511669-54.2024.8.26.0577
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO JOSE DOS CAMPOS, Comarca: 02 CIVEL DE SAO JOSE DOS CAMPOS
+   Data distribuicao: 2024-07-03T20:23:08.000Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERIDO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 1509042-77.2024.8.26.0577
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO JOSE DOS CAMPOS, Comarca: 02 CIVEL DE SAO JOSE DOS CAMPOS
+   Data distribuicao: 2024-04-23T18:04:41.000Z
+   Classe: INQUÉRITO POLICIAL
+   Assunto: ESTUPRO
+   Papel: AVERIGUADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 1511305-19.2023.8.26.0577
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO JOSE DOS CAMPOS, Comarca: 02 CIVEL DE SAO JOSE DOS CAMPOS
+   Data distribuicao: 2023-10-20T19:10:51.000Z
+   Classe: MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA)  - CRIMINAL
+   Assunto: ESTUPRO
+   Papel: AVERIGUADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+4. WELDON ANDERSON CORREA CRUZ
+   CPF: 00968557201
+   Case ID: AYpwpqqqI2IiBGsghXO4
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 2)
+   CNJ: 0000947-62.2023.5.08.0111
+   Tribunal: TRT8, UF: PA
+   Cidade: ANANINDEUA, Comarca: 1ª VARA DO TRABALHO DE ANANINDEUA
+   Data distribuicao: 2024-05-24T17:50:17.833Z
+   Classe: Ação Trabalhista - Rito Sumaríssimo
+   Assunto: Desconfiguração de Justa Causa / Rescisão Indireta / Integração em Verbas Rescisórias / Acúmulo de Função / Adicional de Insalubridade
+   Papel: RECORRENTE, Lado: Active
+   Status: Ativo
+   Ultimo andamento: Remetidos os autos para Órgão jurisdicional competente  para prosseguir
+   CPF exato: SIM
+
+   CNJ: 0000947-62.2023.5.08.0111
+   Tribunal: TRT8, UF: PA
+   Cidade: ANANINDEUA, Comarca: 1ª VARA DO TRABALHO DE ANANINDEUA
+   Data distribuicao: 2023-09-08T14:55:38.116Z
+   Classe: Ação Trabalhista - Rito Sumaríssimo
+   Assunto: Desconfiguração de Justa Causa / Rescisão Indireta / Integração em Verbas Rescisórias / Acúmulo de Função / Adicional de Insalubridade
+   Papel: RECLAMANTE, Lado: Active
+   Status: Ativo
+   Ultimo andamento: Arquivados os autos definitivamente
+   CPF exato: SIM
+
+   CNJ: 0000879-15.2023.5.08.0111
+   Tribunal: TRT8, UF: PA
+   Cidade: ANANINDEUA, Comarca: 1ª VARA DO TRABALHO DE ANANINDEUA
+   Data distribuicao: 2023-08-21T15:52:37.700Z
+   Classe: Ação Trabalhista - Rito Sumaríssimo
+   Assunto: Desconfiguração de Justa Causa / Rescisão Indireta / Integração em Verbas Rescisórias / Acúmulo de Função / Adicional de Insalubridade
+   Papel: RECLAMANTE, Lado: Active
+   Status: Ativo
+   Ultimo andamento: Arquivados os autos definitivamente
+   CPF exato: SIM
+
+   CNJ: 0011937-32.2017.8.14.0006
+   Tribunal: TJPA, UF: PA
+   Cidade: ANANINDEUA, Comarca: 1ª VARA ANANINDEUA
+   Data distribuicao: 2017-07-20T13:23:22.000Z
+   Classe: Apelação Criminal
+   Assunto: Roubo 
+   Papel: VÍTIMA, Lado: Unknown
+   Status: Ativo
+   Ultimo andamento: Conclusos para julgamento
+   CPF exato: SIM
+
+   CNJ: 0055638-14.2015.8.14.0006
+   Tribunal: TJPA, UF: PA
+   Cidade: ANANINDEUA, Comarca: 1ª VARA ANANINDEUA
+   Data distribuicao: 2015-10-16T18:16:36.000Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: RÉU, Lado: Passive
+   Status: N/A
+   Ultimo andamento: Processo migrado do sistema Libra
+   CPF exato: SIM
+
+   CNJ: 0005814-59.2013.8.14.0943
+   Tribunal: TJPA, UF: PA
+   Cidade: ANANINDEUA, Comarca: 2ª VARA DO JUIZADO ESPECIAL CÍVEL DE ANANINDEUA
+   Data distribuicao: 2013-11-11T20:02:58.000Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: Arquivado Definitivamente
+   CPF exato: SIM
+
+---
+5. THOMAZ RUSSO NETTO
+   CPF: 28762356844
+   Case ID: DW62bLNf3Y8iDDYu4ebw
+   Veredito final: ATTENTION
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 1001003-27.2022.5.02.0064
+   Tribunal: TRT2, UF: SP
+   Cidade: SAO PAULO, Comarca: 64ª VARA DO TRABALHO DE SÃO PAULO
+   Data distribuicao: 2022-07-21T13:28:30.000Z
+   Classe: AÇÃO TRABALHISTA - RITO SUMARÍSSIMO
+   Assunto: ADICIONAL DE HORAS EXTRAS / TERCEIRIZAÇÃO/TOMADOR DE SERVIÇOS / HORAS EXTRAS / INTEGRAÇÃO EM VERBAS RESCISÓRIAS / MULTA DE 40% DO FGTS
+   Papel: RECLAMANTE, Lado: Active
+   Status: Ativo
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+   CNJ: 1529275-13.2019.8.26.0564
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO BERNARDO DO CAMPO, Comarca: 02 CIVEL DE SAO BERNARDO DO CAMPO
+   Data distribuicao: 2019-12-20T13:12:11.000Z
+   Classe: TERMO CIRCUNSTANCIADO
+   Assunto: RECEPTAÇÃO CULPOSA
+   Papel: VÍTIMA, Lado: Unknown
+   Status: Ativo
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+6. LETÍCIA DUARTE GUIMARÃES
+   CPF: 49302318842
+   Case ID: Dgmkzz6zLGCMxbKBLgFi
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0599813-49.2023.8.04.0001
+   Tribunal: TJAM, UF: AM
+   Cidade: MANAUS, Comarca: 2ª VARA ESPECIALIZADA DA DÍVIDA ATIVA MUNICIPAL
+   Data distribuicao: 2023-09-11T13:45:45.742Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: VÍTIMA DO FATO, Lado: Active
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+7. AILTON FELIPE LÁZARO DE OLIVEIRA
+   CPF: 48244079827
+   Case ID: Hn90Wi9IqAGUGMoUDEBf
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 1525164-19.2022.8.26.0228
+   Tribunal: TJSP, UF: SP
+   Cidade: SAO PAULO, Comarca: 14 CRIMINAL DE CENTRAL
+   Data distribuicao: 2022-11-08T08:11:31.000Z
+   Classe: AÇÃO PENAL - PROCEDIMENTO SUMÁRIO
+   Assunto: DECORRENTE DE VIOLÊNCIA DOMÉSTICA
+   Papel: VÍTIMA, Lado: Unknown
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+8. FABÍOLA CARDOSO DOS SANTOS
+   CPF: 13481729405
+   Case ID: KxjzfKU3wWSm15UYod90
+   Veredito final: ATTENTION
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0801290-87.2023.8.15.0981
+   Tribunal: TJPB, UF: PB
+   Cidade: QUEIMADAS, Comarca: 1ª VARA MISTA DE QUEIMADAS
+   Data distribuicao: 2023-07-26T09:43:50.293Z
+   Classe: Procedimento Investigatório Criminal (PIC-MP) 
+   Assunto: Comunicação falsa de crime ou de contravenção 
+   Papel: INVESTIGADO, Lado: Passive
+   Status: Finalizado
+   Ultimo andamento: Arquivado Definitivamente
+   CPF exato: SIM
+
+---
+9. FLÁVIO CORREIA
+   CPF: 09323743798
+   Case ID: hqM38OzSgUSXwufkHM1N
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 2)
+   CNJ: 0818425-98.2025.8.19.0054
+   Tribunal: TJRJ, UF: RIO DE JANEIRO
+   Cidade: SÃO JOÃO DE MERITI, Comarca: SÃO JOÃO DE MERITI
+   Data distribuicao: 2025-08-20T16:25:42.532Z
+   Classe: CARTA PRECATÓRIA CRIMINAL
+   Assunto: CITAÇÃO / OBJETOS DE CARTAS PRECATÓRIAS CRIMINAIS
+   Papel: RÉU, Lado: Passive
+   Status: Ativo
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+   CNJ: 0805287-59.2024.8.14.0015
+   Tribunal: TJPA, UF: PA
+   Cidade: CASTANHAL, Comarca: 1ª VARA CÍVEL E EMPRESARIAL DE CASTANHAL
+   Data distribuicao: 2024-06-07T11:58:50.854Z
+   Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO
+   Assunto: EXTORSÃO
+   Papel: RÉU, Lado: Passive
+   Status: Ativo
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+   CNJ: 0100217-40.2022.5.01.0224
+   Tribunal: TRT1, UF: RJ
+   Cidade: NOVA IGUACU, Comarca: NOVA IGUAÇU - 4ª VARA DO TRABALHO
+   Data distribuicao: 2022-03-23T02:31:50.000Z
+   Classe: AÇÃO TRABALHISTA - RITO SUMARÍSSIMO
+   Assunto: RESCISÃO INDIRETA
+   Papel: RECLAMANTE, Lado: Active
+   Status: Ativo
+   Ultimo andamento: ARQUIVADOS OS AUTOS DEFINITIVAMENTE
+   CPF exato: SIM
+
+   CNJ: 0026572-25.2020.8.19.0054
+   Tribunal: TJRJ, UF: RIO DE JANEIRO
+   Cidade: SÃO JOÃO DE MERITI, Comarca: SÃO JOÃO DE MERITI
+   Data distribuicao: 2020-12-29T03:00:00.000Z
+   Classe: EXECUÇÃO FISCAL
+   Assunto: DÍVIDA ATIVA (EXECUÇÃO FISCAL)
+   Papel: RÉU, Lado: Passive
+   Status: Ativo
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+   CNJ: 0011825-62.2015.5.01.0033
+   Tribunal: TRT1, UF: PB
+   Cidade: CAICARA, Comarca: CAICARA
+   Data distribuicao: 2015-12-17T23:30:52.000Z
+   Classe: RITO ORDINARIO
+   Assunto: AVISO PRÉVIO
+   Papel: RECLAMANTE, Lado: Active
+   Status: N/A
+   Ultimo andamento: ARQUIVADOS OS AUTOS DEFINITIVAMENTE
+   CPF exato: SIM
+
+   CNJ: 0033546-93.2011.8.19.0054
+   Tribunal: TJRJ, UF: RIO DE JANEIRO
+   Cidade: SÃO JOÃO DE MERITI, Comarca: SÃO JOÃO DE MERITI
+   Data distribuicao: N/A
+   Classe: N/A
+   Assunto: N/A
+   Papel: null, Lado: null
+   Status: N/A
+   Ultimo andamento: N/A
+   CPF exato: N/A
+
+---
+10. MILLENE MACEIS ALVES DE SOUZA
+   CPF: 00477431151
+   Case ID: kG6gz2SYYmfFB9bFx0kr
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0802325-41.2025.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2025-07-20T17:16:07.500Z
+   Classe: CUMPRIMENTO DE SENTENÇA
+   Assunto: REVISÃO DO SALDO DEVEDOR
+   Papel: REQUERIDO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: Recebidos os Autos do Juiz de Direito
+   CPF exato: SIM
+
+   CNJ: 0803569-73.2023.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2023-12-13T17:04:18.163Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERIDO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0001612-41.2021.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2021-06-11T19:33:28.450Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: TESTEMUNHA - PARTE ATIVA, Lado: Unknown
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0802127-14.2019.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2019-04-16T18:39:25.797Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0800868-81.2019.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2019-02-02T11:44:48.690Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0803073-54.2017.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2017-12-05T12:34:55.633Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0801337-98.2017.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2017-06-01T20:34:41.797Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: RÉU, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0801511-44.2016.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2016-07-11T14:56:02.880Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: EXECUTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0005041-26.2015.8.12.0029
+   Tribunal: TJMS, UF: MS
+   Cidade: NAVIRAI, Comarca: NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL
+   Data distribuicao: 2016-07-06T10:53:21.030Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: APELADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+11. ADRIANO BARBOSA DE SOUZA
+   CPF: 81007167149
+   Case ID: mO55TRp60lg2hRr3YkIP
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 2)
+   CNJ: 0904073-04.2024.8.12.0110
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - 3ª VARA DO JUIZADO ESPECIAL CENTRAL
+   Data distribuicao: 2024-09-04T18:52:29.000Z
+   Classe: TERMO CIRCUNSTANCIADO
+   Assunto: AMEAÇA
+   Papel: RÉU, Lado: Passive
+   Status: N/A
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+   CNJ: 0844622-84.2024.8.12.0001
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL
+   Data distribuicao: 2024-07-31T15:44:08.933Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REPRESENTADO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0844109-19.2024.8.12.0001
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL
+   Data distribuicao: 2024-07-30T01:44:32.847Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERIDO, Lado: Passive
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0801434-12.2022.8.12.0001
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL
+   Data distribuicao: 2022-01-20T20:15:32.633Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERENTE, Lado: Active
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0801926-09.2019.8.12.0001
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL
+   Data distribuicao: 2019-01-23T16:30:29.780Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERENTE, Lado: Active
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+   CNJ: 0005970-11.2018.8.12.0108
+   Tribunal: TJMS, UF: MS
+   Cidade: CAMPO GRANDE, Comarca: CAMPO GRANDE - 8ª VARA DO JUIZADO ESPECIAL - JUSTIÇA ITINERANTE
+   Data distribuicao: 2018-08-10T18:00:09.653Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: REQUERENTE, Lado: Active
+   Status: N/A
+   Ultimo andamento: ---
+   CPF exato: SIM
+
+---
+12. MICHELLE DOS SANTOS
+   CPF: 05118465923
+   Case ID: mWP4yKsOpmtFWtvLhk1L
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0017530-91.2021.8.16.0185
+   Tribunal: TJPR, UF: PR
+   Cidade: CURITIBA, Comarca: CURITIBA - 1ª VARA DE EXECUÇÕES FISCAIS MUNICIPAIS
+   Data distribuicao: 2023-07-07T18:39:41.193Z
+   Classe: Cumprimento de Sentença contra a Fazenda Pública
+   Assunto: Custas
+   Papel: PASSIVO, Lado: Passive
+   Status: Finalizado
+   Ultimo andamento: TRANSITADO EM JULGADO EM 04/09/2023
+   CPF exato: SIM
+
+   CNJ: 0017530-91.2021.8.16.0185
+   Tribunal: TJPR, UF: PR
+   Cidade: CURITIBA, Comarca: CURITIBA - 1ª VARA DE EXECUÇÕES FISCAIS MUNICIPAIS
+   Data distribuicao: 2021-09-21T13:58:37.232Z
+   Classe: Cumprimento de Sentença contra a Fazenda Pública
+   Assunto: Custas
+   Papel: PASSIVO, Lado: Passive
+   Status: Finalizado
+   Ultimo andamento: EXPEDIÇÃO DE INTIMAÇÃO
+   CPF exato: SIM
+
+   CNJ: 0013316-59.2019.8.16.0013
+   Tribunal: TJPR, UF: PR
+   Cidade: CURITIBA, Comarca: CURITIBA - 12ª VARA CRIMINAL
+   Data distribuicao: 2019-05-16T15:55:49.779Z
+   Classe: Ação Penal - Procedimento Ordinário
+   Assunto: Furto de coisa comum 
+   Papel: VÍTIMA, Lado: Unknown
+   Status: Ativo
+   Ultimo andamento: ARQUIVADO DEFINITIVAMENTE
+   CPF exato: SIM
+
+---
+13. RUBICLEUSON DA COSTA PEREIRA
+   CPF: 04269670207
+   Case ID: mZwHEzO57QV3a3hBHwd9
+   Veredito final: FIT
+   Flag criminal final: NEGATIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 6093876-08.2024.8.09.0011
+   Tribunal: TJGO, UF: GO
+   Cidade: APARECIDA DE GOIANIA, Comarca: APARECIDA DE GOIÂNIA - VARA DA FAZENDA PUB MUNICIPAL, DE REG PUB E AMBIENTAL
+   Data distribuicao: 2024-12-02T00:00:00.000Z
+   Classe: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO
+   Assunto: INTOLERÂNCIA POR ORIENTAÇÃO SEXUAL
+   Papel: TESTEMUNHA DO JUÍZO, Lado: Interested
+   Status: Ativo
+   Ultimo andamento: N/A
+   CPF exato: SIM
+
+---
+14. VITOR AUGUSTO ALMEIDA DE LIMA
+   CPF: 14716834948
+   Case ID: pj6iZrA2inoRMhEyI0WU
+   Veredito final: NOT_RECOMMENDED
+   Flag criminal final: POSITIVE
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0000454-96.2023.8.16.0116
+   Tribunal: TJPR, UF: PR
+   Cidade: MATINHOS, Comarca: MATINHOS - VARA CÍVEL, DA FAZENDA PÚBLICA, ACIDENTES DO TRABALHO, REGISTROS PÚBLICOS E CORREGEDORIA DO FORO EXTRAJUDICIAL, JUIZADO ESPECIAL CÍVEL E JUIZADO ESPECIAL DA FAZENDA PÚBLICA
+   Data distribuicao: 2023-01-26T13:29:45.438Z
+   Classe: Termo Circunstanciado
+   Assunto: Posse de Drogas para Consumo Pessoal
+   Papel: PASSIVO, Lado: Passive
+   Status: Finalizado
+   Ultimo andamento: ARQUIVADO DEFINITIVAMENTE
+   CPF exato: SIM
+
+---
+15. LUIS FERNANDO RIBEIRO ARAUJO
+   CPF: 61920815309
+   Case ID: qjDzmFUs2vI6MOs0TFAX
+   Veredito final: ATTENTION
+   Flag criminal final: NEGATIVE_PARTIAL
+   BDC criminal: NEGATIVE (count 0)
+   Judit criminal: POSITIVE (count 1)
+   CNJ: 0702461-95.2020.8.07.0012
+   Tribunal: TJDF, UF: DF
+   Cidade: SÃO SEBASTIÃO, Comarca: JUIZADO ESPECIAL CÍVEL E CRIMINAL DE SÃO SEBASTIÃO
+   Data distribuicao: 2020-06-08T21:27:55.463Z
+   Classe: N/A
+   Assunto: N/A
+   Papel: null, Lado: null
+   Status: N/A
+   Ultimo andamento: Arquivado Definitivamente
+   CPF exato: N/A
+
+---
+FIM DA LISTA

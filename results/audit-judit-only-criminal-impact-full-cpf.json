@@ -1,0 +1,1662 @@
+{
+  "generatedAt": "2026-05-28T20:23:08.641Z",
+  "total": 15,
+  "byImpact": {
+    "NAO_MUDARIA_VEREDITO_CRIMINAL": 8,
+    "PODERIA_NAO_MUDAR_VEREDITO_FINAL": 4,
+    "PROVAVELMENTE_MUDARIA_VEREDITO_FINAL": 3
+  },
+  "cases": [
+    {
+      "id": "23UzfJAJ4MOW1FWFNlIj",
+      "candidateName": "AILTON FELIPE LAZARO DE OLIVEIRA",
+      "cpfMasked": "***.***.***-27",
+      "finalVerdict": "FIT",
+      "suggestedVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": null,
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "1525164-19.2022.8.26.0228",
+          "area": "DIREITO PENAL",
+          "state": "SP",
+          "city": "SAO PAULO",
+          "county": "14 CRIMINAL DE CENTRAL",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2022-11-08T08:11:31.000Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA",
+          "side": "Unknown",
+          "status": null,
+          "subjects": [
+            "DECORRENTE DE VIOLÊNCIA DOMÉSTICA"
+          ],
+          "classifications": [
+            "AÇÃO PENAL - PROCEDIMENTO SUMÁRIO"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.",
+        "analystComment": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nNao foram identificados impeditivos materiais para continuidade do fluxo interno.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 1525164-19.2022.8.26.0228 | DIREITO PENAL | VÍTIMA | polo Unknown",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Nao ha evidencia criminal relevante; os matches exatos encontrados aparecem apenas em papel de baixo risco, como testemunha/informante."
+      },
+      "cpf": "48244079827"
+    },
+    {
+      "id": "27vc6KqTrO8cbask2Iau",
+      "candidateName": "RODRIGO DANTAS",
+      "cpfMasked": "***.***.***-26",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 90,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "POSITIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 2,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0000774-23.2022.8.26.0628",
+          "area": "NÃO INFORMADO",
+          "state": "SP",
+          "city": "COTIA",
+          "county": "CRIMINAL DE COTIA",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2022-07-14T17:07:21.000Z",
+          "lastStepDate": null,
+          "role": "REQUERIDO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "INCONSISTENTE"
+          ],
+          "classifications": [
+            "COMUNICADO DE MANDADO DE PRISÃO"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "1006583-88.2016.8.26.0271",
+          "area": "DIREITO PROCESSUAL CIVIL E DO TRABALHO",
+          "state": "SP",
+          "city": "ITAPEVI",
+          "county": "VARA JUIZADO ESP. CIVEL CRIM. DE ITAPEVI",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2016-11-16T22:08:33.613Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "VALOR DA EXECUÇÃO / CÁLCULO / ATUALIZAÇÃO"
+          ],
+          "classifications": [
+            "CUMPRIMENTO DE SENTENÇA"
+          ],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "Baixa Definitiva"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PODERIA_NAO_MUDAR_VEREDITO_FINAL",
+        "rationale": "O criminal final dependeu do Judit, mas havia outro(s) sinal(is) final(is): mandado. O veredito final poderia permanecer restritivo por outro eixo.",
+        "otherSignals": [
+          "mandado"
+        ]
+      },
+      "notes": {
+        "criminalNotes": "1. 0000774-23.2022.8.26.0628\n Processo: 0000774-23.2022.8.26.0628\n Tipo: COMUNICADO DE MANDADO DE PRISÃO\n Assunto: Trata-se de ação distribuída em plantão, após a prisão civil por dívida alimentícia\n Tribunal: TJSP | Vara: CRIMINAL DE COTIA\n Comarca: COTIA\n Papel: REQUERIDO\n Distribuição: 14/07/2022\n Último andamento: ---\n\n• Todos os processos concentrados na Comarca de COTIA\n\nMandado ativo localizado. Mandados sao tratados como achado critico operacional, independentemente da origem/natureza do processo. Detalhes completos constam na secao de mandados.",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nAdicionalmente, há mandado de prisão civil cumprido por inadimplência de obrigação alimentar (processo 0008812-38.2016.8.26.0271), com prazo de até 30 dias.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 25 pessoas no Brasil com esse nome -- probabilidade relevante de homonímia.",
+        "juditNotes": "Judit: 2 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0000774-23.2022.8.26.0628 | NÃO INFORMADO | REQUERIDO | polo Passive\n2. 1006583-88.2016.8.26.0271 | DIREITO PROCESSUAL CIVIL E DO TRABALHO | EXECUTADO | polo Passive",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 3557 comunicação(ões) da API, 287 descartada(s) por filtro de nome, 13 confirmada(s) (1 cível(is) removida(s)), 12 criminal/trabalhista → 5 processo(s) único(s) após desduplicação. 5 trabalhista. Filtro rigoroso ativo: apenas NAME_EXACT aceito. 1 na UF do candidato (SP), 4 em outros estados.",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit, Judit/Warrant.\nMandado ativo confirmado (1 via BigDataCorp)."
+      },
+      "cpf": "22637748826"
+    },
+    {
+      "id": "7Fn2ipprrqZdy8PnkWQs",
+      "candidateName": "RAFAEL HENRIQUE APARECIDO SILVA FERNANDES",
+      "cpfMasked": "***.***.***-63",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 95,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "HIGH",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 3,
+        "juditProcessTotal": 3,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "POSITIVE",
+        "djenCriminalCount": 2
+      },
+      "juditProcesses": [
+        {
+          "cnj": "1511669-54.2024.8.26.0577",
+          "area": "NÃO INFORMADO",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2024-07-03T20:23:08.000Z",
+          "lastStepDate": null,
+          "role": "REQUERIDO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "1509042-77.2024.8.26.0577",
+          "area": "DIREITO PENAL",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2024-04-23T18:04:41.000Z",
+          "lastStepDate": null,
+          "role": "AVERIGUADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "ESTUPRO"
+          ],
+          "classifications": [
+            "INQUÉRITO POLICIAL"
+          ],
+          "isCriminal": true,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "1511305-19.2023.8.26.0577",
+          "area": "DIREITO PENAL",
+          "state": "SP",
+          "city": "SAO JOSE DOS CAMPOS",
+          "county": "02 CIVEL DE SAO JOSE DOS CAMPOS",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2023-10-20T19:10:51.000Z",
+          "lastStepDate": null,
+          "role": "AVERIGUADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "ESTUPRO"
+          ],
+          "classifications": [
+            "MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA)  - CRIMINAL"
+          ],
+          "isCriminal": true,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PROVAVELMENTE_MUDARIA_VEREDITO_FINAL",
+        "rationale": "O criminal final ficou positivo e nao ha outro eixo final positivo nos campos principais. Sem Judit, o caso provavelmente perderia o motivo material do veredito restritivo.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 1511669-54.2024.8.26.0577\n Processo: 1511669-54.2024.8.26.0577\n Status: N/A\n Tribunal: TJSP | Vara: 02 CIVEL DE SAO JOSE DOS CAMPOS\n Comarca: SAO JOSE DOS CAMPOS\n Papel: REQUERIDO\n Distribuição: 03/07/2024\n Último andamento: ---\n\n2. 1509042-77.2024.8.26.0577\n Processo: 1509042-77.2024.8.26.0577\n Tipo: INQUÉRITO POLICIAL\n Assunto: ESTUPRO\n Status: N/A\n Tribunal: TJSP | Vara: 02 CIVEL DE SAO JOSE DOS CAMPOS\n Comarca: SAO JOSE DOS CAMPOS\n Papel: AVERIGUADO\n Distribuição: 23/04/2024\n Último andamento: ---\n\n3. 1511305-19.2023.8.26.0577\n Processo: 1511305-19.2023.8.26.0577\n Tipo: MEDIDAS PROTETIVAS DE URGÊNCIA (LEI MARIA DA PENHA) - CRIMINAL\n Assunto: ESTUPRO\n Status: N/A\n Tribunal: TJSP | Vara...",
+        "analystComment": "3 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 3 processo(s) encontrado(s). 3 processo(s) criminal(is).\n1. 1511669-54.2024.8.26.0577 | NÃO INFORMADO | REQUERIDO | polo Passive\n2. 1509042-77.2024.8.26.0577 | DIREITO PENAL | AVERIGUADO | polo Passive\n3. 1511305-19.2023.8.26.0577 | DIREITO PENAL | AVERIGUADO | polo Passive",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 5 comunicação(ões) da API, 5 confirmada(s), 5 criminal/trabalhista → 2 processo(s) único(s) após desduplicação. 2 criminal/penal. 2 na UF do candidato (SP,SC), 0 em outros estados. 0 alta confiança (score ≥80), 2 média confiança (50-79).\n1. 5001168-51.2025.8.24.0124 | AçãO PENAL - PROCEDIMENTO ORDINáRIO | TJSC | polo P | 2025-12-09\n2. 5000913-72.2025.8.24.0519 | INQUéRITO POLICIAL | TJSC | polo P | 2025-07-16",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "46302426863"
+    },
+    {
+      "id": "AYpwpqqqI2IiBGsghXO4",
+      "candidateName": "WELDON ANDERSON CORREA CRUZ",
+      "cpfMasked": "***.***.***-01",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 90,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "MEDIUM",
+        "laborFlag": "POSITIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 2,
+        "juditProcessTotal": 6,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 3,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0000947-62.2023.5.08.0111",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "1ª VARA DO TRABALHO DE ANANINDEUA",
+          "tribunalAcronym": "TRT8",
+          "distributionDate": "2024-05-24T17:50:17.833Z",
+          "lastStepDate": null,
+          "role": "RECORRENTE",
+          "side": "Active",
+          "status": "Ativo",
+          "subjects": [
+            "Desconfiguração de Justa Causa",
+            "Rescisão Indireta",
+            "Integração em Verbas Rescisórias",
+            "Acúmulo de Função",
+            "Adicional de Insalubridade"
+          ],
+          "classifications": [
+            "Ação Trabalhista - Rito Sumaríssimo"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Remetidos os autos para Órgão jurisdicional competente  para prosseguir"
+        },
+        {
+          "cnj": "0000947-62.2023.5.08.0111",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "1ª VARA DO TRABALHO DE ANANINDEUA",
+          "tribunalAcronym": "TRT8",
+          "distributionDate": "2023-09-08T14:55:38.116Z",
+          "lastStepDate": null,
+          "role": "RECLAMANTE",
+          "side": "Active",
+          "status": "Ativo",
+          "subjects": [
+            "Desconfiguração de Justa Causa",
+            "Rescisão Indireta",
+            "Integração em Verbas Rescisórias",
+            "Acúmulo de Função",
+            "Adicional de Insalubridade"
+          ],
+          "classifications": [
+            "Ação Trabalhista - Rito Sumaríssimo"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Arquivados os autos definitivamente"
+        },
+        {
+          "cnj": "0000879-15.2023.5.08.0111",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "1ª VARA DO TRABALHO DE ANANINDEUA",
+          "tribunalAcronym": "TRT8",
+          "distributionDate": "2023-08-21T15:52:37.700Z",
+          "lastStepDate": null,
+          "role": "RECLAMANTE",
+          "side": "Active",
+          "status": "Ativo",
+          "subjects": [
+            "Desconfiguração de Justa Causa",
+            "Rescisão Indireta",
+            "Integração em Verbas Rescisórias",
+            "Acúmulo de Função",
+            "Adicional de Insalubridade"
+          ],
+          "classifications": [
+            "Ação Trabalhista - Rito Sumaríssimo"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Arquivados os autos definitivamente"
+        },
+        {
+          "cnj": "0011937-32.2017.8.14.0006",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "1ª VARA ANANINDEUA",
+          "tribunalAcronym": "TJPA",
+          "distributionDate": "2017-07-20T13:23:22.000Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA",
+          "side": "Unknown",
+          "status": "Ativo",
+          "subjects": [
+            "Roubo "
+          ],
+          "classifications": [
+            "Apelação Criminal"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Conclusos para julgamento"
+        },
+        {
+          "cnj": "0055638-14.2015.8.14.0006",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "1ª VARA ANANINDEUA",
+          "tribunalAcronym": "TJPA",
+          "distributionDate": "2015-10-16T18:16:36.000Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Processo migrado do sistema Libra"
+        },
+        {
+          "cnj": "0005814-59.2013.8.14.0943",
+          "area": "NÃO INFORMADO",
+          "state": "PA",
+          "city": "ANANINDEUA",
+          "county": "2ª VARA DO JUIZADO ESPECIAL CÍVEL DE ANANINDEUA",
+          "tribunalAcronym": "TJPA",
+          "distributionDate": "2013-11-11T20:02:58.000Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "Arquivado Definitivamente"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PODERIA_NAO_MUDAR_VEREDITO_FINAL",
+        "rationale": "O criminal final dependeu do Judit, mas havia outro(s) sinal(is) final(is): trabalhista. O veredito final poderia permanecer restritivo por outro eixo.",
+        "otherSignals": [
+          "trabalhista"
+        ]
+      },
+      "notes": {
+        "criminalNotes": "1. 0011937-32.2017.8.14.0006\n Processo: 0011937-32.2017.8.14.0006\n Tipo: Apelação Criminal\n Assunto: Roubo \n Status: Ativo (fase: Inicial)\n Tribunal: TJPA | Vara: 1ª VARA ANANINDEUA\n Comarca: ANANINDEUA\n Papel: VÍTIMA\n Distribuição: 20/07/2017\n\n2. 0055638-14.2015.8.14.0006\n Processo: 0055638-14.2015.8.14.0006\n Assunto: Estelionato\n Tribunal: TJPA | Vara: 1ª VARA ANANINDEUA\n Comarca: ANANINDEUA\n Papel: RÉU\n Distribuição: 16/10/2015\n\n• Todos os processos concentrados na Comarca de ANANINDEUA",
+        "analystComment": "2 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados alertas restritivos, exposicao politica. Há processos trabalhistas registrados.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 6 processo(s) encontrado(s). 2 processo(s) criminal(is).\n1. 0000947-62.2023.5.08.0111 | NÃO INFORMADO | Fase: Inicial | RECORRENTE | polo Active | Ativo\n2. 0000947-62.2023.5.08.0111 | NÃO INFORMADO | Fase: Inicial | RECLAMANTE | polo Active | Ativo\n3. 0000879-15.2023.5.08.0111 | NÃO INFORMADO | Fase: Inicial | RECLAMANTE | polo Active | Ativo\n4. 0011937-32.2017.8.14.0006 | NÃO INFORMADO | Fase: Inicial | VÍTIMA | polo Unknown | Ativo\n5. 0055638-14.2015.8.14.0006 | NÃO INFORMADO | RÉU | polo Passive\n6. 0005814-59.2013.8.14.0943 | NÃO INFORMADO | EXECUTADO | polo Passive",
+        "bdcProcessNotes": "BigDataCorp: 3 processo(s) encontrado(s). 3 trabalhista(s) com CPF confirmado. 3 com CPF exato confirmado.\n1. 00008791520235080111 | TRABALHISTA | ACÚMULO DE FUNÇÃO | RECLAMANTE | ARQUIVADO | CPF EXATO\n2. 00009476220235080111 | TRABALHISTA | ACÚMULO DE FUNÇÃO | RECLAMANTE | ARQUIVADO | CPF EXATO\n3. 00009476220235080111 | TRABALHISTA | ACÚMULO DE FUNÇÃO | RECORRENTE | ARQUIVADO | CPF EXATO",
+        "djenNotes": "DJEN: 12 comunicação(ões) da API, 12 confirmada(s), 12 criminal/trabalhista → 1 processo(s) único(s) após desduplicação. 1 trabalhista. 1 na UF do candidato (PA), 0 em outros estados. 0 alta confiança (score ≥80), 1 média confiança (50-79).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "00968557201"
+    },
+    {
+      "id": "DW62bLNf3Y8iDDYu4ebw",
+      "candidateName": "THOMAZ RUSSO NETTO",
+      "cpfMasked": "***.***.***-44",
+      "finalVerdict": "ATTENTION",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 90,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": null,
+        "laborFlag": "POSITIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 2,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 1,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "1001003-27.2022.5.02.0064",
+          "area": "DIREITO DO TRABALHO",
+          "state": "SP",
+          "city": "SAO PAULO",
+          "county": "64ª VARA DO TRABALHO DE SÃO PAULO",
+          "tribunalAcronym": "TRT2",
+          "distributionDate": "2022-07-21T13:28:30.000Z",
+          "lastStepDate": null,
+          "role": "RECLAMANTE",
+          "side": "Active",
+          "status": "Ativo",
+          "subjects": [
+            "ADICIONAL DE HORAS EXTRAS",
+            "TERCEIRIZAÇÃO/TOMADOR DE SERVIÇOS",
+            "HORAS EXTRAS",
+            "INTEGRAÇÃO EM VERBAS RESCISÓRIAS",
+            "MULTA DE 40% DO FGTS"
+          ],
+          "classifications": [
+            "AÇÃO TRABALHISTA - RITO SUMARÍSSIMO"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        },
+        {
+          "cnj": "1529275-13.2019.8.26.0564",
+          "area": "DIREITO PENAL",
+          "state": "SP",
+          "city": "SAO BERNARDO DO CAMPO",
+          "county": "02 CIVEL DE SAO BERNARDO DO CAMPO",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2019-12-20T13:12:11.000Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA",
+          "side": "Unknown",
+          "status": "Ativo",
+          "subjects": [
+            "RECEPTAÇÃO CULPOSA"
+          ],
+          "classifications": [
+            "TERMO CIRCUNSTANCIADO"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": [
+          "trabalhista"
+        ]
+      },
+      "notes": {
+        "criminalNotes": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.",
+        "analystComment": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.\n\nNao foram identificados alertas restritivos, exposicao politica. Há processos trabalhistas registrados.\n\nOs apontamentos identificados exigem avaliacao operacional antes de qualquer decisao final.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 2 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 1001003-27.2022.5.02.0064 | DIREITO DO TRABALHO | Fase: Inicial | RECLAMANTE | polo Active | Ativo\n2. 1529275-13.2019.8.26.0564 | DIREITO PENAL | Fase: Inicial | VÍTIMA | polo Unknown | Ativo",
+        "bdcProcessNotes": "BigDataCorp: 1 processo(s) encontrado(s). 1 trabalhista(s) com CPF confirmado. 1 com CPF exato confirmado.\n1. 10010032720225020064 | TRABALHISTA | ADICIONAL DE HORAS EXTRAS | RECLAMANTE | ARQUIVADO | CPF EXATO",
+        "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Nao ha evidencia criminal relevante; os matches exatos encontrados aparecem apenas em papel de baixo risco, como testemunha/informante."
+      },
+      "cpf": "28762356844"
+    },
+    {
+      "id": "Dgmkzz6zLGCMxbKBLgFi",
+      "candidateName": "LETÍCIA DUARTE GUIMARÃES",
+      "cpfMasked": "***.***.***-42",
+      "finalVerdict": "FIT",
+      "suggestedVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0599813-49.2023.8.04.0001",
+          "area": "NÃO INFORMADO",
+          "state": "AM",
+          "city": "MANAUS",
+          "county": "2ª VARA ESPECIALIZADA DA DÍVIDA ATIVA MUNICIPAL",
+          "tribunalAcronym": "TJAM",
+          "distributionDate": "2023-09-11T13:45:45.742Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA DO FATO",
+          "side": "Active",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 0599813-49.2023.8.04.0001\n Processo: 0599813-49.2023.8.04.0001\n Status: N/A\n Tribunal: TJAM | Vara: 2ª VARA ESPECIALIZADA DA DÍVIDA ATIVA MUNICIPAL\n Comarca: MANAUS\n Papel: VÍTIMA DO FATO\n Distribuição: 11/09/2023\n\n• Todos os processos concentrados na Comarca de MANAUS",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 5 pessoas no Brasil com esse nome -- probabilidade moderada de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0599813-49.2023.8.04.0001 | NÃO INFORMADO | VÍTIMA DO FATO | polo Active",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 19 comunicação(ões) da API, 11 descartada(s) por filtro de nome, 8 confirmada(s) (8 cível(is) removida(s)), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "49302318842"
+    },
+    {
+      "id": "Hn90Wi9IqAGUGMoUDEBf",
+      "candidateName": "AILTON FELIPE LÁZARO DE OLIVEIRA",
+      "cpfMasked": "***.***.***-27",
+      "finalVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "1525164-19.2022.8.26.0228",
+          "area": "DIREITO PENAL",
+          "state": "SP",
+          "city": "SAO PAULO",
+          "county": "14 CRIMINAL DE CENTRAL",
+          "tribunalAcronym": "TJSP",
+          "distributionDate": "2022-11-08T08:11:31.000Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA",
+          "side": "Unknown",
+          "status": null,
+          "subjects": [
+            "DECORRENTE DE VIOLÊNCIA DOMÉSTICA"
+          ],
+          "classifications": [
+            "AÇÃO PENAL - PROCEDIMENTO SUMÁRIO"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 1525164-19.2022.8.26.0228\n Processo: 1525164-19.2022.8.26.0228\n Tipo: AÇÃO PENAL - PROCEDIMENTO SUMÁRIO\n Assunto: DECORRENTE DE VIOLÊNCIA DOMÉSTICA\n Status: N/A\n Tribunal: TJSP | Vara: 14 CRIMINAL DE CENTRAL\n Comarca: SAO PAULO\n Papel: VÍTIMA\n Distribuição: 08/11/2022\n\n• Todos os processos concentrados na Comarca de SAO PAULO",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado como vítima.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 1525164-19.2022.8.26.0228 | DIREITO PENAL | VÍTIMA | polo Unknown",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "48244079827"
+    },
+    {
+      "id": "KxjzfKU3wWSm15UYod90",
+      "candidateName": "FABÍOLA CARDOSO DOS SANTOS",
+      "cpfMasked": "***.***.***-05",
+      "finalVerdict": "ATTENTION",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 75,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0801290-87.2023.8.15.0981",
+          "area": "NÃO INFORMADO",
+          "state": "PB",
+          "city": "QUEIMADAS",
+          "county": "1ª VARA MISTA DE QUEIMADAS",
+          "tribunalAcronym": "TJPB",
+          "distributionDate": "2023-07-26T09:43:50.293Z",
+          "lastStepDate": null,
+          "role": "INVESTIGADO",
+          "side": "Passive",
+          "status": "Finalizado",
+          "subjects": [
+            "Comunicação falsa de crime ou de contravenção "
+          ],
+          "classifications": [
+            "Procedimento Investigatório Criminal (PIC-MP) "
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "Arquivado Definitivamente"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PROVAVELMENTE_MUDARIA_VEREDITO_FINAL",
+        "rationale": "O criminal final ficou positivo e nao ha outro eixo final positivo nos campos principais. Sem Judit, o caso provavelmente perderia o motivo material do veredito restritivo.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 0801290-87.2023.8.15.0981\n Processo: 0801290-87.2023.8.15.0981\n Tipo: Procedimento Investigatório Criminal (PIC-MP) \n Assunto: Comunicação falsa de crime ou de contravenção \n Status: Finalizado (fase: Arquivado)\n Tribunal: TJPB | Vara: 1ª VARA MISTA DE QUEIMADAS\n Comarca: QUEIMADAS\n Papel: INVESTIGADO\n Distribuição: 26/07/2023\n\n• Todos os processos concentrados na Comarca de QUEIMADAS",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 19 pessoas no Brasil com esse nome -- probabilidade relevante de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0801290-87.2023.8.15.0981 | NÃO INFORMADO | Fase: Arquivado | INVESTIGADO | polo Passive | Finalizado",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 76 comunicação(ões) da API, 63 descartada(s) por filtro de nome, 13 confirmada(s) (13 cível(is) removida(s)), 0 criminal/trabalhista → 0 processo(s) único(s). Filtro rigoroso ativo: apenas NAME_EXACT aceito.",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "13481729405"
+    },
+    {
+      "id": "hqM38OzSgUSXwufkHM1N",
+      "candidateName": "FLÁVIO CORREIA",
+      "cpfMasked": "***.***.***-98",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 90,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "POSITIVE",
+        "warrantFlag": "POSITIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 2,
+        "juditProcessTotal": 6,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 3,
+        "djenCriminalFlag": "POSITIVE",
+        "djenCriminalCount": 1
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0818425-98.2025.8.19.0054",
+          "area": "DIREITO PENAL",
+          "state": "RIO DE JANEIRO",
+          "city": "SÃO JOÃO DE MERITI",
+          "county": "SÃO JOÃO DE MERITI",
+          "tribunalAcronym": "TJRJ",
+          "distributionDate": "2025-08-20T16:25:42.532Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": "Ativo",
+          "subjects": [
+            "CITAÇÃO",
+            "OBJETOS DE CARTAS PRECATÓRIAS CRIMINAIS"
+          ],
+          "classifications": [
+            "CARTA PRECATÓRIA CRIMINAL"
+          ],
+          "isCriminal": true,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        },
+        {
+          "cnj": "0805287-59.2024.8.14.0015",
+          "area": "DIREITO PENAL",
+          "state": "PA",
+          "city": "CASTANHAL",
+          "county": "1ª VARA CÍVEL E EMPRESARIAL DE CASTANHAL",
+          "tribunalAcronym": "TJPA",
+          "distributionDate": "2024-06-07T11:58:50.854Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": "Ativo",
+          "subjects": [
+            "EXTORSÃO"
+          ],
+          "classifications": [
+            "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+          ],
+          "isCriminal": true,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        },
+        {
+          "cnj": "0100217-40.2022.5.01.0224",
+          "area": "DIREITO DO TRABALHO",
+          "state": "RJ",
+          "city": "NOVA IGUACU",
+          "county": "NOVA IGUAÇU - 4ª VARA DO TRABALHO",
+          "tribunalAcronym": "TRT1",
+          "distributionDate": "2022-03-23T02:31:50.000Z",
+          "lastStepDate": null,
+          "role": "RECLAMANTE",
+          "side": "Active",
+          "status": "Ativo",
+          "subjects": [
+            "RESCISÃO INDIRETA"
+          ],
+          "classifications": [
+            "AÇÃO TRABALHISTA - RITO SUMARÍSSIMO"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "ARQUIVADOS OS AUTOS DEFINITIVAMENTE"
+        },
+        {
+          "cnj": "0026572-25.2020.8.19.0054",
+          "area": "NÃO INFORMADO",
+          "state": "RIO DE JANEIRO",
+          "city": "SÃO JOÃO DE MERITI",
+          "county": "SÃO JOÃO DE MERITI",
+          "tribunalAcronym": "TJRJ",
+          "distributionDate": "2020-12-29T03:00:00.000Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": "Ativo",
+          "subjects": [
+            "DÍVIDA ATIVA (EXECUÇÃO FISCAL)"
+          ],
+          "classifications": [
+            "EXECUÇÃO FISCAL"
+          ],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        },
+        {
+          "cnj": "0011825-62.2015.5.01.0033",
+          "area": "DIREITO DO TRABALHO",
+          "state": "PB",
+          "city": "CAICARA",
+          "county": "CAICARA",
+          "tribunalAcronym": "TRT1",
+          "distributionDate": "2015-12-17T23:30:52.000Z",
+          "lastStepDate": null,
+          "role": "RECLAMANTE",
+          "side": "Active",
+          "status": null,
+          "subjects": [
+            "AVISO PRÉVIO"
+          ],
+          "classifications": [
+            "RITO ORDINARIO"
+          ],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "ARQUIVADOS OS AUTOS DEFINITIVAMENTE"
+        },
+        {
+          "cnj": "0033546-93.2011.8.19.0054",
+          "area": null,
+          "state": "RIO DE JANEIRO",
+          "city": "SÃO JOÃO DE MERITI",
+          "county": "SÃO JOÃO DE MERITI",
+          "tribunalAcronym": "TJRJ",
+          "distributionDate": null,
+          "lastStepDate": null,
+          "role": null,
+          "side": null,
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": false,
+          "lastStep": null
+        }
+      ],
+      "counterfactual": {
+        "impact": "PODERIA_NAO_MUDAR_VEREDITO_FINAL",
+        "rationale": "O criminal final dependeu do Judit, mas havia outro(s) sinal(is) final(is): trabalhista, mandado. O veredito final poderia permanecer restritivo por outro eixo.",
+        "otherSignals": [
+          "trabalhista",
+          "mandado"
+        ]
+      },
+      "notes": {
+        "criminalNotes": "1. 0818425-98.2025.8.19.0054\n Processo: 0818425-98.2025.8.19.0054\n Tipo: CARTA PRECATÓRIA CRIMINAL\n Assunto: CITAÇÃO, OBJETOS DE CARTAS PRECATÓRIAS CRIMINAIS\n Status: Ativo (fase: Inicial)\n Tribunal: TJRJ | Vara: SÃO JOÃO DE MERITI\n Comarca: SÃO JOÃO DE MERITI\n Papel: RÉU\n Distribuição: 20/08/2025\n\n2. 0805287-59.2024.8.14.0015\n Processo: 0805287-59.2024.8.14.0015\n Tipo: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO\n Assunto: EXTORSÃO\n Status: Ativo (fase: Inicial)\n Tribunal: TJPA | Vara: 1ª VARA CÍVEL E EMPRESARIAL DE CASTANHAL\n Comarca: CASTANHAL\n Papel: RÉU\n Distribuição: 07/06/2024",
+        "analystComment": "2 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nAdicionalmente, há mandado de prisão civil pendente de cumprimento por inadimplência de obrigação alimentar (processo 0004363-57.2023.8.19.0054), com prazo de até 30 dias.\n\nNao foram identificados alertas restritivos, exposicao politica. Há processos trabalhistas registrados.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 27 pessoas no Brasil com esse nome -- probabilidade relevante de homonímia.",
+        "juditNotes": "Judit: 6 processo(s) encontrado(s). 2 processo(s) criminal(is).\n1. 0818425-98.2025.8.19.0054 | DIREITO PENAL | Fase: Inicial | RÉU | polo Passive | Ativo\n2. 0805287-59.2024.8.14.0015 | DIREITO PENAL | Fase: Inicial | RÉU | polo Passive | Ativo\n3. 0100217-40.2022.5.01.0224 | DIREITO DO TRABALHO | Fase: Inicial | RECLAMANTE | polo Active | Ativo\n4. 0026572-25.2020.8.19.0054 | NÃO INFORMADO | Fase: Inicial | RÉU | polo Passive | Ativo\n5. 0011825-62.2015.5.01.0033 | DIREITO DO TRABALHO | RECLAMANTE | polo Active\n6. 0033546-93.2011.8.19.0054",
+        "bdcProcessNotes": "BigDataCorp: 3 processo(s) encontrado(s). 2 trabalhista(s) com CPF confirmado. 3 com CPF exato confirmado.\n1. 01002174020225010224 | TRABALHISTA | RESCISÃO INDIRETA | RECLAMANTE | ARQUIVADO | CPF EXATO\n2. 00118256220155010033 | TRABALHISTA | AVISO PRÉVIO | RECLAMANTE | ARQUIVADO | CPF EXATO\n3. 00265722520208190054 | DÍVIDA ATIVA (EXECUÇÃO FISCAL) | EXECUTADO | INDEFINIDO | CPF EXATO",
+        "djenNotes": "DJEN: 2305 comunicação(ões) da API, 290 descartada(s) por filtro de nome, 10 confirmada(s) (6 cível(is) removida(s)), 4 criminal/trabalhista → 2 processo(s) único(s) após desduplicação. 1 criminal/penal. 1 trabalhista. Filtro rigoroso ativo: apenas NAME_EXACT aceito. 1 na UF do candidato (RJ), 1 em outros estados.\n1. 5000230-38.2026.8.24.0636 | AçãO PENAL - PROCEDIMENTO ORDINáRIO | TJSC | polo P | 2026-05-15",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit, Judit/Warrant.\nMandado ativo confirmado (1 via BigDataCorp)."
+      },
+      "cpf": "09323743798"
+    },
+    {
+      "id": "kG6gz2SYYmfFB9bFx0kr",
+      "candidateName": "MILLENE MACEIS ALVES DE SOUZA",
+      "cpfMasked": "***.***.***-51",
+      "finalVerdict": "FIT",
+      "suggestedVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": null,
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 9,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 7,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0802325-41.2025.8.12.0029",
+          "area": "DIREITO CIVIL",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2025-07-20T17:16:07.500Z",
+          "lastStepDate": null,
+          "role": "REQUERIDO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "REVISÃO DO SALDO DEVEDOR"
+          ],
+          "classifications": [
+            "CUMPRIMENTO DE SENTENÇA"
+          ],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "Recebidos os Autos do Juiz de Direito"
+        },
+        {
+          "cnj": "0803569-73.2023.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2023-12-13T17:04:18.163Z",
+          "lastStepDate": null,
+          "role": "REQUERIDO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0001612-41.2021.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2021-06-11T19:33:28.450Z",
+          "lastStepDate": null,
+          "role": "TESTEMUNHA - PARTE ATIVA",
+          "side": "Unknown",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0802127-14.2019.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2019-04-16T18:39:25.797Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0800868-81.2019.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2019-02-02T11:44:48.690Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0803073-54.2017.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2017-12-05T12:34:55.633Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0801337-98.2017.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2017-06-01T20:34:41.797Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0801511-44.2016.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2016-07-11T14:56:02.880Z",
+          "lastStepDate": null,
+          "role": "EXECUTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0005041-26.2015.8.12.0029",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "NAVIRAI",
+          "county": "NAVIRAI - JUIZADO ESPECIAL ADJUNTO CÍVEL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2016-07-06T10:53:21.030Z",
+          "lastStepDate": null,
+          "role": "APELADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "Sem apontamentos. Figura apenas como Vítima/parte.",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado - Não autora\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 9 processo(s) encontrado(s). 1 processo(s) criminal(is). 1 como TESTEMUNHA (nao indicam risco).\n1. 0802325-41.2025.8.12.0029 | DIREITO CIVIL | REQUERIDO | polo Passive\n2. 0803569-73.2023.8.12.0029 | NÃO INFORMADO | REQUERIDO | polo Passive\n3. 0001612-41.2021.8.12.0029 | NÃO INFORMADO | TESTEMUNHA - PARTE ATIVA | polo Unknown\n4. 0802127-14.2019.8.12.0029 | NÃO INFORMADO | EXECUTADO | polo Passive\n5. 0800868-81.2019.8.12.0029 | NÃO INFORMADO | EXECUTADO | polo Passive\n6. 0803073-54.2017.8.12.0029 | NÃO INFORMADO | EXECUTADO | polo Passive\n7. 0801337-98.2017.8.12.0029 | NÃO INFORMADO | RÉU | polo Passive\n8. 0801511-44.2016.8.12.0029 | NÃO INFORMADO | EXECUTADO | polo Passive\n9. 0005041-2...",
+        "bdcProcessNotes": "BigDataCorp: 7 processo(s) encontrado(s). 6 com CPF exato confirmado.\n1. 00050412620158120029 | CIVEL | PERDAS E DANOS | REQTE | ARQUIVADO | CPF EXATO\n2. 08015114420168120029 | DADOS OCULTADOS: SEGREDO DE JUSTIÇA\n3. 08008688120198120029 | CIVEL | CHEQUE | EXECTDA | ARQUIVADO | CPF EXATO\n4. 08021271420198120029 | CIVEL | CHEQUE | EXECTDA | TRANSITADO EM JULGADO | CPF EXATO\n5. 08030735420178120029 | CIVEL | IPTU/ IMPOSTO PREDIAL E TERRITORIAL URBANO | EXECTDA | INDEFINIDO | CPF EXATO\n6. 08013379820178120029 | CIVEL | CÉDULA DE CRÉDITO BANCÁRIO | RE | INDEFINIDO | CPF EXATO\n7. 00050412620158120029 | CIVEL | PERDAS E DANOS | APELADA | ARQUIVADO | CPF EXATO",
+        "djenNotes": "DJEN: 2 comunicação(ões) da API, 2 confirmada(s) (2 cível(is) removida(s)), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "00477431151"
+    },
+    {
+      "id": "mO55TRp60lg2hRr3YkIP",
+      "candidateName": "ADRIANO BARBOSA DE SOUZA",
+      "cpfMasked": "***.***.***-49",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 90,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "MEDIUM",
+        "laborFlag": "POSITIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 2,
+        "juditProcessTotal": 6,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 1,
+        "djenCriminalFlag": "POSITIVE",
+        "djenCriminalCount": 15
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0904073-04.2024.8.12.0110",
+          "area": "DIREITO PENAL",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - 3ª VARA DO JUIZADO ESPECIAL CENTRAL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2024-09-04T18:52:29.000Z",
+          "lastStepDate": null,
+          "role": "RÉU",
+          "side": "Passive",
+          "status": null,
+          "subjects": [
+            "AMEAÇA"
+          ],
+          "classifications": [
+            "TERMO CIRCUNSTANCIADO"
+          ],
+          "isCriminal": true,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        },
+        {
+          "cnj": "0844622-84.2024.8.12.0001",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2024-07-31T15:44:08.933Z",
+          "lastStepDate": null,
+          "role": "REPRESENTADO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0844109-19.2024.8.12.0001",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2024-07-30T01:44:32.847Z",
+          "lastStepDate": null,
+          "role": "REQUERIDO",
+          "side": "Passive",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0801434-12.2022.8.12.0001",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2022-01-20T20:15:32.633Z",
+          "lastStepDate": null,
+          "role": "REQUERENTE",
+          "side": "Active",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0801926-09.2019.8.12.0001",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2019-01-23T16:30:29.780Z",
+          "lastStepDate": null,
+          "role": "REQUERENTE",
+          "side": "Active",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        },
+        {
+          "cnj": "0005970-11.2018.8.12.0108",
+          "area": "NÃO INFORMADO",
+          "state": "MS",
+          "city": "CAMPO GRANDE",
+          "county": "CAMPO GRANDE - 8ª VARA DO JUIZADO ESPECIAL - JUSTIÇA ITINERANTE",
+          "tribunalAcronym": "TJMS",
+          "distributionDate": "2018-08-10T18:00:09.653Z",
+          "lastStepDate": null,
+          "role": "REQUERENTE",
+          "side": "Active",
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": false,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "---"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PODERIA_NAO_MUDAR_VEREDITO_FINAL",
+        "rationale": "O criminal final dependeu do Judit, mas havia outro(s) sinal(is) final(is): trabalhista. O veredito final poderia permanecer restritivo por outro eixo.",
+        "otherSignals": [
+          "trabalhista"
+        ]
+      },
+      "notes": {
+        "criminalNotes": "1. 0904073-04.2024.8.12.0110\n Processo: 0904073-04.2024.8.12.0110\n Tipo: TERMO CIRCUNSTANCIADO\n Assunto: AMEAÇA\n Status: N/A\n Tribunal: TJMS | Vara: CAMPO GRANDE - 3ª VARA DO JUIZADO ESPECIAL CENTRAL\n Comarca: CAMPO GRANDE\n Papel: RÉU\n Distribuição: 04/09/2024\n\n2. 0844622-84.2024.8.12.0001\n Processo: 0844622-84.2024.8.12.0001\n Status: N/A\n Tribunal: TJMS | Vara: CAMPO GRANDE - VARA EXECUÇÃO FISCAL MUNICIPAL\n Comarca: CAMPO GRANDE\n Papel: REPRESENTADO\n Distribuição: 31/07/2024\n Último andamento: ---\n\n• Todos os processos concentrados na Comarca de CAMPO GRANDE",
+        "analystComment": "2 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados alertas restritivos, exposicao politica. Há processos trabalhistas registrados.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 107 pessoas no Brasil com esse nome -- probabilidade relevante de homonímia.",
+        "juditNotes": "Judit: 6 processo(s) encontrado(s). 2 processo(s) criminal(is).\n1. 0904073-04.2024.8.12.0110 | DIREITO PENAL | RÉU | polo Passive\n2. 0844622-84.2024.8.12.0001 | NÃO INFORMADO | REPRESENTADO | polo Passive\n3. 0844109-19.2024.8.12.0001 | NÃO INFORMADO | REQUERIDO | polo Passive\n4. 0801434-12.2022.8.12.0001 | NÃO INFORMADO | REQUERENTE | polo Active\n5. 0801926-09.2019.8.12.0001 | NÃO INFORMADO | REQUERENTE | polo Active\n6. 0005970-11.2018.8.12.0108 | NÃO INFORMADO | REQUERENTE | polo Active",
+        "bdcProcessNotes": "BigDataCorp: 1 processo(s) encontrado(s). 1 trabalhista(s) com CPF confirmado. 1 com CPF exato confirmado.\n1. 00260023920255240001 | TRABALHISTA | RECONHECIMENTO DE RELAÇÃO DE EMPREGO | AUTOR | DISTRIBUIDO | CPF EXATO",
+        "djenNotes": "DJEN: 746 comunicação(ões) da API, 83 descartada(s) por filtro de nome, 217 confirmada(s) (81 cível(is) removida(s)), 136 criminal/trabalhista → 27 processo(s) único(s) após desduplicação. 15 criminal/penal. 12 trabalhista. Filtro rigoroso ativo: apenas NAME_EXACT aceito. 2 na UF do candidato (MS), 22 em outros estados.\n1. 0126130-70.2026.3.00.0000 | HABEAS CORPUS | STJ | polo A | 2026-05-06\n2. 0242192-87.2022.8.19.0001 | APELAçãO CRIMINAL | TJRJ | polo A | 2025-12-11\n3. 0028510-13.2026.8.19.0000 | HABEAS CORPUS CRIMINAL | TJRJ | polo P | 2026-05-27\n4. 0020618-53.2026.8.19.0000 | HABEAS CORPUS CRIMINAL | TJRJ | polo P | 2026-05-20\n5. 0023755-77.2009.8.14.0097 | AçãO PENAL DE COMPETêNCIA DO J...",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "81007167149"
+    },
+    {
+      "id": "mWP4yKsOpmtFWtvLhk1L",
+      "candidateName": "MICHELLE DOS SANTOS",
+      "cpfMasked": "***.***.***-23",
+      "finalVerdict": "FIT",
+      "suggestedVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": null,
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 3,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 4,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0017530-91.2021.8.16.0185",
+          "area": "NÃO INFORMADO",
+          "state": "PR",
+          "city": "CURITIBA",
+          "county": "CURITIBA - 1ª VARA DE EXECUÇÕES FISCAIS MUNICIPAIS",
+          "tribunalAcronym": "TJPR",
+          "distributionDate": "2023-07-07T18:39:41.193Z",
+          "lastStepDate": null,
+          "role": "PASSIVO",
+          "side": "Passive",
+          "status": "Finalizado",
+          "subjects": [
+            "Custas"
+          ],
+          "classifications": [
+            "Cumprimento de Sentença contra a Fazenda Pública"
+          ],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "TRANSITADO EM JULGADO EM 04/09/2023"
+        },
+        {
+          "cnj": "0017530-91.2021.8.16.0185",
+          "area": "NÃO INFORMADO",
+          "state": "PR",
+          "city": "CURITIBA",
+          "county": "CURITIBA - 1ª VARA DE EXECUÇÕES FISCAIS MUNICIPAIS",
+          "tribunalAcronym": "TJPR",
+          "distributionDate": "2021-09-21T13:58:37.232Z",
+          "lastStepDate": null,
+          "role": "PASSIVO",
+          "side": "Passive",
+          "status": "Finalizado",
+          "subjects": [
+            "Custas"
+          ],
+          "classifications": [
+            "Cumprimento de Sentença contra a Fazenda Pública"
+          ],
+          "isCriminal": false,
+          "isDefendant": true,
+          "hasExactCpfMatch": true,
+          "lastStep": "EXPEDIÇÃO DE INTIMAÇÃO"
+        },
+        {
+          "cnj": "0013316-59.2019.8.16.0013",
+          "area": "NÃO INFORMADO",
+          "state": "PR",
+          "city": "CURITIBA",
+          "county": "CURITIBA - 12ª VARA CRIMINAL",
+          "tribunalAcronym": "TJPR",
+          "distributionDate": "2019-05-16T15:55:49.779Z",
+          "lastStepDate": null,
+          "role": "VÍTIMA",
+          "side": "Unknown",
+          "status": "Ativo",
+          "subjects": [
+            "Furto de coisa comum "
+          ],
+          "classifications": [
+            "Ação Penal - Procedimento Ordinário"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "ARQUIVADO DEFINITIVAMENTE"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.",
+        "analystComment": "Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nNao foram identificados impeditivos materiais para continuidade do fluxo interno.\n\nRessalva: 232 pessoas no Brasil com esse nome -- probabilidade relevante de homonímia.",
+        "juditNotes": "Judit: 3 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0017530-91.2021.8.16.0185 | NÃO INFORMADO | Fase: Suspenso | PASSIVO | polo Passive | Finalizado\n2. 0017530-91.2021.8.16.0185 | NÃO INFORMADO | Fase: Suspenso | PASSIVO | polo Passive | Finalizado\n3. 0013316-59.2019.8.16.0013 | NÃO INFORMADO | Fase: Inicial | VÍTIMA | polo Unknown | Ativo",
+        "bdcProcessNotes": "BigDataCorp: 4 processo(s) encontrado(s). 4 com CPF exato confirmado.\n1. 00542498620188160182 | ESPECIAL CIVEL | CHEQUE | EXEQUENTE | ARQUIVADO | CPF EXATO\n2. 00265243020158160182 | ESPECIAL CIVEL | PRESTAÇÃO DE SERVIÇOS | POLO ATIVO | ARQUIVADO | CPF EXATO\n3. 00175309120218160185 | FAZENDA | CUSTAS | EXECUTADO | ARQUIVADO | CPF EXATO\n4. 00175309120218160185 | TRIBUTARIA | DÍVIDA ATIVA (EXECUÇÃO FISCAL) | APELADO | ARQUIVADO | CPF EXATO",
+        "djenNotes": "DJEN: 7059 comunicação(ões) da API, 276 descartada(s) por filtro de nome, 24 confirmada(s) (12 cível(is) removida(s)), 12 criminal/trabalhista → 6 processo(s) único(s) após desduplicação. 6 trabalhista. Filtro rigoroso ativo: apenas NAME_EXACT aceito. 1 na UF do candidato (PR), 5 em outros estados.",
+        "enrichmentCriminalNotes": "Nao ha evidencia criminal relevante; os matches exatos encontrados aparecem apenas em papel de baixo risco, como testemunha/informante."
+      },
+      "cpf": "05118465923"
+    },
+    {
+      "id": "mZwHEzO57QV3a3hBHwd9",
+      "candidateName": "RUBICLEUSON DA COSTA PEREIRA",
+      "cpfMasked": "***.***.***-07",
+      "finalVerdict": "FIT",
+      "riskScore": 0,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "6093876-08.2024.8.09.0011",
+          "area": "DIREITO PENAL",
+          "state": "GO",
+          "city": "APARECIDA DE GOIANIA",
+          "county": "APARECIDA DE GOIÂNIA - VARA DA FAZENDA PUB MUNICIPAL, DE REG PUB E AMBIENTAL",
+          "tribunalAcronym": "TJGO",
+          "distributionDate": "2024-12-02T00:00:00.000Z",
+          "lastStepDate": null,
+          "role": "TESTEMUNHA DO JUÍZO",
+          "side": "Interested",
+          "status": "Ativo",
+          "subjects": [
+            "INTOLERÂNCIA POR ORIENTAÇÃO SEXUAL"
+          ],
+          "classifications": [
+            "AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": null
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 6093876-08.2024.8.09.0011\n Processo: 6093876-08.2024.8.09.0011\n Tipo: AÇÃO PENAL - PROCEDIMENTO ORDINÁRIO\n Assunto: INTOLERÂNCIA POR ORIENTAÇÃO SEXUAL\n Status: Ativo (fase: Inicial)\n Tribunal: TJGO | Vara: APARECIDA DE GOIÂNIA - VARA DA FAZENDA PUB MUNICIPAL, DE REG PUB E AMBIENTAL\n Comarca: APARECIDA DE GOIANIA\n Papel: TESTEMUNHA DO JUÍZO\n Distribuição: 02/12/2024\n\n• Todos os processos concentrados na Comarca de APARECIDA DE GOIANIA",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento. - TESTEMUNHA\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nRessalva: nome com ocorrência única no Brasil, o que reduz significativamente a possibilidade de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is). 1 como TESTEMUNHA (nao indicam risco).\n1. 6093876-08.2024.8.09.0011 | DIREITO PENAL | Fase: Inicial | TESTEMUNHA DO JUÍZO | polo Interested | Ativo",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "04269670207"
+    },
+    {
+      "id": "pj6iZrA2inoRMhEyI0WU",
+      "candidateName": "VITOR AUGUSTO ALMEIDA DE LIMA",
+      "cpfMasked": "***.***.***-48",
+      "finalVerdict": "NOT_RECOMMENDED",
+      "suggestedVerdict": "NOT_RECOMMENDED",
+      "riskScore": 75,
+      "riskLevel": "RED",
+      "finalFlags": {
+        "criminalFlag": "POSITIVE",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "POSITIVE",
+        "djenCriminalCount": 1
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0000454-96.2023.8.16.0116",
+          "area": "NÃO INFORMADO",
+          "state": "PR",
+          "city": "MATINHOS",
+          "county": "MATINHOS - VARA CÍVEL, DA FAZENDA PÚBLICA, ACIDENTES DO TRABALHO, REGISTROS PÚBLICOS E CORREGEDORIA DO FORO EXTRAJUDICIAL, JUIZADO ESPECIAL CÍVEL E JUIZADO ESPECIAL DA FAZENDA PÚBLICA",
+          "tribunalAcronym": "TJPR",
+          "distributionDate": "2023-01-26T13:29:45.438Z",
+          "lastStepDate": null,
+          "role": "PASSIVO",
+          "side": "Passive",
+          "status": "Finalizado",
+          "subjects": [
+            "Posse de Drogas para Consumo Pessoal"
+          ],
+          "classifications": [
+            "Termo Circunstanciado"
+          ],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": true,
+          "lastStep": "ARQUIVADO DEFINITIVAMENTE"
+        }
+      ],
+      "counterfactual": {
+        "impact": "PROVAVELMENTE_MUDARIA_VEREDITO_FINAL",
+        "rationale": "O criminal final ficou positivo e nao ha outro eixo final positivo nos campos principais. Sem Judit, o caso provavelmente perderia o motivo material do veredito restritivo.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "1. 0000454-96.2023.8.16.0116\n Processo: 0000454-96.2023.8.16.0116\n Tipo: Termo Circunstanciado\n Assunto: Posse de Drogas para Consumo Pessoal\n Status: Finalizado (fase: Arquivado)\n Tribunal: TJPR | Vara: MATINHOS - VARA CÍVEL, DA FAZENDA PÚBLICA, ACIDENTES DO TRABALHO, REGISTROS PÚBLICOS E CORREGEDORIA DO FORO EXTRAJUDICIAL, JUIZADO ESPECIAL CÍVEL E JUIZADO ESPECIAL DA FAZENDA PÚBLICA\n Comarca: MATINHOS\n Papel: PASSIVO\n Distribuição: 26/01/2023\n\n• Todos os processos concentrados na Comarca de MATINHOS",
+        "analystComment": "1 processo(s) criminal(is) com CPF confirmado, sem condenação definitiva identificada até o momento.\n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco elevado para continuidade do processo.\n\nRessalva: 2 pessoas no Brasil com esse nome -- probabilidade moderada de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0000454-96.2023.8.16.0116 | NÃO INFORMADO | Fase: Arquivado | PASSIVO | polo Passive | Finalizado",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 4 comunicação(ões) da API, 4 confirmada(s) (1 cível(is) removida(s)), 3 criminal/trabalhista → 1 processo(s) único(s) após desduplicação. 1 criminal/penal. 1 na UF do candidato (PR), 0 em outros estados. 0 alta confiança (score ≥80), 1 média confiança (50-79).\n1. 0010874-65.2025.8.16.0028 | INQUéRITO POLICIAL | TJPR | polo P | 2026-04-24",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "14716834948"
+    },
+    {
+      "id": "qjDzmFUs2vI6MOs0TFAX",
+      "candidateName": "LUIS FERNANDO RIBEIRO ARAUJO",
+      "cpfMasked": "***.***.***-09",
+      "finalVerdict": "ATTENTION",
+      "riskScore": 18,
+      "riskLevel": "GREEN",
+      "finalFlags": {
+        "criminalFlag": "NEGATIVE_PARTIAL",
+        "criminalSeverity": "LOW",
+        "laborFlag": "NEGATIVE",
+        "warrantFlag": "NEGATIVE",
+        "pepFlag": "NEGATIVE",
+        "sanctionFlag": "NEGATIVE",
+        "socialStatus": "",
+        "digitalFlag": "",
+        "conflictInterest": ""
+      },
+      "providers": {
+        "juditCriminalFlag": "POSITIVE",
+        "juditCriminalCount": 1,
+        "juditProcessTotal": 1,
+        "bigdatacorpCriminalFlag": "NEGATIVE",
+        "bigdatacorpCriminalCount": 0,
+        "bigdatacorpProcessTotal": 0,
+        "djenCriminalFlag": "NEGATIVE",
+        "djenCriminalCount": 0
+      },
+      "juditProcesses": [
+        {
+          "cnj": "0702461-95.2020.8.07.0012",
+          "area": "NÃO INFORMADO",
+          "state": "DF",
+          "city": "SÃO SEBASTIÃO",
+          "county": "JUIZADO ESPECIAL CÍVEL E CRIMINAL DE SÃO SEBASTIÃO",
+          "tribunalAcronym": "TJDF",
+          "distributionDate": "2020-06-08T21:27:55.463Z",
+          "lastStepDate": null,
+          "role": null,
+          "side": null,
+          "status": null,
+          "subjects": [],
+          "classifications": [],
+          "isCriminal": true,
+          "isDefendant": false,
+          "hasExactCpfMatch": false,
+          "lastStep": "Arquivado Definitivamente"
+        }
+      ],
+      "counterfactual": {
+        "impact": "NAO_MUDARIA_VEREDITO_CRIMINAL",
+        "rationale": "O analista nao manteve criminal positivo no resultado final; sem Judit, a conclusao criminal provavelmente continuaria sem apontamento material.",
+        "otherSignals": []
+      },
+      "notes": {
+        "criminalNotes": "Processo adicional (sem confirmação de CPF):\n\n Processo: 0702461-95.2020.8.07.0012\n Status: N/A\n Tribunal: TJDF | Vara: JUIZADO ESPECIAL CÍVEL E CRIMINAL DE SÃO SEBASTIÃO - Crimes de Trânsito\n Comarca: SÃO SEBASTIÃO\n Distribuição: 08/06/2020\n Nota: 2 pessoas no Brasil com esse nome -- probabilidade moderada de homonímia.\n\n• Todos os processos concentrados na Comarca de SÃO SEBASTIÃO",
+        "analystComment": "1 processo(s) criminal(is) identificado(s) -- sem confirmação documental de CPF. \n\nNao foram identificados apontamentos trabalhistas, alertas restritivos, exposicao politica.\n\nO conjunto de evidências configura risco baixo para continuidade do processo.\n\nRessalva: 2 pessoas no Brasil com esse nome -- probabilidade moderada de homonímia.",
+        "juditNotes": "Judit: 1 processo(s) encontrado(s). 1 processo(s) criminal(is).\n1. 0702461-95.2020.8.07.0012 | NÃO INFORMADO",
+        "bdcProcessNotes": "BigDataCorp: 0 processo(s) encontrado(s).",
+        "djenNotes": "DJEN: 0 comunicação(ões) da API, 0 confirmada(s), 0 criminal/trabalhista → 0 processo(s) único(s).",
+        "enrichmentCriminalNotes": "Criminal POSITIVO: evidencia forte confirmada por Judit."
+      },
+      "cpf": "61920815309"
+    }
+  ]
+}

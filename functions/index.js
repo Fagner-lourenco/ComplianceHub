@@ -7223,20 +7223,39 @@ exports.registerClientExport = onCall(
     },
 );
 
-exports.backfillClientCasesMirror = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 540 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-        await getOpsUserProfile(uid);
+async function backfillClientCasesMirrorInner(request) {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+    const profile = await getOpsUserProfile(uid);
 
+    // BUG-R5-004: Only admins/owners can trigger backfill.
+    if (profile.role !== 'admin' && profile.role !== 'owner') {
+        throw new HttpsError('permission-denied', 'Apenas administradores podem executar backfill.');
+    }
+
+    const targetTenant = request.data?.tenantId || profile.tenantId;
+    if (!targetTenant) {
+        throw new HttpsError('invalid-argument', 'tenantId e obrigatorio.');
+    }
+
+    // BUG-R5-004: Distributed lock to prevent concurrent backfill for the same tenant.
+    const lockRef = db.collection('systemLocks').doc(`backfill-${targetTenant}`);
+    const lockSnap = await lockRef.get();
+    if (lockSnap.exists) {
+        throw new HttpsError('resource-exhausted', 'Backfill ja em execucao para este tenant.');
+    }
+    await lockRef.set({ startedAt: FieldValue.serverTimestamp() });
+
+    try {
         // BUG-R5-004: Paginate backfill to avoid loading all cases into memory.
         let lastDoc = null;
         let count = 0;
         const pageSize = 400;
 
         while (true) {
-            let q = db.collection('cases').limit(pageSize);
+            let q = db.collection('cases')
+                .where('tenantId', '==', targetTenant)
+                .limit(pageSize);
             if (lastDoc) q = q.startAfter(lastDoc);
             const snapshot = await q.get();
             const docs = snapshot.docs || [];
@@ -7257,7 +7276,15 @@ exports.backfillClientCasesMirror = onCall(
             if (docs.length < pageSize) break;
         }
         return { synced: count };
-    },
+    } finally {
+        // Always release the lock, even on error.
+        await lockRef.delete().catch(() => {});
+    }
+}
+
+exports.backfillClientCasesMirror = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 540 , cors: true },
+    backfillClientCasesMirrorInner,
 );
 
 exports.createAnalystPublicReport = onCall(
@@ -12582,6 +12609,7 @@ exports.__test = {
     shouldEnforceClientVerdictPolicy,
     normalizeUnicodeToAscii,
     fixLatinMojibake,
+    backfillClientCasesMirrorInner,
     _setDb(mockDb) { db = mockDb; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },
 };
