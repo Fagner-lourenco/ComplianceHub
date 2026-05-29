@@ -10,12 +10,12 @@ import PaginationControls from '../../ui/components/PaginationControls/Paginatio
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
-import { useCases } from '../../hooks/useCases';
 import {
     callAssignCaseToCurrentAnalyst,
     callAssignCaseToAnalyst,
     callListOpsUsers,
 } from '../../core/firebase/firestoreService';
+import { useOpsCasesQuery } from '../../hooks/useOpsCasesQuery';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { formatDate } from '../../core/formatDate';
 import { extractErrorMessage } from '../../core/errorUtils';
@@ -46,11 +46,7 @@ export default function FilaPage() {
     const isDemoMode = !user;
     const routePrefix = isDemoMode ? '/demo' : '';
     const { selectedTenantId } = useTenant();
-    const {
-        cases,
-        error,
-        loading,
-    } = useCases(selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId);
+    const tenantId = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
     const [filter, setFilter] = useState('ALL');
     const [assignment, setAssignment] = useState('ALL');
     const [dateFrom, setDateFrom] = useState('');
@@ -61,6 +57,7 @@ export default function FilaPage() {
     const assumeErrorTimerRef = useRef(null);
     const [selected, setSelected] = useState(new Set());
     const [bulkRunning, setBulkRunning] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Assignment modal state
     const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -76,42 +73,28 @@ export default function FilaPage() {
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
     const isAssignable = (c) => c.status === 'PENDING' && !c.assigneeId;
 
-    const queue = useMemo(() => {
-        let result = cases.filter((currentCase) => currentCase.status !== 'DONE');
-
-        if (filter !== 'ALL') {
-            result = result.filter((currentCase) => currentCase.status === filter);
-        }
-
-        if (assignment === 'UNASSIGNED') {
-            result = result.filter((currentCase) => !currentCase.assigneeId);
-        }
-
-        if (assignment === 'MINE') {
-            result = result.filter((currentCase) => currentCase.assigneeId === user?.uid);
-        }
-
-        if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
-        if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
-
-        return result;
-    }, [assignment, cases, dateFrom, dateTo, filter, user?.uid]);
-
-    const stats = useMemo(() => cases.reduce((acc, currentCase) => {
-        if (currentCase.status === 'PENDING') acc.pending += 1;
-        if (currentCase.status === 'IN_PROGRESS') acc.inProgress += 1;
-        if (currentCase.status === 'WAITING_INFO') acc.waiting += 1;
-        if (currentCase.status === 'CORRECTION_NEEDED') acc.corrections += 1;
-        return acc;
-    }, { pending: 0, inProgress: 0, waiting: 0, corrections: 0 }), [cases]);
-
-    const totalPages = Math.max(1, Math.ceil(queue.length / PAGE_SIZE));
+    const queryFilters = useMemo(() => ({
+        status: filter,
+        assignment,
+        dateFrom,
+        dateTo,
+    }), [assignment, dateFrom, dateTo, filter]);
+    const { cases, error, loading, total, totalPages, stats } = useOpsCasesQuery({
+        tenantId,
+        isDemoMode,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        filters: queryFilters,
+        queueOnly: true,
+        assigneeUid: user?.uid || null,
+        refreshKey,
+    });
     const safeCurrentPage = Math.min(currentPage, totalPages);
 
-    const paginatedQueue = useMemo(() => {
-        const start = (safeCurrentPage - 1) * PAGE_SIZE;
-        return queue.slice(start, start + PAGE_SIZE);
-    }, [queue, safeCurrentPage]);
+    useEffect(() => {
+        setCurrentPage(1);
+        setSelected(new Set());
+    }, [queryFilters]);
 
     const handleAssume = useCallback(async (currentCase) => {
         if (assumingCaseId || !user) return;
@@ -119,6 +102,7 @@ export default function FilaPage() {
         setAssumeError(null);
         try {
             await callAssignCaseToCurrentAnalyst({ caseId: currentCase.id });
+            setRefreshKey((current) => current + 1);
         } catch (err) {
             console.error('Error assuming case:', err);
             setAssumeError(extractErrorMessage(err, 'Falha ao assumir o caso. Tente novamente.'));
@@ -210,7 +194,7 @@ export default function FilaPage() {
     };
 
     const toggleAll = () => {
-        const visibleAssignableIds = paginatedQueue.filter(isAssignable).map((c) => c.id);
+        const visibleAssignableIds = cases.filter(isAssignable).map((c) => c.id);
         const allVisibleSelected = visibleAssignableIds.length > 0 && visibleAssignableIds.every((id) => selected.has(id));
         setSelected((prev) => {
             const next = new Set(prev);
@@ -237,6 +221,7 @@ export default function FilaPage() {
         }
         setBulkRunning(false);
         setSelected(new Set());
+        setRefreshKey((current) => current + 1);
         if (failedIds.length > 0) {
             setAssumeError(`${failedIds.length} de ${ids.length} caso(s) falharam ao ser atribuídos.`);
             clearTimeout(assumeErrorTimerRef.current);
@@ -252,6 +237,7 @@ export default function FilaPage() {
             await callAssignCaseToAnalyst({ caseId: assignModalCase.id, targetUid });
             setAssignModalOpen(false);
             setAssignModalCase(null);
+            setRefreshKey((current) => current + 1);
         } catch (err) {
             setAssignError(extractErrorMessage(err, 'Falha ao atribuir caso.'));
         } finally {
@@ -320,7 +306,7 @@ export default function FilaPage() {
             )}
 
             <MobileDataCardList
-                items={paginatedQueue}
+                items={cases}
                 loading={loading}
                 emptyMessage={filter !== 'ALL' || assignment !== 'ALL' || dateFrom || dateTo ? 'Nenhum caso corresponde aos filtros selecionados.' : 'Nenhum caso pendente na fila.'}
                 renderCard={renderCard}
@@ -331,7 +317,7 @@ export default function FilaPage() {
                         <thead>
                             <tr>
                                 <th scope="col" style={{ width: 36 }}>
-                                    <input type="checkbox" checked={paginatedQueue.some(isAssignable) && paginatedQueue.filter(isAssignable).every((currentCase) => selected.has(currentCase.id))} onChange={toggleAll} disabled={bulkRunning} aria-label="Selecionar todos" />
+                                    <input type="checkbox" checked={cases.some(isAssignable) && cases.filter(isAssignable).every((currentCase) => selected.has(currentCase.id))} onChange={toggleAll} disabled={bulkRunning} aria-label="Selecionar todos" />
                                 </th>
                                 <th scope="col">Candidato</th>
                                 <th scope="col">Empresa</th>
@@ -371,7 +357,7 @@ export default function FilaPage() {
                                     </td>
                                 </tr>
                             )}
-                            {!loading && !error && paginatedQueue.map((currentCase) => (
+                            {!loading && !error && cases.map((currentCase) => (
                                 <tr
                                     key={currentCase.id}
                                     className={`fila-table__row ${currentCase.priority === 'HIGH' ? 'fila-table__row--high' : ''} ${selected.has(currentCase.id) ? 'fila-table__row--selected' : ''}`}
@@ -435,7 +421,7 @@ export default function FilaPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {!loading && !error && queue.length === 0 && (
+                            {!loading && !error && total === 0 && (
                                 <tr>
                                     <td colSpan={14} style={{ textAlign: 'center', padding: '48px' }}>
                                         <span style={{ fontSize: '2rem' }}>OK</span>
@@ -455,7 +441,7 @@ export default function FilaPage() {
             <PaginationControls
                 page={safeCurrentPage}
                 pageSize={PAGE_SIZE}
-                totalItems={queue.length}
+                totalItems={total}
                 itemLabel="casos"
                 onPageChange={setCurrentPage}
             />

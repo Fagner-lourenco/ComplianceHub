@@ -16,6 +16,9 @@ const filaPageMocks = vi.hoisted(() => ({
         error: null,
     },
     callAssignCaseToCurrentAnalyst: vi.fn(),
+    callAssignCaseToAnalyst: vi.fn(),
+    callListOpsUsers: vi.fn(),
+    callListOpsCases: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -32,6 +35,9 @@ vi.mock('../../hooks/useCases', () => ({
 
 vi.mock('../../core/firebase/firestoreService', () => ({
     callAssignCaseToCurrentAnalyst: (...args) => filaPageMocks.callAssignCaseToCurrentAnalyst(...args),
+    callAssignCaseToAnalyst: (...args) => filaPageMocks.callAssignCaseToAnalyst(...args),
+    callListOpsUsers: (...args) => filaPageMocks.callListOpsUsers(...args),
+    callListOpsCases: (...args) => filaPageMocks.callListOpsCases(...args),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -49,10 +55,33 @@ describe('FilaPage', () => {
     beforeEach(() => {
         filaPageMocks.navigate.mockReset();
         filaPageMocks.callAssignCaseToCurrentAnalyst.mockReset();
+        filaPageMocks.callAssignCaseToAnalyst.mockReset();
+        filaPageMocks.callListOpsUsers.mockReset();
+        filaPageMocks.callListOpsCases.mockReset();
+        filaPageMocks.callListOpsCases.mockResolvedValue({
+            cases: [],
+            total: 0,
+            totalPages: 1,
+            stats: { pending: 0, inProgress: 0, waiting: 0, corrections: 0 },
+            meta: { source: 'server' },
+        });
+    });
+
+    it('consulta a fila operacional no servidor em vez de depender dos 500 casos carregados', async () => {
+        render(<FilaPage />);
+
+        await vi.waitFor(() => {
+            expect(filaPageMocks.callListOpsCases).toHaveBeenCalledWith(expect.objectContaining({
+                queueOnly: true,
+                page: 1,
+                pageSize: 50,
+                tenantId: null,
+            }));
+        });
     });
 
     it('filtra "Meus casos" pelo uid do usuario autenticado, nao por string fixa', () => {
-        filaPageMocks.casesState = {
+        filaPageMocks.callListOpsCases.mockResolvedValue({
             cases: [
                 {
                     id: 'C1',
@@ -79,9 +108,11 @@ describe('FilaPage', () => {
                     assigneeId: 'other-user',
                 },
             ],
-            loading: false,
-            error: null,
-        };
+            total: 1,
+            totalPages: 1,
+            stats: { pending: 0, inProgress: 1, waiting: 0, corrections: 0 },
+            meta: { source: 'server' },
+        });
 
         render(<FilaPage />);
 
@@ -90,13 +121,18 @@ describe('FilaPage', () => {
         const assignmentSelect = selects[1];
         fireEvent.change(assignmentSelect, { target: { value: 'MINE' } });
 
-        expect(screen.getByText('Alice')).toBeInTheDocument();
-        expect(screen.queryByText('Bob')).not.toBeInTheDocument();
+        return vi.waitFor(() => {
+            expect(filaPageMocks.callListOpsCases).toHaveBeenLastCalledWith(expect.objectContaining({
+                filters: expect.objectContaining({ assignment: 'MINE' }),
+                assigneeUid: 'analyst-7',
+            }));
+            expect(screen.getByText('Alice')).toBeInTheDocument();
+        });
     });
 
     it('chama o callable operacional ao clicar em Assumir', async () => {
         filaPageMocks.callAssignCaseToCurrentAnalyst.mockResolvedValue(undefined);
-        filaPageMocks.casesState = {
+        filaPageMocks.callListOpsCases.mockResolvedValue({
             cases: [
                 {
                     id: 'C3',
@@ -112,13 +148,15 @@ describe('FilaPage', () => {
                     assigneeId: null,
                 },
             ],
-            loading: false,
-            error: null,
-        };
+            total: 1,
+            totalPages: 1,
+            stats: { pending: 1, inProgress: 0, waiting: 0, corrections: 0 },
+            meta: { source: 'server' },
+        });
 
         render(<FilaPage />);
 
-        const assumeButton = screen.getByRole('button', { name: 'Assumir' });
+        const assumeButton = await screen.findByRole('button', { name: 'Assumir' });
         fireEvent.click(assumeButton);
 
         await vi.waitFor(() => {
@@ -129,7 +167,7 @@ describe('FilaPage', () => {
     });
 
     it('nao mostra botao Assumir quando caso ja tem assigneeId', () => {
-        filaPageMocks.casesState = {
+        filaPageMocks.callListOpsCases.mockResolvedValue({
             cases: [
                 {
                     id: 'C4',
@@ -144,13 +182,17 @@ describe('FilaPage', () => {
                     assigneeId: 'analyst-7',
                 },
             ],
-            loading: false,
-            error: null,
-        };
+            total: 1,
+            totalPages: 1,
+            stats: { pending: 0, inProgress: 1, waiting: 0, corrections: 0 },
+            meta: { source: 'server' },
+        });
 
         render(<FilaPage />);
 
-        expect(screen.queryByRole('button', { name: 'Assumir' })).not.toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Abrir' })).toBeInTheDocument();
+        return vi.waitFor(() => {
+            expect(screen.queryByRole('button', { name: 'Assumir' })).not.toBeInTheDocument();
+            expect(screen.getByRole('button', { name: 'Abrir' })).toBeInTheDocument();
+        });
     });
 });

@@ -36,6 +36,7 @@ const exportacoesPageMocks = vi.hoisted(() => ({
     },
     subscribeToExports: vi.fn(),
     callRegisterClientExport: vi.fn(),
+    callGetClientExportCases: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -49,6 +50,8 @@ vi.mock('../../hooks/useCases', () => ({
 vi.mock('../../core/firebase/firestoreService', () => ({
     subscribeToExports: (...args) => exportacoesPageMocks.subscribeToExports(...args),
     callRegisterClientExport: (...args) => exportacoesPageMocks.callRegisterClientExport(...args),
+    callGetClientExportCases: (...args) => exportacoesPageMocks.callGetClientExportCases(...args),
+    getCasePublicResult: vi.fn(),
 }));
 
 exportacoesPageMocks.subscribeToExports.mockImplementation((tenantId, callback) => {
@@ -92,6 +95,12 @@ describe('ExportacoesPage', () => {
             ],
         };
         exportacoesPageMocks.callRegisterClientExport.mockResolvedValue({ exportId: 'exp-1' });
+        exportacoesPageMocks.callGetClientExportCases.mockResolvedValue({
+            cases: exportacoesPageMocks.casesState.cases,
+            total: exportacoesPageMocks.casesState.cases.length,
+            pendingCount: exportacoesPageMocks.casesState.cases.filter((currentCase) => currentCase.status !== 'DONE').length,
+            meta: { source: 'server' },
+        });
         global.URL.createObjectURL = vi.fn(() => 'blob:export');
         global.URL.revokeObjectURL = vi.fn();
         window.open = vi.fn();
@@ -105,10 +114,11 @@ describe('ExportacoesPage', () => {
         expect(exportacoesPageMocks.subscribeToExports).toHaveBeenCalledWith('madero-br', expect.any(Function));
     });
 
-    it('mostra que o escopo usa casos carregados e renomeia PDF para imprimivel', () => {
+    it('mostra que o escopo usa recorte completo e renomeia PDF para imprimivel', async () => {
         render(<ExportacoesPage />);
 
-        expect(screen.getAllByText(/Casos carregados/i).length).toBeGreaterThan(0);
+        expect(await screen.findByText(/Registros no recorte/i)).toBeInTheDocument();
+        expect(screen.getByText(/recorte completo encontrado no servidor/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Página para impressão/i })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /^PDF$/i })).not.toBeInTheDocument();
     });
@@ -123,12 +133,14 @@ describe('ExportacoesPage', () => {
     });
 
     it('bloqueia exportacao quando casos estao em erro', () => {
-        exportacoesPageMocks.casesState = { loading: false, error: new Error('permission-denied'), cases: [] };
+        exportacoesPageMocks.callGetClientExportCases.mockRejectedValueOnce(new Error('permission-denied'));
 
         render(<ExportacoesPage />);
 
-        expect(screen.getByRole('button', { name: /Registrar e gerar/i })).toBeDisabled();
-        expect(screen.getByText(/Não foi possível carregar as solicitações|exportação foi bloqueada/i)).toBeInTheDocument();
+        return waitFor(() => {
+            expect(screen.getByRole('button', { name: /Registrar e gerar/i })).toBeDisabled();
+            expect(screen.getByText(/Não foi possível carregar as solicitações|exportação foi bloqueada|permission-denied/i)).toBeInTheDocument();
+        });
     });
 
     it('bloqueia intervalo de data invalido sem chamar backend', () => {
@@ -146,7 +158,9 @@ describe('ExportacoesPage', () => {
         const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
         render(<ExportacoesPage />);
 
-        fireEvent.click(screen.getByRole('button', { name: /Registrar e gerar/i }));
+        const button = await screen.findByRole('button', { name: /Registrar e gerar/i });
+        await waitFor(() => expect(button).not.toBeDisabled());
+        fireEvent.click(button);
 
         await waitFor(() => {
             expect(exportacoesPageMocks.callRegisterClientExport).toHaveBeenCalledTimes(1);
@@ -159,6 +173,41 @@ describe('ExportacoesPage', () => {
             containsPending: true,
         }));
         await waitFor(() => expect(clickSpy).toHaveBeenCalled());
+        clickSpy.mockRestore();
+    });
+
+    it('gera exportacao a partir do recorte completo do servidor, inclusive acima de 500 registros', async () => {
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+        exportacoesPageMocks.callGetClientExportCases.mockResolvedValue({
+            cases: Array.from({ length: 750 }, (_, index) => ({
+                id: `case-${index + 1}`,
+                candidateName: `Pessoa ${index + 1}`,
+                cpfMasked: '***.123.456-**',
+                status: 'DONE',
+                createdAt: '2026-04-20',
+                riskLevel: 'GREEN',
+                finalVerdict: 'FIT',
+            })),
+            total: 750,
+            pendingCount: 0,
+            meta: { source: 'server' },
+        });
+
+        render(<ExportacoesPage />);
+
+        await waitFor(() => expect(screen.getAllByText('750').length).toBeGreaterThan(0));
+        const button = screen.getByRole('button', { name: /Registrar e gerar/i });
+        await waitFor(() => expect(button).not.toBeDisabled());
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(exportacoesPageMocks.callRegisterClientExport).toHaveBeenCalledWith(expect.objectContaining({
+                records: 750,
+            }));
+        });
+        expect(exportacoesPageMocks.callGetClientExportCases).toHaveBeenCalledWith(expect.objectContaining({
+            scopeCode: 'ALL',
+        }));
         clickSpy.mockRestore();
     });
 

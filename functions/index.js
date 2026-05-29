@@ -7171,8 +7171,8 @@ exports.registerClientExport = onCall(
         if (!allowedArtifactModes.has(normalizedArtifactMode)) {
             throw new HttpsError('invalid-argument', 'Modo de artefato invalido.');
         }
-        if (!Number.isFinite(normalizedRecords) || normalizedRecords < 1 || normalizedRecords > 500) {
-            throw new HttpsError('invalid-argument', 'Quantidade de registros invalida para exportacao client-side.');
+        if (!Number.isFinite(normalizedRecords) || normalizedRecords < 1) {
+            throw new HttpsError('invalid-argument', 'Quantidade de registros invalida para exportacao.');
         }
 
         const exportRef = db.collection('exports').doc();
@@ -10445,6 +10445,121 @@ function matchesClientCaseFilters(caseData, filters) {
     return true;
 }
 
+function getOverallEnrichmentStatusBackend(caseData) {
+    const statuses = [
+        caseData?.juditEnrichmentStatus,
+        caseData?.escavadorEnrichmentStatus,
+        caseData?.enrichmentStatus,
+        caseData?.bigdatacorpEnrichmentStatus,
+        caseData?.djenEnrichmentStatus,
+        caseData?.aiStatus,
+    ].filter(Boolean);
+
+    if (statuses.includes('RUNNING')) return 'RUNNING';
+    if (statuses.includes('BLOCKED')) return 'BLOCKED';
+    if (statuses.includes('PARTIAL')) return 'PARTIAL';
+    if (statuses.includes('FAILED') && statuses.includes('DONE')) return 'PARTIAL';
+    if (statuses.includes('FAILED')) return 'FAILED';
+    if (statuses.includes('DONE')) return 'DONE';
+    if (statuses.length > 0 && statuses.every((status) => status === 'SKIPPED')) return 'SKIPPED';
+    return 'PENDING';
+}
+
+function getSlaStateBackend(caseData, now = new Date()) {
+    const createdAt = asDate(caseData?.createdAt);
+    if (!createdAt) return 'no_sla';
+    const slaHours = Number(caseData?.slaHours ?? 48);
+    const totalMs = slaHours * 60 * 60 * 1000;
+    const deadline = new Date(createdAt.getTime() + totalMs);
+
+    if (caseData?.status === 'DONE') {
+        const concludedAt = asDate(caseData?.concludedAt);
+        const elapsedMs = concludedAt
+            ? concludedAt.getTime() - createdAt.getTime()
+            : (Number(caseData?.turnaroundHours) || 0) * 60 * 60 * 1000;
+        return elapsedMs <= totalMs ? 'completed_on_time' : 'completed_late';
+    }
+
+    const remainingMs = deadline.getTime() - now.getTime();
+    if (remainingMs < 0) return 'overdue';
+    const elapsedMs = totalMs - remainingMs;
+    const percentElapsed = Math.max(0, (elapsedMs / totalMs) * 100);
+    return percentElapsed >= 75 ? 'warning' : 'on_time';
+}
+
+function matchesOpsCaseSearch(caseData, rawTerm) {
+    const term = normalizeSearchText(rawTerm);
+    if (!term) return true;
+    const digits = String(rawTerm || '').replace(/\D/g, '');
+    const candidateName = normalizeSearchText(caseData.candidateName);
+    const cpfDigits = String(caseData.cpf || caseData.cpfMasked || '').replace(/\D/g, '');
+    const caseId = normalizeSearchText(caseData.caseId || caseData.id);
+
+    if (candidateName.includes(term)) return true;
+    if (caseId.includes(term)) return true;
+    return digits.length >= 3 && cpfDigits.includes(digits);
+}
+
+function matchesOpsCaseFilters(caseData, filters = {}, options = {}) {
+    const status = String(filters.status || filters.filter || 'ALL');
+    const risk = String(filters.risk || 'ALL');
+    const verdict = String(filters.verdict || 'ALL');
+    const enrichment = String(filters.enrichment || 'ALL');
+    const sla = String(filters.sla || 'ALL');
+    const assignment = String(filters.assignment || 'ALL');
+    const dateFrom = String(filters.dateFrom || '');
+    const dateTo = String(filters.dateTo || '');
+    const createdDate = String(caseData.createdAt || '').slice(0, 10);
+
+    if (options.queueOnly && caseData.status === 'DONE') return false;
+    if (status !== 'ALL' && caseData.status !== status) return false;
+    if (risk !== 'ALL' && caseData.riskLevel !== risk) return false;
+    if (verdict !== 'ALL' && caseData.finalVerdict !== verdict) return false;
+    if (enrichment !== 'ALL' && getOverallEnrichmentStatusBackend(caseData) !== enrichment) return false;
+    if (sla !== 'ALL') {
+        const state = getSlaStateBackend(caseData);
+        if (sla === 'ON_TIME' && state !== 'on_time') return false;
+        if (sla === 'WARNING' && state !== 'warning') return false;
+        if (sla === 'OVERDUE' && state !== 'overdue') return false;
+    }
+    if (assignment === 'UNASSIGNED' && caseData.assigneeId) return false;
+    if (assignment === 'MINE' && caseData.assigneeId !== options.assigneeUid) return false;
+    if (dateFrom && createdDate && createdDate < dateFrom) return false;
+    if (dateTo && createdDate && createdDate > dateTo) return false;
+    if (filters.searchTerm && !matchesOpsCaseSearch(caseData, filters.searchTerm)) return false;
+    return true;
+}
+
+function compareOpsCases(left, right, sortField, sortDir) {
+    const field = ['candidateName', 'createdAt', 'status', 'finalVerdict', 'riskLevel'].includes(sortField) ? sortField : 'createdAt';
+    const direction = sortDir === 'asc' ? 1 : -1;
+    let leftValue = left[field] || '';
+    let rightValue = right[field] || '';
+    if (field === 'candidateName') {
+        leftValue = normalizeSearchText(leftValue);
+        rightValue = normalizeSearchText(rightValue);
+    }
+    if (leftValue < rightValue) return -1 * direction;
+    if (leftValue > rightValue) return 1 * direction;
+    return String(left.id || '').localeCompare(String(right.id || ''));
+}
+
+function buildOpsCaseStats(cases) {
+    return cases.reduce((acc, caseData) => {
+        acc.total += 1;
+        if (caseData.status === 'DONE') acc.done += 1;
+        if (caseData.status === 'PENDING') acc.pending += 1;
+        if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
+        if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
+        if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
+        if (caseData.riskLevel === 'RED' || caseData.riskLevel === 'HIGH') acc.red += 1;
+        if (caseData.finalVerdict === 'FIT') acc.fit += 1;
+        if (caseData.finalVerdict === 'ATTENTION') acc.attention += 1;
+        if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
+        return acc;
+    }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, red: 0, fit: 0, attention: 0, notRecommended: 0 });
+}
+
 function compareClientCases(left, right, sortField, sortDir) {
     const field = ['candidateName', 'createdAt', 'status', 'finalVerdict'].includes(sortField) ? sortField : 'createdAt';
     const direction = sortDir === 'asc' ? 1 : -1;
@@ -10683,6 +10798,38 @@ const CLIENT_DASHBOARD_FIELDS = [
     'digitalFlag', 'conflictInterest',
 ];
 
+const OPS_CASE_LIST_FIELDS = [
+    'caseId', 'tenantId', 'tenantName', 'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'createdAt', 'updatedAt',
+    'concludedAt', 'turnaroundHours', 'slaHours', 'status', 'riskLevel', 'criminalFlag', 'finalVerdict', 'priority',
+    'assigneeId', 'assigneeName', 'assigneeEmail', 'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus',
+    'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus', 'aiStatus',
+];
+
+async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [] }) {
+    let lastDoc = null;
+    let pageCount = 0;
+    let scannedRecords = 0;
+    const docs = [];
+
+    while (true) {
+        let q = db.collection(collectionId);
+        if (tenantId) q = q.where('tenantId', '==', tenantId);
+        q = q.orderBy('createdAt', 'desc');
+        if (fields.length > 0) q = q.select(...fields);
+        if (lastDoc) q = q.startAfter(lastDoc);
+        q = q.limit(CASE_QUERY_PAGE_SIZE);
+        const snap = await q.get();
+        pageCount += 1;
+        const currentDocs = snap.docs || [];
+        scannedRecords += currentDocs.length;
+        docs.push(...currentDocs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
+        lastDoc = currentDocs[currentDocs.length - 1];
+    }
+
+    return { docs, pageCount, scannedRecords };
+}
+
 exports.getOpsCaseMetrics = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
     async (request) => {
@@ -10754,6 +10901,54 @@ exports.getClientCaseById = onCall(
     },
 );
 
+exports.listOpsCases = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getOpsUserProfile(uid);
+        const tenantId = resolveOpsMetricsTenant(profile, request.data?.tenantId);
+        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
+        const page = Math.max(Number(request.data?.page) || 1, 1);
+        const filters = request.data?.filters || {};
+        const queueOnly = Boolean(request.data?.queueOnly);
+        const assigneeUid = String(request.data?.assigneeUid || uid || '');
+        const sortField = String(request.data?.sortField || 'createdAt');
+        const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
+
+        const { docs, pageCount, scannedRecords } = await fetchTenantCaseDocuments({
+            collectionId: 'cases',
+            tenantId,
+            fields: OPS_CASE_LIST_FIELDS,
+        });
+        const serialized = docs.map((docData) => serializeClientCaseDocument(docData));
+        const statsBase = queueOnly
+            ? serialized.filter((caseData) => caseData.status !== 'DONE')
+            : serialized;
+        const allMatches = serialized.filter((caseData) => matchesOpsCaseFilters(caseData, filters, { queueOnly, assigneeUid }));
+        allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir));
+
+        const start = (page - 1) * pageSize;
+        const pageCases = allMatches.slice(start, start + pageSize);
+        return {
+            cases: pageCases,
+            total: allMatches.length,
+            stats: buildOpsCaseStats(statsBase),
+            page,
+            pageSize,
+            totalPages: Math.max(1, Math.ceil(allMatches.length / pageSize)),
+            hasMore: start + pageSize < allMatches.length,
+            meta: {
+                source: 'server',
+                scannedRecords,
+                pageCount,
+                tenantId,
+                queueOnly,
+            },
+        };
+    },
+);
+
 exports.listClientCases = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
     async (request) => {
@@ -10815,6 +11010,47 @@ exports.listClientCases = onCall(
                 scannedRecords,
                 pageCount,
                 capped: scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT,
+            },
+        };
+    },
+);
+
+exports.getClientExportCases = onCall(
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+        const profile = await getClientUserProfile(uid);
+        assertClientManager(profile);
+        const scopeCode = String(request.data?.scopeCode || 'ALL').toUpperCase();
+        const dateFrom = String(request.data?.dateFrom || '');
+        const dateTo = String(request.data?.dateTo || '');
+        const allowedScopes = new Set(['ALL', 'DONE', 'PENDING', 'RED']);
+        if (!allowedScopes.has(scopeCode)) throw new HttpsError('invalid-argument', 'Escopo de exportacao invalido.');
+
+        const { docs, pageCount, scannedRecords } = await fetchTenantCaseDocuments({
+            collectionId: 'clientCases',
+            tenantId: profile.tenantId,
+        });
+        const filters = {
+            status: scopeCode === 'DONE' || scopeCode === 'PENDING' ? scopeCode : 'ALL',
+            dateFrom,
+            dateTo,
+        };
+        const cases = docs
+            .map((docData) => serializeClientCaseDocument(docData))
+            .filter((caseData) => matchesClientCaseFilters(caseData, filters))
+            .filter((caseData) => (scopeCode === 'RED' ? caseData.riskLevel === 'RED' || caseData.riskLevel === 'HIGH' : true));
+        const pendingCount = cases.filter((caseData) => caseData.status !== 'DONE').length;
+
+        return {
+            cases,
+            total: cases.length,
+            pendingCount,
+            meta: {
+                source: 'server',
+                scannedRecords,
+                pageCount,
             },
         };
     },

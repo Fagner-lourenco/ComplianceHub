@@ -984,6 +984,14 @@ export async function callListClientCases(payload = {}) {
     return callBackendFunction('listClientCases', payload);
 }
 
+export async function callListOpsCases(payload = {}) {
+    return callBackendFunction('listOpsCases', payload);
+}
+
+export async function callGetClientExportCases(payload = {}) {
+    return callBackendFunction('getClientExportCases', payload);
+}
+
 export async function callGetClientCaseById(caseId) {
     const result = await callBackendFunction('getClientCaseById', { caseId });
     return result?.case || null;

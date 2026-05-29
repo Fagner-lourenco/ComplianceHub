@@ -3,12 +3,12 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import {
+    callGetClientExportCases,
     callRegisterClientExport,
     subscribeToExports,
     getCasePublicResult,
 } from '../../core/firebase/firestoreService';
-import { getMockCaseById, getMockExports } from '../../data/mockData';
-import { useCases } from '../../hooks/useCases';
+import { getMockCaseById, getMockExports, MOCK_CASES } from '../../data/mockData';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
 import { ROLES } from '../../core/rbac/permissions';
@@ -893,13 +893,13 @@ export default function ExportacoesPage() {
     const isDemoMode = !user || userProfile?.source === 'demo';
     const isManager = userProfile?.role === ROLES.CLIENT_MANAGER;
     const tenantId = userProfile?.tenantId || null;
-    const { cases, loading: casesLoading, error: casesError } = useCases();
     const [exportType, setExportType] = useState('CSV');
     const [exportScope, setExportScope] = useState('ALL');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [exporting, setExporting] = useState(false);
     const [feedback, setFeedback] = useState('');
+    const [exportCasesState, setExportCasesState] = useState({ cases: [], loading: !isDemoMode, error: null, meta: null });
     const demoTimerRef = useRef(null);
     const [exportsState, setExportsState] = useState({
         exports: isDemoMode ? getMockExports(tenantId) : [],
@@ -934,18 +934,42 @@ export default function ExportacoesPage() {
         if (demoTimerRef.current) window.clearTimeout(demoTimerRef.current);
     }, []);
 
-    const filteredCases = useMemo(() => {
-        let result = [...cases];
+    const filteredDemoCases = useMemo(() => {
+        let result = tenantId ? MOCK_CASES.filter((caseData) => caseData.tenantId === tenantId) : [...MOCK_CASES];
         if (exportScope === 'DONE') result = result.filter((c) => c.status === 'DONE');
         if (exportScope === 'PENDING') result = result.filter((c) => c.status === 'PENDING');
         if (exportScope === 'RED') result = result.filter((c) => c.riskLevel === 'RED');
         if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
         if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
         return result;
-    }, [cases, exportScope, dateFrom, dateTo]);
+    }, [dateFrom, dateTo, exportScope, tenantId]);
 
-    const recordCount = filteredCases.length;
     const invalidDateRange = Boolean(dateFrom && dateTo && dateFrom > dateTo);
+    useEffect(() => {
+        if (isDemoMode) {
+            setExportCasesState({ cases: filteredDemoCases, loading: false, error: null, meta: { source: 'demo' } });
+            return undefined;
+        }
+        if (!isManager || invalidDateRange) {
+            setExportCasesState((current) => ({ ...current, loading: false }));
+            return undefined;
+        }
+        let cancelled = false;
+        setExportCasesState((current) => ({ ...current, loading: true, error: null }));
+        callGetClientExportCases({ scopeCode: exportScope, dateFrom: dateFrom || null, dateTo: dateTo || null })
+            .then((result) => {
+                if (!cancelled) setExportCasesState({ cases: result?.cases || [], loading: false, error: null, meta: result?.meta || null });
+            })
+            .catch((error) => {
+                if (!cancelled) setExportCasesState({ cases: [], loading: false, error, meta: null });
+            });
+        return () => { cancelled = true; };
+    }, [dateFrom, dateTo, exportScope, filteredDemoCases, invalidDateRange, isDemoMode, isManager]);
+
+    const filteredCases = exportCasesState.cases;
+    const casesLoading = exportCasesState.loading;
+    const casesError = exportCasesState.error;
+    const recordCount = filteredCases.length;
     const pendingCount = filteredCases.filter((currentCase) => currentCase.status !== 'DONE').length;
     const scopeLabel = SCOPE_OPTIONS.find((option) => option.value === exportScope)?.label || exportScope;
     const dateRange = (dateFrom || dateTo) ? ` (${dateFrom || '...'} a ${dateTo || '...'})` : '';
@@ -1094,13 +1118,13 @@ export default function ExportacoesPage() {
                 eyebrow="Arquivos"
                 title="Exportar solicitações"
                 description="Gere arquivos com os dados permitidos para acompanhamento e conferência."
-                metric={{ value: cases.length, label: 'Casos carregados' }}
+                metric={{ value: recordCount, label: 'Registros no recorte' }}
             />
 
             <div className="export-new">
                 <h3>Nova exportação</h3>
                 <p className="export-new__hint">
-                    Esta exportação considera apenas os resultados carregados agora. Para períodos maiores, solicite uma exportação completa ao suporte.
+                    Esta exportação considera o recorte completo encontrado no servidor para a sua empresa.
                 </p>
                 {casesLoading && <p className="export-alert export-alert--info">Carregando solicitações antes de liberar a exportação.</p>}
                 {casesError && <p className="export-alert export-alert--danger">{extractErrorMessage(casesError, 'Não foi possível carregar as solicitações para exportação.')}</p>}

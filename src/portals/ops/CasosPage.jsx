@@ -9,11 +9,9 @@ import PaginationControls from '../../ui/components/PaginationControls/Paginatio
 import { useTenant } from '../../core/contexts/useTenant';
 import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { formatDate } from '../../core/formatDate';
-import { useCases } from '../../hooks/useCases';
-import { getCaseStats } from '../../core/caseUtils';
-import { getSlaStatus } from '../../core/caseSla';
 import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { useOpsCasesQuery } from '../../hooks/useOpsCasesQuery';
 import SlaBadge from '../../ui/components/SlaBadge/SlaBadge';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
@@ -47,11 +45,7 @@ export default function CasosPage() {
     const isDemoPortal = location.pathname.startsWith('/demo/');
     const routePrefix = isDemoPortal ? '/demo' : '';
     const { selectedTenantId } = useTenant();
-    const {
-        cases,
-        error,
-        loading,
-    } = useCases(selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId);
+    const tenantId = selectedTenantId === ALL_TENANTS_ID ? null : selectedTenantId;
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [dateFrom, setDateFrom] = useState('');
@@ -62,66 +56,29 @@ export default function CasosPage() {
     const [slaFilter, setSlaFilter] = useState('ALL');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const stats = useMemo(() => getCaseStats(cases), [cases]);
-
-    const filtered = useMemo(() => {
-        let result = [...cases];
-
-        if (statusFilter !== 'ALL') {
-            result = result.filter((currentCase) => currentCase.status === statusFilter);
-        }
-
-        if (riskFilter !== 'ALL') {
-            result = result.filter((c) => c.riskLevel === riskFilter);
-        }
-
-        if (verdictFilter !== 'ALL') {
-            result = result.filter((c) => c.finalVerdict === verdictFilter);
-        }
-
-        if (enrichmentFilter !== 'ALL') {
-            result = result.filter((c) => getOverallEnrichmentStatus(c) === enrichmentFilter);
-        }
-
-        if (slaFilter !== 'ALL') {
-            result = result.filter((c) => {
-                const { state } = getSlaStatus(c);
-                if (slaFilter === 'ON_TIME') return state === 'on_time';
-                if (slaFilter === 'WARNING') return state === 'warning';
-                if (slaFilter === 'OVERDUE') return state === 'overdue';
-                return true;
-            });
-        }
-
-        if (dateFrom) result = result.filter((c) => (c.createdAt || '').slice(0, 10) >= dateFrom);
-        if (dateTo) result = result.filter((c) => (c.createdAt || '').slice(0, 10) <= dateTo);
-
-        if (searchTerm) {
-            const normalizedTerm = searchTerm.toLowerCase().replace(/\D/g, '') || searchTerm.toLowerCase();
-            const rawTerm = searchTerm.toLowerCase();
-            result = result.filter((currentCase) => (
-                currentCase.candidateName.toLowerCase().includes(rawTerm)
-                || (currentCase.cpf && currentCase.cpf.includes(normalizedTerm))
-                || currentCase.cpfMasked.replace(/\D/g, '').includes(normalizedTerm)
-                || currentCase.cpfMasked.includes(rawTerm)
-                || currentCase.id.toLowerCase().includes(rawTerm)
-            ));
-        }
-
-        return result;
-    }, [cases, dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, slaFilter, statusFilter, verdictFilter]);
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const queryFilters = useMemo(() => ({
+        status: statusFilter,
+        risk: riskFilter,
+        verdict: verdictFilter,
+        enrichment: enrichmentFilter,
+        sla: slaFilter,
+        dateFrom,
+        dateTo,
+        searchTerm,
+    }), [dateFrom, dateTo, enrichmentFilter, riskFilter, searchTerm, slaFilter, statusFilter, verdictFilter]);
+    const { cases, error, loading, total, totalPages, stats, meta } = useOpsCasesQuery({
+        tenantId,
+        isDemoMode: isDemoPortal,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        filters: queryFilters,
+    });
     const safeCurrentPage = Math.min(currentPage, totalPages);
 
-    const paginatedCases = useMemo(() => {
-        const start = (safeCurrentPage - 1) * PAGE_SIZE;
-        return filtered.slice(start, start + PAGE_SIZE);
-    }, [filtered, safeCurrentPage]);
-
-    const handleClickAll = useCallback(() => setStatusFilter('ALL'), []);
-    const handleClickDone = useCallback(() => setStatusFilter('DONE'), []);
-    const handleClickPending = useCallback(() => setStatusFilter('PENDING'), []);
+    const resetToFirstPage = useCallback(() => setCurrentPage(1), []);
+    const handleClickAll = useCallback(() => { setStatusFilter('ALL'); resetToFirstPage(); }, [resetToFirstPage]);
+    const handleClickDone = useCallback(() => { setStatusFilter('DONE'); resetToFirstPage(); }, [resetToFirstPage]);
+    const handleClickPending = useCallback(() => { setStatusFilter('PENDING'); resetToFirstPage(); }, [resetToFirstPage]);
 
     const renderCard = useCallback((currentCase) => (
         <>
@@ -171,7 +128,7 @@ export default function CasosPage() {
             </div>
 
             <FilterPanelMobile
-                activeFilterCount={[statusFilter !== 'ALL' ? 1 : 0, riskFilter !== 'ALL' ? 1 : 0, verdictFilter !== 'ALL' ? 1 : 0, enrichmentFilter !== 'ALL' ? 1 : 0, dateFrom ? 1 : 0, dateTo ? 1 : 0].reduce((a, b) => a + b, 0)}
+                activeFilterCount={[statusFilter !== 'ALL' ? 1 : 0, riskFilter !== 'ALL' ? 1 : 0, verdictFilter !== 'ALL' ? 1 : 0, enrichmentFilter !== 'ALL' ? 1 : 0, slaFilter !== 'ALL' ? 1 : 0, dateFrom ? 1 : 0, dateTo ? 1 : 0].reduce((a, b) => a + b, 0)}
                 searchElement={
                     <div className="filter-bar__search" style={{ flex: 1, minWidth: 0 }}>
                         <span className="filter-bar__search-icon" aria-hidden="true">
@@ -183,7 +140,7 @@ export default function CasosPage() {
                             placeholder="Buscar por nome, CPF ou ID..."
                             aria-label="Buscar casos"
                             value={searchTerm}
-                            onChange={(event) => setSearchTerm(event.target.value)}
+                            onChange={(event) => { setSearchTerm(event.target.value); resetToFirstPage(); }}
                         />
                     </div>
                 }
@@ -199,10 +156,10 @@ export default function CasosPage() {
                             placeholder="Buscar por nome, CPF ou ID..."
                             aria-label="Buscar casos"
                             value={searchTerm}
-                            onChange={(event) => setSearchTerm(event.target.value)}
+                            onChange={(event) => { setSearchTerm(event.target.value); resetToFirstPage(); }}
                         />
                     </div>
-                    <select className="filter-bar__select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                    <select className="filter-bar__select" value={statusFilter} onChange={(event) => { setStatusFilter(event.target.value); resetToFirstPage(); }}>
                         <option value="ALL">Todos os status</option>
                         <option value="PENDING">Pendente</option>
                         <option value="IN_PROGRESS">Em Analise</option>
@@ -210,19 +167,19 @@ export default function CasosPage() {
                         <option value="DONE">Concluido</option>
                         <option value="CORRECTION_NEEDED">Correcao Pendente</option>
                     </select>
-                    <select className="filter-bar__select" value={riskFilter} onChange={(e) => setRiskFilter(e.target.value)}>
+                    <select className="filter-bar__select" value={riskFilter} onChange={(e) => { setRiskFilter(e.target.value); resetToFirstPage(); }}>
                         <option value="ALL">Todos os riscos</option>
                         <option value="HIGH">Alto</option>
                         <option value="MEDIUM">Médio</option>
                         <option value="LOW">Baixo</option>
                     </select>
-                    <select className="filter-bar__select" value={verdictFilter} onChange={(e) => setVerdictFilter(e.target.value)}>
+                    <select className="filter-bar__select" value={verdictFilter} onChange={(e) => { setVerdictFilter(e.target.value); resetToFirstPage(); }}>
                         <option value="ALL">Todos os resultados</option>
                         <option value="FIT">FIT</option>
                         <option value="ATTENTION">ATTENTION</option>
                         <option value="NOT_RECOMMENDED">NOT RECOMMENDED</option>
                     </select>
-                    <select className="filter-bar__select" value={enrichmentFilter} onChange={(e) => setEnrichmentFilter(e.target.value)}>
+                    <select className="filter-bar__select" value={enrichmentFilter} onChange={(e) => { setEnrichmentFilter(e.target.value); resetToFirstPage(); }}>
                         <option value="ALL">Consulta automática</option>
                         <option value="DONE">Concluído</option>
                         <option value="RUNNING">Em andamento</option>
@@ -230,19 +187,19 @@ export default function CasosPage() {
                         <option value="FAILED">Falhou</option>
                         <option value="BLOCKED">Bloqueado</option>
                     </select>
-                    <select className="filter-bar__select" value={slaFilter} onChange={(e) => setSlaFilter(e.target.value)}>
+                    <select className="filter-bar__select" value={slaFilter} onChange={(e) => { setSlaFilter(e.target.value); resetToFirstPage(); }}>
                         <option value="ALL">Prazo combinado</option>
                         <option value="ON_TIME">No prazo</option>
                         <option value="WARNING">Alerta</option>
                         <option value="OVERDUE">Vencido</option>
                     </select>
-                    <input type="date" className="filter-bar__select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} title="Data inicial" />
-                    <input type="date" className="filter-bar__select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} title="Data final" />
+                    <input type="date" className="filter-bar__select" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); resetToFirstPage(); }} title="Data inicial" />
+                    <input type="date" className="filter-bar__select" value={dateTo} onChange={(e) => { setDateTo(e.target.value); resetToFirstPage(); }} title="Data final" />
                 </div>
             </FilterPanelMobile>
 
             <MobileDataCardList
-                items={paginatedCases}
+                items={cases}
                 loading={loading}
                 emptyMessage="Nenhum caso encontrado."
                 renderCard={renderCard}
@@ -281,7 +238,7 @@ export default function CasosPage() {
                                     </td>
                                 </tr>
                             )}
-                            {!loading && !error && paginatedCases.map((currentCase) => (
+                            {!loading && !error && cases.map((currentCase) => (
                                 <tr key={currentCase.id} className="data-table__row">
                                     <td className="data-table__td data-table__td--mono">{currentCase.id}</td>
                                     <td className="data-table__td" style={{ fontSize: '.75rem' }}>{currentCase.tenantName}</td>
@@ -304,7 +261,7 @@ export default function CasosPage() {
                                     </td>
                                 </tr>
                             ))}
-                            {!loading && !error && filtered.length === 0 && (
+                            {!loading && !error && total === 0 && (
                                 <tr>
                                     <td colSpan={13} className="data-table__empty" style={{ textAlign: 'center', padding: 48 }}>
                                         Nenhum caso encontrado.
@@ -319,13 +276,13 @@ export default function CasosPage() {
             <PaginationControls
                 page={safeCurrentPage}
                 pageSize={PAGE_SIZE}
-                totalItems={filtered.length}
+                totalItems={total}
                 itemLabel="casos"
                 onPageChange={setCurrentPage}
             />
 
             <div style={{ textAlign: 'right', fontSize: '.8125rem', color: 'var(--text-secondary)' }}>
-                Mostrando {filtered.length} de {cases.length} casos
+                Mostrando {cases.length} de {total} casos{meta?.source === 'server' ? ' encontrados no servidor' : ''}
             </div>
         </PageShell>
     );
