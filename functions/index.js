@@ -25,7 +25,7 @@ const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https')
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
+let getAuth = require('firebase-admin/auth').getAuth;
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
 
@@ -6322,45 +6322,67 @@ exports.syncUserClaims = onCall(
 );
 
 /* â”€â”€ repairAllClaims â”€â”€ */
+async function repairAllClaimsInner(request) {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+
+    const callerDoc = await db.collection('userProfiles').doc(uid).get();
+    const callerData = callerDoc.data() || {};
+    if (!['admin', 'owner'].includes(callerData.role)) {
+        throw new HttpsError('permission-denied', 'Apenas administradores podem executar reparo em massa.');
+    }
+
+    const BATCH_SIZE = 500;
+    const CONCURRENCY = 10;
+    let lastDoc = null;
+    let fixed = 0;
+    let skipped = 0;
+    let errors = 0;
+    let total = 0;
+
+    while (true) {
+        let q = db.collection('userProfiles')
+            .orderBy('__name__')
+            .limit(BATCH_SIZE);
+        if (lastDoc) q = q.startAfter(lastDoc);
+
+        const snap = await q.get();
+        if (snap.empty) break;
+
+        const batch = snap.docs;
+        total += batch.length;
+        lastDoc = batch[batch.length - 1];
+
+        for (let i = 0; i < batch.length; i += CONCURRENCY) {
+            const chunk = batch.slice(i, i + CONCURRENCY);
+            await Promise.all(chunk.map(async (doc) => {
+                const data = doc.data();
+                const targetUid = doc.id;
+
+                if (!data.role || !data.tenantId) {
+                    skipped++;
+                    return;
+                }
+
+                try {
+                    await getAuth().setCustomUserClaims(targetUid, {
+                        role: data.role,
+                        tenantId: data.tenantId,
+                    });
+                    fixed++;
+                } catch {
+                    errors++;
+                }
+            }));
+        }
+    }
+
+    return { success: true, total, fixed, skipped, errors };
+}
+
 exports.repairAllClaims = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 300 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const callerDoc = await db.collection('userProfiles').doc(uid).get();
-        const callerData = callerDoc.data() || {};
-        if (!['admin', 'owner'].includes(callerData.role)) {
-            throw new HttpsError('permission-denied', 'Apenas administradores podem executar reparo em massa.');
-        }
-
-        const snapshot = await db.collection('userProfiles').get();
-        let fixed = 0;
-        let skipped = 0;
-        let errors = 0;
-
-        for (const doc of snapshot.docs) {
-            const data = doc.data();
-            const targetUid = doc.id;
-
-            if (!data.role || !data.tenantId) {
-                skipped++;
-                continue;
-            }
-
-            try {
-                await getAuth().setCustomUserClaims(targetUid, {
-                    role: data.role,
-                    tenantId: data.tenantId,
-                });
-                fixed++;
-            } catch {
-                errors++;
-            }
-        }
-
-        return { success: true, total: snapshot.size, fixed, skipped, errors };
-    },
+    repairAllClaimsInner,
 );
 
 /* â”€â”€ listOpsUsers â”€â”€ */
@@ -12619,7 +12641,9 @@ exports.__test = {
     fixLatinMojibake,
     backfillClientCasesMirrorInner,
     fetchTenantCaseDocuments,
+    repairAllClaimsInner,
     _setDb(mockDb) { db = mockDb; },
+    _setGetAuth(mockFn) { getAuth = mockFn; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },
 };
 

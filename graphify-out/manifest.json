@@ -51,6 +51,10 @@
     "mtime": 1778896526.8814547,
     "hash": "ab404aa1e2d2fb916703b7ae8a4e527b"
   },
+  "D:\\ComplianceHub\\functions\\backfillClientCasesMirror.test.js": {
+    "mtime": 1780081273.604933,
+    "hash": "3713b211f8eab5e3ac6811fb34914761"
+  },
   "D:\\ComplianceHub\\functions\\caseCommunication.js": {
     "mtime": 1779315605.7671092,
     "hash": "b1c9de0babfc90ee355caa1e70fc82b3"
@@ -67,6 +71,10 @@
     "mtime": 1778893383.8726754,
     "hash": "5c2ef7ffb405252fe954df8e1478948c"
   },
+  "D:\\ComplianceHub\\functions\\fetchTenantCaseDocuments.test.js": {
+    "mtime": 1780088710.9779463,
+    "hash": "1e9d91ff85f62d3bfdfb1082980a0b8c"
+  },
   "D:\\ComplianceHub\\functions\\fix-tenant-configs.js": {
     "mtime": 1777947612.8779886,
     "hash": "f7be5ee445b8ca730ee399d462da3edc"
@@ -80,8 +88,8 @@
     "hash": "f4834d98cc1ba0a681a472e6a30e2344"
   },
   "D:\\ComplianceHub\\functions\\index.js": {
-    "mtime": 1780074329.67269,
-    "hash": "f6c7217a6323c2c1762c615b90abde2d"
+    "mtime": 1780088848.7586427,
+    "hash": "5cf6ce668129829639ae42be3ff0c2bd"
   },
   "D:\\ComplianceHub\\functions\\repair-all-claims.js": {
     "mtime": 1777947612.8879972,
@@ -792,8 +800,8 @@
     "hash": "7fe30664baa47b3a3ad473a8855c3211"
   },
   "D:\\ComplianceHub\\progress.md": {
-    "mtime": 1780078595.6656547,
-    "hash": "a949e340834c501ef091e79b2d31e242"
+    "mtime": 1780081408.1815782,
+    "hash": "26ff963c7d9d4278738747c93b4b5f77"
   },
   "D:\\ComplianceHub\\README.md": {
     "mtime": 1777947612.8659892,
