@@ -995,6 +995,23 @@ export async function callGetClientExportCases(payload = {}) {
     return callBackendFunction('getClientExportCases', payload);
 }
 
+// Export assíncrono — Phase B
+export async function callCreateExportJob(payload = {}) {
+    return callBackendFunction('createExportJob', payload);
+}
+
+export async function callGetExportJobStatus(jobId) {
+    return callBackendFunction('getExportJobStatus', { jobId });
+}
+
+export async function callListExportJobs(payload = {}) {
+    return callBackendFunction('listExportJobs', payload);
+}
+
+export async function callCancelExportJob(jobId) {
+    return callBackendFunction('cancelExportJob', { jobId });
+}
+
 export async function callGetClientCaseById(caseId) {
     const result = await callBackendFunction('getClientCaseById', { caseId });
     return result?.case || null;

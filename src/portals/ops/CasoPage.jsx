@@ -782,6 +782,9 @@ export default function CasoPage() {
     const [showHighRiskConfirm, setShowHighRiskConfirm] = useState(false);
     const [showChecklistModal, setShowChecklistModal] = useState(false);
     const [showFinalConclusionModal, setShowFinalConclusionModal] = useState(false);
+    const [showIdentityBypassModal, setShowIdentityBypassModal] = useState(false);
+    const [identityBypassJustification, setIdentityBypassJustification] = useState('');
+    const [identityBypassError, setIdentityBypassError] = useState(null);
     const [overrideRequest, setOverrideRequest] = useState(null);
     const [overrideJustification, setOverrideJustification] = useState('');
     const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -1090,7 +1093,27 @@ export default function CasoPage() {
             description: 'Confirme que esta fase foi revisada manualmente antes da conclusão.',
         })), [steps]);
     const manualChecklist = useChecklistSession(caseData?.id || caseId, manualChecklistItems);
-    const canEditCase = !READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded;
+    const canBypassIdentityGate = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
+
+    const identityGateBlocked = Boolean(
+        caseData?.bigdatacorpGateResult?.passed === false ||
+        caseData?.juditGateResult?.passed === false ||
+        caseData?.enrichmentGateResult?.passed === false ||
+        caseData?.bigdatacorpEnrichmentStatus === 'BLOCKED' ||
+        caseData?.juditEnrichmentStatus === 'BLOCKED' ||
+        caseData?.enrichmentStatus === 'BLOCKED'
+    );
+
+    const canBypassBlockedCorrection =
+        caseData?.status === 'CORRECTION_NEEDED' &&
+        identityGateBlocked &&
+        canBypassIdentityGate &&
+        !concluded;
+
+    const canEditCase =
+        (!READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded) ||
+        canBypassBlockedCorrection;
+
     const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
 
@@ -1400,8 +1423,9 @@ export default function CasoPage() {
         }
     };
 
-    const submitConclusion = async ({ override = null } = {}) => {
-        if (!caseData || !allOk || saving || !canEditCase) {
+    const submitConclusion = async ({ override = null, identityBypass = false, identityBypassJustification: bypassJustification = '' } = {}) => {
+        const bypassFlow = identityBypass === true;
+        if (!caseData || !allOk || saving || (!canEditCase && !bypassFlow)) {
             return;
         }
 
@@ -1417,6 +1441,11 @@ export default function CasoPage() {
 
         if (!user) {
             setSaveError('Sua sessao nao esta disponivel para concluir o caso.');
+            return;
+        }
+
+        if (bypassFlow && bypassJustification.trim().length < 15) {
+            setIdentityBypassError('Informe uma justificativa com no minimo 15 caracteres.');
             return;
         }
 
@@ -1478,6 +1507,10 @@ export default function CasoPage() {
                         || latestForm.analystComment
                         || latestForm.keyFindings?.trim()
                     ),
+                    ...(bypassFlow ? {
+                        identityBypassed: true,
+                        identityBypassJustification: bypassJustification.trim(),
+                    } : {}),
                 },
             });
 
@@ -1490,9 +1523,17 @@ export default function CasoPage() {
                 riskScore: latestRisk.riskScore,
                 hasNotes: true,
                 reviewDraft: undefined,
+                ...(bypassFlow ? {
+                    identityBypassed: true,
+                    identityBypassJustification: bypassJustification.trim(),
+                    identityBypassedBy: userProfile?.email || user?.email || user?.uid,
+                } : {}),
             }));
             setConcluded(true);
             setShowFinalConclusionModal(false);
+            setShowIdentityBypassModal(false);
+            setIdentityBypassJustification('');
+            setIdentityBypassError(null);
             setOverrideRequest(null);
             setOverrideJustification('');
         } catch (error) {
@@ -1676,6 +1717,16 @@ export default function CasoPage() {
                             {saving ? 'Salvando...' : 'Concluir'}
                         </button>
                     )}
+                    {canBypassBlockedCorrection && (
+                        <button
+                            className="caso-btn caso-btn--warning"
+                            disabled={!allOk || saving}
+                            onClick={() => setShowIdentityBypassModal(true)}
+                            title="Concluir mesmo com gate de identidade bloqueado mediante justificativa administrativa"
+                        >
+                            Concluir com bypass de identidade
+                        </button>
+                    )}
                     {canAssignOthers && caseData.assigneeId && (
                         <button className="caso-btn caso-btn--ghost" onClick={openAssignModal} disabled={assigning}>
                             Trocar responsavel
@@ -1734,6 +1785,16 @@ export default function CasoPage() {
                         {caseData.status === 'DONE'
                             ? 'Caso concluído. Campos analíticos e reprocessamentos ficam bloqueados para preservar o dossiê publicado.'
                             : 'Caso aguardando ação do cliente. A edição operacional fica bloqueada até a correção ser reenviada.'}
+                    </span>
+                </div>
+            )}
+
+            {caseData?.identityBypassed === true && (
+                <div className="caso-readonly-banner" role="status" style={{ borderColor: 'var(--orange-300)', background: 'var(--orange-50)', color: 'var(--orange-800)' }}>
+                    <strong>Bypass de identidade registrado</strong>
+                    <span>
+                        Este caso foi concluído com bypass do gate de identidade por {caseData.identityBypassedBy || 'usuário autorizado'}.
+                        {caseData.identityBypassJustification ? ` Justificativa: ${caseData.identityBypassJustification}` : ''}
                     </span>
                 </div>
             )}
@@ -2851,6 +2912,62 @@ export default function CasoPage() {
                     </div>
                 </Modal>
 
+                <Modal
+                    open={showIdentityBypassModal}
+                    onClose={() => {
+                        setShowIdentityBypassModal(false);
+                        setIdentityBypassError(null);
+                    }}
+                    title="Bypass do gate de identidade"
+                    maxWidth={560}
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => setShowIdentityBypassModal(false)}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                disabled={saving || identityBypassJustification.trim().length < 15}
+                                onClick={() => submitConclusion({
+                                    identityBypass: true,
+                                    identityBypassJustification,
+                                })}
+                            >
+                                {saving ? 'Concluindo...' : 'Confirmar bypass e concluir'}
+                            </button>
+                        </>
+                    )}
+                >
+                    <div className="caso-critical-modal">
+                        <p>
+                            Este caso possui gate de identidade bloqueado. O bypass deve ser usado apenas quando um supervisor ou administrador revisou manualmente a divergencia e decidiu concluir mesmo assim.
+                        </p>
+                        <dl>
+                            <div><dt>Candidato</dt><dd>{caseData.candidateName || 'Nao informado'}</dd></div>
+                            <div><dt>Motivo do bloqueio</dt><dd>{caseData.bigdatacorpGateResult?.reason || caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason || 'Gate bloqueado'}</dd></div>
+                        </dl>
+                        {identityBypassError && (
+                            <div role="alert" style={{ color: 'var(--red-600)', background: 'var(--red-50)', padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
+                                {identityBypassError}
+                            </div>
+                        )}
+                        <div className="form-group">
+                            <label style={{ fontWeight: 600, fontSize: '.875rem' }}>Justificativa do bypass *</label>
+                            <textarea
+                                className="caso-textarea"
+                                value={identityBypassJustification}
+                                onChange={(event) => setIdentityBypassJustification(event.target.value)}
+                                rows={4}
+                                placeholder="Descreva por que a conclusao deve ser permitida mesmo com gate de identidade bloqueado..."
+                            />
+                            <span style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
+                                Minimo de 15 caracteres. Esta justificativa sera registrada em auditoria.
+                            </span>
+                        </div>
+                    </div>
+                </Modal>
+
                 {currentStepKey === 'criminal' && (
                     <div className="caso-section">
                         <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge field="criminalFlag" />}</h3>
@@ -3930,6 +4047,16 @@ export default function CasoPage() {
                             {canEditCase && (
                                 <button className="caso-btn caso-btn--primary caso-btn--conclude" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                                     {saving ? 'Salvando...' : 'Concluir caso'}
+                                </button>
+                            )}
+                            {canBypassBlockedCorrection && (
+                                <button
+                                    className="caso-btn caso-btn--warning caso-btn--conclude"
+                                    disabled={!allOk || saving}
+                                    onClick={() => setShowIdentityBypassModal(true)}
+                                    title="Concluir mesmo com gate de identidade bloqueado mediante justificativa administrativa"
+                                >
+                                    Concluir com bypass de identidade
                                 </button>
                             )}
                         </div>

@@ -5,8 +5,10 @@
 
 const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { FieldValue } = require('firebase-admin/firestore');
-const { asDate, sanitizePublicStructuredValue } = require('../helpers/normalize');
+const { asDate, sanitizePublicStructuredValue, stripUndefined, sanitizeStructuredText, sanitizeStructuredList, hasMeaningfulValue } = require('../helpers/normalize');
 const { formatDateKey, formatMonthKey } = require('./utilityHelpers');
+const { RESULT_ONLY_FIELDS, ALLOWED_DRAFT_FIELDS, REVIEW_DRAFT_ARRAY_FIELDS } = require('./_shared/fieldConstants');
+const { DEFAULT_ANALYSIS_CONFIG } = require('./_shared/analysisConfig');
 
 const IDENTITY_FIELDS = [
     'candidateName',
@@ -29,23 +31,6 @@ const IDENTITY_FIELDS = [
     'bigdatacorpGender',
     'bigdatacorpMotherName',
     'bigdatacorpHasDeathRecord',
-];
-
-const RESULT_ONLY_FIELDS = [
-    'criminalFlag', 'criminalSeverity', 'criminalNotes',
-    'laborFlag', 'laborSeverity', 'laborNotes',
-    'warrantFlag', 'warrantNotes',
-    'osintLevel', 'osintVectors', 'osintNotes',
-    'socialStatus', 'socialReasons', 'socialNotes',
-    'digitalFlag', 'digitalVectors', 'digitalNotes',
-    'conflictInterest', 'conflictNotes',
-    'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
-    'enabledPhases',
-    'keyFindings',
-    'executiveSummary',
-    'publicReportToken',
-    'cpfPendingRegularization',
-    'cpfPendingNotes',
 ];
 
 const CLIENT_SAFE_PUBLICATION_FIELDS = [
@@ -256,8 +241,111 @@ async function publishResultOnCaseDoneLogic({
     }
 
     if (before.status === 'DONE') {
-        await revokeCasePublicationArtifacts(caseId, before);
+        await revokeCasePublicationArtifacts(caseId, before, db);
         console.log(`Case ${caseId}: public publication artifacts revoked after leaving DONE.`);
+    }
+}
+
+/* =========================================================
+   Publication Artifacts Helpers
+   ========================================================= */
+
+function normalizeKeyFindingsValue(value) {
+    if (Array.isArray(value)) {
+        return sanitizeStructuredList(value, 8, 220);
+    }
+    if (typeof value === 'string') {
+        return sanitizeStructuredList(
+            value.split(/\r?\n|;/).map((item) => item.trim()),
+            8,
+            220,
+        );
+    }
+    return [];
+}
+
+function normalizeNarrativeValue(field, value) {
+    if (value === undefined) return undefined;
+    if (field === 'enabledPhases') {
+        const allowed = new Set(Object.keys(DEFAULT_ANALYSIS_CONFIG));
+        return Array.isArray(value) ? value.filter((item) => allowed.has(item)) : [];
+    }
+    if (field === 'keyFindings') return normalizeKeyFindingsValue(value);
+    if (REVIEW_DRAFT_ARRAY_FIELDS.has(field)) return Array.isArray(value) ? value.filter(Boolean) : [];
+    if (typeof value === 'string') {
+        const maxLength = field === 'executiveSummary' ? 900 : field === 'analystComment' ? 900 : 1400;
+        return sanitizeStructuredText(value, maxLength);
+    }
+    return value;
+}
+
+function buildReviewDraftSeed(caseData) {
+    const reviewDraft = { ...(caseData.reviewDraft || {}) };
+    for (const field of ALLOWED_DRAFT_FIELDS) {
+        const value = caseData[field];
+        if (!hasMeaningfulValue(value)) continue;
+        reviewDraft[field] = normalizeNarrativeValue(field, value);
+    }
+    reviewDraft.__source = 'auto-seed';
+    return stripUndefined(reviewDraft);
+}
+
+function buildResetPublishedCaseFields(caseData, options = {}) {
+    const {
+        preserveReviewDraft = false,
+        resetReportReady = true,
+    } = options;
+    const resetFields = {
+        publicReportToken: FieldValue.delete(),
+        reportSlug: FieldValue.delete(),
+        concludedAt: FieldValue.delete(),
+        turnaroundHours: FieldValue.delete(),
+        keyFindings: FieldValue.delete(),
+        executiveSummary: FieldValue.delete(),
+        analystComment: FieldValue.delete(),
+        statusSummary: FieldValue.delete(),
+        sourceSummary: FieldValue.delete(),
+        nextSteps: FieldValue.delete(),
+        hasNotes: FieldValue.delete(),
+        hasEvidence: FieldValue.delete(),
+    };
+
+    if (resetReportReady) {
+        resetFields.reportReady = false;
+    }
+
+    for (const field of RESULT_ONLY_FIELDS) {
+        if (field === 'enabledPhases') continue;
+        resetFields[field] = FieldValue.delete();
+    }
+
+    if (preserveReviewDraft) {
+        const reviewDraft = buildReviewDraftSeed(caseData);
+        if (Object.keys(reviewDraft).length > 0) {
+            resetFields.reviewDraft = reviewDraft;
+        }
+    }
+
+    return resetFields;
+}
+
+async function revokeCasePublicationArtifacts(caseId, caseData, db) {
+    if (caseData?.publicReportToken) {
+        const reportRef = db.collection('publicReports').doc(caseData.publicReportToken);
+        const reportSnap = await reportRef.get();
+        if (reportSnap.exists) {
+            await reportRef.update({ active: false });
+        }
+        // P2-018: Clear publicReportToken from case to prevent stale references
+        await db.collection('cases').doc(caseId).update({
+            publicReportToken: FieldValue.delete(),
+        });
+    }
+
+    const publicResultRef = db.collection('cases').doc(caseId).collection('publicResult').doc('latest');
+    const publicResultSnap = await publicResultRef.get();
+    if (publicResultSnap.exists) {
+        await publicResultRef.delete();
     }
 }
 
@@ -301,7 +389,7 @@ function createSyncClientCaseOnDelete({ db }) {
     );
 }
 
-function createPublishResultOnCaseDone({ db, hasPublicReportMinimumContent, syncPublicResultLatest, revokeCasePublicationArtifacts }) {
+function createPublishResultOnCaseDone({ db, hasPublicReportMinimumContent, syncPublicResultLatest }) {
     return onDocumentUpdated(
         { document: 'cases/{caseId}', region: 'southamerica-east1' },
         async (event) => {
@@ -316,7 +404,6 @@ function createPublishResultOnCaseDone({ db, hasPublicReportMinimumContent, sync
                 after,
                 hasPublicReportMinimumContent,
                 syncPublicResultLatest,
-                revokeCasePublicationArtifacts,
             });
         },
     );
@@ -333,6 +420,10 @@ module.exports = {
     syncClientCaseOnUpdateLogic,
     syncClientCaseOnDeleteLogic,
     publishResultOnCaseDoneLogic,
+    // Publication Artifacts
+    buildReviewDraftSeed,
+    buildResetPublishedCaseFields,
+    revokeCasePublicationArtifacts,
     // Factories
     createSyncClientCaseOnCreate,
     createSyncClientCaseOnUpdate,

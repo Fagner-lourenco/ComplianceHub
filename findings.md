@@ -1,310 +1,340 @@
-# Findings — Análise de Gargalos ComplianceHub
+# Findings — Refatoração do Monolito ComplianceHub
 
 > **Data:** 2026-05-29
-> **Scope:** Frontend, Backend, Segurança, Arquitetura
-> **Método:** Análise estática de código + trace de dependências + quantificação de impacto
+> **Scope:** Arquitetura, Escalabilidade, Modularização
+> **Método:** Análise estática de código + graphify + trace de dependências + quantificação de impacto
 
 ---
 
 ## Executive Summary
 
-Foram identificados **15 problemas** distribuídos em 4 categorias. Destes, **11 estão no escopo de correção** (4 excluídos por decisão do usuário: 1.2, 1.4, 1.5, 2.4).
+O monolito `functions/index.js` possui **13.556 linhas** com **47 callables**, **10 triggers Firestore diretos**, **1 `onRequest`**, **1 `onSchedule`**, totalizando **~59 exports Firebase detectados por busca estática**. Análise via graphify identificou **1.110 nós** e **2.062 edges**, indicando acoplamento excessivo e dificuldade de manutenção.
 
-| Categoria | Crítico | Alto | Médio | Baixo | Total |
-|-----------|---------|------|-------|-------|-------|
-| Segurança | 1 | 0 | 0 | 0 | 1 |
-| Performance Backend | 2 | 3 | 1 | 0 | 6 |
-| Performance Frontend | 3 | 0 | 0 | 0 | 3 |
-| Arquitetura/Dívida | — | — | — | — | (fora do escopo) |
+Foram identificados **5 grandes gargalos de escala** que impedem crescimento para 100k+ casos:
 
----
-
-## Discovery 1: `fetchTenantCaseDocuments` — Leitura Ilimitada (CRÍTICO)
-
-### Localização
-- **Arquivo:** `functions/index.js:10809`
-- **Função:** `fetchTenantCaseDocuments`
-- **Constante:** `CASE_QUERY_PAGE_SIZE = 500` (linha 10372)
-
-### Código atual
-```javascript
-async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [] }) {
-    let lastDoc = null;
-    let pageCount = 0;
-    let scannedRecords = 0;
-    const docs = [];
-
-    while (true) {  // ← SEM LIMITE
-        let q = db.collection(collectionId);
-        if (tenantId) q = q.where('tenantId', '==', tenantId);
-        q = q.orderBy('createdAt', 'desc');
-        if (fields.length > 0) q = q.select(...fields);
-        if (lastDoc) q = q.startAfter(lastDoc);
-        q = q.limit(CASE_QUERY_PAGE_SIZE);
-        const snap = await q.get();
-        // ...
-        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
-        lastDoc = currentDocs[currentDocs.length - 1];
-    }
-    return { docs, pageCount, scannedRecords };
-}
-```
-
-### Callers
-- `listOpsCases` (linha 10920)
-- `getClientExportCases` (linha 11032)
-- `fetchCaseMetricDocuments` (linha 10764) — função quase idêntica
-
-### Impacto quantitativo
-- **Memória:** 50.000 docs × 2KB = **100 MB** de payload + overhead Node.js
-- **Tempo:** 100 páginas × 100ms = **10 segundos** de I/O
-- **Risco:** OOM kill (limite 1GiB) ou timeout de 120s
-
-### Cenário de falha
-Tenant com 50.000 casos (ex: cliente enterprise com histórico de 2 anos) invoca `listOpsCases`. A function carrega todos os casos em memória antes de filtrar. A instância é morta pelo Firebase antes de retornar.
-
-### Correção ideal
-Hard limit de 10.000 documentos com flag `capped` no retorno.
+| # | Gargalo | Severidade | Impacto |
+|---|---------|------------|---------|
+| 1 | Listagens com paginação interna mas acumulação em memória (scan até 10k docs) | CRÍTICO | OOM/timeout em tenants grandes |
+| 2 | Export síncrono (120s timeout) | CRÍTICO | Quebra com >2k casos |
+| 3 | Monolito 13k+ linhas | ALTO | Impossível testar isoladamente, mudanças arriscadas |
+| 4 | Enriquecimento sem backpressure real | ALTO | Cascata de falhas em APIs externas |
+| 5 | Código morto acumulado | MÉDIO | Confusão, bundle maior, risco de regressão |
 
 ---
 
-## Discovery 2: `repairAllClaims` — Query Unbounded (CRÍTICO)
-
-### Localização
-- **Arquivo:** `functions/index.js:6325`
-- **Função:** `exports.repairAllClaims`
-
-### Código atual
-```javascript
-const snapshot = await db.collection('userProfiles').get();  // ← SEM LIMITE
-for (const doc of snapshot.docs) {
-    await getAuth().setCustomUserClaims(targetUid, {...});  // Sequencial, ~100ms cada
-}
-```
-
-### Impacto quantitativo
-- 5.000 usuários × 100ms = **500 segundos** > timeout de 300s
-- Snapshot consome **5-10 MB** de memória
-- Falha silenciosa na metade → claims inconsistentes
-
-### Código duplicado
-- `functions/repair-all-claims.js` (duplica a lógica)
-- `scripts/repair-all-claims.cjs` (duplica a lógica)
-
----
-
-## Discovery 3: `CasoPage.jsx` — Componente Monolítico (CRÍTICO)
-
-### Localização
-- **Arquivo:** `src/portals/ops/CasoPage.jsx`
-- **Tamanho:** 3.911 linhas, ~256 KB
-- **Estados:** 30+ useState declarations
-
-### Código problemático
-```javascript
-const update = (field, value) => {
-    setForm((previous) => ({ ...previous, [field]: value }));
-};
-
-const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
-const checklist = useMemo(() => [/* 15 regras */], [enabledPhases, form, caseData, activeWarrantCount, risk]);
-```
-
-### Impacto
-- Cada keystroke dispara recálculo de risk + checklist + allOk
-- Componente de 3.911 linhas re-renderiza inteiro
-- `activeWarrantCount` não memoizado (filtra array a cada render)
-
----
-
-## Discovery 4: Subscriptions Firestore — Limite 500 (CRÍTICO)
-
-### Localização
-- **Arquivo:** `src/core/firebase/firestoreService.js`
-- **Constante:** `DEFAULT_QUERY_LIMIT = 500` (linha 330)
-
-### Funções afetadas
-- `subscribeToCases` (500 docs)
-- `subscribeToClientCases` (500 docs)
-- `subscribeToAuditLogs` (500 docs)
-- `subscribeToExports` (500 docs)
-- `subscribeToCaseMessages` (**SEM LIMITE**)
-
-### Impacto
-- Dados truncados silenciosamente (sem alerta ao usuário)
-- 500 leituras Firestore por subscriber
-- 10 analistas = 5.000 leituras simultâneas
-
----
-
-## Discovery 5: Exportação Frontend — Processamento Síncrono (CRÍTICO)
-
-### Localização
-- **Arquivo:** `src/portals/client/ExportacoesPage.jsx`
-- **Funções:** `enrichCasesForExport` (linha 1007), `handleExport` (linha 1034)
-
-### Código problemático
-```javascript
-const enriched = await Promise.all(casesToEnrich.map(async (c) => {
-    return getCasePublicResult(c.id);  // Ilimitado paralelismo
-}));
-// buildPrintableHtml monolítico no main thread
-```
-
-### Impacto
-- 50 casos = 50 requisições paralelas ao Firestore
-- UI congela por 1-3s durante `buildPrintableHtml`
-- Sem feedback visual ao usuário
-
----
-
-## Discovery 6: PDF Puppeteer — Cold Start Extremo (ALTO)
-
-### Localização
-- **Arquivo:** `functions/helpers/pdfRenderer.js`
-- **Função:** `renderHtmlToPdfBuffer` (linha 14)
-
-### Código problemático
-```javascript
-browser = await puppeteer.launch({...});  // Novo browser a cada chamada
-// ... renderiza ...
-await browser.close();  // Fecha tudo
-```
-
-### Impacto
-- Cold start: **10-20s** só para abrir Chromium
-- Renderização: +30-60s para casos complexos
-- Memory: **2GiB** alocada, Chromium consome 300-600MB
-- Custo: cada PDF gera ~500-1000 vCPU-seconds desnecessários
-
----
-
-## Discovery 7: DJEN Trigger — Timeout Default (ALTO)
-
-### Localização
-- **Arquivo:** `functions/index.js:4807`
-- **Função:** `exports.enrichDjenOnCase`
-
-### Código atual
-```javascript
-exports.enrichDjenOnCase = onDocumentUpdated(
-    { document: 'cases/{caseId}', region: 'southamerica-east1', secrets: [openaiApiKey] },
-    async (event) => { ... }  // Sem timeoutSeconds → 60s default
-);
-```
-
-### Impacto
-- Loop com 500ms de delay por processo
-- 20 processos = 10s só de espera + latência HTTP
-- Timeout em casos complexos → pipeline travado
-
----
-
-## Discovery 8: `writeClientCaseMirror` — JSON.stringify Não-Determinístico (ALTO)
-
-### Localização
-- **Arquivo:** `functions/index.js:5910`
-- **Função:** `writeClientCaseMirror`
-
-### Código problemático
-```javascript
-const payloadJson = JSON.stringify(payload);
-const existingJson = JSON.stringify(existing);
-if (payloadJson === existingJson) return;  // Problemas:
-// 1. Ordem das chaves não garantida
-// 2. Timestamps serializam como "{}"
-// 3. CPU excessiva para docs grandes
-```
-
-### Impacto
-- Skips writes legítimos quando timestamps mudam
-- CPU spikes a cada update do case (10-20 updates por pipeline)
-- Leitura extra no Firestore antes de decidir skipar
-
----
-
-## Discovery 9: Cascata de Triggers (MÉDIO)
+## Discovery 1: Listagens com Paginação Interna + Acumulação em Memória (CRÍTICO)
 
 ### Localização
 - **Arquivo:** `functions/index.js`
-- **Função:** `maybeRunAutoClassifyAndAi` → `runAutoClassifyAndAi` → `caseRef.update()`
-
-### Cadeia de eventos
-1. Judit completa → autoClassify → update case
-2. Update dispara: syncClientCaseOnUpdate, publishResultOnCaseDone, enrichEscavadorOnCase
-3. Escavador completa → autoClassify → update case
-4. ... ciclo repete para DJEN
-
-### Impacto
-- ~12 invocações de trigger por caso
-- Custo Firebase multiplicado
-- `syncClientCaseOnUpdate` executa mesmo quando só campos derivados mudaram
-
----
-
-## Discovery 10: `backfillClientCasesMirror` — Sem Permissões (CRÍTICO)
-
-### Localização
-- **Arquivo:** `functions/index.js:7227`
-- **Função:** `exports.backfillClientCasesMirror`
+- **Funções:** `listOpsCases`, `listClientCases`, `getClientExportCases`, `fetchTenantCaseDocuments`
 
 ### Código problemático
 ```javascript
-await getOpsUserProfile(uid);  // Retorno descartado — não verifica role!
-let q = db.collection('cases').limit(pageSize);  // Sem filtro de tenant
+// fetchTenantCaseDocuments (linha ~10870)
+// Usa startAfter internamente para buscar páginas de 500 docs,
+// mas acumula TODOS os documentos em um array `docs` antes de retornar
+while (scannedRecords < maxDocs) {
+    let q = db.collection(collectionId);
+    if (tenantId) q = q.where('tenantId', '==', tenantId);
+    q = q.orderBy('createdAt', 'desc');
+    if (lastDoc) q = q.startAfter(lastDoc);
+    q = q.limit(Math.min(CASE_QUERY_PAGE_SIZE, maxDocs - scannedRecords));
+    const snap = await q.get();
+    // ... docs.push(...currentDocs.map(...))
+}
+```
+
+```javascript
+// listOpsCases (linha ~10920)
+const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
+    collectionId: 'cases', tenantId, fields: OPS_CASE_LIST_FIELDS,
+});
+const serialized = docs.map((docData) => serializeClientCaseDocument(docData));
+const allMatches = serialized.filter((caseData) => matchesOpsCaseFilters(caseData, filters, { queueOnly, assigneeUid }));
+allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir));
+const start = (page - 1) * pageSize;
+const pageCases = allMatches.slice(start, start + pageSize);
+```
+
+```javascript
+// listClientCases (linha ~10980)
+// Também pagina internamente com startAfter, mas acumula matches em memória
+while (true) {
+    let q = db.collection('clientCases')
+        .where('tenantId', '==', profile.tenantId)
+        .orderBy('createdAt', 'desc')
+        .limit(CASE_QUERY_PAGE_SIZE);
+    if (lastDoc) q = q.startAfter(lastDoc);
+    // ... docs.forEach(...) → allMatches.push(serialized)
+}
+allMatches.sort((left, right) => compareClientCases(left, right, sortField, sortDir));
+const pageCases = allMatches.slice(start, start + pageSize);
+```
+
+```javascript
+// getClientExportCases (linha ~11032)
+const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
+    collectionId: 'clientCases', tenantId: profile.tenantId,
+});
+const cases = docs
+    .map((docData) => serializeClientCaseDocument(docData))
+    .filter((caseData) => matchesClientCaseFilters(caseData, filters))
+    .filter((caseData) => (scopeCode === 'RED' ? caseData.riskLevel === 'RED' || caseData.riskLevel === 'HIGH' : true));
+```
+
+### Problema Real
+O problema **não é ausência absoluta de `startAfter`**. O problema real é que:
+
+1. **`fetchTenantCaseDocuments`** usa `startAfter` para buscar dados em batches de 500, mas **acumula todos os documentos em memória** antes de retornar. Para um tenant com 50.000 casos:
+   - **Memória:** 50.000 × 2KB = **100 MB** de payload
+   - **Tempo:** 100 páginas × 100ms = **10 segundos** de I/O
+   - **Risco:** OOM kill (limite 1GiB) ou timeout de 120s
+
+2. **`listOpsCases`** e **`listClientCases`** filtram e ordenam **em memória** (`matches*CaseFilters`, `compare*Cases`), depois fazem `slice((page-1)*pageSize, page*pageSize)`. Isso não é cursor pagination real — é "offset pagination falsa" que ainda requer carregar todos os docs.
+
+3. **`getClientExportCases`** carrega **todos** os casos filtrados em uma callable (120s timeout), pior cenário.
+
+### Callers afetados
+1. `listOpsCases` — carrega todos os cases do tenant via `fetchTenantCaseDocuments`, filtra/sorta em memória
+2. `listClientCases` — mesmo padrão, com paginação interna até `CLIENT_CASE_SEARCH_SCAN_LIMIT = 10000`
+3. `getClientExportCases` — carrega todos para export (pior cenário)
+4. `getOpsCaseMetrics` / `getClientDashboardMetrics` — agregação em tempo real
+
+### Solução proposta
+Implementar **cursor pagination real** por Firestore:
+- Queries com `orderBy` + `startAfter` + `limit` que **não acumulam** em memória
+- Índices compostos para cada combinação de filtros
+- Retorno: `{ results, nextCursor }` — nunca carregar tudo em memória
+- **Tie-breaker obrigatório por `__name__` (document ID)** para evitar duplicatas/omissões quando timestamps são iguais
+- **Buscar `limit + 1`** para calcular `hasMore` sem necessidade de `total`
+
+---
+
+## Discovery 2: Export Síncrono (CRÍTICO)
+
+### Localização
+- **Arquivo:** `functions/index.js:11032`
+- **Função:** `getClientExportCases`
+- **Frontend:** `src/portals/client/ExportacoesPage.jsx`
+
+### Código problemático
+```javascript
+// Backend: retorna TUDO numa callable
+const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
+    collectionId: 'clientCases', tenantId: profile.tenantId,
+});
+const cases = docs.map(...).filter(...).filter(...);
+return { cases, total: cases.length, pendingCount, meta: { scannedRecords, pageCount, capped } };
+
+// Frontend: asyncPool(5) chamando getCasePublicResult para cada caso
 ```
 
 ### Impacto
-- Qualquer usuário autenticado pode invocar
-- Lê cases de **todos os tenants**
-- Escreve em `clientCases` de todos os tenants
-- Vazamento de dados cross-tenant
+- **Backend:** 120s timeout em callable — quebra com >2.000 casos
+- **Frontend:** UI congela durante processamento
+- **Browser:** múltiplas requisições paralelas = memory leak, throttling
+
+### Solução proposta
+**Export assíncrono com Cloud Storage (Phase B):**
+1. Frontend chama `createExportJob(filters, format)`
+2. Backend cria doc em `exportJobs` com status `pending`
+3. Trigger `onCreate` dispara worker que processa em background
+4. Worker pagina cases (500/batch), formata, upload para Storage
+5. Frontend faz polling a cada 3s via `getExportJobStatus(jobId)`
+6. Quando `done`, frontend recebe URL signed para download
+
+**Nota:** Phase A não implementa export assíncrono. Apenas documenta a necessidade.
 
 ---
 
-## Discovery 11: Duplicação `reportBuilder.js` / `reportBuilder.cjs`
+## Discovery 3: Monolito 13.556 Linhas (ALTO)
 
 ### Localização
-- **Frontend:** `src/core/reportBuilder.js` (425 linhas)
-- **Backend:** `functions/reportBuilder.cjs` (317 linhas)
+- **Arquivo:** `functions/index.js`
 
-### Funções duplicadas
-- `esc()`, `formatDateBR()`, `formatCpfStatus()`
-- `flagColor()`, `badge()`, `maskCpfValue()`
-- `phaseRow()`, `listBlock()`, `timelineHtml()`
+### Métricas (detectadas por busca estática)
+| Métrica | Valor |
+|---------|-------|
+| Linhas de código | **13.556** |
+| Callables (`onCall`) | **47** |
+| Triggers Firestore diretos (`onDocument*`) | **10** |
+| `onRequest` | **1** |
+| `onSchedule` | **1** |
+| Total exports detectados | **~59** |
+| Funções internas | ~300 |
+| Nós graphify | 1.110 |
+| Edges graphify | 2.062 |
 
-### Impacto
-- Bug em um não corrige no outro
-- Cada mudança de design requer 2 implementações
-- Divergência silenciosa de versão
+### Problemas
+1. **Testabilidade:** Impossível testar uma função sem carregar todo o arquivo
+2. **Code review:** PRs de 500+ linhas são impossíveis de revisar efetivamente
+3. **Hot reload:** Qualquer mudança recompila todo o monolito (30-60s)
+4. **Deploy:** Uma function quebra = todo o backend quebra
+5. **Onboarding:** Novo dev leva dias para entender o fluxo
+
+### Solução proposta
+**Extração em módulos coesos (Phase C):**
+```
+functions/modules/
+├── caseManager/         # CRUD cases, listagem, busca
+├── enrichmentPipeline/  # Judit, Escavador, BigDataCorp, DJEN, IA
+├── reportEngine/        # HTML, PDF, publicação
+├── userManager/         # Auth, roles, claims
+├── clientPortal/        # clientCases, quotas, export
+├── auditManager/        # Logs, eventos, rastreabilidade
+└── notificationManager/ # Notificações, push
+```
+
+**Nota:** Phase A não cria `functions/modules/*`. Modularização é exclusiva da Phase C.
 
 ---
 
-## Métricas de Impacto
+## Discovery 4: Enriquecimento Sem Backpressure (ALTO)
 
-| Métrica | Valor Atual | Após Correções |
-|---------|-------------|----------------|
-| Tempo de `listOpsCases` (10k docs) | 10s+ / OOM | <3s com cap |
-| Tempo de `repairAllClaims` (5k users) | Timeout 300s | <60s |
-| Cold start PDF | 10-20s | <3s (warm) |
-| Invocações trigger por caso | ~12 | ~4 |
-| UI freeze exportação (50 casos) | 1-3s | <500ms |
-| Casos carregados no frontend | 500 (truncado) | 5.000 |
+### Localização
+- **Arquivo:** `functions/index.js`
+- **Adapters:** `functions/adapters/judit.js`, `escavador.js`, `bigdatacorp.js`, `djen.js`
+
+### Código problemático
+```javascript
+// Cada trigger de enriquecimento dispara imediatamente
+exports.enrichJuditOnCase = onDocumentUpdated(..., async (event) => {
+    // ... chama Judit API sem fila, sem rate limit, sem retry backoff
+});
+```
+
+### Impacto
+- Judit falha → trigger falha → case fica preso
+- 100 casos criados ao mesmo tempo = 100 chamadas paralelas à Judit
+- Sem circuit breaker por provedor (apenas global)
+- Sem fila para retry em caso de rate limit
+
+### Solução proposta (Fase F — fora do escopo inicial)
+1. **Cloud Tasks por provedor:** cada enriquecimento vira uma task na fila
+2. **Rate limiting:** max 5 tasks/min por provedor
+3. **Retry com backoff:** exponential backoff, max 5 tentativas
+4. **Dead letter queue:** tasks que falham 5x vão para DLQ para análise
+
+**Imediato (este plano):**
+- Adicionar `maxInstances: 10` por trigger de enriquecimento
+- Reforçar circuit breaker existente
+
+---
+
+## Discovery 5: Candidatos a Auditoria de Código Morto (MÉDIO)
+
+### Localização
+- **Arquivo:** `functions/audit/auditCatalog.js`
+- **Arquivo:** `functions/index.js` (funções não chamadas)
+
+### Candidatos identificados
+```javascript
+// auditCatalog.js — exports usados internamente
+exports.ENTITY_TYPE = { /* ... */ };
+exports.ACTOR_TYPE = { /* ... */ };
+exports.getActionConfig = (action) => { /* ... */ };
+```
+
+### Status
+**NÃO CONFIRMADO COMO REMOVÍVEL.** Verificação via `grep` simples não é suficiente:
+- `ENTITY_TYPE`, `ACTOR_TYPE`, `getActionConfig` são usados **internamente** em `writeAuditEvent.js` (que os importa do `auditCatalog.js`)
+- Remoção requer análise semântica do fluxo de auditoria, não apenas busca textual
+
+### Classificação
+| Candidato | Status | Rationale |
+|-----------|--------|-----------|
+| `ENTITY_TYPE` | NÃO CONFIRMADO | Pode ser usado internamente em `writeAuditEvent` |
+| `ACTOR_TYPE` | NÃO CONFIRMADO | Pode ser usado internamente em `writeAuditEvent` |
+| `getActionConfig` | NÃO CONFIRMADO | Pode ser usado internamente em `writeAuditEvent` |
+| Funções órfãs em `index.js` | CANDIDATOS | Requer análise profunda de dependências |
+
+### Solução proposta
+1. Auditar cada export do monolito com análise semântica (não apenas grep)
+2. Cruzar com referências em frontend + outros módulos
+3. Classificar em:
+   - **REMOVÍVEL COM SEGURANÇA** — nenhuma referência, testes cobrem ausência
+   - **PROVAVELMENTE REMOVÍVEL, MAS PRECISA TESTE** — referências indiretas ou dinâmicas
+   - **NÃO CONFIRMADO** — requer análise manual
+   - **NÃO REMOVER** — usado em fluxo crítico
+
+**Nota:** Remoção de código morto fica **fora da Phase A**. É responsabilidade da Phase D, após modularização.
+
+---
+
+## Correção de Escopo da Phase A
+
+A Phase A foi **restringida e corrigida** para ser uma fase de baseline + documentação + V2 side-by-side, **sem**:
+
+- ❌ Modularização (não criar `functions/modules/*`)
+- ❌ Remoção de código morto
+- ❌ Export assíncrono
+- ❌ Deploy de índices (apenas planejamento)
+- ❌ Remoção de índices existentes
+- ❌ Alteração de callables V1 existentes
+
+A Phase A **deve**:
+- ✅ Criar V2 side-by-side, preservando V1 intacta
+- ✅ Evitar scan completo silencioso (não carregar tudo em memória)
+- ✅ Usar cursor composto com tie-breaker por document ID
+- ✅ Documentar contratos e migration path
+- ✅ Planejar índices necessários (sem deploy)
+- ✅ Testar em emulador/local (sem alterar dados reais)
+
+---
+
+## Métricas de Impacto Esperado (Pós-Refatoração)
+
+| Métrica | Valor Atual | Target | Melhoria |
+|---------|-------------|--------|----------|
+| Tamanho do monolito | 13.556 linhas | < 500 linhas | **96% redução** |
+| Tempo de listagem (10k docs) | 10s+ / OOM | < 2s | **5x+** |
+| Export (50k casos) | Timeout 120s | < 5 min (async) | **Infinito** |
+| Cold start PDF | 10-20s | < 3s (warm) | **3-6x** |
+| Invocações trigger por caso | ~12 | ~4 | **3x** |
+| Testes isolados por módulo | 0 | 100+ | **Novo** |
+| Tempo de build functions | 30-60s | < 5s | **6-12x** |
 
 ---
 
 ## Referências Cruzadas
 
-| Descoberta | Arquivos Relacionados | Testes Afetados |
-|------------|----------------------|-----------------|
-| fetchTenantCaseDocuments | `index.js`, `firestoreService.js` | Nenhum direto |
-| repairAllClaims | `index.js`, `repair-all-claims.js`, `scripts/repair-all-claims.cjs` | Nenhum |
-| CasoPage.jsx | `CasoPage.jsx`, `CasoPage.test.jsx` | `CasoPage.test.jsx` |
-| Subscriptions 500 | `firestoreService.js`, `useCases.js`, hooks | `firestoreService.test.js` |
-| Exportação síncrona | `ExportacoesPage.jsx`, `ExportacoesPage.test.jsx` | `ExportacoesPage.test.jsx` |
-| PDF cold start | `pdfRenderer.js`, `index.js` | Nenhum |
-| DJEN timeout | `index.js`, `djen.js` | `djen.test.js` |
-| JSON.stringify mirror | `index.js`, `clientPortal.js` | Nenhum |
-| Cascata triggers | `index.js` (múltiplos triggers) | Nenhum |
-| backfill permissions | `index.js` | Nenhum |
-| reportBuilder duplicado | `src/core/reportBuilder.js`, `functions/reportBuilder.cjs` | Ambos |
+| Descoberta | Arquivos Relacionados | Testes Necessários |
+|------------|----------------------|-------------------|
+| Cursor pagination | `firestoreService.js`, `index.js`, `firestore.indexes.json` | `paginateFirestoreQuery.test.js`, `listOpsCasesV2.test.js` |
+| Export async | `ExportacoesPage.jsx`, `index.js` | `exportManager.test.js`, `exportWorker.test.js` |
+| Modularização | `index.js`, `modules/*` | Testes por módulo (7 módulos) |
+| Backpressure | `adapters/*.js`, `index.js` | Testes de carga, circuit breaker |
+| Código morto | `auditCatalog.js`, `index.js` | Análise semântica + testes de regressão |
+
+---
+
+## Riscos Identificados
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|-------|--------------|---------|-----------|
+| Regressão em callable durante extração | Alta | Alto | Testes de contrato, branch `pre-refactor` |
+| Índice Firestore não propagado a tempo | Média | Alto | Deploy índices 24h antes, validar no console |
+| Worker de export excede timeout (9min) | Média | Médio | Paginação interna, progresso parcial, retry |
+| Frontend não adapta a paginação | Baixa | Alto | Manter V1 operante, migration path documentado |
+| Módulo circular (A importa B, B importa A) | Baixa | Alto | Contratos claros, shared layer |
+| Filtros textuais/search não indexáveis | Alta | Médio | Rejeitar em V2 ou cair para V1 com flag explícita |
+| `stats`/`total` exatos exigem scan completo | Média | Médio | Não retornar `total` em V2; usar contadores aproximados |
+
+---
+
+## Notas Técnicas
+
+- **Firestore Cursor:** `startAfter` requer que o campo de ordenação seja único ou composto. **Obrigatório usar `__name__` (document ID) como tie-breaker**.
+- **Cursor Encoder:** Base64 URL-safe do array `[fieldValue, docId]` para evitar parsing ambíguo.
+- **Limit + 1:** Buscar `limit + 1` docs para calcular `hasMore` sem necessidade de contagem total.
+- **Storage Bucket:** Usar bucket padrão do Firebase (`{projectId}.firebasestorage.app`) ou criar `exports.{projectId}.firebasestorage.app`.
+- **TTL:** Firestore TTL é eventual (pode levar 72h). Para garantia imediata, usar Cloud Scheduler.
+- **maxInstances:** Firebase Functions Gen2 suporta `maxInstances` por function. Recomendado: 10 para enriquecimento, 100 para callables.
+- **Circuit Breaker:** Já existe em `functions/helpers/circuitBreaker.js`. Precisa ser movido para `modules/_shared/` (Phase C).
+- **Auditoria:** Subscriptions de auditLogs usam `occurredAt` (não `createdAt`). Índices de auditoria existentes usam `occurredAt`.
+- **Índices:** Não remover índices nesta fase. Adicionar apenas estritamente necessários.
+
+---
+
+> **Atualizado em:** 2026-05-29
+> **Próxima revisão:** Após conclusão da Phase A corrigida

@@ -1,0 +1,110 @@
+﻿{
+    "Result":  [
+                   {
+                       "MatchKeys":  "doc{12559053446}",
+                       "BasicData":  {
+                                         "TaxIdNumber":  "12559053446",
+                                         "TaxIdCountry":  "BRAZIL",
+                                         "AlternativeIdNumbers":  {
+
+                                                                  },
+                                         "Name":  "LIANDRA MIRELY DE PAIVA PINHEIRO",
+                                         "Aliases":  {
+                                                         "CommonName":  "LIANDRA PINHEIRO",
+                                                         "StandardizedName":  "LIANDRA MIRELI PAIVA PINHEIRO"
+                                                     },
+                                         "Gender":  "F",
+                                         "NameWordCount":  5,
+                                         "NumberOfFullNameNamesakes":  1,
+                                         "NameUniquenessScore":  1,
+                                         "FirstNameUniquenessScore":  0.001,
+                                         "FirstAndLastNameUniquenessScore":  0.04,
+                                         "BirthDate":  "2004-10-17T00:00:00Z",
+                                         "CapturedBirthDateFromRFSource":  "2004-10-17",
+                                         "IsValidBirthDateInRFSource":  true,
+                                         "Age":  21,
+                                         "ZodiacSign":  "LIBRA",
+                                         "ChineseSign":  "Monkey",
+                                         "BirthCountry":  "BRASILEIRA",
+                                         "MotherName":  "",
+                                         "FatherName":  "",
+                                         "MaritalStatusData":  {
+
+                                                               },
+                                         "TaxIdStatus":  "REGULAR",
+                                         "TaxIdOrigin":  "RECEITA FEDERAL",
+                                         "TaxIdFiscalRegion":  "AL-PB-PE-RN",
+                                         "HasObitIndication":  false,
+                                         "TaxIdStatusDate":  "2014-03-26T00:00:00Z",
+                                         "TaxIdStatusRegistrationDate":  "2014-02-20T00:00:00Z",
+                                         "CreationDate":  "2014-03-26T00:00:00Z",
+                                         "LastUpdateDate":  "2026-04-07T00:00:00Z"
+                                     },
+                       "KycData":  {
+                                       "PEPHistory":  [
+
+                                                      ],
+                                       "IsCurrentlyPEP":  false,
+                                       "SanctionsHistory":  [
+
+                                                            ],
+                                       "IsCurrentlySanctioned":  false,
+                                       "WasPreviouslySanctioned":  false,
+                                       "Last30DaysSanctions":  0,
+                                       "Last90DaysSanctions":  0,
+                                       "Last180DaysSanctions":  0,
+                                       "Last365DaysSanctions":  0,
+                                       "LastYearPEPOccurence":  0,
+                                       "Last3YearsPEPOccurence":  0,
+                                       "Last5YearsPEPOccurence":  0,
+                                       "Last5PlusYearsPEPOccurence":  0,
+                                       "IsCurrentlyElectoralDonor":  false,
+                                       "IsHistoricalElectoralDonor":  false,
+                                       "TotalElectoralDonations":  0,
+                                       "TotalElectoralDonationAmount":  0,
+                                       "ElectoralDonations":  {
+
+                                                              }
+                                   },
+                       "Processes":  {
+                                         "Lawsuits":  [
+
+                                                      ],
+                                         "TotalLawsuits":  0,
+                                         "TotalLawsuitsAsAuthor":  0,
+                                         "TotalLawsuitsAsDefendant":  0,
+                                         "TotalLawsuitsAsOther":  0,
+                                         "Last30DaysLawsuits":  0,
+                                         "Last90DaysLawsuits":  0,
+                                         "Last180DaysLawsuits":  0,
+                                         "Last365DaysLawsuits":  0
+                                     }
+                   }
+               ],
+    "QueryId":  "15aa687c-621a-425b-b129-d2212042cfa7",
+    "ElapsedMilliseconds":  138,
+    "QueryDate":  "2026-05-30T02:21:18.2917485Z",
+    "Status":  {
+                   "basic_data":  [
+                                      {
+                                          "Code":  0,
+                                          "Message":  "OK"
+                                      }
+                                  ],
+                   "kyc":  [
+                               {
+                                   "Code":  0,
+                                   "Message":  "OK"
+                               }
+                           ],
+                   "processes":  [
+                                     {
+                                         "Code":  0,
+                                         "Message":  "OK"
+                                     }
+                                 ]
+               },
+    "Evidences":  {
+
+                  }
+}

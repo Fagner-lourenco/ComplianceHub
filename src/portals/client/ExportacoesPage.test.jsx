@@ -51,6 +51,10 @@ vi.mock('../../core/firebase/firestoreService', () => ({
     subscribeToExports: (...args) => exportacoesPageMocks.subscribeToExports(...args),
     callRegisterClientExport: (...args) => exportacoesPageMocks.callRegisterClientExport(...args),
     callGetClientExportCases: (...args) => exportacoesPageMocks.callGetClientExportCases(...args),
+    callCreateExportJob: vi.fn(),
+    callGetExportJobStatus: vi.fn(),
+    callListExportJobs: vi.fn(),
+    callCancelExportJob: vi.fn(),
     getCasePublicResult: vi.fn(),
 }));
 
@@ -58,6 +62,8 @@ exportacoesPageMocks.subscribeToExports.mockImplementation((tenantId, callback) 
     callback([], null);
     return () => {};
 });
+
+import { callCreateExportJob, callGetExportJobStatus, callListExportJobs, callCancelExportJob } from '../../core/firebase/firestoreService';
 
 const { default: ExportacoesPage } = await import('./ExportacoesPage');
 
@@ -104,6 +110,11 @@ describe('ExportacoesPage', () => {
         global.URL.createObjectURL = vi.fn(() => 'blob:export');
         global.URL.revokeObjectURL = vi.fn();
         window.open = vi.fn();
+
+        callListExportJobs.mockResolvedValue({ jobs: [] });
+        callCreateExportJob.mockResolvedValue({ jobId: 'job-1' });
+        callGetExportJobStatus.mockResolvedValue({ status: 'done', downloadUrl: 'https://example.com/export.csv' });
+        callCancelExportJob.mockResolvedValue({ success: true });
     });
 
     it('usa historico real vazio em vez de mock no portal do cliente', async () => {

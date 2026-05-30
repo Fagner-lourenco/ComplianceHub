@@ -1,1435 +1,482 @@
-# Task Plan — Correção de Gargalos Críticos ComplianceHub
+# Task Plan: Refatoração Zero-Risco do Monolito ComplianceHub
 
-> **Status:** Planejamento concluído. Aguardando aprovação para execução.
+> **Status:** Planejamento em execução — Phase A corrigida detalhada, Fases B-E estruturadas
 > **Criado em:** 2026-05-29
-> **Scope:** 11 itens de segurança, performance e estabilidade (excluídos: 1.2, 1.4, 1.5, 2.4)
+> **Última revisão:** 2026-05-29
+> **Scope:** Refatoração do monolito `functions/index.js` (~13.556 linhas, 47 callables, 10 triggers Firestore, 1 onRequest, 1 onSchedule) com paginação por cursor Firestore, export assíncrono via Cloud Storage, e remoção de código morto — mantendo 100% dos testes passando, zero regressão de API pública, e compatibilidade backward-compatible.
 
 ---
 
 ## Goal
 
-Corrigir todos os gargalos críticos e de alta severidade identificados na análise de performance e segurança do ComplianceHub, sem introduzir regressão, mantendo compatibilidade com o fluxo de enriquecimento existente e preservando todos os testes passando.
-
-## Constraints
-
-- **Não remover** código sem validar dependências via `grep` e leitura de callers
-- **Não alterar** interfaces públicas de callables (manter mesma assinatura de entrada/saída)
-- **Preservar** `DEFAULT_QUERY_LIMIT = 500` para subscriptions realtime legítimas
-- **Manter** compatibilidade com demo mode e mock data
-- **TDD:** Testes RED → Implementação → Testes GREEN para cada item
-- **Verificações obrigatórias** antes de cada commit: lint, test frontend, test backend, build
-- **Deploy separado:** backend primeiro, frontend depois, com janela de observação
+Implementar cursor pagination real para listagens, substituir export síncrono por job assíncrono com Cloud Storage, dividir o monolito em módulos coesos testáveis, e eliminar código morto confirmado — mantendo V1 operante durante toda a transição.
 
 ---
 
-## Phase Overview
+## Constraints & Preferences
 
-| Phase | Nome | Itens | Est. Horas | Status |
-|-------|------|-------|------------|--------|
-| 0 | Infraestrutura e Helpers | Criar rateLimiter.js, transaction wrappers | 2h | 🔲 Pending |
-| 1 | Segurança Crítica | 1.3 (backfill permissions) | 3h | 🔲 Pending |
-| 2 | Performance Backend | 2.1, 2.2, 2.3, 2.5, 2.6 | 8h | 🔲 Pending |
-| 3 | Performance Frontend | 3.1, 3.2, 3.3 | 6h | 🔲 Pending |
-| 4 | Remoção de Código Morto | Arquivos duplicados, funções não chamadas | 1h | 🔲 Pending |
-| 5 | Validação e Deploy | Testes completos, smoke test, deploy | 2h | 🔲 Pending |
-| **Total** | | | **~22h** | |
+- **Respostas em português**
+- **TDD:** Testes RED → Implementação → Testes GREEN para cada módulo
+- **Não alterar interfaces públicas de callables sem versionamento**
+- **Verificar `lint`, `test` frontend (~891), `test` backend (~571) antes de cada commit**
+- **Deploy separado:** backend primeiro, frontend depois, com janela de observação de 5 minutos
+- **Modo PLANO para refatoração:** análise profunda primeiro, execução depois de aprovação explícita
+- **Métricas baseline documentadas:** monolito 13.556 linhas, 1110 nós graphify, 2062 edges
 
 ---
 
-## Phase 0 — Infraestrutura e Helpers
+## Current Phase
 
-### 0.1 Criar `functions/helpers/rateLimiter.js`
-
-**Motivação:** Embora o item 1.5 (rate limiting em callables) tenha sido excluído do escopo, o helper de rate limiting é necessário para o item 1.3 (backfillClientCasesMirror), que deve ter proteção contra reexecução acidental.
-
-**Arquivo:** `functions/helpers/rateLimiter.js` (novo)  
-**Teste:** `functions/helpers/rateLimiter.test.js` (novo)  
-**Estimativa:** 2 horas  
-**Risco:** Baixo — função pura, não afeta fluxo existente
+**Phase A corrigida — baseline/documentos + V2 cursor pagination side-by-side**
 
 ---
 
-#### PASSO 0.1.1 — Análise Pré-Implementação
+## Decisões de Trade-off (Aprovadas)
 
-- [ ] **Ler** `functions/helpers/circuitBreaker.js` para entender padrão de acesso Firestore usado no projeto
-- [ ] **Verificar** se existe algum helper de rate limiting existente (`grep -r "rate" functions/helpers/ --include="*.js"`)
-- [ ] **Ler** `functions/package.json` para confirmar versão do `firebase-admin` (deve suportar `runTransaction`)
-- [ ] **Verificar** se há testes existentes em `functions/helpers/` para seguir o mesmo padrão
-
-#### PASSO 0.1.2 — Implementação do Helper
-
-**Arquivo:** `functions/helpers/rateLimiter.js`
-
-```javascript
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-
-const DEFAULT_WINDOW_MS = 60_000;
-const DEFAULT_MAX_REQUESTS = 10;
-
-/**
- * Verifica se o identificador excedeu o limite de requisições na janela de tempo.
- * Usa Firestore + transaction para atomicidade.
- * 
- * @param {string} identifier - UID do usuário ou IP
- * @param {Object} options
- * @param {number} options.windowMs - Janela de tempo em ms (default: 60000)
- * @param {number} options.maxRequests - Máximo de requisições na janela (default: 10)
- * @param {string} options.key - Chave de contexto (default: 'default')
- * @throws {Error} com code: 'resource-exhausted' se limite excedido
- */
-async function checkRateLimit(identifier, { windowMs = DEFAULT_WINDOW_MS, maxRequests = DEFAULT_MAX_REQUESTS, key = 'default' } = {}) {
-    const db = getFirestore();
-    const ref = db.collection('rateLimits').doc(`${identifier}:${key}`);
-    const now = Date.now();
-    const windowStart = now - windowMs;
-
-    await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        const data = snap.exists ? snap.data() : {};
-        const requests = Array.isArray(data.requests) ? data.requests : [];
-        
-        // Filtrar apenas requisições dentro da janela
-        const recent = requests.filter(ts => ts > windowStart);
-        
-        if (recent.length >= maxRequests) {
-            const err = new Error('RATE_LIMIT_EXCEEDED');
-            err.code = 'resource-exhausted';
-            throw err;
-        }
-        
-        recent.push(now);
-        tx.set(ref, { requests: recent, updatedAt: FieldValue.serverTimestamp() });
-    });
-}
-
-module.exports = { checkRateLimit };
-```
-
-**Checklist de implementação:**
-- [ ] Criar arquivo com a função acima
-- [ ] Garantir que não há import circular com outros helpers
-- [ ] Garantir que não quebra o build do backend
-
-#### PASSO 0.1.3 — Implementação dos Testes
-
-**Arquivo:** `functions/helpers/rateLimiter.test.js`
-
-**Cenários a testar:**
-
-| # | Cenário | Expectativa |
-|---|---------|-------------|
-| 1 | 3 requisições dentro da janela | Todas permitidas (não throw) |
-| 2 | 4ª requisição na mesma janela | Throw com `err.code === 'resource-exhausted'` |
-| 3 | Após windowMs passar, nova requisição | Permitida (timestamps antigos limpos) |
-| 4 | Identifier A atinge limite, Identifier B solicita | B permitido (isolamento) |
-| 5 | Duas chamadas simultâneas (concorrência) | Transaction resolve atomicamente, uma é rejeitada |
-| 6 | Collection `rateLimits` não existe | Criada automaticamente na primeira chamada |
-
-**Checklist de testes:**
-- [ ] Mock do `getFirestore()` e `runTransaction()`
-- [ ] Mock do `FieldValue.serverTimestamp()`
-- [ ] Teste 1: 3 calls → nenhum throw
-- [ ] Teste 2: 4th call → throw com code correto
-- [ ] Teste 3: wait > windowMs → 4th call permitida
-- [ ] Teste 4: identifier A limitado, identifier B livre
-- [ ] Teste 5: simular race condition
-- [ ] Teste 6: collection vazia → cria doc
-
-#### PASSO 0.1.4 — Validação
-
-- [ ] `cd functions && npm test -- rateLimiter.test.js` → TODOS passam
-- [ ] `cd functions && npm run lint` → 0 erros, 0 warnings
-- [ ] `cd functions && npm test` → todos os 513+ testes existentes ainda passam (sem regressão)
-- [ ] Commit: `feat(infra): add rate limiter helper with Firestore-backed sliding window`
+| # | Pergunta | Decisão | Rationale |
+|---|----------|---------|-----------|
+| 1 | Downtime aceitável? | **(A)** 2-5min de indisponibilidade | Blue-green é overkill; janela de manutenção aceitável |
+| 2 | Prioridade? | **(A)** Cursor pagination primeiro | Resolve dor imediata dos usuários (listagens truncadas/lentas) |
+| 3 | Compatibilidade API? | **(A)** 100% backward-compatible | V1 intacta + V2 side-by-side; frontend adapta gradualmente |
+| 4 | Arquitetura export? | **(D)** Coleção `exportJobs` + polling | Simples, transparente, sem infra extra de Cloud Tasks/Pub/Sub |
+| 5 | Backpressure? | **(A)** `maxInstances: 10` + circuit breaker | Cloud Tasks é próximo passo após estabilizar |
+| 6 | Phase A inclui modularização? | **(NÃO)** Modularização é Phase C | Phase A = baseline + V2 cursor apenas |
+| 7 | Phase A inclui remoção de código morto? | **(NÃO)** Remoção é Phase D | Phase A = zero alterações em código existente |
+| 8 | Phase A inclui export assíncrono? | **(NÃO)** Export async é Phase B | Phase A = apenas documentar necessidade |
 
 ---
 
-## Phase 1 — Segurança Crítica
+## Baseline Pré-Refatoração (Confirmado por Busca Estática)
 
-### 1.1 `backfillClientCasesMirror` sem permissões
+| Métrica | Valor Atual | Target Pós-Refatoração |
+|---------|-------------|------------------------|
+| Tamanho monolito | **13.556 linhas** | < 500 linhas (wiring apenas) |
+| Callables no index.js | **47** | 0 (delegados para módulos) |
+| Triggers Firestore no index.js | **10** | 0 (delegados para módulos) |
+| onRequest no index.js | **1** | 0 (delegados para módulos) |
+| onSchedule no index.js | **1** | 0 (delegados para módulos) |
+| Total exports detectados | **~59** | 0 (delegados) |
+| Funções no index.js | ~300 | ~0 |
+| Testes frontend | ~891 (39 arquivos) | Manter 891+ |
+| Testes backend | ~571 (48 arquivos) | Manter 571+ |
+| Lint frontend | 0 erros, 0 warnings | Manter 0 |
+| Lint backend | 0 erros, 0 warnings | Manter 0 |
+| Nós graphify | 1110 | Esperado: 1200+ (mais granular) |
+| Listagens com cursor real | 0% | 100% (após migração frontend) |
+| Export síncrono | 100% | 0% (após Phase B) |
+| Código morto identificado | Candidatos não confirmados | 0 (após Phase D) |
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `functions/index.js:7227`  
-**Risco:** Qualquer usuário autenticado pode invocar e ler/escrever cases de todos os tenants  
-**Estimativa:** 3 horas  
-**Risco de regressão:** Médio — altera callable administrativo
-
----
-
-#### PASSO 1.1.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/index.js` linhas 7227-7262 (função atual)
-- [ ] **Ler** `functions/index.js` linhas próximas a `getOpsUserProfile` para entender o padrão de verificação de role
-- [ ] **Grep** no frontend: `grep -r "backfillClientCasesMirror" src/ --include="*.js" --include="*.jsx"`
-- [ ] **Verificar** se existe teste para `backfillClientCasesMirror` atualmente
-- [ ] **Ler** `functions/index.js` linhas 5909+ para entender `buildClientCasePayload` (usado dentro do backfill)
-- [ ] **Verificar** se `systemLocks` collection já existe no código (usada em outros lugares?)
-
-#### PASSO 1.1.2 — Backup do Código Original
-
-- [ ] Copiar trecho atual das linhas 7227-7262 para um comentário ou arquivo temporário
-- [ ] Documentar o comportamento atual em `findings.md` (já feito)
-
-#### PASSO 1.1.3 — Implementação da Correção
-
-**Alterações em `functions/index.js`:**
-
-**Linha ~7232 (verificação de role):**
-```javascript
-// DE:
-await getOpsUserProfile(uid);
-
-// PARA:
-const profile = await getOpsUserProfile(uid);
-if (!['admin', 'owner'].includes(profile.role)) {
-    throw new HttpsError('permission-denied', 'Apenas administradores podem executar backfill.');
-}
-```
-
-**Linha ~7240 (filtro de tenant):**
-```javascript
-// DE:
-let q = db.collection('cases').limit(pageSize);
-
-// PARA:
-const targetTenant = request.data?.tenantId || profile.tenantId;
-if (!targetTenant) {
-    throw new HttpsError('invalid-argument', 'tenantId obrigatorio para backfill.');
-}
-let q = db.collection('cases').where('tenantId', '==', targetTenant).limit(pageSize);
-```
-
-**Linha ~7233 (lock de reexecução):**
-```javascript
-// ADICIONAR após a verificação de role:
-const lockRef = db.collection('systemLocks').doc('backfillClientCasesMirror');
-const lockSnap = await lockRef.get();
-if (lockSnap.exists && lockSnap.data().locked === true) {
-    throw new HttpsError('failed-precondition', 'Backfill ja em execucao.');
-}
-await lockRef.set({ 
-    locked: true, 
-    startedBy: uid, 
-    startedAt: FieldValue.serverTimestamp() 
-});
-
-try {
-    // ... loop de backfill existente ...
-} finally {
-    await lockRef.update({ 
-        locked: false, 
-        finishedAt: FieldValue.serverTimestamp() 
-    });
-}
-```
-
-**Checklist de implementação:**
-- [ ] Adicionar verificação de role (`admin`/`owner`)
-- [ ] Adicionar atribuição do retorno de `getOpsUserProfile` para `profile`
-- [ ] Adicionar extração de `targetTenant`
-- [ ] Adicionar validação de `targetTenant`
-- [ ] Adicionar filtro `where('tenantId', '==', targetTenant)` na query
-- [ ] Adicionar lock com `systemLocks` collection
-- [ ] Garantir unlock no `finally`
-- [ ] Verificar que `return { synced: count }` ainda funciona
-
-#### PASSO 1.1.4 — Testes de Não Regressão
-
-**Arquivo:** `functions/index.test.js` (novo) OU adicionar em arquivo de teste existente
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Analyst chamando | `request.auth.uid` com role `analyst` | `HttpsError('permission-denied')` |
-| 2 | Owner sem tenantId | `request.auth.uid` com role `owner`, sem `tenantId` | `HttpsError('invalid-argument')` |
-| 3 | Admin com tenantId | `request.auth.uid` com role `admin`, `tenantId: 'tenant1'` | Query inclui `where('tenantId', '==', 'tenant1')` |
-| 4 | Lock ativo | Doc `systemLocks/backfillClientCasesMirror` com `locked: true` | `HttpsError('failed-precondition')` |
-| 5 | Sem lock, 2 tenants | Cases em `tenant1` e `tenant2`, caller de `tenant1` | Apenas cases de `tenant1` processados |
-| 6 | Lock liberado | Após execução, verificar `systemLocks` | `locked: false`, `finishedAt` presente |
-
-**Checklist de testes:**
-- [ ] Mock de `getFirestore()`, `collection()`, `doc()`, `get()`, `set()`, `update()`
-- [ ] Mock de `getOpsUserProfile()`
-- [ ] Mock de `HttpsError`
-- [ ] Mock de `buildClientCasePayload()` (se necessário)
-- [ ] Teste 1: analyst → permission-denied
-- [ ] Teste 2: owner sem tenantId → invalid-argument
-- [ ] Teste 3: admin com tenantId → where clause correto
-- [ ] Teste 4: lock ativo → failed-precondition
-- [ ] Teste 5: tenant isolation → count correto
-- [ ] Teste 6: lock cleanup → unlocked after execution
-
-#### PASSO 1.1.5 — Validação de Não Regressão
-
-- [ ] `cd functions && npm test` → todos os 513+ testes existentes passam
-- [ ] `cd functions && npm run lint` → 0 erros, 0 warnings
-- [ ] Verificar que `getClientExportCases` ainda funciona (não usa mesma função, mas validar)
-- [ ] Verificar que `listOpsCases` ainda funciona
-- [ ] Commit: `fix(security): add role and tenant validation to backfillClientCasesMirror`
+**Nota:** Números de testes e exports detectados por busca estática. Contagem semântica pode divergir.
 
 ---
 
-## Phase 2 — Performance Backend
+## Phases
 
-### 2.1 `fetchTenantCaseDocuments` sem limite total
+### Phase A corrigida: Baseline/Documentos + V2 Cursor Pagination Side-by-Side
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `functions/index.js:10809`  
-**Risco:** OOM/timeout em tenants grandes (10k+ casos)  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Baixo — adiciona parâmetro opcional com default
-
----
-
-#### PASSO 2.1.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/index.js` linhas 10370-10375 (constantes próximas)
-- [ ] **Ler** `functions/index.js` linhas 10809-10832 (`fetchTenantCaseDocuments`)
-- [ ] **Ler** `functions/index.js` linhas 10920-10940 (`listOpsCases` — caller)
-- [ ] **Ler** `functions/index.js` linhas 11032-11050 (`getClientExportCases` — caller)
-- [ ] **Ler** `functions/index.js` linhas 10764-10786 (`fetchCaseMetricDocuments` — função similar)
-- [ ] **Verificar** se `CASE_QUERY_PAGE_SIZE` é usada em outros lugares (`grep -n "CASE_QUERY_PAGE_SIZE" functions/index.js`)
-- [ ] **Decidir:** Unificar `fetchTenantCaseDocuments` e `fetchCaseMetricDocuments`? (Se sim, criar sub-task)
-
-#### PASSO 2.1.2 — Implementação da Correção
-
-**Arquivo:** `functions/index.js`
-
-**Linha ~10372 (nova constante):**
-```javascript
-const CASE_QUERY_MAX_DOCS = 10000;
-```
-
-**Linhas 10809-10832 (função modificada):**
-```javascript
-async function fetchTenantCaseDocuments({ 
-    collectionId, 
-    tenantId = null, 
-    fields = [], 
-    maxDocs = CASE_QUERY_MAX_DOCS 
-}) {
-    let lastDoc = null;
-    let pageCount = 0;
-    let scannedRecords = 0;
-    const docs = [];
-
-    while (scannedRecords < maxDocs) {
-        let q = db.collection(collectionId)
-            .orderBy('createdAt', 'desc')
-            .limit(Math.min(CASE_QUERY_PAGE_SIZE, maxDocs - scannedRecords));
-        
-        if (tenantId) q = q.where('tenantId', '==', tenantId);
-        if (fields.length > 0) q = q.select(...fields);
-        if (lastDoc) q = q.startAfter(lastDoc);
-        
-        const snap = await q.get();
-        const currentDocs = snap.docs || [];
-        scannedRecords += currentDocs.length;
-        docs.push(...currentDocs.map(d => ({ id: d.id, ...d.data() })));
-        
-        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
-        lastDoc = currentDocs[currentDocs.length - 1];
-    }
-
-    return { docs, pageCount, scannedRecords, capped: scannedRecords >= maxDocs };
-}
-```
-
-**Modificar callers:**
-
-**`listOpsCases` (linha ~10934):**
-```javascript
-// Propagar capped no retorno
-return {
-    cases: pageCases,
-    total: allMatches.length,
-    // ... outros campos ...
-    meta: {
-        // ... campos existentes ...
-        capped: fetchResult.capped,
-    },
-};
-```
-
-**`getClientExportCases` (linha ~11045):**
-```javascript
-// Similar propagation
-return {
-    cases: exportCases,
-    // ...
-    meta: {
-        // ...
-        capped: fetchResult.capped,
-    },
-};
-```
-
-**Checklist de implementação:**
-- [ ] Adicionar `CASE_QUERY_MAX_DOCS` constante
-- [ ] Adicionar `maxDocs` parâmetro com default
-- [ ] Modificar condição do `while`
-- [ ] Adicionar `capped` no return
-- [ ] Modificar `listOpsCases` para propagar `capped`
-- [ ] Modificar `getClientExportCases` para propagar `capped`
-- [ ] **NÃO modificar** `fetchCaseMetricDocuments` (fora do escopo, risco de regressão)
-
-#### PASSO 2.1.3 — Testes de Não Regressão
-
-**Arquivo:** Novo teste em `functions/index.test.js` ou arquivo dedicado
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | 10.001 cases | Mock de 10.001 docs | Retorna 10.000, `capped: true` |
-| 2 | 100 cases | Mock de 100 docs | Retorna 100, `capped: false` |
-| 3 | Sem maxDocs | Chamada sem `maxDocs` | Usa default 10.000 |
-| 4 | Com maxDocs=500 | Chamada com `maxDocs: 500` | Retorna 500, respeita parâmetro |
-| 5 | listOpsCases propaga | `listOpsCases` chamado | `meta.capped` presente na resposta |
-| 6 | Tenant pequeno | 50 cases | Retorna 50, `capped: false`, funciona normalmente |
-
-**Checklist de testes:**
-- [ ] Mock de `db.collection()`, `orderBy()`, `where()`, `limit()`, `startAfter()`, `get()`
-- [ ] Simular paginação (múltiplas chamadas ao `get()`)
-- [ ] Teste 1: 10.001 cases → 10.000 + capped
-- [ ] Teste 2: 100 cases → 100 + !capped
-- [ ] Teste 3: default maxDocs
-- [ ] Teste 4: custom maxDocs
-- [ ] Teste 5: listOpsCases integration
-- [ ] Teste 6: tenant pequeno (não regressão)
-
-#### PASSO 2.1.4 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] `npm test` → 820+ testes frontend passam
-- [ ] Commit: `perf(backend): add hard limit to fetchTenantCaseDocuments to prevent OOM`
+**Objetivo:** Criar baseline documental do código real, implementar cursor pagination real em V2 side-by-side com V1, sem alterar callables existentes, sem modularizar, sem remover código morto, e sem implementar export assíncrono.
+**Status:** pending → **a iniciar após aprovação**
+**Estimativa:** 16-24 horas
+**Risco:** Médio — cria V2 novo, mas V1 permanece inalterado
 
 ---
 
-### 2.2 `repairAllClaims` sem paginação
+#### A.0 — Baseline Real e Contrato V1
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `functions/index.js:6325`  
-**Risco:** Timeout em massa (>300s) com 5k+ usuários  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Médio — altera loop principal da função
-
----
-
-#### PASSO 2.2.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/index.js` linhas 6325-6365 (função atual)
-- [ ] **Verificar** `functions/repair-all-claims.js` existe e se é igual
-- [ ] **Verificar** `scripts/repair-all-claims.cjs` existe e se é igual
-- [ ] **Grep** por chamadas: `grep -r "repair-all-claims" . --include="*.js" --include="*.cjs" --include="*.json"`
-- [ ] **Verificar** `package.json` scripts que possam chamar esses arquivos
-- [ ] **Ler** documentação Firebase sobre `setCustomUserClaims` rate limits
-
-#### PASSO 2.2.2 — Implementação da Correção
-
-**Arquivo:** `functions/index.js`
-
-**Linhas 6325-6365 (função modificada):**
-```javascript
-exports.repairAllClaims = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 300, memory: '1GiB', cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const callerDoc = await db.collection('userProfiles').doc(uid).get();
-        const callerData = callerDoc.data() || {};
-        if (!['admin', 'owner'].includes(callerData.role)) {
-            throw new HttpsError('permission-denied', 'Apenas administradores podem executar reparo em massa.');
-        }
-
-        const BATCH_SIZE = 500;
-        const CONCURRENCY = 10;
-        let lastDoc = null;
-        let fixed = 0;
-        let skipped = 0;
-        let errors = 0;
-        let total = 0;
-
-        while (true) {
-            let q = db.collection('userProfiles')
-                .orderBy('__name__')
-                .limit(BATCH_SIZE);
-            if (lastDoc) q = q.startAfter(lastDoc);
-            
-            const snap = await q.get();
-            if (snap.empty) break;
-
-            const batch = snap.docs;
-            total += batch.length;
-            lastDoc = batch[batch.length - 1];
-
-            // Processar em paralelo com limite de concorrência
-            for (let i = 0; i < batch.length; i += CONCURRENCY) {
-                const chunk = batch.slice(i, i + CONCURRENCY);
-                await Promise.all(chunk.map(async (doc) => {
-                    const data = doc.data();
-                    const targetUid = doc.id;
-
-                    if (!data.role || !data.tenantId) {
-                        skipped++;
-                        return;
-                    }
-
-                    try {
-                        await getAuth().setCustomUserClaims(targetUid, {
-                            role: data.role,
-                            tenantId: data.tenantId,
-                        });
-                        fixed++;
-                    } catch {
-                        errors++;
-                    }
-                }));
-            }
-        }
-
-        return { success: true, total, fixed, skipped, errors };
-    },
-);
-```
-
-**Checklist de implementação:**
-- [ ] Substituir `db.collection('userProfiles').get()` por paginação
-- [ ] Adicionar `orderBy('__name__')` para cursor estável
-- [ ] Adicionar `startAfter(lastDoc)` para paginação
-- [ ] Substituir `for...of` sequencial por chunks paralelos
-- [ ] Adicionar `CONCURRENCY = 10` para evitar rate limit do Auth
-- [ ] Manter contadores `total`, `fixed`, `skipped`, `errors`
-- [ ] Manter `return` object com mesmas chaves
-
-#### PASSO 2.2.3 — Remoção de Código Duplicado
-
-**Arquivos a remover (após validação):**
-- `functions/repair-all-claims.js`
-- `scripts/repair-all-claims.cjs`
+**Objetivo:** Documentar o estado real do código antes de qualquer alteração.
 
 **Checklist:**
-- [ ] `grep -r "repair-all-claims" .` → 0 resultados (exceto o próprio arquivo)
-- [ ] `cat functions/repair-all-claims.js` → confirmar que é cópia
-- [ ] `cat scripts/repair-all-claims.cjs` → confirmar que é cópia
-- [ ] `git rm functions/repair-all-claims.js`
-- [ ] `git rm scripts/repair-all-claims.cjs`
-- [ ] Commit separado: `chore: remove duplicate repair-all-claims files`
+- [ ] **A.0.1** Confirmar linhas reais de `functions/index.js`: **13.556 linhas**
+- [ ] **A.0.2** Confirmar contagem real de `onCall`: **47 callables**
+- [ ] **A.0.3** Confirmar contagem real de triggers Firestore diretos (`onDocumentCreated/Updated/Deleted`): **10 triggers**
+- [ ] **A.0.4** Confirmar contagem real de `onRequest`: **1**
+- [ ] **A.0.5** Confirmar contagem real de `onSchedule`: **1**
+- [ ] **A.0.6** Confirmar total de exports detectados por busca estática: **~59**
+- [ ] **A.0.7** Mapear contratos atuais de `listOpsCases`:
+  - Parâmetros: `tenantId`, `pageSize` (max 100), `page` (numérica), `filters`, `queueOnly`, `assigneeUid`, `sortField`, `sortDir`
+  - Retorno: `{ cases, total, stats, page, pageSize, totalPages, hasMore, meta }`
+  - Implementação: carrega todos os docs via `fetchTenantCaseDocuments`, filtra/sorta em memória, faz `slice`
+- [ ] **A.0.8** Mapear contratos atuais de `listClientCases`:
+  - Parâmetros: `pageSize` (max 100), `page` (numérica), `filters`, `sortField`, `sortDir`
+  - Retorno: `{ cases, total, stats, page, pageSize, totalPages, hasMore, meta }`
+  - Implementação: pagina internamente com `startAfter`, mas acumula `allMatches` em memória, depois filtra/sorta e faz `slice`
+- [ ] **A.0.9** Mapear contrato atual de `getClientExportCases`:
+  - Parâmetros: `scopeCode` (ALL/DONE/PENDING/RED), `dateFrom`, `dateTo`
+  - Retorno: `{ cases, total, pendingCount, meta }`
+  - Implementação: carrega todos os docs via `fetchTenantCaseDocuments`, filtra em memória
+- [ ] **A.0.10** Mapear consumidores frontend V1:
+  - `callListOpsCases` → `src/hooks/useOpsCasesQuery.js`
+  - `callListClientCases` → `src/hooks/useClientCasesQuery.js`
+  - `callGetClientExportCases` → `src/portals/client/ExportacoesPage.jsx`
+- [ ] **A.0.11** Registrar que V1 será **preservada sem alteração funcional**
+- [ ] **A.0.12** Registrar que V2 será **criada side-by-side** (novas callables)
+- [ ] **A.0.13** Registrar que **frontend não será migrado automaticamente nesta fase**
 
-#### PASSO 2.2.4 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | 1.000 usuários | Mock de 1.000 docs | `total === 1000`, processado em <5s |
-| 2 | 5.000 usuários | Mock de 5.000 docs | `fixed + skipped + errors === 5000` |
-| 3 | Sem role/tenantId | Alguns docs sem `role` ou `tenantId` | `skipped` incrementado, não quebra |
-| 4 | Auth falha em 1 | `setCustomUserClaims` falha em 1 usuário | `errors++`, outros continuam |
-| 5 | Paginação | Mais de 500 usuários | Usa `startAfter`, múltiplas páginas |
-| 6 | Retorno | Qualquer cenário | Retorna `{ success, total, fixed, skipped, errors }` |
-
-**Checklist de testes:**
-- [ ] Mock de `db.collection().orderBy().limit().get()` com paginação
-- [ ] Mock de `getAuth().setCustomUserClaims()`
-- [ ] Teste 1: 1.000 usuários
-- [ ] Teste 2: 5.000 usuários
-- [ ] Teste 3: usuários incompletos
-- [ ] Teste 4: falha parcial
-- [ ] Teste 5: múltiplas páginas
-- [ ] Teste 6: estrutura do retorno
-
-#### PASSO 2.2.5 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] Commit 1: `perf(backend): paginate repairAllClaims to handle large user bases`
-- [ ] Commit 2: `chore: remove duplicate repair-all-claims files`
+**Critério de aceite:** Documento de baseline com números reais, contratos V1 mapeados, e decisão arquitetural registrada.
 
 ---
 
-### 2.3 PDF Puppeteer cold start extremo
+#### A.1 — Auditar todas as queries de listagem
 
-**Severidade:** ALTO  
-**Arquivo:** `functions/helpers/pdfRenderer.js`  
-**Risco:** Timeout 10-20s de cold start + 30-60s de renderização  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Baixo — melhoria de performance sem mudar interface
+**Arquivos alvo:**
+- `src/core/firebase/firestoreService.js` (subscriptions)
+- `functions/index.js` (callables: `listOpsCases`, `listClientCases`, `getClientExportCases`)
 
----
+**Checklist:**
+- [ ] **A.1.1** Listar todas as funções que fazem `.get()` sem cursor real no retorno
+- [ ] **A.1.2** Mapear collections: `cases`, `clientCases`, `auditLogs`, `notifications`, `tenantAuditLogs`
+- [ ] **A.1.3** Documentar filtros atuais (where clauses), ordenação, limites
+- [ ] **A.1.4** Identificar queries que usam paginação interna mas acumulam em memória
+- [ ] **A.1.5** Identificar queries com `.orderBy()` implícito ou ausente
+- [ ] **A.1.6** Verificar quais queries são usadas por subscriptions realtime (não devem usar cursor)
+- [ ] **A.1.7** Documentar em `findings.md` com tabela: Collection | Filtros | Ordem | Limit | Cursor real? | Usada em
 
-#### PASSO 2.3.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/helpers/pdfRenderer.js` inteiro (linhas 1-100+)
-- [ ] **Ler** como o arquivo é importado em `functions/index.js` (`grep -n "pdfRenderer" functions/index.js`)
-- [ ] **Verificar** se Puppeteer é usado em outros lugares (`grep -r "puppeteer" functions/ --include="*.js"`)
-- [ ] **Pesquisar** se Firebase Functions Gen2 reutiliza instâncias entre chamadas (sim, warm starts)
-- [ ] **Ler** documentação do `@sparticuz/chromium` sobre reutilização
-
-#### PASSO 2.3.2 — Implementação da Correção
-
-**Arquivo:** `functions/helpers/pdfRenderer.js`
-
-**Código completo modificado:**
-```javascript
-const Chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
-
-// Cache global na instância da function (persiste entre warm starts)
-let browserPromise = null;
-let lastLaunchError = null;
-
-async function getBrowser() {
-    if (lastLaunchError) {
-        throw new Error(`[pdfRenderer] Browser launch previously failed: ${lastLaunchError.message}`);
-    }
-    
-    if (browserPromise) {
-        try {
-            const browser = await browserPromise;
-            // Health check: verificar se o processo ainda existe
-            if (browser.process() != null) {
-                return browser;
-            }
-        } catch {
-            // Browser morreu, recriar
-        }
-        browserPromise = null;
-    }
-    
-    console.log('[pdfRenderer] Launching Chromium (persistent instance)...');
-    Chromium.graphicsMode = false;
-    
-    try {
-        const executablePath = await Chromium.executablePath();
-        browserPromise = puppeteer.launch({
-            args: [
-                ...Chromium.args,
-                '--disable-gpu',
-                '--font-render-hinting=none',
-            ],
-            defaultViewport: { width: 1240, height: 1754, deviceScaleFactor: 1 },
-            executablePath,
-            headless: 'shell',
-        });
-        
-        return await browserPromise;
-    } catch (err) {
-        lastLaunchError = err;
-        throw err;
-    }
-}
-
-async function renderHtmlToPdfBuffer(html, options = {}) {
-    if (!html || typeof html !== 'string') {
-        throw new Error('renderHtmlToPdfBuffer: html obrigatorio.');
-    }
-
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-    
-    try {
-        page.setDefaultTimeout(options.timeoutMs || 60000);
-        await page.emulateMediaType('print');
-        
-        await page.setContent(html, {
-            waitUntil: ['load', 'domcontentloaded'],
-            timeout: options.setContentTimeoutMs || 60000,
-        });
-        
-        try {
-            await page.evaluateHandle('document.fonts && document.fonts.ready');
-        } catch (fontErr) {
-            console.warn('[pdfRenderer] Font ready check failed:', fontErr.message);
-        }
-        
-        const rawPdf = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            preferCSSPageSize: true,
-            displayHeaderFooter: false,
-            margin: { top: '14mm', right: '12mm', bottom: '14mm', left: '12mm' },
-            timeout: options.pdfTimeoutMs || 60000,
-        });
-        
-        return Buffer.isBuffer(rawPdf) ? rawPdf : Buffer.from(rawPdf);
-    } finally {
-        // Fechar a página, mas NÃO o browser (reutilização)
-        await page.close().catch(() => {});
-    }
-}
-
-module.exports = { renderHtmlToPdfBuffer };
-```
-
-**Checklist de implementação:**
-- [ ] Adicionar variáveis globais `browserPromise` e `lastLaunchError`
-- [ ] Criar função `getBrowser()` com cache
-- [ ] Adicionar health check (`browser.process() != null`)
-- [ ] Modificar `renderHtmlToPdfBuffer` para usar `getBrowser()`
-- [ ] Remover `browser.close()` do `finally`
-- [ ] Manter `page.close()` no `finally`
-- [ ] Adicionar tratamento de erro no `getBrowser()`
-
-#### PASSO 2.3.3 — Testes de Não Regressão
-
-**Arquivo:** `functions/helpers/pdfRenderer.test.js` (novo)
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Reutilização | Chamar 2x | `getBrowser()` retorna mesma instância |
-| 2 | Browser morto | `browser.process()` retorna `null` | Cria nova instância |
-| 3 | HTML válido | HTML simples | Retorna Buffer válido |
-| 4 | HTML inválido | `null` ou número | Throw com mensagem correta |
-| 5 | Page fechada | Verificar após chamada | `page.close()` chamado, `browser.close()` NÃO |
-| 6 | Erro de launch | `puppeteer.launch()` falha | Erro armazenado em `lastLaunchError`, próxima chamada throw imediato |
-
-**Checklist de testes:**
-- [ ] Mock de `puppeteer.launch()`
-- [ ] Mock de `Chromium.executablePath()`
-- [ ] Mock de `browser.process()`
-- [ ] Mock de `browser.newPage()` e `page.close()`
-- [ ] Teste 1: segunda chamada reutiliza browser
-- [ ] Teste 2: browser morto → novo launch
-- [ ] Teste 3: HTML válido → Buffer
-- [ ] Teste 4: HTML inválido → throw
-- [ ] Teste 5: page.close() simulado, browser.close() NÃO chamado
-- [ ] Teste 6: launch falha → erro persistente
-
-#### PASSO 2.3.4 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] Commit: `perf(backend): reuse Puppeteer browser instance to reduce PDF cold start`
+**Critério de aceite:** Toda query de listagem (>50 docs potenciais) está mapeada com decisão: "mantém subscription", "migra para cursor pagination", ou "requer análise adicional".
 
 ---
 
-### 2.4 DJEN trigger sem timeout adequado
+#### A.2 — Projetar índices compostos para cursor pagination
 
-**Severidade:** ALTO  
-**Arquivo:** `functions/index.js:4807`  
-**Risco:** Timeout 60s default com loop de 500ms por processo  
-**Estimativa:** 30 minutos  
-**Risco de regressão:** Muito baixo — apenas adiciona parâmetros de configuração
+**Arquivo alvo:** `firestore.indexes.json` (planejamento apenas, sem deploy)
 
----
+**Checklist:**
+- [ ] **A.2.1** Para cada query paginada V2: definir `orderBy` fields + `cursorField` + tie-breaker `__name__`
+- [ ] **A.2.2** `cases`: `(tenantId, status, createdAt DESC, __name__ DESC)`, `(tenantId, assigneeId, createdAt DESC, __name__ DESC)`, `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.3** `clientCases`: `(tenantId, createdAt DESC, __name__ DESC)`, `(tenantId, status, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.4** `auditLogs`: `(tenantId, occurredAt DESC, __name__ DESC)` — **nota: usar `occurredAt`, não `createdAt`**
+- [ ] **A.2.5** `tenantAuditLogs`: `(tenantId, occurredAt DESC, __name__ DESC)` — **nota: usar `occurredAt`, não `createdAt`**
+- [ ] **A.2.6** `notifications`: `(recipientUid, read, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.7** Validar contra índices existentes (16 índices atuais)
+- [ ] **A.2.8** Criar tabela obrigatória:
 
-#### PASSO 2.4.1 — Análise Pré-Implementação
+| Collection | Query V2 | Where | OrderBy | Índice necessário | Já existia? |
+|------------|----------|-------|---------|-------------------|-------------|
+| cases | listOpsCasesV2 | tenantId | createdAt DESC, __name__ DESC | (tenantId, createdAt DESC, __name__ DESC) | NÃO |
+| cases | listOpsCasesV2 + status | tenantId, status | createdAt DESC, __name__ DESC | (tenantId, status, createdAt DESC, __name__ DESC) | NÃO |
+| clientCases | listClientCasesV2 | tenantId | createdAt DESC, __name__ DESC | (tenantId, createdAt DESC, __name__ DESC) | SIM (parcial) |
+| auditLogs | (futuro) | tenantId | occurredAt DESC, __name__ DESC | (tenantId, occurredAt DESC, __name__ DESC) | SIM |
 
-- [ ] **Ler** `functions/index.js` linhas 4807-4810 (definição atual do trigger)
-- [ ] **Ler** `functions/index.js` linhas 4440-4445 (como `enrichJuditOnCase` define timeout)
-- [ ] **Grep** todos os triggers: `grep -n "onDocumentUpdated" functions/index.js | head -20`
-- [ ] **Identificar** outros triggers sem timeout explícito
+- [ ] **A.2.9** **NÃO remover índices nesta fase**
+- [ ] **A.2.10** **NÃO fazer deploy de índices nesta tarefa de documentação**
 
-#### PASSO 2.4.2 — Implementação da Correção
-
-**Arquivo:** `functions/index.js`
-
-**Linhas 4807-4810:**
-```javascript
-// DE:
-exports.enrichDjenOnCase = onDocumentUpdated(
-    { document: 'cases/{caseId}', region: 'southamerica-east1', secrets: [openaiApiKey] },
-    async (event) => { ... }
-);
-
-// PARA:
-exports.enrichDjenOnCase = onDocumentUpdated(
-    { 
-        document: 'cases/{caseId}', 
-        region: 'southamerica-east1',
-        timeoutSeconds: 300,
-        memory: '512MiB',
-        secrets: [openaiApiKey] 
-    },
-    async (event) => { ... }
-);
-```
-
-**Opcional (verificar outros triggers):**
-- [ ] Verificar `enrichEscavadorOnCase` — adicionar timeout se não tiver?
-- [ ] Verificar `enrichJuditOnCase` — já tem timeout?
-- [ ] Documentar outros triggers sem timeout para futura correção
-
-**Checklist de implementação:**
-- [ ] Adicionar `timeoutSeconds: 300`
-- [ ] Adicionar `memory: '512MiB'`
-- [ ] **NÃO modificar** a lógica interna do trigger
-- [ ] **NÃO modificar** outras partes do arquivo
-
-#### PASSO 2.4.3 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Trigger disparado | Simular update em `cases/{caseId}` | Trigger é invocado (lógica interna intacta) |
-| 2 | Timeout config | Verificar definição do trigger | `timeoutSeconds === 300`, `memory === '512MiB'` |
-| 3 | Outros triggers | `enrichJuditOnCase`, `enrichEscavadorOnCase` | Não afetados |
-
-**Checklist de testes:**
-- [ ] Teste 1: trigger invocation mock
-- [ ] Teste 2: config verification
-- [ ] Teste 3: other triggers untouched
-
-#### PASSO 2.4.4 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] Commit: `fix(backend): add timeout and memory to DJEN trigger to prevent timeouts`
+**Critério de aceite:** Nenhuma query paginada V2 sem índice correspondente planejado; tabela de índices completa.
 
 ---
 
-### 2.5 `writeClientCaseMirror` compara `JSON.stringify` inteiro
+#### A.3 — Implementar `paginateFirestoreQuery`
 
-**Severidade:** ALTO  
-**Arquivo:** `functions/index.js:5910`  
-**Risco:** Skips writes legítimos, CPU excessiva  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Médio — altera lógica de comparação crítica
+**Arquivo:** `functions/helpers/paginateFirestoreQuery.js` (novo)
+**Teste:** `functions/helpers/paginateFirestoreQuery.test.js` (novo)
 
----
+**Checklist:**
+- [ ] **A.3.1** Definir interface: `async paginateFirestoreQuery(query, { cursor, limit, cursorField })`
+- [ ] **A.3.2** Suporte a `startAfter()` com **cursor composto** (array de valores: `[fieldValue, docId]`)
+- [ ] **A.3.3** **Tie-breaker obrigatório por `__name__`** (document ID) para evitar duplicatas/omissões
+- [ ] **A.3.4** **Buscar `limit + 1` docs** para calcular `hasMore` sem necessidade de contagem total
+- [ ] **A.3.5** Encoder de cursor: **Base64 URL-safe** do JSON do array `[fieldValue, docId]`
+- [ ] **A.3.6** Decoder de cursor: inverso do encoder, validação de schema
+- [ ] **A.3.7** Retorno: `{ results: DocumentSnapshot[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.3.8** Validação: `limit` entre 1 e 1000 (limite Firestore)
+- [ ] **A.3.9** Validação: `cursorField` existe no schema da collection
+- [ ] **A.3.10** Tratamento de cursor inválido: throw `invalid-argument`
+- [ ] **A.3.11** Teste 1: primeira página sem cursor
+- [ ] **A.3.12** Teste 2: segunda página com cursor
+- [ ] **A.3.13** Teste 3: página vazia (fim dos resultados)
+- [ ] **A.3.14** Teste 4: limite customizado (1, 50, 100, 1000)
+- [ ] **A.3.15** Teste 5: cursor inválido
+- [ ] **A.3.16** Teste 6: **timestamps iguais** — verificar que tie-breaker por `__name__` evita duplicatas
+- [ ] **A.3.17** Teste 7: **omissão** — verificar que nenhum doc é pulado entre páginas
+- [ ] **A.3.18** Teste 8: múltiplos filtros + paginação
 
-#### PASSO 2.5.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/index.js` linhas 5910-5927 (`writeClientCaseMirror`)
-- [ ] **Ler** `functions/index.js` linhas 5873-5908 (`buildClientCasePayload`)
-- [ ] **Identificar** todos os timestamps que podem estar no payload (`updatedAt`, `createdAt`, `concludedAt`, etc.)
-- [ ] **Verificar** se `syncClientCaseOnCreate` usa a mesma função
-- [ ] **Verificar** quais campos são arrays (ex: `warrants`, `processes`)
-
-#### PASSO 2.5.2 — Implementação da Correção
-
-**Arquivo:** `functions/index.js`
-
-**Nova função (adicionar antes de `writeClientCaseMirror`):**
-```javascript
-function clientPayloadChanged(payload, existing) {
-    const ignoreKeys = new Set([
-        'updatedAt', 'createdAt', 'concludedAt', 'correctedAt',
-        'djenEnrichedAt', 'autoClassifiedAt', 'enrichedAt'
-    ]);
-    
-    const keysToCompare = Object.keys(payload).filter(k => !ignoreKeys.has(k));
-    
-    for (const key of keysToCompare) {
-        const a = payload[key];
-        const b = existing[key];
-        
-        // Arrays: comparar comprimento e itens
-        if (Array.isArray(a) && Array.isArray(b)) {
-            if (a.length !== b.length) return true;
-            for (let i = 0; i < a.length; i++) {
-                if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return true;
-            }
-            continue;
-        }
-        
-        // Objetos simples
-        if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
-            if (JSON.stringify(a) !== JSON.stringify(b)) return true;
-            continue;
-        }
-        
-        // Primitivos
-        if (a !== b) return true;
-    }
-    
-    return false;
-}
-```
-
-**Função `writeClientCaseMirror` modificada:**
-```javascript
-async function writeClientCaseMirror(caseId, caseData) {
-    const payload = buildClientCasePayload(caseId, caseData);
-    const existingRef = db.collection('clientCases').doc(caseId);
-    const existingSnap = await existingRef.get();
-    
-    if (existingSnap.exists) {
-        const existing = existingSnap.data() || {};
-        if (!clientPayloadChanged(payload, existing)) {
-            console.log(`[clientCases] ${caseId}: no visible change, skipping mirror write.`);
-            return;
-        }
-    }
-    
-    await existingRef.set(payload);
-}
-```
-
-**Checklist de implementação:**
-- [ ] Criar `clientPayloadChanged(payload, existing)`
-- [ ] Definir `ignoreKeys` com todos os timestamps
-- [ ] Implementar comparação de arrays
-- [ ] Implementar comparação de objetos
-- [ ] Implementar comparação de primitivos
-- [ ] Substituir `JSON.stringify` duplo no `writeClientCaseMirror`
-- [ ] Manter logs existentes
-- [ ] **NÃO alterar** `buildClientCasePayload`
-
-#### PASSO 2.5.3 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Timestamps iguais | `updatedAt` diferente, resto igual | `clientPayloadChanged` → `false` |
-| 2 | Flag diferente | `criminalFlag: 'POSITIVE'` vs `'NEGATIVE'` | `clientPayloadChanged` → `true` |
-| 3 | Array diferente | `warrants` com 1 item a mais | `clientPayloadChanged` → `true` |
-| 4 | Timestamp only | Mudança apenas em `updatedAt` | `writeClientCaseMirror` NÃO chama `set()` |
-| 5 | Flag changed | Mudança em `criminalFlag` | `writeClientCaseMirror` chama `set()` |
-| 6 | Novo caso | `existingSnap.exists === false` | `writeClientCaseMirror` chama `set()` |
-
-**Checklist de testes:**
-- [ ] Teste 1: timestamps ignorados
-- [ ] Teste 2: flags detectados
-- [ ] Teste 3: arrays detectados
-- [ ] Teste 4: skip de write
-- [ ] Teste 5: write realizado
-- [ ] Teste 6: novo caso sempre write
-
-#### PASSO 2.5.4 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] Commit: `fix(backend): replace JSON.stringify comparison with field-by-field diff in clientCaseMirror`
+**Critério de aceite:** 100% cobertura de testes, zero dependência de Firebase Admin (mockável), < 50ms overhead por query.
 
 ---
 
-### 2.6 Cascata de triggers `maybeRunAutoClassifyAndAi`
+#### A.4 — Criar `listOpsCasesV2` (side-by-side com V1)
 
-**Severidade:** MÉDIO  
-**Arquivo:** `functions/index.js`  
-**Risco:** ~12 invocações de trigger por caso  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Médio — altera comportamento de triggers
+**Arquivo:** Callable registrado em `functions/index.js` atual (não criar `functions/modules/caseManager/index.js` nesta fase)
+**Teste:** `functions/index.test.js` ou novo `functions/listOpsCasesV2.test.js`
 
----
+**Checklist:**
+- [ ] **A.4.1** Copiar lógica de autorização de `listOpsCases` atual como baseline
+- [ ] **A.4.2** Adicionar parâmetros: `cursor` (string | null), `limit` (default 50, max 500)
+- [ ] **A.4.3** **Remover parâmetro `page` (numérico)** — V2 usa cursor, não paginação numérica
+- [ ] **A.4.4** Manter parâmetros: `filters`, `sortField`, `sortDir`, `queueOnly`, `assigneeUid`
+- [ ] **A.4.5** Usar `paginateFirestoreQuery` com índice `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.4.6** Se `cursor` omitido, retorna primeira página
+- [ ] **A.4.7** Se `nextCursor` null, indica fim dos resultados
+- [ ] **A.4.8** Retorno: `{ results: Case[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.4.9** **NÃO retornar `totalCount` ou `totalPages`** se isso exigir scan completo
+- [ ] **A.4.10** **NÃO retornar `stats`** por scan completo; `stats` pode ser `null` ou omitido
+- [ ] **A.4.11** Filtros não suportados por Firestore (ex: search textual) devem ser:
+  - **Rejeitados** com erro claro, OU
+  - **Documentados** como não suportados, OU
+  - **Caírem para V1** com flag explícita (`fallbackToV1: true`), nunca de forma silenciosa
+- [ ] **A.4.12** Teste 1: sem cursor → primeira página
+- [ ] **A.4.13** Teste 2: com cursor → próxima página
+- [ ] **A.4.14** Teste 3: limite custom (10, 50, 100, 500)
+- [ ] **A.4.15** Teste 4: filtros combinados + paginação
+- [ ] **A.4.16** Teste 5: permission denied (role inválido)
+- [ ] **A.4.17** Teste 6: tenant isolation (não vê cases de outro tenant)
+- [ ] **A.4.18** Teste 7: **timestamps iguais** — verificar duplicatas/omissões
 
-#### PASSO 2.6.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `functions/index.js` linhas 1115-1134 (`maybeRunAutoClassifyAndAi`)
-- [ ] **Ler** `functions/index.js` linhas 5086-5384 (`runAutoClassifyAndAi`)
-- [ ] **Ler** `functions/index.js` linhas 5929-5945 (`syncClientCaseOnCreate`)
-- [ ] **Ler** `functions/index.js` linhas 5939-5955 (`syncClientCaseOnUpdate`)
-- [ ] **Ler** `functions/index.js` linhas 5957-5994 (`publishResultOnCaseDone`)
-- [ ] **Identificar** todos os campos que `runAutoClassifyAndAi` modifica
-- [ ] **Verificar** se `syncClientCaseOnUpdate` deve reagir a MUDANÇAS DE STATUS (sim!)
-
-#### PASSO 2.6.2 — Implementação da Correção
-
-**Nova função (adicionar antes dos triggers):**
-```javascript
-function isAutoClassifyOnlyChange(before, after) {
-    const autoClassifyFields = new Set([
-        'autoClassifySignature', 'autoClassifiedAt', 'autoClassifyLock',
-        'autoClassifyRerunRequested', 'criminalFlag', 'warrantFlag', 'laborFlag',
-        'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict',
-        'negativePartialSafetyNetEligible', 'negativePartialSafetyNetReasons',
-        'negativePartialSafetyNetAction', 'negativePartialSafetyNetTriggered',
-        'prefillNarratives', 'deterministicPrefill', 'aiHomonymTriggered',
-        'aiHomonymDecision', 'aiHomonymConfidence', 'aiHomonymRisk',
-        'aiHomonymRecommendedAction', 'aiClassificationReview',
-        'aiClassificationReviewOk', 'aiProvidersIncluded', 'aiStatus', 'aiError',
-        'aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd',
-        'executiveSummary', 'keyFindings', 'clientNotes',
-    ]);
-    
-    const beforeKeys = Object.keys(before);
-    const afterKeys = Object.keys(after);
-    const allKeys = new Set([...beforeKeys, ...afterKeys]);
-    
-    for (const key of allKeys) {
-        if (before[key] !== after[key]) {
-            if (!autoClassifyFields.has(key)) {
-                return false; // Mudança NÃO relacionada a auto-classify
-            }
-        }
-    }
-    
-    return true; // Todas as mudanças são de auto-classify
-}
-```
-
-**Trigger `syncClientCaseOnUpdate` modificado:**
-```javascript
-exports.syncClientCaseOnUpdate = onDocumentUpdated(
-    { document: 'cases/{caseId}', region: 'southamerica-east1' },
-    async (event) => {
-        const before = event.data?.before?.data() || {};
-        const after = event.data?.after?.data();
-        if (!after) return;
-        
-        // GUARD: skip se a única mudança foi auto-classificação
-        if (isAutoClassifyOnlyChange(before, after)) return;
-        
-        const caseId = event.params.caseId;
-        await writeClientCaseMirror(caseId, after);
-    },
-);
-```
-
-**Checklist de implementação:**
-- [ ] Criar `isAutoClassifyOnlyChange(before, after)`
-- [ ] Definir set completo de campos de auto-classificação
-- [ ] Adicionar guard no `syncClientCaseOnUpdate`
-- [ ] Verificar se `publishResultOnCaseDone` também precisa de guard (se só reage a `status === 'DONE'`, talvez não)
-- [ ] **NÃO adicionar guard** em triggers que reagem a status (Judit, Escavador)
-
-#### PASSO 2.6.3 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Mudança auto-only | `riskScore` muda de 30 para 50 | `isAutoClassifyOnlyChange` → `true` |
-| 2 | Mudança de status | `status` muda de `PENDING` para `IN_PROGRESS` | `isAutoClassifyOnlyChange` → `false` |
-| 3 | Mudança mista | `riskScore` + `status` mudam | `isAutoClassifyOnlyChange` → `false` |
-| 4 | Trigger skip | `syncClientCaseOnUpdate` com mudança auto-only | NÃO chama `writeClientCaseMirror` |
-| 5 | Trigger executa | `syncClientCaseOnUpdate` com mudança de status | Chama `writeClientCaseMirror` |
-| 6 | Judit trigger | `enrichJuditOnCase` com mudança de status | Ainda reage normalmente |
-
-**Checklist de testes:**
-- [ ] Teste 1: auto-only → true
-- [ ] Teste 2: status change → false
-- [ ] Teste 3: mixed → false
-- [ ] Teste 4: trigger skip
-- [ ] Teste 5: trigger executes
-- [ ] Teste 6: Judit unaffected
-
-#### PASSO 2.6.4 — Validação
-
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] `cd functions && npm run lint` → 0 erros
-- [ ] Commit: `perf(backend): skip syncClientCaseOnUpdate when only auto-classify fields changed`
+**Critério de aceite:** Resposta < 500ms para 50 docs, < 2s para 500 docs; V1 intacta e operante.
 
 ---
 
-## Phase 3 — Performance Frontend
+#### A.5 — Criar `listClientCasesV2` (side-by-side com V1)
 
-### 3.1 `CasoPage.jsx` recálculos síncronos pesados a cada keystroke
+**Arquivo:** Callable registrado em `functions/index.js` atual (não criar `functions/modules/clientPortal/index.js` nesta fase)
+**Teste:** `functions/listClientCasesV2.test.js`
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `src/portals/ops/CasoPage.jsx`  
-**Risco:** UI trava ao digitar em casos complexos  
-**Estimativa:** 3 horas  
-**Risco de regressão:** Médio — altera estado e ciclo de vida do componente principal
+**Checklist:**
+- [ ] **A.5.1** Copiar lógica de autorização de `listClientCases` atual como baseline
+- [ ] **A.5.2** Adicionar parâmetros: `cursor` (string | null), `limit` (default 50, max 500)
+- [ ] **A.5.3** **Remover parâmetro `page` (numérico)**
+- [ ] **A.5.4** Usar `paginateFirestoreQuery` com índice `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.5.5** `tenantId` deve vir do `profile` (autorização), **não do payload do cliente**
+- [ ] **A.5.6** Retorno: `{ results: ClientCase[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.5.7** **NÃO retornar `totalCount`, `totalPages`, ou `stats` por scan completo**
+- [ ] **A.5.8** Filtros não suportados: rejeitar, documentar, ou cair para V1 com flag explícita
+- [ ] **A.5.9** Teste 1: sem cursor → primeira página
+- [ ] **A.5.10** Teste 2: com cursor → próxima página
+- [ ] **A.5.11** Teste 3: filtros + paginação
+- [ ] **A.5.12** Teste 4: client isolation (usuário só vê seus cases)
+- [ ] **A.5.13** Teste 5: permission denied
+- [ ] **A.5.14** Teste 6: **timestamps iguais** — verificar duplicatas/omissões
 
----
-
-#### PASSO 3.1.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `src/portals/ops/CasoPage.jsx` linhas 1068-1098 (função `update`)
-- [ ] **Ler** `src/portals/ops/CasoPage.jsx` linhas 1100-1164 (useMemo declarations)
-- [ ] **Ler** `src/portals/ops/CasoPage.jsx` linhas 749-785 (state declarations)
-- [ ] **Identificar** todos os campos de texto livre (textarea) no JSX
-- [ ] **Verificar** se `CasoPage.test.jsx` testa digitação em algum campo
-- [ ] **Ler** `src/portals/ops/CasoPage.test.jsx` para entender mocks existentes
-
-#### PASSO 3.1.2 — Implementação do Debounce
-
-**Opção A: Hook reutilizável (recomendado)**
-
-**Novo arquivo:** `src/hooks/useDebouncedField.js`
-```javascript
-import { useState, useCallback, useRef } from 'react';
-
-export function useDebouncedField(initialValue, onCommit, delay = 400) {
-    const [localValue, setLocalValue] = useState(initialValue);
-    const debounceRef = useRef(null);
-
-    const handleChange = useCallback((value) => {
-        setLocalValue(value);
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-            onCommit(value);
-        }, delay);
-    }, [onCommit, delay]);
-
-    return [localValue, handleChange];
-}
-```
-
-**Uso no CasoPage:**
-```javascript
-// Para cada campo de texto:
-const [localAnalystComment, handleAnalystCommentChange] = useDebouncedField(
-    form.analystComment || '',
-    (value) => update('analystComment', value),
-    400
-);
-```
-
-**Opção B: Inline (se não quiser criar hook)**
-
-**Checklist de implementação:**
-- [ ] Criar hook `useDebouncedField` (ou implementar inline)
-- [ ] Adicionar estados locais para os 10 campos de texto
-- [ ] Substituir `onChange={(e) => update('field', e.target.value)}` por handlers debounced
-- [ ] Manter `value={form.field}` para campos NÃO debounced (dropdowns, radios)
-- [ ] Memoizar `activeWarrantCount`
-- [ ] Granularizar dependencies do `calculateRisk`
-
-#### PASSO 3.1.3 — Memoização de `activeWarrantCount`
-
-**Linha ~1109:**
-```javascript
-// DE:
-const activeWarrantCount = (
-    (caseData?.juditActiveWarrantCount || 0) +
-    (Array.isArray(caseData?.bigdatacorpActiveWarrants)
-        ? caseData.bigdatacorpActiveWarrants.filter((warrant) => warrant?.isActive !== false).length
-        : 0)
-);
-
-// PARA:
-const activeWarrantCount = useMemo(() => (
-    (caseData?.juditActiveWarrantCount || 0) +
-    (Array.isArray(caseData?.bigdatacorpActiveWarrants)
-        ? caseData.bigdatacorpActiveWarrants.filter((warrant) => warrant?.isActive !== false).length
-        : 0)
-), [caseData?.juditActiveWarrantCount, caseData?.bigdatacorpActiveWarrants]);
-```
-
-#### PASSO 3.1.4 — Granularização de `calculateRisk`
-
-**Linha ~1100:**
-```javascript
-// DE:
-const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
-
-// PARA:
-const risk = useMemo(() => calculateRisk(form, enabledPhases), [
-    enabledPhases,
-    form.criminalFlag, form.criminalSeverity,
-    form.laborFlag, form.laborSeverity,
-    form.warrantFlag, form.osintLevel,
-    form.socialStatus, form.digitalFlag,
-    form.conflictInterest, form.cpfPendingRegularization,
-    // NOTA: campos de texto (analystComment, notes) NÃO devem estar aqui
-]);
-```
-
-#### PASSO 3.1.5 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Renderização | Renderizar CasoPage | Não quebra (smoke test) |
-| 2 | Debounce | Digitar em `analystComment` | `update()` NÃO chamado imediatamente |
-| 3 | Commit | Esperar 400ms após digitar | `update()` chamado com valor correto |
-| 4 | Memo | `caseData` não muda | `activeWarrantCount` não recalcula |
-| 5 | Risk calc | Mudar `analystComment` | `calculateRisk` NÃO recalcula |
-| 6 | Salvar | Fluxo completo de conclusão | Funciona normalmente |
-| 7 | Carregar | Caso existente | Dados preenchidos corretamente |
-
-**Checklist de testes:**
-- [ ] Smoke test
-- [ ] Mock de `update()` com spy
-- [ ] Teste de debounce com `jest.useFakeTimers()` ou `vi.useFakeTimers()`
-- [ ] Teste de memoização
-- [ ] Teste de risk calculation
-- [ ] Teste de fluxo de salvar
-- [ ] Teste de carregar caso existente
-
-#### PASSO 3.1.6 — Validação
-
-- [ ] `npm test -- CasoPage.test.jsx` → todos passam
-- [ ] `npm test` → 820+ testes passam
-- [ ] `npm run lint` → 0 erros
-- [ ] Commit: `perf(frontend): add debounce to text fields and memoize heavy computations in CasoPage`
+**Critério de aceite:** Mesmo padrão de A.4, mas com isolation por `tenantId` do profile.
 
 ---
 
-### 3.2 Subscriptions Firestore com limit 500
+#### A.6 — Auditoria documental de subscriptions de auditoria (não criar callables V2)
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `src/core/firebase/firestoreService.js`  
-**Risco:** Dados truncados silenciosamente  
-**Estimativa:** 1 hora  
-**Risco de regressão:** Baixo — altera constante numérica
+**Arquivo alvo:** `src/core/firebase/firestoreService.js`
 
----
+**Checklist:**
+- [ ] **A.6.1** Mapear subscriptions de auditoria atuais:
+  - `subscribeToAuditLogs` — usa `occurredAt` (não `createdAt`)
+  - `subscribeToTenantAuditLogs` — usa `occurredAt` (não `createdAt`)
+- [ ] **A.6.2** Verificar que índices de auditoria existentes usam `occurredAt`
+- [ ] **A.6.3** Registrar que subscriptions realtime **não devem usar cursor pagination** (natureza realtime)
+- [ ] **A.6.4** **NÃO criar `listAuditLogsV2` ou `listTenantAuditLogsV2` como callables nesta fase**
+- [ ] **A.6.5** Registrar que eventual migração de auditoria para cursor pagination será **decisão futura**, não Phase A
 
-#### PASSO 3.2.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `src/core/firebase/firestoreService.js` linha 330 (`DEFAULT_QUERY_LIMIT`)
-- [ ] **Ler** `src/core/firebase/firestoreService.js` linhas 1079-1109 (`subscribeToCaseMessages`)
-- [ ] **Grep** por `subscribeTo` no frontend: `grep -n "subscribeTo" src/core/firebase/firestoreService.js`
-- [ ] **Verificar** se `demo mode` usa essas funções (`grep -n "subscribeTo" src/demo/`)
-- [ ] **Verificar** uso de memória: 5000 docs × 2KB = ~10MB (aceitável para desktop)
-
-#### PASSO 3.2.2 — Implementação da Correção
-
-**Arquivo:** `src/core/firebase/firestoreService.js`
-
-**Linha 330:**
-```javascript
-// DE:
-const DEFAULT_QUERY_LIMIT = 500;
-
-// PARA:
-const DEFAULT_QUERY_LIMIT = 5000;
-const MESSAGE_QUERY_LIMIT = 50;
-```
-
-**Linhas 1079-1109 (`subscribeToCaseMessages`):**
-```javascript
-// Adicionar .limit(MESSAGE_QUERY_LIMIT) na query
-q = query(q, limit(MESSAGE_QUERY_LIMIT));
-```
-
-**Checklist de implementação:**
-- [ ] Alterar `DEFAULT_QUERY_LIMIT` para 5000
-- [ ] Adicionar `MESSAGE_QUERY_LIMIT = 50`
-- [ ] Adicionar `.limit(MESSAGE_QUERY_LIMIT)` em `subscribeToCaseMessages`
-- [ ] Verificar se outras subscriptions precisam de limites diferentes
-
-#### PASSO 3.2.3 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Limit 5000 | `buildTenantCollectionQuery` | Query tem `limit(5000)` |
-| 2 | Messages | `subscribeToCaseMessages` | Query tem `limit(50)` |
-| 3 | CasosPage | Render com 2.000 casos | Mostra todos sem erro |
-| 4 | Auditoria | Render com 2.000 logs | Mostra todos sem truncamento |
-| 5 | Demo mode | Carregar demo | Funciona normalmente |
-
-**Checklist de testes:**
-- [ ] Teste de `buildTenantCollectionQuery`
-- [ ] Teste de `subscribeToCaseMessages`
-- [ ] Teste de componente CasosPage
-- [ ] Teste de componente AuditoriaPage
-- [ ] Teste de demo mode
-
-#### PASSO 3.2.4 — Validação
-
-- [ ] `npm test` → 820+ testes passam
-- [ ] `npm run lint` → 0 erros
-- [ ] Commit: `perf(frontend): increase Firestore query limits to prevent data truncation`
+**Critério de aceite:** Documento de auditoria com decisão registrada: "subscriptions realtime mantidas; callables de auditoria não são parte da Phase A".
 
 ---
 
-### 3.3 Exportação síncrona no frontend
+#### A.7 — Planejar índices Firestore (sem deploy)
 
-**Severidade:** CRÍTICO  
-**Arquivo:** `src/portals/client/ExportacoesPage.jsx`  
-**Risco:** UI congela, 50+ requisições paralelas  
-**Estimativa:** 2 horas  
-**Risco de regressão:** Baixo — melhoria de performance sem mudar interface
+**Checklist:**
+- [ ] **A.7.1** Gerar tabela de índices necessários (ver A.2.8)
+- [ ] **A.7.2** Validar contra índices existentes (16 índices atuais)
+- [ ] **A.7.3** **NÃO remover índices nesta fase**
+- [ ] **A.7.4** **Adicionar apenas índices estritamente necessários** para V2
+- [ ] **A.7.5** Documentar que deploy de índices será feito em etapa separada, antes da ativação de V2
+- [ ] **A.7.6** **NÃO fazer deploy nesta tarefa de documentação**
 
----
-
-#### PASSO 3.3.1 — Análise Pré-Implementação
-
-- [ ] **Ler** `src/portals/client/ExportacoesPage.jsx` linhas 1007-1032 (`enrichCasesForExport`)
-- [ ] **Ler** `src/portals/client/ExportacoesPage.jsx` linhas 1034-1095 (`handleExport`)
-- [ ] **Identificar** onde `buildCsvContent` e `buildPrintableHtml` são chamados
-- [ ] **Verificar** se existe algum padrão de `asyncPool` no projeto (`grep -r "asyncPool\|p-limit\|Promise.all" src/ --include="*.js"`)
-
-#### PASSO 3.3.2 — Implementação do `asyncPool`
-
-**Novo arquivo:** `src/utils/asyncPool.js`
-```javascript
-export async function asyncPool(concurrency, items, fn) {
-    const results = [];
-    const executing = new Set();
-    
-    for (const item of items) {
-        const p = fn(item).then((result) => {
-            executing.delete(p);
-            return result;
-        });
-        
-        results.push(p);
-        executing.add(p);
-        
-        if (executing.size >= concurrency) {
-            await Promise.race(executing);
-        }
-    }
-    
-    return Promise.all(results);
-}
-```
-
-**Modificação em `ExportacoesPage.jsx`:**
-```javascript
-// Substituir Promise.all por asyncPool
-const enriched = await asyncPool(5, casesToEnrich, async (c) => {
-    if (c.status !== 'DONE') return c;
-    try {
-        const publicResult = await getCasePublicResult(c.id);
-        return publicResult ? { ...c, ...publicResult } : c;
-    } catch {
-        return c;
-    }
-});
-```
-
-**Adicionar estado de progresso:**
-```javascript
-const [exportProgress, setExportProgress] = useState({ current: 0, total: 0 });
-
-// Durante o enrich:
-setExportProgress({ current: index, total: casesToEnrich.length });
-```
-
-**Checklist de implementação:**
-- [ ] Criar `src/utils/asyncPool.js`
-- [ ] Importar `asyncPool` em `ExportacoesPage.jsx`
-- [ ] Substituir `Promise.all` por `asyncPool(5, ...)`
-- [ ] Adicionar estado de progresso
-- [ ] Renderizar barra/spinner de progresso no JSX
-
-#### PASSO 3.3.3 — Testes de Não Regressão
-
-| # | Teste | Setup | Expectativa |
-|---|-------|-------|-------------|
-| 1 | Concorrência | 50 casos DONE | `getCasePublicResult` chamado max 5x simultâneo |
-| 2 | UI não trava | Exportar 50 casos | Test passa com `act()` e `waitFor` |
-| 3 | Progresso | Exportar casos | Barra de progresso visível |
-| 4 | 0 casos | Nenhum caso selecionado | Mensagem adequada |
-| 5 | Erro parcial | 1 caso falha | Outros 49 processados normalmente |
-| 6 | Output correto | Exportar casos | CSV/HTML gerado corretamente |
-
-**Checklist de testes:**
-- [ ] Mock de `getCasePublicResult` com delay
-- [ ] Teste de concorrência
-- [ ] Teste de UI não travando
-- [ ] Teste de progresso
-- [ ] Teste de 0 casos
-- [ ] Teste de erro parcial
-- [ ] Teste de output
-
-#### PASSO 3.3.4 — Validação
-
-- [ ] `npm test -- ExportacoesPage.test.jsx` → todos passam
-- [ ] `npm test` → 820+ testes passam
-- [ ] `npm run lint` → 0 erros
-- [ ] Commit: `perf(frontend): limit concurrency in export and add progress indicator`
+**Critério de aceite:** Tabela de índices completa, validada, e pronta para deploy futuro.
 
 ---
 
-## Phase 4 — Remoção de Código Morto
+#### A.8 — Testes de carga end-to-end (local/emulador apenas)
 
-### 4.1 Validação e Remoção
+**Script:** `scripts/load-test-pagination.cjs` (novo)
 
-**Estimativa:** 1 hora  
+**Checklist:**
+- [ ] **A.8.1** Script deve **abortar em produção** — verificar `process.env.FIRESTORE_EMULATOR_HOST`
+- [ ] **A.8.2** Exigir `FIRESTORE_EMULATOR_HOST` ou `ALLOW_LOCAL_LOAD_TEST=true` para prosseguir
+- [ ] **A.8.3** Usar tenant fake (ex: `test-tenant-load`)
+- [ ] **A.8.4** Inserir 1.000 cases mockados via batch
+- [ ] **A.8.5** Iterar todas as páginas via `listOpsCasesV2` (limit 100)
+- [ ] **A.8.6** Verificar: total recuperado == 1.000
+- [ ] **A.8.7** Verificar: ordem correta (createdAt DESC)
+- [ ] **A.8.8** Verificar: sem duplicatas ou omissões
+- [ ] **A.8.9** Medir latência por página (log em console, não em `progress.md`)
+- [ ] **A.8.10** Testar cenário: deletar case no meio da paginação (verificar consistência)
+- [ ] **A.8.11** **NÃO alterar `progress.md` automaticamente pelo script**
+
+**Critério de aceite:** < 3s por página de 500, memória estável, zero duplicatas/omissões.
+
+---
+
+#### A.9 — Documentar migration path e contratos V2
+
+**Arquivo:** `docs/migrations/v2-pagination.md` (novo)
+
+**Checklist:**
+- [ ] **A.9.1** Explicar diferença V1 vs V2:
+  - V1: paginação numérica (`page`, `pageSize`), carrega tudo em memória
+  - V2: cursor pagination (`cursor`, `limit`), sem acumulação em memória
+- [ ] **A.9.2** Documentar que V2 **não retorna `total` nem `totalPages`** (a menos que contador barato seja implementado)
+- [ ] **A.9.3** Documentar que V2 **não retorna `stats` por scan completo** — `stats` pode ser `null`
+- [ ] **A.9.4** Exemplo de código: como iterar todas as páginas com cursor
+- [ ] **A.9.5** Timeline de deprecação da V1: **3 meses após frontend migrado e validado**
+- [ ] **A.9.6** Checklist de migração para frontend:
+  1. Criar hook `useOpsCasesQueryV2` side-by-side com `useOpsCasesQuery`
+  2. Testar com feature flag
+  3. Migrar `useClientCasesQuery` para V2
+  4. Remover V1 após 3 meses estável
+- [ ] **A.9.7** Documentar que V1 só será depreciada após frontend migrado e validado
+- [ ] **A.9.8** Documentar plano de fallback: se V2 falhar, frontend pode voltar para V1 imediatamente
+
+**Critério de aceite:** Qualquer dev consegue seguir o doc para migrar uma listagem.
+
+---
+
+### Phase B: Export Assíncrono + Cloud Storage
+
+**Objetivo:** Eliminar timeout de 120s do `getClientExportCases`. Substituir por job background com Storage.
+**Status:** pending
+**Estimativa:** 20 horas
+**Risco:** Médio — nova arquitetura, mas isolada
+
+**Nota:** Phase B fica **fora da Phase A**. Não implementar nesta rodada.
+
+---
+
+### Phase C: Extração de Módulos do Monolito
+
+**Objetivo:** Dividir `functions/index.js` em módulos coesos testáveis independentemente.
+**Status:** pending
+**Estimativa:** 40 horas
+**Risco:** Alto — altera estrutura fundamental do backend
+
+**Nota:** Phase C fica **fora da Phase A**. Modularização só começa após Phase A e B concluídas e estáveis.
+
+#### C.0 — Preparação e contratos
+
+**Checklist:**
+- [ ] **C.0.1** Criar diretório `functions/modules/` (apenas na Phase C)
+- [ ] **C.0.2** Criar `functions/modules/_contracts/` com interfaces TypeScript (JSDoc)
+- [ ] **C.0.3** Definir contrato `ICaseManager`: métodos, parâmetros, retornos, erros
+- [ ] **C.0.4** Definir contrato `IEnrichmentPipeline`: adapters, circuit breaker, retry
+- [ ] **C.0.5** Definir contrato `IReportEngine`: HTML, PDF, publicação
+- [ ] **C.0.6** Definir contrato `IUserManager`: CRUD, roles, claims
+- [ ] **C.0.7** Definir contrato `IClientPortal`: clientCases, quotas, export, mirror
+- [ ] **C.0.8** Definir contrato `IAuditManager`: logs, eventos, query
+- [ ] **C.0.9** Definir contrato `INotificationManager`: notificações, push, email
+- [ ] **C.0.10** Criar `functions/modules/_shared/` para utilitários compartilhados (db, auth, logger)
+
+**Critério de aceite:** Todos os contratos documentados, revisados, e aprovados.
+
+#### C.1-C.9 — Extração de módulos (detalhado na execução da Phase C)
+
+**Módulos a extrair:**
+- `caseManager` — CRUD cases, listagem V1/V2, busca
+- `enrichmentPipeline` — Judit, Escavador, BigDataCorp, DJEN, IA
+- `reportEngine` — HTML, PDF, publicação
+- `userManager` — Auth, roles, claims
+- `clientPortal` — clientCases, quotas, export, mirror
+- `auditManager` — Logs, eventos, query
+- `notificationManager` — Notificações, push
+
+**Critério de aceite:** `index.js` < 500 linhas, nenhuma função de negócio inline.
+
+---
+
+### Phase D: Remoção de Código Morto
+
+**Objetivo:** Limpar exports não utilizados e funções órfãs.
+**Status:** pending
+**Estimativa:** 4 horas
 **Risco:** Baixo — apenas remove código confirmado como morto
 
----
+**Nota:** Phase D fica **fora da Phase A**. Remoção de código morto só ocorre após modularização (Phase C).
 
-#### PASSO 4.1.1 — Verificação Completa
+#### D.1 — Classificação de candidatos a remoção
 
-**Arquivo:** `functions/repair-all-claims.js`
-- [ ] `cat functions/repair-all-claims.js` → confirmar conteúdo
-- [ ] `grep -r "repair-all-claims" . --include="*.js" --include="*.cjs" --include="*.json" --include="*.md"`
-- [ ] Verificar `package.json` scripts
-- [ ] Verificar `firebase.json` functions config
-- [ ] Se NENHUMA referência encontrada: **REMOVER**
+**Checklist:**
+- [ ] **D.1.1** `ENTITY_TYPE` — analisar uso em `writeAuditEvent.js` (não apenas grep)
+- [ ] **D.1.2** `ACTOR_TYPE` — analisar uso em `writeAuditEvent.js`
+- [ ] **D.1.3** `getActionConfig` — analisar uso em `writeAuditEvent.js`
+- [ ] **D.1.4** Classificar cada candidato:
+  - **REMOVÍVEL COM SEGURANÇA** — nenhuma referência, testes cobrem ausência
+  - **PROVAVELMENTE REMOVÍVEL, MAS PRECISA TESTE** — referências indiretas ou dinâmicas
+  - **NÃO CONFIRMADO** — requer análise manual
+  - **NÃO REMOVER** — usado em fluxo crítico
+- [ ] **D.1.5** Documentar classificação em `findings.md`
 
-**Arquivo:** `scripts/repair-all-claims.cjs`
-- [ ] `cat scripts/repair-all-claims.cjs` → confirmar conteúdo
-- [ ] `grep -r "repair-all-claims.cjs" . --include="*.js" --include="*.json" --include="*.md"`
-- [ ] Verificar se é chamado em CI/CD (GitHub Actions, etc.)
-- [ ] Se NENHUMA referência encontrada: **REMOVER**
+#### D.2 — Remoção de código morto confirmado
 
-**Arquivo:** `functions/audit-firestore.cjs.bkp`
-- [ ] `ls -la functions/audit-firestore.cjs.bkp` → verificar data
-- [ ] Se arquivo antigo (>30 dias): **REMOVER**
+**Checklist:**
+- [ ] **D.2.1** Remover funções classificadas como REMOVÍVEL COM SEGURANÇA
+- [ ] **D.2.2** Remover imports não usados
+- [ ] **D.2.3** Remover variáveis não usadas
+- [ ] **D.2.4** Atualizar testes se necessário
+- [ ] **D.2.5** `npm run lint` → 0 erros
+- [ ] **D.2.6** `npm test` → todos passam
 
-**Função:** `queryLawsuitsAsync` em `functions/adapters/judit.js`
-- [ ] `grep -n "queryLawsuitsAsync" functions/ -r --include="*.js"`
-- [ ] Se NÃO é chamada em nenhum lugar: adicionar `@deprecated` ou **REMOVER**
-
-#### PASSO 4.1.2 — Remoção
-
-- [ ] `git rm functions/repair-all-claims.js` (se validado)
-- [ ] `git rm scripts/repair-all-claims.cjs` (se validado)
-- [ ] `git rm functions/audit-firestore.cjs.bkp` (se validado)
-- [ ] Remover `queryLawsuitsAsync` (se validado)
-
-#### PASSO 4.1.3 — Validação
-
-- [ ] `npm test` → 820+ testes passam
-- [ ] `cd functions && npm test` → 513+ testes passam
-- [ ] Commit: `chore: remove dead code and duplicate files`
+**Critério de aceite:** Lint passa, testes passam, zero código morto confirmado removido.
 
 ---
 
-## Phase 5 — Validação Final e Deploy
+### Phase E: Documentação e Handoff
 
-### 5.1 Pré-deploy Checklist
+**Objetivo:** Documentar arquitetura nova e garantir manutenibilidade futura.
+**Status:** pending
+**Estimativa:** 8 horas
+**Risco:** Baixo — apenas documentação
 
-- [ ] **Backend lint:** `cd functions && npm run lint` → 0 erros, 0 warnings
-- [ ] **Backend tests:** `cd functions && npm test` → todos os 513+ passam
-- [ ] **Frontend lint:** `npm run lint` → 0 erros, 0 warnings
-- [ ] **Frontend tests:** `npm test` → todos os 820+ passam
-- [ ] **Build:** `npm run build` → sucesso, `dist/` gerado
-- [ ] **Git status:** apenas arquivos intencionais staged
-- [ ] **Diff review:** revisar `git diff` completo antes de push
-
-### 5.2 Smoke Tests Manuais
-
-| # | Teste | Passos | Expectativa |
-|---|-------|--------|-------------|
-| 1 | Concluir caso | Abrir caso, preencher flags, clicar "Concluir" | Caso concluído, publicResult gerado, não duplica |
-| 2 | Exportar 50+ | Portal cliente, selecionar 50 casos DONE, exportar | UI não trava, arquivo gerado, progresso visível |
-| 3 | Gerar PDF | Caso concluído, clicar "Gerar PDF" | PDF gerado em <5s (warm) |
-| 4 | Dashboard grande | Tenant com 1.000+ casos, abrir /ops/casos | Todos os casos listados, sem truncamento |
-| 5 | DJEN complexo | Criar caso com 20+ processos, aguardar enriquecimento | DJEN completa sem timeout |
-| 6 | Backfill seguro | Logar como admin, tentar backfill | Só processa tenant do admin |
-
-### 5.3 Deploy Orquestrado
-
-**Passo 1 — Deploy Backend**
-```bash
-firebase deploy --only functions
-```
-- [ ] Aguardar conclusão
-- [ ] Verificar logs: `firebase functions:log --tail`
-- [ ] Observar por 30 minutos
-- [ ] Verificar cold starts e taxas de erro
-
-**Passo 2 — Smoke Test em Produção**
-- [ ] Concluir 1 caso real
-- [ ] Exportar 10 casos
-- [ ] Gerar 1 PDF
-- [ ] Verificar métricas no Firebase Console
-
-**Passo 3 — Deploy Frontend**
-```bash
-vercel --prod --yes
-```
-- [ ] Aguardar build
-- [ ] Verificar se build completou sem erros
-
-**Passo 4 — Validação Pós-Deploy**
-- [ ] Acessar app em produção
-- [ ] Realizar smoke tests
-- [ ] Monitorar por 1 hora
-- [ ] Verificar Sentry/Cloud Monitoring por erros
-
-### 5.4 Rollback Plan
-
-Se algo der errado:
-
-1. **Backend:** `firebase deploy --only functions --force` (reverte para última versão estável)
-2. **Frontend:** Reverter commit no Git e fazer novo deploy na Vercel
-3. **Comunicação:** Notificar equipe sobre incidente e timeline de correção
+**Nota:** Phase E fica **fora da Phase A**.
 
 ---
+
+## Key Questions
+
+1. **Aprovação do plano:** Confirma que todas as fases e subtarefas estão claras?
+2. **Prioridade de fases:** A → B → C → D → E, ou prefere paralelizar algumas?
+3. **Timeline:** Urgente (1 semana), moderado (1 mês), ou conservador (2 meses)?
+4. **Orçamento de instâncias:** Limite de `maxInstances` para teste de carga?
+5. **Cloud Storage bucket:** Usar bucket padrão do Firebase ou criar dedicado para exports?
+
+## Decisions Made
+
+| Decision | Rationale |
+|----------|-----------|
+| Preservar CPF em clientCases (autenticado) | Busca por CPF necessária; removido apenas de publicResult |
+| backfillClientCasesMirror sem merge: true | Evita campos stale no espelho |
+| syncClientCaseOnUpdate sincroniza DONE | Classificação precisa refletir no portal do cliente |
+| DEFAULT_QUERY_LIMIT conservador em 500 | Evita timeouts em collections grandes |
+| Debounce com queueMicrotask + cleanup | Performance + segurança de memória |
+| limitToLast(50) para mensagens | Evita índice descending extra |
+| Browser Puppeteer sem estado de erro permanente | Sempre tenta relançar |
+| Refatoração não começa sem plano aprovado | Prevenir regressão em produção |
+| Downtime 2-5min aceitável | Blue-green é overkill para escopo atual |
+| Cursor pagination primeiro | Resolve dor imediata dos usuários |
+| Backward-compatible API | V1 intacta + V2 side-by-side |
+| ExportJobs + polling | Simples, transparente, sem infra extra |
+| maxInstances: 10 por provedor | Suficiente para backpressure inicial |
+| Phase A sem modularização | Modularização é Phase C; Phase A = baseline + V2 apenas |
+| Phase A sem remoção de código morto | Remoção é Phase D; requer análise semântica, não grep |
+| Phase A sem export assíncrono | Export async é Phase B; Phase A apenas documenta |
+| V2 sem total/stats por scan | Cursor pagination real não calcula total exato |
+| Tie-breaker por `__name__` obrigatório | Evita duplicatas/omissões com timestamps iguais |
+| Buscar `limit + 1` para hasMore | Evita necessidade de contagem total |
+| Cursor em Base64 URL-safe | Seguro para URLs e JSON |
+| Filtros não suportados: rejeitar ou flag | Nunca fallback silencioso para V1 |
 
 ## Errors Encountered
 
-| Error | Phase | Item | Resolution |
-|-------|-------|------|------------|
-| (nenhum ainda) | — | — | — |
+| Error | Attempt | Resolution |
+|-------|---------|-----------|
+| — | — | — |
+
+## Notes
+
+- **Modo PLANO ativo**: Após aprovação do usuário, finalizar plano e criar arquivos de execução.
+- **Métricas baselines** (pré-refatoração):
+  - Frontend: ~891 testes, 39 arquivos, ~10s
+  - Backend: ~571 testes, 48 arquivos
+  - Monolito: 13.556 linhas, 47 callables, 10 triggers, 1 onRequest, 1 onSchedule, ~59 exports
+  - Nós graphify: 1110
+- **Deploy seguro**: backend primeiro, aguardar 5min, deploy frontend.
+- **Rollback**: manter branch `pre-refactor` como backup.
+- **Código morto identificado**: candidatos não confirmados em `auditCatalog.js`; análise semântica requerida antes de remoção.
+- **Graphify**: Atualizar após cada fase major (`graphify update .`).
+- **Phase A corrigida**: Não modulariza, não remove código morto, não implementa export async, não altera índices existentes.
 
 ---
 
-## Decisions Log
-
-| Decisão | Data | Justificativa |
-|---------|------|---------------|
-| Preservar `DEFAULT_QUERY_LIMIT = 500` para realtime | 2026-05-29 | Protege subscriptions legítimas; aumentar para 5000 resolve truncamento sem quebrar contrato |
-| Não modularizar `functions/index.js` nesta rodada | 2026-05-29 | Foco em correções cirúrgicas; refatoração estrutural é projeto separado (P1) |
-| Browser Puppeteer persistente (não pré-gerar PDF) | 2026-05-29 | Ganho imediato de warm start; pré-geração requer redesign do pipeline |
-| Debounce 400ms (não useReducer) | 2026-05-29 | Menor mudança arquitetural, mesmo efeito de performance |
-| Firestore para rate limiting (não Redis) | 2026-05-29 | Menor infra adicional; sufficiente para lock de backfill |
-| Excluir item 1.2 (race condition conclude) | 2026-05-29 | Solicitado pelo usuário |
-| Excluir item 1.4 (listOpsUsers) | 2026-05-29 | Solicitado pelo usuário — comportamento esperado para owners |
-| Excluir item 1.5 (rate limiting callables) | 2026-05-29 | Solicitado pelo usuário — não faz sentido real |
-| Excluir item 2.4 (Judit polling) | 2026-05-29 | Solicitado pelo usuário — dúvida sobre necessidade |
+> **Próximo passo:** Aguardar aprovação do usuário para iniciar Phase A corrigida (baseline/documentos + V2 cursor pagination side-by-side).

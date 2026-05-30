@@ -1,0 +1,110 @@
+﻿{
+    "Result":  [
+                   {
+                       "MatchKeys":  "doc{08403904592}",
+                       "BasicData":  {
+                                         "TaxIdNumber":  "08403904592",
+                                         "TaxIdCountry":  "BRAZIL",
+                                         "AlternativeIdNumbers":  {
+                                                                      "SocialSecurityNumber":  "21243903939"
+                                                                  },
+                                         "Name":  "BRENO DE SANTA ISABEL SANT ANA",
+                                         "Aliases":  {
+                                                         "CommonName":  "BRENO ANA",
+                                                         "StandardizedName":  "BRENO SANTA ISABEL SANT ANA"
+                                                     },
+                                         "Gender":  "M",
+                                         "NameWordCount":  6,
+                                         "NumberOfFullNameNamesakes":  1,
+                                         "NameUniquenessScore":  1,
+                                         "FirstNameUniquenessScore":  0.001,
+                                         "FirstAndLastNameUniquenessScore":  0.02702703,
+                                         "BirthDate":  "2005-06-27T00:00:00Z",
+                                         "CapturedBirthDateFromRFSource":  "2005-06-27",
+                                         "IsValidBirthDateInRFSource":  true,
+                                         "Age":  20,
+                                         "ZodiacSign":  "CANCER",
+                                         "ChineseSign":  "Rooster",
+                                         "BirthCountry":  "BRASILEIRA",
+                                         "MotherName":  "RITA MARIA DE SANTA ISABEL SANT ANA",
+                                         "FatherName":  "",
+                                         "MaritalStatusData":  {
+
+                                                               },
+                                         "TaxIdStatus":  "REGULAR",
+                                         "TaxIdOrigin":  "RECEITA FEDERAL",
+                                         "TaxIdFiscalRegion":  "BA-SE",
+                                         "HasObitIndication":  false,
+                                         "TaxIdStatusDate":  "2026-05-25T00:00:00Z",
+                                         "TaxIdStatusRegistrationDate":  "2015-05-13T00:00:00Z",
+                                         "CreationDate":  "2018-07-25T00:00:00Z",
+                                         "LastUpdateDate":  "2026-05-25T00:00:00Z"
+                                     },
+                       "KycData":  {
+                                       "PEPHistory":  [
+
+                                                      ],
+                                       "IsCurrentlyPEP":  false,
+                                       "SanctionsHistory":  [
+
+                                                            ],
+                                       "IsCurrentlySanctioned":  false,
+                                       "WasPreviouslySanctioned":  false,
+                                       "Last30DaysSanctions":  0,
+                                       "Last90DaysSanctions":  0,
+                                       "Last180DaysSanctions":  0,
+                                       "Last365DaysSanctions":  0,
+                                       "LastYearPEPOccurence":  0,
+                                       "Last3YearsPEPOccurence":  0,
+                                       "Last5YearsPEPOccurence":  0,
+                                       "Last5PlusYearsPEPOccurence":  0,
+                                       "IsCurrentlyElectoralDonor":  false,
+                                       "IsHistoricalElectoralDonor":  false,
+                                       "TotalElectoralDonations":  0,
+                                       "TotalElectoralDonationAmount":  0,
+                                       "ElectoralDonations":  {
+
+                                                              }
+                                   },
+                       "Processes":  {
+                                         "Lawsuits":  [
+
+                                                      ],
+                                         "TotalLawsuits":  0,
+                                         "TotalLawsuitsAsAuthor":  0,
+                                         "TotalLawsuitsAsDefendant":  0,
+                                         "TotalLawsuitsAsOther":  0,
+                                         "Last30DaysLawsuits":  0,
+                                         "Last90DaysLawsuits":  0,
+                                         "Last180DaysLawsuits":  0,
+                                         "Last365DaysLawsuits":  0
+                                     }
+                   }
+               ],
+    "QueryId":  "9a6658eb-57f4-41b6-b813-6ed7c97c23ed",
+    "ElapsedMilliseconds":  192,
+    "QueryDate":  "2026-05-30T02:21:18.7897145Z",
+    "Status":  {
+                   "basic_data":  [
+                                      {
+                                          "Code":  0,
+                                          "Message":  "OK"
+                                      }
+                                  ],
+                   "kyc":  [
+                               {
+                                   "Code":  0,
+                                   "Message":  "OK"
+                               }
+                           ],
+                   "processes":  [
+                                     {
+                                         "Code":  0,
+                                         "Message":  "OK"
+                                     }
+                                 ]
+               },
+    "Evidences":  {
+
+                  }
+}

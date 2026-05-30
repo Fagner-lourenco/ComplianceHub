@@ -696,4 +696,107 @@ describe('CasoPage', () => {
         expect(screen.getAllByText('Concorda').length).toBeGreaterThanOrEqual(2);
         expect(screen.queryByText('Cobertura parcial pode esconder achados.')).not.toBeInTheDocument();
     });
+
+    it('exibe botao de bypass para supervisor quando caso esta em CORRECTION_NEEDED com gate bloqueado', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+        expect(screen.getByText('Concluir com bypass de identidade')).toBeInTheDocument();
+    });
+
+    it('nao exibe botao de bypass para analista comum', async () => {
+        casoPageMocks.authState.userProfile = { role: 'analyst' };
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+        expect(screen.queryByText('Concluir com bypass de identidade')).not.toBeInTheDocument();
+
+        // Restore admin role
+        casoPageMocks.authState.userProfile = { role: 'admin' };
+    });
+
+    it('abre modal de bypass e envia payload correto ao concluir', async () => {
+        casoPageMocks.callConcludeCaseByAnalyst.mockResolvedValue({});
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+
+        const bypassButton = screen.getByText('Concluir com bypass de identidade');
+        fireEvent.click(bypassButton);
+
+        expect(await screen.findByText('Bypass do gate de identidade')).toBeInTheDocument();
+
+        const textarea = screen.getByPlaceholderText('Descreva por que a conclusao deve ser permitida mesmo com gate de identidade bloqueado...');
+        fireEvent.change(textarea, { target: { value: 'Justificativa de teste com mais de 15 caracteres' } });
+
+        const confirmButton = screen.getByText('Confirmar bypass e concluir');
+        fireEvent.click(confirmButton);
+
+        await waitFor(() => {
+            expect(casoPageMocks.callConcludeCaseByAnalyst).toHaveBeenCalledWith(expect.objectContaining({
+                caseId: 'CASE-999',
+                payload: expect.objectContaining({
+                    identityBypassed: true,
+                    identityBypassJustification: 'Justificativa de teste com mais de 15 caracteres',
+                }),
+            }));
+        });
+    });
 });

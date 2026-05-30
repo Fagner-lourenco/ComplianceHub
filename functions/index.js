@@ -26,7 +26,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 let getAuth = require('firebase-admin/auth').getAuth;
-const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 
 
 const {
@@ -101,6 +101,10 @@ const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
 const tenantUserManagement = require('./modules/tenantUserManagement');
 const caseCommunication = require('./caseCommunication');
 const {
+    buildResetPublishedCaseFields,
+    revokeCasePublicationArtifacts,
+} = require('./modules/publishAndSync');
+const {
     IDENTITY_FIELDS,
     RESULT_ONLY_FIELDS,
     PUBLIC_RESULT_FIELDS,
@@ -110,6 +114,9 @@ const {
     REVIEW_DRAFT_ARRAY_FIELDS,
 } = require('./modules/_shared/fieldConstants');
 const { calculateRisk: calculateRiskScore } = require('./shared/riskCalculator');
+const { DEFAULT_ANALYSIS_CONFIG } = require('./modules/_shared/analysisConfig');
+const { isJuditSettled, isSettledProviderStatus } = require('./helpers/enrichmentStatus');
+const enrichmentTriggers = require('./modules/enrichmentTriggers');
 const {
     DEFAULT_FONTE_DATA_CONFIG,
     DEFAULT_ESCAVADOR_CONFIG,
@@ -128,6 +135,7 @@ const caseQueriesAssignments = require('./modules/caseQueriesAssignments');
 const notificationService = require('./modules/notificationService');
 const pdfGeneration = require('./modules/pdfGeneration');
 const systemHealth = require('./modules/systemHealth');
+const clientSolicitations = require('./modules/clientSolicitations');
 
 const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin', 'owner']);
 const CLIENT_REQUESTER_ROLES = new Set(['CLIENT', 'client_operator', 'client_manager']);
@@ -145,16 +153,13 @@ const authDeps = {
 };
 const { getOpsUserProfile, getClientUserProfile, assertOpsCanAccessCase, assertClientManager, assertCanAssignCase, canAssignCases } = require('./modules/_shared/auth')(authDeps);
 const {
-    validateCpfDigits,
     sanitizeCpf,
-    maskCpf,
     validateAiClassificationReviewSchema,
     sanitizeStructuredList,
     sanitizeStructuredText,
     fixLatinMojibake,
     normalizeUnicodeToAscii,
     sanitizePublicReportHtml,
-    formatRequestedBy,
 } = require('./modules/_shared/sanitizers');
 
 const caseComm = {
@@ -178,16 +183,6 @@ const escavadorApiToken = defineSecret('ESCAVADOR_API_TOKEN');
 const juditApiKey = defineSecret('JUDIT_API_KEY');
 const bigdatacorpAccessToken = defineSecret('BIGDATACORP_ACCESS_TOKEN');
 const bigdatacorpTokenId = defineSecret('BIGDATACORP_TOKEN_ID');
-
-const DEFAULT_ANALYSIS_CONFIG = {
-    criminal: { enabled: true },
-    labor: { enabled: true },
-    warrant: { enabled: true },
-    osint: { enabled: true },
-    social: { enabled: true },
-    digital: { enabled: true },
-    conflictInterest: { enabled: true },
-};
 
 /* =========================================================
    NAME SIMILARITY HELPERS (gate)
@@ -916,10 +911,6 @@ function isDoneOrPartial(status) {
     return status === 'DONE' || status === 'PARTIAL';
 }
 
-function isSettledProviderStatus(status) {
-    return status === 'DONE' || status === 'PARTIAL' || status === 'FAILED' || status === 'SKIPPED' || status === 'BLOCKED';
-}
-
 function hasPendingJuditAsync(caseData = {}) {
     const count = Number(caseData.juditPendingAsyncCount || 0);
     const phases = Array.isArray(caseData.juditPendingAsyncPhases)
@@ -930,11 +921,6 @@ function hasPendingJuditAsync(caseData = {}) {
 
 function isProviderTerminalForPipeline(status) {
     return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
-}
-
-function isJuditSettled(caseData = {}) {
-    return isProviderTerminalForPipeline(caseData.juditEnrichmentStatus)
-        && !hasPendingJuditAsync(caseData);
 }
 
 function canRunFinalClassification(caseData = {}) {
@@ -4154,458 +4140,57 @@ async function runJuditEnrichmentPhase(caseRef, caseId, caseData, juditConfig, o
 // The runFonteDataEnrichmentPhase function is still available via rerunEnrichmentPhase.
 
 /* =========================================================
-   JUDIT — Cloud Function (triggered after BigDataCorp completes)
-   BigDataCorp is the PRIMARY identity gate. Judit is the FALLBACK.
-   Triggered when bigdatacorpEnrichmentStatus transitions to a
-   terminal state (DONE, BLOCKED, FAILED, SKIPPED).
+   ENRICHMENT TRIGGERS — Wiring modular
    ========================================================= */
+
+const enrichmentTriggerDeps = {
+    db,
+    FieldValue,
+    acquirePhaseRun,
+    loadJuditConfig,
+    loadBigDataCorpConfig,
+    loadEscavadorConfig,
+    loadDjenConfig,
+    runJuditEnrichmentPhase,
+    runBigDataCorpEnrichmentPhase,
+    runEscavadorEnrichmentPhase,
+    runDjenEnrichmentPhase,
+    isJuditSettled,
+    isSettledProviderStatus,
+    maybeRunAutoClassifyAndAi,
+    writeAuditEvent,
+    ACTOR_TYPE,
+    SOURCE,
+};
 
 exports.enrichJuditOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 540, memory: '512MiB', secrets: [juditApiKey, fontedataApiKey, openaiApiKey] },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
-        if (!before || !after) return;
-
-        // Guard: bigdatacorpEnrichmentStatus must have CHANGED to a terminal state
-        const bdcBefore = before.bigdatacorpEnrichmentStatus;
-        const bdcAfter = after.bigdatacorpEnrichmentStatus;
-        if (bdcBefore === bdcAfter) return;
-        const bdcTerminal = ['DONE', 'BLOCKED', 'FAILED', 'SKIPPED'];
-        if (!bdcTerminal.includes(bdcAfter)) return;
-
-        // Guard: Judit must not have already started
-        const juditStatus = after.juditEnrichmentStatus;
-        if (juditStatus && juditStatus !== 'PENDING') return;
-
-        // Guard: case must still be actionable
-        if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
-
-        const caseData = after;
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-
-        const tenantId = caseData.tenantId;
-        if (!tenantId) {
-            console.log(`Case ${caseId}: no tenantId, skipping enrichment.`);
-            return;
-        }
-
-        try {
-            const runLock = await acquirePhaseRun(caseRef, 'juditEnrichmentStatus');
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [Judit]: skipped because status is already ${runLock.caseData?.juditEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            const runCaseData = runLock.caseData || caseData;
-            const juditConfig = await loadJuditConfig(tenantId);
-            if (!juditConfig.enabled) {
-                console.log(`Case ${caseId} [Judit]: disabled for tenant ${tenantId}. Skipping.`);
-                await caseRef.update({
-                    juditEnrichmentStatus: 'SKIPPED',
-                    juditError: null,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                return;
-            }
-
-            await runJuditEnrichmentPhase(caseRef, caseId, runCaseData, juditConfig);
-
-            // Audit: log automatic enrichment trigger
-            try {
-                const refreshed = (await caseRef.get()).data() || {};
-                await writeAuditEvent({
-                    action: 'ENRICHMENT_AUTO_TRIGGERED',
-                    tenantId,
-                    actor: { type: ACTOR_TYPE.SYSTEM },
-                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                    related: { caseId },
-                    source: SOURCE.CLOUD_FUNCTION,
-                    metadata: { phase: 'judit', status: refreshed.juditEnrichmentStatus, trigger: 'bigdatacorp_settled' },
-                    templateVars: { candidateName: caseData.candidateName || caseId, phase: 'judit', status: refreshed.juditEnrichmentStatus || 'UNKNOWN' },
-                });
-            } catch { /* audit failure must not block pipeline */ }
-        } catch (err) {
-            console.error(`Case ${caseId} [Judit]: error:`, err.message);
-            await caseRef.update({
-                juditEnrichmentStatus: 'FAILED',
-                juditError: err.message,
-                juditPendingAsyncPhases: FieldValue.delete(),
-                juditPendingAsyncCount: FieldValue.delete(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        }
-    },
+    enrichmentTriggers.createEnrichJuditOnCaseHandler(enrichmentTriggerDeps),
 );
-
-/* =========================================================
-   BIGDATACORP — Cloud Function (triggered on case creation)
-   PRIMARY identity gate. Runs FIRST, then triggers Judit via
-   onDocumentUpdated when it reaches a terminal state.
-   Queries: basic_data + processes + kyc + occupation_data.
-   ========================================================= */
 
 exports.enrichBigDataCorpOnCase = onDocumentCreated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB', secrets: [bigdatacorpAccessToken, bigdatacorpTokenId, openaiApiKey] },
-    async (event) => {
-        const snap = event.data;
-        if (!snap) return;
-
-        const caseData = snap.data();
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-
-        const tenantId = caseData.tenantId;
-        if (!tenantId) {
-            console.log(`Case ${caseId} [BigDataCorp]: no tenantId, skipping.`);
-            return;
-        }
-
-        try {
-            const runLock = await acquirePhaseRun(caseRef, 'bigdatacorpEnrichmentStatus');
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [BigDataCorp]: skipped because status is already ${runLock.caseData?.bigdatacorpEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            const runCaseData = runLock.caseData || caseData;
-
-            const bdcConfig = await loadBigDataCorpConfig(tenantId);
-            if (!bdcConfig.enabled) {
-                console.log(`Case ${caseId} [BigDataCorp]: disabled for tenant ${tenantId}, writing SKIPPED.`);
-                await caseRef.update({
-                    bigdatacorpEnrichmentStatus: 'SKIPPED',
-                    bigdatacorpError: 'Provider desabilitado para este tenant.',
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'BigDataCorp disabled');
-                return;
-            }
-
-            await runBigDataCorpEnrichmentPhase(caseRef, caseId, runCaseData, bdcConfig);
-
-            // Audit: log automatic enrichment trigger
-            try {
-                const refreshed = (await caseRef.get()).data() || {};
-                await writeAuditEvent({
-                    action: 'ENRICHMENT_AUTO_TRIGGERED',
-                    tenantId,
-                    actor: { type: ACTOR_TYPE.SYSTEM },
-                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                    related: { caseId },
-                    source: SOURCE.CLOUD_FUNCTION,
-                    metadata: { phase: 'bigdatacorp', status: refreshed.bigdatacorpEnrichmentStatus, trigger: 'case_created' },
-                    templateVars: { candidateName: caseData.candidateName || caseId, phase: 'bigdatacorp', status: refreshed.bigdatacorpEnrichmentStatus || 'UNKNOWN' },
-                });
-            } catch { /* audit failure must not block pipeline */ }
-        } catch (err) {
-            console.error(`Case ${caseId} [BigDataCorp]: error:`, err.message);
-            // Do NOT rethrow — BigDataCorp failure should not block the pipeline
-        }
-    },
+    enrichmentTriggers.createEnrichBigDataCorpOnCaseHandler(enrichmentTriggerDeps),
 );
 
 exports.enrichBigDataCorpOnCorrection = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB', secrets: [bigdatacorpAccessToken, bigdatacorpTokenId, openaiApiKey] },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
-        if (!before || !after) return;
-
-        if (before.status !== 'CORRECTION_NEEDED' || after.status !== 'PENDING') return;
-        if (after.bigdatacorpEnrichmentStatus !== 'PENDING') return;
-
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-        const tenantId = after.tenantId;
-        if (!tenantId) return;
-
-        try {
-            const runLock = await acquirePhaseRun(caseRef, 'bigdatacorpEnrichmentStatus');
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [BigDataCorp correction]: skipped because status is already ${runLock.caseData?.bigdatacorpEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            const runCaseData = runLock.caseData || after;
-            const bdcConfig = await loadBigDataCorpConfig(tenantId);
-            if (!bdcConfig.enabled) {
-                console.log(`Case ${caseId} [BigDataCorp correction]: disabled for tenant ${tenantId}, writing SKIPPED.`);
-                await caseRef.update({
-                    bigdatacorpEnrichmentStatus: 'SKIPPED',
-                    bigdatacorpError: 'Provider desabilitado para este tenant.',
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                return;
-            }
-
-            await runBigDataCorpEnrichmentPhase(caseRef, caseId, runCaseData, bdcConfig);
-        } catch (err) {
-            console.error(`Case ${caseId} [BigDataCorp correction]: error:`, err.message);
-        }
-    },
+    enrichmentTriggers.createEnrichBigDataCorpOnCorrectionHandler(enrichmentTriggerDeps),
 );
-
-/* =========================================================
-   JUDIT — Re-enrichment after client correction.
-   Triggered only as fallback when correction did not schedule BDC.
-   The normal correction path re-runs BigDataCorp first, then Judit
-   via enrichJuditOnCase when BDC reaches a terminal state.
-   ========================================================= */
 
 exports.enrichJuditOnCorrection = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 540, memory: '512MiB', secrets: [juditApiKey, fontedataApiKey, openaiApiKey] },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
-        if (!before || !after) return;
-
-        // Guard: only trigger on CORRECTION_NEEDED → PENDING transition
-        if (before.status !== 'CORRECTION_NEEDED' || after.status !== 'PENDING') return;
-
-        // Guard: must have juditEnrichmentStatus reset to PENDING
-        if (after.juditEnrichmentStatus !== 'PENDING') return;
-        if (!isSettledProviderStatus(after.bigdatacorpEnrichmentStatus)) {
-            console.log(`Case ${event.params.caseId} [Judit correction]: waiting for BigDataCorp correction gate (${after.bigdatacorpEnrichmentStatus || 'PENDING'}).`);
-            return;
-        }
-
-        const caseData = after;
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-
-        const tenantId = caseData.tenantId;
-        if (!tenantId) return;
-
-        try {
-            const runLock = await acquirePhaseRun(caseRef, 'juditEnrichmentStatus');
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [Judit correction]: skipped because status is already ${runLock.caseData?.juditEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            const runCaseData = runLock.caseData || caseData;
-            const juditConfig = await loadJuditConfig(tenantId);
-            if (!juditConfig.enabled) {
-                console.log(`Case ${caseId} [Judit correction]: disabled for tenant ${tenantId}. Skipping.`);
-                await caseRef.update({
-                    juditEnrichmentStatus: 'SKIPPED',
-                    juditError: null,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                return;
-            }
-
-            console.log(`Case ${caseId} [Judit correction]: re-running enrichment after client correction.`);
-            await runJuditEnrichmentPhase(caseRef, caseId, runCaseData, juditConfig);
-        } catch (err) {
-            console.error(`Case ${caseId} [Judit correction]: error:`, err.message);
-            await caseRef.update({
-                juditEnrichmentStatus: 'FAILED',
-                juditError: err.message,
-                juditPendingAsyncPhases: FieldValue.delete(),
-                juditPendingAsyncCount: FieldValue.delete(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        }
-    },
+    enrichmentTriggers.createEnrichJuditOnCorrectionHandler(enrichmentTriggerDeps),
 );
-
-/* =========================================================
-   ESCAVADOR — Sequential Cloud Function (waits for FonteData)
-   Triggered when enrichmentStatus changes to DONE/PARTIAL.
-   Reads enrichmentPrimaryUf to apply tribunal filters.
-   ========================================================= */
-
-/* =========================================================
-   ESCAVADOR — Conditional Cloud Function (waits for Judit)
-   Triggered when juditEnrichmentStatus changes to DONE/PARTIAL.
-   Only runs if juditNeedsEscavador is true OR config forces it.
-   ========================================================= */
 
 exports.enrichEscavadorOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', secrets: [escavadorApiToken, openaiApiKey] },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
-        if (!before || !after) return;
-
-        // Guard: only trigger when Judit enrichment completes and is truly settled
-        const statusBefore = before.juditEnrichmentStatus;
-        const statusAfter = after.juditEnrichmentStatus;
-        const needsEscavadorTurnedTrue = before.juditNeedsEscavador !== true && after.juditNeedsEscavador === true;
-        if (statusBefore === statusAfter && !needsEscavadorTurnedTrue) return;
-        if (!isJuditSettled(after)) return;
-
-        // Guard: don't re-trigger if Escavador already ran, except when it was
-        // previously skipped and Judit async completion now requires validation.
-        const escavadorStatus = after.escavadorEnrichmentStatus;
-        const canReviveSkippedEscavador = escavadorStatus === 'SKIPPED' && after.juditNeedsEscavador === true;
-        if (escavadorStatus && escavadorStatus !== 'PENDING' && !canReviveSkippedEscavador) return;
-
-        // Guard: don't enrich concluded or returned cases
-        if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
-
-        const caseData = after;
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-
-        const tenantId = caseData.tenantId;
-        if (!tenantId) return;
-
-        try {
-            const escavadorConfig = await loadEscavadorConfig(tenantId);
-            if (!escavadorConfig.enabled) {
-                console.log(`Case ${caseId} [Escavador]: disabled for tenant ${tenantId}.`);
-                // BUG-3 fix: When Escavador is disabled but Judit flagged it as needed,
-                // we must still mark SKIPPED and run auto-classification. Otherwise the
-                // pipeline gets permanently stuck waiting for Escavador to complete.
-                await caseRef.update({
-                    escavadorEnrichmentStatus: 'SKIPPED',
-                    escavadorError: null,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                if (caseData.juditNeedsEscavador) {
-                    await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador disabled');
-                }
-                return;
-            }
-
-            // Conditional: only run if Judit flagged the need OR config forces it
-            const forceRun = escavadorConfig.alwaysRun === true;
-            if (!caseData.juditNeedsEscavador && !forceRun) {
-                console.log(`Case ${caseId} [Escavador]: skipped — Judit found no flags requiring cross-validation.`);
-                await caseRef.update({
-                    escavadorEnrichmentStatus: 'SKIPPED',
-                    escavadorError: null,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                // Run auto-classify since Escavador will not run
-                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador skip');
-                return;
-            }
-
-            console.log(`Case ${caseId} [Escavador]: running cross-validation (juditNeedsEscavador=${caseData.juditNeedsEscavador}, forceRun=${forceRun}).`);
-            const runLock = await acquirePhaseRun(
-                caseRef,
-                'escavadorEnrichmentStatus',
-                canReviveSkippedEscavador ? [undefined, null, 'PENDING', 'SKIPPED'] : [undefined, null, 'PENDING'],
-            );
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [Escavador]: skipped because status is already ${runLock.caseData?.escavadorEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            await runEscavadorEnrichmentPhase(caseRef, caseId, runLock.caseData || caseData, escavadorConfig);
-
-            // Audit: log automatic enrichment trigger
-            try {
-                const refreshed = (await caseRef.get()).data() || {};
-                await writeAuditEvent({
-                    action: 'ENRICHMENT_AUTO_TRIGGERED',
-                    tenantId,
-                    actor: { type: ACTOR_TYPE.SYSTEM },
-                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                    related: { caseId },
-                    source: SOURCE.CLOUD_FUNCTION,
-                    metadata: { phase: 'escavador', status: refreshed.escavadorEnrichmentStatus, trigger: 'judit_settled' },
-                    templateVars: { candidateName: caseData.candidateName || caseId, phase: 'escavador', status: refreshed.escavadorEnrichmentStatus || 'UNKNOWN' },
-                });
-            } catch { /* audit failure must not block pipeline */ }
-        } catch (err) {
-            console.error(`Case ${caseId} [Escavador]: error:`, err.message);
-            await caseRef.update({
-                escavadorEnrichmentStatus: 'FAILED',
-                escavadorError: err.message,
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        }
-    },
+    enrichmentTriggers.createEnrichEscavadorOnCaseHandler(enrichmentTriggerDeps),
 );
-
-/* =========================================================
-   DJEN — Cloud Function (triggered on case update)
-   Runs AFTER Judit completes. Searches comunicações judiciais.
-   DISABLED by default — requires tenant-level enablement.
-   ========================================================= */
 
 exports.enrichDjenOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', secrets: [openaiApiKey] },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
-        if (!before || !after) return;
-
-        // Guard: trigger when Judit settles, or when Escavador settles after DJEN waited for it.
-        const statusBefore = before.juditEnrichmentStatus;
-        const statusAfter = after.juditEnrichmentStatus;
-        const juditJustSettled = statusBefore !== statusAfter && isJuditSettled(after);
-        const escavadorJustSettled = before.escavadorEnrichmentStatus !== after.escavadorEnrichmentStatus
-            && after.juditNeedsEscavador === true
-            && isSettledProviderStatus(after.escavadorEnrichmentStatus)
-            && isJuditSettled(after);
-        if (!juditJustSettled && !escavadorJustSettled) return;
-        if (!isJuditSettled(after)) return;
-
-        // Guard: don't re-trigger if DJEN already ran
-        const djenStatus = after.djenEnrichmentStatus;
-        if (djenStatus && djenStatus !== 'PENDING') return;
-
-        // P2-007: Guard — wait for Escavador when Judit flagged it as needed
-        if (after.juditNeedsEscavador === true) {
-            const escavadorStatus = after.escavadorEnrichmentStatus;
-            if (!isSettledProviderStatus(escavadorStatus)) {
-                console.log(`Case ${event.params.caseId} [DJEN]: waiting for Escavador to settle (status=${escavadorStatus || 'PENDING'}).`);
-                return;
-            }
-        }
-
-        // Guard: don't enrich concluded cases
-        if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
-
-        const caseData = after;
-        const caseId = event.params.caseId;
-        const caseRef = db.collection('cases').doc(caseId);
-
-        const tenantId = caseData.tenantId;
-        if (!tenantId) return;
-
-        try {
-            const djenConfig = await loadDjenConfig(tenantId);
-            if (!djenConfig.enabled) {
-                console.log(`Case ${caseId} [DJEN]: disabled for tenant ${tenantId}.`);
-                await caseRef.update({
-                    djenEnrichmentStatus: 'SKIPPED',
-                    djenError: null,
-                    djenSkippedReason: 'disabled_for_tenant',
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'DJEN disabled');
-                return;
-            }
-
-            console.log(`Case ${caseId} [DJEN]: running enrichment (strategy=${djenConfig.searchStrategy}).`);
-            const runLock = await acquirePhaseRun(caseRef, 'djenEnrichmentStatus');
-            if (!runLock.acquired) {
-                console.log(`Case ${caseId} [DJEN]: skipped because status is already ${runLock.caseData?.djenEnrichmentStatus || 'set'}.`);
-                return;
-            }
-            await runDjenEnrichmentPhase(caseRef, caseId, runLock.caseData || caseData, djenConfig);
-
-            // Audit: log automatic enrichment trigger
-            try {
-                const refreshed = (await caseRef.get()).data() || {};
-                await writeAuditEvent({
-                    action: 'ENRICHMENT_AUTO_TRIGGERED',
-                    tenantId,
-                    actor: { type: ACTOR_TYPE.SYSTEM },
-                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                    related: { caseId },
-                    source: SOURCE.CLOUD_FUNCTION,
-                    metadata: { phase: 'djen', status: refreshed.djenEnrichmentStatus, trigger: 'judit_settled' },
-                    templateVars: { candidateName: caseData.candidateName || caseId, phase: 'djen', status: refreshed.djenEnrichmentStatus || 'UNKNOWN' },
-                });
-            } catch { /* audit failure must not block pipeline */ }
-        } catch (err) {
-            console.error(`Case ${caseId} [DJEN]: error:`, err.message);
-        }
-    },
+    enrichmentTriggers.createEnrichDjenOnCaseHandler(enrichmentTriggerDeps),
 );
 
 /* =========================================================
@@ -5719,7 +5304,7 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
         }
 
         if (before.status === 'DONE') {
-            await revokeCasePublicationArtifacts(caseId, before);
+            await revokeCasePublicationArtifacts(caseId, before, db);
             console.log(`Case ${caseId}: public publication artifacts revoked after leaving DONE.`);
         }
     },
@@ -5729,534 +5314,39 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
    CLIENT / ADMIN CALLABLES
    ========================================================= */
 
-/* =========================================================
-   CLIENT / ADMIN CALLABLES (wiring será feito após tenantUserDeps)
-   ========================================================= */
+const solicitationDeps = {
+    db,
+    FieldValue,
+    Timestamp,
+    getClientUserProfile,
+    getTenantSettingsData,
+    assertClientManager,
+    writeAuditEvent,
+    ACTOR_TYPE,
+    SOURCE,
+    notificationService,
+    sanitizeCpf,
+    CLIENT_CASE_FIELDS,
+    enforceTenantSubmissionLimits,
+    compensateTenantSubmissionLimit,
+    buildClientCasePayload,
+    clientPayloadChanged,
+    writeClientCaseMirror,
+    isAutoClassifyOnlyChange,
+    shouldSkipClientCaseMirrorSync,
+    getClientIp,
+    getOpsUserProfile,
+    caseComm,
+};
 
 exports.createClientSolicitation = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 120, cors: [/\.vercel\.app$/, /localhost/] },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const profile = await getClientUserProfile(uid, { requireRequester: true });
-        const {
-            fullName,
-            cpf,
-            dateOfBirth = '',
-            position = '',
-            department = '',
-            hiringUf = '',
-            candidateResidenceUf = '',
-            email = '',
-            phone = '',
-            priority = 'NORMAL',
-            digitalProfileNotes = '',
-            socialProfiles = {},
-            otherSocialUrls = [],
-        } = request.data || {};
-
-        const candidateName = String(fullName || '').trim();
-        const cpfDigits = sanitizeCpf(cpf);
-        if (candidateName.length < 3 || cpfDigits.length !== 11 || !validateCpfDigits(cpfDigits)) {
-            throw new HttpsError('invalid-argument', 'Nome completo deve ter no minimo 3 caracteres e CPF valido e obrigatorio.');
-        }
-
-        // P2-003: Normaliza campos textuais (trim)
-        const trimmedPosition = String(position || '').trim();
-        const trimmedDepartment = String(department || '').trim();
-        const trimmedEmail = String(email || '').trim();
-        const trimmedPhone = String(phone || '').trim();
-        const trimmedDob = String(dateOfBirth || '').trim();
-        const trimmedHiringUf = String(hiringUf || '').trim().toUpperCase();
-        const trimmedResidenceUf = String(candidateResidenceUf || '').trim().toUpperCase();
-        const trimmedNotes = String(digitalProfileNotes || '').trim().slice(0, 500);
-        const trimmedSocialProfiles = {
-            instagram: String(socialProfiles?.instagram || '').trim(),
-            facebook: String(socialProfiles?.facebook || '').trim(),
-            linkedin: String(socialProfiles?.linkedin || '').trim(),
-            tiktok: String(socialProfiles?.tiktok || '').trim(),
-            twitter: String(socialProfiles?.twitter || '').trim(),
-            youtube: String(socialProfiles?.youtube || '').trim(),
-        };
-
-        // Validate UF fields
-        const VALID_UFS = new Set(['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']);
-        const hiringUfClean = trimmedHiringUf;
-        const residenceUfClean = trimmedResidenceUf;
-        if (hiringUfClean && !VALID_UFS.has(hiringUfClean)) {
-            throw new HttpsError('invalid-argument', `UF de local de trabalho invalida: ${hiringUf}`);
-        }
-        if (!VALID_UFS.has(residenceUfClean)) {
-            throw new HttpsError('invalid-argument', `UF de residencia invalida: ${candidateResidenceUf}`);
-        }
-
-        // P1-001: Validate field lengths
-        if (candidateName.length > 200) {
-            throw new HttpsError('invalid-argument', 'Nome completo deve ter no maximo 200 caracteres.');
-        }
-        if (trimmedPosition.length > 100) {
-            throw new HttpsError('invalid-argument', 'Cargo deve ter no maximo 100 caracteres.');
-        }
-        if (trimmedDepartment.length > 100) {
-            throw new HttpsError('invalid-argument', 'Departamento deve ter no maximo 100 caracteres.');
-        }
-        if (trimmedNotes.length > 500) {
-            throw new HttpsError('invalid-argument', 'Notas devem ter no maximo 500 caracteres.');
-        }
-
-        // P1-002: Validate email format
-        if (trimmedEmail) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(trimmedEmail)) {
-                throw new HttpsError('invalid-argument', 'Formato de e-mail invalido.');
-            }
-        }
-
-        // P1-003: Validate date of birth format
-        if (trimmedDob && !/^\d{4}-\d{2}-\d{2}$/.test(trimmedDob)) {
-            throw new HttpsError('invalid-argument', 'Data de nascimento deve estar no formato AAAA-MM-DD.');
-        }
-
-        // P1-004: Validate social profile URLs
-        const urlRegex = /^https?:\/\/.+/;
-        for (const [key, url] of Object.entries(trimmedSocialProfiles)) {
-            if (url && !urlRegex.test(String(url))) {
-                throw new HttpsError('invalid-argument', `URL invalida para ${key}: deve comecar com http:// ou https://`);
-            }
-        }
-
-        const tenantId = profile.tenantId;
-        const tenantName = profile.tenantName || tenantId;
-        const tenantData = await getTenantSettingsData(tenantId);
-        const analysisConfig = tenantData?.analysisConfig || DEFAULT_ANALYSIS_CONFIG;
-        const enabledPhases = Object.entries(analysisConfig)
-            .filter(([, value]) => value?.enabled)
-            .map(([key]) => key);
-        const tenantSlaHours = Number(tenantData?.slaHours ?? 48);
-        const safeSlaHours = Number.isFinite(tenantSlaHours) && tenantSlaHours >= 1 ? tenantSlaHours : 48;
-
-        await enforceTenantSubmissionLimits(tenantId, tenantData || {}, {
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
-            ip: getClientIp(request),
-        });
-
-        const now = new Date();
-        const createdDateKey = formatDateKey(now);
-        const createdMonthKey = formatMonthKey(now);
-        const candidateRef = db.collection('candidates').doc();
-        const caseRef = db.collection('cases').doc();
-
-        const batch = db.batch();
-
-        batch.set(candidateRef, {
-            tenantId,
-            tenantName,
-            candidateName,
-            cpf: cpfDigits,
-            cpfMasked: maskCpf(cpfDigits),
-            candidatePosition: trimmedPosition,
-            department: trimmedDepartment,
-            dateOfBirth: trimmedDob,
-            candidateResidenceUf: trimmedResidenceUf,
-            email: trimmedEmail,
-            phone: trimmedPhone,
-            instagram: trimmedSocialProfiles.instagram,
-            facebook: trimmedSocialProfiles.facebook,
-            linkedin: trimmedSocialProfiles.linkedin,
-            tiktok: trimmedSocialProfiles.tiktok,
-            twitter: trimmedSocialProfiles.twitter,
-            youtube: trimmedSocialProfiles.youtube,
-            otherSocialUrls: (Array.isArray(otherSocialUrls) ? otherSocialUrls : [])
-                .filter(item => item && typeof item === 'object')
-                .map(item => ({
-                    label: String(item.label || '').trim().slice(0, 50),
-                    url: String(item.url || '').trim().slice(0, 500),
-                }))
-                .slice(0, 20),
-            digitalProfileNotes: trimmedNotes,
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-        });
-
-        batch.set(caseRef, {
-            tenantId,
-            tenantName,
-            candidateId: candidateRef.id,
-            candidateName,
-            candidatePosition: trimmedPosition,
-            department: trimmedDepartment,
-            cpf: cpfDigits,
-            cpfMasked: maskCpf(cpfDigits),
-            hiringUf: trimmedHiringUf,
-            candidateResidenceUf: trimmedResidenceUf,
-            priority: priority === 'HIGH' ? 'HIGH' : 'NORMAL',
-            requestedBy: formatRequestedBy(profile, uid),
-            requestedByName: profile.displayName || null,
-            requestedByEmail: profile.email || null,
-            enabledPhases: enabledPhases.length > 0 ? enabledPhases : Object.keys(DEFAULT_ANALYSIS_CONFIG),
-            socialProfiles: trimmedSocialProfiles,
-            otherSocialUrls: (Array.isArray(otherSocialUrls) ? otherSocialUrls : [])
-                .filter(item => item && typeof item === 'object')
-                .map(item => ({
-                    label: String(item.label || '').trim().slice(0, 50),
-                    url: String(item.url || '').trim().slice(0, 500),
-                }))
-                .slice(0, 20),
-            dateOfBirth: trimmedDob,
-            email: trimmedEmail,
-            phone: trimmedPhone,
-            clientSubmissionNotes: trimmedNotes,
-            status: 'PENDING',
-            assigneeId: null,
-            slaHours: safeSlaHours,
-            criminalFlag: null,
-            laborFlag: null,
-            laborSeverity: null,
-            laborNotes: '',
-            warrantFlag: null,
-            warrantNotes: '',
-            osintLevel: null,
-            socialStatus: null,
-            digitalFlag: null,
-            conflictInterest: null,
-            finalVerdict: 'PENDING',
-            riskLevel: null,
-            riskScore: 0,
-            hasNotes: false,
-            hasEvidence: false,
-            enrichmentStatus: 'PENDING',
-            bigdatacorpEnrichmentStatus: 'PENDING',
-            juditEnrichmentStatus: 'PENDING',
-            escavadorEnrichmentStatus: 'PENDING',
-            djenEnrichmentStatus: 'PENDING',
-            enrichmentSources: {},
-            enrichmentIdentity: null,
-            enrichmentGateResult: null,
-            enrichedAt: null,
-            enrichmentOriginalValues: {},
-            aiAnalysis: null,
-            aiStatus: null,
-            aiCostUsd: null,
-            aiModel: null,
-            aiTokens: null,
-            aiError: null,
-            createdDateKey,
-            createdMonthKey,
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-        });
-
-        try {
-            await batch.commit();
-        } catch (batchErr) {
-            await compensateTenantSubmissionLimit(tenantId);
-            throw batchErr;
-        }
-
-        await writeAuditEvent({
-            action: 'SOLICITATION_CREATED',
-            tenantId,
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
-            entity: { type: 'CASE', id: caseRef.id, label: candidateName },
-            related: { caseId: caseRef.id },
-            source: SOURCE.PORTAL_CLIENT,
-            ip: getClientIp(request),
-            detail: `Nova solicitacao criada para ${candidateName}`,
-        });
-
-            try {
-                const caseSnapshot = await caseRef.get();
-                if (caseSnapshot.exists) {
-                    await notificationService.createNewSolicitationNotifications(caseRef.id, caseSnapshot.data(), caseComm);
-                }
-            } catch (err) {
-                console.warn('[notifications] failed to create new solicitation notifications', err);
-            }
-
-        return {
-            caseId: caseRef.id,
-            candidateId: candidateRef.id,
-        };
-    },
+    clientSolicitations.createClientSolicitationHandler(solicitationDeps)
 );
 
 exports.submitClientCorrection = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const profile = await getClientUserProfile(uid, { requireRequester: true });
-        const {
-            caseId,
-            candidateName,
-            cpf,
-            linkedin = '',
-            instagram = '',
-            facebook = '',
-            twitter = '',
-            tiktok = '',
-            youtube = '',
-            otherSocialUrls = [],
-        } = request.data || {};
-        if (!caseId || !candidateName || !cpf) {
-            throw new HttpsError('invalid-argument', 'Dados obrigatorios ausentes para reenviar o caso.');
-        }
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-
-        const caseData = caseDoc.data() || {};
-        if (caseData.tenantId !== profile.tenantId) {
-            throw new HttpsError('permission-denied', 'Caso fora do tenant do cliente.');
-        }
-        if (caseData.status !== 'CORRECTION_NEEDED') {
-            throw new HttpsError('failed-precondition', 'Apenas casos com correcao solicitada podem ser reenviados.');
-        }
-
-        const cpfDigits = sanitizeCpf(cpf);
-        if (cpfDigits.length !== 11 || !validateCpfDigits(cpfDigits)) {
-            throw new HttpsError('invalid-argument', 'CPF invalido para reenviar o caso.');
-        }
-
-        const corrections = Array.isArray(caseData.corrections) ? caseData.corrections : [];
-        const batch = db.batch();
-
-        // AUD-002: Revoke public report when case is corrected/resubmitted
-        if (caseData.publicReportToken || caseData.status === 'DONE') {
-            await revokeCasePublicationArtifacts(caseId, caseData);
-        }
-
-        batch.update(caseRef, {
-            candidateName: String(candidateName).trim(),
-            cpf: cpfDigits,
-            cpfMasked: maskCpf(cpfDigits),
-            socialProfiles: {
-                ...(caseData.socialProfiles || {}),
-                linkedin: String(linkedin || ''),
-                instagram: String(instagram || ''),
-                facebook: String(facebook || ''),
-                twitter: String(twitter || ''),
-                tiktok: String(tiktok || ''),
-                youtube: String(youtube || ''),
-            },
-            otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : (caseData.otherSocialUrls || []),
-            status: 'PENDING',
-            // Increment enrichment generation to invalidate stale async callbacks.
-            enrichmentGeneration: FieldValue.increment(1),
-            // BUG-2 fix: Reset enrichment statuses so the pipeline can re-run.
-            // BUG-R1-001 fix: Also reset BigDataCorp so the new CPF/name gets a fresh gate.
-            bigdatacorpEnrichmentStatus: 'PENDING',
-            bigdatacorpError: null,
-            bigdatacorpGateResult: FieldValue.delete(),
-            bigdatacorpName: FieldValue.delete(),
-            bigdatacorpBirthDate: FieldValue.delete(),
-            bigdatacorpCpfStatus: FieldValue.delete(),
-            bigdatacorpHasDeathRecord: FieldValue.delete(),
-            bigdatacorpProcessTotal: FieldValue.delete(),
-            bigdatacorpProcessos: FieldValue.delete(),
-            bigdatacorpCriminalFlag: FieldValue.delete(),
-            bigdatacorpCriminalCount: FieldValue.delete(),
-            bigdatacorpLaborFlag: FieldValue.delete(),
-            bigdatacorpLaborCount: FieldValue.delete(),
-            bigdatacorpIsPep: FieldValue.delete(),
-            bigdatacorpPepLevel: FieldValue.delete(),
-            bigdatacorpPepDetails: FieldValue.delete(),
-            bigdatacorpIsSanctioned: FieldValue.delete(),
-            bigdatacorpWasSanctioned: FieldValue.delete(),
-            bigdatacorpHasArrestWarrant: FieldValue.delete(),
-            bigdatacorpSanctionCount: FieldValue.delete(),
-            bigdatacorpSanctionTypes: FieldValue.delete(),
-            bigdatacorpSanctionSources: FieldValue.delete(),
-            bigdatacorpSanctionDetails: FieldValue.delete(),
-            bigdatacorpActiveWarrants: FieldValue.delete(),
-            bigdatacorpProfessionNotes: FieldValue.delete(),
-            bigdatacorpKycNotes: FieldValue.delete(),
-            bigdatacorpProcessNotes: FieldValue.delete(),
-            bigdatacorpNameUniqueness: FieldValue.delete(),
-            bigdatacorpSources: FieldValue.delete(),
-            bigdatacorpCostBRL: FieldValue.delete(),
-            bigdatacorpElapsedMs: FieldValue.delete(),
-            bigdatacorpQueryDate: FieldValue.delete(),
-            bigdatacorpEnrichedAt: FieldValue.delete(),
-            // BUG-R3-005 fix: Reset DJEN so the new CPF/name gets fresh comunicações.
-            djenEnrichmentStatus: 'PENDING',
-            djenError: null,
-            djenComunicacoes: FieldValue.delete(),
-            djenSources: FieldValue.delete(),
-            djenCostBRL: FieldValue.delete(),
-            djenElapsedMs: FieldValue.delete(),
-            djenQueryDate: FieldValue.delete(),
-            djenEnrichedAt: FieldValue.delete(),
-            // Reset downstream providers
-            juditEnrichmentStatus: 'PENDING',
-            juditError: null,
-            juditIdentity: FieldValue.delete(),
-            juditGateResult: FieldValue.delete(),
-            juditPrimaryUf: FieldValue.delete(),
-            juditAllUfs: FieldValue.delete(),
-            juditHasLawsuits: FieldValue.delete(),
-            juditProcessTotal: FieldValue.delete(),
-            juditRoleSummary: FieldValue.delete(),
-            juditProcessos: FieldValue.delete(),
-            juditCriminalFlag: FieldValue.delete(),
-            juditCriminalCount: FieldValue.delete(),
-            juditWarrantFlag: FieldValue.delete(),
-            juditWarrantNotes: FieldValue.delete(),
-            juditWarrants: FieldValue.delete(),
-            juditActiveWarrantCount: FieldValue.delete(),
-            juditExecutionFlag: FieldValue.delete(),
-            juditExecutionCount: FieldValue.delete(),
-            juditExecutions: FieldValue.delete(),
-            juditExecutionNotes: FieldValue.delete(),
-            juditNameSearchFlag: FieldValue.delete(),
-            juditNameSearchProcessTotal: FieldValue.delete(),
-            juditNameSearchCriminalCount: FieldValue.delete(),
-            juditNameSearchCpfsComNome: FieldValue.delete(),
-            juditNeedsEscavador: FieldValue.delete(),
-            juditNeedsEscavadorReason: FieldValue.delete(),
-            juditPendingAsyncPhases: FieldValue.delete(),
-            juditPendingAsyncCount: FieldValue.delete(),
-            juditRequestIds: FieldValue.delete(),
-            juditSources: FieldValue.delete(),
-            juditRawPayloads: FieldValue.delete(),
-            juditCostBRL: FieldValue.delete(),
-            juditEnrichedAt: FieldValue.delete(),
-            escavadorEnrichmentStatus: 'PENDING',
-            escavadorError: null,
-            escavadorProcessTotal: FieldValue.delete(),
-            escavadorProcessos: FieldValue.delete(),
-            escavadorCriminalFlag: FieldValue.delete(),
-            escavadorCriminalCount: FieldValue.delete(),
-            escavadorLaborFlag: FieldValue.delete(),
-            escavadorLaborCount: FieldValue.delete(),
-            escavadorNotes: FieldValue.delete(),
-            escavadorCpfsComEsseNome: FieldValue.delete(),
-            escavadorSources: FieldValue.delete(),
-            escavadorEnrichedAt: FieldValue.delete(),
-            enrichmentStatus: 'PENDING',
-            enrichmentError: null,
-            enrichmentSources: {},
-            enrichmentIdentity: FieldValue.delete(),
-            enrichmentGateResult: FieldValue.delete(),
-            enrichmentOriginalValues: {},
-            enrichedAt: FieldValue.delete(),
-            // Clear stale classification and AI data so they don't bleed into re-analysis
-            autoClassifiedAt: FieldValue.delete(),
-            autoClassifySignature: FieldValue.delete(),
-            autoClassifyLock: FieldValue.delete(),
-            autoClassifyRerunRequested: FieldValue.delete(),
-            criminalFlag: FieldValue.delete(),
-            criminalSeverity: FieldValue.delete(),
-            criminalEvidenceQuality: FieldValue.delete(),
-            criminalNotes: FieldValue.delete(),
-            warrantFlag: FieldValue.delete(),
-            warrantNotes: FieldValue.delete(),
-            laborFlag: FieldValue.delete(),
-            laborNotes: FieldValue.delete(),
-            coverageLevel: FieldValue.delete(),
-            providerDivergence: FieldValue.delete(),
-            reviewRecommended: FieldValue.delete(),
-            aiRawResponse: FieldValue.delete(),
-            aiAnalysis: FieldValue.delete(),
-            aiStatus: FieldValue.delete(),
-            aiStructured: FieldValue.delete(),
-            aiStructuredOk: FieldValue.delete(),
-            aiCostUsd: FieldValue.delete(),
-            aiTokens: FieldValue.delete(),
-            aiExecutedAt: FieldValue.delete(),
-            aiProvidersIncluded: FieldValue.delete(),
-            aiPromptVersion: FieldValue.delete(),
-            aiFromCache: FieldValue.delete(),
-            aiError: FieldValue.delete(),
-            aiHomonymStructured: FieldValue.delete(),
-            aiHomonymStructuredOk: FieldValue.delete(),
-            aiHomonymRawResponse: FieldValue.delete(),
-            aiHomonymTriggered: FieldValue.delete(),
-            aiHomonymDecision: FieldValue.delete(),
-            aiHomonymConfidence: FieldValue.delete(),
-            aiHomonymRisk: FieldValue.delete(),
-            aiHomonymRecommendedAction: FieldValue.delete(),
-            aiHomonymCostUsd: FieldValue.delete(),
-            aiHomonymTokens: FieldValue.delete(),
-            aiHomonymExecutedAt: FieldValue.delete(),
-            aiHomonymError: FieldValue.delete(),
-            prefillNarratives: FieldValue.delete(),
-            deterministicPrefill: FieldValue.delete(),
-            negativePartialSafetyNetEligible: FieldValue.delete(),
-            negativePartialSafetyNetReasons: FieldValue.delete(),
-            negativePartialSafetyNetAction: FieldValue.delete(),
-            negativePartialSafetyNetTriggered: FieldValue.delete(),
-            riskScore: FieldValue.delete(),
-            riskLevel: FieldValue.delete(),
-            finalVerdict: FieldValue.delete(),
-            ...buildResetPublishedCaseFields(caseData, {
-                preserveReviewDraft: true,
-            }),
-            correctedAt: FieldValue.serverTimestamp(),
-            correctedBy: {
-                uid,
-                email: profile.email || null,
-                displayName: profile.displayName || null,
-            },
-            corrections: [
-                ...corrections,
-                {
-                    submittedAt: new Date().toISOString(),
-                    submittedBy: profile.email || uid,
-                },
-            ],
-            updatedAt: FieldValue.serverTimestamp(),
-        });
-
-        // AUD-016: Sync corrected data to candidates/{candidateId}
-        if (caseData.candidateId) {
-            const candidateRef = db.collection('candidates').doc(caseData.candidateId);
-            batch.update(candidateRef, {
-                candidateName: String(candidateName).trim(),
-                cpf: cpfDigits,
-                cpfMasked: maskCpf(cpfDigits),
-                linkedin: String(linkedin || ''),
-                instagram: String(instagram || ''),
-                facebook: String(facebook || ''),
-                twitter: String(twitter || ''),
-                tiktok: String(tiktok || ''),
-                youtube: String(youtube || ''),
-                otherSocialUrls: Array.isArray(otherSocialUrls) ? otherSocialUrls : (caseData.otherSocialUrls || []),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        }
-
-        await batch.commit();
-
-        await writeAuditEvent({
-            action: 'CASE_CORRECTED',
-            tenantId: profile.tenantId,
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
-            entity: { type: 'CASE', id: caseId, label: String(candidateName).trim() },
-            related: { caseId },
-            source: SOURCE.PORTAL_CLIENT,
-            ip: getClientIp(request),
-        });
-
-        // Criar mensagem automatica na comunicacao
-        try {
-            await caseCommunication.createSystemCaseMessage({
-                caseId,
-                tenantId: caseData.tenantId,
-                db,
-                systemType: 'CORRECTION_SUBMITTED',
-                body: 'O cliente corrigiu os dados e reenviou a analise.',
-            });
-        } catch (err) {
-            console.warn('[communication] failed to create system message for correction submitted', err);
-        }
-
-
-        return { success: true };
-    },
+    { region: 'southamerica-east1', timeoutSeconds: 120, cors: true },
+    clientSolicitations.submitClientCorrectionHandler(solicitationDeps)
 );
 
 exports.registerClientExport = onCall(
@@ -8540,76 +7630,6 @@ async function syncPublicResultLatest(caseId, caseData, payload = {}, options = 
     }
     await db.collection('cases').doc(caseId).collection('publicResult').doc('latest').set(writePayload);
     return publicData;
-}
-
-function buildReviewDraftSeed(caseData) {
-    const reviewDraft = { ...(caseData.reviewDraft || {}) };
-    for (const field of ALLOWED_DRAFT_FIELDS) {
-        const value = caseData[field];
-        if (!hasMeaningfulValue(value)) continue;
-        reviewDraft[field] = normalizeNarrativeValue(field, value);
-    }
-    reviewDraft.__source = 'auto-seed';
-    return stripUndefined(reviewDraft);
-}
-
-function buildResetPublishedCaseFields(caseData, options = {}) {
-    const {
-        preserveReviewDraft = false,
-        resetReportReady = true,
-    } = options;
-    const resetFields = {
-        publicReportToken: FieldValue.delete(),
-        reportSlug: FieldValue.delete(),
-        concludedAt: FieldValue.delete(),
-        turnaroundHours: FieldValue.delete(),
-        keyFindings: FieldValue.delete(),
-        executiveSummary: FieldValue.delete(),
-        analystComment: FieldValue.delete(),
-        statusSummary: FieldValue.delete(),
-        sourceSummary: FieldValue.delete(),
-        nextSteps: FieldValue.delete(),
-        hasNotes: FieldValue.delete(),
-        hasEvidence: FieldValue.delete(),
-    };
-
-    if (resetReportReady) {
-        resetFields.reportReady = false;
-    }
-
-    for (const field of RESULT_ONLY_FIELDS) {
-        if (field === 'enabledPhases') continue;
-        resetFields[field] = FieldValue.delete();
-    }
-
-    if (preserveReviewDraft) {
-        const reviewDraft = buildReviewDraftSeed(caseData);
-        if (Object.keys(reviewDraft).length > 0) {
-            resetFields.reviewDraft = reviewDraft;
-        }
-    }
-
-    return resetFields;
-}
-
-async function revokeCasePublicationArtifacts(caseId, caseData) {
-    if (caseData?.publicReportToken) {
-        const reportRef = db.collection('publicReports').doc(caseData.publicReportToken);
-        const reportSnap = await reportRef.get();
-        if (reportSnap.exists) {
-            await reportRef.update({ active: false });
-        }
-        // P2-018: Clear publicReportToken from case to prevent stale references
-        await db.collection('cases').doc(caseId).update({
-            publicReportToken: FieldValue.delete(),
-        });
-    }
-
-    const publicResultRef = db.collection('cases').doc(caseId).collection('publicResult').doc('latest');
-    const publicResultSnap = await publicResultRef.get();
-    if (publicResultSnap.exists) {
-        await publicResultRef.delete();
-    }
 }
 
 function computePublicSnapshotHash(publicData) {

@@ -1,0 +1,44 @@
+const { validateAiClassificationReviewSchema } = require('./modules/aiParsers');
+
+const structured = {
+    summary: '',
+    identityAssessment: {
+        status: 'CONFIRMED',
+        rationale: '',
+        homonymRisk: 'LOW'
+    },
+    classificationValidation: {
+        criminal: {
+            autoFlag: 'NEGATIVE',
+            assessment: 'AGREE_WITH_CAUTION',
+            evidenceStrength: 'MIXED',
+            rationale: '',
+            possibleErrors: []
+        },
+        labor: {
+            autoFlag: 'NEGATIVE',
+            assessment: 'AGREE',
+            evidenceStrength: 'STRONG',
+            rationale: 'Nao ha achado trabalhista material nas fontes consultadas.',
+            possibleErrors: []
+        },
+        warrant: {
+            autoFlag: 'NEGATIVE',
+            assessment: 'AGREE',
+            evidenceStrength: 'STRONG',
+            rationale: 'Nao ha mandado ativo confirmado.',
+            possibleErrors: []
+        }
+    },
+    inconsistencies: [],
+    manualReviewPoints: [
+        'Confirmar criterio operacional do processo penal arquivado.'
+    ],
+    consultativeSuggestion: {
+        action: 'REVIEW_BEFORE_CONCLUDING',
+        rationale: ''
+    },
+    confidence: 'MEDIUM'
+};
+
+console.log('validator result:', validateAiClassificationReviewSchema(structured));

@@ -88,6 +88,12 @@ function normalizeTenantSlug(value = '') {
         .replace(/(^-|-$)+/g, '');
 }
 
+function hasMeaningfulValue(value) {
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'string') return value.trim().length > 0;
+    return value !== undefined && value !== null;
+}
+
 function hasBenignNoProcessCoverage(caseData = {}) {
     const coverageNotes = Array.isArray(caseData.coverageNotes) ? caseData.coverageNotes : [];
     return caseData.criminalFlag === 'NEGATIVE'
@@ -106,5 +112,6 @@ module.exports = {
     sanitizeStructuredText,
     sanitizeStructuredList,
     normalizeTenantSlug,
+    hasMeaningfulValue,
     hasBenignNoProcessCoverage,
 };
