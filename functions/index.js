@@ -27,7 +27,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 let getAuth = require('firebase-admin/auth').getAuth;
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { getStorage } = require('firebase-admin/storage');
+
 
 const {
     queryWarrant, queryLabor, queryIdentity,
@@ -98,13 +98,76 @@ const {
 const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
 let { writeAuditEvent } = require('./audit/writeAuditEvent');
 const { ACTOR_TYPE, SOURCE } = require('./audit/auditCatalog');
-const { createSystemCaseMessage, buildNotificationFunctions } = require('./caseCommunication');
+const tenantUserManagement = require('./modules/tenantUserManagement');
+const caseCommunication = require('./caseCommunication');
+const {
+    IDENTITY_FIELDS,
+    RESULT_ONLY_FIELDS,
+    PUBLIC_RESULT_FIELDS,
+    CLIENT_CASE_FIELDS,
+    ALLOWED_CONCLUDE_FIELDS,
+    ALLOWED_DRAFT_FIELDS,
+    REVIEW_DRAFT_ARRAY_FIELDS,
+} = require('./modules/_shared/fieldConstants');
 const { calculateRisk: calculateRiskScore } = require('./shared/riskCalculator');
+const {
+    DEFAULT_FONTE_DATA_CONFIG,
+    DEFAULT_ESCAVADOR_CONFIG,
+    DEFAULT_JUDIT_CONFIG,
+    DEFAULT_BIGDATACORP_CONFIG,
+    DEFAULT_DJEN_CONFIG,
+    loadFonteDataConfig,
+    loadEscavadorConfig,
+    loadJuditConfig,
+    loadBigDataCorpConfig,
+    loadDjenConfig,
+} = require('./modules/_shared/providerConfigs');
+
+// Módulos extraídos (Phase C)
+const caseQueriesAssignments = require('./modules/caseQueriesAssignments');
+const notificationService = require('./modules/notificationService');
+const pdfGeneration = require('./modules/pdfGeneration');
+const systemHealth = require('./modules/systemHealth');
+
+const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin', 'owner']);
+const CLIENT_REQUESTER_ROLES = new Set(['CLIENT', 'client_operator', 'client_manager']);
+const CLIENT_VIEW_ROLES = new Set(['CLIENT', 'client_viewer', 'client_operator', 'client_manager']);
 
 initializeApp();
 let db = getFirestore();
 
-const caseComm = buildNotificationFunctions(db);
+const authDeps = {
+    get db() { return db; },
+    HttpsError,
+    OPS_ROLES,
+    CLIENT_REQUESTER_ROLES,
+    CLIENT_VIEW_ROLES,
+};
+const { getOpsUserProfile, getClientUserProfile, assertOpsCanAccessCase, assertClientManager, assertCanAssignCase, canAssignCases } = require('./modules/_shared/auth')(authDeps);
+const {
+    validateCpfDigits,
+    sanitizeCpf,
+    maskCpf,
+    validateAiClassificationReviewSchema,
+    sanitizeStructuredList,
+    sanitizeStructuredText,
+    fixLatinMojibake,
+    normalizeUnicodeToAscii,
+    sanitizePublicReportHtml,
+    formatRequestedBy,
+} = require('./modules/_shared/sanitizers');
+
+const caseComm = {
+    sendCaseMessage: caseCommunication.sendCaseMessage,
+    markCaseCommunicationRead: caseCommunication.markCaseCommunicationRead,
+    NOTIFICATION_TYPES: caseCommunication.NOTIFICATION_TYPES,
+    createNotification: (notificationInput) =>
+        caseCommunication.createNotification({ db, notificationInput }),
+    findClientNotificationRecipientsForCase: (caseData) =>
+        caseCommunication.findClientNotificationRecipientsForCase({ db, caseData }),
+    findOpsNotificationRecipientsForTenant: (tenantId) =>
+        caseCommunication.findOpsNotificationRecipientsForTenant({ db, tenantId }),
+};
 
 const PUBLIC_REPORT_TTL_DAYS = 14;
 const PUBLIC_REPORT_TTL_MS = PUBLIC_REPORT_TTL_DAYS * 24 * 60 * 60 * 1000;
@@ -115,108 +178,6 @@ const escavadorApiToken = defineSecret('ESCAVADOR_API_TOKEN');
 const juditApiKey = defineSecret('JUDIT_API_KEY');
 const bigdatacorpAccessToken = defineSecret('BIGDATACORP_ACCESS_TOKEN');
 const bigdatacorpTokenId = defineSecret('BIGDATACORP_TOKEN_ID');
-
-/**
- * Default enrichment config when tenant has none configured.
- * Cenário D structure — all phases configurable.
- */
-const DEFAULT_ENRICHMENT_CONFIG = {
-    enabled: false,
-    phases: {
-        identity: true,       // cadastro-pf-basica (R$ 0,24)
-        criminal: true,       // processos-agrupada criminal detection (R$ 1,65)
-        warrant: true,        // cnj-mandados-prisao (R$ 1,08)
-        labor: true,          // trt-consulta (R$ 0,54/region)
-    },
-    escalation: {
-        enabled: true,        // processos-completa on triggers
-        triggers: ['criminal', 'warrant', 'highProcessCount'],
-        processCountThreshold: 5,
-    },
-    filters: { uf: '' },
-    gate: { minNameSimilarity: 0.7 },
-    ai: { enabled: false },
-};
-
-const DEFAULT_ESCAVADOR_CONFIG = {
-    enabled: false,
-    phases: {
-        processos: true,  // RESERVED: not consulted at runtime — Escavador always queries processos. Kept for future phase-gating.
-    },
-    filters: {
-        incluirHomonimos: true,  // ALWAYS include homonyms — critical for non-indexed CPFs
-        autoTribunais: false,    // NO tribunal filter by default — causes missed processes
-        tribunais: [],           // manual override
-        status: null,            // 'ATIVO' | null
-    },
-};
-
-const DEFAULT_JUDIT_CONFIG = {
-    enabled: true,
-    phases: {
-        entity: false,           // R$0.12 — gate (Dados Cadastrais Data Lake) — OFF by default, BDC is primary
-        lawsuits: true,          // R$0.50 simples | R$1.50/1k datalake | R$6.00/1k on_demand
-        warrant: true,           // R$1.00 — mandado de prisao
-        execution: false,        // R$0.50 — execucao criminal (default OFF, toggleable per tenant)
-    },
-    escalation: {
-        triggerEscavador: ['criminal', 'warrant', 'execution', 'highProcessCount'],
-        processCountThreshold: 5,
-    },
-    filters: {
-        autoTribunals: false,    // NO tribunal filter by default — causes missed processes
-        tribunals: [],           // manual override
-        useAsync: false,         // WARNING: DEFAULT=false: sync simples (R.50). Async datalake (R.50/1k) ou on_demand (R.00/1k) apenas se forçado.        useWebhook: true,        // warrant/execution are async by contract — use callback instead of blocking polling
-        cacheTtlDays: 7,        // reuse Judit cache if extracted within X days (0 = no cache)
-    },
-    realTime: {
-        // RESERVED: realTime config is NOT read at runtime in the current flow.
-        // Kept for future on_demand async capability (R$6.00/1k).
-        enabled: true,           // async/on_demand CAPABILITY is available...
-        default: false,          // ...but DISABLED by default. Only used for explicit triggers.
-        triggers: [              // conditions that justify async on_demand (R$6.00/1k):
-            'caso_sensivel_alto_risco',
-            'conflito_relevante_entre_fontes',
-            'processo_critico_sem_detalhe',
-            'necessidade_explicita_usuario',
-            'revisao_manual_duvida_relevante',
-        ],
-    },
-    gate: { minNameSimilarity: 0.7 },
-    nameSearchSupplement: {
-        enabled: true,           // enable name-based search when CPF yields 0 lawsuits
-        maxCpfsComNome: 3,       // only search if name has â‰¤ N CPFs (avoid homonym pollution)
-        preferSync: true,        // use sync datalake by name (cheaper) instead of async
-    },
-    persistence: {
-        saveRawPayloads: true,   // persist request_id, request body, raw response for audit
-    },
-};
-
-const DEFAULT_BIGDATACORP_CONFIG = {
-    enabled: true,            // PRIMARY provider — gate + processes + KYC
-    phases: {
-        basicData: true,      // R$0.03 — identity validation + gate
-        processes: true,      // R$0.07 — lawsuits with CPF in Parties.Doc
-        kyc: true,            // R$0.05 — PEP + sanctions (Interpol, FBI, OFAC, etc.)
-        occupation: true,     // R$0.05 — employment/profession history (included in combined call)
-    },
-    gate: { minNameSimilarity: 0.7 },
-    processLimit: 100,        // Max processes to return per query
-};
-
-const DEFAULT_DJEN_CONFIG = {
-    enabled: false,           // Optional public source; enable per tenant when needed
-    phases: {
-        comunicacoes: true,   // GET /comunicacao
-    },
-    searchStrategy: 'hybrid', // 'hybrid' = byProcess + byName; 'byProcess'; 'byName'
-    maxPages: 3,              // Max pages per name search (100 items/page)
-    filters: {
-        siglaTribunal: null,  // Filter by tribunal sigla
-    },
-    nameMatchThreshold: 0.85, // Min word-similarity for name filter (byName phase)
-};
 
 const DEFAULT_ANALYSIS_CONFIG = {
     criminal: { enabled: true },
@@ -538,25 +499,6 @@ Regras:
 
 function isStringArray(value) {
     return !value || (Array.isArray(value) && value.every((item) => typeof item === 'string'));
-}
-
-function sanitizeStructuredList(value, maxItems = 8, maxLength = 220) {
-    if (!Array.isArray(value)) return [];
-    return value
-        .map((item) => sanitizeAiOutput(String(item || '')).replace(/\s+/g, ' ').trim())
-        .filter(Boolean)
-        .slice(0, maxItems)
-        .map((item) => (item.length > maxLength ? `${item.slice(0, maxLength - 3)}...` : item));
-}
-
-function sanitizeStructuredText(value, maxLength = 500) {
-    if (typeof value !== 'string') return '';
-    const normalized = sanitizeAiOutput(value)
-        .replace(/[^\S\n]+/g, ' ')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-    if (!normalized) return '';
-    return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
 }
 
 function stripInvalidControlChars(text) {
@@ -903,97 +845,6 @@ function validateAiPrefillSchema(obj) {
     if (typeof obj.finalJustification !== 'string') return false;
     if (!isStringArray(obj.keyFindings)) return false;
     return true;
-}
-
-function validateClassificationReviewAxis(axis, validFlags) {
-    const validAssessments = ['AGREE', 'AGREE_WITH_CAUTION', 'DISAGREE', 'INSUFFICIENT_DATA'];
-    const validStrength = ['STRONG', 'MIXED', 'WEAK', 'INSUFFICIENT'];
-    if (!axis || typeof axis !== 'object') return false;
-    if (axis.autoFlag && !validFlags.includes(axis.autoFlag)) return false;
-    if (!validAssessments.includes(axis.assessment)) return false;
-    if (!validStrength.includes(axis.evidenceStrength)) return false;
-    if (typeof axis.rationale !== 'string') return false;
-    if (!isStringArray(axis.possibleErrors)) return false;
-    return true;
-}
-
-function validateAiClassificationReviewSchema(obj) {
-    if (!obj || typeof obj !== 'object') return false;
-    const validIdentityStatus = ['CONFIRMED', 'ATTENTION', 'BLOCKED', 'UNKNOWN'];
-    const validHomonymRisk = ['LOW', 'MEDIUM', 'HIGH', 'UNKNOWN'];
-    const validSuggestionActions = ['MAINTAIN_AUTOCLASSIFICATION', 'REVIEW_BEFORE_CONCLUDING', 'CONTEST_AUTOCLASSIFICATION'];
-    const validConfidence = ['HIGH', 'MEDIUM', 'LOW'];
-    const validCriminalFlags = ['NEGATIVE', 'NEGATIVE_PARTIAL', 'POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'NOT_FOUND'];
-    const validSimpleFlags = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
-
-    if (typeof obj.summary !== 'string') return false;
-    if (!obj.identityAssessment || typeof obj.identityAssessment !== 'object') return false;
-    if (!validIdentityStatus.includes(obj.identityAssessment.status)) return false;
-    if (typeof obj.identityAssessment.rationale !== 'string') return false;
-    if (!validHomonymRisk.includes(obj.identityAssessment.homonymRisk)) return false;
-
-    const validation = obj.classificationValidation;
-    if (!validation || typeof validation !== 'object') return false;
-    if (!validateClassificationReviewAxis(validation.criminal, validCriminalFlags)) return false;
-    if (!validateClassificationReviewAxis(validation.labor, validSimpleFlags)) return false;
-    if (!validateClassificationReviewAxis(validation.warrant, validSimpleFlags)) return false;
-    if (!isStringArray(obj.inconsistencies)) return false;
-    if (!isStringArray(obj.manualReviewPoints)) return false;
-    if (!obj.consultativeSuggestion || typeof obj.consultativeSuggestion !== 'object') return false;
-    if (!validSuggestionActions.includes(obj.consultativeSuggestion.action)) return false;
-    if (typeof obj.consultativeSuggestion.rationale !== 'string') return false;
-    if (!validConfidence.includes(obj.confidence)) return false;
-    return true;
-}
-
-/**
- * P2-016: Detecta e corrige mojibake comum de ISO-8859-1 decodificado como UTF-8.
- * Ex: "Ã§" -> "Ã§", "Ã£" -> "Ã£", "Ã¡" -> "Ã¡".
- */
-function fixLatinMojibake(text) {
-    if (!text || typeof text !== 'string') return text;
-    // Heuristica: se nao ha padroes tipicos de mojibake latino, retorna como esta
-    if (!/\u00C3[\u0080-\u00BF]/.test(text)) {
-        return text;
-    }
-    const map = {
-        '\u00C3\u00A1': '\u00E1', '\u00C3\u00A9': '\u00E9', '\u00C3\u00AD': '\u00ED',
-        '\u00C3\u00B3': '\u00F3', '\u00C3\u00BA': '\u00FA', '\u00C3\u00A0': '\u00E0',
-        '\u00C3\u00A8': '\u00E8', '\u00C3\u00AC': '\u00EC', '\u00C3\u00B2': '\u00F2',
-        '\u00C3\u00B9': '\u00F9', '\u00C3\u00A2': '\u00E2', '\u00C3\u00AA': '\u00EA',
-        '\u00C3\u00AE': '\u00EE', '\u00C3\u00B4': '\u00F4', '\u00C3\u00BB': '\u00FB',
-        '\u00C3\u00A3': '\u00E3', '\u00C3\u00B5': '\u00F5', '\u00C3\u00A7': '\u00E7',
-        '\u00C3\u0080': '\u00C0', '\u00C3\u0081': '\u00C1', '\u00C3\u0082': '\u00C2',
-        '\u00C3\u0083': '\u00C3', '\u00C3\u0084': '\u00C4', '\u00C3\u0085': '\u00C5',
-        '\u00C3\u0086': '\u00C6', '\u00C3\u0087': '\u00C7', '\u00C3\u0088': '\u00C8',
-        '\u00C3\u0089': '\u00C9', '\u00C3\u008A': '\u00CA', '\u00C3\u008B': '\u00CB',
-        '\u00C3\u008C': '\u00CC', '\u00C3\u008D': '\u00CD', '\u00C3\u008E': '\u00CE',
-        '\u00C3\u008F': '\u00CF', '\u00C3\u0091': '\u00D1', '\u00C3\u0092': '\u00D2',
-        '\u00C3\u0093': '\u00D3', '\u00C3\u0094': '\u00D4', '\u00C3\u0095': '\u00D5',
-        '\u00C3\u0096': '\u00D6', '\u00C3\u0098': '\u00D8', '\u00C3\u0099': '\u00D9',
-        '\u00C3\u009A': '\u00DA', '\u00C3\u009B': '\u00DB', '\u00C3\u009C': '\u00DC',
-        '\u00C3\u009D': '\u00DD', '\u00C3\u009F': '\u00DF',
-    };
-    let result = text;
-    for (const [from, to] of Object.entries(map)) {
-        result = result.split(from).join(to);
-    }
-    return result;
-}
-
-/**
- * Normaliza caracteres Unicode problematicos para ASCII equivalente.
- * Previne mojibake em browsers/editores com encoding incorreto.
- */
-function normalizeUnicodeToAscii(text) {
-    if (!text || typeof text !== 'string') return text;
-    return text
-        .replace(/[\u2018\u2019]/g, "'")   // smart single quotes → apostrophe
-        .replace(/[\u201C\u201D]/g, '"')   // smart double quotes → straight quotes
-        .replace(/\u2014/g, '--')           // em-dash → double hyphen
-        .replace(/\u2013/g, '-')            // en-dash → hyphen
-        .replace(/\u2026/g, '...')          // ellipsis → three dots
-        .replace(/\u00A0/g, ' ');           // non-breaking space → regular space
 }
 
 /**
@@ -1421,135 +1272,6 @@ async function getTenantSettingsData(tenantId) {
     if (!tenantId) return null;
     const tenantDoc = await db.collection('tenantSettings').doc(tenantId).get();
     return tenantDoc.exists ? tenantDoc.data() : null;
-}
-
-async function loadFonteDataConfig(tenantId) {
-    const tenantData = await getTenantSettingsData(tenantId);
-    const rawConfig = tenantData?.enrichmentConfig;
-    if (!rawConfig) return { ...DEFAULT_ENRICHMENT_CONFIG };
-
-    return {
-        ...DEFAULT_ENRICHMENT_CONFIG,
-        ...rawConfig,
-        phases: {
-            ...DEFAULT_ENRICHMENT_CONFIG.phases,
-            ...(rawConfig.phases || {}),
-        },
-        escalation: {
-            ...DEFAULT_ENRICHMENT_CONFIG.escalation,
-            ...(rawConfig.escalation || {}),
-        },
-        filters: {
-            ...DEFAULT_ENRICHMENT_CONFIG.filters,
-            ...(rawConfig.filters || {}),
-        },
-        gate: {
-            ...DEFAULT_ENRICHMENT_CONFIG.gate,
-            ...(rawConfig.gate || {}),
-        },
-        ai: {
-            ...DEFAULT_ENRICHMENT_CONFIG.ai,
-            ...(rawConfig.ai || {}),
-        },
-    };
-}
-
-async function loadEscavadorConfig(tenantId) {
-    const tenantData = await getTenantSettingsData(tenantId);
-    const rawConfig = tenantData?.enrichmentConfig?.escavador;
-    if (!rawConfig) return { ...DEFAULT_ESCAVADOR_CONFIG };
-
-    return {
-        ...DEFAULT_ESCAVADOR_CONFIG,
-        ...rawConfig,
-        phases: {
-            ...DEFAULT_ESCAVADOR_CONFIG.phases,
-            ...(rawConfig.phases || {}),
-        },
-        filters: {
-            ...DEFAULT_ESCAVADOR_CONFIG.filters,
-            ...(rawConfig.filters || {}),
-        },
-    };
-}
-
-async function loadJuditConfig(tenantId) {
-    const tenantData = await getTenantSettingsData(tenantId);
-    const rawConfig = tenantData?.enrichmentConfig?.judit;
-    if (!rawConfig) return { ...DEFAULT_JUDIT_CONFIG };
-
-    return {
-        ...DEFAULT_JUDIT_CONFIG,
-        ...rawConfig,
-        phases: {
-            ...DEFAULT_JUDIT_CONFIG.phases,
-            ...(rawConfig.phases || {}),
-        },
-        escalation: {
-            ...DEFAULT_JUDIT_CONFIG.escalation,
-            ...(rawConfig.escalation || {}),
-        },
-        filters: {
-            ...DEFAULT_JUDIT_CONFIG.filters,
-            ...(rawConfig.filters || {}),
-        },
-        realTime: {
-            ...DEFAULT_JUDIT_CONFIG.realTime,
-            ...(rawConfig.realTime || {}),
-        },
-        gate: {
-            ...DEFAULT_JUDIT_CONFIG.gate,
-            ...(tenantData?.enrichmentConfig?.gate || {}),
-            ...(rawConfig.gate || {}),
-        },
-        nameSearchSupplement: {
-            ...DEFAULT_JUDIT_CONFIG.nameSearchSupplement,
-            ...(rawConfig.nameSearchSupplement || {}),
-        },
-        persistence: {
-            ...DEFAULT_JUDIT_CONFIG.persistence,
-            ...(rawConfig.persistence || {}),
-        },
-    };
-}
-
-async function loadBigDataCorpConfig(tenantId) {
-    const tenantData = await getTenantSettingsData(tenantId);
-    const rawConfig = tenantData?.enrichmentConfig?.bigdatacorp;
-    if (!rawConfig) return { ...DEFAULT_BIGDATACORP_CONFIG };
-
-    return {
-        ...DEFAULT_BIGDATACORP_CONFIG,
-        ...rawConfig,
-        phases: {
-            ...DEFAULT_BIGDATACORP_CONFIG.phases,
-            ...(rawConfig.phases || {}),
-        },
-        gate: {
-            ...DEFAULT_BIGDATACORP_CONFIG.gate,
-            ...(tenantData?.enrichmentConfig?.gate || {}),
-            ...(rawConfig.gate || {}),
-        },
-    };
-}
-
-async function loadDjenConfig(tenantId) {
-    const tenantData = await getTenantSettingsData(tenantId);
-    const rawConfig = tenantData?.enrichmentConfig?.djen;
-    if (!rawConfig) return { ...DEFAULT_DJEN_CONFIG };
-
-    return {
-        ...DEFAULT_DJEN_CONFIG,
-        ...rawConfig,
-        phases: {
-            ...DEFAULT_DJEN_CONFIG.phases,
-            ...(rawConfig.phases || {}),
-        },
-        filters: {
-            ...DEFAULT_DJEN_CONFIG.filters,
-            ...(rawConfig.filters || {}),
-        },
-    };
 }
 
 function buildJuditCallbackUrl() {
@@ -5803,76 +5525,7 @@ function computeAutoClassification(caseData) {
    Only fires when analyst concludes (status transitions to DONE).
    ========================================================= */
 
-const IDENTITY_FIELDS = [
-    'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
-    'requestedBy', 'requestedByName', 'requestedByEmail',
-    'slaHours',
 
-    // Validação cadastral BigDataCorp
-    'bigdatacorpName',
-    'bigdatacorpCpfStatus',
-    'bigdatacorpBirthDate',
-    'bigdatacorpAge',
-    'bigdatacorpGender',
-    'bigdatacorpMotherName',
-    'bigdatacorpHasDeathRecord',
-];
-
-const RESULT_ONLY_FIELDS = [
-    'criminalFlag', 'criminalSeverity', 'criminalNotes',
-    'laborFlag', 'laborSeverity', 'laborNotes',
-    'warrantFlag', 'warrantNotes',
-    'osintLevel', 'osintVectors', 'osintNotes',
-    'socialStatus', 'socialReasons', 'socialNotes',
-    'digitalFlag', 'digitalVectors', 'digitalNotes',
-    'conflictInterest', 'conflictNotes',
-    'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
-    'enabledPhases',
-    'keyFindings',
-    'executiveSummary',
-    'publicReportToken',
-    'cpfPendingRegularization',
-    'cpfPendingNotes',
-];
-
-const CLIENT_SAFE_PUBLICATION_FIELDS = [
-    'statusSummary',
-    'sourceSummary',
-    'nextSteps',
-    'timelineEvents',
-    'socialProfiles',
-    'reportReady',
-    'reportSlug',
-    'concludedAt',
-    'turnaroundHours',
-];
-
-const PUBLIC_RESULT_FIELDS = [...IDENTITY_FIELDS, ...RESULT_ONLY_FIELDS, ...CLIENT_SAFE_PUBLICATION_FIELDS];
-
-const CLIENT_CASE_PRIVATE_FIELDS = [
-    'cpf',
-];
-
-const CLIENT_CASE_FIELDS = [
-    ...PUBLIC_RESULT_FIELDS,
-    ...CLIENT_CASE_PRIVATE_FIELDS,
-    'candidateId',
-    'tenantName',
-    'status',
-    'priority',
-    'createdDateKey',
-    'createdMonthKey',
-    'concludedAt',
-    'updatedAt',
-    'correctedAt',
-    // executiveSummary, keyFindings already in PUBLIC_RESULT_FIELDS
-    'statusSummary',
-    'sourceSummary',
-    'nextSteps',
-    'clientNotes',
-    'hasNotes',
-    'hasEvidence',
-];
 
 function buildClientCasePayload(caseId, caseData) {
     const payload = { caseId };
@@ -6076,648 +5729,9 @@ exports.publishResultOnCaseDone = onDocumentUpdated(
    CLIENT / ADMIN CALLABLES
    ========================================================= */
 
-exports.createOpsClientUser = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const operatorProfile = await getOpsUserProfile(uid);
-
-        // CLI-OPS-001: Only admins/supervisors can create client users
-        if (operatorProfile.role !== 'admin' && operatorProfile.role !== 'owner' && operatorProfile.role !== 'supervisor') {
-            throw new HttpsError('permission-denied', 'Apenas administradores e supervisores podem criar clientes.');
-        }
-
-        const {
-            email,
-            password,
-            displayName,
-            tenantName,
-            tenantId: requestedTenantId = null,
-            role = 'client_manager',
-        } = request.data || {};
-
-        if (!CLIENT_VIEW_ROLES.has(role)) {
-            throw new HttpsError('invalid-argument', 'Role invalida para usuario cliente.');
-        }
-
-        if (!email || !password || !displayName || !(requestedTenantId || tenantName)) {
-            throw new HttpsError('invalid-argument', 'Dados obrigatorios ausentes para criar o cliente.');
-        }
-
-        const tenantId = requestedTenantId || normalizeTenantSlug(tenantName);
-        if (!tenantId) {
-            throw new HttpsError('invalid-argument', 'Nao foi possivel gerar tenantId valido.');
-        }
-
-        // CLI-OPS-005: Reject if new tenant collides with existing
-        if (!requestedTenantId) {
-            const existingTenant = await db.collection('tenantSettings').doc(tenantId).get();
-            if (existingTenant.exists) {
-                throw new HttpsError('already-exists', `Tenant "${tenantId}" ja existe. Selecione-o na lista ou escolha outro nome.`);
-            }
-        }
-
-        const authUser = await getAuth().createUser({
-            email,
-            password,
-            displayName,
-        });
-
-        try {
-            await db.collection('userProfiles').doc(authUser.uid).set({
-                email,
-                displayName,
-                role,
-                tenantId,
-                tenantName: tenantName || requestedTenantId,
-                status: 'active',
-                createdAt: FieldValue.serverTimestamp(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-
-            // Sync custom claims for Firestore rules (avoids getUserProfile reads)
-            await getAuth().setCustomUserClaims(authUser.uid, { role, tenantId });
-
-            const tenantRef = db.collection('tenantSettings').doc(tenantId);
-            const tenantDoc = await tenantRef.get();
-            if (!tenantDoc.exists) {
-                await tenantRef.set({
-                    name: tenantName || tenantId,
-                    analysisConfig: { ...DEFAULT_ANALYSIS_CONFIG },
-                    slaHours: 48,
-                    updatedAt: FieldValue.serverTimestamp(),
-                });
-            }
-
-            await writeAuditEvent({
-                action: 'USER_CREATED',
-                tenantId: null,
-                actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: operatorProfile.email || uid },
-                entity: { type: 'USER', id: authUser.uid, label: email },
-                related: { userId: authUser.uid },
-                source: SOURCE.PORTAL_OPS,
-                ip: getClientIp(request),
-                detail: `Cliente criado: ${tenantName || tenantId} (${email})`,
-                templateVars: { tenantName: tenantName || tenantId },
-            });
-
-            return { uid: authUser.uid, tenantId };
-        } catch (error) {
-            await getAuth().deleteUser(authUser.uid).catch(() => {});
-            throw error;
-        }
-    },
-);
-
 /* =========================================================
-   TENANT USER MANAGEMENT — Client manager self-service
+   CLIENT / ADMIN CALLABLES (wiring será feito após tenantUserDeps)
    ========================================================= */
-
-exports.listTenantUsers = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getClientUserProfile(uid);
-        if (callerProfile.role !== 'client_manager') {
-            throw new HttpsError('permission-denied', 'Apenas gestores podem listar usuarios da equipe.');
-        }
-
-        const snapshot = await db.collection('userProfiles')
-            .where('tenantId', '==', callerProfile.tenantId)
-            .get();
-
-        const users = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            if (!CLIENT_VIEW_ROLES.has(data.role)) return;
-            users.push({
-                uid: doc.id,
-                email: data.email || '',
-                displayName: data.displayName || '',
-                role: data.role,
-                status: data.status || 'active',
-                createdAt: data.createdAt || null,
-            });
-        });
-
-        return { users };
-    },
-);
-
-exports.createTenantUser = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getClientUserProfile(uid);
-        if (callerProfile.role !== 'client_manager') {
-            throw new HttpsError('permission-denied', 'Apenas gestores podem criar usuarios.');
-        }
-
-        const { email, password, displayName, role = 'client_viewer' } = request.data || {};
-
-        if (!CLIENT_MANAGEABLE_ROLES.has(role)) {
-            throw new HttpsError('invalid-argument', 'Role invalida. Use client_viewer, client_operator ou client_manager.');
-        }
-        if (!email || !password || !displayName) {
-            throw new HttpsError('invalid-argument', 'Email, senha e nome sao obrigatorios.');
-        }
-
-        const tenantId = callerProfile.tenantId;
-        const tenantName = callerProfile.tenantName;
-
-        const authUser = await getAuth().createUser({ email, password, displayName });
-
-        try {
-            await db.collection('userProfiles').doc(authUser.uid).set({
-                email,
-                displayName,
-                role,
-                tenantId,
-                tenantName,
-                status: 'active',
-                createdAt: FieldValue.serverTimestamp(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-
-            // Sync custom claims for Firestore rules
-            await getAuth().setCustomUserClaims(authUser.uid, { role, tenantId });
-
-            await writeAuditEvent({
-                action: 'TENANT_USER_CREATED',
-                tenantId,
-                actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: callerProfile.email || uid },
-                entity: { type: 'USER', id: authUser.uid, label: email },
-                related: { userId: authUser.uid },
-                source: SOURCE.PORTAL_CLIENT,
-                ip: getClientIp(request),
-                detail: `Usuario ${email} criado pelo gestor ${callerProfile.email}.`,
-                templateVars: { targetEmail: email },
-            });
-
-            return { uid: authUser.uid };
-        } catch (error) {
-            await getAuth().deleteUser(authUser.uid).catch(() => {});
-            throw error;
-        }
-    },
-);
-
-exports.updateTenantUser = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getClientUserProfile(uid);
-        if (callerProfile.role !== 'client_manager') {
-            throw new HttpsError('permission-denied', 'Apenas gestores podem modificar usuarios.');
-        }
-
-        const { targetUid, role, status, displayName } = request.data || {};
-        if (!targetUid) {
-            throw new HttpsError('invalid-argument', 'ID do usuario alvo e obrigatorio.');
-        }
-
-        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
-        if (!targetDoc.exists) {
-            throw new HttpsError('not-found', 'Usuario nao encontrado.');
-        }
-        const targetProfile = targetDoc.data();
-
-        if (targetProfile.tenantId !== callerProfile.tenantId) {
-            throw new HttpsError('permission-denied', 'Voce nao pode gerenciar usuarios de outra franquia.');
-        }
-        if (!CLIENT_VIEW_ROLES.has(targetProfile.role)) {
-            throw new HttpsError('permission-denied', 'Este usuario nao pode ser gerenciado por aqui.');
-        }
-        if (targetUid === uid && role && role !== 'client_manager') {
-            throw new HttpsError('invalid-argument', 'Voce nao pode remover seu proprio acesso de gestor.');
-        }
-        if (targetUid === uid && status === 'inactive') {
-            throw new HttpsError('invalid-argument', 'Voce nao pode desativar a si mesmo.');
-        }
-
-        const updateData = { updatedAt: FieldValue.serverTimestamp() };
-
-        if (role !== undefined) {
-            if (!CLIENT_MANAGEABLE_ROLES.has(role)) {
-                throw new HttpsError('invalid-argument', 'Role invalida. Use client_viewer, client_operator ou client_manager.');
-            }
-            updateData.role = role;
-        }
-        if (status !== undefined) {
-            if (!['active', 'inactive'].includes(status)) {
-                throw new HttpsError('invalid-argument', 'Status invalido. Use active ou inactive.');
-            }
-            updateData.status = status;
-            if (status === 'inactive') {
-                await getAuth().updateUser(targetUid, { disabled: true });
-            } else {
-                await getAuth().updateUser(targetUid, { disabled: false });
-            }
-        }
-        if (displayName !== undefined) {
-            if (typeof displayName !== 'string' || displayName.trim().length < 2) {
-                throw new HttpsError('invalid-argument', 'Nome precisa ter pelo menos 2 caracteres.');
-            }
-            updateData.displayName = displayName.trim();
-        }
-
-        await db.collection('userProfiles').doc(targetUid).update(updateData);
-
-        // Sync custom claims when role changes
-        if (updateData.role) {
-            const freshDoc = await db.collection('userProfiles').doc(targetUid).get();
-            const freshData = freshDoc.data() || {};
-            await getAuth().setCustomUserClaims(targetUid, {
-                role: freshData.role,
-                tenantId: freshData.tenantId,
-            });
-        }
-
-        const changes = [];
-        if (role) changes.push(`role=${role}`);
-        if (status) changes.push(`status=${status}`);
-        if (displayName) changes.push(`name=${displayName}`);
-
-        await writeAuditEvent({
-            action: 'TENANT_USER_UPDATED',
-            tenantId: callerProfile.tenantId,
-            actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: callerProfile.email || uid },
-            entity: { type: 'USER', id: targetUid, label: targetProfile.email },
-            related: { userId: targetUid },
-            source: SOURCE.PORTAL_CLIENT,
-            ip: getClientIp(request),
-            detail: `${targetProfile.email}: ${changes.join(', ')}.`,
-            templateVars: { targetEmail: targetProfile.email, changes: changes.join(', ') },
-        });
-
-        return { success: true };
-    },
-);
-
-/* â”€â”€ syncUserClaims â”€â”€ */
-exports.syncUserClaims = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const callerDoc = await db.collection('userProfiles').doc(uid).get();
-        const callerData = callerDoc.data() || {};
-        const isAdmin = ['admin', 'owner', 'supervisor'].includes(callerData.role);
-        if (!isAdmin) {
-            throw new HttpsError('permission-denied', 'Apenas administradores podem sincronizar claims.');
-        }
-
-        const { targetUid } = request.data || {};
-        if (!targetUid) {
-            throw new HttpsError('invalid-argument', 'targetUid e obrigatorio.');
-        }
-
-        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
-        if (!targetDoc.exists) {
-            throw new HttpsError('not-found', 'Usuario nao encontrado em userProfiles.');
-        }
-
-        const targetData = targetDoc.data();
-        await getAuth().setCustomUserClaims(targetUid, {
-            role: targetData.role,
-            tenantId: targetData.tenantId,
-        });
-
-        return {
-            success: true,
-            uid: targetUid,
-            role: targetData.role,
-            tenantId: targetData.tenantId,
-        };
-    },
-);
-
-/* â”€â”€ repairAllClaims â”€â”€ */
-async function repairAllClaimsInner(request) {
-    const uid = request.auth?.uid;
-    if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-    const callerDoc = await db.collection('userProfiles').doc(uid).get();
-    const callerData = callerDoc.data() || {};
-    if (!['admin', 'owner'].includes(callerData.role)) {
-        throw new HttpsError('permission-denied', 'Apenas administradores podem executar reparo em massa.');
-    }
-
-    const BATCH_SIZE = 500;
-    const CONCURRENCY = 10;
-    let lastDoc = null;
-    let fixed = 0;
-    let skipped = 0;
-    let errors = 0;
-    let total = 0;
-
-    while (true) {
-        let q = db.collection('userProfiles')
-            .orderBy('__name__')
-            .limit(BATCH_SIZE);
-        if (lastDoc) q = q.startAfter(lastDoc);
-
-        const snap = await q.get();
-        if (snap.empty) break;
-
-        const batch = snap.docs;
-        total += batch.length;
-        lastDoc = batch[batch.length - 1];
-
-        for (let i = 0; i < batch.length; i += CONCURRENCY) {
-            const chunk = batch.slice(i, i + CONCURRENCY);
-            await Promise.all(chunk.map(async (doc) => {
-                const data = doc.data();
-                const targetUid = doc.id;
-
-                if (!data.role || !data.tenantId) {
-                    skipped++;
-                    return;
-                }
-
-                try {
-                    await getAuth().setCustomUserClaims(targetUid, {
-                        role: data.role,
-                        tenantId: data.tenantId,
-                    });
-                    fixed++;
-                } catch {
-                    errors++;
-                }
-            }));
-        }
-    }
-
-    return { success: true, total, fixed, skipped, errors };
-}
-
-exports.repairAllClaims = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 300 , cors: true },
-    repairAllClaimsInner,
-);
-
-/* â”€â”€ listOpsUsers â”€â”€ */
-exports.listOpsUsers = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getOpsUserProfile(uid);
-        assertOpsManager(callerProfile);
-
-        const { tenantId } = request.data || {};
-        let q = db.collection('userProfiles');
-
-        if (callerProfile.role === 'supervisor') {
-            q = q.where('tenantId', '==', callerProfile.tenantId);
-        } else if (callerProfile.role === 'admin' && callerProfile.tenantId) {
-            q = q.where('tenantId', '==', callerProfile.tenantId);
-        } else if (callerProfile.role === 'admin' && tenantId) {
-            q = q.where('tenantId', '==', tenantId);
-        }
-
-        const snapshot = await q.get();
-        const users = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            if (!OPS_ROLES.has(data.role)) return;
-            users.push({
-                uid: doc.id,
-                email: data.email || '',
-                displayName: data.displayName || '',
-                role: data.role,
-                tenantId: data.tenantId || null,
-                tenantName: data.tenantName || '',
-                status: data.status || 'active',
-                createdAt: data.createdAt || null,
-            });
-        });
-
-        return { users };
-    },
-);
-
-/* â”€â”€ createOpsUser â”€â”€ */
-exports.createOpsUser = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getOpsUserProfile(uid);
-        assertOpsManager(callerProfile);
-
-        const { email, password, displayName, role = 'analyst', tenantId } = request.data || {};
-
-        if (!OPS_MANAGEABLE_ROLES.has(role)) {
-            throw new HttpsError('invalid-argument', 'Role invalida. Use analyst, supervisor ou admin.');
-        }
-        if (!email || !password || !displayName) {
-            throw new HttpsError('invalid-argument', 'Email, senha e nome sao obrigatorios.');
-        }
-
-        if (callerProfile.role === 'supervisor' && role !== 'analyst') {
-            throw new HttpsError('permission-denied', 'Supervisor so pode criar analistas.');
-        }
-
-        const targetTenantId = callerProfile.role === 'supervisor'
-            ? callerProfile.tenantId
-            : (tenantId || callerProfile.tenantId);
-        if (!targetTenantId) {
-            throw new HttpsError('invalid-argument', 'tenantId obrigatorio para criar usuario operacional.');
-        }
-
-        let tenantName = '';
-        const tenantDoc = await db.collection('tenantSettings').doc(targetTenantId).get();
-        if (tenantDoc.exists) tenantName = tenantDoc.data().name || '';
-
-        const authUser = await getAuth().createUser({
-            email,
-            password,
-            displayName: sanitizeDisplayName(displayName),
-        });
-
-        try {
-            await db.collection('userProfiles').doc(authUser.uid).set({
-                email,
-                displayName: sanitizeDisplayName(displayName),
-                role,
-                tenantId: targetTenantId,
-                tenantName,
-                status: 'active',
-                createdAt: FieldValue.serverTimestamp(),
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-
-            await getAuth().setCustomUserClaims(authUser.uid, { role, tenantId: targetTenantId });
-
-            await writeAuditEvent({
-                action: 'OPS_USER_CREATED',
-                tenantId: targetTenantId,
-                actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
-                entity: { type: 'USER', id: authUser.uid, label: email },
-                related: { userId: authUser.uid },
-                source: SOURCE.PORTAL_OPS,
-                ip: getClientIp(request),
-                detail: `Usuario ops ${email} criado com role ${role} por ${callerProfile.email}.`,
-                templateVars: { targetEmail: email },
-            });
-
-            return { uid: authUser.uid };
-        } catch (error) {
-            await getAuth().deleteUser(authUser.uid).catch(() => {});
-            throw error;
-        }
-    },
-);
-
-/* â”€â”€ updateOpsUser â”€â”€ */
-exports.updateOpsUser = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Login necessario.');
-
-        const callerProfile = await getOpsUserProfile(uid);
-        assertOpsManager(callerProfile);
-
-        const { targetUid, role, status, displayName, tenantId } = request.data || {};
-        if (!targetUid) throw new HttpsError('invalid-argument', 'ID do usuario alvo e obrigatorio.');
-
-        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
-        if (!targetDoc.exists) throw new HttpsError('not-found', 'Usuario nao encontrado.');
-        const targetProfile = targetDoc.data();
-
-        if (!OPS_ROLES.has(targetProfile.role)) {
-            throw new HttpsError('permission-denied', 'Este usuario nao pode ser gerenciado por aqui.');
-        }
-        if (callerProfile.role === 'supervisor' && targetProfile.tenantId !== callerProfile.tenantId) {
-            throw new HttpsError('permission-denied', 'Voce nao pode gerenciar usuarios de outra franquia.');
-        }
-        if (callerProfile.role === 'supervisor' && targetProfile.role !== 'analyst') {
-            throw new HttpsError('permission-denied', 'Supervisor so pode gerenciar analistas.');
-        }
-        if (targetUid === uid && role && role !== callerProfile.role) {
-            throw new HttpsError('invalid-argument', 'Voce nao pode alterar seu proprio papel.');
-        }
-        if (targetUid === uid && status === 'inactive') {
-            throw new HttpsError('invalid-argument', 'Voce nao pode desativar a si mesmo.');
-        }
-
-        const updateData = { updatedAt: FieldValue.serverTimestamp() };
-
-        if (role !== undefined) {
-            if (!OPS_MANAGEABLE_ROLES.has(role)) {
-                throw new HttpsError('invalid-argument', 'Role invalida. Use analyst, supervisor ou admin.');
-            }
-            updateData.role = role;
-        }
-        if (status !== undefined) {
-            const normalized = normalizeUserStatus(status);
-            updateData.status = normalized;
-            if (normalized === 'inactive') {
-                await getAuth().updateUser(targetUid, { disabled: true });
-            } else {
-                await getAuth().updateUser(targetUid, { disabled: false });
-            }
-        }
-        if (displayName !== undefined) {
-            const trimmed = sanitizeDisplayName(displayName);
-            if (trimmed.length < 2) throw new HttpsError('invalid-argument', 'Nome precisa ter pelo menos 2 caracteres.');
-            updateData.displayName = trimmed;
-        }
-        if (tenantId !== undefined && callerProfile.role !== 'supervisor') {
-            updateData.tenantId = tenantId;
-            const tDoc = await db.collection('tenantSettings').doc(tenantId).get();
-            if (tDoc.exists) updateData.tenantName = tDoc.data().name || '';
-        }
-
-        await db.collection('userProfiles').doc(targetUid).update(updateData);
-
-        const freshDoc = await db.collection('userProfiles').doc(targetUid).get();
-        const freshData = freshDoc.data() || {};
-        await getAuth().setCustomUserClaims(targetUid, {
-            role: freshData.role,
-            tenantId: freshData.tenantId,
-        });
-
-        const changes = [];
-        if (role) changes.push(`role=${role}`);
-        if (status) changes.push(`status=${status}`);
-        if (displayName) changes.push(`name=${sanitizeDisplayName(displayName)}`);
-        if (tenantId) changes.push(`tenant=${tenantId}`);
-
-        await writeAuditEvent({
-            action: 'OPS_USER_UPDATED',
-            tenantId: freshData.tenantId || targetProfile.tenantId || null,
-            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
-            entity: { type: 'USER', id: targetUid, label: targetProfile.email },
-            related: { userId: targetUid },
-            source: SOURCE.PORTAL_OPS,
-            ip: getClientIp(request),
-            detail: `${targetProfile.email}: ${changes.join(', ')}.`,
-            templateVars: { targetEmail: targetProfile.email, changes: changes.join(', ') },
-        });
-
-        return { success: true };
-    },
-);
-
-/* â”€â”€ updateOwnProfile â”€â”€ */
-exports.updateOwnProfile = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const profileDoc = await db.collection('userProfiles').doc(uid).get();
-        if (!profileDoc.exists) {
-            throw new HttpsError('not-found', 'Perfil nao encontrado.');
-        }
-
-        const { displayName, portal } = request.data || {};
-        if (!displayName || typeof displayName !== 'string' || displayName.trim().length < 2) {
-            throw new HttpsError('invalid-argument', 'Nome precisa ter pelo menos 2 caracteres.');
-        }
-        const trimmed = displayName.trim();
-        if (trimmed.length > 80) {
-            throw new HttpsError('invalid-argument', 'Nome pode ter no maximo 80 caracteres.');
-        }
-
-        await db.collection('userProfiles').doc(uid).update({
-            displayName: trimmed,
-            updatedAt: FieldValue.serverTimestamp(),
-        });
-        await getAuth().updateUser(uid, { displayName: trimmed });
-
-        const profileData = profileDoc.data();
-        const isOps = portal === 'ops' || String(profileData.role).startsWith('analyst') || String(profileData.role).startsWith('supervisor') || String(profileData.role).startsWith('admin');
-
-        await writeAuditEvent({
-            action: 'OWN_PROFILE_UPDATED',
-            tenantId: profileData.tenantId || null,
-            actor: { type: isOps ? ACTOR_TYPE.OPS_USER : ACTOR_TYPE.CLIENT_USER, id: uid, email: profileData.email || uid, displayName: trimmed },
-            entity: { type: 'PROFILE', id: uid, label: trimmed },
-            related: { userId: uid },
-            source: isOps ? SOURCE.PORTAL_OPS : SOURCE.PORTAL_CLIENT,
-            ip: getClientIp(request),
-            detail: `displayName: ${trimmed}`,
-            templateVars: { actorName: trimmed },
-        });
-
-        return { success: true, displayName: trimmed };
-    },
-);
 
 exports.createClientSolicitation = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 120, cors: [/\.vercel\.app$/, /localhost/] },
@@ -6951,14 +5965,14 @@ exports.createClientSolicitation = onCall(
             detail: `Nova solicitacao criada para ${candidateName}`,
         });
 
-        try {
-            const caseSnapshot = await caseRef.get();
-            if (caseSnapshot.exists) {
-                await createNewSolicitationNotifications(caseRef.id, caseSnapshot.data());
+            try {
+                const caseSnapshot = await caseRef.get();
+                if (caseSnapshot.exists) {
+                    await notificationService.createNewSolicitationNotifications(caseRef.id, caseSnapshot.data(), caseComm);
+                }
+            } catch (err) {
+                console.warn('[notifications] failed to create new solicitation notifications', err);
             }
-        } catch (err) {
-            console.warn('[notifications] failed to create new solicitation notifications', err);
-        }
 
         return {
             caseId: caseRef.id,
@@ -7229,10 +6243,10 @@ exports.submitClientCorrection = onCall(
 
         // Criar mensagem automatica na comunicacao
         try {
-            await createSystemCaseMessage({
+            await caseCommunication.createSystemCaseMessage({
                 caseId,
-                caseData,
                 tenantId: caseData.tenantId,
+                db,
                 systemType: 'CORRECTION_SUBMITTED',
                 body: 'O cliente corrigiu os dados e reenviou a analise.',
             });
@@ -8082,62 +7096,7 @@ exports.listOpsPublicReports = onCall(
     },
 );
 
-const ALLOWED_CONCLUDE_FIELDS = new Set([
-    'assigneeId',
-    'executiveSummary',
-    'criminalFlag',
-    'criminalSeverity',
-    'criminalNotes',
-    'laborFlag',
-    'laborSeverity',
-    'laborNotes',
-    'warrantFlag',
-    'warrantNotes',
-    'osintLevel',
-    'osintVectors',
-    'osintNotes',
-    'socialStatus',
-    'socialReasons',
-    'socialNotes',
-    'digitalFlag',
-    'digitalVectors',
-    'digitalNotes',
-    'conflictInterest',
-    'conflictNotes',
-    'finalVerdict',
-    'keyFindings',
-    'analystComment',
-    'enabledPhases',
-    'clientVerdictOverride',
-]);
 
-const ALLOWED_DRAFT_FIELDS = new Set([
-    'executiveSummary',
-    'criminalFlag',
-    'criminalSeverity',
-    'criminalNotes',
-    'laborFlag',
-    'laborSeverity',
-    'laborNotes',
-    'warrantFlag',
-    'warrantNotes',
-    'osintLevel',
-    'osintVectors',
-    'osintNotes',
-    'socialStatus',
-    'socialReasons',
-    'socialNotes',
-    'digitalFlag',
-    'digitalVectors',
-    'digitalNotes',
-    'conflictInterest',
-    'conflictNotes',
-    'finalVerdict',
-    'keyFindings',
-    'analystComment',
-    'riskLevel',
-    'riskScore',
-]);
 
 const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
 const CLIENT_VERDICT_POLICY_EFFECTIVE_AT = new Date('2026-05-27T00:00:00.000Z');
@@ -8294,12 +7253,7 @@ function validateClientVerdictPolicy({ submittedVerdict, policy, override } = {}
     );
 }
 
-const REVIEW_DRAFT_ARRAY_FIELDS = new Set([
-    'keyFindings',
-    'osintVectors',
-    'socialReasons',
-    'digitalVectors',
-]);
+
 
 function hasMeaningfulValue(value) {
     if (Array.isArray(value)) return value.length > 0;
@@ -8398,260 +7352,51 @@ function pickDraftPayload(payload = {}, existingReviewDraft = {}) {
     };
 }
 
-exports.assignCaseToCurrentAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+exports.assignCaseToCurrentAnalyst = caseQueriesAssignments.createAssignCaseToCurrentAnalystHandler({
+    db,
+    getOpsUserProfile,
+    assertOpsCanAccessCase,
+    writeAuditEvent,
+    getClientIp,
+    ACTOR_TYPE,
+    SOURCE,
+});
 
-        const profile = await getOpsUserProfile(uid);
-        const caseId = String(request.data?.caseId || '').trim();
-        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
+exports.assignCaseToAnalyst = caseQueriesAssignments.createAssignCaseToAnalystHandler({
+    db,
+    getOpsUserProfile,
+    assertCanAssignCase,
+    assertOpsCanAccessCase,
+    writeAuditEvent,
+    getClientIp,
+    ACTOR_TYPE,
+    SOURCE,
+    OPS_ROLES,
+});
 
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
+exports.unassignCase = caseQueriesAssignments.createUnassignCaseHandler({
+    db,
+    getOpsUserProfile,
+    assertCanAssignCase,
+    assertOpsCanAccessCase,
+    writeAuditEvent,
+    getClientIp,
+    ACTOR_TYPE,
+    SOURCE,
+});
 
-        const caseData = caseDoc.data() || {};
-        assertOpsCanAccessCase(profile, caseData, caseId);
-
-        // FILA-001: só permite assumir casos PENDING sem responsável
-        // P1-009: Use transaction to prevent race conditions
-        await db.runTransaction(async (t) => {
-            const snap = await t.get(caseRef);
-            const data = snap.data() || {};
-            if (data.status !== 'PENDING') {
-                throw new HttpsError('failed-precondition', `Caso nao pode ser assumido (status: ${data.status || 'desconhecido'}).`);
-            }
-            if (data.assigneeId) {
-                throw new HttpsError('failed-precondition', 'Caso ja possui responsavel.');
-            }
-            t.update(caseRef, {
-                assigneeId: uid,
-                status: 'IN_PROGRESS',
-                updatedAt: FieldValue.serverTimestamp(),
-            });
-        });
-
-        await writeAuditEvent({
-            action: 'CASE_ASSIGNED',
-            tenantId: caseData.tenantId || null,
-            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
-            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-            related: { caseId },
-            source: SOURCE.PORTAL_OPS,
-            ip: getClientIp(request),
-            detail: `Caso assumido: ${caseData.candidateName || caseId}`,
-        });
-
-        return { success: true };
-    },
-);
-
-/* â”€â”€ assignCaseToAnalyst â”€â”€ */
-exports.assignCaseToAnalyst = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const callerProfile = await getOpsUserProfile(uid);
-        assertCanAssignCase(callerProfile);
-
-        const caseId = String(request.data?.caseId || '').trim();
-        const targetUid = String(request.data?.targetUid || '').trim();
-        if (!caseId || !targetUid) throw new HttpsError('invalid-argument', 'caseId e targetUid obrigatorios.');
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-        const caseData = caseDoc.data() || {};
-        assertOpsCanAccessCase(callerProfile, caseData, caseId);
-
-        const targetDoc = await db.collection('userProfiles').doc(targetUid).get();
-        if (!targetDoc.exists) throw new HttpsError('not-found', 'Analista nao encontrado.');
-        const targetProfile = targetDoc.data();
-        if (!OPS_ROLES.has(targetProfile.role)) {
-            throw new HttpsError('invalid-argument', 'Usuario alvo nao e um analista.');
-        }
-        if (targetProfile.status === 'inactive') {
-            throw new HttpsError('failed-precondition', 'Analista esta inativo.');
-        }
-        if (caseData.tenantId && targetProfile.tenantId !== caseData.tenantId) {
-            throw new HttpsError('permission-denied', 'Analista nao pertence ao mesmo tenant.');
-        }
-
-        // P1-009: Use transaction to prevent race conditions
-        const isReassignment = !!caseData.assigneeId;
-        await db.runTransaction(async (t) => {
-            const snap = await t.get(caseRef);
-            const data = snap.data() || {};
-            const updateFields = {
-                assigneeId: targetUid,
-                assigneeName: targetProfile.displayName || targetProfile.email || targetUid,
-                assigneeEmail: targetProfile.email || '',
-                assignedAt: new Date().toISOString(),
-                assignedBy: uid,
-                assignedByEmail: callerProfile.email || '',
-                updatedAt: FieldValue.serverTimestamp(),
-            };
-            if (data.status === 'PENDING') {
-                updateFields.status = 'IN_PROGRESS';
-            }
-            t.update(caseRef, updateFields);
-        });
-
-        await writeAuditEvent({
-            action: isReassignment ? 'CASE_REASSIGNED' : 'CASE_ASSIGNED',
-            tenantId: caseData.tenantId || null,
-            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
-            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-            related: { caseId, targetUid, targetEmail: targetProfile.email },
-            source: SOURCE.PORTAL_OPS,
-            ip: getClientIp(request),
-            detail: `Caso ${isReassignment ? 'reatribuido' : 'atribuido'} para ${targetProfile.displayName || targetProfile.email}`,
-            templateVars: { actorName: callerProfile.displayName || callerProfile.email, candidateName: caseData.candidateName },
-        });
-
-        return { success: true, assigneeId: targetUid, assigneeName: targetProfile.displayName };
-    },
-);
-
-/* â”€â”€ unassignCase â”€â”€ */
-exports.unassignCase = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const callerProfile = await getOpsUserProfile(uid);
-        assertCanAssignCase(callerProfile);
-
-        const caseId = String(request.data?.caseId || '').trim();
-        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-        const caseData = caseDoc.data() || {};
-        assertOpsCanAccessCase(callerProfile, caseData, caseId);
-
-        if (!caseData.assigneeId) {
-            throw new HttpsError('failed-precondition', 'Caso nao possui responsavel.');
-        }
-
-        // P2-017: Prevent unassigning DONE cases
-        if (caseData.status === 'DONE') {
-            throw new HttpsError('failed-precondition', 'Nao e possivel remover responsavel de caso concluido.');
-        }
-
-        const updateFields = {
-            assigneeId: FieldValue.delete(),
-            assigneeName: FieldValue.delete(),
-            assigneeEmail: FieldValue.delete(),
-            assignedAt: FieldValue.delete(),
-            assignedBy: FieldValue.delete(),
-            assignedByEmail: FieldValue.delete(),
-            updatedAt: FieldValue.serverTimestamp(),
-        };
-        const hasReviewData = caseData.reviewDraft && Object.keys(caseData.reviewDraft).length > 0;
-        if (!hasReviewData && caseData.status === 'IN_PROGRESS') {
-            updateFields.status = 'PENDING';
-        }
-
-        await caseRef.update(updateFields);
-
-        await writeAuditEvent({
-            action: 'CASE_UNASSIGNED',
-            tenantId: caseData.tenantId || null,
-            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: callerProfile.email || uid },
-            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-            related: { caseId },
-            source: SOURCE.PORTAL_OPS,
-            ip: getClientIp(request),
-            detail: `Responsavel removido do caso ${caseData.candidateName || caseId}`,
-        });
-
-        return { success: true };
-    },
-);
-
-exports.returnCaseToClient = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 60 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const profile = await getOpsUserProfile(uid);
-        const caseId = String(request.data?.caseId || '').trim();
-        const reason = String(request.data?.reason || '').trim();
-        const notes = String(request.data?.notes || '').trim();
-        if (!caseId || !reason) {
-            throw new HttpsError('invalid-argument', 'caseId e motivo sao obrigatorios.');
-        }
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-        const caseData = caseDoc.data() || {};
-
-        assertOpsCanAccessCase(profile, caseData, caseId);
-
-        const updateFields = {
-            status: 'CORRECTION_NEEDED',
-            correctionReason: reason,
-            correctionNotes: notes,
-            correctionRequestedAt: new Date().toISOString(),
-            correctionRequestedBy: profile.email || uid,
-            updatedAt: FieldValue.serverTimestamp(),
-        };
-
-        if (caseData.status === 'DONE') {
-            Object.assign(updateFields, buildResetPublishedCaseFields(caseData, {
-                preserveReviewDraft: true,
-            }));
-        }
-
-        // AUD-002: Revoke public report when case leaves DONE
-        if (caseData.publicReportToken || caseData.status === 'DONE') {
-            await revokeCasePublicationArtifacts(caseId, caseData);
-        }
-
-        await caseRef.update(updateFields);
-
-        // Criar mensagem automatica na comunicacao
-        try {
-            const systemBody = notes
-                ? `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}. Detalhes: ${notes}.`
-                : `A equipe solicitou uma correcao nesta analise. Motivo: ${reason}.`;
-            await createSystemCaseMessage({
-                caseId,
-                caseData,
-                tenantId: caseData.tenantId,
-                db,
-                systemType: 'CORRECTION_REQUESTED',
-                body: systemBody,
-            });
-        } catch (err) {
-            console.warn('[communication] failed to create system message for correction', err);
-        }
-
-
-        await writeAuditEvent({
-            action: 'CASE_RETURNED',
-            tenantId: caseData.tenantId || null,
-            actor: { type: ACTOR_TYPE.OPS_USER, id: uid, email: profile.email || uid },
-            entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-            related: { caseId },
-            source: SOURCE.PORTAL_OPS,
-            ip: getClientIp(request),
-            detail: `Caso devolvido: ${reason}`,
-            templateVars: { reason },
-        });
-
-        return { success: true };
-    },
-);
+exports.returnCaseToClient = caseQueriesAssignments.createReturnCaseToClientHandler({
+    db,
+    getOpsUserProfile,
+    assertOpsCanAccessCase,
+    writeAuditEvent,
+    getClientIp,
+    ACTOR_TYPE,
+    SOURCE,
+    buildResetPublishedCaseFields,
+    revokeCasePublicationArtifacts,
+    createSystemCaseMessage: caseCommunication.createSystemCaseMessage,
+});
 
 /**
  * Build a source label for a process group based on the actual providers present.
@@ -10143,14 +8888,14 @@ exports.concludeCaseByAnalyst = onCall(
             detail: `Caso concluido para ${caseData.candidateName || caseId}`,
         });
 
-        try {
-            const concludedCaseSnap = await caseRef.get();
-            if (concludedCaseSnap.exists) {
-                await createCaseCompletedNotifications(caseId, concludedCaseSnap.data());
+            try {
+                const concludedCaseSnap = await caseRef.get();
+                if (concludedCaseSnap.exists) {
+                    await notificationService.createCaseCompletedNotifications(caseId, concludedCaseSnap.data(), caseComm);
+                }
+            } catch (err) {
+                console.warn('[notifications] failed to create case completed notifications', err);
             }
-        } catch (err) {
-            console.warn('[notifications] failed to create case completed notifications', err);
-        }
 
         return { success: true };
     },
@@ -10337,200 +9082,61 @@ exports.setAiDecisionByAnalyst = onCall(
    Rate limited: max 3 runs per case, min 1 min between runs.
    ========================================================= */
 
-const OPS_ROLES = new Set(['analyst', 'supervisor', 'admin', 'owner']);
-const CLIENT_REQUESTER_ROLES = new Set(['CLIENT', 'client_operator', 'client_manager']);
-const CLIENT_VIEW_ROLES = new Set(['CLIENT', 'client_viewer', 'client_operator', 'client_manager']);
 const CLIENT_MANAGEABLE_ROLES = new Set(['client_viewer', 'client_operator', 'client_manager']);
 const OPS_MANAGEABLE_ROLES = new Set(['analyst', 'supervisor', 'admin']);
 
 
-async function createCaseCompletedNotifications(caseId, caseData) {
-    const recipients = await caseComm.findClientNotificationRecipientsForCase(caseData);
-    console.log(`[notifications] createCaseCompletedNotifications case=${caseId}: ${recipients.length} client recipients found`);
+const tenantUserDeps = {
+    db,
+    getAuth,
+    getClientUserProfile,
+    getOpsUserProfile,
+    writeAuditEvent,
+    ACTOR_TYPE,
+    SOURCE,
+    DEFAULT_ANALYSIS_CONFIG,
+};
 
-    if (recipients.length === 0) {
-        console.warn('[notifications] createCaseCompletedNotifications: no client recipients found, skipping');
-        return [];
-    }
+/* =========================================================
+   TENANT USER MANAGEMENT — Wiring modular
+   ========================================================= */
+exports.createOpsClientUser = tenantUserManagement.createOpsClientUserHandler(tenantUserDeps);
+exports.listTenantUsers = tenantUserManagement.createListTenantUsersHandler(tenantUserDeps);
+exports.createTenantUser = tenantUserManagement.createTenantUserHandler(tenantUserDeps);
+exports.updateTenantUser = tenantUserManagement.createUpdateTenantUserHandler(tenantUserDeps);
+exports.syncUserClaims = tenantUserManagement.createSyncUserClaimsHandler(tenantUserDeps);
+exports.repairAllClaims = tenantUserManagement.createRepairAllClaimsHandler(tenantUserDeps);
+exports.listOpsUsers = tenantUserManagement.createListOpsUsersHandler(tenantUserDeps);
+exports.createOpsUser = tenantUserManagement.createOpsUserHandler(tenantUserDeps);
+exports.updateOpsUser = tenantUserManagement.createUpdateOpsUserHandler(tenantUserDeps);
+exports.updateOwnProfile = tenantUserManagement.createUpdateOwnProfileHandler(tenantUserDeps);
 
-    const candidateName = caseData?.candidateName || 'solicitação';
-    const tenantId = caseData?.tenantId;
-
-    const results = [];
-    const failedRecipients = [];
-    for (const recipient of recipients) {
-        try {
-            const nid = await caseComm.createNotification({
-                tenantId,
-                recipientUid: recipient.uid,
-                type: caseComm.NOTIFICATION_TYPES.CASE_COMPLETED,
-                title: 'Análise concluída',
-                message: `A análise de ${candidateName} já está disponível.`,
-                targetUrl: `/client/relatorio/${caseId}`,
-                caseId,
-                candidateName,
-                source: { kind: 'system', caseId, event: 'case_completed' },
-            });
-            results.push(nid);
-        } catch (err) {
-            console.warn('[notifications] failed to create CASE_COMPLETED for', recipient.uid, err.message);
-            failedRecipients.push(recipient.uid);
-        }
-    }
-    console.log(`[notifications] createCaseCompletedNotifications case=${caseId}: ${results.length} sent, ${failedRecipients.length} failed`);
-    return results;
-}
-
-async function createNewSolicitationNotifications(caseId, caseData) {
-    const tenantId = caseData?.tenantId;
-    console.log(`[notifications] createNewSolicitationNotifications case=${caseId} tenant=${tenantId}: starting`);
-    const recipients = await caseComm.findOpsNotificationRecipientsForTenant(tenantId);
-    console.log(`[notifications] createNewSolicitationNotifications case=${caseId}: ${recipients.length} OPS recipients found`);
-
-    if (recipients.length === 0) {
-        console.warn('[notifications] createNewSolicitationNotifications: no OPS recipients found, skipping');
-        return [];
-    }
-
-    const candidateName = String(caseData?.candidateName || 'solicitação').replace(/[<>&"']/g, '');
-    const tenantName = String(caseData?.tenantName || 'Uma empresa').replace(/[<>&"']/g, '');
-
-    const results = [];
-    const failedRecipients = [];
-    for (const recipient of recipients) {
-        let lastErr = null;
-        for (let attempt = 1; attempt <= 3; attempt++) {
-            try {
-                if (attempt > 1) {
-                    await new Promise((r) => setTimeout(r, 200 * attempt));
-                }
-                const nid = await caseComm.createNotification({
-                    tenantId,
-                    recipientUid: recipient.uid,
-                    type: caseComm.NOTIFICATION_TYPES.NEW_CLIENT_SOLICITATION,
-                    title: 'Nova solicitação recebida',
-                    message: `${tenantName} enviou uma nova análise.`,
-                    targetUrl: `/ops/caso/${caseId}`,
-                    caseId,
-                    candidateName,
-                    source: { kind: 'system', caseId, event: 'new_client_solicitation' },
-                });
-                results.push(nid);
-                lastErr = null;
-                break;
-            } catch (err) {
-                lastErr = err;
-                console.warn(`[notifications] attempt ${attempt}/3 failed for NEW_CLIENT_SOLICITATION recipient=${recipient.uid}:`, err.message);
-            }
-        }
-        if (lastErr) {
-            console.error('[notifications] exhausted retries for NEW_CLIENT_SOLICITATION recipient=', recipient.uid);
-            failedRecipients.push(recipient.uid);
-        }
-    }
-    console.log(`[notifications] createNewSolicitationNotifications case=${caseId}: ${results.length} sent, ${failedRecipients.length} failed, recipients=[${recipients.map(r => r.uid).join(', ')}]`);
-    return results;
-}
-
-function canManageOpsUsers(profile = {}) {
-    return ['supervisor', 'admin', 'owner'].includes(profile.role);
-}
-function canAssignCases(profile = {}) {
-    return ['supervisor', 'admin', 'owner'].includes(profile.role);
-}
-function normalizeUserStatus(status) {
-    const value = String(status || 'active').trim().toLowerCase();
-    return ['active', 'inactive', 'suspended'].includes(value) ? value : 'active';
-}
-function sanitizeDisplayName(value) {
-    return String(value || '').replace(/\s+/g, ' ').trim();
-}
-function assertOpsManager(profile) {
-    if (!canManageOpsUsers(profile)) throw new HttpsError('permission-denied', 'Sem permissao para gerenciar equipe operacional.');
-}
-function assertCanAssignCase(profile) {
-    if (!canAssignCases(profile)) throw new HttpsError('permission-denied', 'Sem permissao para atribuir casos.');
-}
-
-async function getOpsUserProfile(uid) {
-    const profileDoc = await db.collection('userProfiles').doc(uid).get();
-    if (!profileDoc.exists || !OPS_ROLES.has(profileDoc.data().role)) {
-        throw new HttpsError('permission-denied', 'Apenas analistas podem re-executar fases do pipeline.');
-    }
-    const profile = profileDoc.data();
-    if (profile.status === 'inactive') {
-        throw new HttpsError('permission-denied', 'Conta desativada. Contate o gestor da franquia.');
-    }
-    return profile;
-}
-
-/**
- * Assert that an ops user can access a case.
- * Validates: case exists, tenant isolation, user is active.
- * Throws HttpsError with appropriate code if any check fails.
- */
-function assertOpsCanAccessCase(profile, caseData, caseId) {
-    if (!caseData) {
-        throw new HttpsError('not-found', 'Caso nao encontrado.');
-    }
-    if (!caseData.tenantId) {
-        throw new HttpsError('failed-precondition', `Caso ${caseId || ''} sem tenantId.`);
-    }
-    if (!profile.tenantId && (profile.role === 'admin' || profile.role === 'owner')) {
-        return;
-    }
-    if (caseData.tenantId && caseData.tenantId !== profile.tenantId) {
-        throw new HttpsError('permission-denied', 'Sem permissao para operar neste caso.');
-    }
-}
-
-async function getClientUserProfile(uid, { requireRequester = false } = {}) {
-    const profileDoc = await db.collection('userProfiles').doc(uid).get();
-    if (!profileDoc.exists) {
-        throw new HttpsError('permission-denied', 'Perfil do cliente nao encontrado.');
-    }
-
-    const profile = profileDoc.data() || {};
-    const allowedRoles = requireRequester ? CLIENT_REQUESTER_ROLES : CLIENT_VIEW_ROLES;
-    if (!allowedRoles.has(profile.role)) {
-        throw new HttpsError('permission-denied', 'Perfil do cliente sem permissao para esta operacao.');
-    }
-    if (!profile.tenantId) {
-        throw new HttpsError('failed-precondition', 'Cliente sem tenantId associado.');
-    }
-    if (profile.status === 'inactive') {
-        throw new HttpsError('permission-denied', 'Conta desativada. Contate o gestor da franquia.');
-    }
-    return profile;
-}
-
-function assertClientManager(profile) {
-    if (profile?.role !== 'client_manager') {
-        throw new HttpsError('permission-denied', 'Operacao disponivel apenas para gestores.');
-    }
-}
-
-const CASE_METRICS_PERIODS = new Set([0, 7, 30, 90, 365]);
 const CASE_QUERY_PAGE_SIZE = 500;
-const CLIENT_CASE_PAGE_SIZE_MAX = 100;
-const CLIENT_CASE_SEARCH_SCAN_LIMIT = 10000;
+const CASE_QUERY_MAX_DOCS = 10000;
 
-function normalizeMetricsPeriod(value) {
-    const periodDays = Number(value);
-    if (!CASE_METRICS_PERIODS.has(periodDays)) {
-        throw new HttpsError('invalid-argument', 'Periodo de metricas invalido.');
+async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [], maxDocs = CASE_QUERY_MAX_DOCS }) {
+    let lastDoc = null;
+    let pageCount = 0;
+    let scannedRecords = 0;
+    const docs = [];
+
+    while (scannedRecords < maxDocs) {
+        let q = db.collection(collectionId);
+        if (tenantId) q = q.where('tenantId', '==', tenantId);
+        q = q.orderBy('createdAt', 'desc');
+        if (fields.length > 0) q = q.select(...fields);
+        if (lastDoc) q = q.startAfter(lastDoc);
+        q = q.limit(Math.min(CASE_QUERY_PAGE_SIZE, maxDocs - scannedRecords));
+        const snap = await q.get();
+        pageCount += 1;
+        const currentDocs = snap.docs || [];
+        scannedRecords += currentDocs.length;
+        docs.push(...currentDocs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
+        lastDoc = currentDocs[currentDocs.length - 1];
     }
-    return periodDays;
-}
 
-function isGlobalOpsProfile(profile) {
-    return !profile?.tenantId && ['admin', 'owner'].includes(profile?.role);
-}
-
-function resolveOpsMetricsTenant(profile, requestedTenantId) {
-    const normalizedTenantId = String(requestedTenantId || '').trim() || null;
-    if (isGlobalOpsProfile(profile)) return normalizedTenantId;
-    return profile.tenantId || null;
+    return { docs, pageCount, scannedRecords, capped: scannedRecords >= maxDocs };
 }
 
 function asIsoOrNull(value) {
@@ -10588,447 +9194,15 @@ function matchesClientCaseFilters(caseData, filters) {
     return true;
 }
 
-function getOverallEnrichmentStatusBackend(caseData) {
-    const statuses = [
-        caseData?.juditEnrichmentStatus,
-        caseData?.escavadorEnrichmentStatus,
-        caseData?.enrichmentStatus,
-        caseData?.bigdatacorpEnrichmentStatus,
-        caseData?.djenEnrichmentStatus,
-        caseData?.aiStatus,
-    ].filter(Boolean);
+exports.getOpsCaseMetrics = caseQueriesAssignments.createGetOpsCaseMetricsHandler({
+    db,
+    getOpsUserProfile,
+});
 
-    if (statuses.includes('RUNNING')) return 'RUNNING';
-    if (statuses.includes('BLOCKED')) return 'BLOCKED';
-    if (statuses.includes('PARTIAL')) return 'PARTIAL';
-    if (statuses.includes('FAILED') && statuses.includes('DONE')) return 'PARTIAL';
-    if (statuses.includes('FAILED')) return 'FAILED';
-    if (statuses.includes('DONE')) return 'DONE';
-    if (statuses.length > 0 && statuses.every((status) => status === 'SKIPPED')) return 'SKIPPED';
-    return 'PENDING';
-}
-
-function getSlaStateBackend(caseData, now = new Date()) {
-    const createdAt = asDate(caseData?.createdAt);
-    if (!createdAt) return 'no_sla';
-    const slaHours = Number(caseData?.slaHours ?? 48);
-    const totalMs = slaHours * 60 * 60 * 1000;
-    const deadline = new Date(createdAt.getTime() + totalMs);
-
-    if (caseData?.status === 'DONE') {
-        const concludedAt = asDate(caseData?.concludedAt);
-        const elapsedMs = concludedAt
-            ? concludedAt.getTime() - createdAt.getTime()
-            : (Number(caseData?.turnaroundHours) || 0) * 60 * 60 * 1000;
-        return elapsedMs <= totalMs ? 'completed_on_time' : 'completed_late';
-    }
-
-    const remainingMs = deadline.getTime() - now.getTime();
-    if (remainingMs < 0) return 'overdue';
-    const elapsedMs = totalMs - remainingMs;
-    const percentElapsed = Math.max(0, (elapsedMs / totalMs) * 100);
-    return percentElapsed >= 75 ? 'warning' : 'on_time';
-}
-
-function matchesOpsCaseSearch(caseData, rawTerm) {
-    const term = normalizeSearchText(rawTerm);
-    if (!term) return true;
-    const digits = String(rawTerm || '').replace(/\D/g, '');
-    const candidateName = normalizeSearchText(caseData.candidateName);
-    const cpfDigits = String(caseData.cpf || caseData.cpfMasked || '').replace(/\D/g, '');
-    const caseId = normalizeSearchText(caseData.caseId || caseData.id);
-
-    if (candidateName.includes(term)) return true;
-    if (caseId.includes(term)) return true;
-    return digits.length >= 3 && cpfDigits.includes(digits);
-}
-
-function matchesOpsCaseFilters(caseData, filters = {}, options = {}) {
-    const status = String(filters.status || filters.filter || 'ALL');
-    const risk = String(filters.risk || 'ALL');
-    const verdict = String(filters.verdict || 'ALL');
-    const enrichment = String(filters.enrichment || 'ALL');
-    const sla = String(filters.sla || 'ALL');
-    const assignment = String(filters.assignment || 'ALL');
-    const dateFrom = String(filters.dateFrom || '');
-    const dateTo = String(filters.dateTo || '');
-    const createdDate = String(caseData.createdAt || '').slice(0, 10);
-
-    if (options.queueOnly && caseData.status === 'DONE') return false;
-    if (status !== 'ALL' && caseData.status !== status) return false;
-    if (risk !== 'ALL' && caseData.riskLevel !== risk) return false;
-    if (verdict !== 'ALL' && caseData.finalVerdict !== verdict) return false;
-    if (enrichment !== 'ALL' && getOverallEnrichmentStatusBackend(caseData) !== enrichment) return false;
-    if (sla !== 'ALL') {
-        const state = getSlaStateBackend(caseData);
-        if (sla === 'ON_TIME' && state !== 'on_time') return false;
-        if (sla === 'WARNING' && state !== 'warning') return false;
-        if (sla === 'OVERDUE' && state !== 'overdue') return false;
-    }
-    if (assignment === 'UNASSIGNED' && caseData.assigneeId) return false;
-    if (assignment === 'MINE' && caseData.assigneeId !== options.assigneeUid) return false;
-    if (dateFrom && createdDate && createdDate < dateFrom) return false;
-    if (dateTo && createdDate && createdDate > dateTo) return false;
-    if (filters.searchTerm && !matchesOpsCaseSearch(caseData, filters.searchTerm)) return false;
-    return true;
-}
-
-function compareOpsCases(left, right, sortField, sortDir) {
-    const field = ['candidateName', 'createdAt', 'status', 'finalVerdict', 'riskLevel'].includes(sortField) ? sortField : 'createdAt';
-    const direction = sortDir === 'asc' ? 1 : -1;
-    let leftValue = left[field] || '';
-    let rightValue = right[field] || '';
-    if (field === 'candidateName') {
-        leftValue = normalizeSearchText(leftValue);
-        rightValue = normalizeSearchText(rightValue);
-    }
-    if (leftValue < rightValue) return -1 * direction;
-    if (leftValue > rightValue) return 1 * direction;
-    return String(left.id || '').localeCompare(String(right.id || ''));
-}
-
-function buildOpsCaseStats(cases) {
-    return cases.reduce((acc, caseData) => {
-        acc.total += 1;
-        if (caseData.status === 'DONE') acc.done += 1;
-        if (caseData.status === 'PENDING') acc.pending += 1;
-        if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
-        if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
-        if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
-        if (caseData.riskLevel === 'RED' || caseData.riskLevel === 'HIGH') acc.red += 1;
-        if (caseData.finalVerdict === 'FIT') acc.fit += 1;
-        if (caseData.finalVerdict === 'ATTENTION') acc.attention += 1;
-        if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
-        return acc;
-    }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, red: 0, fit: 0, attention: 0, notRecommended: 0 });
-}
-
-function compareClientCases(left, right, sortField, sortDir) {
-    const field = ['candidateName', 'createdAt', 'status', 'finalVerdict'].includes(sortField) ? sortField : 'createdAt';
-    const direction = sortDir === 'asc' ? 1 : -1;
-    let leftValue = left[field] || '';
-    let rightValue = right[field] || '';
-    if (field === 'candidateName') {
-        leftValue = normalizeSearchText(leftValue);
-        rightValue = normalizeSearchText(rightValue);
-    }
-    if (leftValue < rightValue) return -1 * direction;
-    if (leftValue > rightValue) return 1 * direction;
-    return String(left.id || '').localeCompare(String(right.id || ''));
-}
-
-function getMetricCaseDate(caseData, field) {
-    return asDate(caseData?.[field]);
-}
-
-function diffHoursBackend(startValue, endValue) {
-    const start = getMetricCaseDate({ value: startValue }, 'value');
-    const end = getMetricCaseDate({ value: endValue }, 'value');
-    if (!start || !end) return null;
-    const hours = (end.getTime() - start.getTime()) / 36e5;
-    return Number.isFinite(hours) && hours >= 0 ? hours : null;
-}
-
-function pctBackend(value, total) {
-    return total > 0 ? Math.round((value / total) * 100) : 0;
-}
-
-const METRIC_PROVIDERS = [
-    { key: 'judit', field: 'juditEnrichmentStatus' },
-    { key: 'escavador', field: 'escavadorEnrichmentStatus' },
-    { key: 'fontedata', field: 'enrichmentStatus' },
-    { key: 'bigdatacorp', field: 'bigdatacorpEnrichmentStatus' },
-    { key: 'djen', field: 'djenEnrichmentStatus' },
-];
-
-function buildOpsMetricsFromCases(cases, { showAllTenants = false } = {}) {
-    const done = cases.filter((caseData) => caseData.status === 'DONE');
-    const running = cases.filter((caseData) => caseData.status !== 'DONE' && caseData.status !== 'CORRECTION_NEEDED');
-    const corrections = cases.filter((caseData) => caseData.status === 'CORRECTION_NEEDED');
-    const verdicts = { FIT: 0, ATTENTION: 0, NOT_RECOMMENDED: 0, INCONCLUSIVE: 0 };
-    done.forEach((caseData) => {
-        const key = caseData.finalVerdict || 'INCONCLUSIVE';
-        verdicts[key] = (verdicts[key] || 0) + 1;
-    });
-
-    const prov = {};
-    METRIC_PROVIDERS.forEach((provider) => {
-        const stats = { calls: 0, done: 0, partial: 0, failed: 0, running: 0, costBRL: 0 };
-        cases.forEach((caseData) => {
-            const status = caseData[provider.field];
-            if (!status || status === 'SKIPPED') return;
-            stats.calls += 1;
-            if (status === 'DONE') stats.done += 1;
-            else if (status === 'PARTIAL') stats.partial += 1;
-            else if (status === 'FAILED') stats.failed += 1;
-            else if (status === 'RUNNING') stats.running += 1;
-        });
-        prov[provider.key] = stats;
-    });
-
-    let fdTotalBRL = 0;
-    const fdPhaseCosts = {};
-    cases.forEach((caseData) => {
-        const sources = caseData.enrichmentSources || {};
-        Object.entries(sources).forEach(([phase, info]) => {
-            const cost = Number.parseFloat(info?.cost) || 0;
-            fdTotalBRL += cost;
-            fdPhaseCosts[phase] = (fdPhaseCosts[phase] || 0) + cost;
-        });
-    });
-    prov.fontedata.costBRL = fdTotalBRL;
-
-    const aiCases = cases.filter((caseData) => caseData.aiClassificationReviewRawResponse || caseData.aiClassificationReview || caseData.aiRawResponse || caseData.aiStructured);
-    const structOk = aiCases.filter((caseData) => (caseData.aiClassificationReviewOk ?? caseData.aiStructuredOk) === true).length;
-    const structFail = aiCases.filter((caseData) => (caseData.aiClassificationReviewOk ?? caseData.aiStructuredOk) === false).length;
-    const aiErrors = cases.filter((caseData) => (caseData.aiClassificationReviewError || caseData.aiError) && !(caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse)).length;
-    const cached = aiCases.filter((caseData) => caseData.aiClassificationReviewFromCache || caseData.aiFromCache).length;
-    const aiCostUSD = aiCases.reduce((sum, caseData) => sum + (caseData.aiCostUsd || 0) + (caseData.aiHomonymCostUsd || 0) + (caseData.aiClassificationReviewCostUsd || 0), 0);
-    const tokIn = aiCases.reduce((sum, caseData) => sum + (caseData.aiClassificationReviewTokens?.input || caseData.aiTokens?.input || 0), 0);
-    const tokOut = aiCases.reduce((sum, caseData) => sum + (caseData.aiClassificationReviewTokens?.output || caseData.aiTokens?.output || 0), 0);
-    const decisions = { ACCEPTED: 0, ADJUSTED: 0, IGNORED: 0, none: 0 };
-    aiCases.forEach((caseData) => {
-        const key = caseData.aiDecision || 'none';
-        decisions[key] = (decisions[key] || 0) + 1;
-    });
-
-    const turnaroundHours = done
-        .map((caseData) => (typeof caseData.turnaroundHours === 'number' ? caseData.turnaroundHours : diffHoursBackend(caseData.createdAt, caseData.concludedAt || caseData.updatedAt)))
-        .filter((value) => typeof value === 'number' && Number.isFinite(value));
-    const avgDays = turnaroundHours.length
-        ? (turnaroundHours.reduce((sum, value) => sum + value, 0) / turnaroundHours.length / 24).toFixed(1)
-        : null;
-
-    const byTenant = {};
-    if (showAllTenants) {
-        cases.forEach((caseData) => {
-            const tenant = caseData.tenantName || caseData.tenantId || '?';
-            if (!byTenant[tenant]) byTenant[tenant] = { total: 0, done: 0, fdCost: 0, aiCost: 0 };
-            byTenant[tenant].total += 1;
-            if (caseData.status === 'DONE') byTenant[tenant].done += 1;
-            byTenant[tenant].aiCost += (caseData.aiCostUsd || 0) + (caseData.aiHomonymCostUsd || 0) + (caseData.aiClassificationReviewCostUsd || 0);
-            Object.values(caseData.enrichmentSources || {}).forEach((info) => {
-                byTenant[tenant].fdCost += Number.parseFloat(info?.cost) || 0;
-            });
-        });
-    }
-
-    return {
-        total: cases.length,
-        done: done.length,
-        running: running.length,
-        corrections: corrections.length,
-        verdicts,
-        prov,
-        fdPhaseCosts: Object.entries(fdPhaseCosts).sort((left, right) => right[1] - left[1]),
-        fdTotalBRL,
-        ai: { total: aiCases.length, structOk, structFail, errors: aiErrors, cached, costUSD: aiCostUSD, tokIn, tokOut, decisions },
-        avgDays,
-        completionRate: pctBackend(done.length, cases.length),
-        structuredRate: pctBackend(structOk, aiCases.length),
-        cacheRate: pctBackend(cached, aiCases.length),
-        reviewRate: pctBackend((decisions.ADJUSTED || 0) + (decisions.IGNORED || 0), aiCases.length),
-        byTenant: Object.entries(byTenant).sort((left, right) => (right[1].fdCost + right[1].aiCost) - (left[1].fdCost + left[1].aiCost)),
-    };
-}
-
-function buildClientDashboardMetricsFromCases(cases, now = new Date()) {
-    const doneCases = cases.filter((caseData) => caseData.status === 'DONE');
-    const inProgressCases = cases.filter((caseData) => ['IN_PROGRESS', 'WAITING_INFO'].includes(caseData.status));
-    const pendingCases = cases.filter((caseData) => caseData.status === 'PENDING');
-    const correctionCases = cases.filter((caseData) => caseData.status === 'CORRECTION_NEEDED');
-    const waitingInfoCases = cases.filter((caseData) => caseData.status === 'WAITING_INFO');
-    const verdicts = {
-        FIT: doneCases.filter((caseData) => caseData.finalVerdict === 'FIT').length,
-        ATTENTION: doneCases.filter((caseData) => caseData.finalVerdict === 'ATTENTION').length,
-        NOT_RECOMMENDED: doneCases.filter((caseData) => caseData.finalVerdict === 'NOT_RECOMMENDED').length,
-    };
-    const turnaroundHours = doneCases
-        .map((caseData) => (typeof caseData.turnaroundHours === 'number' ? caseData.turnaroundHours : diffHoursBackend(caseData.createdAt, caseData.concludedAt)))
-        .filter((value) => typeof value === 'number' && Number.isFinite(value));
-    const avgTurnaroundHours = turnaroundHours.length
-        ? turnaroundHours.reduce((sum, value) => sum + value, 0) / turnaroundHours.length
-        : null;
-    const months = [];
-    for (let offset = 5; offset >= 0; offset -= 1) {
-        const currentMonth = new Date(now.getFullYear(), now.getMonth() - offset, 1);
-        const key = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
-        const monthCases = cases.filter((caseData) => String(caseData.createdMonthKey || caseData.createdAt || '').startsWith(key));
-        months.push({
-            key,
-            label: currentMonth.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
-            count: monthCases.length,
-            doneCount: monthCases.filter((caseData) => caseData.status === 'DONE').length,
-        });
-    }
-    const recentCompletedCases = [...doneCases]
-        .filter((caseData) => caseData.concludedAt)
-        .sort((left, right) => String(right.concludedAt).localeCompare(String(left.concludedAt)))
-        .slice(0, 4);
-    const attentionRules = [
-        { label: 'Antecedentes criminais', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag) },
-        { label: 'Processos trabalhistas', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag) },
-        { label: 'Mandados de prisao', match: (caseData) => caseData.warrantFlag === 'POSITIVE' },
-        { label: 'Exposicao OSINT', match: (caseData) => ['MEDIUM', 'HIGH'].includes(caseData.osintLevel) },
-        { label: 'Redes sociais', match: (caseData) => ['CONCERN', 'CONTRAINDICATED'].includes(caseData.socialStatus) },
-        { label: 'Perfil digital', match: (caseData) => ['ALERT', 'CRITICAL'].includes(caseData.digitalFlag) },
-        { label: 'Conflito de interesse', match: (caseData) => caseData.conflictInterest === 'YES' },
-    ];
-    const topFlagCounts = {};
-    doneCases
-        .filter((caseData) => ['ATTENTION', 'NOT_RECOMMENDED'].includes(caseData.finalVerdict))
-        .forEach((caseData) => {
-            attentionRules.forEach((rule) => {
-                if (rule.match(caseData)) topFlagCounts[rule.label] = (topFlagCounts[rule.label] || 0) + 1;
-            });
-        });
-
-    return {
-        total: cases.length,
-        done: doneCases.length,
-        inProgress: inProgressCases.length,
-        pending: pendingCases.length,
-        corrections: correctionCases.length,
-        waitingInfo: waitingInfoCases.length,
-        completionRate: cases.length > 0 ? Math.round((doneCases.length / cases.length) * 100) : 0,
-        avgTurnaroundHours,
-        verdicts,
-        months,
-        maxMonthCount: Math.max(...months.map((month) => month.count), 1),
-        topFlags: Object.entries(topFlagCounts)
-            .sort((left, right) => right[1] - left[1])
-            .slice(0, 6)
-            .map(([label, count]) => ({ label, count })),
-        recentCompletedCases,
-    };
-}
-
-async function fetchCaseMetricDocuments({ collectionId = 'cases', tenantId = null, periodDays = 0, fields = [] }) {
-    const cutoff = periodDays > 0 ? new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000) : null;
-    let lastDoc = null;
-    let pageCount = 0;
-    const docs = [];
-
-    while (true) {
-        let q = db.collection(collectionId);
-        if (tenantId) q = q.where('tenantId', '==', tenantId);
-        if (cutoff) q = q.where('createdAt', '>=', cutoff);
-        q = q.orderBy('createdAt', 'desc');
-        if (fields.length > 0) q = q.select(...fields);
-        if (lastDoc) q = q.startAfter(lastDoc);
-        q = q.limit(CASE_QUERY_PAGE_SIZE);
-        const snapshot = await q.get();
-        pageCount += 1;
-        docs.push(...snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
-        if (snapshot.docs.length < CASE_QUERY_PAGE_SIZE) break;
-        lastDoc = snapshot.docs[snapshot.docs.length - 1];
-    }
-
-    return { docs, pageCount };
-}
-
-const OPS_METRIC_FIELDS = [
-    'tenantId', 'tenantName', 'status', 'finalVerdict', 'createdAt', 'concludedAt', 'updatedAt', 'turnaroundHours',
-    'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus', 'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus',
-    'enrichmentSources', 'aiClassificationReviewRawResponse', 'aiClassificationReview', 'aiRawResponse', 'aiStructured',
-    'aiClassificationReviewOk', 'aiStructuredOk', 'aiClassificationReviewError', 'aiError', 'aiClassificationReviewFromCache', 'aiFromCache',
-    'aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd', 'aiClassificationReviewTokens', 'aiTokens', 'aiDecision',
-];
-
-const CLIENT_DASHBOARD_FIELDS = [
-    'caseId', 'tenantId', 'candidateName', 'candidatePosition', 'status', 'finalVerdict', 'createdAt', 'createdMonthKey',
-    'concludedAt', 'updatedAt', 'turnaroundHours', 'criminalFlag', 'laborFlag', 'warrantFlag', 'osintLevel', 'socialStatus',
-    'digitalFlag', 'conflictInterest',
-];
-
-const OPS_CASE_LIST_FIELDS = [
-    'caseId', 'tenantId', 'tenantName', 'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'createdAt', 'updatedAt',
-    'concludedAt', 'turnaroundHours', 'slaHours', 'status', 'riskLevel', 'criminalFlag', 'finalVerdict', 'priority',
-    'assigneeId', 'assigneeName', 'assigneeEmail', 'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus',
-    'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus', 'aiStatus',
-];
-
-const CASE_QUERY_MAX_DOCS = 10000;
-
-async function fetchTenantCaseDocuments({ collectionId, tenantId = null, fields = [], maxDocs = CASE_QUERY_MAX_DOCS }) {
-    let lastDoc = null;
-    let pageCount = 0;
-    let scannedRecords = 0;
-    const docs = [];
-
-    while (scannedRecords < maxDocs) {
-        let q = db.collection(collectionId);
-        if (tenantId) q = q.where('tenantId', '==', tenantId);
-        q = q.orderBy('createdAt', 'desc');
-        if (fields.length > 0) q = q.select(...fields);
-        if (lastDoc) q = q.startAfter(lastDoc);
-        q = q.limit(Math.min(CASE_QUERY_PAGE_SIZE, maxDocs - scannedRecords));
-        const snap = await q.get();
-        pageCount += 1;
-        const currentDocs = snap.docs || [];
-        scannedRecords += currentDocs.length;
-        docs.push(...currentDocs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
-        if (currentDocs.length < CASE_QUERY_PAGE_SIZE) break;
-        lastDoc = currentDocs[currentDocs.length - 1];
-    }
-
-    return { docs, pageCount, scannedRecords, capped: scannedRecords >= maxDocs };
-}
-
-exports.getOpsCaseMetrics = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-        const profile = await getOpsUserProfile(uid);
-        const periodDays = normalizeMetricsPeriod(request.data?.periodDays ?? 30);
-        const tenantId = resolveOpsMetricsTenant(profile, request.data?.tenantId);
-        const { docs, pageCount } = await fetchCaseMetricDocuments({
-            collectionId: 'cases',
-            tenantId,
-            periodDays,
-            fields: OPS_METRIC_FIELDS,
-        });
-        const metrics = buildOpsMetricsFromCases(docs, { showAllTenants: !tenantId && isGlobalOpsProfile(profile) });
-        return {
-            ...metrics,
-            meta: {
-                source: 'server',
-                scannedRecords: docs.length,
-                pageCount,
-                generatedAt: new Date().toISOString(),
-                periodDays,
-                tenantId,
-            },
-        };
-    },
-);
-
-exports.getClientDashboardMetrics = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-        const profile = await getClientUserProfile(uid);
-        const { docs, pageCount } = await fetchCaseMetricDocuments({
-            collectionId: 'clientCases',
-            tenantId: profile.tenantId,
-            periodDays: 0,
-            fields: CLIENT_DASHBOARD_FIELDS,
-        });
-        const serialized = docs.map((docData) => serializeClientCaseDocument(docData));
-        const metrics = buildClientDashboardMetricsFromCases(serialized);
-        return {
-            ...metrics,
-            meta: {
-                source: 'server',
-                scannedRecords: docs.length,
-                pageCount,
-                generatedAt: new Date().toISOString(),
-            },
-        };
-    },
-);
+exports.getClientDashboardMetrics = caseQueriesAssignments.createGetClientDashboardMetricsHandler({
+    db,
+    getClientUserProfile,
+});
 
 exports.getClientCaseById = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 30, cors: true },
@@ -11046,124 +9220,25 @@ exports.getClientCaseById = onCall(
     },
 );
 
-exports.listOpsCases = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-        const profile = await getOpsUserProfile(uid);
-        const tenantId = resolveOpsMetricsTenant(profile, request.data?.tenantId);
-        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
-        const page = Math.max(Number(request.data?.page) || 1, 1);
-        const filters = request.data?.filters || {};
-        const queueOnly = Boolean(request.data?.queueOnly);
-        const assigneeUid = String(request.data?.assigneeUid || uid || '');
-        const sortField = String(request.data?.sortField || 'createdAt');
-        const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
+exports.listOpsCases = caseQueriesAssignments.createListOpsCasesHandler({
+    db,
+    getOpsUserProfile,
+});
 
-        const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
-            collectionId: 'cases',
-            tenantId,
-            fields: OPS_CASE_LIST_FIELDS,
-        });
-        const serialized = docs.map((docData) => serializeClientCaseDocument(docData));
-        const statsBase = queueOnly
-            ? serialized.filter((caseData) => caseData.status !== 'DONE')
-            : serialized;
-        const allMatches = serialized.filter((caseData) => matchesOpsCaseFilters(caseData, filters, { queueOnly, assigneeUid }));
-        allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir));
+exports.listOpsCasesV2 = caseQueriesAssignments.createListOpsCasesV2Handler({
+    db,
+    getOpsUserProfile,
+});
 
-        const start = (page - 1) * pageSize;
-        const pageCases = allMatches.slice(start, start + pageSize);
-        return {
-            cases: pageCases,
-            total: allMatches.length,
-            stats: buildOpsCaseStats(statsBase),
-            page,
-            pageSize,
-            totalPages: Math.max(1, Math.ceil(allMatches.length / pageSize)),
-            hasMore: start + pageSize < allMatches.length,
-            meta: {
-                source: 'server',
-                scannedRecords,
-                pageCount,
-                capped,
-                tenantId,
-                queueOnly,
-            },
-        };
-    },
-);
+exports.listClientCases = caseQueriesAssignments.createListClientCasesHandler({
+    db,
+    getClientUserProfile,
+});
 
-exports.listClientCases = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-        const profile = await getClientUserProfile(uid);
-        const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
-        const page = Math.max(Number(request.data?.page) || 1, 1);
-        const filters = request.data?.filters || {};
-        const sortField = String(request.data?.sortField || 'createdAt');
-        const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
-        const allMatches = [];
-        let lastDoc = null;
-        let scannedRecords = 0;
-        let pageCount = 0;
-        let capped = false;
-
-        while (true) {
-            let q = db.collection('clientCases')
-                .where('tenantId', '==', profile.tenantId)
-                .orderBy('createdAt', 'desc')
-                .limit(CASE_QUERY_PAGE_SIZE);
-            if (lastDoc) q = q.startAfter(lastDoc);
-            const snap = await q.get();
-            pageCount += 1;
-            const docs = snap.docs || [];
-            docs.forEach((docSnap) => {
-                scannedRecords += 1;
-                const serialized = serializeClientCaseDocument(docSnap);
-                if (matchesClientCaseFilters(serialized, filters)) allMatches.push(serialized);
-            });
-            if (docs.length < CASE_QUERY_PAGE_SIZE) break;
-            if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) {
-                capped = true;
-                break;
-            }
-            lastDoc = docs[docs.length - 1];
-        }
-
-        allMatches.sort((left, right) => compareClientCases(left, right, sortField, sortDir));
-        const start = (page - 1) * pageSize;
-        const pageCases = allMatches.slice(start, start + pageSize);
-        const stats = allMatches.reduce((acc, caseData) => {
-            acc.total += 1;
-            if (caseData.status === 'DONE') acc.done += 1;
-            if (caseData.status === 'PENDING') acc.pending += 1;
-            if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
-            if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
-            if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
-            if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
-            return acc;
-        }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 });
-        return {
-            cases: pageCases,
-            total: allMatches.length,
-            stats,
-            page,
-            pageSize,
-            totalPages: Math.max(1, Math.ceil(allMatches.length / pageSize)),
-            hasMore: start + pageSize < allMatches.length,
-            meta: {
-                source: 'server',
-                scannedRecords,
-                pageCount,
-                capped,
-            },
-        };
-    },
-);
+exports.listClientCasesV2 = caseQueriesAssignments.createListClientCasesV2Handler({
+    db,
+    getClientUserProfile,
+});
 
 exports.getClientExportCases = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
@@ -11207,55 +9282,11 @@ exports.getClientExportCases = onCall(
     },
 );
 
-/**
- * Validate CPF digits including check digits (same algorithm as frontend).
- * BUG-R1-010 fix: backend must reject invalid CPFs, not just check length.
- */
-function validateCpfDigits(digits) {
-    if (typeof digits !== 'string' || digits.length !== 11) return false;
-    if (/^(\d)\1{10}$/.test(digits)) return false;
-    for (let t = 9; t < 11; t++) {
-        let sum = 0;
-        for (let i = 0; i < t; i++) sum += Number(digits[i]) * (t + 1 - i);
-        const remainder = (sum * 10) % 11;
-        if ((remainder === 10 ? 0 : remainder) !== Number(digits[t])) return false;
-    }
-    return true;
-}
-
-function sanitizeCpf(cpf) {
-    return String(cpf || '').replace(/\D/g, '').slice(0, 11);
-}
-
-function maskCpf(cpf) {
-    const digits = sanitizeCpf(cpf);
-    if (digits.length !== 11) return '';
-    return `***.***.***-${digits.slice(9)}`;
-}
-
 function normalizeTenantSlug(value = '') {
     return String(value)
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '');
-}
-
-function formatRequestedBy(profile, uid) {
-    const name = String(profile.displayName || '').trim();
-    const email = String(profile.email || '').trim();
-    if (name && email) return `${name} (${email})`;
-    if (name) return name;
-    if (email) return email;
-    return uid;
-}
-
-function sanitizePublicReportHtml(html) {
-    return String(html || '')
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-        .replace(/<iframe\b[\s\S]*?<\/iframe>/gi, '')
-        .replace(/<button\b[^>]*\bclass="[^"]*\bprint-btn\b[^"]*"[^>]*>[\s\S]*?<\/button>/gi, '')
-        .replace(/\son\w+=(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-        .replace(/\s(href|src)=("|')\s*javascript:[\s\S]*?\2/gi, ' $1="#"');
 }
 
 function getClientIp(request) {
@@ -11657,28 +9688,12 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
     };
 }
 
-exports.rerunAiAnalysis = onCall(
-    { region: 'southamerica-east1', secrets: [openaiApiKey] , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const { caseId } = request.data || {};
-        if (!caseId || typeof caseId !== 'string') {
-            throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
-        }
-
-        const profile = await getOpsUserProfile(uid);
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseDoc = await caseRef.get();
-        if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-        const caseData = caseDoc.data() || {};
-        assertOpsCanAccessCase(profile, caseData, caseId);
-
-        return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
-    },
-);
+exports.rerunAiAnalysis = caseQueriesAssignments.createRerunAiAnalysisHandler({
+    db,
+    getOpsUserProfile,
+    assertOpsCanAccessCase,
+    rerunAiForCase,
+});
 
 function makeRunId(prefix, caseId) {
     return `${prefix}_${caseId}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -12684,6 +10699,10 @@ exports.juditAsyncFallback = onSchedule(
     },
 );
 
+async function repairAllClaimsInner(request) {
+    return tenantUserManagement.repairAllClaimsInner({ db, getAuth, request });
+}
+
 exports.__test = {
     computeAutoClassification,
     buildAiPrompt,
@@ -12741,6 +10760,45 @@ exports.__test = {
     clientPayloadChanged,
     isAutoClassifyOnlyChange,
     shouldSkipClientCaseMirrorSync,
+    // Identity gate helpers
+    isIdentityGateBlocked(caseData) {
+      if (!caseData) return false;
+      if (caseData.bigdatacorpGateResult?.passed === false) return true;
+      if (caseData.juditGateResult?.passed === false) return true;
+      if (caseData.enrichmentGateResult?.passed === false) return true;
+      if (caseData.bigdatacorpEnrichmentStatus === 'BLOCKED') return true;
+      if (caseData.juditEnrichmentStatus === 'BLOCKED') return true;
+      if (caseData.enrichmentStatus === 'BLOCKED') return true;
+      return false;
+    },
+    canBypassIdentityGate(profile) {
+      if (!profile || !profile.role) return false;
+      return ['supervisor', 'admin', 'owner'].includes(profile.role);
+    },
+    buildIdentityGateCorrectionMessage(provider, reason) {
+      const safeProvider = String(provider || 'Provedor');
+      const safeReason = reason ? String(reason) : 'Gate de identidade bloqueado';
+      return `[${safeProvider}] ${safeReason}`;
+    },
+    async returnCaseForIdentityGateBlock({ caseRef, caseId, provider, providerLabel, gateReason, updateFields }) {
+      const updatePayload = {
+        status: 'CORRECTION_NEEDED',
+        correctionReason: 'identity_gate_blocked',
+        correctionNotes: gateReason || 'Gate de identidade bloqueado',
+        correctionRequestedBy: 'system_gate',
+        ...(updateFields || {}),
+      };
+      await caseRef.update(updatePayload);
+      return {
+        status: 'BLOCKED',
+        error: gateReason || 'Gate de identidade bloqueado',
+        caseId,
+        provider: provider || providerLabel,
+      };
+    },
+    // Handlers V2 para testes (usam db dinamicamente)
+    listOpsCasesV2Handler: (request) => caseQueriesAssignments.createListOpsCasesV2Handler({ db, getOpsUserProfile })(request),
+    listClientCasesV2Handler: (request) => caseQueriesAssignments.createListClientCasesV2Handler({ db, getClientUserProfile })(request),
     _setDb(mockDb) { db = mockDb; },
     _setGetAuth(mockFn) { getAuth = mockFn; },
     _setWriteAuditEvent(mockFn) { writeAuditEvent = mockFn; },
@@ -12750,45 +10808,21 @@ exports.__test = {
    SYSTEM HEALTH — Read-only endpoint for provider status
    ========================================================= */
 
-exports.getSystemHealth = onCall(
-    { region: 'southamerica-east1' , cors: true },
-    async (request) => {
-        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
-        const profile = await getOpsUserProfile(request.auth.uid);
-        if (!['analyst', 'supervisor', 'admin'].includes(profile?.role)) {
-            throw new HttpsError('permission-denied', 'Apenas analistas podem acessar.');
-        }
-
-        const { COLLECTION: healthCollection } = require('./helpers/circuitBreaker');
-        const snapshot = await db.collection(healthCollection).get();
-        const providers = {};
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            providers[doc.id] = {
-                providerId: doc.id,
-                failCount: data.failCount || 0,
-                lastSuccess: data.lastSuccess || null,
-                lastFailure: data.lastFailure || null,
-                lastError: data.lastError || null,
-                disabledUntil: data.disabledUntil || null,
-                updatedAt: data.updatedAt || null,
-            };
-        });
-        return { providers };
-    },
-);
+exports.getSystemHealth = systemHealth.createGetSystemHealthHandler({
+    db,
+    getOpsUserProfile: (uid) => getOpsUserProfile(uid),
+    circuitBreaker: require('./helpers/circuitBreaker'),
+});
 
 /* =========================================================
    CLIENT QUOTA STATUS — Read-only quota info for client portal
    ========================================================= */
 
-exports.getClientQuotaStatus = onCall(
-    { region: 'southamerica-east1', cors: [/\.vercel\.app$/, /localhost/] },
-    async (request) => {
-        if (!request.auth) throw new HttpsError('unauthenticated', 'Login necessario.');
-        return getClientQuotaStatusInner(request.auth.uid);
-    },
-);
+exports.getClientQuotaStatus = systemHealth.createGetClientQuotaStatusHandler({
+    db,
+    getClientUserProfile,
+    getTenantSettingsData,
+});
 
 /* =========================================================
    PDF Generation — Server-side rendering with Puppeteer
@@ -12797,312 +10831,32 @@ exports.getClientQuotaStatus = onCall(
 const { renderHtmlToPdfBuffer } = require('./helpers/pdfRenderer');
 const { injectPdfExportCss } = require('./helpers/pdfHtml');
 
-const PDF_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes for signed URL
-const PDF_SIGNED_URL_ACTION = 'read';
+exports.generateClientCasePdf = pdfGeneration.createGenerateClientCasePdfHandler({
+    db,
+    getClientUserProfile,
+    assertClientManager,
+    getOpsUserProfile,
+    assertOpsCanAccessCase,
+    prepareCanonicalReport,
+    renderHtmlToPdfBuffer,
+    injectPdfExportCss,
+    hasPublicReportMinimumContent,
+    writeAuditEvent,
+    ACTOR_TYPE,
+    SOURCE,
+    getClientIp,
+});
 
-function makeSafePdfFilename(value) {
-    const base = String(value || 'relatorio')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-zA-Z0-9\-_\s]/g, '_')
-        .replace(/_+/g, '_')
-        .trim()
-        .slice(0, 80);
-    return base || 'relatorio';
-}
-
-function asIsoForFilename(date) {
-    const d = date instanceof Date ? date : new Date(date || Date.now());
-    return d.toISOString().replace(/[:.]/g, '-').slice(0, 19);
-}
-
-async function savePdfAndCreateSignedUrl({ pdfBuffer, storagePath, filename, metadata = {}, expiresMs = PDF_EXPIRY_MS }) {
-    const bucket = getStorage().bucket();
-    const filePath = `${storagePath}/${filename}`;
-    const file = bucket.file(filePath);
-
-    await file.save(pdfBuffer, {
-        metadata: {
-            contentType: 'application/pdf',
-            metadata: {
-                ...metadata,
-                generatedAt: new Date().toISOString(),
-            },
-        },
-    });
-
-    // Generate signed URL for secure temporary access
-    try {
-        const [signedUrl] = await file.getSignedUrl({
-            action: PDF_SIGNED_URL_ACTION,
-            expires: Date.now() + expiresMs,
-            responseDisposition: `attachment; filename="${filename}"`,
-        });
-        return { signedUrl, filePath, filename };
-    } catch (signErr) {
-        console.error(`[savePdfAndCreateSignedUrl] Signed URL generation failed for ${filePath}:`, signErr.message);
-        throw new Error(
-            `Falha ao gerar URL assinada para o PDF. ` +
-            `Verifique se a service account tem a permissao 'iam.serviceAccounts.signBlob'. ` +
-            `Erro original: ${signErr.message}`,
-        );
-    }
-}
-
-exports.generateClientCasePdf = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '2GiB' , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const profile = await getClientUserProfile(uid);
-        assertClientManager(profile);
-        const caseId = String(request.data?.caseId || '').trim();
-        if (!caseId) throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
-
-        const caseRef = db.collection('cases').doc(caseId);
-        const caseSnap = await caseRef.get();
-        if (!caseSnap.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
-        const caseData = caseSnap.data() || {};
-
-        if (caseData.tenantId !== profile.tenantId) {
-            throw new HttpsError('permission-denied', 'Caso nao pertence ao seu tenant.');
-        }
-        if (caseData.status !== 'DONE') {
-            throw new HttpsError('failed-precondition', 'PDF disponivel apenas para casos concluidos.');
-        }
-        if (!hasPublicReportMinimumContent(caseData)) {
-            throw new HttpsError('failed-precondition', 'Relatorio ainda nao possui conteudo minimo para exportacao.');
-        }
-
-        try {
-            console.log(`[generateClientCasePdf] caseId=${caseId} tenant=${profile.tenantId} — starting HTML build`);
-            // Build canonical HTML (watermark already in REPORT_CSS)
-            const { html } = await prepareCanonicalReport(caseId, caseData);
-            console.log(`[generateClientCasePdf] caseId=${caseId} — HTML built, length=${html?.length || 0}`);
-            const pdfHtml = injectPdfExportCss(html, { includeWatermark: false });
-            console.log(`[generateClientCasePdf] caseId=${caseId} — CSS injected`);
-
-            // Render PDF
-            console.log(`[generateClientCasePdf] caseId=${caseId} — launching Chromium via Puppeteer`);
-            const pdfBuffer = await renderHtmlToPdfBuffer(pdfHtml, {
-                timeoutMs: 90000,
-                setContentTimeoutMs: 90000,
-                pdfTimeoutMs: 90000,
-            });
-            console.log(`[generateClientCasePdf] caseId=${caseId} — PDF rendered, buffer size=${pdfBuffer?.length || 0}`);
-
-            const tenantId = profile.tenantId;
-            const candidateName = makeSafePdfFilename(caseData.candidateName);
-            const timestamp = asIsoForFilename(new Date());
-            const filename = `${candidateName}_${timestamp}.pdf`;
-
-            // Try to upload to Storage; fallback to base64 data URL if bucket unavailable
-            let signedUrl = null;
-            let filePath = null;
-            let storageFailed = false;
-            try {
-                const storagePath = `tenants/${tenantId}/cases/${caseId}/pdfExports`;
-                const uploadResult = await savePdfAndCreateSignedUrl({
-                    pdfBuffer,
-                    storagePath,
-                    filename,
-                    metadata: {
-                        caseId,
-                        tenantId,
-                        generatedBy: uid,
-                        candidateName: caseData.candidateName || '',
-                    },
-                });
-                signedUrl = uploadResult.signedUrl;
-                filePath = uploadResult.filePath;
-                console.log(`[generateClientCasePdf] caseId=${caseId} — uploaded to ${filePath}`);
-            } catch (storageErr) {
-                const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
-                    storageErr?.code === 404 ||
-                    storageErr?.status === 404;
-                const isSignBlobDenied = storageErr?.message?.includes('signBlob') ||
-                    storageErr?.message?.includes('iam.serviceAccounts.signBlob');
-                if (isBucketMissing || isSignBlobDenied) {
-                    console.warn(`[generateClientCasePdf] caseId=${caseId} — Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64 data URL`);
-                    storageFailed = true;
-                } else {
-                    throw storageErr;
-                }
-            }
-
-            if (!storageFailed && signedUrl) {
-                // Persist metadata in Firestore subcollection
-                const exportRef = caseRef.collection('pdfExports').doc();
-                await exportRef.set({
-                    filePath,
-                    filename,
-                    generatedAt: FieldValue.serverTimestamp(),
-                    generatedBy: uid,
-                    generatedByEmail: profile.email || uid,
-                    candidateName: caseData.candidateName || '',
-                    tenantId,
-                    caseId,
-                    signedUrl,
-                    signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
-                });
-
-                await writeAuditEvent({
-                    action: 'CLIENT_REPORT_PDF_GENERATED',
-                    tenantId,
-                    actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid, displayName: profile.displayName || null },
-                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                    related: { caseId, exportId: exportRef.id, filePath },
-                    source: SOURCE.PORTAL_CLIENT,
-                    ip: getClientIp(request),
-                    detail: `PDF do relatorio gerado para ${caseData.candidateName || caseId}`,
-                    clientMetadata: { filePath, filename },
-                });
-
-                return { url: signedUrl, expiresInSeconds: Math.floor(PDF_EXPIRY_MS / 1000) };
-            }
-
-            // Fallback: return base64 data URL for direct client download
-            const safePdfBuffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
-            const base64Pdf = safePdfBuffer.toString('base64');
-            const dataUrl = `data:application/pdf;base64,${base64Pdf}`;
-            console.log(`[generateClientCasePdf] caseId=${caseId} — returning base64 data URL, length=${dataUrl.length}, bufferBytes=${safePdfBuffer.length}`);
-
-            await writeAuditEvent({
-                action: 'CLIENT_REPORT_PDF_GENERATED',
-                tenantId,
-                actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid, displayName: profile.displayName || null },
-                entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
-                related: { caseId },
-                source: SOURCE.PORTAL_CLIENT,
-                ip: getClientIp(request),
-                detail: `PDF do relatorio gerado (base64 fallback) para ${caseData.candidateName || caseId}`,
-                clientMetadata: { filename, fallback: 'base64' },
-            });
-
-            return { url: dataUrl, expiresInSeconds: 0, filename, fallback: 'base64' };
-        } catch (err) {
-            console.error(`[generateClientCasePdf] caseId=${caseId} tenant=${profile.tenantId} error:`, err.message, err.stack);
-            throw new HttpsError('internal', `Falha ao gerar PDF: ${err.message}`);
-        }
-    },
-);
-
-exports.generatePublicReportPdf = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB' , cors: true },
-    async (request) => {
-        const token = String(request.data?.token || '').trim();
-        if (!token) throw new HttpsError('invalid-argument', 'Token do relatorio obrigatorio.');
-
-        const reportRef = db.collection('publicReports').doc(token);
-        const reportSnap = await reportRef.get();
-        if (!reportSnap.exists) throw new HttpsError('not-found', 'Relatorio nao encontrado.');
-
-        const reportData = reportSnap.data() || {};
-        const status = resolvePublicReportStatus(reportData);
-        if (status === 'REVOKED') throw new HttpsError('failed-precondition', 'Relatorio revogado.');
-        if (status === 'EXPIRED') throw new HttpsError('failed-precondition', 'Link expirado.');
-
-        // Defense in depth: verify case is still DONE
-        const caseId = reportData.caseId;
-        if (caseId) {
-            const caseSnap = await db.collection('cases').doc(caseId).get();
-            if (caseSnap.exists) {
-                const caseData = caseSnap.data() || {};
-                if (caseData.status !== 'DONE') {
-                    throw new HttpsError('failed-precondition', 'Caso nao esta concluido.');
-                }
-            }
-        }
-
-        // Use HTML stored in publicReports (already sanitized)
-        let html = reportData.html || '';
-        if (!html.trim()) {
-            throw new HttpsError('internal', 'HTML do relatorio indisponivel.');
-        }
-
-        // Inject only PDF export CSS — verification banner removed (was rendering as ugly box)
-        html = injectPdfExportCss(html, { includeWatermark: false });
-
-        const pdfBuffer = await renderHtmlToPdfBuffer(html, {
-            timeoutMs: 90000,
-            setContentTimeoutMs: 90000,
-            pdfTimeoutMs: 90000,
-        });
-
-        const candidateName = makeSafePdfFilename(reportData.candidateName);
-        const timestamp = asIsoForFilename(new Date());
-        const filename = `${candidateName}_${timestamp}.pdf`;
-        const storagePath = `publicReports/${token}/pdfExports`;
-
-        let signedUrl = null;
-        let filePath = null;
-        let returnUrl;
-
-        try {
-            const uploadResult = await savePdfAndCreateSignedUrl({
-                pdfBuffer,
-                storagePath,
-                filename,
-                metadata: {
-                    token,
-                    caseId: reportData.caseId || '',
-                    candidateName: reportData.candidateName || '',
-                    generatedBy: reportData.createdBy || 'public',
-                },
-            });
-            signedUrl = uploadResult.signedUrl;
-            filePath = uploadResult.filePath;
-            returnUrl = signedUrl;
-        } catch (storageErr) {
-            const isSignBlobDenied = storageErr?.message?.includes('signBlob') ||
-                storageErr?.message?.includes('iam.serviceAccounts.signBlob');
-            const isBucketMissing = storageErr?.message?.includes('bucket does not exist') ||
-                storageErr?.code === 404 || storageErr?.status === 404;
-            if (isSignBlobDenied || isBucketMissing) {
-                const safePdfBuffer = Buffer.isBuffer(pdfBuffer) ? pdfBuffer : Buffer.from(pdfBuffer);
-                console.warn(`[generatePublicReportPdf] Storage/signBlob unavailable (${storageErr.message?.slice(0, 120)}), falling back to base64 (bufferBytes=${safePdfBuffer.length})`);
-                returnUrl = `data:application/pdf;base64,${safePdfBuffer.toString('base64')}`;
-            } else {
-                throw storageErr;
-            }
-        }
-
-        // Persist metadata if uploaded successfully
-        if (filePath) {
-            const exportRef = reportRef.collection('pdfExports').doc();
-            await exportRef.set({
-                filePath,
-                filename,
-                generatedAt: FieldValue.serverTimestamp(),
-                candidateName: reportData.candidateName || '',
-                token,
-                caseId: reportData.caseId || null,
-                signedUrl,
-                signedUrlExpiresAt: new Date(Date.now() + PDF_EXPIRY_MS),
-            });
-        }
-
-        // Best-effort audit (public access — no authenticated actor)
-        try {
-            await writeAuditEvent({
-                action: 'PUBLIC_REPORT_PDF_GENERATED',
-                tenantId: reportData.tenantId || null,
-                actor: { type: ACTOR_TYPE.PUBLIC_LINK, id: token },
-                entity: { type: 'REPORT_PUBLIC', id: token, label: reportData.candidateName || token },
-                related: { caseId: reportData.caseId || null, token, filePath },
-                source: SOURCE.PUBLIC_REPORT,
-                ip: getClientIp(request),
-                detail: `PDF do relatorio publico gerado${reportData.candidateName ? ` para ${reportData.candidateName}` : ''}`,
-                clientMetadata: { filePath, filename },
-            });
-        } catch {
-            // Non-blocking: audit failure should not break PDF generation
-        }
-
-        return { url: returnUrl, expiresInSeconds: signedUrl ? Math.floor(PDF_EXPIRY_MS / 1000) : 0 };
-    },
-);
+exports.generatePublicReportPdf = pdfGeneration.createGeneratePublicReportPdfHandler({
+    db,
+    renderHtmlToPdfBuffer,
+    injectPdfExportCss,
+    resolvePublicReportStatus,
+    writeAuditEvent,
+    ACTOR_TYPE,
+    SOURCE,
+    getClientIp,
+});
 
 async function getClientQuotaStatusInner(uid) {
     const profile = await getClientUserProfile(uid);
@@ -13143,223 +10897,8 @@ async function getClientQuotaStatusInner(uid) {
    NOTIFICATIONS — Callable functions for frontend
    ========================================================= */
 
-exports.markNotificationAsRead = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 30 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const { notificationId } = request.data || {};
-        if (!notificationId) throw new HttpsError('invalid-argument', 'notificationId obrigatorio.');
-
-        const notificationRef = db.collection('notifications').doc(notificationId);
-        const notificationDoc = await notificationRef.get();
-        if (!notificationDoc.exists) throw new HttpsError('not-found', 'Notificacao nao encontrada.');
-
-        const notificationData = notificationDoc.data();
-        if (notificationData.recipientUid !== uid) {
-            throw new HttpsError('permission-denied', 'Sem permissao para alterar esta notificacao.');
-        }
-
-        await notificationRef.update({
-            read: true,
-            readAt: FieldValue.serverTimestamp(),
-        });
-
-        return { success: true };
-    },
-);
-
-exports.markAllNotificationsAsRead = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 30 , cors: true },
-    async (request) => {
-        const uid = request.auth?.uid;
-        if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
-
-        const snapshot = await db.collection('notifications')
-            .where('recipientUid', '==', uid)
-            .where('read', '==', false)
-            .limit(100)
-            .get();
-
-        if (snapshot.empty) return { updated: 0 };
-
-        const batch = db.batch();
-        snapshot.docs.forEach((doc) => {
-            batch.update(doc.ref, {
-                read: true,
-                readAt: FieldValue.serverTimestamp(),
-            });
-        });
-
-        await batch.commit();
-        return { updated: snapshot.docs.length };
-    },
-);
-
-// â”€â”€ Client GeoIP proxy (bypasses browser CORS / rate-limit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-function isPrivateOrLocalIp(ip) {
-    const value = String(ip || '').trim();
-    return (
-        value === '127.0.0.1' ||
-        value === '::1' ||
-        value.startsWith('10.') ||
-        value.startsWith('192.168.') ||
-        /^172\.(1[6-9]|2\d|3[0-1])\./.test(value)
-    );
-}
-
-function normalizeIp(ip) {
-    if (!ip) return null;
-    let value = String(ip).trim();
-    if (value.includes(',')) {
-        // x-forwarded-for can be a comma-separated list; pick the first public IP
-        const parts = value.split(',').map((p) => p.trim()).filter(Boolean);
-        for (const part of parts) {
-            const cleaned = part.startsWith('::ffff:') ? part.slice(7) : part;
-            if (!isPrivateOrLocalIp(cleaned)) {
-                return cleaned;
-            }
-        }
-        // fallback to first item if all are private
-        value = parts[0];
-    }
-    if (value.startsWith('::ffff:')) value = value.slice(7);
-    return value || null;
-}
-
-function getRequestIp(req) {
-    const candidates = [
-        req.headers['x-forwarded-for'],
-        req.headers['x-real-ip'],
-        req.headers['cf-connecting-ip'],
-        req.headers['fastly-client-ip'],
-        req.ip,
-        req.socket?.remoteAddress,
-    ];
-    for (const candidate of candidates) {
-        const ip = normalizeIp(candidate);
-        if (ip) return ip;
-    }
-    return null;
-}
-
-
-
-function sanitizeGeoText(value, maxLength = 80) {
-    return String(value || '')
-        .replace(/[<>]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, maxLength);
-}
-
-async function lookupIpLocation(ip) {
-    if (!ip || isPrivateOrLocalIp(ip)) {
-        return {
-            ip,
-            city: null,
-            region: null,
-            regionCode: null,
-            countryName: null,
-            countryCode: null,
-            lookupOk: false,
-            reason: 'private_or_local_ip',
-        };
-    }
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 2500);
-
-    try {
-        const response = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
-            method: 'GET',
-            signal: controller.signal,
-            headers: {
-                Accept: 'application/json',
-                'User-Agent': 'ComplianceHub-SecurityContext/1.0',
-            },
-        });
-
-        if (!response.ok) {
-            return {
-                ip,
-                lookupOk: false,
-                reason: `http_${response.status}`,
-            };
-        }
-
-        const data = await response.json();
-
-        return {
-            ip,
-            city: sanitizeGeoText(data.city) || null,
-            region: sanitizeGeoText(data.region) || null,
-            regionCode: sanitizeGeoText(data.region_code || data.regionCode, 12) || null,
-            countryName: sanitizeGeoText(data.country_name || data.countryName) || null,
-            countryCode: sanitizeGeoText(data.country_code || data.countryCode, 12) || null,
-            lookupOk: true,
-            provider: 'ipapi.co',
-        };
-    } catch (err) {
-        return {
-            ip,
-            city: null,
-            region: null,
-            regionCode: null,
-            countryName: null,
-            countryCode: null,
-            lookupOk: false,
-            reason: err?.name === 'AbortError' ? 'timeout' : 'lookup_failed',
-            provider: 'ipapi.co',
-        };
-    } finally {
-        clearTimeout(timer);
-    }
-}
-
-exports.getClientGeoIp = onCall(
-    {
-        region: 'southamerica-east1',
-        memory: '256MiB',
-        timeoutSeconds: 10,
-        cors: true,
-    },
-    async (request) => {
-        const clientIp = getRequestIp(request.rawRequest) || normalizeIp(request.data?.clientIp);
-
-        if (!clientIp) {
-            return {
-                monitored: true,
-                ip: null,
-                city: null,
-                region: null,
-                regionCode: null,
-                countryName: null,
-                countryCode: null,
-                lookupOk: false,
-                reason: 'ip_not_detected',
-            };
-        }
-
-        const lookup = await lookupIpLocation(clientIp);
-
-        return {
-            monitored: true,
-            ip: lookup.ip || clientIp,
-            city: lookup.city || null,
-            region: lookup.region || null,
-            regionCode: lookup.regionCode || null,
-            countryName: lookup.countryName || null,
-            countryCode: lookup.countryCode || null,
-            lookupOk: lookup.lookupOk === true,
-            reason: lookup.reason || null,
-            provider: lookup.provider || null,
-        };
-    }
-);
-
-// Case Communication exports
-exports.sendCaseMessage = caseComm.sendCaseMessage;
-exports.markCaseCommunicationRead = caseComm.markCaseCommunicationRead;
+exports.markNotificationAsRead = notificationService.createMarkNotificationAsReadHandler({ db });
+exports.markAllNotificationsAsRead = notificationService.createMarkAllNotificationsAsReadHandler({ db });
+exports.getClientGeoIp = notificationService.createGetClientGeoIpHandler();
+exports.sendCaseMessage = notificationService.createSendCaseMessageHandler({ db });
+exports.markCaseCommunicationRead = notificationService.createMarkCaseCommunicationReadHandler({ db });

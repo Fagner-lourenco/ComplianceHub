@@ -12,10 +12,13 @@ const {
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
 const { buildHomonymAnalysisInput } = require('./aiHomonym');
+const { computeAutoClassification } = require('../modules/autoClassification');
 const { __test } = require('../index');
+const {
+    validateConcludeFinalFlags,
+} = require('../modules/concludeCaseAndSettings');
 
 const {
-    computeAutoClassification,
     buildAiPrompt,
     buildAiClassificationReviewPrompt,
     buildAiClassificationReviewContext,
@@ -23,9 +26,6 @@ const {
     buildAiHomonymPrompt,
     parseAiClassificationReviewResponse,
     validateAiClassificationReviewSchema,
-    validateConcludeFinalFlags,
-    buildClientVerdictPolicy,
-    validateClientVerdictPolicy,
     evaluateNegativePartialSafetyNet,
     sanitizeAuditMetadataValue,
 } = __test;
@@ -468,135 +468,6 @@ describe('conclusion final flag validation', () => {
         expect(() => validateConcludeFinalFlags({ criminalFlag: 'NEGATIVE' })).not.toThrow();
         expect(() => validateConcludeFinalFlags({ criminalFlag: 'POSITIVE' })).not.toThrow();
         expect(() => validateConcludeFinalFlags({ criminalFlag: 'INCONCLUSIVE' })).not.toThrow();
-    });
-});
-
-describe('client verdict policy', () => {
-    it('exige ATENCAO para um processo trabalhista do candidato como reclamante', () => {
-        const policy = buildClientVerdictPolicy({
-            candidateName: 'Joao Silva',
-            juditRoleSummary: [{
-                code: '0000001-11.2026.5.02.0001',
-                area: 'Trabalhista',
-                personType: 'Reclamante',
-                parties: [
-                    { name: 'Joao Silva', role: 'Reclamante', side: 'ACTIVE' },
-                    { name: 'Empresa A Ltda', role: 'Reclamado', side: 'PASSIVE' },
-                ],
-            }],
-        });
-
-        expect(policy.requiredVerdict).toBe('ATTENTION');
-        expect(policy.reasons.join(' ')).toMatch(/trabalhista/i);
-    });
-
-    it('exige NAO RECOMENDADO para dois processos trabalhistas contra empresas diferentes', () => {
-        const policy = buildClientVerdictPolicy({
-            candidateName: 'Joao Silva',
-            juditRoleSummary: [
-                {
-                    code: '0000001-11.2026.5.02.0001',
-                    area: 'Trabalhista',
-                    personType: 'Reclamante',
-                    parties: [
-                        { name: 'Joao Silva', role: 'Reclamante', side: 'ACTIVE' },
-                        { name: 'Empresa A Ltda', role: 'Reclamado', side: 'PASSIVE' },
-                    ],
-                },
-                {
-                    code: '0000002-22.2026.5.02.0002',
-                    area: 'Trabalhista',
-                    personType: 'Autor',
-                    parties: [
-                        { name: 'Joao Silva', role: 'Autor', side: 'ACTIVE' },
-                        { name: 'Empresa B S.A.', role: 'Reclamado', side: 'PASSIVE' },
-                    ],
-                },
-            ],
-        });
-
-        expect(policy.requiredVerdict).toBe('NOT_RECOMMENDED');
-        expect(policy.reasons.join(' ')).toMatch(/empresas diferentes/i);
-    });
-
-    it('exige NAO RECOMENDADO para processo trabalhista contra Madero', () => {
-        const policy = buildClientVerdictPolicy({
-            candidateName: 'Joao Silva',
-            juditRoleSummary: [{
-                code: '0000001-11.2026.5.02.0001',
-                area: 'Trabalhista',
-                personType: 'Reclamante',
-                parties: [
-                    { name: 'Joao Silva', role: 'Reclamante', side: 'ACTIVE' },
-                    { name: 'Madero Industria e Comercio S.A.', role: 'Reclamado', side: 'PASSIVE' },
-                ],
-            }],
-        });
-
-        expect(policy.requiredVerdict).toBe('NOT_RECOMMENDED');
-        expect(policy.reasons.join(' ')).toMatch(/Madero/i);
-    });
-
-    it('exige ATENCAO para criminal material somente de transito', () => {
-        const policy = buildClientVerdictPolicy({
-            juditRoleSummary: [{
-                code: '0000001-11.2026.8.26.0001',
-                area: 'Criminal',
-                subjects: ['Crimes de transito'],
-                personType: 'Reu',
-                isDefendant: true,
-            }],
-        });
-
-        expect(policy.requiredVerdict).toBe('ATTENTION');
-    });
-
-    it('exige NAO RECOMENDADO para criminal material que nao seja apenas transito ou ambiental', () => {
-        const policy = buildClientVerdictPolicy({
-            juditRoleSummary: [{
-                code: '0000001-11.2026.8.26.0001',
-                area: 'Criminal',
-                subjects: ['Ameaca'],
-                personType: 'Reu',
-                isDefendant: true,
-            }],
-        });
-
-        expect(policy.requiredVerdict).toBe('NOT_RECOMMENDED');
-    });
-
-    it('ignora criminal em que o candidato aparece como vitima', () => {
-        const policy = buildClientVerdictPolicy({
-            juditRoleSummary: [{
-                code: '0000001-11.2026.8.26.0001',
-                area: 'Criminal',
-                subjects: ['Ameaca'],
-                personType: 'Vitima',
-                isVictim: true,
-            }],
-        });
-
-        expect(policy.requiredVerdict).toBe('FIT');
-    });
-
-    it('bloqueia conclusao abaixo da politica sem override confirmado', () => {
-        const policy = { requiredVerdict: 'NOT_RECOMMENDED', reasons: ['Regra critica'], evidence: [] };
-
-        expect(() => validateClientVerdictPolicy({
-            submittedVerdict: 'ATTENTION',
-            policy,
-            override: { confirmed: false, justification: 'Teste operacional' },
-        })).toThrow(/Nao recomendado/i);
-    });
-
-    it('permite conclusao abaixo da politica com override confirmado e justificativa', () => {
-        const policy = { requiredVerdict: 'NOT_RECOMMENDED', reasons: ['Regra critica'], evidence: [] };
-
-        expect(() => validateClientVerdictPolicy({
-            submittedVerdict: 'ATTENTION',
-            policy,
-            override: { confirmed: true, justification: 'Override aprovado pelo supervisor responsavel.' },
-        })).not.toThrow();
     });
 });
 

@@ -11,10 +11,10 @@ const {
     normalizeJuditLawsuits,
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
+const { computeAutoClassification } = require('../modules/autoClassification');
 const { __test } = require('../index');
 
 const {
-    computeAutoClassification,
     buildDeterministicPrefill,
     evaluateComplexityTriggers,
     buildDetCriminalNotes,
@@ -1197,8 +1197,8 @@ describe('Deterministic Prefill', () => {
         it('DEFAULT_JUDIT_CONFIG has entity OFF by default', () => {
             // Judit cadastro must be disabled by default — BDC is primary
             // This test validates the config is correct at code level
-            const indexSrc = fs.readFileSync(path.resolve(__dirname, '../index.js'), 'utf-8');
-            expect(indexSrc).toContain("entity: false,");
+            const providerSrc = fs.readFileSync(path.resolve(__dirname, '../modules/_shared/providerConfigs.js'), 'utf-8');
+            expect(providerSrc).toContain("entity: false,");
         });
     });
 

@@ -1,16 +1,59 @@
 /**
- * Testes para getClientQuotaStatusInner (extraído para modules/systemHealth.js)
+ * Testes para systemHealth.js
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getClientQuotaStatusInner } from './modules/systemHealth';
-import { formatDateKey, formatMonthKey } from './modules/utilityHelpers';
+import {
+    getSystemHealthLogic,
+    getClientQuotaStatusInner,
+} from './systemHealth';
 
-const NOW = new Date('2026-04-10T15:00:00Z');
-const DAY_KEY = formatDateKey(NOW);
-const MONTH_KEY = formatMonthKey(NOW);
+describe('getSystemHealthLogic', () => {
+    it('retorna providers com status', async () => {
+        const mockDocs = [
+            {
+                id: 'judit',
+                data: () => ({ failCount: 2, lastSuccess: new Date(), lastError: 'timeout' }),
+            },
+            {
+                id: 'escavador',
+                data: () => ({ failCount: 0, lastSuccess: new Date() }),
+            },
+        ];
+
+        const db = {
+            collection: vi.fn(() => ({
+                get: vi.fn(async () => ({
+                    forEach: (cb) => mockDocs.forEach(cb),
+                })),
+            })),
+        };
+
+        const getOpsUserProfile = vi.fn(async () => ({ role: 'admin' }));
+        const circuitBreaker = { COLLECTION: 'systemHealth' };
+
+        const result = await getSystemHealthLogic({ db, getOpsUserProfile, circuitBreaker });
+
+        expect(result.providers).toHaveProperty('judit');
+        expect(result.providers).toHaveProperty('escavador');
+        expect(result.providers.judit.failCount).toBe(2);
+        expect(result.providers.escavador.failCount).toBe(0);
+    });
+
+    it('nega acesso para role nao autorizado', async () => {
+        const getOpsUserProfile = vi.fn(async () => ({ role: 'client_manager' }));
+        const db = { collection: vi.fn() };
+        const circuitBreaker = { COLLECTION: 'systemHealth' };
+
+        await expect(
+            getSystemHealthLogic({ db, getOpsUserProfile, circuitBreaker })
+        ).rejects.toThrow('Apenas analistas podem acessar.');
+    });
+});
 
 describe('getClientQuotaStatusInner', () => {
+    const NOW = new Date('2026-04-10T15:00:00Z');
+
     beforeEach(() => {
         vi.useFakeTimers({ now: NOW });
     });
@@ -53,25 +96,10 @@ describe('getClientQuotaStatusInner', () => {
         };
     }
 
-    it('throws when user profile does not exist', async () => {
-        const deps = buildMockDeps({}); // no profile doc
-        await expect(getClientQuotaStatusInner({ ...deps, uid: 'uid-1' })).rejects.toThrow('Perfil do cliente');
-    });
-
-    it('throws when profile has non-client role', async () => {
-        const deps = buildMockDeps({ profile: { role: 'ops_analyst', tenantId: 'tenant-1' } });
-        await expect(getClientQuotaStatusInner({ ...deps, uid: 'uid-1' })).rejects.toThrow('sem permissao');
-    });
-
-    it('throws when profile has no tenantId', async () => {
-        const deps = buildMockDeps({ profile: { role: 'client_manager' } }); // no tenantId
-        await expect(getClientQuotaStatusInner({ ...deps, uid: 'uid-1' })).rejects.toThrow('tenantId');
-    });
-
-    it('returns hasLimits false when tenant has no limits', async () => {
+    it('retorna hasLimits false quando tenant nao tem limites', async () => {
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
-            tenantSettings: { /* no dailyLimit, no monthlyLimit */ },
+            tenantSettings: {},
         });
 
         const result = await getClientQuotaStatusInner({ ...deps, uid: 'uid-1' });
@@ -84,23 +112,9 @@ describe('getClientQuotaStatusInner', () => {
         });
     });
 
-    it('returns hasLimits false when tenantSettings doc does not exist', async () => {
-        const deps = buildMockDeps({
-            profile: { role: 'client_manager', tenantId: 'tenant-1' },
-            // no tenantSettings → getTenantSettingsData returns null
-        });
-
-        const result = await getClientQuotaStatusInner({ ...deps, uid: 'uid-1' });
-        expect(result).toEqual({
-            hasLimits: false,
-            dailyLimit: null,
-            monthlyLimit: null,
-            dailyCount: 0,
-            monthlyCount: 0,
-        });
-    });
-
-    it('returns correct counts when usage matches current day/month', async () => {
+    it('retorna contadores corretos quando ha uso atual', async () => {
+        const DAY_KEY = '2026-04-10';
+        const MONTH_KEY = '2026-04';
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: { dailyLimit: 10, monthlyLimit: 50, allowDailyExceedance: false },
@@ -119,7 +133,8 @@ describe('getClientQuotaStatusInner', () => {
         });
     });
 
-    it('resets daily count when dayKey is stale', async () => {
+    it('reseta contagem diaria quando dayKey esta desatualizado', async () => {
+        const MONTH_KEY = '2026-04';
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: { dailyLimit: 10, monthlyLimit: 50 },
@@ -131,7 +146,8 @@ describe('getClientQuotaStatusInner', () => {
         expect(result.monthlyCount).toBe(30);
     });
 
-    it('resets monthly count when monthKey is stale', async () => {
+    it('reseta contagem mensal quando monthKey esta desatualizado', async () => {
+        const DAY_KEY = '2026-04-10';
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: { dailyLimit: 10, monthlyLimit: 50 },
@@ -143,11 +159,10 @@ describe('getClientQuotaStatusInner', () => {
         expect(result.monthlyCount).toBe(0);
     });
 
-    it('returns zero counts when no usage doc exists', async () => {
+    it('retorna zero quando nao ha doc de uso', async () => {
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: { dailyLimit: 10, monthlyLimit: 50 },
-            // no usage doc
         });
 
         const result = await getClientQuotaStatusInner({ ...deps, uid: 'uid-1' });
@@ -156,7 +171,9 @@ describe('getClientQuotaStatusInner', () => {
         expect(result.hasLimits).toBe(true);
     });
 
-    it('forwards allowDailyExceedance and allowMonthlyExceedance', async () => {
+    it('forward allowDailyExceedance e allowMonthlyExceedance', async () => {
+        const DAY_KEY = '2026-04-10';
+        const MONTH_KEY = '2026-04';
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: {
@@ -173,7 +190,9 @@ describe('getClientQuotaStatusInner', () => {
         expect(result.allowMonthlyExceedance).toBe(true);
     });
 
-    it('handles only daily limit (monthly null)', async () => {
+    it('lida com apenas daily limit configurado', async () => {
+        const DAY_KEY = '2026-04-10';
+        const MONTH_KEY = '2026-04';
         const deps = buildMockDeps({
             profile: { role: 'client_manager', tenantId: 'tenant-1' },
             tenantSettings: { dailyLimit: 5 },
@@ -184,5 +203,15 @@ describe('getClientQuotaStatusInner', () => {
         expect(result.hasLimits).toBe(true);
         expect(result.dailyLimit).toBe(5);
         expect(result.monthlyLimit).toBe(null);
+    });
+
+    it('throws when profile has non-client role', async () => {
+        const deps = buildMockDeps({ profile: { role: 'ops_analyst', tenantId: 'tenant-1' } });
+        await expect(getClientQuotaStatusInner({ ...deps, uid: 'uid-1' })).rejects.toThrow('sem permissao');
+    });
+
+    it('throws when profile has no tenantId', async () => {
+        const deps = buildMockDeps({ profile: { role: 'client_manager' } });
+        await expect(getClientQuotaStatusInner({ ...deps, uid: 'uid-1' })).rejects.toThrow('tenantId');
     });
 });

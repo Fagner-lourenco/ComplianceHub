@@ -33,11 +33,12 @@ const createMockDb = (queries) => {
 };
 
 // Importa o modulo
-const { buildNotificationFunctions } = await import('./caseCommunication.js');
+const {
+    findOpsNotificationRecipientsForTenant,
+    NOTIFICATION_TYPES,
+} = await import('./caseCommunication.js');
 
 describe('caseCommunication', () => {
-    let caseComm;
-
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -45,8 +46,7 @@ describe('caseCommunication', () => {
     describe('findOpsNotificationRecipientsForTenant', () => {
         it('retorna vazio quando tenantId é nulo', async () => {
             const db = createMockDb([]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant(null);
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: null });
             expect(result).toEqual([]);
             expect(db.collection).not.toHaveBeenCalled();
         });
@@ -59,8 +59,7 @@ describe('caseCommunication', () => {
                 ]), size: 2 },
                 { docs: [], size: 0 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(2);
             expect(result[0].displayName).toBe('Ana');
             expect(result[1].displayName).toBe('Beto');
@@ -74,8 +73,7 @@ describe('caseCommunication', () => {
                     { displayName: 'Owner Global', role: 'owner', status: 'active' },
                 ]), size: 2 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(2);
             expect(result[0].displayName).toBe('Admin Global');
             expect(result[1].displayName).toBe('Owner Global');
@@ -90,8 +88,7 @@ describe('caseCommunication', () => {
                     { id: 'uid-2', data: () => ({ displayName: 'Admin Global', role: 'admin', status: 'active' }) },
                 ], size: 1 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(2);
             expect(result.map(r => r.displayName)).toContain('Ana');
             expect(result.map(r => r.displayName)).toContain('Admin Global');
@@ -107,8 +104,7 @@ describe('caseCommunication', () => {
                     { displayName: 'Admin Global', role: 'admin', status: 'active' },
                 ]), size: 2 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(2);
             const uids = result.map(r => r.uid);
             expect(new Set(uids).size).toBe(2);
@@ -125,8 +121,7 @@ describe('caseCommunication', () => {
                     { displayName: 'Admin Ativo', role: 'admin', status: 'active' },
                 ]), size: 2 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(2);
             expect(result.map(r => r.displayName)).toContain('Ativo');
             expect(result.map(r => r.displayName)).toContain('Admin Ativo');
@@ -142,10 +137,15 @@ describe('caseCommunication', () => {
                     { displayName: 'Admin Global', role: 'admin', status: 'active' },
                 ]), size: 2 },
             ]);
-            caseComm = buildNotificationFunctions(db);
-            const result = await caseComm.findOpsNotificationRecipientsForTenant('tenant-1');
+            const result = await findOpsNotificationRecipientsForTenant({ db, tenantId: 'tenant-1' });
             expect(result).toHaveLength(1);
             expect(result[0].displayName).toBe('Admin Global');
+        });
+    });
+
+    describe('NOTIFICATION_TYPES', () => {
+        it('expoe NOTIFICATION_TYPES.CASE_RETURNED', () => {
+            expect(NOTIFICATION_TYPES.CASE_RETURNED).toBe('CASE_RETURNED');
         });
     });
 });
