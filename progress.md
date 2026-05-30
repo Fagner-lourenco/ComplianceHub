@@ -40,7 +40,10 @@
 | 2026-05-30 | **RECONSTRUÇÃO DAS IMPORTAÇÕES** | **Agente dedicado reconstruiu todas as importações dos 17 módulos; index.js reduzido para 10.435 linhas (-22%, -2.931 linhas)** |
 | 2026-05-30 | **CORREÇÕES PÓS-RECONSTRUÇÃO** | **CaseCommunication.js restaurado, TDZ tenantUserDeps corrigido, repairAllClaimsInner wrapper criado, V2 handlers reimportados, lint 0 erros** |
 | 2026-05-30 | **VALIDAÇÃO FINAL PÓS-CORREÇÕES** | **Backend: 1085 tests (47 arquivos), Frontend: 1408 tests (87 arquivos), Total: 2493 tests passando, Build: sucesso, Lint: 0 erros** |
-| 2026-05-30 | **RELATÓRIO DE ESTADO** | **`docs/audits/STATE-REVIEW-2026-05-30.md` criado. Decisão: GO COM CONDIÇÕES. Phase C: avançada/parcial com monolito residual controlado. Phase D: bloqueada até completar extrações residuais.** |
+| 2026-05-30 | **EXTRAÇÃO TRIGGERS DE ENRIQUECIMENTO** | **`functions/modules/enrichmentTriggers.js` com 6 factories + 12 testes. Todos os triggers movidos do monolito.** |
+| 2026-05-30 | **EXTRAÇÃO SOLICITAÇÕES DE CASO** | **`functions/modules/clientSolicitations.js` com createClientSolicitation e submitClientCorrection + 17 testes.** |
+| 2026-05-30 | **EXTRAÇÃO PUBLICATION ARTIFACTS** | **`buildResetPublishedCaseFields` e `revokeCasePublicationArtifacts` movidos para `publishAndSync.js`.** |
+| 2026-05-30 | **PHASE C FINALIZADA** | **Index.js: 8.962 linhas (-4.404, -33%). 24 módulos. 1.201 backend + 1.524 frontend = 2.725 tests. Relatório: `docs/audits/PHASE-C-FINAL-REVIEW-2026-05-30.md`. Decisão: CONCLUÍDA COM RESSALVAS. Phase D liberada com condições.** |
 
 ---
 
