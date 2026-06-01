@@ -210,8 +210,11 @@ describe('buildProviderRunIds', () => {
     expect(typeof ids.escavadorRunId).toBe('string');
     expect(typeof ids.fontedataRunId).toBe('string');
     expect(typeof ids.djenRunId).toBe('string');
+    expect(ids.enrichmentRunId.startsWith('enrichment_case-123_')).toBe(true);
     expect(ids.bigdatacorpRunId.startsWith('bdc_case-123_')).toBe(true);
-    expect(ids.juditRunId.startsWith('jud_case-123_')).toBe(true);
+    expect(ids.juditRunId.startsWith('judit_case-123_')).toBe(true);
+    expect(ids.escavadorRunId.startsWith('escavador_case-123_')).toBe(true);
+    expect(ids.fontedataRunId.startsWith('fontedata_case-123_')).toBe(true);
   });
 });
 

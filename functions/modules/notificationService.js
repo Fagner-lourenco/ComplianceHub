@@ -5,6 +5,7 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { FieldValue } = require('firebase-admin/firestore');
+const { checkRateLimit } = require('../helpers/rateLimiter');
 const {
   assertCanAccessCaseCommunication,
   sanitizeCaseMessageBody,
@@ -251,12 +252,13 @@ function createGetClientGeoIpHandler() {
    CASE COMMUNICATION — sendCaseMessage
    ========================================================= */
 
-function createSendCaseMessageHandler({ db }) {
+function createSendCaseMessageHandler({ db, writeAuditEvent = null, ACTOR_TYPE = {}, SOURCE = {}, getClientIp = null, rateLimiter = checkRateLimit }) {
   return onCall(
     { region: 'southamerica-east1', timeoutSeconds: 30 },
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
+      await rateLimiter(uid, { maxRequests: 20, windowMs: 60000, key: 'sendCaseMessage' });
 
       const caseId = String(request.data?.caseId || '').trim();
       const body = String(request.data?.body || '').trim();
@@ -315,6 +317,30 @@ function createSendCaseMessageHandler({ db }) {
       }
 
       await db.collection('cases').doc(caseId).update(caseUpdate);
+
+      if (typeof writeAuditEvent === 'function') {
+        await writeAuditEvent({
+          action: 'CASE_MESSAGE_SENT',
+          tenantId: caseData.tenantId,
+          actor: {
+            type: portal === 'client' ? ACTOR_TYPE.CLIENT_USER : ACTOR_TYPE.OPS_USER,
+            id: uid,
+            email: profile.email || uid,
+            displayName: profile.displayName || profile.name || null,
+          },
+          entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+          related: { caseId, messageId },
+          source: portal === 'client' ? SOURCE.PORTAL_CLIENT : SOURCE.PORTAL_OPS,
+          ip: typeof getClientIp === 'function' ? getClientIp(request) : null,
+          detail: `Mensagem enviada no caso ${caseId}.`,
+          clientDetail: 'Mensagem registrada no caso.',
+          metadata: {
+            senderPortal: portal,
+            bodyLength: sanitizedBody.length,
+            bodyPreviewLength: bodyPreview.length,
+          },
+        });
+      }
 
       try {
         const clientCaseUpdate = {

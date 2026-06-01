@@ -71,6 +71,12 @@ describe('canRunFinalClassification', () => {
         expect(result.reason).toBe('judit_async_pending');
     });
 
+    it('defers with fallback helper when judit pending async count is positive', () => {
+        const result = canRunFinalClassification(makeCase({ juditPendingAsyncCount: 1 }));
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('judit_async_pending');
+    });
+
     it('defers when bigdatacorp is not terminal', () => {
         const result = canRunFinalClassification(makeCase({ bigdatacorpEnrichmentStatus: 'RUNNING' }), helpers);
         expect(result.ok).toBe(false);

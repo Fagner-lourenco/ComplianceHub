@@ -262,5 +262,6 @@ module.exports = {
     loadJuditConfig,
     loadBigDataCorpConfig,
     loadDjenConfig,
+    getTenantSettingsData,
     _setDb,
 };

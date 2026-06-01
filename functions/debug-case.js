@@ -1,5 +1,11 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('./serviceAccountKey.json');
+const serviceAccountPath = process.env.SERVICE_ACCOUNT_KEY_PATH || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+if (!serviceAccountPath) {
+  throw new Error('Defina SERVICE_ACCOUNT_KEY_PATH ou GOOGLE_APPLICATION_CREDENTIALS para usar debug-case.js.');
+}
+
+const serviceAccount = require(serviceAccountPath);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)

@@ -12,7 +12,7 @@ const { formatDateKey, formatMonthKey } = require('./utilityHelpers');
  */
 async function getSystemHealthLogic({ db, getOpsUserProfile, circuitBreaker }) {
     const profile = await getOpsUserProfile();
-    if (!['analyst', 'supervisor', 'admin'].includes(profile?.role)) {
+    if (!['analyst', 'supervisor', 'admin', 'owner'].includes(profile?.role)) {
         throw new HttpsError('permission-denied', 'Apenas analistas podem acessar.');
     }
 

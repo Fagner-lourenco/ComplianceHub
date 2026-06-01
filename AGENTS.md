@@ -1,7 +1,7 @@
 # ComplianceHub — Agent Guide
 
 > Documento para agentes de código. Língua principal dos comentários e docs: **português (PT-BR)**. Identificadores de código: **inglês**.
-> Última atualização: 2026-05-03.
+> Última atualização: 2026-05-31.
 
 ---
 
@@ -122,11 +122,35 @@ Relatório disponível (frontend + backend reportBuilder)
 │       └── setupTests.js         # Mock localStorage, cleanup Vitest
 │
 ├── functions/                    # Backend Firebase Functions (CommonJS + ESM misto)
-│   ├── index.js                  # Entry principal (~10.900 linhas): endpoints, triggers, pipeline
+│   ├── index.js                  # Entry principal (~1.800 linhas): wiring, triggers, wrappers
 │   ├── reportBuilder.cjs         # Mirror server-side do reportBuilder (CommonJS)
+│   ├── modules/                  # 26 módulos extraídos (Phase C)
+│   │   ├── _shared/              # auth, fieldConstants, sanitizers, providerConfigs, analysisConfig
+│   │   ├── aiOrchestrator.js     # Prompts, runners, payload builders, cost
+│   │   ├── aiParsers.js          # Sanitização e parsing de respostas OpenAI
+│   │   ├── autoClassification.js # Classificação automática + handlers AI
+│   │   ├── caseManager/          # caseFilters.js
+│   │   ├── caseQueriesAssignments.js # Listagens V1/V2, métricas, assignments, reruns
+│   │   ├── clientSolicitations.js    # Criação e correção de solicitações
+│   │   ├── clientVerdictPolicy.js    # Política de veredito do cliente
+│   │   ├── concludeCaseAndSettings.js # Funções puras: pickConcludePayload, syncPublicResult
+│   │   ├── deterministicPrefill.js   # Prefill determinístico
+│   │   ├── enrichmentPhases.js       # Fases: FonteData, Escavador, BigDataCorp, Judit, DJEN
+│   │   ├── enrichmentTriggers.js     # 6 triggers Firestore (onDocument)
+│   │   ├── exportJobsAndReports.js   # Export jobs + relatórios públicos
+│   │   ├── juditWebhookAndFallback.js # Webhook + fallback async Judit
+│   │   ├── notificationService.js    # Notificações push/email
+│   │   ├── opsReviewHandlers.js      # Handlers: conclude, settings, draft, aiDecision
+│   │   ├── pdfGeneration.js          # Geração de PDF via Puppeteer
+│   │   ├── publishAndSync.js         # Sincronização cases↔clientCases + publicação
+│   │   ├── rateLimitMiddleware.js    # Rate limiting via Firestore
+│   │   ├── reportEngine.js           # Geração e sanitização de relatórios
+│   │   ├── systemHealth.js           # Saúde do sistema + quotas
+│   │   ├── tenantUserManagement.js   # Gestão de usuários por tenant
+│   │   └── utilityHelpers.js         # formatDateKey, formatMonthKey
 │   ├── adapters/                 # Clientes HTTP para APIs externas (6 adapters)
 │   ├── normalizers/              # Mapeamento resposta externa → schema interno
-│   ├── helpers/                  # circuitBreaker, aiHomonym, tribunalMap, pdfHtml, pdfRenderer, textNormalize
+│   ├── helpers/                  # 14 helpers: circuitBreaker, aiHomonym, tribunalMap, pdfHtml, pdfRenderer, textNormalize, enrichmentStatus, exportManager, normalize, paginateFirestoreQuery, rateLimiter, processClassifier, roleClassifier, reportHelpers
 │   └── audit/                    # auditCatalog.js, writeAuditEvent.js
 │
 ├── scripts/                      # Utilitários Node.js one-off (.cjs) — 27 scripts
@@ -288,7 +312,7 @@ ROLES = {
 
 ### Frontend e Regras Firestore (`src/` + raiz)
 
-30+ arquivos de teste em `src/` cobrindo:
+55+ arquivos de teste em `src/` cobrindo:
 - Lógica de negócio: `caseSla`, `clientPortal`, `enrichmentStatus`, `errorUtils`, `portalPaths`, `validators`
 - Contextos: `AuthContext`, `TenantContext`
 - Serviços: `firestoreService`
@@ -296,28 +320,24 @@ ROLES = {
 - Componentes: `QuotaBar`, `Sidebar`, `Topbar`, `NovaSolicitacaoPage`, `CasoPage`, páginas diversas
 - Hooks: `useAuditLogs`, `useCases`
 
-Mais `firestore.rules.test.js` na raiz (5 testes de contrato de segurança).
+Mais `firestore.rules.test.js` na raiz (5 testes de contrato de segurança) e `frontendBackendContract.test.js` (contrato frontend↔backend).
 
 ### Backend (`functions/`)
 
-12 arquivos de teste:
+55+ arquivos de teste:
 - Adapters: `djen.test.js`, `judit.test.js`
 - Audit: `auditCatalog.test.js`, `writeAuditEvent.test.js`
-- Helpers: `aiCalibration.test.js`, `aiHomonym.test.js`, `deterministicPrefill.test.js`, `sanitizeAiOutput.test.js`
+- Helpers: `aiCalibration.test.js`, `aiHomonym.test.js`, `deterministicPrefill.test.js`, `sanitizeAiOutput.test.js`, `paginateFirestoreQuery.test.js`, `rateLimiter.test.js`, `processClassifier.test.js`, `roleClassifier.test.js`, `exportManager.test.js`, `pdfRenderer.test.js`
+- Modules: `aiOrchestrator.test.js`, `autoClassification.test.js`, `caseQueriesAssignments.test.js`, `clientSolicitations.test.js`, `concludeCaseAndSettings.test.js`, `deterministicPrefill.test.js`, `enrichmentPhases.test.js`, `enrichmentTriggers.test.js`, `exportJobsAndReports.test.js`, `juditWebhookAndFallback.test.js`, `notificationService.test.js`, `opsReviewHandlers.test.js`, `pdfGeneration.test.js`, `publishAndSync.test.js`, `reportEngine.test.js`, `systemHealth.test.js`, `tenantUserManagement.test.js`, `utilityHelpers.test.js`
 - Normalizers: `bigdatacorp.test.js`, `djen.test.js`
-- Limits: `enforceTenantSubmissionLimits.test.js`, `getClientQuotaStatus.test.js`
-
-### Configuração de Teste
-
-- **Frontend:** `vite.config.js` → `test: { globals: true, environment: 'jsdom', setupFiles: './src/test/setupTests.js' }`
-- **Backend:** `functions/package.json` → Vitest 2 com detecção automática
-- **Setup:** mock de `localStorage`, cleanup automático, mocks do Firebase
+- Shared: `auth.test.js`, `fieldConstants.test.js`, `providerConfigs.test.js`, `sanitizers.test.js`
+- Raiz: `backfillClientCasesMirror.test.js`, `caseCommunication.test.js`, `clientPayloadChanged.test.js`, `enforceTenantSubmissionLimits.test.js`, `exportJobsExportsContract.test.js`, `exportWorker.test.js`, `fetchTenantCaseDocuments.test.js`, `getClientQuotaStatus.test.js`, `getPublicReportView.test.js`, `identityGate.test.js`, `isAutoClassifyOnlyChange.test.js`, `listClientCasesV2.test.js`, `listOpsCasesV2.test.js`, `publicResultPrivacy.test.js`, `repairAllClaims.test.js`, `shared/riskCalculator.test.js`
 
 ### Estado Atual dos Testes
 
-- **Raiz:** 43 arquivos de teste, 579 testes passando
-- **Functions:** 12 arquivos de teste, 330 testes passando
-- Duração total raiz: ~10s
+- **Raiz:** 55+ arquivos de teste, ~1.200+ testes passando
+- **Functions:** 55 arquivos de teste, ~1.200+ testes passando
+- Duração total backend: ~8s
 
 ---
 
@@ -397,14 +417,16 @@ MADERO_UID=
 
 ---
 
-## 11. Estado Atual do Projeto (2026-05-03)
+## 11. Estado Atual do Projeto (2026-05-31)
 
-- **Layout Standardization:** ~90% concluído. `PageShell` + `PageHeader` implementados e integrados nos 20 portais.
-- **Testes:** 55 arquivos de teste no total (43 raiz + 12 functions), todos passando.
-- **Build:** Limpo, sem warnings.
-- **Deploy ativo:** Vercel + Firebase Functions (`compliance-hub-br`).
+- **Phase C — Modularização:** CONCLUÍDA. `functions/index.js` de ~13.366 para ~1.800 linhas (−87%). 26 módulos extraídos com factories e wrappers de dependência.
+- **Phase B — Async Export:** CONCLUÍDA. 5 callables de exportação assíncrona registrados + teste de contrato.
+- **Testes:** 55 arquivos backend + 55+ frontend = ~2.400+ testes passando.
+- **Lint:** 0 erros (root + functions).
+- **Deploy ativo:** Vercel + Firebase Functions (`compliance-hub-br`). Nenhum deploy da branch `refactor/full-local-roadmap`.
 - **Sem CI/CD:** Deploy é manual via CLI. Não há GitHub Actions configurado.
-- **Arquivos não commitados:** ~1.447 (alta atividade de desenvolvimento).
+- **Segurança:** CSP atualizado (`*.cloudfunctions.net` → domínio específico). CORS restrito em 21 de 22 callables. Rate limiter wireado via middleware.
+- **Phase D (código morto):** Pendente. Stale handlers removidos de `concludeCaseAndSettings.js`, re-export modules deletados.
 
 ### Decisões de Arquitetura Registradas (ADRs)
 

@@ -34,8 +34,25 @@ functions/service-account*.json
 
 # Playwright MCP dumps
 .playwright-mcp/
+playwright-report/
+test-results/
+
+# Firebase emulator logs
+firestore-debug.log
+ui-debug.log
+firebase-debug.log
 
 # Graphify AST caches
 graphify-out/cache/
 
 .vercel
+
+# Auditoria e dados sensíveis
+results/
+*.bak
+*.bkp
+users.json
+stdout
+src_imports.txt
+src_exports.txt
+temp_*.txt

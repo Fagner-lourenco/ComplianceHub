@@ -11,25 +11,39 @@ const { SAFE_NARRATIVE_TEXTS } = require('./reportEngine');
    LÓGICA PURA: Classificação automática
    ========================================================= */
 
-function canRunFinalClassification(caseData = {}, { hasPendingJuditAsync, isProviderTerminalForPipeline }) {
-    if (hasPendingJuditAsync(caseData)) {
+function hasPendingJuditAsync(caseData = {}) {
+    const count = Number(caseData.juditPendingAsyncCount || 0);
+    const phases = Array.isArray(caseData.juditPendingAsyncPhases)
+        ? caseData.juditPendingAsyncPhases.filter(Boolean)
+        : [];
+    return count > 0 || phases.length > 0;
+}
+
+function isProviderTerminalForPipeline(status) {
+    return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
+}
+
+function canRunFinalClassification(caseData = {}, { hasPendingJuditAsync: hasPendingJuditAsyncArg, isProviderTerminalForPipeline: isProviderTerminalForPipelineArg } = {}) {
+    const hasPendingJuditAsyncFn = hasPendingJuditAsyncArg || hasPendingJuditAsync;
+    const isProviderTerminalForPipelineFn = isProviderTerminalForPipelineArg || isProviderTerminalForPipeline;
+    if (hasPendingJuditAsyncFn(caseData)) {
         return { ok: false, reason: 'judit_async_pending' };
     }
 
-    if (!isProviderTerminalForPipeline(caseData.bigdatacorpEnrichmentStatus)) {
+    if (!isProviderTerminalForPipelineFn(caseData.bigdatacorpEnrichmentStatus)) {
         return { ok: false, reason: `bigdatacorp_${caseData.bigdatacorpEnrichmentStatus || 'PENDING'}` };
     }
 
-    if (!isProviderTerminalForPipeline(caseData.juditEnrichmentStatus)) {
+    if (!isProviderTerminalForPipelineFn(caseData.juditEnrichmentStatus)) {
         return { ok: false, reason: `judit_${caseData.juditEnrichmentStatus || 'PENDING'}` };
     }
 
-    if (caseData.juditNeedsEscavador === true && !isProviderTerminalForPipeline(caseData.escavadorEnrichmentStatus)) {
+    if (caseData.juditNeedsEscavador === true && !isProviderTerminalForPipelineFn(caseData.escavadorEnrichmentStatus)) {
         return { ok: false, reason: `escavador_${caseData.escavadorEnrichmentStatus || 'PENDING'}` };
     }
 
     // DJEN/DPJe must settle if it was started/pending, but SKIPPED/FAILED is fine
-    if (caseData.djenEnrichmentStatus && !isProviderTerminalForPipeline(caseData.djenEnrichmentStatus)) {
+    if (caseData.djenEnrichmentStatus && !isProviderTerminalForPipelineFn(caseData.djenEnrichmentStatus)) {
         return { ok: false, reason: `djen_${caseData.djenEnrichmentStatus}` };
     }
 

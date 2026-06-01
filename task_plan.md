@@ -1,3 +1,269 @@
+# Task Plan Ativo: Revisao Completa Frontend + Backend ComplianceHub
+
+> **Status:** Fases 0-7 concluidas; Fase 8 manual/staging pendente; Fase 9 em fechamento sem commit/deploy
+> **Criado em:** 2026-06-01
+> **Branch:** `refactor/full-local-roadmap`
+> **Objetivo:** revisar todos os fluxos, funcionalidades, formularios, callables, triggers, regras, relatorios e integracoes do ComplianceHub antes de qualquer deploy de Functions refatoradas.
+
+---
+
+## Escopo
+
+Revisao end-to-end de produto e engenharia cobrindo:
+- Portal Ops (`/ops/*`): fila, detalhe de caso, auditoria, metricas, relatorios, equipe, clientes, configuracoes, exportacoes e saude.
+- Portal Cliente (`/client/*`): dashboard, solicitacoes, nova solicitacao, relatorios, auditoria, equipe/usuarios, exportacoes e quota.
+- Relatorio publico (`/r/:token`) e demo routes.
+- Backend Firebase Functions: todos callables, triggers Firestore, scheduler, webhook Judit, PDF, exports, notifications, RBAC e rate limiting.
+- Firestore: regras, indices, colecoes, contratos de privacidade e consistencia `cases` <-> `clientCases` <-> `publicResult`.
+- Integracoes externas: Judit, Escavador, FonteData, BigDataCorp, DJEN e OpenAI.
+
+---
+
+## Principios da Revisao
+
+- Nao alterar dados reais sem confirmacao.
+- Nao fazer deploy de Functions ate fechar checklist e testes.
+- Nao usar `--force` em Firestore indexes.
+- Separar achados em: bloqueador, alto, medio, baixo.
+- Toda descoberta relevante vai para `findings.md`.
+- Todo teste/erro/resultado vai para `progress.md`.
+- A cada 2 leituras/buscas relevantes, atualizar arquivos de planejamento.
+
+---
+
+## Estado Inicial Conhecido
+
+- Working tree esta suja com varias mudancas acumuladas da refatoracao/auditoria.
+- `functions` lint passou.
+- `functions` tests passaram: 55 arquivos, 1215 testes.
+- Contrato frontend/backend passou: 49 callables frontend, 68 backend exports, 0 missing.
+- `npm run lint` passou.
+- `npm run build` passou.
+- Playwright focado `e2e/casopage.lazy-render.spec.js` passou: 10 tests.
+- `npm test` raiz ainda falha intermitentemente em `src/portals/ops/CasoPage.test.jsx` quando executado junto com toda a suite, embora o arquivo isolado passe.
+- Novo indice local pendente de deploy: `juditWebhookRequests(status ASC, createdAt ASC)`.
+- Indice `caseMessages` ja foi adicionado e deployado anteriormente.
+
+---
+
+## Fases
+
+### Fase 0 — Inventario e Baseline
+
+**Status:** done
+
+Objetivo: congelar o escopo real antes da revisao.
+
+Checklist:
+- [x] Listar todas rotas frontend reais em `src/App.jsx`.
+- [x] Listar todas paginas em `src/pages`, `src/portals/ops`, `src/portals/client`.
+- [x] Listar todos callables usados em `src/core/firebase/firestoreService.js`.
+- [x] Listar todos exports backend em `functions/index.js`.
+- [x] Listar todos triggers/schedulers/onRequest backend.
+- [x] Mapear colecoes Firestore usadas por frontend, backend e rules.
+- [x] Registrar baseline de testes, lint, build e flakiness conhecida.
+
+Saida esperada:
+- Matriz inicial `rota -> componente -> dados -> callable/subscription -> permissao` registrada em `findings.md`.
+- Matriz inicial `callable/trigger -> modulo -> auth -> input -> output -> testes` iniciada em `findings.md`; detalhamento por input/output/teste segue na Fase 3.
+
+Resumo de conclusao:
+- `src/App.jsx` centraliza todas as rotas reais e demo.
+- Frontend usa 49 chamadas para backend via `firestoreService.js` e `notificationService.js`.
+- Backend carrega 68 exports publicos excluindo `__test`.
+- Frontend ainda usa `listOpsCases`/`listClientCases` V1; V2 existe no backend mas nao esta adotado.
+- Colecoes principais diretas: `userProfiles`, `tenantSettings`, `tenantUsage`, `cases`, `clientCases`, `candidates`, `auditLogs`, `tenantAuditLogs`, `exports`, `exportJobs`, `publicReports`, `systemHealth`, `notifications`, `caseMessages`, `juditWebhookRequests`, `systemLocks` e subcolecao `cases/{caseId}/publicResult`.
+
+---
+
+### Fase 1 — Revisao Frontend: Rotas, Telas e Navegacao
+
+**Status:** done
+
+Checklist Ops:
+- [ ] Login/acesso/redirect por role.
+- [x] `/ops/fila`: filtros, paginacao, status, assign, SLA, tenants — revisada; corrigido desalinhamento de chaves `waiting`/`corrections`.
+- [x] `/ops/casos/:caseId`: contratos de conclusao, rascunho, retorno, bypass, rerun — verificados e alinhados.
+- [ ] Auditoria ops: filtros, logs, tenant isolation.
+- [ ] Metricas/IA/saude: carregamento, estados vazios, erro, permissao.
+- [ ] Equipe ops/clientes/configuracoes: formularios, validacao, RBAC.
+- [ ] Exportacoes/relatorios: job flow, download, erro, cancelamento.
+
+Checklist Cliente:
+- [x] Dashboard cliente: KPIs, quota, status e cards — contratos alinhados.
+- [x] Nova solicitacao: social URLs alinhadas com backend; CPF/nome ja cobertos por testes focados.
+- [x] Solicitacoes/listagem: filtros, status, paginacao e correcao cliente revisados em pontos criticos.
+- [ ] Relatorio cliente: campos publicos, PDF, revogacao/expiracao.
+- [ ] Auditoria cliente: tenant isolation e filtros.
+- [ ] Equipe/usuarios cliente: roles, convite/criacao, desativacao.
+- [x] Exportacoes cliente: contrato de job async corrigido para enviar `scopeCode`, disparar `processExportJob`, aceitar retorno `jobId/status` e normalizar status.
+
+Checklist Public/Demo:
+- [x] `/r/:token`: expirado, inexistente, valido, privacidade, render HTML seguro — contratos alinhados.
+- [ ] `/demo/*`: nao depende de auth real, nao chama writes reais.
+
+---
+
+### Fase 2 — Revisao Frontend: Formularios e Validadores
+
+**Status:** done — validacao campo a campo concluida; correcoes aplicadas com regressao
+
+Checklist:
+- [ ] Inventariar todos `<form>`, inputs e textareas.
+- [ ] Comparar validacao frontend vs backend para cada campo.
+- [ ] Validar labels/acessibilidade basica (`label`, `aria-label`, foco, erros).
+- [ ] Validar estados loading/saving/error/success.
+- [ ] Validar debounce/dirty tracking em `CasoPage`.
+- [x] Corrigir desalinhamento conhecido: social URL aceita `@usuario` no front e backend rejeita.
+- [ ] Revisar mensagens em PT-BR e dados sensiveis em erros.
+
+---
+
+### Fase 3 — Revisao Backend: Callables
+
+**Status:** done — 12+ callables revisados contra checklist; achados de cobertura de testes e duplicacao documentados
+
+Checklist por callable:
+- [ ] Auth obrigatoria e role correta.
+- [ ] Tenant isolation.
+- [ ] Validacao de input.
+- [ ] Sanitizacao de output.
+- [ ] Rate limit quando aplicavel.
+- [ ] Audit log quando ha write/acao sensivel.
+- [ ] Idempotencia/concorrencia.
+- [ ] Teste unitario/contrato cobrindo sucesso e negacao.
+
+Grupos:
+- [ ] Cases/listagens/assignments/reruns.
+- [ ] Solicitacoes cliente e quotas.
+- [ ] Conclusao, rascunho, retorno ao cliente e settings.
+- [ ] Relatorios publicos e PDF.
+- [ ] Export jobs.
+- [ ] Usuarios ops/clientes/claims.
+- [ ] Auditoria e notificacoes.
+- [ ] Saude do sistema.
+
+---
+
+### Fase 4 — Revisao Backend: Triggers, Pipeline e Integracoes
+
+**Status:** done — pipeline completo revisado; gate, triggers, classificacao e publicacao verificados
+
+Checklist:
+- [ ] Trigger de criacao/correcao do caso inicia fases corretas.
+- [ ] Gate de identidade reprova divergencia real e nao reprova erro tecnico.
+- [ ] BigDataCorp: success, failed, blocked, rerun e lock.
+- [ ] Judit: sync, async, webhook, fallback, pending phases, timeout, retry, stale generation.
+- [ ] Escavador: condicional por config/necessidade, erro tecnico, rerun.
+- [ ] DJEN: filtros por processo/nome, erro tecnico, classificacao final.
+- [ ] AutoClassify/AI: readiness, lock, prompt, parser, custos, secrets, modelo.
+- [ ] Publicacao `publicResult/latest`: privacidade, TTL, sync, revogacao.
+- [ ] Notifications: destinatarios, duplicidade, retries.
+- [ ] Export worker: status, cancelamento, Storage, CSV/PDF.
+
+---
+
+### Fase 5 — Firestore, Rules, Indices e Dados
+
+**Status:** done — rules, indices e contratos de campos revisados
+
+Checklist:
+- [ ] Revisar `firestore.rules` por colecao e role.
+- [ ] Validar rules com testes existentes.
+- [ ] Confirmar indices locais vs remotos, sem `--force`.
+- [ ] Investigar 2 indices remotos nao presentes no arquivo local.
+- [ ] Deployar apenas indices aprovados, se necessario.
+- [ ] Revisar contratos `PUBLIC_RESULT_FIELDS` vs `RESULT_ONLY_FIELDS`.
+- [ ] Revisar risco de hot document em `tenantUsage/{tenantId}`.
+
+---
+
+### Fase 6 — Segurança, Privacidade e Compliance
+
+**Status:** done — CSP, secrets, logs, sanitização e RBAC revisados
+
+Checklist:
+- [ ] Public report sem `tenantId`, requester, email, filiacao materna e campos internos.
+- [ ] CSP/headers em `vercel.json`.
+- [ ] Secrets e arquivos locais (`.env.local`, `users.json`, outputs em `results/`).
+- [ ] Logs sem PII excessiva.
+- [ ] RBAC: owner/admin/supervisor/analyst/client roles.
+- [ ] Auto-promocao bloqueada.
+- [ ] Cross-tenant reads/writes bloqueados.
+- [ ] HTML/PDF sanitizados.
+
+---
+
+### Fase 7 — Testes Automatizados e Flakiness
+
+**Status:** done — suite raiz, backend, lint, build e Playwright focado verdes em 2026-06-01
+
+Checklist:
+- [x] Estabilizar `src/portals/ops/CasoPage.test.jsx` na suite completa.
+- [x] Rodar `npm test` raiz ate suite completa verde sem rerun seletivo.
+- [x] Rodar `cd functions && npm test`.
+- [x] Rodar `npm run lint` e `cd functions && npm run lint`.
+- [x] Rodar `npm run build`.
+- [x] Rodar Playwright focado e, se viavel, suite completa.
+- [x] Registrar todos resultados em `progress.md`.
+
+---
+
+### Fase 8 — Validacao Manual/Staging End-to-End
+
+**Status:** pending
+
+Checklist minimo:
+- [ ] Login ops/admin/supervisor/analyst.
+- [ ] Login cliente manager/operator/viewer.
+- [ ] Criar solicitacao valida.
+- [ ] Criar solicitacao com CPF/nome divergente e confirmar devolucao automatica.
+- [ ] Simular erro tecnico de provider e confirmar `FAILED` sem devolucao indevida.
+- [ ] Acompanhar pipeline completo ate classificacao.
+- [ ] Salvar rascunho e concluir caso.
+- [ ] Publicar/abrir relatorio publico.
+- [ ] Gerar PDF/export.
+- [ ] Mensagens cliente/ops.
+- [ ] Auditoria gerada para acoes criticas.
+
+---
+
+### Fase 9 — Relatorio Final, Commit e Decisao de Deploy
+
+**Status:** partial — relatorio final criado; commit/deploy dependem de aprovacao explicita
+
+Checklist:
+- [x] Consolidar achados em `docs/audits/`.
+- [x] Classificar bloqueadores restantes.
+- [x] Revisar `git status`, `git diff --stat`, diffs sensiveis e arquivos ignorados.
+- [ ] Garantir que artefatos sensiveis nao entram no commit.
+- [ ] Commit detalhado se aprovado.
+- [ ] Plano de deploy/rollback de Functions.
+- [ ] Deploy somente apos aprovacao explicita.
+
+---
+
+## Errors Encountered
+
+| Erro | Tentativa | Resolucao |
+|------|-----------|-----------|
+| `session-catchup.py` nao encontrado em `%USERPROFILE%\.opencode` | 1 | Usado caminho real `%USERPROFILE%\.config\opencode\skills\planning-with-files\scripts\session-catchup.py` |
+| `npm test` raiz falha intermitentemente em `CasoPage.test.jsx` | 1 | Corrigido isolamento de teste: reset de `authState.userProfile`, `navigate` e `sessionStorage`; suite raiz passou 97/97 arquivos, 1554/1554 testes |
+
+---
+
+## Criterio de Conclusao Geral
+
+A revisao completa so sera considerada concluida quando:
+- Todas as fases 0-9 estiverem completas ou explicitamente dispensadas pelo usuario.
+- Nao houver bloqueadores abertos.
+- Lint/test/build backend e frontend estiverem verdes.
+- Validacao manual/staging dos fluxos criticos estiver registrada.
+- Indices pendentes estiverem decididos/deployados sem `--force`.
+- Relatorio final existir em `docs/audits/`.
+
+---
+
 # Task Plan: Refatoração Zero-Risco do Monolito ComplianceHub
 
 > **Status:** Planejamento em execução — Phase A corrigida detalhada, Fases B-E estruturadas

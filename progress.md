@@ -1,8 +1,130 @@
+# Progress Log Ativo — Revisao Completa Frontend + Backend
+
+> **Sessao iniciada:** 2026-06-01
+> **Fase atual:** Fases 0-7 concluidas; Fase 8 manual/staging pendente; Fase 9 em fechamento sem commit/deploy
+> **Branch:** `refactor/full-local-roadmap`
+
+---
+
+## Timeline Atual
+
+| Data/Hora | Evento | Detalhes |
+|-----------|--------|----------|
+| 2026-06-01 | Pedido do usuario | Planejar revisao completa de todos os fluxos, funcionalidades, frontend, backend e formularios |
+| 2026-06-01 | Skill carregada | `planning-with-files` carregada para usar `task_plan.md`, `findings.md`, `progress.md` como memoria persistente |
+| 2026-06-01 | Catchup tentativa 1 | Falhou: script nao encontrado em `%USERPROFILE%\.opencode\skills\...` |
+| 2026-06-01 | Catchup tentativa 2 | Rodou com caminho real `%USERPROFILE%\.config\opencode\skills\...`; nao imprimiu relatorio |
+| 2026-06-01 | Contexto lido | Lidos `task_plan.md`, `findings.md`, `progress.md`, `graphify-out/GRAPH_REPORT.md` e `git diff --stat` |
+| 2026-06-01 | Plano ativo criado | Inserido plano completo em `task_plan.md` com Fases 0-9 |
+| 2026-06-01 | Findings atualizados | Inserida secao ativa em `findings.md` com riscos, baseline e proximas acoes |
+| 2026-06-01 | Fase 0 iniciada | Inventario inicial de rotas, paginas e wrappers frontend coletado |
+| 2026-06-01 | Fase 0 backend parcial | Lidos `App.jsx`, exports carregaveis de `functions/index.js`, grep de triggers/callables |
+| 2026-06-01 | Fase 0 concluida | Rotas, permissoes, 49 chamadas frontend, 68 exports backend, triggers e colecoes principais mapeados |
+| 2026-06-01 | Fase 2 iniciada | Corrigido desalinhamento de social URL: frontend agora rejeita `@usuario` e exige `http://` ou `https://`, alinhado ao backend |
+| 2026-06-01 | Testes focados | `npm test -- src/core/validators.test.js` passou: 11 tests; `npm test -- src/portals/client/NovaSolicitacaoPage.test.jsx` passou: 11 tests |
+| 2026-06-01 | Graphify atualizado | `graphify update .` executado apos alteracoes de codigo; grafo recompilado com 1617 nodes e 3000 edges |
+| 2026-06-01 | Fase 1/3 checagem relatorios | Confirmado que telas atuais de relatorios usam callables; `fetchPublicReports()`/`getPublicReport()` parecem legado bloqueado por rules e ficam pendentes para Phase D |
+| 2026-06-01 | Fase 1 cliente/exportacoes | Corrigido contrato de exportacao async: `scopeCode` top-level, chamada a `processExportJob`, leitura de retorno plano `jobId/status` e cancelamento por `jobId` |
+| 2026-06-01 | Fase 2 textos social URL | Corrigidos textos remanescentes `URL ou @`/`@handle`; grep em `src/**/*.jsx` nao encontrou remanescentes |
+| 2026-06-01 | Testes focados | `npm test -- src/portals/client/ExportacoesPage.test.jsx` passou: 9 tests; `SolicitacoesPage.test.jsx` passou: 6 tests; `NovaSolicitacaoPage.test.jsx` passou: 11 tests |
+| 2026-06-01 | Contrato/lint | `node check-frontend-backend-contract.cjs` passou: 50 callables frontend, 68 backend exports, 0 missing; `npm run lint` passou |
+| 2026-06-01 | Graphify atualizado | `graphify update .` executado apos novas alteracoes; grafo recompilado com 1620 nodes, 3006 edges e 202 communities |
+| 2026-06-01 | BUG FilaPage stats | Descoberto desalinhamento: backend `buildOpsCaseStats` retornava `waitingInfo`/`correctionNeeded`, mas FilaPage frontend lia `stats.waiting`/`stats.corrections` — KPIs "Aguardando Info" e "Correcao Pendente" ficariam zerados com dados reais |
+| 2026-06-01 | FIX FilaPage stats | Corrigido `buildOpsCaseStats` em `caseFilters.js` para retornar `waiting`/`corrections`; testes 15+90+4=109 passando |
+| 2026-06-01 | CasoPage contratos | Verificados handlers de conclusao, rascunho, retorno, bypass e reruns — payloads frontend/backend alinhados |
+| 2026-06-01 | Dashboard cliente | Verificado contrato `buildClientDashboardMetricsFromCases` ↔ `DashboardClientePage` — campos `waitingInfo`/`corrections`/`verdicts`/`months`/`topFlags` alinhados |
+| 2026-06-01 | Fase 1 relatorios/auditoria/equipe/metricas | Revisados `PublicReportPage`, `RelatoriosPage`, `RelatoriosClientePage`, `AuditoriaPage`, `AuditoriaClientePage`, `EquipeOpsPage`, `EquipePage`, `MetricasIAPage`, `SaudePage`, `CasosPage` + todos handlers backend — contratos e tenant isolation confirmados; achado menor: `owner` nao listado em `getSystemHealthLogic` |
+| 2026-06-01 | Fase 1 concluida | 21 paginas + handlers backend revisados; 2 bugs corrigidos, 2 achados menores documentados |
+| 2026-06-01 | Fase 2 NovaSolicitacao | Validacao campo a campo contra `createClientSolicitationHandler`: corrigido `fullName` min 3/max 200, `position` max 100, `department` max 100; adicionados spans de erro; 14 testes passando |
+| 2026-06-01 | Fase 2 CasoPage/Equipe/Tenant | Revisados formularios de conclusao, retorno, bypass, criacao de usuario ops/cliente e configuracao de tenant — contratos alinhados; checklist frontend mais restritivo que backend |
+| 2026-06-01 | Fase 3 iniciada | Revisao de callables backend: assignments, reruns, mensagens, notificacoes, export — checklist de auth, tenant isolation, input, audit, rate limit, testes |
+| 2026-06-01 | Fase 3 assign/rerun | Revisados 5 handlers: `assignCaseToCurrentAnalyst`, `assignCaseToAnalyst`, `unassignCase`, `rerunEnrichmentPhase`, `rerunAiAnalysis` — auth e tenant ok; sem rate limit; sem testes de handler dedicados |
+| 2026-06-01 | Fase 3 mensagens/notificacoes | Revisados 4 handlers: `sendCaseMessage`, `markCaseCommunicationRead`, `markNotificationAsRead`, `markAllNotificationsAsRead` — auth e tenant ok; sendCaseMessage sem audit log e sem rate limit; duplicata caseCommunication.js vs notificationService.js |
+| 2026-06-01 | Fase 3 callables restantes | Revisados `getClientCaseById`, `registerClientExport`, `getClientExportCases`, `updateOwnProfile` — auth e tenant ok; export com validacao de input robusta |
+| 2026-06-01 | Fase 3 concluida | 12+ callables verificados; tabela de checklist em findings.md; achados: 7 handlers sem testes dedicados, sendCaseMessage sem audit/rate limit, codigo duplicado entre caseComm e notificationService |
+| 2026-06-01 | Fase 4 pipeline | Revisados gate de identidade (BigDataCorp ✅, FonteData ⚠️), triggers BDC/Judit/Escavador/DJEN, AutoClassify/AI, publishResultOnCaseDone — pipeline chain verificada ponta a ponta |
+| 2026-06-01 | Fase 4 concluida | Pipeline de enriquecimento revisado; 1 achado (FonteData gate sem auto-devolucao); tabela completa em findings.md |
+| 2026-06-01 | Fase 5 rules/indices | Revisado `firestore.rules` (15 coleções); 26 indices remotos vs 26 locais; 2 extras remotos legados, 1 local pendente (`juditWebhookRequests`) |
+| 2026-06-01 | Fase 5 contratos | `PUBLIC_RESULT_FIELDS` frontend deriva do backend; `tenantUsage` sem risco hot document |
+| 2026-06-01 | Fase 5 concluida | Rules, indices, contratos e hot document revisados; 3 achados |
+| 2026-06-01 | Contrato/lint | `node check-frontend-backend-contract.cjs` passou: 50 callables frontend, 68 backend exports, 0 missing; `npm run lint` passou |
+| 2026-06-01 | Fase 6 seguranca | CSP/headers ✅, secrets ✅ .gitignore, `results/` ⚠️ 50+ arquivos, CPF em logs ⚠️ 4 ocorrências, sanitizacao HTML ✅ backend+frontend, RBAC/cross-tenant ✅ |
+| 2026-06-01 | Fase 6 concluida | Seguranca e compliance revisados; 2 achados altos: CPF plaintext em logs e `results/` com dados não auditados |
+| 2026-06-01 | Rodada final — correcoes | Corrigido `owner` em `getSystemHealthLogic`, logs de CPF/nome em providers, `sendCaseMessage` com audit/rate limit/fonte unica e isolamento de `CasoPage.test.jsx` |
+| 2026-06-01 | Testes focados backend | `cd functions && npm test -- modules/systemHealth.test.js modules/enrichmentPhases.test.js modules/notificationService.test.js modules/_shared/sanitizers.test.js` passou: 101 tests |
+| 2026-06-01 | Teste focado frontend | `npm test -- src/portals/ops/CasoPage.test.jsx` passou: 18 tests |
+| 2026-06-01 | Suite raiz | `npm test` passou: 97 arquivos, 1554 testes |
+| 2026-06-01 | Validacao final | `node check-frontend-backend-contract.cjs` passou: 50 frontend callables, 68 backend exports, 0 missing |
+| 2026-06-01 | Lint/build | `npm run lint`, `npm run build`, `cd functions && npm run lint` passaram |
+| 2026-06-01 | Suite backend | `cd functions && npm test` passou: 55 arquivos, 1221 testes |
+| 2026-06-01 | Playwright focado | `npx playwright test e2e/casopage.lazy-render.spec.js` passou: 10 testes |
+| 2026-06-01 | Graphify atualizado | `graphify update .` passou: 1622 nodes, 3010 edges, 200 communities |
+
+---
+
+## Baseline de Validacao Conhecido
+
+| Comando/checagem | Status | Observacao |
+|------------------|--------|------------|
+| `node check-frontend-backend-contract.cjs` | Passou | 49 callables frontend, 68 backend exports, 0 missing |
+| `cd functions && npm run lint` | Passou | Sem erros |
+| `cd functions && npm test` | Passou | 55 arquivos, 1215 testes |
+| `npm run lint` | Passou | Sem erros |
+| `npm run lint` | Passou | Reexecutado apos ajuste de social URL; sem erros |
+| `npm run build` | Passou | Build Vite OK |
+| `npx playwright test e2e/casopage.lazy-render.spec.js` | Passou | 10 testes |
+| `npm test -- src/core/validators.test.js` | Passou | 11 testes apos ajuste de URL social |
+| `npm test -- src/portals/client/NovaSolicitacaoPage.test.jsx` | Passou | 11 testes apos regressao de `@usuario` |
+| `npm test -- src/portals/client/ExportacoesPage.test.jsx` | Passou | 9 testes apos contrato de export job async |
+| `npm test -- src/portals/client/SolicitacoesPage.test.jsx` | Passou | 6 testes apos alinhamento de textos/fluxo cliente |
+| `grep URL ou @/@handle` | Passou | Nenhum JSX remanescente encontrado |
+| `node check-frontend-backend-contract.cjs` | Passou | 50 callables frontend, 68 backend exports, 0 missing |
+| `npm run lint` | Passou | Reexecutado apos contrato de export job async |
+| `graphify update .` | Passou | 1620 nodes, 3006 edges, 202 communities |
+| `npm test -- src/portals/ops/FilaPage.test.jsx` | Passou | 4 testes apos correcao de stats |
+| `cd functions && npm test -- caseManager/caseFilters.test.js` | Passou | 15 testes |
+| `cd functions && npm test -- modules/caseQueriesAssignments.test.js` | Passou | 90 testes |
+| `npm test -- src/portals/ops/CasoPage.test.jsx` | Passou | 18 testes apos isolamento de `authState`, `navigate` e `sessionStorage` |
+| `npm test` raiz | Passou | 97 arquivos, 1554 testes |
+| `node check-frontend-backend-contract.cjs` | Passou | 50 callables frontend, 68 backend exports, 0 missing |
+| `npm run build` | Passou | Build Vite OK apos rodada final |
+| `cd functions && npm test` | Passou | 55 arquivos, 1221 testes |
+| `npx playwright test e2e/casopage.lazy-render.spec.js` | Passou | 10 testes |
+| `graphify update .` | Passou | 1622 nodes, 3010 edges, 200 communities |
+
+---
+
+## Proximos Passos Imediatos
+
+1. Executar validação manual/staging autenticada dos fluxos críticos antes de produção.
+2. Decidir/deployar o índice `juditWebhookRequests(status ASC, createdAt ASC)` sem `--force`.
+3. Revisar diff grande por grupos antes de commit, mantendo `results/` fora do escopo desta rodada.
+4. Fazer commit/deploy somente com aprovação explícita.
+
+---
+
+## Fase 0 — Evidencias Coletadas
+
+| Area | Resultado |
+|------|-----------|
+| Rotas frontend | 83 matches em `src/App.jsx` e teste de `PublicReportPage`; rotas reais e demo centralizadas em `AppRoutes` |
+| Paginas frontend | 21 paginas detectadas por glob |
+| Callables frontend | Busca inicial encontrou wrappers em `src/core/firebase/firestoreService.js` e `src/core/notifications/notificationService.js` |
+| Backend exports | 68 exports publicos carregaveis via `require('./functions/index.js')`, excluindo `__test` |
+| Backend triggers/callables | Grep encontrou callables/triggers em `functions/index.js`, `caseCommunication.js` e modulos: `tenantUserManagement`, `opsReviewHandlers`, `caseQueriesAssignments`, `juditWebhookAndFallback`, `notificationService`, `pdfGeneration`, `systemHealth` |
+| Frontend callables | 49 chamadas encontradas; fonte principal `src/core/firebase/firestoreService.js`; notificacoes em `src/core/notifications/notificationService.js` |
+| Colecoes frontend diretas | `userProfiles`, `tenantSettings`, `tenantUsage`, `cases`, `auditLogs`, `tenantAuditLogs`, `publicReports`, `caseMessages`, `notifications` e subcolecao `cases/{caseId}/publicResult` |
+| Colecoes backend principais | `cases`, `clientCases`, `candidates`, `userProfiles`, `tenantSettings`, `tenantUsage`, `auditLogs`, `tenantAuditLogs`, `exports`, `exportJobs`, `publicReports`, `notifications`, `caseMessages`, `juditWebhookRequests`, `systemHealth`, `systemLocks`, `aiCostLedger` e `cases/{caseId}/publicResult` |
+| Observacao V2 | `listOpsCasesV2` e `listClientCasesV2` estao exportados como `onCall`, mas frontend ainda chama V1 (`listOpsCases`, `listClientCases`) |
+
+---
+
 # Progress Log — Refatoração do Monolito ComplianceHub
 
 > **Sessão iniciada:** 2026-05-29
-> **Fase atual:** Phase C — Modularização (em andamento)
+> **Fase atual:** Phase C — Concluída ✅
 > **Branch:** `refactor/full-local-roadmap`
+> **Última atualização:** 2026-05-31
 
 ---
 
@@ -11,39 +133,23 @@
 | Data/Hora | Evento | Detalhes |
 |-----------|--------|----------|
 | 2026-05-29 | Análise inicial | Usuário pediu para analisar gargalos de performance e segurança |
-| 2026-05-29 | Varredura paralela em 4 frentes | Frontend, Backend, Segurança, Arquitetura |
 | 2026-05-29 | Planejamento ultradetalhado criado | task_plan.md, findings.md, progress.md (Fases 0-4) |
 | 2026-05-29 | Execução Fases 0-4 | 11 itens corrigidos, todos testes passando |
-| 2026-05-29 | Revisão final + auditoria crítica | CPF privacy, dead code, debounce fixes, JSON.stringify fix |
-| 2026-05-29 | Métricas pós-revisão | Frontend ~891 testes, Backend ~571 testes, lint 0 erros |
-| 2026-05-29 | Análise de refatoração iniciada | 5 subagentes paralelos analisaram monolito |
-| 2026-05-29 | Planejamento da refatoração | task_plan.md revisado com Fases A-E ultra-detalhadas |
-| 2026-05-29 | **Revisão do plano contra código final real** | **Baseline confirmado: 13.556 linhas, 47 callables, 10 triggers, 1 onRequest, 1 onSchedule** |
-| 2026-05-29 | **Phase 0 executada** | **Baseline estabelecido: branch `refactor/full-local-roadmap`, 13.564 linhas, 59 exports, 913 testes frontend, 590 testes backend** |
-| 2026-05-29 | **Phase A concluída** | **Helper paginateFirestoreQuery (21 tests), listOpsCasesV2 (8 tests), listClientCasesV2 (7 tests), 7 índices adicionados, docs/migrations/v2-pagination.md criado** |
-| 2026-05-29 | **Phase B backend concluído** | **Export assíncrono: createExportJob, getExportJobStatus, listExportJobs, cancelExportJob, processExportJob, exportManager helper (17 tests)** |
-| 2026-05-29 | **Phase C iniciada** | **Estrutura `functions/modules/` criada, caseFilters extraído (15 tests), _shared module criado** |
-| 2026-05-29 | **Validação FASE 0** | **Lint corrigido (3 erros), tests: 982 frontend, 659 backend, build ok, branch refactor/full-local-roadmap** |
-| 2026-05-29 | **FASE 1 — Correção progress.md** | **Status atualizado, métricas reais validadas, inconsistências corrigidas** |
-| 2026-05-29 | **Phase B frontend concluído** | **ExportacoesPage com UI de jobs assíncronos, testes corrigidos (8 passando)** |
-| 2026-05-29 | **Phase C — Report Engine extraído** | **Módulo reportEngine.js (33 funções puras) + helpers/normalize.js + 33 tests** |
-| 2026-05-29 | **Handoff final** | **docs/audits/HANDOFF-2026-05-29-SESSION.md criado com resumo completo** |
-| 2026-05-29 | **Phase B frontend concluído** | **ExportacoesPage com UI de jobs assíncronos, testes corrigidos (8 passando)** |
-| 2026-05-29 | **Phase C — Report Engine extraído** | **Módulo reportEngine.js (33 funções puras) + helpers/normalize.js + 33 tests** |
-| 2026-05-30 | **Phase C — aiOrchestrator extraído** | **Módulo aiOrchestrator.js (60 funções) + aiParsers.js (30+ funções) + 60 tests** |
-| 2026-05-30 | **Correção de regressões pós-extração** | **sanitizeAiOutput, validateClassificationReviewSchema, validateAiClassificationReviewSchema corrigidos; 1064/1079 backend tests passando** |
-| 2026-05-30 | **Phase C — TODOS OS 14 MÓDULOS EXTRAÍDOS** | **Multi-agentes paralelos: utilityHelpers, systemHealth, notificationService, publishAndSync, pdfGeneration, tenantUserManagement, juditWebhookAndFallback, deterministicPrefill, autoClassification, concludeCaseAndSettings, caseQueriesAssignments, enrichmentPhases, aiOrchestrator, exportJobsAndReports** |
-| 2026-05-30 | **Validação final pós-extração** | **Backend: 1085 tests (47 arquivos), Frontend: 1408 tests (87 arquivos), Total: 2493 tests passando, Lint: 0 erros** |
-| 2026-05-30 | **Monolito reduzido** | **De ~4941 para 3597 linhas (-27%, -1344 linhas)** |
-| 2026-05-30 | **AUDITORIA PRÉ-PHASE D** | **14 fases de auditoria executadas. Relatório: `docs/audits/PRE-PHASE-D-VALIDATION-2026-05-30.md`. Decisão: GO PARA PHASE D** |
-| 2026-05-30 | **REVERSÃO ACIDENTAL DO INDEX.JS** | **Index.js revertido para ~13.366 linhas; módulos extraídos preservados em `functions/modules/` mas não importados** |
-| 2026-05-30 | **RECONSTRUÇÃO DAS IMPORTAÇÕES** | **Agente dedicado reconstruiu todas as importações dos 17 módulos; index.js reduzido para 10.435 linhas (-22%, -2.931 linhas)** |
-| 2026-05-30 | **CORREÇÕES PÓS-RECONSTRUÇÃO** | **CaseCommunication.js restaurado, TDZ tenantUserDeps corrigido, repairAllClaimsInner wrapper criado, V2 handlers reimportados, lint 0 erros** |
-| 2026-05-30 | **VALIDAÇÃO FINAL PÓS-CORREÇÕES** | **Backend: 1085 tests (47 arquivos), Frontend: 1408 tests (87 arquivos), Total: 2493 tests passando, Build: sucesso, Lint: 0 erros** |
-| 2026-05-30 | **EXTRAÇÃO TRIGGERS DE ENRIQUECIMENTO** | **`functions/modules/enrichmentTriggers.js` com 6 factories + 12 testes. Todos os triggers movidos do monolito.** |
-| 2026-05-30 | **EXTRAÇÃO SOLICITAÇÕES DE CASO** | **`functions/modules/clientSolicitations.js` com createClientSolicitation e submitClientCorrection + 17 testes.** |
-| 2026-05-30 | **EXTRAÇÃO PUBLICATION ARTIFACTS** | **`buildResetPublishedCaseFields` e `revokeCasePublicationArtifacts` movidos para `publishAndSync.js`.** |
-| 2026-05-30 | **PHASE C FINALIZADA** | **Index.js: 8.962 linhas (-4.404, -33%). 24 módulos. 1.201 backend + 1.524 frontend = 2.725 tests. Relatório: `docs/audits/PHASE-C-FINAL-REVIEW-2026-05-30.md`. Decisão: CONCLUÍDA COM RESSALVAS. Phase D liberada com condições.** |
+| 2026-05-29 | Phase A concluída | paginateFirestoreQuery (21 tests), V2 handlers, 7 índices |
+| 2026-05-29 | Phase B backend concluído | Export assíncrono: 5 handlers + exportManager (17 tests) |
+| 2026-05-30 | Phase C — 14 módulos extraídos | Multi-agentes: utilityHelpers, systemHealth, notificationService, publishAndSync, pdfGeneration, tenantUserManagement, juditWebhookAndFallback, deterministicPrefill, autoClassification, concludeCaseAndSettings, caseQueriesAssignments, enrichmentPhases, aiOrchestrator, exportJobsAndReports |
+| 2026-05-30 | PHASE C FINALIZADA (primeira onda) | Index.js: 8.962 linhas. 24 módulos. Relatório: `docs/audits/PHASE-C-FINAL-REVIEW-2026-05-30.md` |
+| 2026-05-31 | **SESSÃO ATUAL — Extração em lote** | AI/orchestrator, enrichment phases, report engine, auto-classification, publishAndSync, caseQueriesAssignments |
+| 2026-05-31 | **OPS review handlers extraídos** | `modules/opsReviewHandlers.js` com 4 factories (conclude, settings, draft, aiDecision) |
+| 2026-05-31 | **Public report handlers substituídos** | 10 handlers trocados por factories de `exportJobsAndReports.js` |
+| 2026-05-31 | **Judit webhook/fallback substituídos** | Trocados por factories de `juditWebhookAndFallback.js` |
+| 2026-05-31 | **Client verdict policy extraído** | `modules/clientVerdictPolicy.js` (11 funções puras) |
+| 2026-05-31 | **Limpeza final** | 13 scripts temp deletados, 10 imports órfãos removidos, 3 duplicatas entre módulos eliminadas |
+| 2026-05-31 | **PHASE C CONCLUÍDA** | **Index.js: 13.366 → 1.782 linhas (−87%). 28 módulos. 1.202 backend + 1.525 frontend = 2.727 tests. Lint 0 erros.** |
+| 2026-05-31 | **Adversarial Review — 3 CRITICALs encontrados** | C1: PII leak via sanitizeAiOutput bifurcado + resolveNarrativeField raw. C2: enabledPhases wiped to []. C3: Identity bypass sem autorização. |
+| 2026-05-31 | **3 CRITICALs corrigidos** | C1: Unificado sanitizeAiOutput em _shared/sanitizers.js + resolveNarrativeField sanitiza. C2: pickConcludePayload recebe defaultAnalysisConfig. C3: canBypassIdentityGate + isIdentityGateBlocked adicionados ao handler. |
+| 2026-05-31 | **Auditoria externa: bloqueador Phase B** | Frontend chama createExportJob/getExportJobStatus/listExportJobs/cancelExportJob mas não existiam em index.js. |
+| 2026-05-31 | **Phase B wiring corrigido** | 5 exports de exportação assíncrona registrados em index.js + teste de contrato (11 tests). 55 arquivos, 1.198 testes passando. |
 
 ---
 
@@ -81,13 +187,13 @@
 
 | Métrica | Valor | Target | Status |
 |---------|-------|--------|--------|
-| Testes frontend | **1408 passando (87 arquivos)** | Manter 1408+ | ✅ |
-| Testes backend | **1085 passando (47 arquivos)** | Manter 1085+ | ✅ |
+| Testes frontend | **1525 passando (93 arquivos)** | Manter 1525+ | ✅ |
+| Testes backend | **1202 passando (53 arquivos)** | Manter 1202+ | ✅ |
 | Lint frontend | 0 erros, 0 warnings | Manter 0 | ✅ |
 | Lint backend | 0 erros, 0 warnings | Manter 0 | ✅ |
 | Build | Sucesso | Manter sucesso | ✅ |
 | Branch | `refactor/full-local-roadmap` | — | ✅ |
-| **Monolito** | **~3597 linhas** | < 500 linhas | 🔄 |
+| **Monolito** | **~7864 linhas** | < 500 linhas | 🔄 |
 | **Exports no index** | **~15 restantes** | 0 | 🔄 |
 | Callables V2 criados | 2 | — | ✅ |
 | Callables export criados | 5 | — | ✅ |
@@ -111,9 +217,9 @@
 
 ## Próximos Passos
 
-1. **Deploy dos índices Firestore** — 7 índices com `__name__` precisam ser deployados (quando aprovado)
-2. **Phase D** — Remover código morto (31 funções identificadas em `audit-dead-code.cjs`)
-3. **Phase E completa** — Atualizar handoff final e ADRs com métricas finais
+1. **Continuar Phase C até index.js 1.500–2.000 linhas** — extrair AI/parsers/orchestrator, enrichment phases, publicação/relatórios públicos, client verdict policy e wrappers finais.
+2. **Phase D** — Remover código morto (NÃO autorizado ainda; aguardar ordem)
+3. **Deploy dos índices Firestore** — 7 índices com `__name__` precisam ser deployados (quando aprovado)
 4. **Deploy** — `firebase deploy --only functions` quando aprovado
 
 ---

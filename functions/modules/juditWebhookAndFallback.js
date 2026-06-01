@@ -31,6 +31,7 @@ async function registerJuditWebhookRequest({ db, FieldValue, requestId, caseId, 
     await db.collection('juditWebhookRequests').doc(requestId).set({
         caseId,
         phaseType,
+        status: 'PENDING',
         enrichmentGeneration,
         ...payload,
         createdAt: FieldValue.serverTimestamp(),
@@ -322,6 +323,7 @@ async function runJuditAsyncFallbackLogic({
 }) {
     const staleBefore = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS);
     const snapshot = await db.collection('juditWebhookRequests')
+        .where('status', '==', 'PENDING')
         .where('createdAt', '<=', staleBefore)
         .limit(20)
         .get();

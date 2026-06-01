@@ -90,6 +90,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
     };
 
     const currentUid = user?.uid;
+    const getMessageBody = (message) => message?.body || message?.content || '';
 
     return (
         <div className="case-communication-panel">
@@ -118,7 +119,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
                     if (isSystem) {
                         return (
                             <div key={msg.id} className="case-message-system">
-                                <span className="case-message-system-text">{msg.body}</span>
+                                <span className="case-message-system-text">{getMessageBody(msg)}</span>
                                 <span className="case-message-system-time">{formatMessageDate(msg.createdAt)}</span>
                             </div>
                         );
@@ -137,7 +138,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
                                     <span className="case-message-name">{msg.senderName}</span>
                                     <span className="case-message-time">{formatMessageDate(msg.createdAt)}</span>
                                 </div>
-                                <div className="case-message-body">{msg.body}</div>
+                                <div className="case-message-body">{getMessageBody(msg)}</div>
                             </div>
                         </div>
                     );

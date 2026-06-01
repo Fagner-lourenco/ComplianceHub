@@ -11,6 +11,7 @@ import {
   lookupIpLocation,
   createCaseCompletedNotifications,
   createNewSolicitationNotifications,
+  createSendCaseMessageHandler,
 } from './notificationService';
 
 // Mock do fetch global
@@ -317,5 +318,135 @@ describe('createNewSolicitationNotifications', () => {
     const call = caseComm.createNotification.mock.calls[0][0];
     expect(call.candidateName).toBe('Joao');
     expect(call.message).toBe('Acme enviou uma nova análise.');
+  });
+});
+
+describe('createSendCaseMessageHandler', () => {
+  function buildDb({ profile, caseData } = {}) {
+    const messageSet = vi.fn(async () => {});
+    const caseUpdate = vi.fn(async () => {});
+    const clientCaseUpdate = vi.fn(async () => {});
+    const where = vi.fn(() => ({ where, get: vi.fn(async () => ({ docs: [], size: 0 })) }));
+
+    const db = {
+      collection: vi.fn((name) => {
+        if (name === 'userProfiles') {
+          return {
+            doc: vi.fn(() => ({
+              get: vi.fn(async () => ({ exists: Boolean(profile), data: () => profile })),
+            })),
+            where,
+          };
+        }
+        if (name === 'cases') {
+          return {
+            doc: vi.fn(() => ({
+              get: vi.fn(async () => ({ exists: Boolean(caseData), data: () => caseData })),
+              update: caseUpdate,
+            })),
+          };
+        }
+        if (name === 'caseMessages') {
+          return {
+            doc: vi.fn(() => ({ id: 'message-1', set: messageSet })),
+          };
+        }
+        if (name === 'clientCases') {
+          return {
+            doc: vi.fn(() => ({ update: clientCaseUpdate })),
+          };
+        }
+        if (name === 'notifications') {
+          return {
+            doc: vi.fn(() => ({ set: vi.fn(async () => {}) })),
+          };
+        }
+        return { doc: vi.fn(), where };
+      }),
+    };
+
+    return { db, messageSet, caseUpdate, clientCaseUpdate };
+  }
+
+  function buildHandler(deps = {}) {
+    const writeAuditEvent = vi.fn(async () => {});
+    const rateLimiter = vi.fn(async () => {});
+    const handler = createSendCaseMessageHandler({
+      ...deps,
+      writeAuditEvent,
+      rateLimiter,
+      ACTOR_TYPE: { OPS_USER: 'OPS_USER', CLIENT_USER: 'CLIENT_USER' },
+      SOURCE: { PORTAL_OPS: 'PORTAL_OPS', PORTAL_CLIENT: 'PORTAL_CLIENT' },
+      getClientIp: vi.fn(() => '127.0.0.1'),
+    });
+    return { handler, writeAuditEvent, rateLimiter };
+  }
+
+  it('envia mensagem, atualiza caso e registra audit log', async () => {
+    const { db, messageSet, caseUpdate } = buildDb({
+      profile: { role: 'analyst', tenantId: 't1', email: 'ops@test.com', displayName: 'Ops' },
+      caseData: { tenantId: 't1', candidateName: 'Candidato Teste' },
+    });
+    const { handler, writeAuditEvent, rateLimiter } = buildHandler({ db });
+
+    const result = await handler.run({ auth: { uid: 'u1' }, data: { caseId: 'case-1', body: 'Mensagem valida' } });
+
+    expect(result).toEqual({ ok: true, messageId: 'message-1' });
+    expect(rateLimiter).toHaveBeenCalledWith('u1', { maxRequests: 20, windowMs: 60000, key: 'sendCaseMessage' });
+    expect(messageSet).toHaveBeenCalledWith(expect.objectContaining({
+      tenantId: 't1',
+      caseId: 'case-1',
+      senderPortal: 'ops',
+      body: 'Mensagem valida',
+    }));
+    expect(caseUpdate).toHaveBeenCalledWith(expect.objectContaining({ communicationStatus: 'WAITING_CLIENT' }));
+    expect(writeAuditEvent).toHaveBeenCalledWith(expect.objectContaining({
+      action: 'CASE_MESSAGE_SENT',
+      tenantId: 't1',
+      related: { caseId: 'case-1', messageId: 'message-1' },
+      metadata: expect.objectContaining({ bodyLength: 15 }),
+    }));
+  });
+
+  it('nega sem auth', async () => {
+    const { db } = buildDb();
+    const { handler } = buildHandler({ db });
+    await expect(handler.run({ data: { caseId: 'case-1', body: 'Oi' } })).rejects.toThrow('Autenticacao necessaria');
+  });
+
+  it('nega cross-tenant', async () => {
+    const { db } = buildDb({
+      profile: { role: 'client_manager', tenantId: 't1', email: 'cliente@test.com' },
+      caseData: { tenantId: 't2', candidateName: 'Candidato Teste' },
+    });
+    const { handler } = buildHandler({ db });
+
+    await expect(handler.run({ auth: { uid: 'u1' }, data: { caseId: 'case-1', body: 'Oi' } })).rejects.toThrow('Caso fora do seu tenant');
+  });
+
+  it('nega body vazio', async () => {
+    const { db } = buildDb({
+      profile: { role: 'analyst', tenantId: 't1', email: 'ops@test.com' },
+      caseData: { tenantId: 't1' },
+    });
+    const { handler } = buildHandler({ db });
+
+    await expect(handler.run({ auth: { uid: 'u1' }, data: { caseId: 'case-1', body: '   ' } })).rejects.toThrow('caseId e body sao obrigatorios');
+  });
+
+  it('normaliza espacos e trunca body antes de persistir', async () => {
+    const { db, messageSet } = buildDb({
+      profile: { role: 'analyst', tenantId: 't1', email: 'ops@test.com' },
+      caseData: { tenantId: 't1' },
+    });
+    const { handler } = buildHandler({ db });
+    const body = `A\t${'b'.repeat(1600)}`;
+
+    await handler.run({ auth: { uid: 'u1' }, data: { caseId: 'case-1', body } });
+
+    const payload = messageSet.mock.calls[0][0];
+    expect(payload.body).toHaveLength(1500);
+    expect(payload.body).not.toContain('\t');
+    expect(payload.bodyPreview.length).toBeLessThanOrEqual(120);
   });
 });

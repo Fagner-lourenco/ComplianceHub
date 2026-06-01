@@ -14,46 +14,70 @@ const {
 
 function createMockDb(initialDocs = {}) {
     const docs = { ...initialDocs };
+    const makeRef = (path) => ({
+        id: path.split('/').pop(),
+        path,
+        set: vi.fn(async (data, options = {}) => {
+            docs[path] = options.merge ? { ...(docs[path] || {}), ...data } : data;
+        }),
+        update: vi.fn(async (data) => {
+            docs[path] = { ...(docs[path] || {}), ...data };
+        }),
+        delete: vi.fn(async () => { delete docs[path]; }),
+    });
+    const docSnapshot = (path) => ({
+        exists: !!docs[path],
+        data: () => docs[path] || null,
+        id: path.split('/').pop(),
+        ref: makeRef(path),
+    });
+    const applyFilters = (col, filters) => Object.entries(docs)
+        .filter(([k]) => k.startsWith(`${col}/`))
+        .filter(([, data]) => filters.every(([field, op, value]) => {
+            const actual = data?.[field];
+            if (op === '==') return actual === value;
+            if (op === '<=') {
+                const actualDate = actual?.toDate?.() || actual;
+                return actualDate <= value;
+            }
+            return true;
+        }))
+        .map(([path]) => docSnapshot(path));
+    const makeQuery = (col, filters = []) => ({
+        where: vi.fn((field, op, value) => makeQuery(col, [...filters, [field, op, value]])),
+        limit: vi.fn((n) => ({
+            get: vi.fn(async () => {
+                const queryDocs = applyFilters(col, filters).slice(0, n);
+                return {
+                    empty: queryDocs.length === 0,
+                    size: queryDocs.length,
+                    docs: queryDocs,
+                };
+            }),
+        })),
+    });
     return {
         collection: vi.fn((col) => ({
             doc: vi.fn((id) => ({
                 get: vi.fn(async () => {
-                    const data = docs[`${col}/${id}`];
-                    return {
-                        exists: !!data,
-                        data: () => data || null,
-                        ref: { id, path: `${col}/${id}`, set: vi.fn(async () => {}), update: vi.fn(async () => {}), delete: vi.fn(async () => {}) },
-                    };
+                    return docSnapshot(`${col}/${id}`);
                 }),
-                set: vi.fn(async () => {}),
-                update: vi.fn(async () => {}),
-                delete: vi.fn(async () => {}),
+                set: vi.fn(async (data, options = {}) => {
+                    const path = `${col}/${id}`;
+                    docs[path] = options.merge ? { ...(docs[path] || {}), ...data } : data;
+                }),
+                update: vi.fn(async (data) => {
+                    const path = `${col}/${id}`;
+                    docs[path] = { ...(docs[path] || {}), ...data };
+                }),
+                delete: vi.fn(async () => { delete docs[`${col}/${id}`]; }),
             })),
-            where: vi.fn(() => ({
-                limit: vi.fn(() => ({
-                    get: vi.fn(async () => ({
-                        empty: Object.keys(docs).filter((k) => k.startsWith(col)).length === 0,
-                        size: Object.keys(docs).filter((k) => k.startsWith(col)).length,
-                        docs: Object.entries(docs)
-                            .filter(([k]) => k.startsWith(col))
-                            .map(([id, data]) => ({
-                                id: id.replace(`${col}/`, ''),
-                                data: () => data,
-                                ref: { id: id.replace(`${col}/`, ''), path: id, set: vi.fn(async () => {}), update: vi.fn(async () => {}), delete: vi.fn(async () => {}) },
-                            })),
-                    })),
-                })),
-            })),
+            where: vi.fn((field, op, value) => makeQuery(col, [[field, op, value]])),
         })),
         runTransaction: vi.fn(async (fn) => {
             const tx = {
                 get: vi.fn(async (ref) => {
-                    const data = docs[ref.path];
-                    return {
-                        exists: !!data,
-                        data: () => data || null,
-                        ref,
-                    };
+                    return docSnapshot(ref.path);
                 }),
                 update: vi.fn((ref, data) => {
                     docs[ref.path] = { ...(docs[ref.path] || {}), ...data };
@@ -61,6 +85,7 @@ function createMockDb(initialDocs = {}) {
             };
             return fn(tx);
         }),
+        __docs: docs,
     };
 }
 
@@ -124,6 +149,8 @@ describe('registerJuditWebhookRequest', () => {
         });
         await registerJuditWebhookRequest({ db, FieldValue: mockFieldValue, requestId: 'r1', caseId: 'c1', phaseType: 'warrant' });
         expect(db.collection).toHaveBeenCalledWith('juditWebhookRequests');
+        expect(db.__docs['juditWebhookRequests/r1'].status).toBe('PENDING');
+        expect(db.__docs['juditWebhookRequests/r1'].enrichmentGeneration).toBe(3);
     });
 
     it('handles case read error gracefully', async () => {
@@ -252,7 +279,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const deps = createDeps();
         deps.juditApiKey = { value: vi.fn(() => null) };
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
         expect(result.error).toBe('missing_api_key');
@@ -272,7 +299,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const staleDate = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS - 1000);
         const deps = createDeps();
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: staleDate },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: staleDate },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
         expect(result.processed).toBe(0);
@@ -283,7 +310,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const deps = createDeps();
         deps.checkRequestStatus = vi.fn(async () => 'pending');
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -295,7 +322,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const deps = createDeps();
         deps.checkRequestStatus = vi.fn(async () => 'cancelled');
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -307,7 +334,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const deps = createDeps();
         deps.checkRequestStatus = vi.fn(async () => 'failed');
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -319,7 +346,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const deps = createDeps();
         deps.checkRequestStatus = vi.fn(async () => 'completed');
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'], cpf: '123.456.789-00' },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -328,13 +355,29 @@ describe('runJuditAsyncFallbackLogic', () => {
         expect(deps.normalizeJuditWarrants).toHaveBeenCalled();
     });
 
+    it('processa request pendente mesmo com registros terminais antigos', async () => {
+        const staleDate = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS - 1000);
+        const deps = createDeps();
+        deps.checkRequestStatus = vi.fn(async () => 'completed');
+        deps.db = createMockDb({
+            'juditWebhookRequests/old-done': { caseId: 'old', phaseType: 'warrant', status: 'DONE', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'], cpf: '123.456.789-00' },
+        });
+
+        const result = await runJuditAsyncFallbackLogic(deps);
+
+        expect(result.processed).toBe(1);
+        expect(deps.fetchResponses).toHaveBeenCalledWith('r1', 'test-api-key');
+    });
+
     it('handles fetch error gracefully', async () => {
         const staleDate = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS - 1000);
         const deps = createDeps();
         deps.checkRequestStatus = vi.fn(async () => 'completed');
         deps.fetchResponses = vi.fn(async () => { throw new Error('fetch fail'); });
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -345,7 +388,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const staleDate = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS - 1000);
         const deps = createDeps();
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 1, status: 'ENRICHING', juditPendingAsyncPhases: [] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -356,7 +399,7 @@ describe('runJuditAsyncFallbackLogic', () => {
         const staleDate = new Date(Date.now() - JUDIT_WEBHOOK_STALE_MS - 1000);
         const deps = createDeps();
         deps.db = createMockDb({
-            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', createdAt: { toDate: () => staleDate }, enrichmentGeneration: 1, tenantId: 't1' },
+            'juditWebhookRequests/r1': { caseId: 'c1', phaseType: 'warrant', status: 'PENDING', createdAt: { toDate: () => staleDate }, enrichmentGeneration: 1, tenantId: 't1' },
             'cases/c1': { enrichmentGeneration: 2, status: 'ENRICHING', juditPendingAsyncPhases: ['warrant'] },
         });
         const result = await runJuditAsyncFallbackLogic(deps);
@@ -371,6 +414,7 @@ describe('runJuditAsyncFallbackLogic', () => {
             'juditWebhookRequests/r1': {
                 caseId: 'c1',
                 phaseType: 'warrant',
+                status: 'PENDING',
                 createdAt: { toDate: () => staleDate },
                 tenantId: 't1',
             },

@@ -7,7 +7,22 @@
  * - Cria 1.000 casos mockados
  * - Valida total, ordem, duplicatas e omissões
  * - Limpa dados ao final
+ *
+ * Execução:
+ *   cd functions && node ../scripts/load-test-pagination.cjs
+ *   ou
+ *   set NODE_PATH=functions/node_modules && node scripts/load-test-pagination.cjs
  */
+
+// Resolve firebase-admin a partir de functions/node_modules
+const path = require('path');
+const functionsNodeModules = path.resolve(__dirname, '..', 'functions', 'node_modules');
+if (process.env.NODE_PATH) {
+    process.env.NODE_PATH = functionsNodeModules + path.delimiter + process.env.NODE_PATH;
+} else {
+    process.env.NODE_PATH = functionsNodeModules;
+}
+require('module').Module._initPaths();
 
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -26,8 +41,8 @@ initializeApp({ projectId: 'compliance-hub-load-test' });
 const db = getFirestore();
 
 const TENANT_ID = 'test-tenant-load';
-const TOTAL_CASES = 1000;
-const PAGE_SIZE = 100;
+const TOTAL_CASES = Number(process.env.LOAD_TEST_TOTAL_CASES || 1000);
+const PAGE_SIZE = Number(process.env.LOAD_TEST_PAGE_SIZE || 100);
 
 function generateMockCase(index) {
     const now = new Date();
@@ -48,24 +63,34 @@ function generateMockCase(index) {
 async function cleanup() {
     console.log('[CLEANUP] Removendo casos de teste...');
     const snapshot = await db.collection('cases').where('tenantId', '==', TENANT_ID).get();
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
+    let batch = db.batch();
+    let pendingWrites = 0;
+    for (const doc of snapshot.docs) {
+        batch.delete(doc.ref);
+        pendingWrites++;
+        if (pendingWrites === 500) {
+            await batch.commit();
+            batch = db.batch();
+            pendingWrites = 0;
+        }
+    }
+    if (pendingWrites > 0) await batch.commit();
     console.log(`[CLEANUP] ${snapshot.size} documentos removidos.`);
 }
 
 async function seedData() {
     console.log(`[SEED] Criando ${TOTAL_CASES} casos...`);
-    const batch = db.batch();
+    let batch = db.batch();
     for (let i = 0; i < TOTAL_CASES; i++) {
         const ref = db.collection('cases').doc();
         batch.set(ref, generateMockCase(i));
         if (i % 500 === 499) {
             await batch.commit();
+            batch = db.batch();
             console.log(`[SEED] ${i + 1} casos criados...`);
         }
     }
-    await batch.commit();
+    if (TOTAL_CASES % 500 !== 0) await batch.commit();
     console.log(`[SEED] ${TOTAL_CASES} casos criados.`);
 }
 

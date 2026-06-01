@@ -1,21 +1,25 @@
 import { test, expect } from '@playwright/test';
 
+async function gotoDemoCase(page) {
+  await page.goto('/demo/ops/caso/CASE-001');
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByText('Iniciando sistema seguro...')).toBeHidden({ timeout: 15000 });
+}
+
 test.describe('CasoPage - Funcionalidade Essencial', () => {
   test('Pagina carrega sem erros', async ({ page }) => {
     const consoleErrors = [];
     page.on('console', msg => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
     });
-    await page.goto('/demo/ops/caso/CASE-001');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoDemoCase(page);
     
     await expect(page.locator('body')).toBeVisible();
     expect(consoleErrors).toHaveLength(0);
   });
 
   test('Conteudo principal visivel', async ({ page }) => {
-    await page.goto('/demo/ops/caso/CASE-001');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoDemoCase(page);
     
     await expect(page.locator('body')).toBeVisible();
     const text = await page.locator('body').innerText();
@@ -24,8 +28,7 @@ test.describe('CasoPage - Funcionalidade Essencial', () => {
   });
 
   test('Elementos interativos existem', async ({ page }) => {
-    await page.goto('/demo/ops/caso/CASE-001');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoDemoCase(page);
     
     // Verificar que ha pelo menos tags html na pagina
     const body = page.locator('body');
@@ -36,19 +39,17 @@ test.describe('CasoPage - Funcionalidade Essencial', () => {
   });
 
   test('Botao de previa do relatorio existe', async ({ page }) => {
-    await page.goto('/demo/ops/caso/CASE-001');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoDemoCase(page);
     
     const previewBtn = page.locator('button:has-text("Prévia do relatório")').first();
-    await expect(previewBtn).toBeVisible();
+    await expect(previewBtn).toBeVisible({ timeout: 15000 });
   });
 
   test('Botao de previa é clicavel', async ({ page }) => {
-    await page.goto('/demo/ops/caso/CASE-001');
-    await page.waitForLoadState('domcontentloaded');
+    await gotoDemoCase(page);
     
     const previewBtn = page.locator('button:has-text("Prévia do relatório")').first();
-    await expect(previewBtn).toBeVisible();
+    await expect(previewBtn).toBeVisible({ timeout: 15000 });
     
     // Verificar que o botao tem onClick (nao esta desabilitado)
     await expect(previewBtn).not.toBeDisabled();

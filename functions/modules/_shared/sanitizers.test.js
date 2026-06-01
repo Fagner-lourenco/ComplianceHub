@@ -11,7 +11,6 @@ const {
     validateCpfDigits,
     sanitizeCpf,
     maskCpf,
-    validateAiClassificationReviewSchema,
     sanitizeStructuredList,
     sanitizeStructuredText,
     fixLatinMojibake,
@@ -62,55 +61,6 @@ describe('maskCpf', () => {
 
     it('retorna string vazia para CPF inválido', () => {
         expect(maskCpf('123')).toBe('');
-    });
-});
-
-describe('validateAiClassificationReviewSchema', () => {
-    it('retorna true para objeto válido', () => {
-        const valid = {
-            summary: 'Resumo',
-            identityAssessment: {
-                status: 'CONFIRMED',
-                rationale: 'Razão',
-                homonymRisk: 'LOW',
-            },
-            classificationValidation: {
-                criminal: {
-                    autoFlag: 'NEGATIVE',
-                    assessment: 'AGREE',
-                    evidenceStrength: 'STRONG',
-                    rationale: 'Razão',
-                    possibleErrors: [],
-                },
-                labor: {
-                    autoFlag: 'NEGATIVE',
-                    assessment: 'AGREE',
-                    evidenceStrength: 'STRONG',
-                    rationale: 'Razão',
-                    possibleErrors: [],
-                },
-                warrant: {
-                    autoFlag: 'NEGATIVE',
-                    assessment: 'AGREE',
-                    evidenceStrength: 'STRONG',
-                    rationale: 'Razão',
-                    possibleErrors: [],
-                },
-            },
-            inconsistencies: [],
-            manualReviewPoints: [],
-            consultativeSuggestion: {
-                action: 'MAINTAIN_AUTOCLASSIFICATION',
-                rationale: 'Razão',
-            },
-            confidence: 'HIGH',
-        };
-        expect(validateAiClassificationReviewSchema(valid)).toBe(true);
-    });
-
-    it('retorna false para objeto inválido', () => {
-        expect(validateAiClassificationReviewSchema(null)).toBe(false);
-        expect(validateAiClassificationReviewSchema({})).toBe(false);
     });
 });
 

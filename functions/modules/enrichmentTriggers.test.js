@@ -131,6 +131,24 @@ describe('createEnrichBigDataCorpOnCaseHandler', () => {
         await handler(event);
         expect(deps.runBigDataCorpEnrichmentPhase).toHaveBeenCalled();
     });
+
+    it('marca FAILED quando BigDataCorp falha apos adquirir lock', async () => {
+        const deps = makeDeps({
+            runBigDataCorpEnrichmentPhase: vi.fn().mockRejectedValue(new Error('provider down')),
+        });
+        const handler = createEnrichBigDataCorpOnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: { data: () => ({ tenantId: 't1', bigdatacorpEnrichmentStatus: 'PENDING' }), exists: true },
+        };
+        await handler(event);
+
+        const caseRef = deps.db.collection('cases').doc('c1');
+        expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+            bigdatacorpEnrichmentStatus: 'FAILED',
+            bigdatacorpError: 'provider down',
+        }));
+    });
 });
 
 describe('createEnrichBigDataCorpOnCorrectionHandler', () => {
@@ -160,6 +178,27 @@ describe('createEnrichBigDataCorpOnCorrectionHandler', () => {
         };
         await handler(event);
         expect(deps.runBigDataCorpEnrichmentPhase).toHaveBeenCalled();
+    });
+
+    it('marca FAILED quando BigDataCorp falha durante correction', async () => {
+        const deps = makeDeps({
+            runBigDataCorpEnrichmentPhase: vi.fn().mockRejectedValue(new Error('provider down')),
+        });
+        const handler = createEnrichBigDataCorpOnCorrectionHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ status: 'CORRECTION_NEEDED', bigdatacorpEnrichmentStatus: 'PENDING', tenantId: 't1' }) },
+                after: { data: () => ({ status: 'PENDING', bigdatacorpEnrichmentStatus: 'PENDING', tenantId: 't1' }) },
+            },
+        };
+        await handler(event);
+
+        const caseRef = deps.db.collection('cases').doc('c1');
+        expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+            bigdatacorpEnrichmentStatus: 'FAILED',
+            bigdatacorpError: 'provider down',
+        }));
     });
 });
 
@@ -254,5 +293,27 @@ describe('createEnrichDjenOnCaseHandler', () => {
         };
         await handler(event);
         expect(deps.runDjenEnrichmentPhase).not.toHaveBeenCalled();
+    });
+
+    it('marca FAILED e tenta classificar quando trigger DJEN falha antes da fase', async () => {
+        const deps = makeDeps({
+            loadDjenConfig: vi.fn().mockRejectedValue(new Error('config down')),
+        });
+        const handler = createEnrichDjenOnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ juditEnrichmentStatus: 'PENDING', djenEnrichmentStatus: 'PENDING', tenantId: 't1', status: 'PENDING' }) },
+                after: { data: () => ({ juditEnrichmentStatus: 'DONE', djenEnrichmentStatus: 'PENDING', tenantId: 't1', status: 'PENDING' }) },
+            },
+        };
+        await handler(event);
+
+        const caseRef = deps.db.collection('cases').doc('c1');
+        expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+            djenEnrichmentStatus: 'FAILED',
+            djenError: 'config down',
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
     });
 });

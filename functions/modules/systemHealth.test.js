@@ -40,6 +40,20 @@ describe('getSystemHealthLogic', () => {
         expect(result.providers.escavador.failCount).toBe(0);
     });
 
+    it('permite acesso para owner', async () => {
+        const db = {
+            collection: vi.fn(() => ({
+                get: vi.fn(async () => ({
+                    forEach: vi.fn(),
+                })),
+            })),
+        };
+        const getOpsUserProfile = vi.fn(async () => ({ role: 'owner' }));
+        const circuitBreaker = { COLLECTION: 'systemHealth' };
+
+        await expect(getSystemHealthLogic({ db, getOpsUserProfile, circuitBreaker })).resolves.toEqual({ providers: {} });
+    });
+
     it('nega acesso para role nao autorizado', async () => {
         const getOpsUserProfile = vi.fn(async () => ({ role: 'client_manager' }));
         const db = { collection: vi.fn() };

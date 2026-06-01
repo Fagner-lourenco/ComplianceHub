@@ -158,7 +158,12 @@ function createEnrichBigDataCorpOnCaseHandler(deps) {
             } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [BigDataCorp]: error:`, err.message);
-            // Do NOT rethrow — BigDataCorp failure should not block the pipeline
+            await caseRef.update({
+                bigdatacorpEnrichmentStatus: 'FAILED',
+                bigdatacorpError: err.message,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            // Do NOT rethrow — FAILED is terminal and lets downstream triggers continue.
         }
     };
 }
@@ -206,6 +211,11 @@ function createEnrichBigDataCorpOnCorrectionHandler(deps) {
             await runBigDataCorpEnrichmentPhase(caseRef, caseId, runCaseData, bdcConfig);
         } catch (err) {
             console.error(`Case ${caseId} [BigDataCorp correction]: error:`, err.message);
+            await caseRef.update({
+                bigdatacorpEnrichmentStatus: 'FAILED',
+                bigdatacorpError: err.message,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
         }
     };
 }
@@ -480,6 +490,12 @@ function createEnrichDjenOnCaseHandler(deps) {
             } catch { /* audit failure must not block pipeline */ }
         } catch (err) {
             console.error(`Case ${caseId} [DJEN]: error:`, err.message);
+            await caseRef.update({
+                djenEnrichmentStatus: 'FAILED',
+                djenError: err.message,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'DJEN trigger failure');
         }
     };
 }

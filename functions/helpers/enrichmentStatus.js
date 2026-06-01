@@ -26,7 +26,5 @@ function isJuditSettled(caseData = {}) {
 
 module.exports = {
     isSettledProviderStatus,
-    isProviderTerminalForPipeline,
-    hasPendingJuditAsync,
     isJuditSettled,
 };

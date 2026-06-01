@@ -3,6 +3,8 @@
  * Extraídas do monolito index.js para reuso entre módulos
  */
 
+const { sanitizeAiOutput } = require('../modules/_shared/sanitizers');
+
 function asDate(value) {
     if (!value) return null;
     if (value instanceof Date) return value;
@@ -55,7 +57,7 @@ function sanitizeAuditMetadataValue(value) {
 }
 
 function sanitizePublicStructuredValue(value) {
-    if (typeof value === 'string') return sanitizeStructuredText(value, 1200);
+    if (typeof value === 'string') return sanitizeStructuredText(sanitizeAiOutput(value), 1200);
     if (Array.isArray(value)) return value.slice(0, 50).map(sanitizePublicStructuredValue);
     if (!value || typeof value !== 'object') return value;
     if (Object.getPrototypeOf(value) !== Object.prototype) return value;

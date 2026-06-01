@@ -5,6 +5,7 @@
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { FieldValue } = require('firebase-admin/firestore');
+const { normalizeTenantSlug } = require('../helpers/normalize');
 
 /* =========================================================
    Constantes de roles
@@ -17,12 +18,6 @@ const OPS_MANAGEABLE_ROLES = new Set(['analyst', 'supervisor', 'admin']);
 /* =========================================================
    Funções puras / auxiliares
    ========================================================= */
-function normalizeTenantSlug(value = '') {
-    return String(value)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-}
 
 function sanitizeDisplayName(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -655,7 +650,7 @@ async function updateOpsUserLogic({
     if (!targetDoc.exists) throw new HttpsError('not-found', 'Usuario nao encontrado.');
     const targetProfile = targetDoc.data();
 
-    if (!OPS_ROLES.has(targetProfile.role)) {
+    if (!OPS_MANAGEABLE_ROLES.has(targetProfile.role)) {
         throw new HttpsError('permission-denied', 'Este usuario nao pode ser gerenciado por aqui.');
     }
     if (callerProfile.role === 'supervisor' && targetProfile.tenantId !== callerProfile.tenantId) {

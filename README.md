@@ -117,7 +117,7 @@ Relatório disponível via buildCaseReportHtml(caseData)
 | FIX-D | Webhook Judit recebia payloads duplicados | ✅ Deployed |
 | FIX-E | `syncClientCaseOnUpdate` falha silenciosa em tenant sem config | ✅ Deployed |
 
-Coverage: **51/51 testes passando** em 16 arquivos de teste.
+Coverage: **~1.200+ testes passando** em 55+ arquivos de teste (backend) + 55+ frontend.
 
 ### Diagnóstico de Código Atual
 

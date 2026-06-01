@@ -1004,6 +1004,10 @@ export async function callGetExportJobStatus(jobId) {
     return callBackendFunction('getExportJobStatus', { jobId });
 }
 
+export async function callProcessExportJob(jobId) {
+    return callBackendFunction('processExportJob', { jobId });
+}
+
 export async function callListExportJobs(payload = {}) {
     return callBackendFunction('listExportJobs', payload);
 }

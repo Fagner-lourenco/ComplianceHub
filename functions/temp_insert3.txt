@@ -1,6 +1,0 @@
-﻿    // Communication fields
-    if (caseData.communicationStatus !== undefined) payload.communicationStatus = caseData.communicationStatus;
-    if (caseData.lastMessageAt !== undefined) payload.lastMessageAt = caseData.lastMessageAt;
-    if (caseData.lastMessagePreview !== undefined) payload.lastMessagePreview = caseData.lastMessagePreview;
-    if (caseData.lastMessageByPortal !== undefined) payload.lastMessageByPortal = caseData.lastMessageByPortal;
-    if (caseData.clientUnreadMessages !== undefined) payload.clientUnreadMessages = caseData.clientUnreadMessages;

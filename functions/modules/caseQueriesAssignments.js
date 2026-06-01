@@ -129,13 +129,56 @@ function makeRunId(caseId) {
 function buildProviderRunIds(caseId) {
   const runId = makeRunId(caseId);
   return {
+    enrichmentRunId: `enrichment_${runId}`,
     bigdatacorpRunId: `bdc_${runId}`,
-    juditRunId: `jud_${runId}`,
-    escavadorRunId: `esc_${runId}`,
-    fontedataRunId: `fd_${runId}`,
+    juditRunId: `judit_${runId}`,
+    escavadorRunId: `escavador_${runId}`,
+    fontedataRunId: `fontedata_${runId}`,
     djenRunId: `djen_${runId}`,
   };
 }
+
+const FULL_RERUN_DERIVED_FIELDS = [
+  'autoClassifiedAt', 'autoClassifySignature', 'autoClassifyLock', 'autoClassifyRerunRequested',
+  'aiStatus', 'aiRawResponse', 'aiAnalysis', 'aiStructured', 'aiStructuredOk', 'aiError',
+  'aiCostUsd', 'aiTokens', 'aiExecutedAt', 'aiProvidersIncluded', 'aiPromptVersion', 'aiFromCache',
+  'aiHomonymStructured', 'aiHomonymStructuredOk', 'aiHomonymRawResponse', 'aiHomonymTriggered',
+  'aiHomonymDecision', 'aiHomonymConfidence', 'aiHomonymRisk', 'aiHomonymRecommendedAction',
+  'aiHomonymCostUsd', 'aiHomonymTokens', 'aiHomonymExecutedAt', 'aiHomonymError',
+  'prefillNarratives', 'deterministicPrefill',
+  'riskScore', 'riskLevel', 'finalVerdict', 'publicReportToken', 'reportSlug', 'reportReady',
+  'sourceSummary', 'statusSummary', 'nextSteps',
+  'criminalFlag', 'criminalSeverity', 'criminalEvidenceQuality', 'criminalNotes',
+  'warrantFlag', 'warrantNotes', 'laborFlag', 'laborSeverity', 'laborNotes',
+  'coverageLevel', 'coverageNotes', 'providerDivergence', 'ambiguityNotes', 'reviewRecommended',
+  'negativePartialSafetyNetEligible', 'negativePartialSafetyNetReasons',
+  'negativePartialSafetyNetAction', 'negativePartialSafetyNetTriggered',
+  'juditIdentity', 'juditGateResult', 'juditPrimaryUf', 'juditAllUfs', 'juditHasLawsuits',
+  'juditProcessTotal', 'juditRoleSummary', 'juditProcessos', 'juditCriminalFlag', 'juditCriminalCount',
+  'juditWarrantFlag', 'juditWarrantNotes', 'juditWarrants', 'juditActiveWarrantCount',
+  'juditExecutionFlag', 'juditExecutionCount', 'juditExecutions', 'juditExecutionNotes',
+  'juditNameSearchFlag', 'juditNameSearchProcessTotal', 'juditNameSearchCriminalCount',
+  'juditNameSearchCpfsComNome', 'juditNeedsEscavador', 'juditNeedsEscavadorReason',
+  'juditPendingAsyncPhases', 'juditPendingAsyncCount', 'juditRequestIds', 'juditSources',
+  'juditRawPayloads', 'juditCostBRL', 'juditEnrichedAt', 'juditPartialDataAvailable',
+  'escavadorProcessTotal', 'escavadorProcessos', 'escavadorCriminalFlag', 'escavadorCriminalCount',
+  'escavadorLaborFlag', 'escavadorLaborCount', 'escavadorNotes', 'escavadorCpfsComEsseNome',
+  'escavadorSources', 'escavadorEnrichedAt',
+  'djenComunicacoes', 'djenCriminalFlag', 'djenLaborFlag', 'djenNotes',
+  'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
+  'bigdatacorpBasicData', 'bigdatacorpGateResult', 'bigdatacorpName', 'bigdatacorpCpfStatus',
+  'bigdatacorpProcessTotal', 'bigdatacorpCriminalFlag', 'bigdatacorpCriminalCount',
+  'bigdatacorpDirectCriminalCount', 'bigdatacorpPossibleHomonymCriminalCount',
+  'bigdatacorpLaborFlag', 'bigdatacorpLaborCount', 'bigdatacorpDirectLaborCount',
+  'bigdatacorpPossibleHomonymLaborCount', 'bigdatacorpCivilCount', 'bigdatacorpProcessos',
+  'bigdatacorpProcessNotes', 'bigdatacorpKycNotes', 'bigdatacorpProfessionNotes',
+  'bigdatacorpIsPep', 'bigdatacorpIsSanctioned', 'bigdatacorpWasSanctioned',
+  'bigdatacorpSanctionDetails', 'bigdatacorpActiveWarrants', 'bigdatacorpHasArrestWarrant',
+  'bigdatacorpSources', 'bigdatacorpRawPayloads', 'bigdatacorpCostBRL', 'bigdatacorpEnrichedAt',
+  'enrichmentSources', 'enrichmentIdentity', 'enrichmentGateResult', 'enrichmentPrimaryUf',
+  'enrichmentAllUfs', 'fontedataCriminalFlag', 'fontedataWarrantFlag', 'fontedataLaborFlag',
+  'enrichedAt',
+];
 
 /* =========================================================
    Funções puras — Enrichment status / SLA
@@ -1427,9 +1470,13 @@ function createRerunAiAnalysisHandler({
   getOpsUserProfile,
   assertOpsCanAccessCase,
   rerunAiForCase,
+  openaiApiKey,
 }) {
+  const options = { region: 'southamerica-east1', cors: true };
+  if (openaiApiKey) options.secrets = [openaiApiKey];
+
   return onCall(
-    { region: 'southamerica-east1', cors: true },
+    options,
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -1471,13 +1518,16 @@ function createRerunEnrichmentPhaseHandler({
   maybeRunAutoClassifyAndAi,
   markPendingJuditRequestsStale,
   buildProviderRunIds,
+  rerunAiForCase,
   writeAuditEvent,
   getClientIp,
   ACTOR_TYPE,
   SOURCE,
+  secrets,
+  memory,
 }) {
   return onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 540, cors: true },
+    { region: 'southamerica-east1', timeoutSeconds: 540, cors: true, secrets, memory },
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -1502,7 +1552,10 @@ function createRerunEnrichmentPhaseHandler({
       assertOpsCanAccessCase(profile, caseData, caseId);
 
       if (phase === 'ai') {
-        throw new HttpsError('invalid-argument', 'Fase "ai" deve ser tratada via rerunAiAnalysis.');
+        if (typeof rerunAiForCase !== 'function') {
+          throw new HttpsError('failed-precondition', 'Reexecucao de IA nao configurada neste handler.');
+        }
+        return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
       }
 
       if (caseData.status === 'DONE' || caseData.status === 'CORRECTION_NEEDED') {
@@ -1527,7 +1580,7 @@ function createRerunEnrichmentPhaseHandler({
           );
         }
 
-        const staleCount = await markPendingJuditRequestsStale(caseId, `${reason}_full_rerun`);
+        const staleCount = await markPendingJuditRequestsStale(db, caseId, `${reason}_full_rerun`);
         const runIds = buildProviderRunIds(caseId);
 
         const resetPayload = {
@@ -1549,6 +1602,10 @@ function createRerunEnrichmentPhaseHandler({
           fullRerunStatus: 'PENDING',
           updatedAt: FieldValue.serverTimestamp(),
         };
+
+        for (const field of FULL_RERUN_DERIVED_FIELDS) {
+          resetPayload[field] = FieldValue.delete();
+        }
 
         await caseRef.update(resetPayload);
 
@@ -1724,6 +1781,9 @@ module.exports = {
   asDate,
   asIsoOrNull,
   normalizeSearchText,
+  serializeClientCaseDocument,
+  matchesClientCaseSearch: matchesClientCaseSearchFull,
+  matchesClientCaseFilters: matchesClientCaseFiltersFull,
   resolveOpsMetricsTenant,
   isGlobalOpsProfile,
   normalizeMetricsPeriod,

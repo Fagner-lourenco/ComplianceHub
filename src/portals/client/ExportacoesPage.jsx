@@ -10,6 +10,7 @@ import {
     getCasePublicResult,
     callCreateExportJob,
     callGetExportJobStatus,
+    callProcessExportJob,
     callListExportJobs,
     callCancelExportJob,
 } from '../../core/firebase/firestoreService';
@@ -70,6 +71,10 @@ const FLAG_MAP = {
     INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
     NOT_FOUND: 'Não encontrado',
 };
+
+function normalizeJobStatus(status) {
+    return String(status || '').toLowerCase();
+}
 
 function escapeCsvField(value, delimiter = ';') {
     const str = String(value ?? '');
@@ -931,8 +936,10 @@ export default function ExportacoesPage() {
     const pollJobStatus = async (jobId) => {
         try {
             const result = await callGetExportJobStatus(jobId);
-            setCurrentJobStatus(result?.job || null);
-            if (result?.job?.status === 'done' || result?.job?.status === 'error' || result?.job?.status === 'cancelled') {
+            const job = result?.job || result || null;
+            setCurrentJobStatus(job);
+            const status = normalizeJobStatus(job?.status);
+            if (status === 'done' || status === 'error' || status === 'cancelled') {
                 if (pollingRef.current) {
                     window.clearInterval(pollingRef.current);
                     pollingRef.current = null;
@@ -960,6 +967,7 @@ export default function ExportacoesPage() {
         try {
             const result = await callCreateExportJob({
                 format: 'csv',
+                scopeCode: exportScope,
                 filters: {
                     scopeCode: exportScope,
                     dateFrom: dateFrom || null,
@@ -970,6 +978,10 @@ export default function ExportacoesPage() {
                 setFeedback('Exportação iniciada. Acompanhando progresso...');
                 startPolling(result.jobId);
                 loadAsyncJobs();
+                callProcessExportJob(result.jobId).catch((err) => {
+                    setFeedback(`Erro ao processar exportação: ${extractErrorMessage(err)}`);
+                    pollJobStatus(result.jobId);
+                });
             } else {
                 setFeedback('Erro ao iniciar exportação.');
             }
@@ -1299,18 +1311,18 @@ export default function ExportacoesPage() {
 
                     {currentJobStatus && (
                         <div className="export-async__status">
-                            <p><strong>Job atual:</strong> {currentJobStatus.status === 'pending' && '⏳ Pendente'}
-                                {currentJobStatus.status === 'processing' && '⚙️ Processando...'}
-                                {currentJobStatus.status === 'done' && '✅ Concluído'}
-                                {currentJobStatus.status === 'error' && '❌ Erro'}
-                                {currentJobStatus.status === 'cancelled' && '🚫 Cancelado'}</p>
-                            {currentJobStatus.status === 'done' && currentJobStatus.downloadUrl && (
+                            <p><strong>Job atual:</strong> {normalizeJobStatus(currentJobStatus.status) === 'pending' && '⏳ Pendente'}
+                                {normalizeJobStatus(currentJobStatus.status) === 'processing' && '⚙️ Processando...'}
+                                {normalizeJobStatus(currentJobStatus.status) === 'done' && '✅ Concluído'}
+                                {normalizeJobStatus(currentJobStatus.status) === 'error' && '❌ Erro'}
+                                {normalizeJobStatus(currentJobStatus.status) === 'cancelled' && '🚫 Cancelado'}</p>
+                            {normalizeJobStatus(currentJobStatus.status) === 'done' && currentJobStatus.downloadUrl && (
                                 <a href={currentJobStatus.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
                                     📥 Baixar arquivo
                                 </a>
                             )}
-                            {(currentJobStatus.status === 'pending' || currentJobStatus.status === 'processing') && (
-                                <button type="button" className="export-btn export-btn--secondary" onClick={() => handleCancelJob(currentJobStatus.id)}>
+                            {(normalizeJobStatus(currentJobStatus.status) === 'pending' || normalizeJobStatus(currentJobStatus.status) === 'processing') && (
+                                <button type="button" className="export-btn export-btn--secondary" onClick={() => handleCancelJob(currentJobStatus.jobId || currentJobStatus.id)}>
                                     Cancelar
                                 </button>
                             )}
@@ -1321,31 +1333,34 @@ export default function ExportacoesPage() {
                         <div className="export-async__history">
                             <h4>Jobs recentes</h4>
                             <ul className="export-async__list">
-                                {asyncJobs.map((job) => (
-                                    <li key={job.id} className={`export-async__item export-async__item--${job.status}`}>
+                                {asyncJobs.map((job) => {
+                                    const jobStatus = normalizeJobStatus(job.status);
+                                    return (
+                                    <li key={job.jobId || job.id} className={`export-async__item export-async__item--${jobStatus}`}>
                                         <span className="export-async__format">{job.format?.toUpperCase()}</span>
                                         <span className="export-async__status">
-                                            {job.status === 'pending' && '⏳ Pendente'}
-                                            {job.status === 'processing' && '⚙️ Processando'}
-                                            {job.status === 'done' && '✅ Concluído'}
-                                            {job.status === 'error' && '❌ Erro'}
-                                            {job.status === 'cancelled' && '🚫 Cancelado'}
+                                            {jobStatus === 'pending' && '⏳ Pendente'}
+                                            {jobStatus === 'processing' && '⚙️ Processando'}
+                                            {jobStatus === 'done' && '✅ Concluído'}
+                                            {jobStatus === 'error' && '❌ Erro'}
+                                            {jobStatus === 'cancelled' && '🚫 Cancelado'}
                                         </span>
                                         <span className="export-async__date">
                                             {job.createdAt ? new Date(job.createdAt).toLocaleString('pt-BR') : ''}
                                         </span>
-                                        {job.status === 'done' && job.downloadUrl && (
+                                        {jobStatus === 'done' && job.downloadUrl && (
                                             <a href={job.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
                                                 Baixar
                                             </a>
                                         )}
-                                        {(job.status === 'pending' || job.status === 'processing') && (
-                                            <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.id)}>
+                                        {(jobStatus === 'pending' || jobStatus === 'processing') && (
+                                            <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.jobId || job.id)}>
                                                 Cancelar
                                             </button>
                                         )}
                                     </li>
-                                ))}
+                                    );
+                                })}
                             </ul>
                         </div>
                     )}

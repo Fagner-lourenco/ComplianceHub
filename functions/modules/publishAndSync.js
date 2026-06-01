@@ -3,7 +3,6 @@
  * Extraído do monolito index.js durante refatoração Phase C
  */
 
-const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { FieldValue } = require('firebase-admin/firestore');
 const { asDate, sanitizePublicStructuredValue, stripUndefined, sanitizeStructuredText, sanitizeStructuredList, hasMeaningfulValue } = require('../helpers/normalize');
 const { formatDateKey, formatMonthKey } = require('./utilityHelpers');
@@ -349,66 +348,6 @@ async function revokeCasePublicationArtifacts(caseId, caseData, db) {
     }
 }
 
-/* =========================================================
-   Factories — criam os handlers de trigger para index.js
-   ========================================================= */
-
-function createSyncClientCaseOnCreate({ db }) {
-    return onDocumentCreated(
-        { document: 'cases/{caseId}', region: 'southamerica-east1' },
-        async (event) => {
-            const caseData = event.data?.data();
-            if (!caseData) return;
-            const caseId = event.params.caseId;
-            await syncClientCaseOnCreateLogic({ db, caseId, caseData });
-        },
-    );
-}
-
-function createSyncClientCaseOnUpdate({ db }) {
-    return onDocumentUpdated(
-        { document: 'cases/{caseId}', region: 'southamerica-east1' },
-        async (event) => {
-            const before = event.data?.before?.data() || {};
-            const after = event.data?.after?.data();
-            if (!after) return;
-            if (shouldSkipClientCaseMirrorSync(before, after)) return;
-            const caseId = event.params.caseId;
-            await syncClientCaseOnUpdateLogic({ db, caseId, before, after });
-        },
-    );
-}
-
-function createSyncClientCaseOnDelete({ db }) {
-    return onDocumentDeleted(
-        { document: 'cases/{caseId}', region: 'southamerica-east1' },
-        async (event) => {
-            const caseId = event.params.caseId;
-            await syncClientCaseOnDeleteLogic({ db, caseId });
-        },
-    );
-}
-
-function createPublishResultOnCaseDone({ db, hasPublicReportMinimumContent, syncPublicResultLatest }) {
-    return onDocumentUpdated(
-        { document: 'cases/{caseId}', region: 'southamerica-east1' },
-        async (event) => {
-            const before = event.data?.before?.data();
-            const after = event.data?.after?.data();
-            if (!before || !after) return;
-            const caseId = event.params.caseId;
-            await publishResultOnCaseDoneLogic({
-                db,
-                caseId,
-                before,
-                after,
-                hasPublicReportMinimumContent,
-                syncPublicResultLatest,
-            });
-        },
-    );
-}
-
 module.exports = {
     // Lógica pura (testável)
     buildClientCasePayload,
@@ -424,9 +363,4 @@ module.exports = {
     buildReviewDraftSeed,
     buildResetPublishedCaseFields,
     revokeCasePublicationArtifacts,
-    // Factories
-    createSyncClientCaseOnCreate,
-    createSyncClientCaseOnUpdate,
-    createSyncClientCaseOnDelete,
-    createPublishResultOnCaseDone,
 };

@@ -105,47 +105,6 @@ function sanitizeStructuredText(value, maxLength = 500) {
     return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 3)}...` : normalized;
 }
 
-function validateClassificationReviewAxis(axis, validFlags) {
-    const validAssessments = ['AGREE', 'AGREE_WITH_CAUTION', 'DISAGREE', 'INSUFFICIENT_DATA'];
-    const validStrength = ['STRONG', 'MIXED', 'WEAK', 'INSUFFICIENT'];
-    if (!axis || typeof axis !== 'object') return false;
-    if (axis.autoFlag && !validFlags.includes(axis.autoFlag)) return false;
-    if (!validAssessments.includes(axis.assessment)) return false;
-    if (!validStrength.includes(axis.evidenceStrength)) return false;
-    if (typeof axis.rationale !== 'string') return false;
-    if (!isStringArray(axis.possibleErrors)) return false;
-    return true;
-}
-
-function validateAiClassificationReviewSchema(obj) {
-    if (!obj || typeof obj !== 'object') return false;
-    const validIdentityStatus = ['CONFIRMED', 'ATTENTION', 'BLOCKED', 'UNKNOWN'];
-    const validHomonymRisk = ['LOW', 'MEDIUM', 'HIGH', 'UNKNOWN'];
-    const validSuggestionActions = ['MAINTAIN_AUTOCLASSIFICATION', 'REVIEW_BEFORE_CONCLUDING', 'CONTEST_AUTOCLASSIFICATION'];
-    const validConfidence = ['HIGH', 'MEDIUM', 'LOW'];
-    const validCriminalFlags = ['NEGATIVE', 'NEGATIVE_PARTIAL', 'POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'NOT_FOUND'];
-    const validSimpleFlags = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
-
-    if (typeof obj.summary !== 'string') return false;
-    if (!obj.identityAssessment || typeof obj.identityAssessment !== 'object') return false;
-    if (!validIdentityStatus.includes(obj.identityAssessment.status)) return false;
-    if (typeof obj.identityAssessment.rationale !== 'string') return false;
-    if (!validHomonymRisk.includes(obj.identityAssessment.homonymRisk)) return false;
-
-    const validation = obj.classificationValidation;
-    if (!validation || typeof validation !== 'object') return false;
-    if (!validateClassificationReviewAxis(validation.criminal, validCriminalFlags)) return false;
-    if (!validateClassificationReviewAxis(validation.labor, validSimpleFlags)) return false;
-    if (!validateClassificationReviewAxis(validation.warrant, validSimpleFlags)) return false;
-    if (!isStringArray(obj.inconsistencies)) return false;
-    if (!isStringArray(obj.manualReviewPoints)) return false;
-    if (!obj.consultativeSuggestion || typeof obj.consultativeSuggestion !== 'object') return false;
-    if (!validSuggestionActions.includes(obj.consultativeSuggestion.action)) return false;
-    if (typeof obj.consultativeSuggestion.rationale !== 'string') return false;
-    if (!validConfidence.includes(obj.confidence)) return false;
-    return true;
-}
-
 function formatRequestedBy(profile, uid) {
     const name = String(profile?.displayName || '').trim();
     const email = String(profile?.email || '').trim();
@@ -165,10 +124,12 @@ function sanitizePublicReportHtml(html) {
 }
 
 module.exports = {
+    isStringArray,
+    stripInvalidControlChars,
     validateCpfDigits,
     sanitizeCpf,
     maskCpf,
-    validateAiClassificationReviewSchema,
+    sanitizeAiOutput,
     sanitizeStructuredList,
     sanitizeStructuredText,
     fixLatinMojibake,

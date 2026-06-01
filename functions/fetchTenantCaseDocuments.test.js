@@ -5,9 +5,9 @@ process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || 'compliance-hub-test'
 process.env.FIREBASE_CONFIG = process.env.FIREBASE_CONFIG || '{}';
 
 const require = createRequire(import.meta.url);
-const mod = require('./index');
+const mod = require('./modules/caseQueriesAssignments');
 
-const { fetchTenantCaseDocuments, _setDb } = mod.__test;
+const { fetchTenantCaseDocuments } = mod;
 
 function makeDoc(id, data) {
     return { id, data: () => data };
@@ -110,9 +110,9 @@ describe('fetchTenantCaseDocuments', () => {
 
     it('retorna todos os documentos quando menos que o limite', async () => {
         const docs = Array.from({ length: 100 }, (_, i) => ({ id: `doc-${i}`, tenantId: 't1', createdAt: new Date() }));
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
-        const result = await fetchTenantCaseDocuments({ collectionId: 'cases', tenantId: 't1' });
+        const result = await fetchTenantCaseDocuments({ db: mockDb, collectionId: 'cases', tenantId: 't1' });
 
         expect(result.docs.length).toBe(100);
         expect(result.scannedRecords).toBe(100);
@@ -122,9 +122,9 @@ describe('fetchTenantCaseDocuments', () => {
 
     it('respeita o limite maxDocs padrão (10000)', async () => {
         const docs = Array.from({ length: 10001 }, (_, i) => ({ id: `doc-${i}`, tenantId: 't1', createdAt: new Date() }));
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
-        const result = await fetchTenantCaseDocuments({ collectionId: 'cases', tenantId: 't1' });
+        const result = await fetchTenantCaseDocuments({ db: mockDb, collectionId: 'cases', tenantId: 't1' });
 
         expect(result.docs.length).toBe(10000);
         expect(result.scannedRecords).toBe(10000);
@@ -134,9 +134,9 @@ describe('fetchTenantCaseDocuments', () => {
 
     it('permite maxDocs customizado', async () => {
         const docs = Array.from({ length: 1000 }, (_, i) => ({ id: `doc-${i}`, tenantId: 't1', createdAt: new Date() }));
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
-        const result = await fetchTenantCaseDocuments({ collectionId: 'cases', tenantId: 't1', maxDocs: 500 });
+        const result = await fetchTenantCaseDocuments({ db: mockDb, collectionId: 'cases', tenantId: 't1', maxDocs: 500 });
 
         expect(result.docs.length).toBe(500);
         expect(result.scannedRecords).toBe(500);
@@ -148,18 +148,19 @@ describe('fetchTenantCaseDocuments', () => {
             { id: 'doc-1', tenantId: 't1', createdAt: new Date() },
             { id: 'doc-2', tenantId: 't2', createdAt: new Date() },
         ];
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
-        const result = await fetchTenantCaseDocuments({ collectionId: 'cases', tenantId: 't1' });
+        const result = await fetchTenantCaseDocuments({ db: mockDb, collectionId: 'cases', tenantId: 't1' });
 
         expect(result.docs.length).toBe(2); // Mock retorna todos, mas a query tem where
     });
 
     it('respeita fields quando fornecido', async () => {
         const docs = [{ id: 'doc-1', tenantId: 't1', createdAt: new Date(), name: 'Test' }];
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
         const result = await fetchTenantCaseDocuments({
+            db: mockDb,
             collectionId: 'cases',
             tenantId: 't1',
             fields: ['name'],
@@ -170,9 +171,9 @@ describe('fetchTenantCaseDocuments', () => {
 
     it('funciona sem tenantId', async () => {
         const docs = Array.from({ length: 50 }, (_, i) => ({ id: `doc-${i}`, createdAt: new Date() }));
-        _setDb(buildMockDb(docs));
+        const mockDb = buildMockDb(docs);
 
-        const result = await fetchTenantCaseDocuments({ collectionId: 'cases' });
+        const result = await fetchTenantCaseDocuments({ db: mockDb, collectionId: 'cases' });
 
         expect(result.docs.length).toBe(50);
         expect(result.capped).toBe(false);

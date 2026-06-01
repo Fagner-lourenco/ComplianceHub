@@ -5,13 +5,14 @@
 
 /**
  * Serializa um documento de caso do cliente
- * @param {DocumentSnapshot} docSnap
+ * Suporta tanto DocumentSnapshot quanto objetos planos
+ * @param {DocumentSnapshot|Object} docSnap
  * @returns {Object}
  */
 function serializeClientCaseDocument(docSnap) {
-    const data = docSnap.data();
+    const data = docSnap.data ? (docSnap.data() || {}) : (docSnap || {});
     return {
-        id: docSnap.id,
+        id: docSnap.id || data.caseId || null,
         ...data,
         createdAt: data.createdAt?.toDate?.() ?? data.createdAt ?? null,
         updatedAt: data.updatedAt?.toDate?.() ?? data.updatedAt ?? null,
@@ -157,8 +158,8 @@ function buildOpsCaseStats(cases) {
         total: cases.length,
         pending: 0,
         inProgress: 0,
-        waitingInfo: 0,
-        correctionNeeded: 0,
+        waiting: 0,
+        corrections: 0,
         done: 0,
         byRisk: { GREEN: 0, YELLOW: 0, RED: 0 },
         byVerdict: { FIT: 0, ATTENTION: 0, NOT_RECOMMENDED: 0 },
@@ -167,8 +168,8 @@ function buildOpsCaseStats(cases) {
     cases.forEach((c) => {
         if (c.status === 'PENDING') stats.pending++;
         if (c.status === 'IN_PROGRESS') stats.inProgress++;
-        if (c.status === 'WAITING_INFO') stats.waitingInfo++;
-        if (c.status === 'CORRECTION_NEEDED') stats.correctionNeeded++;
+        if (c.status === 'WAITING_INFO') stats.waiting++;
+        if (c.status === 'CORRECTION_NEEDED') stats.corrections++;
         if (c.status === 'DONE') stats.done++;
 
         if (c.riskLevel) stats.byRisk[c.riskLevel] = (stats.byRisk[c.riskLevel] || 0) + 1;

@@ -78,6 +78,7 @@ const {
   buildJuditCallbackUrl: default_buildJuditCallbackUrl,
   registerJuditWebhookRequest: default_registerJuditWebhookRequest,
 } = require('./juditWebhookAndFallback');
+const { maskCpf } = require('./_shared/sanitizers');
 
 /* =========================================================
    FACTORY: dependências injetadas do index.js
@@ -454,7 +455,7 @@ function createEnrichmentPhases(deps) {
       const error = 'CPF invalido.';
       await caseRef.update({
         escavadorEnrichmentStatus: 'FAILED',
-        EscavadorError: error,
+        escavadorError: error,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'FAILED', error };
@@ -462,7 +463,7 @@ function createEnrichmentPhases(deps) {
 
     await caseRef.update({
       escavadorEnrichmentStatus: 'RUNNING',
-      EscavadorError: null,
+      escavadorError: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -471,7 +472,7 @@ function createEnrichmentPhases(deps) {
       const error = 'ESCAVADOR_API_TOKEN nao configurado.';
       await caseRef.update({
         escavadorEnrichmentStatus: 'FAILED',
-        EscavadorError: error,
+        escavadorError: error,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'FAILED', error };
@@ -482,7 +483,7 @@ function createEnrichmentPhases(deps) {
       console.warn(`Case ${caseId} [Escavador]: circuit OPEN — skipping. ${escCircuit.reason}`);
       await caseRef.update({
         escavadorEnrichmentStatus: 'SKIPPED',
-        EscavadorError: escCircuit.reason,
+        escavadorError: escCircuit.reason,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: escCircuit.reason };
@@ -503,7 +504,7 @@ function createEnrichmentPhases(deps) {
         status: filters.status || undefined,
       };
 
-      console.log(`Case ${caseId} [Escavador]: querying CPF=${cpf}, UFs=${ufs.join(',')}, tribunais=${tribunais.join(',') || 'all'}`);
+      console.log(`Case ${caseId} [Escavador]: querying CPF=${maskCpf(cpf)}, UFs=${ufs.join(',')}, tribunais=${tribunais.join(',') || 'all'}`);
 
       const rawItems = await queryProcessosByPerson(cpf, token, queryOptions);
       const normalized = normalizeEscavadorProcessos(rawItems, cpf);
@@ -515,7 +516,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         ...fields,
         escavadorEnrichmentStatus: 'DONE',
-        EscavadorError: null,
+        escavadorError: null,
         escavadorSources: _source,
         escavadorCostBRL,
         escavadorEnrichedAt: FieldValue.serverTimestamp(),
@@ -544,7 +545,7 @@ function createEnrichmentPhases(deps) {
       await recordFailure('escavador', errMsg);
       await caseRef.update({
         escavadorEnrichmentStatus: 'FAILED',
-        EscavadorError: errMsg,
+        escavadorError: errMsg,
         updatedAt: FieldValue.serverTimestamp(),
       });
 
@@ -566,7 +567,7 @@ function createEnrichmentPhases(deps) {
       const error = 'CPF invalido.';
       await caseRef.update({
         bigdatacorpEnrichmentStatus: 'FAILED',
-        BigDataCorpError: error,
+        bigdatacorpError: error,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'FAILED', error };
@@ -574,7 +575,7 @@ function createEnrichmentPhases(deps) {
 
     await caseRef.update({
       bigdatacorpEnrichmentStatus: 'RUNNING',
-      BigDataCorpError: null,
+      bigdatacorpError: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -584,7 +585,7 @@ function createEnrichmentPhases(deps) {
       const error = 'BIGDATACORP_ACCESS_TOKEN ou BIGDATACORP_TOKEN_ID nao configurado.';
       await caseRef.update({
         bigdatacorpEnrichmentStatus: 'FAILED',
-        BigDataCorpError: error,
+        bigdatacorpError: error,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'FAILED', error };
@@ -595,7 +596,7 @@ function createEnrichmentPhases(deps) {
       console.warn(`Case ${caseId} [BigDataCorp]: circuit OPEN — skipping. ${bdcCircuit.reason}`);
       await caseRef.update({
         bigdatacorpEnrichmentStatus: 'SKIPPED',
-        BigDataCorpError: bdcCircuit.reason,
+        bigdatacorpError: bdcCircuit.reason,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: bdcCircuit.reason };
@@ -605,7 +606,7 @@ function createEnrichmentPhases(deps) {
       const credentials = { accessToken, tokenId };
       const processLimit = bdcConfig.processLimit || 100;
 
-      console.log(`Case ${caseId} [BigDataCorp]: querying CPF=${cpf}, processLimit=${processLimit}`);
+      console.log(`Case ${caseId} [BigDataCorp]: querying CPF=${maskCpf(cpf)}, processLimit=${processLimit}`);
 
       const bdcPhases = bdcConfig.phases || {};
       const datasets = {
@@ -675,7 +676,7 @@ function createEnrichmentPhases(deps) {
               ...updatePayload,
               bigdatacorpGateResult,
               bigdatacorpEnrichmentStatus: 'BLOCKED',
-              BigDataCorpError: `Gate bloqueado: ${gateReason}`,
+              bigdatacorpError: `Gate bloqueado: ${gateReason}`,
               bigdatacorpSources: sources,
               bigdatacorpCostBRL: costBRL,
               bigdatacorpElapsedMs: result.elapsedMs,
@@ -714,7 +715,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         ...updatePayload,
         bigdatacorpEnrichmentStatus: 'DONE',
-        BigDataCorpError: null,
+        bigdatacorpError: null,
         bigdatacorpSources: sources,
         bigdatacorpCostBRL: costBRL,
         bigdatacorpElapsedMs: result.elapsedMs,
@@ -746,7 +747,7 @@ function createEnrichmentPhases(deps) {
       await recordFailure('bigdatacorp', errMsg);
       await caseRef.update({
         bigdatacorpEnrichmentStatus: 'FAILED',
-        BigDataCorpError: errMsg,
+        bigdatacorpError: errMsg,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'FAILED', error: errMsg };
@@ -763,7 +764,7 @@ function createEnrichmentPhases(deps) {
       const error = 'CPF invalido.';
       await caseRef.update({
         juditEnrichmentStatus: 'FAILED',
-        JuditError: error,
+        juditError: error,
         juditPendingAsyncPhases: FieldValue.delete(),
         juditPendingAsyncCount: FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -773,7 +774,7 @@ function createEnrichmentPhases(deps) {
 
     await caseRef.update({
       juditEnrichmentStatus: 'RUNNING',
-      JuditError: null,
+      juditError: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -782,7 +783,7 @@ function createEnrichmentPhases(deps) {
       const error = 'JUDIT_API_KEY nao configurado.';
       await caseRef.update({
         juditEnrichmentStatus: 'FAILED',
-        JuditError: error,
+        juditError: error,
         juditPendingAsyncPhases: FieldValue.delete(),
         juditPendingAsyncCount: FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -795,7 +796,7 @@ function createEnrichmentPhases(deps) {
       console.warn(`Case ${caseId} [Judit]: circuit OPEN — skipping. ${juditCircuit.reason}`);
       await caseRef.update({
         juditEnrichmentStatus: 'SKIPPED',
-        JuditError: juditCircuit.reason,
+        juditError: juditCircuit.reason,
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: juditCircuit.reason };
@@ -922,7 +923,7 @@ function createEnrichmentPhases(deps) {
               gateReason,
               updateFields: {
                 juditEnrichmentStatus: 'BLOCKED',
-                JuditError: null,
+                juditError: null,
                 juditIdentity,
                 juditGateResult,
                 juditPrimaryUf: gateEntityData.juditPrimaryUf,
@@ -1009,7 +1010,7 @@ function createEnrichmentPhases(deps) {
                   gateReason,
                   updateFields: {
                     juditEnrichmentStatus: 'BLOCKED',
-                    JuditError: null,
+                    juditError: null,
                     juditIdentity: fallbackIdentity,
                     juditGateResult,
                     enrichmentIdentity,
@@ -1042,7 +1043,7 @@ function createEnrichmentPhases(deps) {
             console.error(`Case ${caseId} [Judit]: both gates failed.`);
             await caseRef.update({
               juditEnrichmentStatus: 'FAILED',
-              JuditError: error,
+              juditError: error,
               juditSources: { entity: { error: gateErrMsg, fallbackError: fbMsg, consultedAt: new Date().toISOString() } },
               juditPendingAsyncPhases: FieldValue.delete(),
               juditPendingAsyncCount: FieldValue.delete(),
@@ -1068,7 +1069,7 @@ function createEnrichmentPhases(deps) {
     const useWebhook = juditFilters.useWebhook !== false;
     const callbackUrl = useWebhook ? buildJuditCallbackUrl() : null;
 
-    console.log(`Case ${caseId} [Judit]: datalake-first strategy. CPF=${cpf}, UFs=${ufs.join(',')}, tribunals=${tribunals.join(',') || 'all'}, cacheTtl=${cacheTtlDays}d, async=${juditFilters.useAsync === true ? 'FORCED' : 'off'}, webhook=${useWebhook ? 'on' : 'off'}`);
+    console.log(`Case ${caseId} [Judit]: datalake-first strategy. CPF=${maskCpf(cpf)}, UFs=${ufs.join(',')}, tribunals=${tribunals.join(',') || 'all'}, cacheTtl=${cacheTtlDays}d, async=${juditFilters.useAsync === true ? 'FORCED' : 'off'}, webhook=${useWebhook ? 'on' : 'off'}`);
 
     const errors = [];
     let successCount = 0;
@@ -1257,7 +1258,7 @@ function createEnrichmentPhases(deps) {
 
       if (shouldSearch) {
         try {
-          console.log(`Case ${caseId} [Judit]: CPF found 0 lawsuits. Supplementing with name search: "${candidateName}" (maxCpfs=${maxCpfs}).`);
+          console.log(`Case ${caseId} [Judit]: CPF found 0 lawsuits. Supplementing with name search (nameLength=${candidateName.length}, maxCpfs=${maxCpfs}).`);
 
           const preferSync = nameConfig.preferSync !== false;
           let nameData;
@@ -1355,7 +1356,7 @@ function createEnrichmentPhases(deps) {
       juditPendingAsyncCount: pendingCount > 0 ? pendingCount : FieldValue.delete(),
       juditRequestIds: Object.keys(juditRequestIds).length > 0 ? juditRequestIds : FieldValue.delete(),
       juditSources,
-      JuditError: error,
+      juditError: error,
       juditNeedsEscavador: needsEscavador,
       juditCostBRL,
       juditEnrichedAt: FieldValue.serverTimestamp(),
@@ -1396,7 +1397,7 @@ function createEnrichmentPhases(deps) {
   async function runDjenEnrichmentPhase(caseRef, caseId, caseData, djenConfig, options = {}) {
     await caseRef.update({
       djenEnrichmentStatus: 'RUNNING',
-      DjenError: null,
+      djenError: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
@@ -1434,7 +1435,7 @@ function createEnrichmentPhases(deps) {
           console.log(`Case ${caseId} [DJEN]: no known processes to search, skipping.`);
           await caseRef.update({
             djenEnrichmentStatus: 'SKIPPED',
-            DjenError: null,
+            djenError: null,
             djenNotes: 'Nenhum processo conhecido para buscar no DJEN.',
             updatedAt: FieldValue.serverTimestamp(),
           });
@@ -1447,14 +1448,14 @@ function createEnrichmentPhases(deps) {
           if (strategy === 'byName') {
             await caseRef.update({
               djenEnrichmentStatus: 'FAILED',
-              DjenError: 'Nome do candidato não disponível.',
+              djenError: 'Nome do candidato não disponível.',
               updatedAt: FieldValue.serverTimestamp(),
             });
             return { status: 'FAILED', error: 'Nome do candidato não disponível.' };
           }
           console.log(`Case ${caseId} [DJEN]: no candidate name, skipping byName phase.`);
         } else {
-          console.log(`Case ${caseId} [DJEN]: phase 2 — querying by name "${candidateName}"`);
+          console.log(`Case ${caseId} [DJEN]: phase 2 — querying by name (nameLength=${candidateName.length})`);
           const nameResult = await queryComunicacoesByName(candidateName, {
             maxPages: djenConfig.maxPages || 3,
             siglaTribunal: djenConfig.filters?.siglaTribunal || undefined,
@@ -1492,7 +1493,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         ...fields,
         djenEnrichmentStatus: 'DONE',
-        DjenError: null,
+        djenError: null,
         djenSources: _source,
         djenEnrichedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -1521,7 +1522,7 @@ function createEnrichmentPhases(deps) {
       console.error(`Case ${caseId} [DJEN]: failed:`, errMsg);
       await caseRef.update({
         djenEnrichmentStatus: 'FAILED',
-        DjenError: errMsg,
+        djenError: errMsg,
         updatedAt: FieldValue.serverTimestamp(),
       });
 

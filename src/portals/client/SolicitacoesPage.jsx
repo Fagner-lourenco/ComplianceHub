@@ -199,11 +199,11 @@ const DrawerDetalhesTab = memo(function DrawerDetalhesTab({ selectedCase, select
                                     <input className="correction-form__input" value={correctionForm.cpf} onChange={(event) => setCorrectionForm((current) => ({ ...current, cpf: event.target.value }))} placeholder="000.000.000-00" />
                                 </div>
                                 <div className="correction-form__field">
-                                    <label>LinkedIn (URL ou @)</label>
+                                    <label>LinkedIn (URL completa)</label>
                                     <input className="correction-form__input" value={correctionForm.linkedin} onChange={(event) => setCorrectionForm((current) => ({ ...current, linkedin: event.target.value }))} placeholder="https://linkedin.com/in/..." />
                                 </div>
                                 <div className="correction-form__field">
-                                    <label>Instagram (URL ou @)</label>
+                                    <label>Instagram (URL completa)</label>
                                     <input className="correction-form__input" value={correctionForm.instagram} onChange={(event) => setCorrectionForm((current) => ({ ...current, instagram: event.target.value }))} placeholder="https://instagram.com/..." />
                                 </div>
                             </div>

@@ -53,6 +53,7 @@ vi.mock('../../core/firebase/firestoreService', () => ({
     callGetClientExportCases: (...args) => exportacoesPageMocks.callGetClientExportCases(...args),
     callCreateExportJob: vi.fn(),
     callGetExportJobStatus: vi.fn(),
+    callProcessExportJob: vi.fn(),
     callListExportJobs: vi.fn(),
     callCancelExportJob: vi.fn(),
     getCasePublicResult: vi.fn(),
@@ -63,7 +64,7 @@ exportacoesPageMocks.subscribeToExports.mockImplementation((tenantId, callback) 
     return () => {};
 });
 
-import { callCreateExportJob, callGetExportJobStatus, callListExportJobs, callCancelExportJob } from '../../core/firebase/firestoreService';
+import { callCreateExportJob, callGetExportJobStatus, callProcessExportJob, callListExportJobs, callCancelExportJob } from '../../core/firebase/firestoreService';
 
 const { default: ExportacoesPage } = await import('./ExportacoesPage');
 
@@ -114,6 +115,7 @@ describe('ExportacoesPage', () => {
         callListExportJobs.mockResolvedValue({ jobs: [] });
         callCreateExportJob.mockResolvedValue({ jobId: 'job-1' });
         callGetExportJobStatus.mockResolvedValue({ status: 'done', downloadUrl: 'https://example.com/export.csv' });
+        callProcessExportJob.mockResolvedValue({ jobId: 'job-1', status: 'done' });
         callCancelExportJob.mockResolvedValue({ success: true });
     });
 
@@ -241,5 +243,22 @@ describe('ExportacoesPage', () => {
 
         expect(await screen.findByText(/Gerado localmente - não armazenado/i)).toBeInTheDocument();
         expect(screen.getByText('analista.rh@madero.com.br')).toBeInTheDocument();
+    });
+
+    it('cria e dispara o processamento da exportacao em nuvem com escopo correto', async () => {
+        render(<ExportacoesPage />);
+
+        const cloudButton = await screen.findByRole('button', { name: /Exportar para nuvem/i });
+        await waitFor(() => expect(cloudButton).not.toBeDisabled());
+        fireEvent.click(cloudButton);
+
+        await waitFor(() => {
+            expect(callCreateExportJob).toHaveBeenCalledWith(expect.objectContaining({
+                format: 'csv',
+                scopeCode: 'ALL',
+            }));
+        });
+        expect(callProcessExportJob).toHaveBeenCalledWith('job-1');
+        expect(callGetExportJobStatus).toHaveBeenCalledWith('job-1');
     });
 });

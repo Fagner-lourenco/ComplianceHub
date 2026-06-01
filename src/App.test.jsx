@@ -57,6 +57,22 @@ vi.mock('./portals/ops/AuditoriaPage', () => ({
     default: () => <div>OPS_AUDITORIA</div>,
 }));
 
+vi.mock('./portals/ops/MetricasIAPage', () => ({
+    default: () => <div>OPS_METRICAS_IA</div>,
+}));
+
+vi.mock('./portals/ops/TenantSettingsPage', () => ({
+    default: () => <div>OPS_TENANT_SETTINGS</div>,
+}));
+
+vi.mock('./portals/ops/EquipeOpsPage', () => ({
+    default: () => <div>OPS_EQUIPE</div>,
+}));
+
+vi.mock('./pages/PerfilPage', () => ({
+    default: () => <div>PERFIL_PAGE</div>,
+}));
+
 vi.mock('./portals/ops/RelatoriosPage', () => ({
     default: () => <div>OPS_RELATORIOS</div>,
 }));
@@ -85,6 +101,22 @@ vi.mock('./portals/client/RelatoriosClientePage', () => ({
 }));
 vi.mock('./portals/client/EquipePage', () => ({
     default: () => <div>CLIENT_EQUIPE</div>,
+}));
+
+vi.mock('./portals/client/DashboardClientePage', () => ({
+    default: () => <div>CLIENT_DASHBOARD</div>,
+}));
+
+vi.mock('./portals/client/ClientReportPage', () => ({
+    default: () => <div>CLIENT_REPORT</div>,
+}));
+
+vi.mock('./portals/client/AuditoriaClientePage', () => ({
+    default: () => <div>CLIENT_AUDITORIA</div>,
+}));
+
+vi.mock('./portals/ops/AuditoriaPage', () => ({
+    default: () => <div>OPS_AUDITORIA</div>,
 }));
 
 vi.mock('./pages/PublicReportPage', () => ({

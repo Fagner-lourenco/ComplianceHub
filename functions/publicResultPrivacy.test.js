@@ -23,6 +23,10 @@ describe('public result privacy contract', () => {
         finalVerdict: 'FIT',
         executiveSummary: 'Sem apontamentos impeditivos.',
         keyFindings: ['Nenhum alerta crítico identificado.'],
+        requestedBy: 'uid-interno',
+        requestedByName: 'Solicitante Interno',
+        requestedByEmail: 'solicitante@example.com',
+        bigdatacorpMotherName: 'Nome Materno Sensivel',
     };
 
     it('mantem CPF completo no clientCases autenticado para busca por tenant', () => {
@@ -37,5 +41,15 @@ describe('public result privacy contract', () => {
 
         expect(snapshot.cpf).toBeUndefined();
         expect(snapshot.cpfMasked).toBe('***.***.***-45');
+    });
+
+    it('nao publica metadados internos ou filiacao sensivel em publicResult/latest', () => {
+        const snapshot = buildSanitizedPublicResultSnapshot('case-1', baseCase);
+
+        expect(snapshot.tenantId).toBeUndefined();
+        expect(snapshot.requestedBy).toBeUndefined();
+        expect(snapshot.requestedByName).toBeUndefined();
+        expect(snapshot.requestedByEmail).toBeUndefined();
+        expect(snapshot.bigdatacorpMotherName).toBeUndefined();
     });
 });

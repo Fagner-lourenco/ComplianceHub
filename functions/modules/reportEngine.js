@@ -4,6 +4,7 @@
  */
 
 const { stripUndefined, sanitizePublicStructuredValue, asDate, normalizeTenantSlug, sanitizeStructuredList, hasBenignNoProcessCoverage } = require('../helpers/normalize');
+const { sanitizeAiOutput } = require('./_shared/sanitizers');
 
 // Guardrails de narrativa segura
 const SAFE_NARRATIVE_TEXTS = {
@@ -344,12 +345,18 @@ function hasMeaningfulValue(value) {
 function resolveNarrativeField(merged, payload, field, options = {}) {
     const { fallbackValue, defaultValue, prefillKey } = options;
 
-    if (hasMeaningfulValue(payload?.[field])) return payload[field];
-    if (hasMeaningfulValue(merged?.[field])) return merged[field];
-    if (prefillKey && hasMeaningfulValue(merged?.[prefillKey])) return merged[prefillKey];
+    const resolve = (val) => {
+        if (typeof val === 'string') return sanitizeAiOutput(val);
+        if (Array.isArray(val)) return val.map((item) => typeof item === 'string' ? sanitizeAiOutput(item) : item);
+        return val;
+    };
+
+    if (hasMeaningfulValue(payload?.[field])) return resolve(payload[field]);
+    if (hasMeaningfulValue(merged?.[field])) return resolve(merged[field]);
+    if (prefillKey && hasMeaningfulValue(merged?.[prefillKey])) return resolve(merged[prefillKey]);
     if (fallbackValue) {
         const fb = typeof fallbackValue === 'function' ? fallbackValue() : fallbackValue;
-        if (hasMeaningfulValue(fb)) return fb;
+        if (hasMeaningfulValue(fb)) return resolve(fb);
     }
     return defaultValue !== undefined ? defaultValue : null;
 }
@@ -422,15 +429,13 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
     }
 
     const PUBLIC_RESULT_FIELDS = [
-        'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
-        'requestedBy', 'requestedByName', 'requestedByEmail',
+        'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'createdAt',
         'slaHours',
         'bigdatacorpName',
         'bigdatacorpCpfStatus',
         'bigdatacorpBirthDate',
         'bigdatacorpAge',
         'bigdatacorpGender',
-        'bigdatacorpMotherName',
         'bigdatacorpHasDeathRecord',
         'criminalFlag', 'criminalSeverity', 'criminalNotes',
         'laborFlag', 'laborSeverity', 'laborNotes',
@@ -484,7 +489,6 @@ module.exports = {
     normalizedNarrativeText,
     narrativeMatches,
     buildSafeNarrativeReplacement,
-    sanitizeNarrativesForFlags,
     resolvePublicReportStatus,
     serializeManagedPublicReport,
     hasPublicReportMinimumContent,
@@ -503,4 +507,5 @@ module.exports = {
     sanitizePublicReportHtml,
     hasMeaningfulValue,
     resolveNarrativeField,
+    sanitizeNarrativesForFlags,
 };

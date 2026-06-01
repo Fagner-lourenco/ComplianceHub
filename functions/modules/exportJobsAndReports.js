@@ -8,6 +8,8 @@
  */
 
 const { HttpsError } = require('firebase-functions/v2/https');
+const { asDate } = require('../helpers/normalize');
+const { resolvePublicReportStatus, serializeManagedPublicReport } = require('./reportEngine');
 
 // =============================================================================
 // Export Job Handlers
@@ -323,39 +325,6 @@ function createProcessExportJobHandler(deps) {
             });
             throw new HttpsError('internal', `Erro ao processar exportacao: ${error.message}`);
         }
-    };
-}
-
-// =============================================================================
-// Public Report Helpers (pure)
-// =============================================================================
-
-function resolvePublicReportStatus(reportData, now = new Date()) {
-    const expiresAt = asDate(reportData?.expiresAt);
-    const active = reportData?.active !== false;
-
-    if (!active) return 'REVOKED';
-    if (expiresAt && expiresAt < now) return 'EXPIRED';
-    return 'ACTIVE';
-}
-
-function serializeManagedPublicReport(docSnap) {
-    const reportData = docSnap.data() || {};
-    const createdAt = asDate(reportData.createdAt);
-    const expiresAt = asDate(reportData.expiresAt);
-
-    return {
-        id: docSnap.id,
-        token: docSnap.id,
-        caseId: reportData.caseId || null,
-        tenantId: reportData.tenantId || null,
-        candidateName: String(reportData.candidateName || '').slice(0, 160),
-        active: reportData.active !== false,
-        status: resolvePublicReportStatus(reportData),
-        createdAt: createdAt ? createdAt.toISOString() : null,
-        expiresAt: expiresAt ? expiresAt.toISOString() : null,
-        reportBuildVersion: reportData.reportBuildVersion || null,
-        publicSnapshotHash: reportData.publicSnapshotHash || null,
     };
 }
 
@@ -781,14 +750,13 @@ async function getPublicReportViewInner(tokenInput, deps) {
     const createdAt = asDate(reportData.createdAt);
     const expiresAt = asDate(reportData.expiresAt);
 
-    return {
-        html: reportData.html,
-        token: token.slice(-12),
-        candidateName: reportData.candidateName || caseData.candidateName || '',
-        caseId: reportData.caseId,
-        tenantId: reportData.tenantId || null,
-        createdAt: createdAt ? createdAt.toISOString() : null,
-        expiresAt: expiresAt ? expiresAt.toISOString() : null,
+        return {
+            html: reportData.html,
+            token: token.slice(-12),
+            candidateName: reportData.candidateName || caseData.candidateName || '',
+            caseId: reportData.caseId,
+            createdAt: createdAt ? createdAt.toISOString() : null,
+            expiresAt: expiresAt ? expiresAt.toISOString() : null,
         reportBuildVersion: reportData.reportBuildVersion || REPORT_BUILD_VERSION,
         publicSnapshotHash: reportData.publicSnapshotHash || null,
     };
@@ -902,19 +870,9 @@ async function prepareCanonicalReport(caseId, caseData, deps = {}) {
 }
 
 // =============================================================================
-// asDate helper (duplicated from index.js for self-containment)
+// asDate — agora importado de ../helpers/normalize
 // =============================================================================
 
-function asDate(value) {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    if (typeof value.toDate === 'function') return value.toDate();
-    if (typeof value === 'string' || typeof value === 'number') {
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? null : date;
-    }
-    return null;
-}
 
 function createListClientPublicReportsHandler(deps) {
     const { db, getClientUserProfile, assertClientManager } = deps;

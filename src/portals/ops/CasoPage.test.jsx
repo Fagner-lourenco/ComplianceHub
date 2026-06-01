@@ -51,6 +51,9 @@ const { default: CasoPage } = await import('./CasoPage');
 
 describe('CasoPage', () => {
     beforeEach(() => {
+        casoPageMocks.authState.userProfile = { role: 'admin' };
+        casoPageMocks.navigate.mockReset();
+        window.sessionStorage.clear();
         casoPageMocks.subscribeToCaseDoc.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockImplementation(() => () => {});
@@ -298,8 +301,8 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
-        fireEvent.click(screen.getAllByText('Criminal')[0]);
-        fireEvent.click(screen.getByText(/Comunicações judiciais DJEN \(2\)/));
+        fireEvent.click(screen.getByRole('button', { name: /Criminal/i }));
+        fireEvent.click(await screen.findByText(/Comunicações judiciais DJEN \(2\)/, {}, { timeout: 3000 }));
         fireEvent.click(screen.getAllByRole('button', { name: '0001234-56.2025.8.16.0001' })[0]);
 
         expect(screen.getAllByText('DJEN').length).toBeGreaterThan(0);
@@ -374,7 +377,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Revisao'));
+        fireEvent.click(screen.getByRole('button', { name: /Revisao/i }));
 
         expect(await screen.findByLabelText('Resumo executivo')).toHaveValue('Resumo consolidado com mandado ativo, processos criminais relevantes e ressalva de divergencia entre fontes de dados.');
         expect(screen.getByLabelText('Principais apontamentos')).toHaveValue('Mandado ativo pendente de cumprimento.\nHa processo criminal confirmado com suporte cruzado.');
@@ -406,7 +409,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Mandado de Prisao'));
+        fireEvent.click(screen.getByRole('button', { name: /Mandado de Prisao/i }));
 
         const warrantTextarea = await screen.findByDisplayValue('Nenhum mandado confirmado ate o momento.', {}, { timeout: 3000 });
         fireEvent.change(warrantTextarea, { target: { value: 'Analista revisando o mandado com cautela.' } });
@@ -481,8 +484,8 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Proximo'));
-        await waitFor(() => expect(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.')).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
+        await waitFor(() => expect(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.')).toBeInTheDocument(), { timeout: 3000 });
         fireEvent.change(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.'), {
             target: { value: 'Analista revisou a cobertura criminal e manteve a classificacao negativa.' },
         });
@@ -520,10 +523,10 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Rafael Nunes')).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
 
-        expect(screen.getByText(/Bloqueio: flag de mandado negativa com 1 mandado/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Bloqueio: flag de mandado negativa com 1 mandado/i, {}, { timeout: 3000 })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Concluir caso/i })).toBeDisabled();
     });
 
@@ -749,8 +752,6 @@ describe('CasoPage', () => {
         expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
         expect(screen.queryByText('Concluir com bypass de identidade')).not.toBeInTheDocument();
 
-        // Restore admin role
-        casoPageMocks.authState.userProfile = { role: 'admin' };
     });
 
     it('abre modal de bypass e envia payload correto ao concluir', async () => {

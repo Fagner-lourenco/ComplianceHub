@@ -578,6 +578,20 @@ describe('updateOpsUserLogic', () => {
         const request = buildRequest({ targetUid: 'caller-uid', role: 'supervisor' }, 'caller-uid');
         await expect(updateOpsUserLogic({ ...deps, request })).rejects.toThrow('proprio papel');
     });
+
+    it('rejeita gerenciar usuário owner', async () => {
+        const deps = buildDeps({
+            collections: {
+                userProfiles: {
+                    'caller-uid': { role: 'admin', tenantId: 't1', email: 'admin@test.com' },
+                    'owner-uid': { role: 'owner', tenantId: 't1', email: 'owner@test.com' },
+                },
+            },
+        });
+        const request = buildRequest({ targetUid: 'owner-uid', status: 'inactive' }, 'caller-uid');
+        await expect(updateOpsUserLogic({ ...deps, request })).rejects.toThrow('nao pode ser gerenciado');
+        expect(deps.getAuth().updateUser).not.toHaveBeenCalled();
+    });
 });
 
 /* =========================================================

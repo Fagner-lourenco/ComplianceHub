@@ -757,4 +757,5 @@ module.exports = {
     buildDetKeyFindings,
     buildDetExecutiveSummary,
     buildDetFinalJustification,
+    formatDjenComunicacao,
 };
