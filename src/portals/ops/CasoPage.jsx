@@ -1273,6 +1273,26 @@ export default function CasoPage() {
         caseData?.aiClassificationReviewOk,
         caseData?.aiClassificationReview,
     ]);
+    const bigdatacorpCriminalProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => p.isCriminal),
+        [caseData?.bigdatacorpProcessos]
+    );
+    const bigdatacorpNonCriminalProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => !p.isCriminal),
+        [caseData?.bigdatacorpProcessos]
+    );
+    const escavadorLaborProcessos = useMemo(() =>
+        (caseData?.escavadorProcessos || []).filter((p) => /trabalh|trt|reclamat/i.test(p.area || '')),
+        [caseData?.escavadorProcessos]
+    );
+    const juditLaborRoles = useMemo(() =>
+        (caseData?.juditRoleSummary || []).filter((r) => /trabalh|trt|reclamat/i.test(r.area || '')),
+        [caseData?.juditRoleSummary]
+    );
+    const bigdatacorpLaborProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => p.isLabor),
+        [caseData?.bigdatacorpProcessos]
+    );
     const activeWarrantCount = useMemo(() => (
         (caseData?.juditActiveWarrantCount || 0) +
         (Array.isArray(caseData?.bigdatacorpActiveWarrants)
@@ -3253,7 +3273,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => p.isCriminal).map((proc, i) => (
+                                            {bigdatacorpCriminalProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
@@ -3292,7 +3312,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => !p.isCriminal).map((proc, i) => (
+                                            {bigdatacorpNonCriminalProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
@@ -3459,7 +3479,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.escavadorProcessos.filter((p) => /trabalh|trt|reclamat/i.test(p.area || '')).map((proc, i) => (
+                                            {escavadorLaborProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{proc.numeroCnj || '—'}</td>
                                                     <td className="data-table__td">{proc.tribunalSigla || '—'}</td>
@@ -3489,7 +3509,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.juditRoleSummary.filter((r) => /trabalh|trt|reclamat/i.test(r.area || '')).map((r, i) => (
+                                            {juditLaborRoles.map((r, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{r.code || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
@@ -3520,7 +3540,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => p.isLabor).map((proc, i) => (
+                                            {bigdatacorpLaborProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtName || '—'}</td>
