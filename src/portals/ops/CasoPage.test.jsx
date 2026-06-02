@@ -342,7 +342,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Maria Silva')).toBeInTheDocument();
         fireEvent.click(screen.getAllByText('Trabalhista')[0]);
-        expect(screen.getByText(/Comunicações judiciais DJEN \(1\)/)).toBeInTheDocument();
+        expect(await screen.findByText(/Comunicações judiciais DJEN \(1\)/, {}, { timeout: 3000 })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '0009999-88.2025.5.09.0001' }));
         expect(screen.getByText('Publicações no Diário (DJEN) · 1 ocorrência(s)')).toBeInTheDocument();
         expect(screen.getAllByText('Notificação').length).toBeGreaterThan(0);
@@ -524,6 +524,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Rafael Nunes')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
+        expect(await screen.findByRole('heading', { name: /Mandado de prisao/i })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
 
         expect(await screen.findByText(/Bloqueio: flag de mandado negativa com 1 mandado/i, {}, { timeout: 3000 })).toBeInTheDocument();
