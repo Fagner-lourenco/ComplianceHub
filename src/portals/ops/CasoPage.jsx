@@ -1130,6 +1130,8 @@ export default function CasoPage() {
     const canEditCase =
         (!READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded) ||
         canBypassBlockedCorrection;
+    const canEditCaseRef = useRef(canEditCase);
+    canEditCaseRef.current = canEditCase;
 
     const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
@@ -1180,7 +1182,7 @@ export default function CasoPage() {
     };
 
     const update = (field, value) => {
-        if (!canEditCase) return;
+        if (!canEditCaseRef.current) return;
         dirtyFieldsRef.current.add(field);
         const previous = formRef.current;
         const next = { ...previous, [field]: value };
