@@ -1301,7 +1301,13 @@ export default function CasoPage() {
             label: 'Nível de risco médio-alto com resultado FIT',
             ok: true, warn: true,
         },
-    ].filter(Boolean), [enabledPhases, form, caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore]);
+    ].filter(Boolean), [
+        enabledPhases,
+        form.criminalFlag, form.laborFlag, form.warrantFlag, form.osintLevel,
+        form.socialStatus, form.digitalFlag, form.conflictInterest, form.finalVerdict,
+        form.analystComment, form.executiveSummary,
+        caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore,
+    ]);
     const allOk = useMemo(() => checklist.every((item) => item.ok), [checklist]);
     const aiHomonymStructured = caseData?.aiHomonymStructured || null;
     const aiHomonymVisible = Boolean(caseData?.aiHomonymTriggered || aiHomonymStructured || caseData?.aiHomonymError);
