@@ -772,6 +772,11 @@ export default function CasoPage() {
     const analystCommentRef = useAutoResize();
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
+    useEffect(() => {
+        if (!saveError) return undefined;
+        const id = setTimeout(() => setSaveError(null), 2000);
+        return () => clearTimeout(id);
+    }, [saveError]);
     const [saving, setSaving] = useState(false);
     const [reportPreview, setReportPreview] = useState({ open: false, loading: false, html: '', error: '' });
     const [retryingPhase, setRetryingPhase] = useState(null);
@@ -1743,7 +1748,6 @@ export default function CasoPage() {
                             try {
                                 await navigator.clipboard.writeText(url);
                                 setSaveError('✅ Link copiado!');
-                                setTimeout(() => setSaveError(null), 2000);
                             } catch {
                                 window.open(url, '_blank');
                             }
