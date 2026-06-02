@@ -20,14 +20,14 @@ const PRIORITY_LABEL  = { NORMAL: 'Normal', HIGH: 'Alta' };
 const SEVERITY_LABEL  = { LOW: 'Baixa', MEDIUM: 'Média', HIGH: 'Alta' };
 
 Object.assign(CRIMINAL_LABEL, {
-    NEGATIVE_PARTIAL: 'Negativo parcial',
-    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
-    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    NEGATIVE_PARTIAL: 'Negativo',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
 });
 Object.assign(LABOR_LABEL, {
-    NEGATIVE_PARTIAL: 'Negativo parcial',
-    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
-    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    NEGATIVE_PARTIAL: 'Negativo',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
 });
 Object.assign(WARRANT_LABEL, {
     INCONCLUSIVE: 'Inconclusivo',
@@ -99,7 +99,7 @@ function formatDateBR(value) {
 
 function flagColor(v) {
     if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
-    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','NEGATIVE_PARTIAL','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
+    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
     if (['NEGATIVE','APPROVED','FIT','CLEAN','LOW','NOT_FOUND','NO','NEUTRAL'].includes(v)) return 'green';
     return 'gray';
 }

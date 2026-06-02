@@ -9,7 +9,6 @@ const { sanitizeAiOutput } = require('./_shared/sanitizers');
 // Guardrails de narrativa segura
 const SAFE_NARRATIVE_TEXTS = {
     criminalNegative: 'Nao foram identificados apontamentos criminais materiais associados ao candidato nas etapas analisadas.',
-    criminalNegativePartial: 'Nao houve apontamento criminal confirmado. A cobertura parcial exige revisao operacional antes da conclusao.',
     criminalInconclusive: 'Ha indicios que exigem validacao operacional antes de uma conclusao definitiva sobre o apontamento criminal.',
     criminalPositive: 'Foram identificados apontamentos criminais materiais que exigem avaliacao de risco antes da continuidade do processo.',
     laborNegative: 'Nao foram identificados processos trabalhistas materiais associados ao candidato nas etapas analisadas.',
@@ -33,8 +32,7 @@ function narrativeMatches(value, patterns) {
 function buildSafeNarrativeReplacement(field, caseData = {}) {
     if (field === 'criminalNotes') {
         if (caseData.criminalFlag === 'POSITIVE') return SAFE_NARRATIVE_TEXTS.criminalPositive;
-        if (caseData.criminalFlag === 'NEGATIVE_PARTIAL') return SAFE_NARRATIVE_TEXTS.criminalNegativePartial;
-        if (['INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'INCONCLUSIVE'].includes(caseData.criminalFlag)) return SAFE_NARRATIVE_TEXTS.criminalInconclusive;
+        if (caseData.criminalFlag === 'INCONCLUSIVE') return SAFE_NARRATIVE_TEXTS.criminalInconclusive;
         return SAFE_NARRATIVE_TEXTS.criminalNegative;
     }
     if (field === 'laborNotes') {
@@ -54,10 +52,6 @@ function sanitizeNarrativesForFlags(caseData = {}, narratives = {}) {
     if (caseData.criminalFlag === 'NEGATIVE' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /cobertura insuficiente/, /baixa cobertura/, /apontamento criminal/, /processo\(s\) criminal/, /processo criminal/, /comunicacoes judiciais de natureza criminal localizadas/, /comunicacao judicial criminal/, /comunicacoes criminais localizadas/, /achado criminal complementar/, /condenacao criminal/, /execucao penal/])) {
         clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
         pushWarning('criminalNotes', 'Texto criminal substituido por versao segura compativel com flag NEGATIVE.');
-    }
-    if (caseData.criminalFlag === 'NEGATIVE_PARTIAL' && narrativeMatches(clean.criminalNotes, [/inconclusiv/, /apontamento criminal/, /condenacao criminal/, /execucao penal/])) {
-        clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);
-        pushWarning('criminalNotes', 'Texto criminal parcial substituido por versao operacional segura.');
     }
     if (caseData.criminalFlag === 'POSITIVE' && !narrativeMatches(clean.criminalNotes, [/apontamento/, /criminal/, /processo/, /condenacao/, /execucao penal/])) {
         clean.criminalNotes = buildSafeNarrativeReplacement('criminalNotes', caseData);

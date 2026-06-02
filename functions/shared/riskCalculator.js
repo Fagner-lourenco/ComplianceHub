@@ -10,11 +10,8 @@ const LEGACY_PHASES = ['criminal', 'labor', 'warrant', 'osint', 'social', 'digit
 
 const BASE_SCORES = {
     NEGATIVE: 0,
-    NEGATIVE_PARTIAL: 18,
     NOT_FOUND: 5,
     INCONCLUSIVE: 40,
-    INCONCLUSIVE_HOMONYM: 45,
-    INCONCLUSIVE_LOW_COVERAGE: 38,
     POSITIVE: 90,
     LOW: 0,
     UNKNOWN: 20,
@@ -97,9 +94,6 @@ function calculateRisk(form, enabledPhases) {
     // ── 2. Sinais amarelos (+15 se >= 2) ─────────────────────────────────────
     const yellowSignals = [
         ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE',
-        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_HOMONYM',
-        ep.includes('criminal') && form.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE',
-        ep.includes('criminal') && form.criminalFlag === 'NEGATIVE_PARTIAL',
         ep.includes('labor')    && form.laborFlag    === 'INCONCLUSIVE',
         ep.includes('warrant')  && form.warrantFlag  === 'INCONCLUSIVE',
         ep.includes('osint')    && form.osintLevel   === 'MEDIUM',

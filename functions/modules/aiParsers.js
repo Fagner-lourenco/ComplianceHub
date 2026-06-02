@@ -417,7 +417,7 @@ function validateAiClassificationReviewSchema(obj) {
     const validHomonymRisk = ['LOW', 'MEDIUM', 'HIGH', 'UNKNOWN'];
     const validSuggestionActions = ['MAINTAIN_AUTOCLASSIFICATION', 'REVIEW_BEFORE_CONCLUDING', 'CONTEST_AUTOCLASSIFICATION'];
     const validConfidence = ['HIGH', 'MEDIUM', 'LOW'];
-    const validCriminalFlags = ['NEGATIVE', 'NEGATIVE_PARTIAL', 'POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'NOT_FOUND'];
+    const validCriminalFlags = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
     const validSimpleFlags = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 
     if (typeof obj.summary !== 'string') return false;

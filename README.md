@@ -365,7 +365,7 @@ gcloud firestore import gs://backups-compliance-hub-br/firestore/2026-06-01/ \
 | `keyFindings` | array | Principais apontamentos | `concludeCaseByAnalyst` |
 | `executiveSummary` | string | Resumo executivo final | `concludeCaseByAnalyst` |
 | `deterministicPrefill` | object | Prefill determinístico (v5) | `concludeCaseByAnalyst` |
-| `criminalFlag` | string | POSITIVE / NEGATIVE / NOT_FOUND | Formulário analista |
+| `criminalFlag` | string | POSITIVE / NEGATIVE / INCONCLUSIVE / NOT_FOUND | Formulário analista |
 | `warrantFlag` | string | POSITIVE / NEGATIVE / NOT_FOUND | Formulário analista |
 | `riskScore` | number | 0-100 | `concludeCaseByAnalyst` |
 | `riskLevel` | string | HIGH / MEDIUM / LOW | `concludeCaseByAnalyst` |

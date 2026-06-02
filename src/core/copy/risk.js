@@ -6,20 +6,20 @@
 export const CRISK_LABELS = {
   CLIENT: {
     NEGATIVE: { label: 'Sem apontamento', icon: 'OK', color: 'green' },
-    NEGATIVE_PARTIAL: { label: 'Parcial', icon: '!', color: 'yellow' },
+    NEGATIVE_PARTIAL: { label: 'Sem apontamento', icon: 'OK', color: 'green' },
     POSITIVE: { label: 'Com apontamento', icon: '!', color: 'red' },
     INCONCLUSIVE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
-    INCONCLUSIVE_HOMONYM: { label: 'Precisa de revisão manual', icon: '?', color: 'yellow' },
-    INCONCLUSIVE_LOW_COVERAGE: { label: 'Cobertura insuficiente', icon: '?', color: 'yellow' },
+    INCONCLUSIVE_HOMONYM: { label: 'Inconclusivo', icon: '?', color: 'blue' },
+    INCONCLUSIVE_LOW_COVERAGE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
     NOT_FOUND: { label: 'Não encontrado', icon: '-', color: 'gray' },
   },
   OPS: {
     NEGATIVE: { label: 'Negativo', icon: 'OK', color: 'green' },
-    NEGATIVE_PARTIAL: { label: 'Negativo parcial', icon: '!', color: 'yellow' },
+    NEGATIVE_PARTIAL: { label: 'Negativo', icon: 'OK', color: 'green' },
     POSITIVE: { label: 'Positivo', icon: '!', color: 'red' },
     INCONCLUSIVE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
-    INCONCLUSIVE_HOMONYM: { label: 'Inconclusivo por homônimo', icon: '?', color: 'yellow' },
-    INCONCLUSIVE_LOW_COVERAGE: { label: 'Inconclusivo por cobertura', icon: '?', color: 'yellow' },
+    INCONCLUSIVE_HOMONYM: { label: 'Inconclusivo', icon: '?', color: 'blue' },
+    INCONCLUSIVE_LOW_COVERAGE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
     NOT_FOUND: { label: 'Não encontrado', icon: '-', color: 'gray' },
   },
 };

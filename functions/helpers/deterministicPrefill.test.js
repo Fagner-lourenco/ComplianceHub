@@ -421,21 +421,20 @@ describe('Deterministic Prefill', () => {
 
             // Diego should have partial coverage
             if (caseData.coverageLevel !== 'HIGH_COVERAGE') {
-                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
+                const hasCovRef = /nenhum apontamento|nao identificou apontamentos|analise identificou/i.test(result.executiveSummary);
                 expect(hasCovRef).toBe(true);
             }
         });
 
-        it('NEGATIVE_PARTIAL yields ATTENTION verdict', () => {
+        it('NEGATIVE with partial coverage keeps sem apontamento wording', () => {
             const caseData = classifyAndMerge(buildDiegoCase());
             const result = buildDeterministicPrefill(caseData);
 
-            if (caseData.criminalFlag === 'NEGATIVE_PARTIAL') {
-                // v6: risk level shown in badge, text shows analysis content
-                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
-                expect(hasCovRef).toBe(true);
-                expect(result.finalJustification).toContain('avaliacao operacional');
-            }
+            expect(caseData.criminalFlag).toBe('NEGATIVE');
+            expect(caseData.criminalEvidenceQuality).toBe('NEGATIVE_WITH_PARTIAL_COVERAGE');
+            const hasCovRef = /nenhum apontamento|nao identificou apontamentos|analise identificou/i.test(result.executiveSummary);
+            expect(hasCovRef).toBe(true);
+            expect(result.finalJustification).not.toMatch(/negativo parcial|parcial/i);
         });
     });
 
@@ -518,7 +517,7 @@ describe('Deterministic Prefill', () => {
                 criminalEvidenceQuality: 'MIXED_STRONG_AND_WEAK',
                 providerDivergence: 'HIGH',
                 coverageLevel: 'LOW_COVERAGE',
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
                 warrantFlag: 'INCONCLUSIVE',
             });
             expect(result.isComplex).toBe(true);
@@ -1183,13 +1182,12 @@ describe('Deterministic Prefill', () => {
             expect(summary).not.toMatch(/Ha nenhum|Há nenhum|Ha nao|Há nao/i);
         });
 
-        it('NEGATIVE_PARTIAL uses operational warning text instead of client-facing inconclusive caveat', () => {
-            const result = sanitizeNarrativesForFlags({ criminalFlag: 'NEGATIVE_PARTIAL' }, {
+        it('NEGATIVE replaces criminal caveats with safe sem apontamento text', () => {
+            const result = sanitizeNarrativesForFlags({ criminalFlag: 'NEGATIVE' }, {
                 criminalNotes: 'Resultado inconclusivo com apontamento criminal pendente de validacao.',
             });
 
-            expect(result.narratives.criminalNotes).toContain('Nao houve apontamento criminal confirmado');
-            expect(result.narratives.criminalNotes).toContain('revisao operacional');
+            expect(result.narratives.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
             expect(result.narratives.criminalNotes).not.toMatch(/inconclusivo|baixa cobertura/i);
             expect(result.warnings).toHaveLength(1);
         });
@@ -1359,10 +1357,11 @@ describe('Deterministic Prefill', () => {
             expect(result.executiveSummary).toContain('sanção ativa');
         });
 
-        // 10. criminalFlag=INCONCLUSIVE_HOMONYM + 0 processes
-        it('criminalNotes INCONCLUSIVE_HOMONYM with 0 processes has explanatory body', () => {
+        // 10. criminalFlag=INCONCLUSIVE + homonym evidence + 0 processes
+        it('criminalNotes INCONCLUSIVE with homonym evidence and 0 processes has explanatory body', () => {
             const caseData = {
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 escavadorProcessos: [],
                 juditRoleSummary: [],
                 bigdatacorpProcessos: [],
@@ -1374,7 +1373,8 @@ describe('Deterministic Prefill', () => {
 
         it('criminalNotes nao lista DJEN isolado sem CNJ confirmado por Judit ou BigDataCorp', () => {
             const notes = buildDetCriminalNotes({
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 candidateName: 'NOME COMUM',
                 bigdatacorpNamesakeCount: 200,
                 juditRoleSummary: [],
@@ -1515,7 +1515,8 @@ describe('Deterministic Prefill', () => {
         it('namesakeCount=0 produces valid caveat text', () => {
             const caseData = {
                 candidateName: 'NOME UNICO',
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 bigdatacorpNamesakeCount: 0,
                 escavadorProcessos: [{
                     numeroCnj: '12345678901234567890',

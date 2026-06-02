@@ -462,8 +462,8 @@ function buildClientDashboardMetricsFromCases(cases, now = new Date()) {
     .sort((left, right) => String(right.concludedAt).localeCompare(String(left.concludedAt)))
     .slice(0, 4);
   const attentionRules = [
-    { label: 'Antecedentes criminais', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag) },
-    { label: 'Processos trabalhistas', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag) },
+    { label: 'Antecedentes criminais', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.criminalFlag) },
+    { label: 'Processos trabalhistas', match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.laborFlag) },
     { label: 'Mandados de prisao', match: (caseData) => caseData.warrantFlag === 'POSITIVE' },
     { label: 'Exposicao OSINT', match: (caseData) => ['MEDIUM', 'HIGH'].includes(caseData.osintLevel) },
     { label: 'Redes sociais', match: (caseData) => ['CONCERN', 'CONTRAINDICATED'].includes(caseData.socialStatus) },

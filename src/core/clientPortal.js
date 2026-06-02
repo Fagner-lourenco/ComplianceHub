@@ -75,11 +75,11 @@ export const CLIENT_STATUS_TONES = {
 const ATTENTION_REASON_RULES = [
     {
         label: 'Antecedentes criminais',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.criminalFlag),
     },
     {
         label: 'Processos trabalhistas',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.laborFlag),
     },
     {
         label: 'Mandados de prisao',

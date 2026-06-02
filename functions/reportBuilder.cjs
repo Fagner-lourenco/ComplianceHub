@@ -10,7 +10,7 @@ function esc(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-const CRIMINAL_LABEL  = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', INCONCLUSIVE: 'Inconclusivo', NOT_FOUND: 'Não Encontrado', NEGATIVE_PARTIAL: 'Negativo parcial', INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo', INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura' };
+const CRIMINAL_LABEL  = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', INCONCLUSIVE: 'Inconclusivo', NOT_FOUND: 'Não Encontrado', NEGATIVE_PARTIAL: 'Negativo', INCONCLUSIVE_HOMONYM: 'Inconclusivo', INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo' };
 const LABOR_LABEL     = { ...CRIMINAL_LABEL };
 const WARRANT_LABEL   = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', NOT_FOUND: 'Não Encontrado', INCONCLUSIVE: 'Inconclusivo' };
 const OSINT_LABEL     = { LOW: 'Baixo', MEDIUM: 'Médio', HIGH: 'Alto', UNKNOWN: 'Desconhecido' };
@@ -110,7 +110,7 @@ function socialLinkHtml(href, label, icon) {
 
 function flagColor(v) {
     if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
-    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','NEGATIVE_PARTIAL','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
+    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
     if (['NEGATIVE','APPROVED','FIT','CLEAN','LOW','NOT_FOUND','NO','NEUTRAL'].includes(v)) return 'green';
     return 'gray';
 }

@@ -293,7 +293,7 @@ function computeAutoClassification(caseData, {
             pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) criminal(is) confirmada(s) no Diario de Justica Eletronico.`);
         }
     } else if (hasWeakCriminalEvidence) {
-        result.criminalFlag = 'INCONCLUSIVE_HOMONYM';
+        result.criminalFlag = 'INCONCLUSIVE';
         result.criminalEvidenceQuality = 'WEAK_NAME_ONLY';
         pushUnique(criminalNotes, `Criminal INCONCLUSIVO por homonimia: ${weakCriminalCandidates.length} achado(s) dependem de nome, identidade fraca ou geografia inconsistente.`);
         if (djenCriminalWeak) {
@@ -313,7 +313,7 @@ function computeAutoClassification(caseData, {
         && !onlyNoProcessEvidenceReturned
         && (result.providerDivergence === 'HIGH' || coverageNotes.length > 0)
     ) {
-        result.criminalFlag = 'INCONCLUSIVE_LOW_COVERAGE';
+        result.criminalFlag = 'INCONCLUSIVE';
         result.criminalEvidenceQuality = 'LOW_COVERAGE_ONLY';
         pushUnique(criminalNotes, 'Criminal INCONCLUSIVO por baixa cobertura: as fontes nao sustentam leitura negativa forte nem evidenciam fato penal confirmatorio.');
         coverageNotes.forEach((note) => pushUnique(criminalNotes, note));
@@ -330,9 +330,9 @@ function computeAutoClassification(caseData, {
         || result.coverageLevel !== 'HIGH_COVERAGE'
         || result.providerDivergence !== 'NONE'
     ) {
-        result.criminalFlag = 'NEGATIVE_PARTIAL';
+        result.criminalFlag = 'NEGATIVE';
         result.criminalEvidenceQuality = 'NEGATIVE_WITH_PARTIAL_COVERAGE';
-        pushUnique(criminalNotes, 'Criminal NEGATIVO com cobertura parcial: nao houve indicio penal confirmado, mas a cobertura das fontes nao foi plena.');
+        pushUnique(criminalNotes, 'Criminal SEM APONTAMENTO: nao houve indicio penal confirmado; a cobertura das fontes nao foi plena.');
         coverageNotes.forEach((note) => pushUnique(criminalNotes, note));
     } else {
         result.criminalFlag = 'NEGATIVE';
@@ -419,10 +419,9 @@ function computeAutoClassification(caseData, {
         pushUnique(laborNotes, SAFE_NARRATIVE_TEXTS_FN.laborNegative);
     }
 
-    result.reviewRecommended = [
-        'INCONCLUSIVE_HOMONYM',
-        'INCONCLUSIVE_LOW_COVERAGE',
-    ].includes(result.criminalFlag) || hasWeakCriminalEvidence;
+    result.reviewRecommended = hasWeakCriminalEvidence
+        || ['WEAK_NAME_ONLY', 'LOW_COVERAGE_ONLY'].includes(result.criminalEvidenceQuality)
+        || result.providerDivergence === 'HIGH';
 
     // BigDataCorp KYC: PEP and Sanctions as NEW classification dimensions
     if (bigdatacorpPep) {

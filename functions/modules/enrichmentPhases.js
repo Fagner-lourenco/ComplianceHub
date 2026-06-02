@@ -1563,9 +1563,15 @@ function evaluateNegativePartialSafetyNet(caseData, autoClassification = {}) {
   const escavadorStatus = caseData.escavadorEnrichmentStatus;
   const escavadorAlreadyHandled = ['RUNNING', 'DONE', 'PARTIAL', 'FAILED', 'SKIPPED'].includes(escavadorStatus);
   const criminalFlag = autoClassification.criminalFlag;
+  const criminalEvidenceQuality = autoClassification.criminalEvidenceQuality;
   const reasons = [];
 
-  if (!['NEGATIVE_PARTIAL', 'INCONCLUSIVE_LOW_COVERAGE'].includes(criminalFlag)) {
+  const hasCoverageRisk = autoClassification.coverageLevel === 'LOW_COVERAGE'
+    || autoClassification.providerDivergence === 'HIGH'
+    || ['NEGATIVE_WITH_PARTIAL_COVERAGE', 'LOW_COVERAGE_ONLY'].includes(criminalEvidenceQuality)
+    || autoClassification.reviewRecommended === true;
+
+  if (!['NEGATIVE', 'INCONCLUSIVE'].includes(criminalFlag) || !hasCoverageRisk) {
     return { eligible: false, reasons: [], action: 'NONE' };
   }
 

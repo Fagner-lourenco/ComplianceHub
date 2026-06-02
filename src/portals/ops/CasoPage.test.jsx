@@ -137,7 +137,7 @@ describe('CasoPage', () => {
                 cpf: '10794180329',
                 createdAt: '2026-04-04',
                 enabledPhases: ['criminal', 'labor', 'warrant'],
-                criminalFlag: 'NEGATIVE_PARTIAL',
+                criminalFlag: 'NEGATIVE',
                 laborFlag: 'NEGATIVE',
                 warrantFlag: 'NEGATIVE',
                 coverageLevel: 'LOW_COVERAGE',
@@ -530,7 +530,7 @@ describe('CasoPage', () => {
         expect(screen.getByRole('button', { name: /Concluir caso/i })).toBeDisabled();
     });
 
-    it('bloqueia conclusao quando resultado criminal ainda e consultivo', async () => {
+    it('permite conclusao quando resultado criminal e inconclusivo final', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -540,7 +540,7 @@ describe('CasoPage', () => {
                 tenantId: 'tenant-1',
                 createdAt: '2026-05-22',
                 enabledPhases: ['criminal'],
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
                 criminalNotes: 'Sem apontamento criminal.',
                 finalVerdict: 'FIT',
                 analystComment: 'Nao foram identificados apontamentos criminais nas fontes consultadas.',
@@ -551,9 +551,7 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Andressa de Souza Pereira')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /^Concluir$/i })).toBeDisabled();
-        fireEvent.click(screen.getByRole('button', { name: /^Concluir$/i }));
-        expect(casoPageMocks.callConcludeCaseByAnalyst).not.toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: /^Concluir$/i })).not.toBeDisabled();
     });
 
     it('exibe revisao consultiva da autoclassificacao sem alterar o nivel de atencao calculado', async () => {

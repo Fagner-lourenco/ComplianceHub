@@ -87,6 +87,8 @@ describe('concludeCaseAndSettings', () => {
     it('aceita flags válidas', () => {
       expect(() => validateConcludeFinalFlags({ criminalFlag: 'NEGATIVE' })).not.toThrow();
       expect(() => validateConcludeFinalFlags({ criminalFlag: 'POSITIVE' })).not.toThrow();
+      expect(() => validateConcludeFinalFlags({ criminalFlag: 'INCONCLUSIVE' })).not.toThrow();
+      expect(() => validateConcludeFinalFlags({ criminalFlag: 'NOT_FOUND' })).not.toThrow();
     });
 
     it('rejeita flag criminal inválida', () => {

@@ -51,14 +51,11 @@ const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
 const CRIMINAL_OPTIONS = [
     'NEGATIVE',
-    'NEGATIVE_PARTIAL',
     'POSITIVE',
     'INCONCLUSIVE',
-    'INCONCLUSIVE_HOMONYM',
-    'INCONCLUSIVE_LOW_COVERAGE',
     'NOT_FOUND',
 ];
-const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
+const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND']);
 const LABOR_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const WARRANT_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH'];
@@ -229,10 +226,10 @@ function getFlagDisplay(value) {
     return {
         POSITIVE: 'Positivo',
         NEGATIVE: 'Negativo',
-        NEGATIVE_PARTIAL: 'Negativo parcial',
+        NEGATIVE_PARTIAL: 'Negativo',
         INCONCLUSIVE: 'Inconclusivo',
-        INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
-        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+        INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
         NOT_FOUND: 'Nao encontrado',
     }[value] || (value || 'N/A');
 }
@@ -1334,7 +1331,7 @@ export default function CasoPage() {
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('criminal') && form.criminalFlag && !isFinalCriminalFlag(form.criminalFlag) && {
-            label: 'Bloqueio: resultado criminal consultivo. Selecione Sem apontamento, Com apontamento ou Inconclusivo.',
+            label: 'Bloqueio: resultado criminal consultivo. Selecione Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.',
             ok: false,
             block: true,
         },
@@ -1538,7 +1535,7 @@ export default function CasoPage() {
         const latestRisk = calculateRisk(latestForm, enabledPhases);
 
         if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
-            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
+            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.');
             return;
         }
 
@@ -1662,7 +1659,7 @@ export default function CasoPage() {
         const latestForm = formRef.current;
 
         if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
-            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
+            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.');
             return;
         }
 

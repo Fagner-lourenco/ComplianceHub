@@ -334,7 +334,8 @@ describe('offline calibration with the 5 reference CPFs', () => {
 
         expect(homonymInput.needsAnalysis).toBe(true);
         expect(homonymInput.providerCoverage.overall.level).toBe('LOW_COVERAGE');
-        expect(classification.criminalFlag).toBe('INCONCLUSIVE_HOMONYM');
+        expect(classification.criminalFlag).toBe('INCONCLUSIVE');
+        expect(classification.criminalEvidenceQuality).toBe('WEAK_NAME_ONLY');
         expect(classification.reviewRecommended).toBe(true);
     });
 
@@ -344,7 +345,8 @@ describe('offline calibration with the 5 reference CPFs', () => {
         const classification = computeAutoClassification(caseData);
 
         expect(homonymInput.needsAnalysis).toBe(false);
-        expect(classification.criminalFlag).toBe('NEGATIVE_PARTIAL');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('NEGATIVE_WITH_PARTIAL_COVERAGE');
         expect(classification.coverageLevel).toBe('PARTIAL_COVERAGE');
         expect(classification.laborFlag).toBe('NEGATIVE');
     });
@@ -389,7 +391,8 @@ describe('offline calibration with the 5 reference CPFs', () => {
         const classification = computeAutoClassification(caseData);
         const safetyNet = evaluateNegativePartialSafetyNet(caseData, classification);
 
-        expect(classification.criminalFlag).toBe('NEGATIVE_PARTIAL');
+        expect(classification.criminalFlag).toBe('NEGATIVE');
+        expect(classification.criminalEvidenceQuality).toBe('NEGATIVE_WITH_PARTIAL_COVERAGE');
         expect(safetyNet.eligible).toBe(true);
         expect(safetyNet.action).toBe('RUN_ESCAVADOR');
         expect(safetyNet.reasons).toContain('LOW_COVERAGE');

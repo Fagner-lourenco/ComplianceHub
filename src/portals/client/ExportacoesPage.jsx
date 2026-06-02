@@ -66,10 +66,10 @@ const PRI_MAP = {
 const FLAG_MAP = {
     POSITIVE: 'Positivo',
     NEGATIVE: 'Negativo',
-    NEGATIVE_PARTIAL: 'Negativo parcial',
+    NEGATIVE_PARTIAL: 'Negativo',
     INCONCLUSIVE: 'Inconclusivo',
-    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homônimo',
-    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
     NOT_FOUND: 'Não encontrado',
 };
 
@@ -111,16 +111,13 @@ function buildMainAlerts(c) {
 
     if (
         c.criminalFlag === 'POSITIVE' ||
-        c.criminalFlag === 'INCONCLUSIVE_HOMONYM' ||
-        c.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE'
+        c.criminalFlag === 'INCONCLUSIVE'
     ) {
         alerts.push(`Criminal: ${FLAG_MAP[c.criminalFlag] || c.criminalFlag}`);
     }
 
     if (
         c.laborFlag === 'POSITIVE' ||
-        c.laborFlag === 'INCONCLUSIVE_HOMONYM' ||
-        c.laborFlag === 'INCONCLUSIVE_LOW_COVERAGE' ||
         c.laborFlag === 'INCONCLUSIVE'
     ) {
         alerts.push(`Trabalhista: ${FLAG_MAP[c.laborFlag] || c.laborFlag}`);

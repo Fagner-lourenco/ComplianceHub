@@ -33,7 +33,7 @@ function evaluateComplexityTriggers(caseData) {
     if (['MIXED_STRONG_AND_WEAK', 'WEAK_NAME_ONLY'].includes(eq)) triggers.push('CRIMINAL_EVIDENCE_UNCERTAIN');
     if (caseData.providerDivergence === 'HIGH') triggers.push('HIGH_PROVIDER_DIVERGENCE');
     if (caseData.coverageLevel === 'LOW_COVERAGE' && !benignLowCoverageNegative) triggers.push('LOW_COVERAGE');
-    if (['INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag)) triggers.push('CRIMINAL_FLAG_INCONCLUSIVE');
+    if (caseData.criminalFlag === 'INCONCLUSIVE') triggers.push('CRIMINAL_FLAG_INCONCLUSIVE');
     if (caseData.warrantFlag === 'INCONCLUSIVE') triggers.push('WARRANT_FLAG_INCONCLUSIVE');
     return { isComplex: triggers.length > 0, triggersActive: triggers };
 }
@@ -93,14 +93,14 @@ function buildDetCriminalNotes(caseData) {
 
     if (cf === 'POSITIVE') {
         // go straight to listing
-    } else if (cf === 'INCONCLUSIVE_HOMONYM') {
+    } else if (cf === 'INCONCLUSIVE' && caseData.criminalEvidenceQuality === 'WEAK_NAME_ONLY') {
         parts.push('Possível homonímia detectada — registros identificados podem não pertencer ao candidato.');
-    } else if (cf === 'INCONCLUSIVE_LOW_COVERAGE') {
+    } else if (cf === 'INCONCLUSIVE' && caseData.criminalEvidenceQuality === 'LOW_COVERAGE_ONLY') {
         parts.push('Cobertura insuficiente das bases consultadas — resultado pode não refletir a situação real.');
-    } else if (cf === 'NEGATIVE_PARTIAL') {
-        parts.push('Nao houve apontamento criminal confirmado nas etapas analisadas. Revisao operacional recomendada antes da conclusao.');
     } else if (cf === 'NOT_FOUND') {
         parts.push('Candidato não localizado nas bases criminais consultadas.');
+    } else if (cf === 'INCONCLUSIVE') {
+        parts.push('Resultado criminal inconclusivo — os dados disponiveis exigem validacao operacional antes da conclusao.');
     } else {
         parts.push(SAFE_NARRATIVE_TEXTS.criminalNegative);
         return parts.join('\n');
@@ -528,10 +528,8 @@ function buildDetExecutiveSummary(caseData) {
             }
         }
         findingsSentences.push(convictionText);
-    } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
+    } else if (cf === 'INCONCLUSIVE') {
         findingsSentences.push('apontamento criminal inconclusivo pendente de confirmação');
-    } else if (cf === 'NEGATIVE_PARTIAL') {
-        findingsSentences.push('nenhum apontamento criminal confirmado');
     } else {
         findingsSentences.push('nenhum apontamento criminal material identificado');
     }
@@ -590,7 +588,7 @@ function buildDetFinalJustification(caseData) {
         const sanctioned = caseData.sanctionFlag === 'POSITIVE';
         if (cf === 'POSITIVE' || wf === 'POSITIVE' || sanctioned) {
             derivedVerdict = 'NOT_RECOMMENDED';
-        } else if (lf === 'POSITIVE' || caseData.pepFlag === 'POSITIVE' || ['INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE', 'NEGATIVE_PARTIAL', 'NOT_FOUND'].includes(cf) || wf === 'INCONCLUSIVE') {
+        } else if (lf === 'POSITIVE' || caseData.pepFlag === 'POSITIVE' || ['INCONCLUSIVE', 'NOT_FOUND'].includes(cf) || wf === 'INCONCLUSIVE') {
             derivedVerdict = 'ATTENTION';
         } else {
             derivedVerdict = 'FIT';
@@ -635,7 +633,7 @@ function buildDetFinalJustification(caseData) {
         }
         parts.push('');
         parts.push(crimParagraph);
-    } else if (cf === 'INCONCLUSIVE_HOMONYM' || cf === 'INCONCLUSIVE_LOW_COVERAGE') {
+    } else if (cf === 'INCONCLUSIVE') {
         parts.push('');
         parts.push('Foram identificados apontamentos criminais, porém sem confirmação inequívoca de identidade. Recomenda-se análise complementar.');
     } else {

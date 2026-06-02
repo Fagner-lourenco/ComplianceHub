@@ -69,16 +69,16 @@ describe('evaluateEscavadorNeed', () => {
 });
 
 describe('evaluateNegativePartialSafetyNet', () => {
-  it('retorna NONE quando criminalFlag não é NEGATIVE_PARTIAL nem INCONCLUSIVE_LOW_COVERAGE', () => {
-    expect(evaluateNegativePartialSafetyNet({}, { criminalFlag: 'POSITIVE' })).toEqual({ eligible: false, reasons: [], action: 'NONE' });
+  it('retorna NONE quando nao ha cobertura parcial, baixa cobertura ou revisao recomendada', () => {
+    expect(evaluateNegativePartialSafetyNet({}, { criminalFlag: 'POSITIVE', coverageLevel: 'HIGH_COVERAGE' })).toEqual({ eligible: false, reasons: [], action: 'NONE' });
   });
 
   it('retorna NONE quando escavador já foi processado', () => {
-    expect(evaluateNegativePartialSafetyNet({ escavadorEnrichmentStatus: 'DONE' }, { criminalFlag: 'NEGATIVE_PARTIAL' })).toEqual({ eligible: false, reasons: [], action: 'NONE' });
+    expect(evaluateNegativePartialSafetyNet({ escavadorEnrichmentStatus: 'DONE' }, { criminalFlag: 'NEGATIVE', criminalEvidenceQuality: 'NEGATIVE_WITH_PARTIAL_COVERAGE' })).toEqual({ eligible: false, reasons: [], action: 'NONE' });
   });
 
   it('retorna RUN_ESCAVADOR quando há LOW_COVERAGE', () => {
-    expect(evaluateNegativePartialSafetyNet({}, { criminalFlag: 'NEGATIVE_PARTIAL', coverageLevel: 'LOW_COVERAGE' })).toEqual({ eligible: true, reasons: ['LOW_COVERAGE', 'JUDIT_ZERO_PROCESS'], action: 'RUN_ESCAVADOR' });
+    expect(evaluateNegativePartialSafetyNet({}, { criminalFlag: 'NEGATIVE', coverageLevel: 'LOW_COVERAGE', criminalEvidenceQuality: 'NEGATIVE_WITH_PARTIAL_COVERAGE' })).toEqual({ eligible: true, reasons: ['LOW_COVERAGE', 'JUDIT_ZERO_PROCESS'], action: 'RUN_ESCAVADOR' });
   });
 });
 

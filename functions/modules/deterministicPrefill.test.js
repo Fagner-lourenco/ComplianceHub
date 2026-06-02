@@ -101,8 +101,8 @@ describe('deterministicPrefill', () => {
             expect(result).toContain('Nao foram identificados');
         });
 
-        it('returns homonym message for INCONCLUSIVE_HOMONYM', () => {
-            const caseData = buildMockCaseData({ criminalFlag: 'INCONCLUSIVE_HOMONYM' });
+        it('returns homonym message for INCONCLUSIVE with weak-name evidence', () => {
+            const caseData = buildMockCaseData({ criminalFlag: 'INCONCLUSIVE', criminalEvidenceQuality: 'WEAK_NAME_ONLY' });
             const result = buildDetCriminalNotes(caseData);
             expect(result).toContain('homonímia');
         });

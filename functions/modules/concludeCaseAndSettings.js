@@ -19,7 +19,7 @@ const { sanitizeStructuredText, sanitizeStructuredList: sanitizeStructuredListBa
    Constantes locais
    ========================================================= */
 
-const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
+const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND']);
 
 function sanitizeStructuredList(value, maxItems = 8, maxLength = 220) {
   return sanitizeStructuredListBase(value, maxItems, maxLength);
@@ -104,7 +104,7 @@ function validateConcludeFinalFlags(payload = {}) {
   if (hasMeaningfulValue(payload.criminalFlag) && !FINAL_CRIMINAL_FLAGS.has(payload.criminalFlag)) {
     throw new HttpsError(
       'invalid-argument',
-      'Selecione um resultado criminal final para concluir: Sem apontamento, Com apontamento ou Inconclusivo.',
+      'Selecione um resultado criminal final para concluir: Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.',
     );
   }
 }
