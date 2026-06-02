@@ -87,6 +87,16 @@ function isFinalCriminalFlag(value) {
     return !value || FINAL_CRIMINAL_FLAGS.has(value);
 }
 
+function formatPendingJuditPhases(phases = []) {
+    return phases
+        .map((phase) => ({
+            warrant: 'mandados',
+            execution: 'execucao penal',
+            lawsuits: 'processos',
+        }[phase] || phase))
+        .join(' e ');
+}
+
 const TIMELINE_ACTION_LABELS = {
     CASE_CONCLUDED: 'Caso concluído',
     CASE_UPDATED: 'Caso atualizado',
@@ -780,13 +790,6 @@ export default function CasoPage() {
     const [saving, setSaving] = useState(false);
     const [reportPreview, setReportPreview] = useState({ open: false, loading: false, html: '', error: '' });
     const [retryingPhase, setRetryingPhase] = useState(null);
-    const formatPendingJuditPhases = (phases = []) => phases
-        .map((phase) => ({
-            warrant: 'mandados',
-            execution: 'execucao penal',
-            lawsuits: 'processos',
-        }[phase] || phase))
-        .join(' e ');
     const [enabledPhases, setEnabledPhases] = useState(LEGACY_PHASES);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnReason, setReturnReason] = useState('');
