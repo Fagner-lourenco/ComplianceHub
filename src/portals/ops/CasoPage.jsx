@@ -1247,6 +1247,24 @@ export default function CasoPage() {
         ) : null;
     }, [caseData?.juditWarrants, caseData?.bigdatacorpActiveWarrants, caseData?.juditActiveWarrantCount]);
 
+    const enrichmentStaleWarning = useMemo(() => {
+        if (!caseData?.draftSavedAt || caseData.status === 'DONE') return null;
+        const draftTs = new Date(caseData.draftSavedAt).getTime();
+        const toMs = (v) => { if (!v) return 0; const d = v.toDate ? v.toDate() : new Date(v); return d.getTime() || 0; };
+        const latestEnrichment = Math.max(
+            toMs(caseData.enrichedAt),
+            toMs(caseData.juditEnrichedAt),
+            toMs(caseData.escavadorEnrichedAt),
+            toMs(caseData.autoClassifiedAt)
+        );
+        return latestEnrichment > draftTs ? (
+            <div style={{ margin: '0 0 .5rem', padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '.85rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚠️</span>
+                <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
+            </div>
+        ) : null;
+    }, [caseData?.draftSavedAt, caseData?.status, caseData?.enrichedAt, caseData?.juditEnrichedAt, caseData?.escavadorEnrichedAt, caseData?.autoClassifiedAt]);
+
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('criminal') && form.criminalFlag && !isFinalCriminalFlag(form.criminalFlag) && {
@@ -1827,17 +1845,7 @@ export default function CasoPage() {
 
 
             {/* P09: Warning if enrichment/AI data changed after last draft save */}
-            {caseData.draftSavedAt && caseData.status !== 'DONE' && (() => {
-                const draftTs = new Date(caseData.draftSavedAt).getTime();
-                const toMs = (v) => { if (!v) return 0; const d = v.toDate ? v.toDate() : new Date(v); return d.getTime() || 0; };
-                const latestEnrichment = Math.max(toMs(caseData.enrichedAt), toMs(caseData.juditEnrichedAt), toMs(caseData.escavadorEnrichedAt), toMs(caseData.autoClassifiedAt));
-                return latestEnrichment > draftTs ? (
-                    <div style={{ margin: '0 0 .5rem', padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '.85rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>⚠️</span>
-                        <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
-                    </div>
-                ) : null;
-            })()}
+            {enrichmentStaleWarning}
 
             <div className="stepper">
                 {steps.map((step, index) => (
