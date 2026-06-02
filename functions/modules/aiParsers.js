@@ -134,19 +134,28 @@ function parseJsonSchemaResponse(content, validator, fallbackExtractor, sanitize
         return { structured: null, raw: content || '', ok: false };
     }
 
+    // Layer 1: Direct JSON.parse
     try {
-        const parsed = sanitizer(JSON.parse(content.trim()));
-        if (validator(parsed)) return { structured: parsed, raw: content, ok: true };
-        return { structured: parsed, raw: content, ok: false };
-    } catch { /* continue */ }
+        const trimmed = content.trim();
+        if (/^[{[]/.test(trimmed)) {
+            const parsed = sanitizer(JSON.parse(trimmed));
+            if (validator(parsed)) return { structured: parsed, raw: content, ok: true };
+            console.warn('[AI_PARSE] Layer 1: JSON valid, schema FAILED', { preview: trimmed.slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
+        }
+    } catch (err) {
+        console.warn('[AI_PARSE] Layer 1: JSON.parse failed', { error: err.message, preview: content.slice(0, 200) });
+    }
 
+    // Layer 2: Extract JSON from markdown code block (any position in text)
     const mdMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
     if (mdMatch) {
         try {
             const parsed = sanitizer(JSON.parse(mdMatch[1].trim()));
             if (validator(parsed)) return { structured: parsed, raw: content, ok: true };
-            return { structured: parsed, raw: content, ok: false };
-        } catch { /* continue */ }
+            console.warn('[AI_PARSE] Layer 2: JSON valid, schema FAILED', { preview: mdMatch[1].trim().slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
+        } catch (err) {
+            console.warn('[AI_PARSE] Layer 2: JSON.parse failed', { error: err.message, preview: mdMatch[1].slice(0, 200) });
+        }
     }
 
     try {
@@ -156,6 +165,7 @@ function parseJsonSchemaResponse(content, validator, fallbackExtractor, sanitize
         }
     } catch { /* continue */ }
 
+    console.error('[AI_PARSE] All layers exhausted — returning ok=false', { preview: content.slice(0, 300) });
     return { structured: null, raw: content, ok: false };
 }
 
