@@ -1842,3 +1842,11 @@ exports.sendCaseMessage = notificationService.createSendCaseMessageHandler({
     getClientIp,
 });
 exports.markCaseCommunicationRead = notificationService.createMarkCaseCommunicationReadHandler({ db });
+
+/* =========================================================
+   BACKUP DIARIO — Firestore export + Auth users
+   Agenda: 02:00 BRT, retencao 7 dias via lifecycle GCS
+   ========================================================= */
+
+const backupWorker = require('./modules/backupWorker');
+exports.backupDaily = backupWorker.createBackupWorkerHandler();
