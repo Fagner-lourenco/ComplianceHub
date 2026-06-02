@@ -13,6 +13,7 @@ export default defineConfig({
 
           if (/[\\/]react-dom[\\/]/.test(id)) return 'react-dom';
           if (/[\\/]react[\\/]/.test(id)) return 'react-core';
+          if (/[\\/]react-router-dom[\\/]/.test(id)) return 'react-router';
 
           if (/[\\/]firebase[\\/]auth[\\/]/.test(id)) return 'firebase-auth';
           if (/[\\/]firebase[\\/]firestore[\\/]/.test(id)) return 'firebase-firestore';
