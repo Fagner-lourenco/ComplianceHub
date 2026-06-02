@@ -742,6 +742,15 @@ function createInitialForm(caseData) {
 }
 
 
+function ApiBadge({ isEnriched, originals, formValue, field }) {
+    if (!isEnriched) return null;
+    if (!(field in originals)) return null;
+    if (formValue === originals[field]) {
+        return <span className="caso-api-badge">via integração</span>;
+    }
+    return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
+}
+
 export default function CasoPage() {
     const { caseId } = useParams();
     const navigate = useNavigate();
@@ -1293,16 +1302,7 @@ export default function CasoPage() {
     ].some(isDoneStatus) || Boolean(caseData?.aiAnalysis);
     const enrichedPhase = (phase) => caseData?.enrichmentSources?.[phase] && !caseData.enrichmentSources[phase].error;
 
-    const ApiBadge = ({ field }) => {
-        if (!isEnriched) return null;
-        const originals = caseData?.enrichmentOriginalValues || {};
-        if (!(field in originals)) return null;
-        // Show "via integração" if field still matches the original enriched value
-        if (form[field] === originals[field]) {
-            return <span className="caso-api-badge">via integração</span>;
-        }
-        return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
-    };
+    const apiBadgeOriginals = caseData?.enrichmentOriginalValues || {};
 
     // Determine if a stepper step was auto-filled by enrichment
     const isStepAutoFilled = (stepKey) => {
@@ -2979,7 +2979,7 @@ export default function CasoPage() {
 
                 {currentStepKey === 'criminal' && (
                     <div className="caso-section">
-                        <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge field="criminalFlag" />}</h3>
+                        <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.criminalFlag} field="criminalFlag" />}</h3>
                         {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
@@ -3018,7 +3018,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="criminalNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.criminalNotes} field="criminalNotes" /></label>
                             <textarea
                                 ref={criminalNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
@@ -3331,7 +3331,7 @@ export default function CasoPage() {
 
                 {currentStepKey === 'labor' && (
                     <div className="caso-section">
-                        <h3>Analise trabalhista {enrichedPhase('labor') && <ApiBadge field="laborFlag" />}</h3>
+                        <h3>Analise trabalhista {enrichedPhase('labor') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.laborFlag} field="laborFlag" />}</h3>
                         {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
@@ -3370,7 +3370,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="laborNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.laborNotes} field="laborNotes" /></label>
                             <textarea
                                 ref={laborNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
@@ -3566,7 +3566,7 @@ export default function CasoPage() {
 
                 {currentStepKey === 'warrant' && (
                     <div className="caso-section">
-                        <h3>Mandado de prisao {enrichedPhase('warrant') && <ApiBadge field="warrantFlag" />}</h3>
+                        <h3>Mandado de prisao {enrichedPhase('warrant') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.warrantFlag} field="warrantFlag" />}</h3>
                         {caseData.juditWarrants?.length > 0 && !['POSITIVE', 'INCONCLUSIVE'].includes(form.warrantFlag) && (
                             <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginBottom: 12 }}>
                                 Atenção: a Judit encontrou {caseData.juditActiveWarrantCount || caseData.juditWarrants.length} mandado(s) ativo(s), mas o resultado selecionado é &ldquo;{form.warrantFlag || 'não definido'}&rdquo;. Revise o campo abaixo.
@@ -3600,7 +3600,7 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="warrantNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.warrantNotes} field="warrantNotes" /></label>
                             <textarea
                                 ref={warrantNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
