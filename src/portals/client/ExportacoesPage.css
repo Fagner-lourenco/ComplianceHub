@@ -221,16 +221,59 @@
     margin-bottom: var(--space-4);
 }
 
-.export-async__status {
-    padding: var(--space-3);
-    background: var(--bg-subtle);
-    border-radius: var(--radius-md);
+.export-async__status-card {
+    padding: var(--space-4);
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
     margin-bottom: var(--space-4);
+    box-shadow: var(--shadow-xs);
 }
 
-.export-async__status p {
-    margin: 0 0 var(--space-2);
+.export-async__status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.export-async__status-label {
     font-size: .875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.export-async__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--space-3);
+}
+
+.export-async__progress-bar {
+    height: 8px;
+    background: var(--bg-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.export-async__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-500), var(--brand-400));
+    border-radius: 999px;
+    transition: width .3s ease;
+}
+
+.export-async__progress-text {
+    font-size: .75rem;
+    color: var(--text-secondary);
+}
+
+.export-async__status-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
 }
 
 .export-async__history {
@@ -243,58 +286,34 @@
     color: var(--text-secondary);
 }
 
-.export-async__list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.export-async__item {
+.export-async__progress--inline {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3);
-    background: var(--bg-subtle);
-    border-radius: var(--radius-md);
-    font-size: .8125rem;
+    gap: 8px;
+    min-width: 100px;
 }
 
-.export-async__item--pending {
-    border-left: 3px solid var(--yellow-500);
-}
-
-.export-async__item--processing {
-    border-left: 3px solid var(--blue-500);
-}
-
-.export-async__item--done {
-    border-left: 3px solid var(--green-500);
-}
-
-.export-async__item--error {
-    border-left: 3px solid var(--red-500);
-}
-
-.export-async__item--cancelled {
-    border-left: 3px solid var(--gray-400);
-}
-
-.export-async__format {
-    font-weight: 600;
-    text-transform: uppercase;
-    min-width: 50px;
-}
-
-.export-async__status {
+.export-async__progress-bar--inline {
     flex: 1;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 999px;
+    overflow: hidden;
+    max-width: 80px;
 }
 
-.export-async__date {
-    color: var(--text-tertiary);
+.export-async__progress-fill--inline {
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-500), var(--brand-400));
+    border-radius: 999px;
+    transition: width .3s ease;
+}
+
+.export-async__progress-text--inline {
     font-size: .75rem;
+    color: var(--text-secondary);
+    min-width: 32px;
+    text-align: right;
 }
 
 .export-btn--async {

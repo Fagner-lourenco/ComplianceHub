@@ -1339,62 +1339,104 @@ export default function ExportacoesPage() {
                     </div>
 
                     {currentJobStatus && (
-                        <div className="export-async__status">
-                            <p><strong>Job atual:</strong> {normalizeJobStatus(currentJobStatus.status) === 'pending' && '⏳ Pendente'}
-                                {normalizeJobStatus(currentJobStatus.status) === 'processing' && '⚙️ Processando...'}
-                                {normalizeJobStatus(currentJobStatus.status) === 'done' && '✅ Concluído'}
-                                {normalizeJobStatus(currentJobStatus.status) === 'error' && '❌ Erro'}
-                                {normalizeJobStatus(currentJobStatus.status) === 'cancelled' && '🚫 Cancelado'}</p>
-                            {normalizeJobStatus(currentJobStatus.status) === 'done' && currentJobStatus.downloadUrl && (
-                                <a href={currentJobStatus.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
-                                    📥 Baixar arquivo
-                                </a>
+                        <div className="export-async__status-card">
+                            <div className="export-async__status-header">
+                                <span className="export-async__status-label">Job em andamento</span>
+                                <StatusBadge status={currentJobStatus.status || 'PENDING'} />
+                            </div>
+                            {currentJobStatus.totalRecords > 0 && (
+                                <div className="export-async__progress">
+                                    <div className="export-async__progress-bar">
+                                        <div
+                                            className="export-async__progress-fill"
+                                            style={{ width: `${Math.round(((currentJobStatus.recordsProcessed || 0) / currentJobStatus.totalRecords) * 100)}%` }}
+                                        />
+                                    </div>
+                                    <span className="export-async__progress-text">
+                                        {currentJobStatus.recordsProcessed || 0} de {currentJobStatus.totalRecords} registros
+                                    </span>
+                                </div>
                             )}
-                            {(normalizeJobStatus(currentJobStatus.status) === 'pending' || normalizeJobStatus(currentJobStatus.status) === 'processing') && (
-                                <button type="button" className="export-btn export-btn--secondary" onClick={() => handleCancelJob(currentJobStatus.jobId || currentJobStatus.id)}>
-                                    Cancelar
-                                </button>
-                            )}
+                            <div className="export-async__status-actions">
+                                {normalizeJobStatus(currentJobStatus.status) === 'done' && currentJobStatus.downloadUrl && (
+                                    <a href={currentJobStatus.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
+                                        Baixar arquivo
+                                    </a>
+                                )}
+                                {(normalizeJobStatus(currentJobStatus.status) === 'pending' || normalizeJobStatus(currentJobStatus.status) === 'processing') && (
+                                    <button type="button" className="export-btn export-btn--secondary" onClick={() => handleCancelJob(currentJobStatus.jobId || currentJobStatus.id)}>
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
 
                     {asyncJobs.length > 0 && (
                         <div className="export-async__history">
                             <h4>Jobs recentes</h4>
-                            <ul className="export-async__list">
-                                {asyncJobs.map((job) => {
-                                    const jobStatus = normalizeJobStatus(job.status);
-                                    return (
-                                    <li key={job.jobId || job.id} className={`export-async__item export-async__item--${jobStatus}`}>
-                                        <span className="export-async__format">{job.format?.toUpperCase()}</span>
-                                        <span className="export-async__status">
-                                            {jobStatus === 'pending' && '⏳ Pendente'}
-                                            {jobStatus === 'processing' && '⚙️ Processando'}
-                                            {jobStatus === 'done' && '✅ Concluído'}
-                                            {jobStatus === 'error' && '❌ Erro'}
-                                            {jobStatus === 'cancelled' && '🚫 Cancelado'}
-                                        </span>
-                                        <span className="export-async__date">
-                                            {formatDateTimeBR(job.createdAt) || ''}
-                                        </span>
-                                        {jobStatus === 'done' && (job.downloadUrl ? (
-                                            <a href={job.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
-                                                Baixar
-                                            </a>
-                                        ) : (
-                                            <button type="button" className="export-btn--small" onClick={() => handleDownloadJob(job.jobId || job.id)}>
-                                                Baixar
-                                            </button>
-                                        ))}
-                                        {(jobStatus === 'pending' || jobStatus === 'processing') && (
-                                            <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.jobId || job.id)}>
-                                                Cancelar
-                                            </button>
-                                        )}
-                                    </li>
-                                    );
-                                })}
-                            </ul>
+                            <div className="export-table-wrapper">
+                                <table className="data-table" aria-label="Jobs de exportação em nuvem">
+                                    <thead>
+                                        <tr>
+                                            <th className="data-table__th" scope="col">ID</th>
+                                            <th className="data-table__th" scope="col">Formato</th>
+                                            <th className="data-table__th" scope="col">Escopo</th>
+                                            <th className="data-table__th" scope="col">Registros</th>
+                                            <th className="data-table__th" scope="col">Status</th>
+                                            <th className="data-table__th" scope="col">Progresso</th>
+                                            <th className="data-table__th" scope="col">Data</th>
+                                            <th className="data-table__th" scope="col">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {asyncJobs.map((job) => {
+                                            const jobStatus = normalizeJobStatus(job.status);
+                                            const progressPct = job.totalRecords > 0
+                                                ? Math.round(((job.recordsProcessed || 0) / job.totalRecords) * 100)
+                                                : 0;
+                                            return (
+                                                <tr key={job.jobId || job.id} className="data-table__row">
+                                                    <td className="data-table__td data-table__td--mono">{(job.jobId || job.id || '').slice(0, 8)}</td>
+                                                    <td className="data-table__td">{job.format?.toUpperCase()}</td>
+                                                    <td className="data-table__td">{job.scopeCode || job.scope || '-'}</td>
+                                                    <td className="data-table__td">{job.totalRecords ?? '-'}</td>
+                                                    <td className="data-table__td"><StatusBadge status={job.status || 'PENDING'} /></td>
+                                                    <td className="data-table__td">
+                                                        {job.totalRecords > 0 ? (
+                                                            <div className="export-async__progress--inline">
+                                                                <div className="export-async__progress-bar--inline">
+                                                                    <div className="export-async__progress-fill--inline" style={{ width: `${progressPct}%` }} />
+                                                                </div>
+                                                                <span className="export-async__progress-text--inline">{progressPct}%</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="export-async__progress-text--inline">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="data-table__td">{formatDateTimeBR(job.createdAt) || '-'}</td>
+                                                    <td className="data-table__td">
+                                                        {jobStatus === 'done' && (job.downloadUrl ? (
+                                                            <a href={job.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">Baixar</a>
+                                                        ) : (
+                                                            <button type="button" className="export-btn--small" onClick={() => handleDownloadJob(job.jobId || job.id)}>Baixar</button>
+                                                        ))}
+                                                        {(jobStatus === 'pending' || jobStatus === 'processing') && (
+                                                            <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.jobId || job.id)}>Cancelar</button>
+                                                        )}
+                                                        {jobStatus === 'error' && (
+                                                            <span className="export-artifact-note">Falhou</span>
+                                                        )}
+                                                        {jobStatus === 'cancelled' && (
+                                                            <span className="export-artifact-note">Cancelado</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     )}
                 </div>
