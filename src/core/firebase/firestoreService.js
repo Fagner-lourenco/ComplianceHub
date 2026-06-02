@@ -418,7 +418,7 @@ async function fetchOrderedCollection({
  * Fetch all client users.
  */
 export async function fetchClients() {
-    const q = query(collection(db, 'userProfiles'), where('role', 'in', CLIENT_ROLES));
+    const q = query(collection(db, 'userProfiles'), where('role', 'in', CLIENT_ROLES), limit(500));
 
     try {
         const snapshot = await withFirestoreTimeout(
@@ -461,7 +461,7 @@ export async function fetchClients() {
 }
 
 export function subscribeToTenantDirectory(callback) {
-    const q = query(collection(db, 'userProfiles'), where('role', 'in', CLIENT_ROLES));
+    const q = query(collection(db, 'userProfiles'), where('role', 'in', CLIENT_ROLES), limit(1000));
 
     return onSnapshot(q, (snapshot) => {
         callback(mapProfilesToTenantDirectory(snapshot.docs.map((documentSnapshot) => documentSnapshot.data())), null);
