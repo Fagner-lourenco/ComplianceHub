@@ -123,9 +123,74 @@ function sanitizeAiClassificationReviewStructured(structured) {
 }
 
 /**
+ * Tenta reparar JSON malformado com state machine que corrige:
+ * 1. Aspas duplas não escapadas dentro de strings — caso mais comum da OpenAI
+ * 2. Vírgulas trailing antes de } e ]
+ */
+function attemptJsonRepair(raw) {
+    // Tenta parse direto primeiro
+    try { JSON.parse(raw); return raw; } catch { /* continua */ }
+
+    // Fix 1: remove trailing commas
+    let json = raw.replace(/,(\s*[}\]])/g, '$1');
+    try { JSON.parse(json); return json; } catch { /* continua */ }
+
+    // Fix 2: repara aspas não escapadas usando state machine
+    // Regra: se estamos dentro de string e encontramos " não escapada,
+    // olhamos o próximo char significativo (não whitespace).
+    // Se for , } ] ou : → fecha string e sai do modo string.
+    // Senão → aspa literal de conteúdo ⇒ escapa.
+    let result = '';
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < raw.length; i++) {
+        const ch = raw[i];
+
+        if (escaped) {
+            result += ch;
+            escaped = false;
+            continue;
+        }
+
+        if (ch === '\\') {
+            result += ch;
+            escaped = true;
+            continue;
+        }
+
+        if (ch === '"') {
+            if (inString) {
+                // Encontra o próximo caractere não-whitespace
+                let j = i + 1;
+                while (j < raw.length && /[ \t\r\n]/.test(raw[j])) j += 1;
+                const next = j < raw.length ? raw[j] : '';
+
+                if (next === ',' || next === '}' || next === ']' || next === ':') {
+                    // Fim estrutural da string
+                    inString = false;
+                    result += ch;
+                } else {
+                    // Aspa literal dentro da string ⇒ escapa
+                    result += '\\"';
+                }
+            } else {
+                inString = true;
+                result += ch;
+            }
+            continue;
+        }
+
+        result += ch;
+    }
+
+    try { JSON.parse(result); return result; } catch { return null; }
+}
+
+/**
  * Parse AI response with 4-layer fallback:
- * 1. Direct JSON.parse
- * 2. Extract JSON from markdown code block
+ * 1. Direct JSON.parse (with repair attempts)
+ * 2. Extract JSON from markdown code block (with repair)
  * 3. Regex field extraction from text
  * 4. Raw text fallback
  */
@@ -134,27 +199,50 @@ function parseJsonSchemaResponse(content, validator, fallbackExtractor, sanitize
         return { structured: null, raw: content || '', ok: false };
     }
 
-    // Layer 1: Direct JSON.parse
+    // Layer 1: Direct JSON.parse (with repair)
     try {
-        const trimmed = content.trim();
+        let trimmed = content.trim();
         if (/^[{[]/.test(trimmed)) {
-            const parsed = sanitizer(JSON.parse(trimmed));
-            if (validator(parsed)) return { structured: parsed, raw: content, ok: true };
-            console.warn('[AI_PARSE] Layer 1: JSON valid, schema FAILED', { preview: trimmed.slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
+            let parsed;
+            try {
+                parsed = sanitizer(JSON.parse(trimmed));
+            } catch (jsonErr) {
+                const repaired = attemptJsonRepair(trimmed);
+                if (repaired) {
+                    console.warn('[AI_PARSE] Layer 1: JSON repaired');
+                    parsed = sanitizer(JSON.parse(repaired));
+                } else {
+                    throw jsonErr;
+                }
+            }
+            if (parsed && validator(parsed)) return { structured: parsed, raw: content, ok: true };
+            console.warn('[AI_PARSE] Layer 1: JSON parsed, schema FAILED', { preview: trimmed.slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
         }
     } catch (err) {
-        console.warn('[AI_PARSE] Layer 1: JSON.parse failed', { error: err.message, preview: content.slice(0, 200) });
+        console.warn('[AI_PARSE] Layer 1: JSON parse/repair failed', { error: err.message, preview: content.slice(0, 200) });
     }
 
-    // Layer 2: Extract JSON from markdown code block (any position in text)
+    // Layer 2: Extract JSON from markdown code block (any position in text, with repair)
     const mdMatch = content.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
     if (mdMatch) {
         try {
-            const parsed = sanitizer(JSON.parse(mdMatch[1].trim()));
-            if (validator(parsed)) return { structured: parsed, raw: content, ok: true };
-            console.warn('[AI_PARSE] Layer 2: JSON valid, schema FAILED', { preview: mdMatch[1].trim().slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
+            let inner = mdMatch[1].trim();
+            let parsed;
+            try {
+                parsed = sanitizer(JSON.parse(inner));
+            } catch (jsonErr) {
+                const repaired = attemptJsonRepair(inner);
+                if (repaired) {
+                    console.warn('[AI_PARSE] Layer 2: JSON repaired');
+                    parsed = sanitizer(JSON.parse(repaired));
+                } else {
+                    throw jsonErr;
+                }
+            }
+            if (parsed && validator(parsed)) return { structured: parsed, raw: content, ok: true };
+            console.warn('[AI_PARSE] Layer 2: JSON parsed, schema FAILED', { preview: inner.slice(0, 200), keys: Object.keys(parsed || {}).join(',') });
         } catch (err) {
-            console.warn('[AI_PARSE] Layer 2: JSON.parse failed', { error: err.message, preview: mdMatch[1].slice(0, 200) });
+            console.warn('[AI_PARSE] Layer 2: JSON parse/repair failed', { error: err.message, preview: mdMatch[1].slice(0, 200) });
         }
     }
 
@@ -366,6 +454,7 @@ module.exports = {
     sanitizeClassificationReviewAxis,
     sanitizeAiClassificationReviewStructured,
     sanitizeAiOutput,
+    attemptJsonRepair,
     parseJsonSchemaResponse,
     extractFallbackAiResponse,
     extractFallbackAiHomonymResponse,
