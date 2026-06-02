@@ -1234,6 +1234,19 @@ export default function CasoPage() {
             : 0)
     ), [caseData?.juditActiveWarrantCount, caseData?.bigdatacorpActiveWarrants]);
 
+    const warrantBadge = useMemo(() => {
+        if (!caseData) return null;
+        const warrantProcesses = new Set();
+        (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
+        (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
+        const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
+        return dedupCount > 0 ? (
+            <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
+                ⚠ {dedupCount} mandado(s)
+            </span>
+        ) : null;
+    }, [caseData?.juditWarrants, caseData?.bigdatacorpActiveWarrants, caseData?.juditActiveWarrantCount]);
+
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('criminal') && form.criminalFlag && !isFinalCriminalFlag(form.criminalFlag) && {
@@ -1762,17 +1775,7 @@ export default function CasoPage() {
                         {(caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)} criminal(is)
                     </span>
                 )}
-                {(() => {
-                    const warrantProcesses = new Set();
-                    (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
-                    (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
-                    const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
-                    return dedupCount > 0 ? (
-                        <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
-                            ⚠ {dedupCount} mandado(s)
-                        </span>
-                    ) : null;
-                })()}
+                {warrantBadge}
                 {caseData.riskLevel && caseData.status === 'DONE' && (
                     <RiskChip value={caseData.riskLevel} size="sm" />
                 )}
