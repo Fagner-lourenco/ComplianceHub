@@ -1236,7 +1236,43 @@ export default function CasoPage() {
             : fallbackReview;
         const sanitizedReview = sanitizeClassificationReviewForDisplay(sourceReview, fallbackReview);
         return applyClassificationReviewGuardrails(sanitizedReview, caseData || {});
-    }, [caseData]);
+    }, [
+        caseData?.autoClassifiedAt,
+        caseData?.criminalFlag,
+        caseData?.laborFlag,
+        caseData?.warrantFlag,
+        caseData?.criminalEvidenceQuality,
+        caseData?.providerDivergence,
+        caseData?.reviewRecommended,
+        caseData?.coverageLevel,
+        caseData?.ambiguityNotes,
+        caseData?.bigdatacorpGateResult?.passed,
+        caseData?.juditGateResult?.passed,
+        caseData?.enrichmentGateResult?.passed,
+        caseData?.juditIdentity,
+        caseData?.enrichmentIdentity,
+        caseData?.bigdatacorpName,
+        caseData?.bigdatacorpCriminalCount,
+        caseData?.bigdatacorpDirectCriminalCount,
+        caseData?.escavadorCriminalCount,
+        caseData?.bigdatacorpLaborCount,
+        caseData?.bigdatacorpDirectLaborCount,
+        caseData?.escavadorProcessos,
+        caseData?.djenComunicacoes,
+        caseData?.djenLaborFlag,
+        caseData?.bigdatacorpActiveWarrants,
+        caseData?.juditActiveWarrantCount,
+        caseData?.juditWarrants,
+        caseData?.juditCriminalFlag,
+        caseData?.bigdatacorpCriminalFlag,
+        caseData?.bigdatacorpLaborFlag,
+        caseData?.juditEnrichmentStatus,
+        caseData?.bigdatacorpEnrichmentStatus,
+        caseData?.escavadorEnrichmentStatus,
+        caseData?.djenEnrichmentStatus,
+        caseData?.aiClassificationReviewOk,
+        caseData?.aiClassificationReview,
+    ]);
     const activeWarrantCount = useMemo(() => (
         (caseData?.juditActiveWarrantCount || 0) +
         (Array.isArray(caseData?.bigdatacorpActiveWarrants)
