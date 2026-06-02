@@ -1065,13 +1065,14 @@ function buildAiClassificationReviewPrompt(caseData) {
    ========================================================= */
 
 function buildAiUpdatePayload(caseData, aiResult, options = {}) {
+  const schemaFailed = !aiResult.error && !aiResult.structuredOk;
   const payload = {
     aiModel: aiResult.model || AI_MODEL,
     aiPromptVersion: AI_PROMPT_VERSION,
     aiExecutedAt: FieldValue.serverTimestamp(),
     aiProvidersIncluded: getAiProvidersIncluded(caseData),
     aiFromCache: !!aiResult.fromCache,
-    aiError: aiResult.error || null,
+    aiError: aiResult.error || (schemaFailed ? 'Schema validation failed — raw response saved for inspection' : null),
     aiStatus: aiResult.error
       ? 'FAILED'
       : aiResult.structuredOk
@@ -1097,12 +1098,13 @@ function buildAiUpdatePayload(caseData, aiResult, options = {}) {
 }
 
 function buildAiClassificationReviewUpdatePayload(aiResult, options = {}) {
+  const schemaFailed = !aiResult.error && !aiResult.structuredOk;
   const payload = {
     aiClassificationReviewModel: aiResult.model || AI_MODEL,
     aiClassificationReviewPromptVersion: AI_CLASSIFICATION_REVIEW_PROMPT_VERSION,
     aiClassificationReviewExecutedAt: FieldValue.serverTimestamp(),
     aiClassificationReviewFromCache: !!aiResult.fromCache,
-    aiClassificationReviewError: aiResult.error || null,
+    aiClassificationReviewError: aiResult.error || (schemaFailed ? 'Schema validation failed — raw response saved for inspection' : null),
     aiClassificationReviewStatus: aiResult.error
       ? 'FAILED'
       : aiResult.structuredOk

@@ -2,16 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../core/auth/useAuth';
 import { callGetSystemHealth } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR } from '../../core/formatDate';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './SaudePage.css';
-
-function formatTs(value) {
-    if (!value) return '—';
-    const d = value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
 
 function getStatus(provider) {
     // BUG-R6-008: Absence of telemetry is NOT healthy — it's unknown/stale.
@@ -117,15 +111,15 @@ export default function SaudePage() {
                                 </div>
                                 <div>
                                     <div className="saude-card__stat-label">Último Sucesso</div>
-                                    <div className="saude-card__stat-value">{formatTs(p.lastSuccess)}</div>
+                                    <div className="saude-card__stat-value">{formatDateTimeBR(p.lastSuccess)}</div>
                                 </div>
                                 <div>
                                     <div className="saude-card__stat-label">Última Falha</div>
-                                    <div className="saude-card__stat-value">{formatTs(p.lastFailure)}</div>
+                                    <div className="saude-card__stat-value">{formatDateTimeBR(p.lastFailure)}</div>
                                 </div>
                                 <div>
                                     <div className="saude-card__stat-label">Bloqueado até</div>
-                                    <div className="saude-card__stat-value">{formatTs(p.disabledUntil)}</div>
+                                    <div className="saude-card__stat-value">{formatDateTimeBR(p.disabledUntil)}</div>
                                 </div>
                             </div>
                             {p.lastError && (

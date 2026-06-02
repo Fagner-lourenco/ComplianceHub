@@ -1,18 +1,12 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../core/auth/useAuth';
 import { subscribeToCaseMessages, callSendCaseMessage, callMarkCaseCommunicationRead } from '../../../core/firebase/firestoreService';
+import { formatDateTimeBR } from '../../../core/formatDate';
 import './CaseCommunicationPanel.css';
 
 function formatMessageDate(date) {
     if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    return formatDateTimeBR(date);
 }
 
 function getInitials(name) {

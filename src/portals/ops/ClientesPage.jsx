@@ -11,6 +11,7 @@ import {
     getTenantSettings,
 } from '../../core/firebase/firestoreService';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR } from '../../core/formatDate';
 import Modal from '../../ui/components/Modal/Modal';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
@@ -361,7 +362,7 @@ export default function ClientesPage() {
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="data-table__td" style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{row.createdAt}</td>
+                                        <td className="data-table__td" style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{formatDateTimeBR(row.createdAt)}</td>
                                         <td className="data-table__td">
                                             <button
                                                 className="btn-config"

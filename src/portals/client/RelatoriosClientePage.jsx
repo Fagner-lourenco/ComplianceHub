@@ -3,22 +3,10 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR } from '../../core/formatDate';
 import { fetchClientPublicReports, revokeClientPublicReport } from '../../core/firebase/firestoreService';
 import { getMockPublicReports } from '../../data/mockData';
 import './RelatoriosClientePage.css';
-
-function formatTs(value) {
-    if (!value) return '--';
-    const date = value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
-    if (Number.isNaN(date.getTime())) return '--';
-    return date.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
 
 function getReportStatus(report) {
     if (!report) return { label: 'Indisponível', tone: 'inactive' };
@@ -240,11 +228,11 @@ export default function RelatoriosClientePage() {
                                 <dl className="client-public-reports__meta">
                                     <div>
                                         <dt>Criado em</dt>
-                                        <dd>{formatTs(report.createdAt)}</dd>
+                                        <dd>{formatDateTimeBR(report.createdAt)}</dd>
                                     </div>
                                     <div>
                                         <dt>Expira em</dt>
-                                        <dd>{formatTs(report.expiresAt)}</dd>
+                                        <dd>{formatDateTimeBR(report.expiresAt)}</dd>
                                     </div>
                                     <div>
                                         <dt>Token</dt>
@@ -310,8 +298,8 @@ export default function RelatoriosClientePage() {
                                         <td className="data-table__td data-table__td--mono">…{(report.token || '').slice(-8)}</td>
                                         <td className="data-table__td">{report.candidateName || '--'}</td>
                                         <td className="data-table__td">{report.caseId || '--'}</td>
-                                        <td className="data-table__td">{formatTs(report.createdAt)}</td>
-                                        <td className="data-table__td">{formatTs(report.expiresAt)}</td>
+                                        <td className="data-table__td">{formatDateTimeBR(report.createdAt)}</td>
+                                        <td className="data-table__td">{formatDateTimeBR(report.expiresAt)}</td>
                                         <td className="data-table__td">
                                             <span className={`client-public-reports__status client-public-reports__status--${status.tone}`}>
                                                 {status.label}

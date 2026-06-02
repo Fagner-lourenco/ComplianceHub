@@ -35,8 +35,12 @@ function matchesClientCaseSearch(caseData, rawTerm) {
     const searchable = [
         caseData.candidateName,
         caseData.candidateCpf,
+        caseData.cpf,
+        caseData.cpfMasked,
         caseData.candidateRole,
+        caseData.candidatePosition,
         caseData.id,
+        caseData.caseId,
         caseData.status,
     ]
         .filter(Boolean)
@@ -55,10 +59,18 @@ function matchesClientCaseSearch(caseData, rawTerm) {
 function matchesClientCaseFilters(caseData, filters) {
     if (!filters || typeof filters !== 'object') return true;
 
-    if (filters.status && caseData.status !== filters.status) return false;
-    if (filters.riskLevel && caseData.riskLevel !== filters.riskLevel) return false;
-    if (filters.finalVerdict && caseData.finalVerdict !== filters.finalVerdict) return false;
-    if (filters.priority && caseData.priority !== filters.priority) return false;
+    const status = filters.status && filters.status !== 'ALL' ? filters.status : null;
+    const riskLevel = filters.riskLevel && filters.riskLevel !== 'ALL' ? filters.riskLevel : null;
+    const finalVerdict = (filters.finalVerdict || filters.verdict) && (filters.finalVerdict || filters.verdict) !== 'ALL'
+        ? (filters.finalVerdict || filters.verdict)
+        : null;
+    const priority = filters.priority && filters.priority !== 'ALL' ? filters.priority : null;
+
+    if (status && caseData.status !== status) return false;
+    if (riskLevel && caseData.riskLevel !== riskLevel) return false;
+    if (finalVerdict && caseData.finalVerdict !== finalVerdict) return false;
+    if (priority && caseData.priority !== priority) return false;
+    if (!matchesClientCaseSearch(caseData, filters.searchTerm)) return false;
 
     if (filters.dateFrom) {
         const from = new Date(filters.dateFrom);

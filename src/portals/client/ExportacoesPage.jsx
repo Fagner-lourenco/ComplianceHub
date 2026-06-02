@@ -17,6 +17,7 @@ import {
 import { getMockCaseById, getMockExports, MOCK_CASES } from '../../data/mockData';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR, formatDate } from '../../core/formatDate';
 import { ROLES } from '../../core/rbac/permissions';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
@@ -210,7 +211,7 @@ function buildCsvContent(rows) {
             c.candidateName || '',
             c.cpfMasked || '',
             c.candidatePosition || 'Cargo não informado',
-            c.createdAt || '',
+            formatDateTimeBR(c.createdAt) || '',
             STATUS_MAP[c.status] || c.status || '',
             getCoverageLabel(c),
             PRI_MAP[c.priority] || c.priority || '',
@@ -234,7 +235,7 @@ function esc(str) {
 
 function buildPrintableHtml(rows, scopeLabel, tenantName) {
     const now = new Date();
-    const nowLabel = now.toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+    const nowLabel = formatDateTimeBR(now);
 
     const statusMap = {
         PENDING: 'Pendente',
@@ -315,7 +316,7 @@ function buildPrintableHtml(rows, scopeLabel, tenantName) {
         <td><span class="coverage">${esc(coverageLabel(c))}</span></td>
         <td>${riskBadge(c.riskLevel)}</td>
         <td>${verdictBadge(c.finalVerdict)}</td>
-        <td>${esc(c.createdAt || '-')}</td>
+        <td>${esc(formatDateTimeBR(c.createdAt) || '-')}</td>
     </tr>`).join('');
 
     const pendingWarning = summary.pending > 0
@@ -886,6 +887,17 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(url);
 }
 
+function downloadBlobFromUrl(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 function openHtmlBlob(html) {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -1008,6 +1020,23 @@ export default function ExportacoesPage() {
         }
     };
 
+    const handleDownloadJob = async (jobId) => {
+        setFeedback('Obtendo arquivo...');
+        try {
+            const result = await callGetExportJobStatus(jobId);
+            const job = result?.job || result || null;
+            if (job?.downloadUrl) {
+                downloadBlobFromUrl(job.downloadUrl, `exportacao-${jobId}.csv`);
+                setFeedback('Download iniciado.');
+                loadAsyncJobs();
+            } else {
+                setFeedback('Arquivo ainda não disponível. Tente novamente.');
+            }
+        } catch (err) {
+            setFeedback(`Erro ao obter arquivo: ${extractErrorMessage(err)}`);
+        }
+    };
+
     useEffect(() => {
         if (!isDemoMode && tenantId) {
             callListExportJobs({ limit: 10 })
@@ -1092,7 +1121,7 @@ export default function ExportacoesPage() {
     const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
 
     const prepareExportArtifact = (casesToExport = filteredCases) => {
-        const ts = new Date().toISOString().slice(0, 10);
+        const ts = formatDate(new Date()).replace(/\//g, '-');
         if (exportType === 'CSV') {
             return {
                 mode: 'download',
@@ -1346,13 +1375,17 @@ export default function ExportacoesPage() {
                                             {jobStatus === 'cancelled' && '🚫 Cancelado'}
                                         </span>
                                         <span className="export-async__date">
-                                            {job.createdAt ? new Date(job.createdAt).toLocaleString('pt-BR') : ''}
+                                            {formatDateTimeBR(job.createdAt) || ''}
                                         </span>
-                                        {jobStatus === 'done' && job.downloadUrl && (
+                                        {jobStatus === 'done' && (job.downloadUrl ? (
                                             <a href={job.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
                                                 Baixar
                                             </a>
-                                        )}
+                                        ) : (
+                                            <button type="button" className="export-btn--small" onClick={() => handleDownloadJob(job.jobId || job.id)}>
+                                                Baixar
+                                            </button>
+                                        ))}
                                         {(jobStatus === 'pending' || jobStatus === 'processing') && (
                                             <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.jobId || job.id)}>
                                                 Cancelar
@@ -1385,7 +1418,7 @@ export default function ExportacoesPage() {
                             <div className="mobile-card__meta">
                                 <span className="mobile-card__meta-item">{item.scope}</span>
                                 <span className="mobile-card__meta-item">{item.records} solicitação(ões)</span>
-                                <span className="mobile-card__meta-item">{item.createdAt}</span>
+                                <span className="mobile-card__meta-item">{formatDateTimeBR(item.createdAt)}</span>
                                 <span className="mobile-card__meta-item">Gerado por: {item.createdByName || item.createdByEmail || 'Não informado'}</span>
                             </div>
                             <div className="mobile-card__actions">
@@ -1435,7 +1468,7 @@ export default function ExportacoesPage() {
                                         <td className="data-table__td">{item.scope}</td>
                                         <td className="data-table__td">{item.records}</td>
                                         <td className="data-table__td">{item.createdByName || item.createdByEmail || 'Não informado'}</td>
-                                        <td className="data-table__td">{item.createdAt}</td>
+                                        <td className="data-table__td">{formatDateTimeBR(item.createdAt)}</td>
                                         <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
                                         <td className="data-table__td">
                                             {isDemoMode && item.artifactCaseId ? (

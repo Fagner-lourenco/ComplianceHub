@@ -17,6 +17,8 @@
 | Contrato FE/BE | 49 callables usados no frontend, 68 exports backend, 0 missing | Positivo | Repetir apos mudancas em `functions/index.js` ou `firestoreService.js` |
 | Indices | `juditWebhookRequests(status ASC, createdAt ASC)` foi adicionado localmente e ainda precisa decisao/deploy | Medio | Fase 5: validar indices remotos e deploy sem `--force` se aprovado |
 | Graphify | Relatorio aponta god nodes: `useAuth`, `callBackendFunction`, `extractErrorMessage`, `runAutoClassifyAndAi`, `CasoPage`, `runJuditEnrichmentPhase` | Medio | Usar esses hubs para navegar revisao de fluxos criticos |
+| Pos-deploy export jobs | `listExportJobs` retornava 500 por falta de indice composto em `exportJobs(clientId ASC, tenantId ASC, createdAt DESC, __name__ DESC)` | Alta | Corrigido e deployado; indice remoto confirmado `READY` |
+| Pos-deploy solicitacoes | `SolicitacoesPage` enviava `filters.status = ALL`; backend V1 interpretava como status literal e filtrava todos os casos | Alta | Corrigido em `matchesClientCaseFilters`; filtros `ALL`, `verdict` e `searchTerm` cobertos por teste |
 
 ---
 

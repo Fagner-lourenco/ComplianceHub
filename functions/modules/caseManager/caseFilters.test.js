@@ -58,6 +58,18 @@ describe('caseFilters', () => {
             expect(matchesClientCaseFilters({ status: 'PENDING' }, { status: 'DONE' })).toBe(false);
         });
 
+        it('ignora filtros ALL enviados pelo portal cliente', () => {
+            expect(matchesClientCaseFilters({ status: 'DONE', finalVerdict: 'FIT' }, { status: 'ALL', verdict: 'ALL', searchTerm: '' })).toBe(true);
+        });
+
+        it('filtra por alias verdict e termo de busca do portal cliente', () => {
+            const caseData = { candidateName: 'Maria Silva', cpfMasked: '***.***.***-12', finalVerdict: 'FIT' };
+
+            expect(matchesClientCaseFilters(caseData, { verdict: 'FIT', searchTerm: 'maria' })).toBe(true);
+            expect(matchesClientCaseFilters(caseData, { verdict: 'NOT_RECOMMENDED' })).toBe(false);
+            expect(matchesClientCaseFilters(caseData, { searchTerm: '999' })).toBe(false);
+        });
+
         it('filtra por risco', () => {
             expect(matchesClientCaseFilters({ riskLevel: 'RED' }, { riskLevel: 'RED' })).toBe(true);
             expect(matchesClientCaseFilters({ riskLevel: 'GREEN' }, { riskLevel: 'RED' })).toBe(false);

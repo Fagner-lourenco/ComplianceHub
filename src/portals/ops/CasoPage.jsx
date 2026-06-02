@@ -1802,7 +1802,7 @@ export default function CasoPage() {
             {!isReadOnlyCase && (
                 <div className={`caso-draft-bar caso-draft-bar--${draftStatus}`} role="status" aria-live="polite">
                     <span>{hasDirtyDraft ? 'Rascunho com alterações não salvas' : 'Rascunho sem alterações pendentes'}</span>
-                    {lastDraftSavedAt && <span>Último salvamento: {lastDraftSavedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>}
+                    {lastDraftSavedAt && <span>Último salvamento: {formatDateTimeBR(lastDraftSavedAt)}</span>}
                     {draftStatus === 'error' && <span>Falha no último salvamento. Tente novamente antes de sair.</span>}
                 </div>
             )}
@@ -1938,7 +1938,7 @@ export default function CasoPage() {
                             )}
                             <div className="caso-field">
                                 <label>Data da solicitacao</label>
-                                <input className="caso-input caso-input--readonly" value={caseData.createdAt} readOnly />
+                                <input className="caso-input caso-input--readonly" value={formatDateTimeBR(caseData.createdAt)} readOnly />
                             </div>
                         </div>
 
@@ -2020,6 +2020,15 @@ export default function CasoPage() {
                             </div>
                         </div>
 
+                        {(caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse) && (
+                            <details id="ai-raw-response" className="caso-assisted-review__raw" style={{ marginTop: 16 }}>
+                                <summary>Resposta bruta da IA para diagnóstico</summary>
+                                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 6, padding: 12, maxHeight: 360, overflowY: 'auto', lineHeight: 1.5 }}>
+                                    {caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse}
+                                </pre>
+                            </details>
+                        )}
+
                         <div className="caso-evidence-summary">
                             <h4>Evidências usadas na análise</h4>
                             <div className="caso-evidence-summary__grid">
@@ -2094,7 +2103,7 @@ export default function CasoPage() {
                                     )}
                                 </div>
                                 {caseData.juditIdentity.consultedAt && (
-                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.juditIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                    <p className="caso-identity-consulted">Consultado em: {formatDateTimeBR(caseData.juditIdentity.consultedAt)}</p>
                                 )}
                                 </div>
                             );
@@ -2130,7 +2139,7 @@ export default function CasoPage() {
                                     )}
                                 </div>
                                 {caseData.enrichmentIdentity.consultedAt && (
-                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.enrichmentIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                    <p className="caso-identity-consulted">Consultado em: {formatDateTimeBR(caseData.enrichmentIdentity.consultedAt)}</p>
                                 )}
                             </div>
                         )}

@@ -452,7 +452,7 @@ function buildClientDashboardMetricsFromCases(cases, now = new Date()) {
     const monthCases = cases.filter((caseData) => String(caseData.createdMonthKey || caseData.createdAt || '').startsWith(key));
     months.push({
       key,
-      label: currentMonth.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      label: new Intl.DateTimeFormat('pt-BR', { month: 'short', year: '2-digit', timeZone: 'America/Sao_Paulo' }).format(currentMonth),
       count: monthCases.length,
       doneCount: monthCases.filter((caseData) => caseData.status === 'DONE').length,
     });

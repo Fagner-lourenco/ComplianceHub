@@ -1,7 +1,7 @@
 # Progress Log Ativo — Revisao Completa Frontend + Backend
 
 > **Sessao iniciada:** 2026-06-01
-> **Fase atual:** Fases 0-7 concluidas; Fase 8 manual/staging pendente; Fase 9 em fechamento sem commit/deploy
+> **Fase atual:** Hotfix pos-deploy aplicado; Fase 8 manual/staging pendente
 > **Branch:** `refactor/full-local-roadmap`
 
 ---
@@ -59,6 +59,10 @@
 | 2026-06-01 | Suite backend | `cd functions && npm test` passou: 55 arquivos, 1221 testes |
 | 2026-06-01 | Playwright focado | `npx playwright test e2e/casopage.lazy-render.spec.js` passou: 10 testes |
 | 2026-06-01 | Graphify atualizado | `graphify update .` passou: 1622 nodes, 3010 edges, 200 communities |
+| 2026-06-01 | Hotfix pos-deploy | Investigado `listExportJobs` 500: Firestore exigia indice `exportJobs(clientId ASC, tenantId ASC, createdAt DESC, __name__ DESC)`; indice adicionado e deployado |
+| 2026-06-01 | Hotfix solicitacoes | Investigado `Minhas solicitacoes` vazia: `matchesClientCaseFilters` tratava `status: ALL` como filtro literal; corrigido para ignorar `ALL` e aceitar `verdict/searchTerm` do portal cliente |
+| 2026-06-01 | Testes/deploy hotfix | `cd functions && npm test -- modules/caseManager/caseFilters.test.js modules/caseQueriesAssignments.test.js modules/exportJobsAndReports.test.js` passou: 132 tests; `firebase deploy --only firestore:indexes --project compliance-hub-br` e `firebase deploy --only functions --project compliance-hub-br` concluidos |
+| 2026-06-01 | Verificacao pos-deploy | Indice `exportJobs` confirmado `READY`; logs apos `2026-06-01T23:28:00Z` sem erros para `listExportJobs` e `listClientCases`; `graphify update .` recompilou 1622 nodes, 3011 edges, 192 communities |
 
 ---
 

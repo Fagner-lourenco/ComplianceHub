@@ -5,6 +5,7 @@ import { ALL_TENANTS_ID } from '../../core/contexts/tenantUtils';
 import { fetchOpsPublicReports, revokePublicReport } from '../../core/firebase/firestoreService';
 import { getMockPublicReports } from '../../data/mockData';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR } from '../../core/formatDate';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
 import PageShell from '../../ui/layouts/PageShell';
@@ -12,13 +13,6 @@ import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import './RelatoriosPage.css';
 
 const PAGE_SIZE = 50;
-
-function formatTs(value) {
-    if (!value) return '—';
-    const d = value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
 
 function isExpired(value) {
     if (!value) return false;
@@ -212,9 +206,9 @@ export default function RelatoriosPage() {
                                     <a href={isDemoMode && report.caseId ? `/demo/r/${report.caseId}` : `/r/${report.id}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--brand-600)', textDecoration: 'none' }}>…{report.id.slice(-8)}</a>
                                 </span>
                                 <span className="mobile-card__meta-item">Empresa: {report.tenantId || '—'}</span>
-                                <span className="mobile-card__meta-item">Criado: {formatTs(report.createdAt)}</span>
+                                <span className="mobile-card__meta-item">Criado: {formatDateTimeBR(report.createdAt)}</span>
                                 <span className="mobile-card__meta-item" style={{ color: expired ? 'var(--red-600)' : 'inherit', fontWeight: expired ? 600 : 400 }}>
-                                    Expira: {formatTs(report.expiresAt)}{expired && ' EXPIRADO'}
+                                    Expira: {formatDateTimeBR(report.expiresAt)}{expired && ' EXPIRADO'}
                                 </span>
                             </div>
                             {active && (
@@ -295,9 +289,9 @@ export default function RelatoriosPage() {
                                         </td>
                                         <td className="data-table__td">{name}</td>
                                         <td className="data-table__td" style={{ fontSize: '.8125rem' }}>{report.tenantId || '—'}</td>
-                                        <td className="data-table__td" style={{ fontSize: '.8125rem' }}>{formatTs(report.createdAt)}</td>
+                                        <td className="data-table__td" style={{ fontSize: '.8125rem' }}>{formatDateTimeBR(report.createdAt)}</td>
                                         <td className="data-table__td" style={{ fontSize: '.8125rem', color: expired ? 'var(--red-600)' : 'inherit', fontWeight: expired ? 600 : 400 }}>
-                                            {formatTs(report.expiresAt)}
+                                            {formatDateTimeBR(report.expiresAt)}
                                             {expired && <span style={{ marginLeft: 4, fontSize: '.72rem' }}>EXPIRADO</span>}
                                         </td>
                                         <td className="data-table__td">

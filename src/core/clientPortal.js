@@ -1,5 +1,12 @@
 // NOTE: PUBLIC_RESULT_FIELDS duplicates the backend list in functions/index.js.
 // Any field additions on the backend must be mirrored here to avoid silent drift.
+const TIMEZONE = 'America/Sao_Paulo';
+const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+    month: 'short',
+    year: '2-digit',
+    timeZone: TIMEZONE,
+});
+
 const PUBLIC_RESULT_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
     'requestedBy', 'requestedByName', 'requestedByEmail',
@@ -335,7 +342,7 @@ export function getClientDashboardMetrics(cases) {
         const key = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
         months.push({
             key,
-            label: currentMonth.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+            label: monthFormatter.format(currentMonth),
             count: countCasesByMonth(cases, key),
             doneCount: countCompletedCasesByMonth(cases, key),
         });

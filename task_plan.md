@@ -1,6 +1,6 @@
 # Task Plan Ativo: Revisao Completa Frontend + Backend ComplianceHub
 
-> **Status:** Fases 0-7 concluidas; Fase 8 manual/staging pendente; Fase 9 em fechamento sem commit/deploy
+> **Status:** Fases 0-7 concluidas; hotfix pos-deploy aplicado; Fase 8 manual/staging pendente
 > **Criado em:** 2026-06-01
 > **Branch:** `refactor/full-local-roadmap`
 > **Objetivo:** revisar todos os fluxos, funcionalidades, formularios, callables, triggers, regras, relatorios e integracoes do ComplianceHub antes de qualquer deploy de Functions refatoradas.
