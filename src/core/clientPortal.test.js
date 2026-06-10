@@ -47,6 +47,33 @@ describe('clientPortal helpers', () => {
         expect(resolved.keyFindings).toEqual(['Mandado ativo pendente de cumprimento.']);
     });
 
+    it('preserva timelineEvents do publicResult quando caseData do espelho nao tem timeline', () => {
+        // BUG-R4-005: Timeline do cliente nao exibia eventos ricos porque
+        // resolveClientCaseView sobrescrevia publicResult.timelineEvents com getCaseTimeline(caseData)
+        const caseData = {
+            id: 'CASE-888',
+            status: 'DONE',
+            candidateName: 'Candidato Teste',
+            createdAt: '2026-01-01T10:00:00Z',
+            // caseData do clientCases pode nao ter timelineEvents (ainda nao sincronizou ou vazio)
+            timelineEvents: [],
+        };
+        const publicResult = {
+            timelineEvents: [
+                { type: 'created', status: 'done', title: 'Solicitacao enviada', at: '2026-01-01T10:00:00Z' },
+                { type: 'analysis_started', status: 'done', title: 'Processamento iniciado', at: '2026-01-01T11:00:00Z' },
+                { type: 'concluded', status: 'done', title: 'Analise concluida', at: '2026-01-01T14:00:00Z' },
+            ],
+        };
+
+        const resolved = resolveClientCaseView(caseData, publicResult);
+
+        expect(resolved.timelineEvents).toHaveLength(3);
+        expect(resolved.timelineEvents[0].type).toBe('created');
+        expect(resolved.timelineEvents[1].type).toBe('analysis_started');
+        expect(resolved.timelineEvents[2].type).toBe('concluded');
+    });
+
     it('sanitizeCaseForClient inclui todos os campos de PUBLIC_RESULT_FIELDS', () => {
         // REPORT-TEST-001: Garantir que PUBLIC_RESULT_FIELDS está sincronizado com backend
         const caseData = {

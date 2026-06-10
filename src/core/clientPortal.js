@@ -151,8 +151,12 @@ export function sanitizeCaseForClient(caseData) {
     return sanitized;
 }
 
-export function getCaseTimeline(caseData) {
+export function getCaseTimeline(caseData, publicResult) {
     if (!caseData) return [];
+    // Preferir timeline rica do publicResult (backend) sobre o caseData espelhado
+    if (Array.isArray(publicResult?.timelineEvents) && publicResult.timelineEvents.length > 0) {
+        return publicResult.timelineEvents;
+    }
     if (Array.isArray(caseData.timelineEvents) && caseData.timelineEvents.length > 0) {
         return caseData.timelineEvents;
     }
@@ -210,7 +214,7 @@ export function resolveClientCaseView(caseData, publicResult) {
             : (Array.isArray(resolvedPublicResult.keyFindings) ? resolvedPublicResult.keyFindings : []),
         nextSteps: Array.isArray(caseData.nextSteps) ? caseData.nextSteps : [],
         clientNotes: caseData.clientNotes || '',
-        timelineEvents: getCaseTimeline(caseData),
+        timelineEvents: getCaseTimeline(caseData, publicResult),
     };
 }
 
