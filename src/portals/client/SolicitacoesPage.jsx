@@ -13,7 +13,7 @@ import { useAuth } from '../../core/auth/useAuth';
 import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildClientInternalReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { useClientCasesQuery } from '../../hooks/useClientCasesQuery';
-import { formatDate } from '../../core/formatDate';
+import { formatDate, formatDateTimeBR } from '../../core/formatDate';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
@@ -265,7 +265,7 @@ const DrawerTimelineTab = memo(function DrawerTimelineTab({ selectedCaseView }) 
                         <div className={`timeline__dot ${event.status === 'risk' ? 'timeline__dot--yellow' : event.status === 'current' ? 'timeline__dot--blue' : 'timeline__dot--green'}`} />
                         <div className="timeline__content">
                             <strong>{event.title}</strong>
-                            <span className="timeline__date">{formatDate(event.at)}</span>
+                            <span className="timeline__date">{formatDateTimeBR(event.at)}</span>
                             {event.description && <span className="timeline__date">{event.description}</span>}
                         </div>
                     </div>
