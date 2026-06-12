@@ -754,6 +754,7 @@ describe('CasoPage', () => {
     });
 
     it('abre modal de bypass e envia payload correto ao concluir', async () => {
+        casoPageMocks.authState.userProfile = { role: 'admin' };
         casoPageMocks.callConcludeCaseByAnalyst.mockResolvedValue({});
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({

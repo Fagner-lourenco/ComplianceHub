@@ -30,6 +30,9 @@ const IDENTITY_FIELDS = [
     'bigdatacorpGender',
     'bigdatacorpMotherName',
     'bigdatacorpHasDeathRecord',
+    'requestedBy',
+    'requestedByName',
+    'requestedByEmail',
 ];
 
 const CLIENT_SAFE_PUBLICATION_FIELDS = [

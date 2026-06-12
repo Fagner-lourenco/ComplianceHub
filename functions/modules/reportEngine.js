@@ -424,6 +424,7 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
 
     const PUBLIC_RESULT_FIELDS = [
         'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'createdAt',
+        'requestedBy', 'requestedByName', 'requestedByEmail',
         'slaHours',
         'bigdatacorpName',
         'bigdatacorpCpfStatus',

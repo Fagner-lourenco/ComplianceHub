@@ -47,9 +47,14 @@ describe('public result privacy contract', () => {
         const snapshot = buildSanitizedPublicResultSnapshot('case-1', baseCase);
 
         expect(snapshot.tenantId).toBeUndefined();
-        expect(snapshot.requestedBy).toBeUndefined();
-        expect(snapshot.requestedByName).toBeUndefined();
-        expect(snapshot.requestedByEmail).toBeUndefined();
         expect(snapshot.bigdatacorpMotherName).toBeUndefined();
+    });
+
+    it('publica metadados do solicitante sanitizados em publicResult/latest', () => {
+        const snapshot = buildSanitizedPublicResultSnapshot('case-1', baseCase);
+
+        expect(snapshot.requestedBy).toBe('uid-interno');
+        expect(snapshot.requestedByName).toBe('Solicitante Interno');
+        expect(snapshot.requestedByEmail).toBe('solicitante@example.com');
     });
 });
