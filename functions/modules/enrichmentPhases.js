@@ -64,6 +64,16 @@ const {
   normalizeDjenComunicacoes: default_normalizeDjenComunicacoes,
 } = require('../normalizers/djen');
 const {
+  consultarEscavador2: default_consultarEscavador2,
+  Escavador2Error: default_Escavador2Error,
+} = require('../adapters/escavador2');
+const {
+  normalizeEscavador2Response: default_normalizeEscavador2Response,
+} = require('../normalizers/escavador2');
+const {
+  deduplicateEscavador2Findings: default_deduplicateEscavador2Findings,
+} = require('../helpers/deduplicateEscavador2');
+const {
   checkCircuit: default_checkCircuit,
   recordSuccess: default_recordSuccess,
   recordFailure: default_recordFailure,
@@ -93,6 +103,7 @@ function createEnrichmentPhases(deps) {
     juditApiKey,
     bigdatacorpAccessToken,
     bigdatacorpTokenId,
+    escavador2ApiKey,
     maybeRunAutoClassifyAndAi,
     returnCaseForIdentityGateBlock,
     // Adapters e helpers injetáveis para testes
@@ -129,6 +140,9 @@ function createEnrichmentPhases(deps) {
   const queryComunicacoesByProcesso = adapters.queryComunicacoesByProcesso || default_queryComunicacoesByProcesso;
   const DjenError = adapters.DjenError || default_DjenError;
 
+  const consultarEscavador2 = adapters.consultarEscavador2 || default_consultarEscavador2;
+  const Escavador2Error = adapters.Escavador2Error || default_Escavador2Error;
+
   // Normalizers com fallback
   const normalizeReceitaFederal = normalizers.normalizeReceitaFederal || default_normalizeReceitaFederal;
   const normalizeIdentity = normalizers.normalizeIdentity || default_normalizeIdentity;
@@ -150,6 +164,7 @@ function createEnrichmentPhases(deps) {
   const normalizeJuditEntity = normalizers.normalizeJuditEntity || default_normalizeJuditEntity;
 
   const normalizeDjenComunicacoes = normalizers.normalizeDjenComunicacoes || default_normalizeDjenComunicacoes;
+  const normalizeEscavador2Response = normalizers.normalizeEscavador2Response || default_normalizeEscavador2Response;
 
   // Helpers com fallback
   const checkCircuit = helpers.checkCircuit || default_checkCircuit;
@@ -161,6 +176,7 @@ function createEnrichmentPhases(deps) {
   const computeNameSimilarity = helpers.computeNameSimilarity || default_computeNameSimilarity;
   const buildJuditCallbackUrl = helpers.buildJuditCallbackUrl || default_buildJuditCallbackUrl;
   const registerJuditWebhookRequest = helpers.registerJuditWebhookRequest || default_registerJuditWebhookRequest;
+  const deduplicateEscavador2Findings = helpers.deduplicateEscavador2Findings || default_deduplicateEscavador2Findings;
 
   /* =========================================================
      FONTEDATA — Enrichment Phase
@@ -1534,12 +1550,90 @@ function createEnrichmentPhases(deps) {
     }
   }
 
+  /* =========================================================
+     ESCAVADOR2 — Enrichment Phase
+     ========================================================= */
+
+  async function runEscavador2EnrichmentPhase(caseRef, caseId, caseData, escavador2Config = {}) {
+    const cpf = String(caseData.cpf || '').replace(/\D/g, '');
+    if (cpf.length !== 11) {
+      const error = 'CPF invalido para Escavador2.';
+      await caseRef.update({
+        escavador2EnrichmentStatus: 'FAILED',
+        escavador2Error: error,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 failed');
+      return { status: 'FAILED', error };
+    }
+
+    const apiKey = escavador2ApiKey?.value ? escavador2ApiKey.value() : '';
+    if (!apiKey) {
+      const error = 'ESCAVADOR2_API_KEY nao configurado.';
+      await caseRef.update({
+        escavador2EnrichmentStatus: 'FAILED',
+        escavador2Error: error,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 failed');
+      return { status: 'FAILED', error };
+    }
+
+    await caseRef.update({
+      escavador2EnrichmentStatus: 'RUNNING',
+      escavador2Error: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    try {
+      const raw = await consultarEscavador2({
+        cpf,
+        nome: caseData.candidateName || '',
+        apiKey,
+        options: escavador2Config.request || {},
+      });
+      const normalized = normalizeEscavador2Response(raw);
+      const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, {
+        dateToleranceDays: escavador2Config.dedupe?.dateToleranceDays ?? 90,
+      });
+      const status = normalized.escavador2ApiStatus === 'PARTIAL' ? 'PARTIAL' : 'DONE';
+      const updatePayload = {
+        ...normalized,
+        ...deduped,
+        escavador2EnrichmentStatus: status,
+        escavador2Error: null,
+        escavador2CostBRL: 0,
+        escavador2EnrichedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      };
+      if (escavador2Config.persistence?.saveRawPayloads === false) {
+        delete updatePayload.escavador2RawPayloads;
+      }
+      await caseRef.update(updatePayload);
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 completed');
+      return { status, error: null };
+    } catch (err) {
+      const errMsg = err instanceof Escavador2Error
+        ? `${err.message}${err.statusCode ? ` (${err.statusCode})` : ''}`
+        : (err.message || 'Erro desconhecido no Escavador2');
+      await caseRef.update({
+        escavador2EnrichmentStatus: 'FAILED',
+        escavador2Error: errMsg,
+        escavador2EnrichedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 failed');
+      return { status: 'FAILED', error: errMsg };
+    }
+  }
+
   return {
     runFonteDataEnrichmentPhase,
     runEscavadorEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
     runJuditEnrichmentPhase,
     runDjenEnrichmentPhase,
+    runEscavador2EnrichmentPhase,
   };
 }
 

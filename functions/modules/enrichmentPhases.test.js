@@ -468,3 +468,123 @@ describe('runDjenEnrichmentPhase', () => {
     expect(result.status).toBe('FAILED');
   });
 });
+
+describe('runEscavador2EnrichmentPhase', () => {
+  function makeEscavador2Deps(overrides = {}) {
+    const consultarEscavador2 = vi.fn();
+    const normalizeEscavador2Response = vi.fn((data) => data);
+    const deduplicateEscavador2Findings = vi.fn((data) => ({
+      escavador2Processos: data.escavador2Processos || [],
+      escavador2DuplicateCount: 0,
+      escavador2NewFindingCount: data.escavador2Processos?.length || 0,
+      escavador2HasNewMaterialRisk: false,
+    }));
+    return {
+      ...makeDeps({
+        escavador2ApiKey: { value: vi.fn(() => 'esc2-key') },
+        adapters: {
+          consultarEscavador2,
+          Escavador2Error: class Escavador2Error extends Error {
+            constructor(message, statusCode) {
+              super(message);
+              this.statusCode = statusCode;
+            }
+          },
+        },
+        normalizers: {
+          normalizeEscavador2Response,
+        },
+        helpers: {
+          deduplicateEscavador2Findings,
+        },
+      }),
+      mocks: { consultarEscavador2, normalizeEscavador2Response, deduplicateEscavador2Findings },
+      ...overrides,
+    };
+  }
+
+  it('fails when ESCAVADOR2_API_KEY is missing and triggers classification', async () => {
+    const deps = makeEscavador2Deps({ escavador2ApiKey: { value: vi.fn(() => '') } });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true });
+
+    expect(result.status).toBe('FAILED');
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      escavador2EnrichmentStatus: 'FAILED',
+      escavador2Error: 'ESCAVADOR2_API_KEY nao configurado.',
+    }));
+    expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 failed');
+  });
+
+  it('stores normalized deduped data as DONE', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'DONE' }, processos: [] });
+    mocks.normalizeEscavador2Response.mockReturnValue({
+      escavador2ApiStatus: 'DONE',
+      escavador2ProcessTotal: 1,
+      escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100', isMaterialRisk: true }],
+      escavador2CriminalFlag: 'POSITIVE',
+      escavador2CriminalCount: 1,
+      escavador2LaborFlag: 'NEGATIVE',
+      escavador2LaborCount: 0,
+      escavador2CostBRL: 0,
+    });
+    mocks.deduplicateEscavador2Findings.mockReturnValue({
+      escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100', isNewEscavador2Finding: true }],
+      escavador2DuplicateCount: 0,
+      escavador2NewFindingCount: 1,
+      escavador2HasNewMaterialRisk: true,
+    });
+
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      enabled: true,
+      request: { detalhar: true, movimentacoes: 'risk_only', documentos: 'risk_only', limit_movimentacoes: 20, limit_documentos: 20 },
+      dedupe: { dateToleranceDays: 90 },
+    });
+
+    expect(result.status).toBe('DONE');
+    expect(mocks.consultarEscavador2).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'esc2-key' }));
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      escavador2EnrichmentStatus: 'DONE',
+      escavador2Error: null,
+      escavador2NewFindingCount: 1,
+      escavador2HasNewMaterialRisk: true,
+      escavador2CostBRL: 0,
+    }));
+    expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 completed');
+  });
+
+  it('stores partial data as PARTIAL and does not fail the pipeline', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'PARTIAL' }, processos: [] });
+    mocks.normalizeEscavador2Response.mockReturnValue({ escavador2ApiStatus: 'PARTIAL', escavador2ProcessTotal: 0, escavador2Processos: [] });
+
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({ escavador2EnrichmentStatus: 'PARTIAL' }));
+    expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 completed');
+  });
+
+  it('marks FAILED on provider error and triggers classification', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    mocks.consultarEscavador2.mockRejectedValue(new Error('Escavador2 HTTP 502'));
+
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+
+    expect(result.status).toBe('FAILED');
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      escavador2EnrichmentStatus: 'FAILED',
+      escavador2Error: 'Escavador2 HTTP 502',
+    }));
+    expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 failed');
+  });
+});
