@@ -146,6 +146,12 @@ function listBlock(title, items) {
     return `<div class="sec"><div class="sec__t">${esc(title)}</div><ul class="blist">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul></div>`;
 }
 
+function getEscavador2NewFindings(caseData = {}) {
+    return (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+        .filter((item) => item?.isNewEscavador2Finding === true)
+        .slice(0, 5);
+}
+
 function timelineHtml(items) {
     if (!Array.isArray(items) || items.length === 0) return '';
     return `<div class="sec"><div class="sec__t">Histórico do Andamento</div><div class="tlist">${items.map((item) => `
@@ -240,6 +246,11 @@ function buildCaseBody(c, generatedAt) {
     const phasesSec = rows.length > 0
         ? `<div class="sec"><div class="sec__t">Análises Realizadas</div><div class="plist">${rows.join('')}</div></div>` : '';
 
+    const escavador2NewFindings = getEscavador2NewFindings(c);
+    const escavador2Sec = escavador2NewFindings.length > 0
+        ? `<div class="sec"><div class="sec__t">Achados complementares Escavador2</div><p>O Escavador2 identificou processo(s) novo(s) não encontrado(s) nas demais fontes automatizadas.</p><ul class="blist">${escavador2NewFindings.map((item) => `<li>${esc(item.numeroCnj || 'Processo sem CNJ completo')} · ${esc(item.area || 'Área não identificada')} · ${esc(item.tribunalSigla || 'Tribunal não identificado')}</li>`).join('')}</ul></div>`
+        : '';
+
     const commentSec = c.analystComment
         ? `<div class="sec"><div class="sec__t">Justificativa Final</div><div class="cbox">${esc(c.analystComment)}</div></div>` : '';
     const executiveSec = (c.executiveSummary || c.statusSummary || c.sourceSummary)
@@ -263,6 +274,7 @@ function buildCaseBody(c, generatedAt) {
   ${executiveSec}
   ${findingsSec}
   ${phasesSec}
+  ${escavador2Sec}
   ${commentSec}
   ${nextStepsSec}
   ${timelineSec}

@@ -27,6 +27,9 @@ describe('public result privacy contract', () => {
         requestedByName: 'Solicitante Interno',
         requestedByEmail: 'solicitante@example.com',
         bigdatacorpMotherName: 'Nome Materno Sensivel',
+        escavador2RawPayloads: { response: { secret: 'raw' } },
+        escavador2Sources: { consulta: { cpf: '12345678901' } },
+        escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100' }],
     };
 
     it('mantem CPF completo no clientCases autenticado para busca por tenant', () => {
@@ -48,6 +51,9 @@ describe('public result privacy contract', () => {
 
         expect(snapshot.tenantId).toBeUndefined();
         expect(snapshot.bigdatacorpMotherName).toBeUndefined();
+        expect(snapshot.escavador2RawPayloads).toBeUndefined();
+        expect(snapshot.escavador2Sources).toBeUndefined();
+        expect(snapshot.escavador2Processos).toBeUndefined();
     });
 
     it('publica metadados do solicitante sanitizados em publicResult/latest', () => {
