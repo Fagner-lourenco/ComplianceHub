@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeEscavador2Response } from './escavador2.js';
+import { normalizeArea, normalizeEscavador2Response } from './escavador2.js';
 
 const response = {
   consulta: { cpf: '12345678901', nome: 'JOAO TESTE', status: 'PARTIAL' },
@@ -102,16 +102,22 @@ describe('normalizeEscavador2Response', () => {
 
   it('preserves response source payloads without mutating input', () => {
     const original = structuredClone(response);
-    const normalized = normalizeEscavador2Response(response);
+    const normalized = normalizeEscavador2Response(response, { consultedAt: '2026-06-12T19:00:00.000Z' });
 
     expect(response).toEqual(original);
     expect(normalized.escavador2Sources).toEqual(expect.objectContaining({
       consulta: response.consulta,
       perfil: response.perfil,
       resumo: response.resumo,
-      consultedAt: expect.any(String),
+      consultedAt: '2026-06-12T19:00:00.000Z',
     }));
     expect(normalized.escavador2RawPayloads).toEqual({ response });
+  });
+
+  it('does not generate consultedAt when no timestamp is provided', () => {
+    const normalized = normalizeEscavador2Response(response);
+
+    expect(normalized.escavador2Sources.consultedAt).toBeNull();
   });
 
   it('returns negative defaults for empty or missing resumo', () => {
@@ -122,5 +128,39 @@ describe('normalizeEscavador2Response', () => {
     expect(normalized.escavador2LaborFlag).toBe('NEGATIVE');
     expect(normalized.escavador2Processos).toEqual([]);
     expect(normalized.escavador2CostBRL).toBe(0);
+  });
+
+  it('returns defaults for null response and maps null process items safely', () => {
+    expect(normalizeEscavador2Response(null)).toEqual(expect.objectContaining({
+      escavador2ApiStatus: null,
+      escavador2ProcessTotal: 0,
+      escavador2Processos: [],
+      escavador2CriminalFlag: 'NEGATIVE',
+      escavador2LaborFlag: 'NEGATIVE',
+      escavador2CostBRL: 0,
+    }));
+
+    const normalized = normalizeEscavador2Response({ processos: [null] });
+    expect(normalized.escavador2Processos).toHaveLength(1);
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      numeroCnj: null,
+      area: 'UNKNOWN',
+      isCriminal: false,
+      isLabor: false,
+      roleCategory: 'UNKNOWN',
+      _sourceEscavador2: expect.objectContaining({ provider: 'escavador2' }),
+    }));
+  });
+});
+
+describe('normalizeArea', () => {
+  it('maps API and Portuguese/domain area values', () => {
+    expect(normalizeArea('TRABALHISTA')).toBe('LABOR');
+    expect(normalizeArea('Direito do Trabalho')).toBe('LABOR');
+    expect(normalizeArea('LABOR')).toBe('LABOR');
+    expect(normalizeArea('PENAL')).toBe('CRIMINAL');
+    expect(normalizeArea('CRIMINAL')).toBe('CRIMINAL');
+    expect(normalizeArea('CIVIL')).toBe('CIVIL');
+    expect(normalizeArea('administrativo')).toBe('UNKNOWN');
   });
 });

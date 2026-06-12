@@ -6,15 +6,20 @@ function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
 }
 
+function asObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
 function normalizeArea(value) {
   const area = String(value || '').trim().toUpperCase();
-  if (area === 'CRIMINAL') return 'CRIMINAL';
-  if (area === 'LABOR') return 'LABOR';
-  if (area === 'CIVIL') return 'CIVIL';
+  if (/CRIM|PENAL/.test(area)) return 'CRIMINAL';
+  if (/TRABALH|LABOR/.test(area)) return 'LABOR';
+  if (/CIVIL/.test(area)) return 'CIVIL';
   return 'UNKNOWN';
 }
 
 function mapProcess(processo = {}, index = 0) {
+  processo = asObject(processo);
   const cnj = processo.cnj || {};
   const dados = processo.normalizado?.dados || {};
   const match = processo.normalizado?.match || {};
@@ -56,7 +61,9 @@ function mapProcess(processo = {}, index = 0) {
   };
 }
 
-function normalizeEscavador2Response(response = {}) {
+function normalizeEscavador2Response(response = {}, options = {}) {
+  response = asObject(response);
+  options = asObject(options);
   const resumo = response.resumo || {};
   const processos = asArray(response.processos).map(mapProcess);
   const criminalCount = Number(resumo.total_criminais ?? processos.filter((item) => item.isCriminal).length);
@@ -79,7 +86,7 @@ function normalizeEscavador2Response(response = {}) {
       consulta: response.consulta || null,
       perfil: response.perfil || null,
       resumo,
-      consultedAt: new Date().toISOString(),
+      consultedAt: options.consultedAt || null,
     },
     escavador2RawPayloads: {
       response,
