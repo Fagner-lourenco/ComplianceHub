@@ -554,3 +554,23 @@ describe('aiOrchestrator - Execution Handlers', () => {
     });
   });
 });
+
+describe('Escavador2 AI context', () => {
+  it('getAiProvidersIncluded includes Escavador2 when DONE', () => {
+    expect(getAiProvidersIncluded({ escavador2EnrichmentStatus: 'DONE' })).toContain('Escavador2');
+  });
+
+  it('buildAiClassificationReviewContext includes Escavador2 source counts', () => {
+    const context = buildAiClassificationReviewContext({
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'DONE',
+      escavador2EnrichmentStatus: 'DONE',
+      escavador2CriminalCount: 1,
+      escavador2LaborCount: 0,
+      escavador2NewFindingCount: 1,
+      escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100', isCriminal: true, isNewEscavador2Finding: true }],
+    });
+
+    expect(context.sources.criminal.some((source) => source.name === 'Escavador2' && source.findingCount === 1)).toBe(true);
+  });
+});

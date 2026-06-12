@@ -332,6 +332,7 @@ function getAiProvidersIncluded(caseData) {
     isDoneOrPartial(caseData.escavadorEnrichmentStatus) ? 'Escavador' : null,
     isDoneOrPartial(caseData.juditEnrichmentStatus) ? 'Judit' : null,
     isDoneOrPartial(caseData.bigdatacorpEnrichmentStatus) ? 'BigDataCorp' : null,
+    isDoneOrPartial(caseData.escavador2EnrichmentStatus) ? 'Escavador2' : null,
   ].filter(Boolean);
 }
 
@@ -407,6 +408,27 @@ function compactEscavadorProcessos(items = []) {
     isCriminal: item.isCriminal === true,
     isLabor: item.isLabor === true,
   }));
+}
+
+function compactEscavador2Processos(items = []) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item?.isNewEscavador2Finding === true)
+    .slice(0, 10)
+    .map((item) => stripUndefined({
+      numeroCnj: item.numeroCnj || null,
+      area: item.area || null,
+      tribunal: item.tribunalSigla || null,
+      uf: item.processUf || null,
+      classe: item.classe || null,
+      assunto: item.assunto || null,
+      roleCategory: item.roleCategory || null,
+      polo: item.polo || null,
+      hasExactCpfMatch: item.hasExactCpfMatch === true,
+      isMaterialRisk: item.isMaterialRisk === true,
+      isCriminal: item.isCriminal === true,
+      isLabor: item.isLabor === true,
+      duplicateOfProvider: item.duplicateOfProvider || null,
+    }));
 }
 
 function compactDjenComunicacoes(items = []) {
@@ -873,12 +895,18 @@ function buildAiClassificationReviewContext(caseData = {}) {
   const criminalJuditCount = countItems(caseData.juditCriminalCount);
   const criminalBdcCount = countItems(caseData.bigdatacorpCriminalCount || caseData.bigdatacorpDirectCriminalCount);
   const criminalEscavadorCount = countItems(caseData.escavadorCriminalCount);
+  const criminalEscavador2Count = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+    .filter((item) => item?.isNewEscavador2Finding === true && item?.isCriminal === true)
+    .length;
   const criminalDjenCount = (Array.isArray(caseData.djenComunicacoes) ? caseData.djenComunicacoes : [])
     .filter((item) => isPositiveFlag(caseData.djenCriminalFlag) || /penal|criminal/i.test(String(item?.area || item?.inferredArea || '')))
     .length;
   const laborBdcCount = countItems(caseData.bigdatacorpLaborCount || caseData.bigdatacorpDirectLaborCount);
   const laborEscavadorCount = (Array.isArray(caseData.escavadorProcessos) ? caseData.escavadorProcessos : [])
     .filter((item) => item?.isLabor === true || /trabalh/i.test(String(item?.area || item?.tribunal || '')))
+    .length;
+  const laborEscavador2Count = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+    .filter((item) => item?.isNewEscavador2Finding === true && item?.isLabor === true)
     .length;
   const laborDjenCount = (Array.isArray(caseData.djenComunicacoes) ? caseData.djenComunicacoes : [])
     .filter((item) => isPositiveFlag(caseData.djenLaborFlag) || /trabalh/i.test(String(item?.area || item?.inferredArea || item?.classe || '')))
@@ -892,31 +920,52 @@ function buildAiClassificationReviewContext(caseData = {}) {
   const warrantConflict = (bdcWarrantCount > 0 || juditWarrantCount > 0) && isNegativeFlag(caseData.warrantFlag);
   const lowRiskCriminalOnly = hasCriminalLowRiskRoleOnly(caseData);
 
+  const criminalSources = [
+    buildReviewSource('Judit', caseData.juditEnrichmentStatus, criminalJuditCount),
+    buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, criminalBdcCount),
+    buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, criminalEscavadorCount),
+    buildReviewSource('Escavador2', caseData.escavador2EnrichmentStatus, criminalEscavador2Count),
+    buildReviewSource('DJEN', caseData.djenEnrichmentStatus, criminalDjenCount, { isWeak: true }),
+  ];
+  const laborSources = [
+    buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, laborBdcCount),
+    buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, laborEscavadorCount),
+    buildReviewSource('Escavador2', caseData.escavador2EnrichmentStatus, laborEscavador2Count),
+    buildReviewSource('DJEN', caseData.djenEnrichmentStatus, laborDjenCount, { isWeak: true }),
+  ];
+  const warrantSources = [
+    buildReviewSource('Judit', caseData.juditEnrichmentStatus, juditWarrantCount),
+    buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, bdcWarrantCount),
+  ];
+
   return {
-    criminal: buildAxisReviewContext('criminal', caseData.criminalFlag, [
-      buildReviewSource('Judit', caseData.juditEnrichmentStatus, criminalJuditCount),
-      buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, criminalBdcCount),
-      buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, criminalEscavadorCount),
-      buildReviewSource('DJEN', caseData.djenEnrichmentStatus, criminalDjenCount, { isWeak: true }),
-    ], {
-      hasMaterialFinding: (criminalJuditCount > 0 || criminalBdcCount > 0 || criminalEscavadorCount > 0) && !lowRiskCriminalOnly,
+    criminal: buildAxisReviewContext('criminal', caseData.criminalFlag, criminalSources, {
+      hasMaterialFinding: (criminalJuditCount > 0 || criminalBdcCount > 0 || criminalEscavadorCount > 0 || criminalEscavador2Count > 0) && !lowRiskCriminalOnly,
       hasProviderConflict: criminalConflict,
       hasAmbiguousRole: lowRiskCriminalOnly && criminalConflict,
       hasHomonymRisk: caseData.aiHomonymRisk === 'HIGH' || caseData.aiHomonymStructured?.homonymRisk === 'HIGH',
     }),
-    labor: buildAxisReviewContext('labor', caseData.laborFlag, [
-      buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, laborBdcCount),
-      buildReviewSource('Escavador', caseData.escavadorEnrichmentStatus, laborEscavadorCount),
-      buildReviewSource('DJEN', caseData.djenEnrichmentStatus, laborDjenCount, { isWeak: true }),
-    ], {
+    labor: buildAxisReviewContext('labor', caseData.laborFlag, laborSources, {
       hasProviderConflict: laborConflict,
     }),
-    warrant: buildAxisReviewContext('warrant', caseData.warrantFlag, [
-      buildReviewSource('Judit', caseData.juditEnrichmentStatus, juditWarrantCount),
-      buildReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, bdcWarrantCount),
-    ], {
+    warrant: buildAxisReviewContext('warrant', caseData.warrantFlag, warrantSources, {
       hasProviderConflict: warrantConflict,
     }),
+    sources: {
+      criminal: criminalSources,
+      labor: laborSources,
+      warrant: warrantSources,
+    },
+    escavador2: {
+      processTotal: caseData.escavador2ProcessTotal || 0,
+      newFindingCount: caseData.escavador2NewFindingCount || 0,
+      duplicateCount: caseData.escavador2DuplicateCount || 0,
+      criminalFlag: caseData.escavador2CriminalFlag || null,
+      criminalCount: caseData.escavador2CriminalCount || 0,
+      laborFlag: caseData.escavador2LaborFlag || null,
+      laborCount: caseData.escavador2LaborCount || 0,
+      processos: compactEscavador2Processos(caseData.escavador2Processos),
+    },
     identity: {
       status: caseData.bigdatacorpGateResult?.passed === false || caseData.juditGateResult?.passed === false || caseData.enrichmentGateResult?.passed === false
         ? 'BLOCKED'
@@ -1032,6 +1081,16 @@ function buildAiClassificationReviewPrompt(caseData) {
         cpfsComEsseNome: caseData.escavadorCpfsComEsseNome ?? null,
         notes: caseData.escavadorNotes ? String(caseData.escavadorNotes).slice(0, 500) : null,
         processos: compactEscavadorProcessos(caseData.escavadorProcessos),
+      },
+      escavador2: {
+        processTotal: caseData.escavador2ProcessTotal || 0,
+        newFindingCount: caseData.escavador2NewFindingCount || 0,
+        duplicateCount: caseData.escavador2DuplicateCount || 0,
+        criminalFlag: caseData.escavador2CriminalFlag || null,
+        criminalCount: caseData.escavador2CriminalCount || 0,
+        laborFlag: caseData.escavador2LaborFlag || null,
+        laborCount: caseData.escavador2LaborCount || 0,
+        processos: compactEscavador2Processos(caseData.escavador2Processos),
       },
       djen: {
         comunicacaoTotal: caseData.djenComunicacaoTotal || 0,
@@ -1479,6 +1538,7 @@ module.exports = {
   compactJuditRoleSummary,
   compactBigDataCorpProcessos,
   compactEscavadorProcessos,
+  compactEscavador2Processos,
   compactDjenComunicacoes,
   countItems,
   isNegativeFlag,
