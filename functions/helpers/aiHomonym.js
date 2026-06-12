@@ -96,6 +96,7 @@ function buildCandidateProfile(caseData = {}) {
         cpfConfirmedInProvider: Boolean(
             (caseData.juditRoleSummary || []).some((item) => item?.hasExactCpfMatch)
             || (caseData.escavadorProcessos || []).some((item) => item?.hasExactCpfMatch)
+            || (caseData.escavador2Processos || []).some((item) => item?.hasExactCpfMatch)
             || (caseData.bigdatacorpProcessos || []).some((item) => item?.isDirectCpfMatch),
         ),
     };
@@ -219,6 +220,64 @@ function buildEscavadorProcessCandidates(caseData, candidateProfile) {
             homonymRiskSignals,
         };
     });
+}
+
+function buildEscavador2ProcessCandidates(caseData, candidateProfile) {
+    if (!['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus)) return [];
+    const processes = Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [];
+    const cpfsComEsseNome = getCpfsComNome(caseData);
+
+    return processes
+        .filter((processo) => processo.isNewEscavador2Finding === true)
+        .map((processo) => {
+            const hasExactCpfMatch = processo.hasExactCpfMatch === true;
+            const hasDivergentCpf = false;
+            const viaNameOnly = !hasExactCpfMatch;
+            const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.processUf, processo.processCity);
+            const roleClassification = classifyRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
+            const lowRiskRole = hasLowRiskRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
+            const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
+            const evidenceOrigin = resolveEvidenceOrigin('Escavador2', hasExactCpfMatch, viaNameOnly, matchStrength);
+            const evidenceStrength = resolveEvidenceStrength({
+                hasExactCpfMatch,
+                hasDivergentCpf,
+                lowRiskRole,
+                geoConsistency,
+                matchStrength,
+                cpfsComEsseNome,
+            });
+            const analysisScope = resolveAnalysisScope(evidenceStrength);
+            const homonymRiskSignals = [];
+
+            if (cpfsComEsseNome > 1) homonymRiskSignals.push(`ESCAVADOR_CPFS_COM_NOME_${cpfsComEsseNome}`);
+            if (viaNameOnly) homonymRiskSignals.push('NO_EXACT_CPF_MATCH');
+            if (geoConsistency === 'DISTANT_REGION') homonymRiskSignals.push('DISTANT_GEOGRAPHY');
+            if (lowRiskRole) homonymRiskSignals.push('LOW_RISK_ROLE');
+
+            return {
+                source: 'Escavador2',
+                sourceKey: 'escavador2',
+                cnj: processo.numeroCnj || null,
+                area: processo.area || null,
+                isCriminal: /penal|crim/i.test(processo.area || ''),
+                tribunal: processo.tribunalSigla || null,
+                processUf: processo.processUf || null,
+                processCity: processo.processCity || null,
+                hasExactCpfMatch,
+                hasDivergentCpf,
+                matchedRole: processo.tipoPrincipal || processo.polo || processo.roleCategory || null,
+                roleClassification,
+                lowRiskRole,
+                matchStrength,
+                evidenceOrigin,
+                evidenceStrength,
+                analysisScope,
+                geoConsistency,
+                identityConsistency: hasExactCpfMatch ? 'HIGH' : 'LOW',
+                viaNameOnly,
+                homonymRiskSignals,
+            };
+        });
 }
 
 function buildJuditProcessCandidates(caseData, candidateProfile) {
@@ -350,6 +409,9 @@ function buildHardFacts(caseData, processCandidates) {
     if (processCandidates.some((item) => item.source === 'Escavador' && item.hasExactCpfMatch && !item.lowRiskRole)) {
         hardFacts.push('ESCAVADOR_EXACT_CPF_MATCH');
     }
+    if (processCandidates.some((item) => item.source === 'Escavador2' && item.hasExactCpfMatch && !item.lowRiskRole)) {
+        hardFacts.push('ESCAVADOR2_EXACT_CPF_MATCH');
+    }
     if (processCandidates.some((item) => item.source === 'BigDataCorp' && item.hasExactCpfMatch && !item.lowRiskRole)) {
         hardFacts.push('BIGDATACORP_EXACT_CPF_MATCH');
     }
@@ -357,6 +419,7 @@ function buildHardFacts(caseData, processCandidates) {
         processCandidates.some((item) => item.hasExactCpfMatch && item.lowRiskRole)
         && !hardFacts.includes('JUDIT_EXACT_CPF_MATCH')
         && !hardFacts.includes('ESCAVADOR_EXACT_CPF_MATCH')
+        && !hardFacts.includes('ESCAVADOR2_EXACT_CPF_MATCH')
         && !hardFacts.includes('BIGDATACORP_EXACT_CPF_MATCH')
     ) {
         hardFacts.push('LOW_RISK_EXACT_ROLE');
@@ -535,6 +598,7 @@ function buildHomonymAnalysisInput(caseData = {}) {
     const rawCandidates = prioritizeProcessCandidates([
         ...buildJuditProcessCandidates(caseData, candidateProfile),
         ...buildEscavadorProcessCandidates(caseData, candidateProfile),
+        ...buildEscavador2ProcessCandidates(caseData, candidateProfile),
         ...buildBigDataCorpProcessCandidates(caseData, candidateProfile),
     ]);
     const processCandidates = dedupCandidatesByCnj(rawCandidates);
@@ -584,6 +648,7 @@ module.exports = {
     getGeoConsistencyBucket,
     buildCoverageAssessment,
     buildHomonymAnalysisInput,
+    buildEscavador2ProcessCandidates,
     getRegionByUf,
     hasLowRiskRole,
     prioritizeProcessCandidates,
