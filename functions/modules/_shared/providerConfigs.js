@@ -54,6 +54,26 @@ const DEFAULT_ESCAVADOR_CONFIG = {
     },
 };
 
+const DEFAULT_ESCAVADOR2_CONFIG = {
+    enabled: false,
+    phases: {
+        processos: true,
+    },
+    request: {
+        detalhar: true,
+        movimentacoes: 'risk_only',
+        documentos: 'risk_only',
+        limit_movimentacoes: 20,
+        limit_documentos: 20,
+    },
+    dedupe: {
+        dateToleranceDays: 90,
+    },
+    persistence: {
+        saveRawPayloads: true,
+    },
+};
+
 const DEFAULT_JUDIT_CONFIG = {
     enabled: true,
     phases: {
@@ -172,6 +192,33 @@ async function loadEscavadorConfig(tenantId) {
     };
 }
 
+async function loadEscavador2Config(tenantId) {
+    const tenantData = await getTenantSettingsData(tenantId);
+    const rawConfig = tenantData?.enrichmentConfig?.escavador2;
+    if (!rawConfig) return { ...DEFAULT_ESCAVADOR2_CONFIG };
+
+    return {
+        ...DEFAULT_ESCAVADOR2_CONFIG,
+        ...rawConfig,
+        phases: {
+            ...DEFAULT_ESCAVADOR2_CONFIG.phases,
+            ...(rawConfig.phases || {}),
+        },
+        request: {
+            ...DEFAULT_ESCAVADOR2_CONFIG.request,
+            ...(rawConfig.request || {}),
+        },
+        dedupe: {
+            ...DEFAULT_ESCAVADOR2_CONFIG.dedupe,
+            ...(rawConfig.dedupe || {}),
+        },
+        persistence: {
+            ...DEFAULT_ESCAVADOR2_CONFIG.persistence,
+            ...(rawConfig.persistence || {}),
+        },
+    };
+}
+
 async function loadJuditConfig(tenantId) {
     const tenantData = await getTenantSettingsData(tenantId);
     const rawConfig = tenantData?.enrichmentConfig?.judit;
@@ -254,11 +301,13 @@ async function loadDjenConfig(tenantId) {
 module.exports = {
     DEFAULT_FONTE_DATA_CONFIG,
     DEFAULT_ESCAVADOR_CONFIG,
+    DEFAULT_ESCAVADOR2_CONFIG,
     DEFAULT_JUDIT_CONFIG,
     DEFAULT_BIGDATACORP_CONFIG,
     DEFAULT_DJEN_CONFIG,
     loadFonteDataConfig,
     loadEscavadorConfig,
+    loadEscavador2Config,
     loadJuditConfig,
     loadBigDataCorpConfig,
     loadDjenConfig,

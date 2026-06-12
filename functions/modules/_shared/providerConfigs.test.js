@@ -7,11 +7,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   DEFAULT_FONTE_DATA_CONFIG,
   DEFAULT_ESCAVADOR_CONFIG,
+  DEFAULT_ESCAVADOR2_CONFIG,
   DEFAULT_JUDIT_CONFIG,
   DEFAULT_BIGDATACORP_CONFIG,
   DEFAULT_DJEN_CONFIG,
   loadFonteDataConfig,
   loadEscavadorConfig,
+  loadEscavador2Config,
   loadJuditConfig,
   loadBigDataCorpConfig,
   loadDjenConfig,
@@ -57,6 +59,20 @@ describe('providerConfigs', () => {
       expect(DEFAULT_ESCAVADOR_CONFIG.filters.autoTribunais).toBe(false);
       expect(DEFAULT_ESCAVADOR_CONFIG.filters.tribunais).toEqual([]);
       expect(DEFAULT_ESCAVADOR_CONFIG.filters.status).toBeNull();
+    });
+  });
+
+  describe('DEFAULT_ESCAVADOR2_CONFIG', () => {
+    it('tem valores default corretos', () => {
+      expect(DEFAULT_ESCAVADOR2_CONFIG.enabled).toBe(false);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.phases.processos).toBe(true);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.request.detalhar).toBe(true);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.request.movimentacoes).toBe('risk_only');
+      expect(DEFAULT_ESCAVADOR2_CONFIG.request.documentos).toBe('risk_only');
+      expect(DEFAULT_ESCAVADOR2_CONFIG.request.limit_movimentacoes).toBe(20);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.request.limit_documentos).toBe(20);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.dedupe.dateToleranceDays).toBe(90);
+      expect(DEFAULT_ESCAVADOR2_CONFIG.persistence.saveRawPayloads).toBe(true);
     });
   });
 
@@ -169,6 +185,46 @@ describe('providerConfigs', () => {
       expect(result.enabled).toBe(true);
       expect(result.filters.autoTribunais).toBe(true);
       expect(result.filters.incluirHomonimos).toBe(true);
+    });
+  });
+
+  describe('loadEscavador2Config', () => {
+    it('retorna default quando não há config', async () => {
+      mockDocGet.mockResolvedValue({ exists: false });
+      const result = await loadEscavador2Config('tenant-1');
+      expect(result.enabled).toBe(false);
+      expect(result.request.detalhar).toBe(true);
+      expect(result.dedupe.dateToleranceDays).toBe(90);
+    });
+
+    it('merge config do tenant preservando defaults aninhados', async () => {
+      mockDocGet.mockResolvedValue({
+        exists: true,
+        data: () => ({
+          enrichmentConfig: {
+            escavador2: {
+              enabled: true,
+              request: {
+                movimentacoes: 'always',
+                limit_documentos: 5,
+              },
+              dedupe: {
+                dateToleranceDays: 30,
+              },
+            },
+          },
+        }),
+      });
+      const result = await loadEscavador2Config('tenant-1');
+      expect(result.enabled).toBe(true);
+      expect(result.phases.processos).toBe(true);
+      expect(result.request.detalhar).toBe(true);
+      expect(result.request.movimentacoes).toBe('always');
+      expect(result.request.documentos).toBe('risk_only');
+      expect(result.request.limit_movimentacoes).toBe(20);
+      expect(result.request.limit_documentos).toBe(5);
+      expect(result.dedupe.dateToleranceDays).toBe(30);
+      expect(result.persistence.saveRawPayloads).toBe(true);
     });
   });
 
