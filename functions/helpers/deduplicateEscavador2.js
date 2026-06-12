@@ -7,7 +7,7 @@ function normalizeCnjDigits(value) {
   const text = String(value);
   if (/[xX]/.test(text)) return null;
   const digits = text.replace(/\D/g, '');
-  return digits || null;
+  return digits.length === 20 ? digits : null;
 }
 
 function normalizeText(value) {
@@ -117,15 +117,11 @@ function buildEscavador2Process(item) {
   };
 }
 
-function valuesMatchOrMissing(left, right) {
-  return !left || !right || left === right;
-}
-
 function hasMetadataMatch(source, target, toleranceDays) {
   if (!source.areaBucket || source.areaBucket !== target.areaBucket) return false;
   if (!source.classOrSubject || source.classOrSubject !== target.classOrSubject) return false;
-  if (!valuesMatchOrMissing(source.tribunal, target.tribunal)) return false;
-  if (!valuesMatchOrMissing(source.uf, target.uf)) return false;
+  if (!source.tribunal || source.tribunal !== target.tribunal) return false;
+  if ((source.uf || target.uf) && source.uf !== target.uf) return false;
 
   const dayDiff = daysBetween(source.date, target.date);
   return dayDiff !== null && dayDiff <= toleranceDays;

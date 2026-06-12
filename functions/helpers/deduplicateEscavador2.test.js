@@ -11,6 +11,7 @@ describe('deduplicateEscavador2', () => {
     expect(normalizeCnjDigits('0001234-56.2024.8.26.0100')).toBe('00012345620248260100');
     expect(normalizeCnjDigits('0001234-XX.2024.8.26.0100')).toBeNull();
     expect(normalizeCnjDigits('0001234-x6.2024.8.26.0100')).toBeNull();
+    expect(normalizeCnjDigits('12345')).toBeNull();
   });
 
   it('marks duplicate by full process number against BigDataCorp', () => {
@@ -76,6 +77,63 @@ describe('deduplicateEscavador2', () => {
       isNewEscavador2Finding: false,
     }));
     expect(result.escavador2HasNewMaterialRisk).toBe(false);
+  });
+
+  it('does not match metadata when tribunal is missing', () => {
+    const result = deduplicateEscavador2Findings({
+      escavadorProcessos: [{
+        area: 'criminal',
+        processUf: 'SP',
+        classe: 'Acao Penal',
+        dataInicio: '2024-01-15',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '0001234-XX.2024.8.26.0100',
+        area: 'CRIMINAL',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+        classe: 'Ação Penal',
+        dataInicio: '2024-03-01',
+        isMaterialRisk: true,
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: false,
+      duplicateOfProvider: null,
+      duplicateMatchStrength: null,
+      isNewEscavador2Finding: true,
+    }));
+    expect(result.escavador2HasNewMaterialRisk).toBe(true);
+  });
+
+  it('does not match metadata when UF conflicts', () => {
+    const result = deduplicateEscavador2Findings({
+      escavadorProcessos: [{
+        area: 'criminal',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+        classe: 'Acao Penal',
+        dataInicio: '2024-01-15',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '0001234-XX.2024.8.26.0100',
+        area: 'CRIMINAL',
+        tribunalSigla: 'TJSP',
+        processUf: 'MG',
+        classe: 'Ação Penal',
+        dataInicio: '2024-03-01',
+        isMaterialRisk: true,
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: false,
+      duplicateOfProvider: null,
+      duplicateMatchStrength: null,
+      isNewEscavador2Finding: true,
+    }));
+    expect(result.escavador2HasNewMaterialRisk).toBe(true);
   });
 
   it('keeps new material risk when metadata date is outside tolerance against DJEN', () => {
