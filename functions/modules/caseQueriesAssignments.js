@@ -27,7 +27,7 @@ const CASE_METRICS_PERIODS = new Set([0, 7, 30, 90, 365]);
 
 const OPS_METRIC_FIELDS = [
   'tenantId', 'tenantName', 'status', 'finalVerdict', 'createdAt', 'concludedAt', 'updatedAt', 'turnaroundHours',
-  'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus', 'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus',
+  'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'escavador2EnrichmentStatus', 'enrichmentStatus', 'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus',
   'enrichmentSources', 'aiClassificationReviewRawResponse', 'aiClassificationReview', 'aiRawResponse', 'aiStructured',
   'aiClassificationReviewOk', 'aiStructuredOk', 'aiClassificationReviewError', 'aiError', 'aiClassificationReviewFromCache', 'aiFromCache',
   'aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd', 'aiClassificationReviewTokens', 'aiTokens', 'aiDecision',
@@ -42,13 +42,14 @@ const CLIENT_DASHBOARD_FIELDS = [
 const OPS_CASE_LIST_FIELDS = [
   'caseId', 'tenantId', 'tenantName', 'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'createdAt', 'updatedAt',
   'concludedAt', 'turnaroundHours', 'slaHours', 'status', 'riskLevel', 'criminalFlag', 'finalVerdict', 'priority',
-  'assigneeId', 'assigneeName', 'assigneeEmail', 'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'enrichmentStatus',
+  'assigneeId', 'assigneeName', 'assigneeEmail', 'juditEnrichmentStatus', 'escavadorEnrichmentStatus', 'escavador2EnrichmentStatus', 'enrichmentStatus',
   'bigdatacorpEnrichmentStatus', 'djenEnrichmentStatus', 'aiStatus',
 ];
 
 const METRIC_PROVIDERS = [
   { key: 'judit', field: 'juditEnrichmentStatus' },
   { key: 'escavador', field: 'escavadorEnrichmentStatus' },
+  { key: 'escavador2', field: 'escavador2EnrichmentStatus' },
   { key: 'fontedata', field: 'enrichmentStatus' },
   { key: 'bigdatacorp', field: 'bigdatacorpEnrichmentStatus' },
   { key: 'djen', field: 'djenEnrichmentStatus' },
@@ -133,6 +134,7 @@ function buildProviderRunIds(caseId) {
     bigdatacorpRunId: `bdc_${runId}`,
     juditRunId: `judit_${runId}`,
     escavadorRunId: `escavador_${runId}`,
+    escavador2RunId: `escavador2_${runId}`,
     fontedataRunId: `fontedata_${runId}`,
     djenRunId: `djen_${runId}`,
   };
@@ -166,6 +168,12 @@ const FULL_RERUN_DERIVED_FIELDS = [
   'escavadorSources', 'escavadorEnrichedAt',
   'djenComunicacoes', 'djenCriminalFlag', 'djenLaborFlag', 'djenNotes',
   'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
+  'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
+  'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
+  'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
+  'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
+  'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
+  'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
   'bigdatacorpBasicData', 'bigdatacorpGateResult', 'bigdatacorpName', 'bigdatacorpCpfStatus',
   'bigdatacorpProcessTotal', 'bigdatacorpCriminalFlag', 'bigdatacorpCriminalCount',
   'bigdatacorpDirectCriminalCount', 'bigdatacorpPossibleHomonymCriminalCount',

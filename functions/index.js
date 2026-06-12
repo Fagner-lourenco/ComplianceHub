@@ -107,6 +107,7 @@ const enrichmentTriggers = require('./modules/enrichmentTriggers');
 const {
     loadFonteDataConfig,
     loadEscavadorConfig,
+    loadEscavador2Config,
     loadJuditConfig,
     loadBigDataCorpConfig,
     loadDjenConfig,
@@ -267,6 +268,7 @@ const CORS_ORIGINS = [/\.vercel\.app$/, /localhost/];
 const fontedataApiKey = defineSecret('FONTEDATA_API_KEY');
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
 const escavadorApiToken = defineSecret('ESCAVADOR_API_TOKEN');
+const escavador2ApiKey = defineSecret('ESCAVADOR2_API_KEY');
 const juditApiKey = defineSecret('JUDIT_API_KEY');
 const bigdatacorpAccessToken = defineSecret('BIGDATACORP_ACCESS_TOKEN');
 const bigdatacorpTokenId = defineSecret('BIGDATACORP_TOKEN_ID');
@@ -353,11 +355,13 @@ const {
     runBigDataCorpEnrichmentPhase,
     runJuditEnrichmentPhase,
     runDjenEnrichmentPhase,
+    runEscavador2EnrichmentPhase,
 } = createEnrichmentPhases({
     db,
     FieldValue,
     fontedataApiKey,
     escavadorApiToken,
+    escavador2ApiKey,
     juditApiKey,
     bigdatacorpAccessToken,
     bigdatacorpTokenId,
@@ -404,10 +408,12 @@ const enrichmentTriggerDeps = {
     loadJuditConfig,
     loadBigDataCorpConfig,
     loadEscavadorConfig,
+    loadEscavador2Config,
     loadDjenConfig,
     runJuditEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
     runEscavadorEnrichmentPhase,
+    runEscavador2EnrichmentPhase,
     runDjenEnrichmentPhase,
     isJuditSettled,
     isSettledProviderStatus,
@@ -445,6 +451,11 @@ exports.enrichEscavadorOnCase = onDocumentUpdated(
 exports.enrichDjenOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB', secrets: [openaiApiKey] },
     enrichmentTriggers.createEnrichDjenOnCaseHandler(enrichmentTriggerDeps),
+);
+
+exports.enrichEscavador2OnCase = onDocumentUpdated(
+    { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 540, memory: '512MiB', secrets: [escavador2ApiKey, openaiApiKey] },
+    enrichmentTriggers.createEnrichEscavador2OnCaseHandler(enrichmentTriggerDeps),
 );
 
 /* =========================================================
@@ -1270,7 +1281,7 @@ exports.rerunAiAnalysis = caseQueriesAssignments.createRerunAiAnalysisHandler({
 });
 
 exports.rerunEnrichmentPhase = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 540, secrets: [fontedataApiKey, openaiApiKey, escavadorApiToken, juditApiKey, bigdatacorpAccessToken, bigdatacorpTokenId] , cors: CORS_ORIGINS },
+    { region: 'southamerica-east1', timeoutSeconds: 540, secrets: [fontedataApiKey, openaiApiKey, escavadorApiToken, escavador2ApiKey, juditApiKey, bigdatacorpAccessToken, bigdatacorpTokenId] , cors: CORS_ORIGINS },
     withRateLimit({ maxRequests: 5, windowMs: 60000, key: 'rerunEnrichment' })(async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -1279,7 +1290,7 @@ exports.rerunEnrichmentPhase = onCall(
         if (!caseId || typeof caseId !== 'string') {
             throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
         }
-        if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
+        if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
             throw new HttpsError('invalid-argument', 'Fase invalida para rerun.');
         }
         // BUG-R3-007: Validate scope parameter.
@@ -1314,6 +1325,7 @@ exports.rerunEnrichmentPhase = onCall(
                 caseData.juditEnrichmentStatus === 'RUNNING' ? 'Judit' : null,
                 caseData.djenEnrichmentStatus === 'RUNNING' ? 'DJEN' : null,
                 caseData.escavadorEnrichmentStatus === 'RUNNING' ? 'Escavador' : null,
+                caseData.escavador2EnrichmentStatus === 'RUNNING' ? 'Escavador2' : null,
             ].filter(Boolean);
 
             if (runningProviders.length > 0 && !force) {
@@ -1337,11 +1349,13 @@ exports.rerunEnrichmentPhase = onCall(
                 juditEnrichmentStatus: 'PENDING',
                 djenEnrichmentStatus: 'PENDING',
                 escavadorEnrichmentStatus: 'PENDING',
+                escavador2EnrichmentStatus: 'PENDING',
                 enrichmentStatus: 'PENDING',
                 bigdatacorpError: null,
                 juditError: null,
                 djenError: null,
                 escavadorError: null,
+                escavador2Error: null,
                 enrichmentError: null,
                 fullRerunRequestedAt: FieldValue.serverTimestamp(),
                 fullRerunRequestedBy: uid,
@@ -1391,6 +1405,12 @@ exports.rerunEnrichmentPhase = onCall(
                 'enrichmentSources', 'enrichmentIdentity', 'enrichmentGateResult', 'enrichmentPrimaryUf',
                 'enrichmentAllUfs', 'fontedataCriminalFlag', 'fontedataWarrantFlag', 'fontedataLaborFlag',
                 'enrichedAt',
+                'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
+                'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
+                'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
+                'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
+                'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
+                'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
             ];
             for (const field of allDerivedFields) {
                 resetPayload[field] = FieldValue.delete();
@@ -1473,6 +1493,14 @@ exports.rerunEnrichmentPhase = onCall(
             'djenComunicacoes', 'djenCriminalFlag', 'djenLaborFlag', 'djenNotes',
             'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
         ];
+        const escavador2DataFields = [
+            'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
+            'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
+            'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
+            'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
+            'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
+            'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
+        ];
         const applyDeleteFields = (target, fields) => {
             for (const field of fields) target[field] = FieldValue.delete();
         };
@@ -1484,21 +1512,32 @@ exports.rerunEnrichmentPhase = onCall(
                 target.escavadorError = null;
                 target.djenEnrichmentStatus = 'PENDING';
                 target.djenError = null;
+                target.escavador2EnrichmentStatus = 'PENDING';
+                target.escavador2Error = null;
                 applyDeleteFields(target, juditDataFields);
                 applyDeleteFields(target, escavadorDataFields);
                 applyDeleteFields(target, djenDataFields);
+                applyDeleteFields(target, escavador2DataFields);
             } else if (currentPhase === 'judit') {
                 target.escavadorEnrichmentStatus = 'PENDING';
                 target.escavadorError = null;
                 target.djenEnrichmentStatus = 'PENDING';
                 target.djenError = null;
+                target.escavador2EnrichmentStatus = 'PENDING';
+                target.escavador2Error = null;
                 applyDeleteFields(target, escavadorDataFields);
                 applyDeleteFields(target, djenDataFields);
+                applyDeleteFields(target, escavador2DataFields);
+            } else if (currentPhase === 'djen') {
+                target.escavador2EnrichmentStatus = 'PENDING';
+                target.escavador2Error = null;
+                applyDeleteFields(target, escavador2DataFields);
             }
         };
         const phaseMeta = {
             fontedata: { statusField: 'enrichmentStatus', errorField: 'enrichmentError', label: 'FonteData', derived: fullDerivedFields },
             escavador: { statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', label: 'Escavador', derived: aiDerivedFields },
+            escavador2: { statusField: 'escavador2EnrichmentStatus', errorField: 'escavador2Error', label: 'Escavador2', derived: aiDerivedFields },
             judit: { statusField: 'juditEnrichmentStatus', errorField: 'juditError', label: 'Judit', derived: fullDerivedFields },
             bigdatacorp: { statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', label: 'BigDataCorp', derived: fullDerivedFields },
             djen: { statusField: 'djenEnrichmentStatus', errorField: 'djenError', label: 'DJEN', derived: aiDerivedFields },
@@ -1635,6 +1674,22 @@ exports.rerunEnrichmentPhase = onCall(
                 await caseRef.update(invalidateFields);
             }
             await runDjenEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), djenConfig);
+        }
+
+        if (phase === 'escavador2') {
+            const escavador2Config = await loadEscavador2Config(caseData.tenantId);
+            if (!escavador2Config.enabled) {
+                throw new HttpsError('failed-precondition', 'Escavador2 desabilitado para este tenant.');
+            }
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                for (const field of phaseMeta.escavador2.derived) {
+                    invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
+                }
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
+            await runEscavador2EnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavador2Config);
         }
 
         const refreshedDoc = await caseRef.get();
