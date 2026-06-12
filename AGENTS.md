@@ -1,7 +1,7 @@
 # ComplianceHub — Agent Guide
 
 > Documento para agentes de código. Língua principal dos comentários e docs: **português (PT-BR)**. Identificadores de código: **inglês**.
-> Última atualização: 2026-05-31.
+> Última atualização: 2026-06-12.
 
 ---
 
@@ -76,10 +76,22 @@ Relatório disponível (frontend + backend reportBuilder)
 |----------|-------|---------|
 | **Judit** | Processos, mandados, execução criminal, entity data lake | `functions/adapters/judit.js` |
 | **Escavador** | Processos por CPF/nome | `functions/adapters/escavador.js` |
+| **Escavador2** | Processos por CPF/nome (API interna complementar) | `functions/adapters/escavador2.js` |
 | **FonteData** | Receita Federal, financeiro, identidade, processos, mandados | `functions/adapters/fontedata.js` |
 | **BigDataCorp** | KYC, processos, profissão | `functions/adapters/bigdatacorp.js` |
 | **DJEN** | Comunicações processuais | `functions/adapters/djen.js` |
 | **OpenAI GPT** | Análise estruturada, triagem homônimos, síntese executiva | chamadas inline em `functions/index.js` |
+
+### Escavador2 (provedor complementar)
+
+- A **Escavador2** é um provedor **separado** da integração oficial do Escavador; não reutiliza campos `escavador*`.
+- Todos os dados novos da Escavador2 usam apenas campos prefixados com `escavador2*`.
+- Ativação por tenant via `tenantSettings/{tenantId}.enrichmentConfig.escavador2.enabled`.
+- Segredo: `ESCAVADOR2_API_KEY` (Firebase Secret / variável de ambiente).
+- Executa como **fase final de enriquecimento**, após DJEN e os demais provedores estarem terminalizados.
+- Status terminais para liberação da classificação: `DONE`, `PARTIAL`, `SKIPPED`, `FAILED`.
+- `FAILED` é não-bloqueante; `escavador2CostBRL` é sempre `0`.
+- Raw payloads (`escavador2RawPayloads`) são salvos apenas para auditoria interna e nunca expostos em relatórios públicos ou no portal do cliente.
 
 ---
 
@@ -434,6 +446,7 @@ MADERO_UID=
 2. **ADR-002:** Campos derivados nunca passam pelo `ALLOWED_CONCLUDE_FIELDS` (segurança).
 3. **ADR-003:** TTL de relatórios públicos = 14 dias.
 4. **ADR-004:** `PublicReportPage` diferencia erros de expiração vs. não encontrado.
+5. **ADR-005:** Escavador2 é um provedor complementar separado da integração oficial do Escavador, usando apenas campos `escavador2*`.
 
 ---
 
