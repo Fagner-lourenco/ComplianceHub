@@ -500,6 +500,89 @@ function createEnrichDjenOnCaseHandler(deps) {
     };
 }
 
+function createEnrichEscavador2OnCaseHandler(deps) {
+    const {
+        db,
+        FieldValue,
+        acquirePhaseRun,
+        loadEscavador2Config,
+        runEscavador2EnrichmentPhase,
+        isSettledProviderStatus,
+        maybeRunAutoClassifyAndAi,
+        writeAuditEvent,
+        ACTOR_TYPE,
+        SOURCE,
+    } = deps;
+
+    return async (event) => {
+        const before = event.data?.before?.data();
+        const after = event.data?.after?.data();
+        if (!before || !after) return;
+
+        const watchedFields = [
+            'bigdatacorpEnrichmentStatus',
+            'juditEnrichmentStatus',
+            'escavadorEnrichmentStatus',
+            'djenEnrichmentStatus',
+        ];
+        const relevantChange = watchedFields.some((field) => before[field] !== after[field]);
+        if (!relevantChange) return;
+
+        const escavador2Status = after.escavador2EnrichmentStatus;
+        if (escavador2Status && escavador2Status !== 'PENDING') return;
+        if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
+        if (!isSettledProviderStatus(after.bigdatacorpEnrichmentStatus)) return;
+        if (!isSettledProviderStatus(after.juditEnrichmentStatus)) return;
+        if (after.juditNeedsEscavador === true && !isSettledProviderStatus(after.escavadorEnrichmentStatus)) return;
+        if (after.djenEnrichmentStatus && !isSettledProviderStatus(after.djenEnrichmentStatus)) return;
+
+        const caseData = after;
+        const caseId = event.params.caseId;
+        const caseRef = db.collection('cases').doc(caseId);
+        const tenantId = caseData.tenantId;
+        if (!tenantId) return;
+
+        try {
+            const escavador2Config = await loadEscavador2Config(tenantId);
+            if (!escavador2Config.enabled) {
+                await caseRef.update({
+                    escavador2EnrichmentStatus: 'SKIPPED',
+                    escavador2Error: null,
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 disabled');
+                return;
+            }
+
+            const runLock = await acquirePhaseRun(caseRef, 'escavador2EnrichmentStatus');
+            if (!runLock.acquired) return;
+
+            await runEscavador2EnrichmentPhase(caseRef, caseId, runLock.caseData || caseData, escavador2Config);
+
+            try {
+                const refreshed = (await caseRef.get()).data() || {};
+                await writeAuditEvent({
+                    action: 'ENRICHMENT_AUTO_TRIGGERED',
+                    tenantId,
+                    actor: { type: ACTOR_TYPE.SYSTEM },
+                    entity: { type: 'CASE', id: caseId, label: caseData.candidateName || caseId },
+                    related: { caseId },
+                    source: SOURCE.CLOUD_FUNCTION,
+                    metadata: { phase: 'escavador2', status: refreshed.escavador2EnrichmentStatus, trigger: 'upstream_settled' },
+                    templateVars: { candidateName: caseData.candidateName || caseId, phase: 'escavador2', status: refreshed.escavador2EnrichmentStatus || 'UNKNOWN' },
+                });
+            } catch { /* audit failure must not block pipeline */ }
+        } catch (err) {
+            await caseRef.update({
+                escavador2EnrichmentStatus: 'FAILED',
+                escavador2Error: err.message || 'Erro desconhecido no Escavador2.',
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 trigger failure');
+        }
+    };
+}
+
 module.exports = {
     createEnrichJuditOnCaseHandler,
     createEnrichBigDataCorpOnCaseHandler,
@@ -507,4 +590,5 @@ module.exports = {
     createEnrichJuditOnCorrectionHandler,
     createEnrichEscavadorOnCaseHandler,
     createEnrichDjenOnCaseHandler,
+    createEnrichEscavador2OnCaseHandler,
 };

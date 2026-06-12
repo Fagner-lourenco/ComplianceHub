@@ -10,6 +10,7 @@ import {
     createEnrichJuditOnCorrectionHandler,
     createEnrichEscavadorOnCaseHandler,
     createEnrichDjenOnCaseHandler,
+    createEnrichEscavador2OnCaseHandler,
 } from './enrichmentTriggers.js';
 
 function makeMockDb(overrides = {}) {
@@ -65,10 +66,12 @@ function makeDeps(overrides = {}) {
         loadJuditConfig: vi.fn().mockResolvedValue({ enabled: true }),
         loadBigDataCorpConfig: vi.fn().mockResolvedValue({ enabled: true }),
         loadEscavadorConfig: vi.fn().mockResolvedValue({ enabled: true, alwaysRun: false }),
+        loadEscavador2Config: vi.fn().mockResolvedValue({ enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } }),
         loadDjenConfig: vi.fn().mockResolvedValue({ enabled: true, searchStrategy: 'hybrid' }),
         runJuditEnrichmentPhase: vi.fn().mockResolvedValue(undefined),
         runBigDataCorpEnrichmentPhase: vi.fn().mockResolvedValue(undefined),
         runEscavadorEnrichmentPhase: vi.fn().mockResolvedValue(undefined),
+        runEscavador2EnrichmentPhase: vi.fn().mockResolvedValue(undefined),
         runDjenEnrichmentPhase: vi.fn().mockResolvedValue(undefined),
         isJuditSettled: vi.fn((data) => data?.juditEnrichmentStatus === 'DONE'),
         isSettledProviderStatus: vi.fn((status) => ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status)),
@@ -261,6 +264,115 @@ describe('createEnrichEscavadorOnCaseHandler', () => {
         };
         await handler(event);
         expect(deps.runEscavadorEnrichmentPhase).not.toHaveBeenCalled();
+    });
+});
+
+describe('createEnrichEscavador2OnCaseHandler', () => {
+    it('runs after DJEN settles and all upstream providers are terminal', async () => {
+        const deps = makeDeps();
+        const handler = createEnrichEscavador2OnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ djenEnrichmentStatus: 'RUNNING' }) },
+                after: { data: () => ({
+                    tenantId: 't1',
+                    status: 'PENDING',
+                    bigdatacorpEnrichmentStatus: 'DONE',
+                    juditEnrichmentStatus: 'DONE',
+                    escavadorEnrichmentStatus: 'SKIPPED',
+                    djenEnrichmentStatus: 'DONE',
+                    escavador2EnrichmentStatus: 'PENDING',
+                }) },
+            },
+        };
+
+        await handler(event);
+
+        expect(deps.acquirePhaseRun).toHaveBeenCalledWith(expect.anything(), 'escavador2EnrichmentStatus');
+        expect(deps.runEscavador2EnrichmentPhase).toHaveBeenCalled();
+    });
+
+    it('waits while DJEN is still running', async () => {
+        const deps = makeDeps();
+        const handler = createEnrichEscavador2OnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ djenEnrichmentStatus: 'PENDING' }) },
+                after: { data: () => ({
+                    tenantId: 't1',
+                    status: 'PENDING',
+                    bigdatacorpEnrichmentStatus: 'DONE',
+                    juditEnrichmentStatus: 'DONE',
+                    escavadorEnrichmentStatus: 'SKIPPED',
+                    djenEnrichmentStatus: 'RUNNING',
+                    escavador2EnrichmentStatus: 'PENDING',
+                }) },
+            },
+        };
+
+        await handler(event);
+
+        expect(deps.runEscavador2EnrichmentPhase).not.toHaveBeenCalled();
+    });
+
+    it('marks SKIPPED and classifies when Escavador2 is disabled for tenant', async () => {
+        const deps = makeDeps({ loadEscavador2Config: vi.fn().mockResolvedValue({ enabled: false }) });
+        const handler = createEnrichEscavador2OnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ djenEnrichmentStatus: 'RUNNING' }) },
+                after: { data: () => ({
+                    tenantId: 't1',
+                    status: 'PENDING',
+                    bigdatacorpEnrichmentStatus: 'DONE',
+                    juditEnrichmentStatus: 'DONE',
+                    escavadorEnrichmentStatus: 'SKIPPED',
+                    djenEnrichmentStatus: 'DONE',
+                    escavador2EnrichmentStatus: 'PENDING',
+                }) },
+            },
+        };
+
+        await handler(event);
+
+        const caseRef = deps.db.collection('cases').doc('c1');
+        expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+            escavador2EnrichmentStatus: 'SKIPPED',
+            escavador2Error: null,
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(expect.anything(), 'c1', 'Escavador2 disabled');
+    });
+
+    it('marks FAILED and classifies when trigger setup fails', async () => {
+        const deps = makeDeps({ runEscavador2EnrichmentPhase: vi.fn().mockRejectedValue(new Error('phase exploded')) });
+        const handler = createEnrichEscavador2OnCaseHandler(deps);
+        const event = {
+            params: { caseId: 'c1' },
+            data: {
+                before: { data: () => ({ djenEnrichmentStatus: 'RUNNING' }) },
+                after: { data: () => ({
+                    tenantId: 't1',
+                    status: 'PENDING',
+                    bigdatacorpEnrichmentStatus: 'DONE',
+                    juditEnrichmentStatus: 'DONE',
+                    escavadorEnrichmentStatus: 'SKIPPED',
+                    djenEnrichmentStatus: 'DONE',
+                    escavador2EnrichmentStatus: 'PENDING',
+                }) },
+            },
+        };
+
+        await handler(event);
+
+        const caseRef = deps.db.collection('cases').doc('c1');
+        expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+            escavador2EnrichmentStatus: 'FAILED',
+            escavador2Error: 'phase exploded',
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(expect.anything(), 'c1', 'Escavador2 trigger failure');
     });
 });
 
