@@ -16,7 +16,7 @@ describe('deduplicateEscavador2', () => {
 
   it('marks duplicate by full process number against BigDataCorp', () => {
     const result = deduplicateEscavador2Findings({
-      bigdatacorpProcessos: [{ processNumber: '0001234-56.2024.8.26.0100' }],
+      bigdatacorpProcessos: [{ numero: '0001234-56.2024.8.26.0100' }],
       escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100', isMaterialRisk: true }],
     });
 
@@ -24,7 +24,7 @@ describe('deduplicateEscavador2', () => {
       isDuplicate: true,
       duplicateOfProvider: 'bigdatacorp',
       duplicateOfProcessNumber: '0001234-56.2024.8.26.0100',
-      duplicateMatchStrength: 'full_cnj',
+      duplicateMatchStrength: 'CNJ_FULL',
       isNewEscavador2Finding: false,
     }));
     expect(result.escavador2DuplicateCount).toBe(1);
@@ -45,7 +45,7 @@ describe('deduplicateEscavador2', () => {
       isDuplicate: true,
       duplicateOfProvider: 'judit',
       duplicateOfProcessNumber: '5009876-10.2023.4.03.6100',
-      duplicateMatchStrength: 'full_cnj',
+      duplicateMatchStrength: 'CNJ_FULL',
       isNewEscavador2Finding: false,
     }));
   });

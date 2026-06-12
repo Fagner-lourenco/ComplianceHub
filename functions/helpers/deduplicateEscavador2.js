@@ -51,6 +51,7 @@ function daysBetween(left, right) {
 
 function buildKnownProcess(item, provider) {
   const processNumber = firstValue(item, [
+    'numero',
     'processNumber',
     'numeroCnj',
     'numeroProcesso',
@@ -131,7 +132,7 @@ function findDuplicate(process, knownProcesses, toleranceDays) {
   const cnjMatch = process.cnjDigits
     ? knownProcesses.find((known) => known.cnjDigits === process.cnjDigits)
     : null;
-  if (cnjMatch) return { known: cnjMatch, strength: 'full_cnj' };
+  if (cnjMatch) return { known: cnjMatch, strength: 'CNJ_FULL' };
 
   const metadataMatch = knownProcesses.find((known) => hasMetadataMatch(process, known, toleranceDays));
   return metadataMatch ? { known: metadataMatch, strength: 'metadata' } : null;
