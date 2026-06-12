@@ -100,6 +100,18 @@ describe('canRunFinalClassification', () => {
         expect(result.ok).toBe(false);
         expect(result.reason).toBe('djen_RUNNING');
     });
+
+    it('defers when escavador2 is pending (Escavador2)', () => {
+        const result = canRunFinalClassification(makeCase({ escavador2EnrichmentStatus: 'PENDING' }), helpers);
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('escavador2_PENDING');
+    });
+
+    it('allows when escavador2 failed (Escavador2)', () => {
+        const result = canRunFinalClassification(makeCase({ escavador2EnrichmentStatus: 'FAILED' }), helpers);
+        expect(result.ok).toBe(true);
+        expect(result.reason).toBe('ready');
+    });
 });
 
 describe('computeAutoClassifySignature', () => {
@@ -121,6 +133,24 @@ describe('computeAutoClassifySignature', () => {
     it('handles empty case data', () => {
         const result = computeAutoClassifySignature({}, { computeSimpleHash });
         expect(result).toMatch(/^hash_/);
+    });
+
+    it('includes Escavador2 fields in signature', () => {
+        const caseData = {
+            enrichmentGeneration: 1,
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 3,
+            escavador2CriminalCount: 1,
+            escavador2LaborCount: 1,
+            escavador2NewFindingCount: 2,
+            escavador2DuplicateCount: 1,
+            escavador2HasNewMaterialRisk: true,
+        };
+        const result = computeAutoClassifySignature(caseData, { computeSimpleHash });
+        expect(result).toMatch(/^hash_/);
+        expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"escavador2EnrichmentStatus":"DONE"'));
+        expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"escavador2ProcessTotal":3'));
+        expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"escavador2HasNewMaterialRisk":true'));
     });
 });
 

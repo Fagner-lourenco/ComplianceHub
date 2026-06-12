@@ -47,6 +47,10 @@ function canRunFinalClassification(caseData = {}, { hasPendingJuditAsync: hasPen
         return { ok: false, reason: `djen_${caseData.djenEnrichmentStatus}` };
     }
 
+    if (caseData.escavador2EnrichmentStatus && !isProviderTerminalForPipelineFn(caseData.escavador2EnrichmentStatus)) {
+        return { ok: false, reason: `escavador2_${caseData.escavador2EnrichmentStatus}` };
+    }
+
     return { ok: true, reason: 'ready' };
 }
 
@@ -73,6 +77,13 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
         'djenEnrichmentStatus',
         'djenCriminalFlag',
         'djenLaborFlag',
+        'escavador2EnrichmentStatus',
+        'escavador2ProcessTotal',
+        'escavador2CriminalCount',
+        'escavador2LaborCount',
+        'escavador2NewFindingCount',
+        'escavador2DuplicateCount',
+        'escavador2HasNewMaterialRisk',
         'enrichmentStatus',
         'fontedataCriminalFlag',
         'fontedataWarrantFlag',
@@ -129,6 +140,11 @@ function computeAutoClassification(caseData, {
     const djenCriminalWeak = false;
     const djenLaborStrong = (caseData.djenLaborFlag === true || caseData.djenLaborFlag === 'POSITIVE') && djenConfirmedLaborItems.length > 0;
     const djenLaborWeak = false;
+    const escavador2Done = ['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus);
+    const escavador2Processos = Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [];
+    const escavador2NewProcesses = escavador2Done ? escavador2Processos.filter((p) => p.isNewEscavador2Finding === true) : [];
+    const escavador2NewCriminalCount = escavador2NewProcesses.filter((p) => p.isCriminal === true).length;
+    const escavador2NewLaborCount = escavador2NewProcesses.filter((p) => p.isLabor === true).length;
     const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
     const bigdatacorpPep = bigdatacorpHasKycData && caseData.bigdatacorpIsPep === true;
     const bigdatacorpSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpIsSanctioned === true;
@@ -292,6 +308,9 @@ function computeAutoClassification(caseData, {
         if (djenCriminalStrong) {
             pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) criminal(is) confirmada(s) no Diario de Justica Eletronico.`);
         }
+        if (escavador2NewCriminalCount > 0) {
+            pushUnique(criminalNotes, `Escavador2 encontrou ${escavador2NewCriminalCount} processo(s) criminal(is) novo(s) nao identificado(s) pelos demais provedores.`);
+        }
     } else if (hasWeakCriminalEvidence) {
         result.criminalFlag = 'INCONCLUSIVE';
         result.criminalEvidenceQuality = 'WEAK_NAME_ONLY';
@@ -397,6 +416,9 @@ function computeAutoClassification(caseData, {
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Judit')) sources.push('Judit');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'BigDataCorp')) sources.push('BigDataCorp');
         pushUnique(laborNotes, `Trabalhista POSITIVO confirmado por: ${sources.join(', ') || 'processos identificados'}.`);
+        if (escavador2NewLaborCount > 0) {
+            pushUnique(laborNotes, `Escavador2 encontrou ${escavador2NewLaborCount} processo(s) trabalhista(s) novo(s) nao identificado(s) pelos demais provedores.`);
+        }
     } else if (djenLaborWeak) {
         result.laborFlag = 'INCONCLUSIVE';
         pushUnique(laborNotes, 'Achados trabalhistas no DJEN/DPJe dependem de nome comum sem confirmacao forte de identidade. Revisao manual recomendada.');
