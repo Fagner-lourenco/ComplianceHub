@@ -133,6 +133,10 @@ describe('createClientSolicitationHandler', () => {
 
         expect(result.caseId).toBeTruthy();
         expect(result.candidateId).toBeTruthy();
+        const caseRef = deps.db.collection('cases').doc();
+        const createdCase = (await caseRef.get()).data();
+        expect(createdCase.escavador2EnrichmentStatus).toBe('PENDING');
+        expect(createdCase.escavador2Error).toBeNull();
         expect(deps.writeAuditEvent).toHaveBeenCalledWith(
             expect.objectContaining({ action: 'SOLICITATION_CREATED' })
         );
@@ -322,10 +326,36 @@ describe('submitClientCorrectionHandler', () => {
         expect(payload.bigdatacorpEnrichmentStatus).toBe('PENDING');
         expect(payload.juditEnrichmentStatus).toBe('PENDING');
         expect(payload.escavadorEnrichmentStatus).toBe('PENDING');
+        expect(payload.escavador2EnrichmentStatus).toBe('PENDING');
+        expect(payload.escavador2Error).toBeNull();
         expect(payload.djenEnrichmentStatus).toBe('PENDING');
         expect(payload.enrichmentStatus).toBe('PENDING');
         expect(payload.status).toBe('PENDING');
         expect(payload.enrichmentGeneration).toEqual(expect.objectContaining({ _methodName: 'FieldValue.increment' }));
+        const deletedEscavador2Fields = [
+            'escavador2ApiStatus',
+            'escavador2ProcessTotal',
+            'escavador2Processos',
+            'escavador2CriminalFlag',
+            'escavador2CriminalCount',
+            'escavador2LaborFlag',
+            'escavador2LaborCount',
+            'escavador2MaterialRiskCount',
+            'escavador2CnjMaskedCount',
+            'escavador2CnjExtractedCount',
+            'escavador2DuplicateCount',
+            'escavador2NewFindingCount',
+            'escavador2HasNewMaterialRisk',
+            'escavador2PartialErrors',
+            'escavador2Stats',
+            'escavador2Sources',
+            'escavador2RawPayloads',
+            'escavador2CostBRL',
+            'escavador2EnrichedAt',
+        ];
+        for (const field of deletedEscavador2Fields) {
+            expect(payload[field], `expected ${field} to be deleted`).toBe('deleted');
+        }
     });
 
     it('cria registro de auditoria CASE_CORRECTED', async () => {
