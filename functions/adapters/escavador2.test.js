@@ -4,6 +4,7 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const {
     DEFAULT_BASE_URL,
+    DEFAULT_TIMEOUT_MS,
     Escavador2Error,
     buildEscavador2Payload,
     consultarEscavador2,
@@ -68,6 +69,7 @@ describe('consultarEscavador2', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+        vi.useRealTimers();
     });
 
     it('posts to Escavador2 endpoint with JSON headers and normalized default body', async () => {
@@ -84,7 +86,7 @@ describe('consultarEscavador2', () => {
 
         expect(result).toEqual({ status: 'ok' });
         expect(fetch).toHaveBeenCalledTimes(1);
-        expect(fetch).toHaveBeenCalledWith(`${DEFAULT_BASE_URL}/escavador2/consultar`, {
+        expect(fetch).toHaveBeenCalledWith(`${DEFAULT_BASE_URL}/escavador2/consultar`, expect.objectContaining({
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -99,7 +101,83 @@ describe('consultarEscavador2', () => {
                 limit_movimentacoes: 20,
                 limit_documentos: 20,
             }),
+            signal: expect.any(AbortSignal),
+        }));
+    });
+
+    it('uses the default timeout when AbortController is available', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 'ok' }),
+        }));
+
+        await consultarEscavador2({
+            cpf: '12345678909',
+            nome: 'Maria Silva',
+            apiKey: 'secret-key',
         });
+
+        const requestInit = fetch.mock.calls[0][1];
+        expect(DEFAULT_TIMEOUT_MS).toBe(60000);
+        expect(requestInit.signal).toBeInstanceOf(AbortSignal);
+        expect(requestInit.signal.aborted).toBe(false);
+    });
+
+    it('aborts unresolved fetch and throws Escavador2Error on timeout', async () => {
+        vi.useFakeTimers();
+        let capturedSignal;
+
+        vi.stubGlobal('fetch', vi.fn((_url, requestInit) => {
+            capturedSignal = requestInit.signal;
+            return new Promise((_resolve, reject) => {
+                requestInit.signal.addEventListener('abort', () => {
+                    const error = new Error('aborted');
+                    error.name = 'AbortError';
+                    reject(error);
+                });
+            });
+        }));
+
+        const promise = consultarEscavador2({
+            cpf: '12345678909',
+            nome: 'Maria Silva',
+            apiKey: 'secret-key',
+            timeoutMs: 25,
+        });
+
+        expect(capturedSignal.aborted).toBe(false);
+        const expectation = expect(promise).rejects.toMatchObject({
+            name: 'Escavador2Error',
+            message: 'Escavador2 timeout apos 25ms',
+            statusCode: null,
+            responseBody: null,
+        });
+
+        await vi.advanceTimersByTimeAsync(25);
+
+        expect(capturedSignal.aborted).toBe(true);
+        await expectation;
+    });
+
+    it('calls fetch without signal when AbortController is unavailable', async () => {
+        const OriginalAbortController = globalThis.AbortController;
+        vi.stubGlobal('AbortController', undefined);
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 'ok' }),
+        }));
+
+        try {
+            await consultarEscavador2({
+                cpf: '12345678909',
+                nome: 'Maria Silva',
+                apiKey: 'secret-key',
+            });
+        } finally {
+            vi.stubGlobal('AbortController', OriginalAbortController);
+        }
+
+        expect(fetch.mock.calls[0][1]).not.toHaveProperty('signal');
     });
 
     it('posts overridden payload options', async () => {

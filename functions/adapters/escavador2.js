@@ -1,4 +1,5 @@
 const DEFAULT_BASE_URL = 'https://escavador2-api-dowqa75f4a-rj.a.run.app';
+const DEFAULT_TIMEOUT_MS = 60000;
 
 class Escavador2Error extends Error {
     constructor(message, statusCode, responseBody) {
@@ -31,6 +32,7 @@ async function consultarEscavador2({
     apiKey,
     options = {},
     baseUrl = DEFAULT_BASE_URL,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
 }) {
     const payload = buildEscavador2Payload({ cpf, nome, options });
 
@@ -42,25 +44,51 @@ async function consultarEscavador2({
         throw new Error('ESCAVADOR2_API_KEY nao configurado.');
     }
 
-    const response = await fetch(`${baseUrl}/escavador2/consultar`, {
+    const requestInit = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-Internal-Api-Key': apiKey,
         },
         body: JSON.stringify(payload),
-    });
+    };
 
-    if (!response.ok) {
-        const responseBody = await response.text();
-        throw new Escavador2Error('Falha ao consultar Escavador2.', response.status, responseBody);
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    let timeoutId;
+    let didTimeout = false;
+
+    if (controller) {
+        requestInit.signal = controller.signal;
+        timeoutId = setTimeout(() => {
+            didTimeout = true;
+            controller.abort();
+        }, timeoutMs);
     }
 
-    return response.json();
+    try {
+        const response = await fetch(`${baseUrl}/escavador2/consultar`, requestInit);
+
+        if (!response.ok) {
+            const responseBody = await response.text();
+            throw new Escavador2Error('Falha ao consultar Escavador2.', response.status, responseBody);
+        }
+
+        return response.json();
+    } catch (error) {
+        if (didTimeout || error?.name === 'AbortError') {
+            throw new Escavador2Error(`Escavador2 timeout apos ${timeoutMs}ms`, null, null);
+        }
+        throw error;
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    }
 }
 
 module.exports = {
     DEFAULT_BASE_URL,
+    DEFAULT_TIMEOUT_MS,
     Escavador2Error,
     buildEscavador2Payload,
     consultarEscavador2,
