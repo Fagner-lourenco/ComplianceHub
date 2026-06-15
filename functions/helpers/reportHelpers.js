@@ -396,6 +396,8 @@ function selectTopProcessos(caseData, limit = 10) {
         });
         const isCriminal = !!p.isCriminal || processArea.area === 'CRIMINAL' || /penal|criminal|crime/i.test(p.area || '');
         const isLabor = !!p.isLabor || !!p.isTrabalhista || processArea.area === 'LABOR' || /trabalh/i.test(p.area || '');
+        const excludedCrimeType = isExcludedCrimeType(p);
+        const effectiveCriminal = isCriminal && !excludedCrimeType;
 
         if (nk && seen.has(nk)) {
             const existing = all.find((e) => normCnj(e.cnj) === nk);
@@ -407,7 +409,8 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (!existing.lastMovementDate && (p.lastMovementDate || p.dataUltimaMovimentacao)) existing.lastMovementDate = p.lastMovementDate || p.dataUltimaMovimentacao;
                 if (!existing.distributionDate && (p.distributionDate || p.dataInicio)) existing.distributionDate = p.distributionDate || p.dataInicio;
                 if (p.hasExactCpfMatch && existing.matchType !== 'CPF confirmado') existing.matchType = 'CPF confirmado';
-                if (isCriminal && !existing.isCriminal) existing.isCriminal = true;
+                if (effectiveCriminal && !existing.isCriminal) existing.isCriminal = true;
+                if (excludedCrimeType && !existing.isExcludedCrimeType) existing.isExcludedCrimeType = excludedCrimeType;
                 if (isLabor && !existing.isTrabalhista) existing.isTrabalhista = true;
                 if (p.isVictim && !existing.isVictim) existing.isVictim = true;
                 if (p.isWitness && !existing.isWitness) existing.isWitness = true;
@@ -418,7 +421,7 @@ function selectTopProcessos(caseData, limit = 10) {
         }
         if (nk) seen.add(nk);
         all.push({
-            cnj: cnj || 'N/A',
+            cnj: cnj || 'CNJ_MASCARADO',
             area: p.area || 'N/A',
             classe: p.classe || null,
             assunto: p.assunto || p.assuntoPrincipal || null,
@@ -429,8 +432,9 @@ function selectTopProcessos(caseData, limit = 10) {
             comarca: p.processUf || null,
             data: p.dataInicio || p.data || 'N/A',
             fonte: 'Escavador2',
-            isCriminal,
+            isCriminal: effectiveCriminal,
             isTrabalhista: isLabor,
+            isExcludedCrimeType: excludedCrimeType || null,
             isActive: /ativo|em andamento/i.test(p.status || '') && !/finaliz|arquiv|encerr|baixad/i.test(p.status || ''),
             matchType: p.hasExactCpfMatch || p.tipoMatch === 'CPF' || p.matchType === 'CPF' ? 'CPF confirmado' : 'match por nome',
             specificRole: p.specificRole || p.tipoNormalizado || p.tipoPrincipal || null,
