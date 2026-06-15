@@ -2,6 +2,8 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+const { isExcludedCrimeType } = require('../helpers/crimeTypeFilter');
+
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
 }
@@ -18,6 +20,37 @@ function normalizeArea(value) {
   return 'UNKNOWN';
 }
 
+function normalizeStatus(value) {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value !== 'object' || Array.isArray(value)) return String(value);
+
+  const details = [
+    value.detalhes && `detalhes: ${value.detalhes}`,
+    value.movimentacoes && `movimentacoes: ${value.movimentacoes}`,
+    value.documentos && `documentos: ${value.documentos}`,
+  ].filter(Boolean);
+  if (details.length > 0) return details.join(' | ');
+  return null;
+}
+
+function normalizeRoleFlags(role = {}) {
+  const text = [role.categoria, role.tipo_principal, role.polo_principal]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+
+  return {
+    isDefendant: /DEFENDANT|REU|RECLAMAD|REQUERID|EXECUTAD|PASSIVO/.test(text),
+    isPlaintiff: /PLAINTIFF|AUTOR|RECLAMANTE|REQUERENTE|EXEQUENTE|ATIVO/.test(text),
+    isVictim: /VICTIM|VITIMA|OFENDID|PREJUDICAD|AGRAVIAD/.test(text),
+    isWitness: /WITNESS|TESTEMUNH|INFORMANTE/.test(text),
+    isLawyer: /LAWYER|ADVOGAD|PROCURADOR/.test(text),
+  };
+}
+
 function mapProcess(processo = {}, index = 0) {
   processo = asObject(processo);
   const cnj = processo.cnj || {};
@@ -26,29 +59,70 @@ function mapProcess(processo = {}, index = 0) {
   const papel = processo.papel_candidato || {};
   const area = normalizeArea(processo.classificacao?.area);
   const fullCnj = cnj.valor_completo_extraido || (!cnj.mascarado ? cnj.valor : null);
+  const numeroCnj = fullCnj || cnj.valor || null;
+  const status = normalizeStatus(processo.status);
+  const roleFlags = normalizeRoleFlags(papel);
+  const tipoNormalizado = papel.tipo_principal || papel.categoria || null;
+
+  const subjects = Array.isArray(dados.subjects) ? dados.subjects : (Array.isArray(processo.subjects) ? processo.subjects : []);
+  const classifications = Array.isArray(dados.classifications) ? dados.classifications : (Array.isArray(processo.classifications) ? processo.classifications : []);
+  const cnjSubject = dados.cnj_subject || processo.cnjSubject || null;
+  const cnjBroadSubject = dados.cnj_broad_subject || processo.cnjBroadSubject || null;
+  const cnjProcedure = dados.cnj_procedure || processo.cnjProcedure || null;
+
+  const excludedCrimeType = isExcludedCrimeType({
+    area,
+    classe: dados.classe,
+    tipo: dados.tipo,
+    natureza: dados.natureza,
+    assunto: dados.assunto,
+    subject: dados.subject,
+    cnjSubject,
+    cnjBroadSubject,
+    subjects,
+    classifications,
+  });
 
   return {
     escavador2Index: index,
-    numeroCnj: fullCnj || cnj.valor || null,
+    numeroCnj,
+    cnj: numeroCnj,
     numeroCnjMascarado: cnj.mascarado ? cnj.valor || null : null,
     numeroCnjCompletoExtraido: cnj.valor_completo_extraido || null,
     cnjResolutionStatus: cnj.status_resolucao || null,
     area,
-    isCriminal: area === 'CRIMINAL',
+    isCriminal: area === 'CRIMINAL' && !excludedCrimeType,
     isLabor: area === 'LABOR',
-    isMaterialRisk: processo.classificacao?.risco_material === true,
+    isTrabalhista: area === 'LABOR',
+    isExcludedCrimeType: excludedCrimeType || null,
+    isMaterialRisk: processo.classificacao?.risco_material === true && !excludedCrimeType,
+    subjects,
+    classifications,
+    cnjSubject,
+    cnjBroadSubject,
+    cnjProcedure,
     tribunalSigla: dados.tribunal_sigla || null,
+    tribunal: dados.tribunal_sigla || null,
     processUf: dados.uf || null,
     classe: dados.classe || null,
     assunto: dados.assunto || null,
+    assuntoPrincipal: dados.assunto || null,
     dataInicio: dados.data_inicio || null,
+    data: dados.data_inicio || null,
+    distributionDate: dados.data_inicio || null,
     ultimaMovimentacao: dados.ultima_movimentacao || null,
+    dataUltimaMovimentacao: dados.ultima_movimentacao || null,
+    lastMovementDate: dados.ultima_movimentacao || null,
     roleCategory: papel.categoria || 'UNKNOWN',
     tipoPrincipal: papel.tipo_principal || null,
+    tipoNormalizado,
+    specificRole: tipoNormalizado,
     polo: papel.polo_principal || null,
     hasExactCpfMatch: match.has_exact_cpf_match === true,
     matchType: match.tipo || null,
-    status: processo.status || {},
+    tipoMatch: match.tipo || null,
+    status,
+    ...roleFlags,
     movimentacoesResumo: processo.movimentacoes_resumo || null,
     documentosResumo: processo.documentos_resumo || null,
     _sourceEscavador2: {
