@@ -8,6 +8,8 @@ const UF_REGION_MAP = {
 };
 
 const { classifyRole } = require('./roleClassifier');
+const { classifyProcessArea } = require('./processClassifier');
+const { isExcludedCrimeType, CONSUMER_CIVIL_NOISE } = require('./crimeTypeFilter');
 
 // BUG-10 fix: Use the best available cpfsComNome signal from all providers.
 // When Escavador didn't run, escavadorCpfsComEsseNome is 0, but Judit gate
@@ -131,8 +133,7 @@ function getGeoConsistencyBucket(candidateProfile, processUf, processCity) {
 
 function resolveEvidenceOrigin(source, hasExactCpfMatch, viaNameOnly, matchStrength) {
     if (hasExactCpfMatch) return 'CPF';
-    if (source === 'Judit' && viaNameOnly) return 'NAME_SUPPLEMENT';
-    if (source === 'Escavador' && matchStrength === 'NAME_UNIQUE') return 'NAME_EXACT_UNIQUE';
+    if ((source === 'Escavador' || source === 'Escavador2') && matchStrength === 'NAME_UNIQUE') return 'NAME_EXACT_UNIQUE';
     if (viaNameOnly) return 'NAME_ONLY';
     return 'WEAK_IDENTITY';
 }
@@ -236,7 +237,11 @@ function buildEscavador2ProcessCandidates(caseData, candidateProfile) {
             const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.processUf, processo.processCity);
             const roleClassification = classifyRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
             const lowRiskRole = hasLowRiskRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
-            const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
+            const matchStrength = hasExactCpfMatch
+                ? 'EXACT_CPF'
+                : (processo.tipoMatch === 'NOME_EXATO_UNICO' || processo.matchDocumentoPor === 'NOME_EXATO_UNICO')
+                    ? 'NAME_UNIQUE'
+                    : 'NAME_ONLY';
             const evidenceOrigin = resolveEvidenceOrigin('Escavador2', hasExactCpfMatch, viaNameOnly, matchStrength);
             const evidenceStrength = resolveEvidenceStrength({
                 hasExactCpfMatch,
@@ -254,12 +259,28 @@ function buildEscavador2ProcessCandidates(caseData, candidateProfile) {
             if (geoConsistency === 'DISTANT_REGION') homonymRiskSignals.push('DISTANT_GEOGRAPHY');
             if (lowRiskRole) homonymRiskSignals.push('LOW_RISK_ROLE');
 
+            const excluded = processo.isExcludedCrimeType || isExcludedCrimeType(processo) || null;
+            const criminalResolved = (() => {
+                if (excluded) return false;
+                const classified = classifyProcessArea({
+                    area: processo.area,
+                    className: processo.classe,
+                    subject: processo.assunto || processo.assuntoPrincipal,
+                    tribunal: processo.tribunalSigla,
+                    subjects: processo.subjects,
+                    classifications: processo.classifications,
+                });
+                if (classified.area === 'CRIMINAL') return true;
+                return /penal|crim/i.test(processo.area || '');
+            })();
+
             return {
                 source: 'Escavador2',
                 sourceKey: 'escavador2',
                 cnj: processo.numeroCnj || null,
                 area: processo.area || null,
-                isCriminal: /penal|crim/i.test(processo.area || ''),
+                isCriminal: criminalResolved,
+                isExcludedCrimeType: excluded,
                 tribunal: processo.tribunalSigla || null,
                 processUf: processo.processUf || null,
                 processCity: processo.processCity || null,
