@@ -1,5 +1,5 @@
 const DEFAULT_BASE_URL = 'https://escavador2-api-dowqa75f4a-rj.a.run.app';
-const DEFAULT_TIMEOUT_MS = 120000;
+const DEFAULT_TIMEOUT_MS = 300000;
 
 class Escavador2Error extends Error {
     constructor(message, statusCode, responseBody) {

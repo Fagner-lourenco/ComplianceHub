@@ -118,7 +118,7 @@ describe('consultarEscavador2', () => {
         });
 
         const requestInit = fetch.mock.calls[0][1];
-        expect(DEFAULT_TIMEOUT_MS).toBe(120000);
+        expect(DEFAULT_TIMEOUT_MS).toBe(300000);
         expect(requestInit.signal).toBeInstanceOf(AbortSignal);
         expect(requestInit.signal.aborted).toBe(false);
     });
