@@ -210,7 +210,7 @@ async function scanClientCases(token, tenantId, onDoc) {
         for (const doc of docs) {
             scanned += 1;
             const id = doc.name.split('/').pop();
-            if (id.startsWith('.fieldPaths=')) {
+            if (CORRUPTED_DOC_IDS.includes(id)) {
                 await onDoc({ id, doc, isCorrupted: true });
                 continue;
             }
