@@ -5,6 +5,7 @@ const require = createRequire(import.meta.url);
 const {
     isExcludedCrimeType,
     hasIdentifiableClassOrSubject,
+    hasCriminalIndicator,
     TRANSITO,
     AMBIENTAL,
     HTE,
@@ -112,6 +113,68 @@ describe('isExcludedCrimeType', () => {
             classe: 'ACAO PENAL',
             assunto: 'Roubo Majorado',
         })).toBeNull();
+    });
+
+    it('detects Execucao Fiscal / IPTU as consumer/civil', () => {
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: '1116 - Execucao Fiscal',
+            assunto: '5952 - IPTU/ Imposto Predial e Territorial Urbano',
+        })).toBe(CONSUMER_CIVIL_NOISE);
+    });
+
+    it('detects Alienacao Fiduciaria as consumer/civil', () => {
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: '81 - Busca e Apreensao em Alienacao Fiduciaria',
+            assunto: '9582 - Alienacao Fiduciaria',
+        })).toBe(CONSUMER_CIVIL_NOISE);
+    });
+
+    it('detects Prisao Civil / Alimentos as consumer/civil', () => {
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: 'Cumprimento Provisorio de Sentenca',
+            assunto: 'DIREITO PROCESSUAL CIVIL E DO TRABALHO - Prisao Civil - Alimentos',
+        })).toBe(CONSUMER_CIVIL_NOISE);
+    });
+
+    it('detects Peticao Civel generic as consumer/civil', () => {
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: '241 - Peticao Civel',
+            assunto: '9582 - Alienacao Fiduciaria',
+        })).toBe(CONSUMER_CIVIL_NOISE);
+    });
+});
+
+describe('hasCriminalIndicator', () => {
+    it('returns false for Execucao Fiscal / IPTU', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Execucao Fiscal', assunto: 'IPTU' })).toBe(false);
+    });
+
+    it('returns false for Alienacao Fiduciaria', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Busca e Apreensao', assunto: 'Alienacao Fiduciaria' })).toBe(false);
+    });
+
+    it('returns true for Ameaca (real criminal)', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Juizado Especial Criminal', assunto: 'Ameaca' })).toBe(true);
+    });
+
+    it('returns true for Trafico de Drogas', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Lei Antitoxicos', assunto: 'Trafico de Drogas' })).toBe(true);
+    });
+
+    it('returns true for Acao Penal / Roubo', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Acao Penal', assunto: 'Roubo' })).toBe(true);
+    });
+
+    it('returns true for Lesao Corporal', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Acao Penal', assunto: 'Lesao Corporal' })).toBe(true);
+    });
+
+    it('returns false for Alimentos / Pensao Alimenticia', () => {
+        expect(hasCriminalIndicator({ area: 'CRIMINAL', classe: 'Alimentos - Lei Especial', assunto: 'Fixacao' })).toBe(false);
     });
 });
 
