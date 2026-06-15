@@ -19,16 +19,42 @@ describe('caseFilters', () => {
                 id: 'case-1',
                 data: () => ({
                     candidateName: 'Joao',
-                    createdAt: { toDate: () => new Date('2024-01-15') },
-                    updatedAt: { toDate: () => new Date('2024-01-16') },
+                    createdAt: { toDate: () => new Date('2024-01-15T00:00:00.000Z') },
+                    updatedAt: { toDate: () => new Date('2024-01-16T00:00:00.000Z') },
                 }),
             };
 
             const result = serializeClientCaseDocument(mockDoc);
             expect(result.id).toBe('case-1');
             expect(result.candidateName).toBe('Joao');
-            expect(result.createdAt).toBeInstanceOf(Date);
-            expect(result.updatedAt).toBeInstanceOf(Date);
+            expect(result.createdAt).toBe('2024-01-15T00:00:00.000Z');
+            expect(result.updatedAt).toBe('2024-01-16T00:00:00.000Z');
+        });
+
+        it('preserva strings ISO já existentes', () => {
+            const mockDoc = {
+                id: 'case-2',
+                data: () => ({
+                    candidateName: 'Maria',
+                    createdAt: '2024-06-15T20:01:40.349Z',
+                }),
+            };
+
+            const result = serializeClientCaseDocument(mockDoc);
+            expect(result.createdAt).toBe('2024-06-15T20:01:40.349Z');
+        });
+
+        it('retorna null quando data está ausente', () => {
+            const mockDoc = {
+                id: 'case-3',
+                data: () => ({ candidateName: 'Jose' }),
+            };
+
+            const result = serializeClientCaseDocument(mockDoc);
+            expect(result.createdAt).toBeNull();
+            expect(result.updatedAt).toBeNull();
+            expect(result.concludedAt).toBeNull();
+            expect(result.submittedAt).toBeNull();
         });
     });
 
