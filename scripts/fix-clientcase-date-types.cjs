@@ -326,31 +326,40 @@ async function run() {
         await sleep(RATE_LIMIT_MS);
     };
 
-    const scan = await scanClientCases(token, FILTER_TENANT, onDoc);
-    report.scanned = scan.scanned;
-    report.finishedAt = new Date().toISOString();
-
-    try {
-        fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-        fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2));
-        console.log(`[fix-clientcase-date-types] relatorio salvo em ${REPORT_PATH}`);
-    } catch (e) {
-        console.warn('Nao foi possivel salvar relatorio:', e.message);
+    function writeReport() {
+        report.finishedAt = new Date().toISOString();
+        try {
+            fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
+            fs.writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2));
+            console.log(`[fix-clientcase-date-types] relatorio salvo em ${REPORT_PATH}`);
+        } catch (e) {
+            console.warn('Nao foi possivel salvar relatorio:', e.message);
+        }
     }
 
-    console.log('\n=== RESUMO ===');
-    console.log(`docs escaneados: ${report.scanned}`);
-    console.log(`clientCases convertidos: ${report.clientCasesConverted}`);
-    console.log(`clientCases pulados: ${report.clientCasesSkipped}`);
-    console.log(`clientCases com erro: ${report.clientCasesFailed}`);
-    console.log(`cases raiz convertidos: ${report.casesConverted}`);
-    console.log(`cases raiz pulados: ${report.casesSkipped}`);
-    console.log(`cases raiz com erro: ${report.casesFailed}`);
-    console.log(`corrompidos deletados: ${report.corruptedDeleted}`);
-    console.log(`corrompidos com erro: ${report.corruptedFailed}`);
-    if (report.errors.length) {
-        console.log(`\nERROS (${report.errors.length}):`);
-        for (const e of report.errors.slice(0, 10)) console.log(' -', e.kind, e.id, e.error);
+    function printSummary() {
+        console.log('\n=== RESUMO ===');
+        console.log(`docs escaneados: ${report.scanned}`);
+        console.log(`clientCases convertidos: ${report.clientCasesConverted}`);
+        console.log(`clientCases pulados: ${report.clientCasesSkipped}`);
+        console.log(`clientCases com erro: ${report.clientCasesFailed}`);
+        console.log(`cases raiz convertidos: ${report.casesConverted}`);
+        console.log(`cases raiz pulados: ${report.casesSkipped}`);
+        console.log(`cases raiz com erro: ${report.casesFailed}`);
+        console.log(`corrompidos deletados: ${report.corruptedDeleted}`);
+        console.log(`corrompidos com erro: ${report.corruptedFailed}`);
+        if (report.errors.length) {
+            console.log(`\nERROS (${report.errors.length}):`);
+            for (const e of report.errors.slice(0, 10)) console.log(' -', e.kind, e.id, e.error);
+        }
+    }
+
+    try {
+        const scan = await scanClientCases(token, FILTER_TENANT, onDoc);
+        report.scanned = scan.scanned;
+    } finally {
+        writeReport();
+        printSummary();
     }
 }
 
