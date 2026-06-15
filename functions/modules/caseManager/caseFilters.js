@@ -4,6 +4,20 @@
  */
 
 /**
+ * Converte Timestamp do Firestore, Date ou string ISO em string ISO.
+ * Retorna null para valores ausentes/inválidos.
+ * @param {any} value
+ * @returns {string|null}
+ */
+function asIsoOrNull(value) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value.toDate === 'function') return value.toDate().toISOString();
+    if (typeof value === 'string') return value;
+    return null;
+}
+
+/**
  * Serializa um documento de caso do cliente
  * Suporta tanto DocumentSnapshot quanto objetos planos
  * @param {DocumentSnapshot|Object} docSnap
@@ -14,10 +28,10 @@ function serializeClientCaseDocument(docSnap) {
     return {
         id: docSnap.id || data.caseId || null,
         ...data,
-        createdAt: data.createdAt?.toDate?.() ?? data.createdAt ?? null,
-        updatedAt: data.updatedAt?.toDate?.() ?? data.updatedAt ?? null,
-        submittedAt: data.submittedAt?.toDate?.() ?? data.submittedAt ?? null,
-        concludedAt: data.concludedAt?.toDate?.() ?? data.concludedAt ?? null,
+        createdAt: asIsoOrNull(data.createdAt) ?? data.createdAt ?? null,
+        updatedAt: asIsoOrNull(data.updatedAt) ?? data.updatedAt ?? null,
+        submittedAt: asIsoOrNull(data.submittedAt) ?? data.submittedAt ?? null,
+        concludedAt: asIsoOrNull(data.concludedAt) ?? data.concludedAt ?? null,
     };
 }
 
