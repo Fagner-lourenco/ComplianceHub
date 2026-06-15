@@ -9,7 +9,6 @@ const {
     AMBIENTAL,
     HTE,
     CARTA_PRECATORIA_NOISE,
-    DRUG_PERSONAL_USE,
     CONSUMER_CIVIL_NOISE,
 } = require('./crimeTypeFilter');
 
@@ -20,12 +19,12 @@ describe('isExcludedCrimeType', () => {
         expect(isExcludedCrimeType(baseProcess)).toBeNull();
     });
 
-    it('detects drug personal use (art. 28) in flagrante context', () => {
+    it('does not exclude drug personal use (art. 28) in flagrante context', () => {
         expect(isExcludedCrimeType({
             area: 'CRIMINAL',
             classe: 'AUTO DE PRISAO EM FLAGRANTE',
             assunto: 'Posse de Drogas para Consumo Pessoal (Lei 11.343/06, art. 28)',
-        })).toBe(DRUG_PERSONAL_USE);
+        })).toBeNull();
     });
 
     it('detects transito by Lei 9.503', () => {
@@ -64,12 +63,12 @@ describe('isExcludedCrimeType', () => {
         })).toBe(CARTA_PRECATORIA_NOISE);
     });
 
-    it('detects drug personal use (art. 28) by assunto', () => {
+    it('does not exclude drug personal use (art. 28) by assunto', () => {
         expect(isExcludedCrimeType({
             area: 'CRIMINAL',
             classe: 'TERMO CIRCUNSTANCIADO',
             assunto: 'Posse de Drogas para Consumo Pessoal',
-        })).toBe(DRUG_PERSONAL_USE);
+        })).toBeNull();
     });
 
     it('detects consumer/civil noise (Escavador2 mis-flags as criminal)', () => {
@@ -96,11 +95,11 @@ describe('isExcludedCrimeType', () => {
         })).toBe(AMBIENTAL);
     });
 
-    it('inspects classifications[] array as fallback', () => {
+    it('does not exclude drug personal use from classifications[] fallback', () => {
         expect(isExcludedCrimeType({
             area: 'CRIMINAL',
             classifications: ['Posse de Drogas para Consumo Pessoal'],
-        })).toBe(DRUG_PERSONAL_USE);
+        })).toBeNull();
     });
 
     it('returns null for empty process', () => {

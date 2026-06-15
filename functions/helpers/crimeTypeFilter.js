@@ -13,12 +13,11 @@ const TRANSITO = 'TRANSITO';
 const AMBIENTAL = 'AMBIENTAL';
 const HTE = 'HTE';
 const CARTA_PRECATORIA_NOISE = 'CARTA_PRECATORIA_NOISE';
-const DRUG_PERSONAL_USE = 'DRUG_PERSONAL_USE';
 const CONSUMER_CIVIL_NOISE = 'CONSUMER_CIVIL_NOISE';
 
 // Lei 9.503/97 (CTB), embriaguez, direcao perigosa.
-// NAO inclui art. 28 (esse artigo eh de posse para uso pessoal, classificado em DRUG_PERSONAL_USE).
-// NAO inclui "Posse de Drogas para Consumo Pessoal" (idem).
+// Nao inclui art. 28 / posse para uso pessoal; para este projeto, esse
+// apontamento permanece material conforme decisao operacional registrada.
 // NAO inclui "Acidente de Transito" (que eh consumer/civil — classificado em CONSUMER_CIVIL_NOISE).
 const TRANSITO_PATTERN = /\b(CRIMES?\s+DE\s+TRANSITO|INFRACAO\s+DE\s+TRANSITO|LEI\s*9\.503|EMBRIAGUEZ\s+AO\s+VOLANTE|DIRECAO\s+PERIGOSA|ART\.?\s*306\b|ART\.?\s*302\b|ART\.?\s*303\b)\b/i;
 // Homicidio no transito nao eh "transito comum" — deve ser criminal material
@@ -34,9 +33,6 @@ const HTE_PATTERN = /\b(HOMOLOGACAO\s+DA?\s+TRANSACAO|HOMOLOGACAO\s+DE\s+TRANSAC
 // Carta precatoria criminal de mera intimacao/citacao/depoimento (nao eh caso criminal)
 const CARTA_PRECATORIA_PATTERN = /\bCARTA\s+PRECATORIA\s+CRIMINAL\b/i;
 const CARTA_PRECATORIA_NOISE_PATTERN = /\b(INTIMACAO|NOTIFICACAO|DEPONIMENTO|PROVAS|CITACAO)\b/i;
-
-// Sui generis: art. 28 da Lei 11.343/06 (posse p/ uso pessoal — nao gera veredito criminal)
-const DRUG_PERSONAL_USE_PATTERN = /\b(USO\s+PESSOAL|CONSUMO\s+PESSOAL|ART\.?\s*28\b)\b/i;
 
 // Consumer / cobranca / civil disfarçado de criminal pela API do Escavador2
 const CONSUMER_CIVIL_NOISE_PATTERN = /\b(DIREITO\s+DO\s+CONSUMIDOR|RESPONSABILIDADE\s+CIVIL|INDENIZACAO\s+POR\s+DANO|ACIDENTE\s+DE\s+TRANSITO|CARTAO\s+DE\s+CREDITO|INCLUSAO\s+INDEVIDA|ALUGUEIS|DESPEJO|OBRAS\s+SOCIAIS|PATRIMONIO\s+CULTURAL|NOTA\s+PROMISSORIA|COBRANCA|COMPRA\s+E\s+VENDA|JUIZADO\s+ESPECIAL\s+CIVEL|PROCEDIMENTO\s+COMUM\s+CIVEL|DIREITO\s+CIVIL|DUPLICATA|TITULO\s+EXTRAJUDICIAL|EXECUCAO\s+DE\s+TITULO|OBRIGACOES|ADIANTAMENTO\s+A\s+DEPOSITARIO|REINTEGRACAO\s+DE\s+POSSE|CONDOMINIO|REVISIONAL)\b/i;
@@ -86,8 +82,6 @@ function isExcludedCrimeType(process = {}) {
 
     if (AMBIENTAL_PATTERN.test(text)) return AMBIENTAL;
     if (HTE_PATTERN.test(text)) return HTE;
-    // DRUG_PERSONAL_USE deve vir ANTES de TRANSITO pois art. 28 casaria ambos
-    if (DRUG_PERSONAL_USE_PATTERN.test(text)) return DRUG_PERSONAL_USE;
     if (TRANSITO_PATTERN.test(text)) return TRANSITO;
 
     // Carta precatoria: so excluir se for mero ato processual (intimacao/citacao/depoimento)
@@ -116,6 +110,5 @@ module.exports = {
     AMBIENTAL,
     HTE,
     CARTA_PRECATORIA_NOISE,
-    DRUG_PERSONAL_USE,
     CONSUMER_CIVIL_NOISE,
 };
