@@ -2,7 +2,7 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-const { isExcludedCrimeType } = require('../helpers/crimeTypeFilter');
+const { isExcludedCrimeType, hasCriminalIndicator } = require('../helpers/crimeTypeFilter');
 
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
@@ -91,7 +91,7 @@ function mapProcess(processo = {}, index = 0) {
     numeroCnjCompletoExtraido: cnj.valor_completo_extraido || null,
     cnjResolutionStatus: cnj.status_resolucao || null,
     area,
-    isCriminal: area === 'CRIMINAL' && !excludedCrimeType,
+    isCriminal: area === 'CRIMINAL' && hasCriminalIndicator({ area, classe: dados.classe, assunto: dados.assunto, tipo: dados.tipo, natureza: dados.natureza, subjects, classifications }) && !excludedCrimeType,
     isLabor: area === 'LABOR',
     isTrabalhista: area === 'LABOR',
     isExcludedCrimeType: excludedCrimeType || null,
