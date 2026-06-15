@@ -7,6 +7,8 @@ const { buildHomonymAnalysisInput } = require('../helpers/aiHomonym');
 const { filterDjenComunicacoesByConfirmedProcess } = require('../helpers/reportHelpers');
 const { SAFE_NARRATIVE_TEXTS } = require('./reportEngine');
 
+const HIGH_RISK_CRIMINAL_ROLES = /^(REU|INDICIAD[OA]|AUTOR\s+DO\s+FATO|CONDENAD[OA]|ACUSAD[OA]|INVESTIGAD[OA]|AVERIGUAD[OA]|EXECUTAD[OA]|DENUNCIAD[OA]|FLAGRANTEAD[OA]|APELAN[DT]E|APELAD[OA]|RECORRENT[AE]|RECORRID[OA]|AGRAVANT[AE]|AGRAVAD[OA]|SENTENCIAD[OA]|NOTICIAD[OA])$/i;
+
 /* =========================================================
    LÓGICA PURA: Classificação automática
    ========================================================= */
@@ -145,6 +147,12 @@ function computeAutoClassification(caseData, {
     const escavador2NewProcesses = escavador2Done ? escavador2Processos.filter((p) => p.isNewEscavador2Finding === true) : [];
     const escavador2NewCriminalCount = escavador2NewProcesses.filter((p) => p.isCriminal === true).length;
     const escavador2NewLaborCount = escavador2NewProcesses.filter((p) => p.isLabor === true).length;
+    if (escavador2NewCriminalCount > 0) {
+        pushUnique(criminalNotes, `Nova consulta processual identificou ${escavador2NewCriminalCount} processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.`);
+    }
+    if (escavador2NewLaborCount > 0) {
+        pushUnique(laborNotes, `Nova consulta processual identificou ${escavador2NewLaborCount} processo(s) trabalhista(s) ativo(s) nao identificado(s) pelos demais provedores.`);
+    }
     const namesakeCount = caseData.bigdatacorpNamesakeCount || 0;
     const bigdatacorpPep = bigdatacorpHasKycData && caseData.bigdatacorpIsPep === true;
     const bigdatacorpSanctioned = bigdatacorpHasKycData && caseData.bigdatacorpIsSanctioned === true;
@@ -223,9 +231,15 @@ function computeAutoClassification(caseData, {
     };
     const dedupedReferenceCandidates = dedupByCnj(normalizedReferenceCandidates);
 
-    const relevantCriminalCandidates = dedupedReferenceCandidates.filter(
-        (candidate) => candidate.isCriminal && !candidate.lowRiskRole && candidate.roleClassification?.category !== 'VICTIM',
-    );
+    const relevantCriminalCandidates = dedupedReferenceCandidates.filter((candidate) => {
+        if (!candidate.isCriminal) return false;
+        if (candidate.lowRiskRole) return false;
+        if (candidate.roleClassification?.category === 'VICTIM') return false;
+        if (candidate.isExcludedCrimeType) return false;
+        const matchedRole = String(candidate.matchedRole || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+        const isActive = candidate.isDefendant === true || HIGH_RISK_CRIMINAL_ROLES.test(matchedRole);
+        return isActive;
+    });
     const relevantLaborCandidates = dedupedReferenceCandidates.filter(
         (candidate) => isLaborCandidate(candidate) && !candidate.lowRiskRole && candidate.roleClassification?.category === 'PLAINTIFF',
     );
@@ -307,9 +321,6 @@ function computeAutoClassification(caseData, {
         }
         if (djenCriminalStrong) {
             pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) criminal(is) confirmada(s) no Diario de Justica Eletronico.`);
-        }
-        if (escavador2NewCriminalCount > 0) {
-            pushUnique(criminalNotes, `Escavador2 encontrou ${escavador2NewCriminalCount} processo(s) criminal(is) novo(s) nao identificado(s) pelos demais provedores.`);
         }
     } else if (hasWeakCriminalEvidence) {
         result.criminalFlag = 'INCONCLUSIVE';
@@ -416,9 +427,6 @@ function computeAutoClassification(caseData, {
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Judit')) sources.push('Judit');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'BigDataCorp')) sources.push('BigDataCorp');
         pushUnique(laborNotes, `Trabalhista POSITIVO confirmado por: ${sources.join(', ') || 'processos identificados'}.`);
-        if (escavador2NewLaborCount > 0) {
-            pushUnique(laborNotes, `Escavador2 encontrou ${escavador2NewLaborCount} processo(s) trabalhista(s) novo(s) nao identificado(s) pelos demais provedores.`);
-        }
     } else if (djenLaborWeak) {
         result.laborFlag = 'INCONCLUSIVE';
         pushUnique(laborNotes, 'Achados trabalhistas no DJEN/DPJe dependem de nome comum sem confirmacao forte de identidade. Revisao manual recomendada.');
