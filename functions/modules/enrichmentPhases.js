@@ -1579,6 +1579,17 @@ function createEnrichmentPhases(deps) {
       return { status: 'FAILED', error };
     }
 
+    const esc2Circuit = await checkCircuit('escavador2');
+    if (esc2Circuit.open) {
+      await caseRef.update({
+        escavador2EnrichmentStatus: 'SKIPPED',
+        escavador2Error: `circuit_open: ${esc2Circuit.reason || 'too many failures'}`.slice(0, 500),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 circuit open');
+      return { status: 'SKIPPED', error: esc2Circuit.reason };
+    }
+
     await caseRef.update({
       escavador2EnrichmentStatus: 'RUNNING',
       escavador2Error: null,
@@ -1610,6 +1621,7 @@ function createEnrichmentPhases(deps) {
         delete updatePayload.escavador2RawPayloads;
       }
       await caseRef.update(updatePayload);
+      await recordSuccess('escavador2');
       await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 completed');
       return { status, error: null };
     } catch (err) {
@@ -1622,6 +1634,7 @@ function createEnrichmentPhases(deps) {
         escavador2EnrichedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
+      await recordFailure('escavador2', errMsg).catch((e) => console.warn('[Escavador2] recordFailure error:', e.message));
       await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 failed');
       return { status: 'FAILED', error: errMsg };
     }

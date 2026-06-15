@@ -471,6 +471,9 @@ describe('runDjenEnrichmentPhase', () => {
 
 describe('runEscavador2EnrichmentPhase', () => {
   function makeEscavador2Deps(overrides = {}) {
+    const checkCircuit = vi.fn(() => Promise.resolve({ open: false }));
+    const recordSuccess = vi.fn(() => Promise.resolve());
+    const recordFailure = vi.fn(() => Promise.resolve());
     const consultarEscavador2 = vi.fn();
     const normalizeEscavador2Response = vi.fn((data) => data);
     const deduplicateEscavador2Findings = vi.fn((data) => ({
@@ -496,9 +499,12 @@ describe('runEscavador2EnrichmentPhase', () => {
         },
         helpers: {
           deduplicateEscavador2Findings,
+          checkCircuit,
+          recordSuccess,
+          recordFailure,
         },
       }),
-      mocks: { consultarEscavador2, normalizeEscavador2Response, deduplicateEscavador2Findings },
+      mocks: { checkCircuit, recordSuccess, recordFailure, consultarEscavador2, normalizeEscavador2Response, deduplicateEscavador2Findings },
       ...overrides,
     };
   }
