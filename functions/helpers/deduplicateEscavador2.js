@@ -57,9 +57,10 @@ function buildKnownProcess(item, provider) {
     'numeroProcesso',
     'numeroProcessoMascara',
     'code',
+    'numeroCnjCompletoExtraido',
   ]);
-  const area = firstValue(item, ['area', 'courtType']);
-  const tribunal = firstValue(item, ['tribunalSigla', 'tribunal', 'tribunalAcronym', 'courtName', 'court']);
+  const area = firstValue(item, ['area', 'courtType', 'areaDireito']);
+  const tribunal = firstValue(item, ['tribunalSigla', 'tribunal', 'tribunalAcronym', 'courtName', 'court', 'orgao']);
   const uf = firstValue(item, ['processUf', 'state', 'uf']);
   const classOrSubject = firstValue(item, [
     'classe',
@@ -67,6 +68,7 @@ function buildKnownProcess(item, provider) {
     'assunto',
     'assuntoPrincipal',
     'subject',
+    'assuntos',
   ]);
   const date = firstValue(item, [
     'dataInicio',
@@ -75,6 +77,7 @@ function buildKnownProcess(item, provider) {
     'lastMovementDate',
     'dataDisponibilizacao',
     'date',
+    'dataDistribuicao',
   ]);
 
   return {
@@ -96,6 +99,7 @@ function collectKnownProcesses(caseData) {
     ...asArray(caseData.juditProcessos).map((item) => buildKnownProcess(item, 'judit')),
     ...asArray(caseData.escavadorProcessos).map((item) => buildKnownProcess(item, 'escavador')),
     ...asArray(caseData.djenComunicacoes).map((item) => buildKnownProcess(item, 'djen')),
+    ...asArray(caseData.processosCompleta).map((item) => buildKnownProcess(item, 'fontedata')),
   ];
 }
 
@@ -158,6 +162,7 @@ function deduplicateEscavador2Findings(caseData = {}, options = {}) {
     return {
       ...item,
       isDuplicate,
+      isDuplicateEscavador2Finding: isDuplicate,
       duplicateOfProvider: duplicate?.known.provider || null,
       duplicateOfProcessNumber: duplicate?.known.processNumber || null,
       duplicateMatchStrength: duplicate?.strength || null,
