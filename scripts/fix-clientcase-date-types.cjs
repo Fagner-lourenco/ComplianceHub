@@ -31,6 +31,10 @@ const CORRUPTED_DOC_IDS = [
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 
+/**
+ * @param {{stringValue?: string} | null | undefined} fv Firestore field value shape
+ * @returns {boolean} true only if fv has a stringValue that matches ISO 8601 UTC and parses to a real Date
+ */
 function isStringIsoDate(fv) {
     if (!fv || typeof fv !== 'object') return false;
     if (typeof fv.stringValue !== 'string') return false;
@@ -39,16 +43,26 @@ function isStringIsoDate(fv) {
     return Number.isFinite(ms);
 }
 
+/**
+ * @param {Record<string, any> | null | undefined} fields Firestore field map (typically from a masked GET)
+ * @returns {Record<string, {timestampValue: string}>} payload with ONLY the 3 date fields that are string-typed
+ *          ISO 8601 dates. Empty object if nothing to fix. NEVER includes non-date fields.
+ */
 function buildFixPayload(fields) {
     const payload = {};
     for (const key of DATE_FIELDS) {
-        if (isStringIsoDate(fields?.[key])) {
-            payload[key] = { timestampValue: fields[key].stringValue };
+        const fv = fields?.[key];
+        if (isStringIsoDate(fv)) {
+            payload[key] = { timestampValue: fv.stringValue };
         }
     }
     return payload;
 }
 
+/**
+ * @param {string[]} fieldNames Firestore field paths to update
+ * @returns {string} URL query string with `updateMask.fieldPaths=NAME` per field, URL-encoded
+ */
 function buildUpdateMask(fieldNames) {
     return fieldNames
         .map((name) => `updateMask.fieldPaths=${encodeURIComponent(name)}`)

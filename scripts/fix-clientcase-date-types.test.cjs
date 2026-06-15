@@ -43,6 +43,18 @@ describe('isStringIsoDate', () => {
     it('returns false for plain text that mentions a date', () => {
         expect(isStringIsoDate({ stringValue: 'Caso criado em 2026-06-02' })).toBe(false);
     });
+    it('returns true for valid leap-year date (2024-02-29)', () => {
+        expect(isStringIsoDate({ stringValue: '2024-02-29T00:00:00Z' })).toBe(true);
+    });
+    it('returns false for null input', () => {
+        expect(isStringIsoDate(null)).toBe(false);
+    });
+    it('ignores extra properties on the field value', () => {
+        expect(isStringIsoDate({
+            stringValue: '2026-06-02T16:34:50.012Z',
+            someExtra: 'value',
+        })).toBe(true);
+    });
 });
 
 describe('buildFixPayload', () => {
@@ -141,5 +153,21 @@ describe('buildUpdateMask', () => {
     });
     it('encodes empty list as empty string', () => {
         expect(buildUpdateMask([])).toBe('');
+    });
+    it('URL-encodes special characters in field names', () => {
+        expect(buildUpdateMask(['foo&bar', 'baz=qux']))
+            .toBe('updateMask.fieldPaths=foo%26bar&updateMask.fieldPaths=baz%3Dqux');
+    });
+});
+
+describe('buildFixPayload edge cases', () => {
+    it('returns empty object for null input', () => {
+        expect(buildFixPayload(null)).toEqual({});
+    });
+    it('returns empty object for undefined input', () => {
+        expect(buildFixPayload(undefined)).toEqual({});
+    });
+    it('returns empty object when fields is an empty object', () => {
+        expect(buildFixPayload({})).toEqual({});
     });
 });
