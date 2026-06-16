@@ -2122,5 +2122,36 @@ describe('Deterministic Prefill', () => {
             expect(block).toContain('Status: ATIVO');
             expect(block).not.toContain('Status: ARQUIVADO');
         });
+
+        it('selectTopProcessos includes new Escavador2 labor finding and prefill lists it', () => {
+            const caseData = {
+                candidateName: 'CANDIDATO TESTE',
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'POSITIVE',
+                warrantFlag: 'NEGATIVE',
+                escavador2Processos: [{
+                    numeroCnj: '015XXXX-22.2009.5.06.0014',
+                    isNewEscavador2Finding: true,
+                    isCriminal: false,
+                    isLabor: true,
+                    isTrabalhista: true,
+                    isPlaintiff: true,
+                    classe: 'RECLAMACAO TRABALHISTA',
+                    assunto: null,
+                    tribunalSigla: 'TRT6',
+                    status: 'Ativo',
+                    polo: 'ATIVO',
+                    dataInicio: '2009-09-15',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            expect(top.length).toBe(1);
+            expect(top[0].isTrabalhista).toBe(true);
+            expect(top[0].fonte).toBe('Escavador2');
+
+            const notes = buildDetLaborNotes(caseData);
+            expect(notes).toContain('015XXXX-22.2009.5.06.0014');
+            expect(notes).toContain('RECLAMACAO TRABALHISTA');
+        });
     });
 });
