@@ -185,4 +185,170 @@ describe('deduplicateEscavador2', () => {
     expect(isPositionalMaskedMatch('XXXXXXXXXXXXXXXXXXXX', '50067239320258210007')).toBe(false);
     expect(isPositionalMaskedMatch('500XXXX9320258210007', '500XXXX9320258210007')).toBe(true);
   });
+
+  it('canonicalizes tribunal acronyms', () => {
+    const { normalizeTribunal } = deduplicateEscavador2;
+    expect(normalizeTribunal('TRT-5')).toBe('TRT5');
+    expect(normalizeTribunal('TRT 5ª Região')).toBe('TRT5');
+    expect(normalizeTribunal('TJSP')).toBe('TJSP');
+    expect(normalizeTribunal('Tribunal Regional do Trabalho da 5ª Região')).toBe('TRT5');
+    expect(normalizeTribunal('  ')).toBeNull();
+  });
+
+  it('detects token overlap in class/subject fields', () => {
+    const { hasSubjectOverlap } = deduplicateEscavador2;
+    expect(hasSubjectOverlap(
+      { classOrSubject: 'Ação Penal' },
+      { classOrSubject: 'Acao Penal - Roubo' },
+    )).toBe(true);
+    expect(hasSubjectOverlap(
+      { classOrSubject: 'Homologação da Transação Extrajudicial' },
+      { classOrSubject: 'HTE' },
+    )).toBe(false);
+    expect(hasSubjectOverlap(
+      { classOrSubject: 'A', cnjSubject: 'Roubo Qualificado' },
+      { classOrSubject: 'Acao Penal', cnjSubject: 'Roubo' },
+    )).toBe(true);
+  });
+
+  it('matches metadata when one side lacks class/subject using fallback', () => {
+    const result = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: [{
+        numero: '5006723-93.2025.8.21.0007',
+        courtType: 'LABOR',
+        courtName: 'TRT5',
+        processUf: 'BA',
+        lastMovementDate: '2025-03-10',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '500XXXX-93.2025.8.21.0008',
+        area: 'LABOR',
+        tribunalSigla: 'TRT-5',
+        processUf: 'BA',
+        dataInicio: '2025-03-12',
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: true,
+      duplicateOfProvider: 'bigdatacorp',
+      duplicateMatchStrength: 'metadata',
+    }));
+  });
+
+  it('matches masked Escavador2 CNJ against full BigDataCorp CNJ with CNJ_MASKED strength', () => {
+    const result = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: [{
+        numero: '5006723-93.2025.8.21.0007',
+        courtType: 'LABOR',
+        courtName: 'TRT5',
+        processUf: 'BA',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '500XXXX-93.2025.8.21.0007',
+        area: 'LABOR',
+        tribunalSigla: 'TRT-5',
+        processUf: 'BA',
+        isMaterialRisk: true,
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: true,
+      isDuplicateEscavador2Finding: true,
+      duplicateOfProvider: 'bigdatacorp',
+      duplicateOfProcessNumber: '5006723-93.2025.8.21.0007',
+      duplicateMatchStrength: 'CNJ_MASKED',
+      isNewEscavador2Finding: false,
+    }));
+    expect(result.escavador2HasNewMaterialRisk).toBe(false);
+  });
+
+  it('matches masked Escavador2 CNJ against Judit process summary', () => {
+    const result = deduplicateEscavador2Findings({
+      juditProcessos: [{
+        code: '0001234-56.2024.8.26.0100',
+        area: 'criminal',
+        tribunalAcronym: 'TJSP',
+        processUf: 'SP',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '0001234-XX.2024.8.26.0100',
+        area: 'CRIMINAL',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: true,
+      duplicateMatchStrength: 'CNJ_MASKED',
+      isNewEscavador2Finding: false,
+    }));
+  });
+
+  it('still prefers CNJ_FULL when Escavador2 has extracted full CNJ', () => {
+    const result = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: [{
+        numero: '0001234-56.2024.8.26.0100',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '0001234-XX.2024.8.26.0100',
+        numeroCnjCompletoExtraido: '0001234-56.2024.8.26.0100',
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      duplicateMatchStrength: 'CNJ_FULL',
+      isNewEscavador2Finding: false,
+    }));
+  });
+
+  it('does not produce false positive on mostly masked CNJ', () => {
+    const result = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: [{
+        numero: '0001234-56.2024.8.26.0100',
+      }],
+      escavador2Processos: [{
+        numeroCnj: 'XXXXXXXXXXXXXXXXX100',
+        area: 'CRIMINAL',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+        classe: 'Acao Penal',
+        dataInicio: '2024-01-15',
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: false,
+      duplicateMatchStrength: null,
+      isNewEscavador2Finding: true,
+    }));
+  });
+
+  it('does not match metadata when tribunal differs', () => {
+    const result = deduplicateEscavador2Findings({
+      escavadorProcessos: [{
+        area: 'criminal',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+        classe: 'Acao Penal',
+        dataInicio: '2024-01-15',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '0001234-XX.2024.8.26.0100',
+        area: 'CRIMINAL',
+        tribunalSigla: 'TJMG',
+        processUf: 'SP',
+        classe: 'Ação Penal',
+        dataInicio: '2024-03-01',
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: false,
+      duplicateMatchStrength: null,
+      isNewEscavador2Finding: true,
+    }));
+  });
 });

@@ -55,8 +55,92 @@ function normalizeAreaBucket(value) {
   if (!text) return null;
   if (/CRIM|PENAL/.test(text)) return 'CRIMINAL';
   if (/TRABALH|LABOR/.test(text)) return 'LABOR';
-  if (/CIVEL|CIVIL/.test(text)) return 'CIVIL';
+  if (/\b(CIVEL|CIVIL)\b/.test(text)) return 'CIVIL';
   return text;
+}
+
+const LEGAL_STOPWORDS = new Set([
+  'ACAO', 'ACOES', 'PROCEDIMENTO', 'PROCEDIMENTOS', 'CIVEL', 'CIVEIS', 'COMUM',
+  'ORDINARIA', 'ESPECIAL', 'SUMARIO', 'SUMARISSIMO', 'MONITORIA', 'CUMPRIMENTO',
+  'SENTENCA', 'EXECUCAO', 'EXECUCOES', 'DE', 'DO', 'DA', 'DOS', 'DAS', 'EM', 'NO',
+  'NA', 'POR', 'PARA', 'E', 'OU', 'COM', 'SEM', 'SOB', 'SOBRE',
+]);
+
+function normalizeTribunal(value) {
+  const text = normalizeText(value);
+  if (!text) return null;
+
+  const acronymMatch = text.match(/\b(TRT|TJ|TRF|JF|STM|TSE|TRE|STJ|STF)\s*-?\s*(\d{1,2})?\b/i);
+  if (acronymMatch) {
+    const [, acronym, number] = acronymMatch;
+    const normalizedNumber = number ? number.replace(/[ªº]/g, '') : '';
+    return normalizedNumber ? `${acronym}${normalizedNumber}` : acronym;
+  }
+
+  if (/REGIONAL\s+DO\s+TRABALHO|JUSTI[ÇC]A\s+DO\s+TRABALHO/i.test(text)) {
+    const numberMatch = text.match(/\b(\d{1,2})[ªº]?\s*REGI[AÃ]O/i);
+    return numberMatch ? `TRT${numberMatch[1]}` : 'TRT';
+  }
+
+  if (/JUSTI[ÇC]A\s+FEDERAL/i.test(text)) {
+    const numberMatch = text.match(/\b(\d{1,2})[ªº]?\s*REGI[AÃ]O/i);
+    return numberMatch ? `TRF${numberMatch[1]}` : 'JF';
+  }
+
+  if (/JUSTI[ÇC]A\s+ESTADUAL/i.test(text)) {
+    const stateMap = {
+      'SAO PAULO': 'SP', 'RIO DE JANEIRO': 'RJ', 'MINAS GERAIS': 'MG', 'BAHIA': 'BA',
+      PARANA: 'PR', 'RIO GRANDE DO SUL': 'RS', PERNAMBUCO: 'PE', CEARA: 'CE',
+      PARA: 'PA', 'SANTA CATARINA': 'SC', GOIAS: 'GO', MARANHAO: 'MA', PARAIBA: 'PB',
+      AMAZONAS: 'AM', PIAUI: 'PI', 'MATO GROSSO': 'MT', 'RIO GRANDE DO NORTE': 'RN',
+      ALAGOAS: 'AL', 'DISTRITO FEDERAL': 'DF', 'MATO GROSSO DO SUL': 'MS', SERGIPE: 'SE',
+      RONDONIA: 'RO', TOCANTINS: 'TO', ACRE: 'AC', AMAPA: 'AP', RORAIMA: 'RR',
+    };
+    for (const [name, uf] of Object.entries(stateMap)) {      if (text.includes(name)) return `TJ${uf}`;
+    }
+  }
+
+  return text
+    .replace(/[-\s]/g, '')
+    .replace(/[ªº]/g, '')
+    .replace(/\b(DE|DO|DA|DOS|DAS|REGI[AÃ]O|REGI[ÕO]ES|TRABALHO|FEDERAL|ESTADUAL|JUSTI[ÇC]A|TRIBUNAL|REGIONAL)\b/gi, '');
+}
+
+function normalizeTokens(value) {
+  const text = normalizeText(value);
+  if (!text) return [];
+  return text
+    .split(/[^A-Z0-9]+/)
+    .filter((token) => token.length >= 3 && !LEGAL_STOPWORDS.has(token));
+}
+
+function collectSubjectTexts(item) {
+  const texts = [];
+  if (item.classOrSubject) texts.push(item.classOrSubject);
+  if (item.cnjSubject) texts.push(item.cnjSubject);
+  if (item.cnjBroadSubject) texts.push(item.cnjBroadSubject);
+  if (item.cnjProcedure) texts.push(item.cnjProcedure);
+  if (Array.isArray(item.subjects)) texts.push(...item.subjects);
+  if (Array.isArray(item.classifications)) texts.push(...item.classifications);
+  return texts;
+}
+
+function hasSubjectOverlap(source, target, minShared = 1) {
+  const sourceTokens = new Set();
+  for (const text of collectSubjectTexts(source)) {
+    for (const token of normalizeTokens(text)) sourceTokens.add(token);
+  }
+  if (sourceTokens.size === 0) return false;
+
+  let shared = 0;
+  for (const text of collectSubjectTexts(target)) {
+    for (const token of normalizeTokens(text)) {
+      if (sourceTokens.has(token)) {
+        shared += 1;
+      }
+    }
+  }
+  return shared >= minShared;
 }
 
 function firstValue(item, keys) {
@@ -99,6 +183,8 @@ function buildKnownProcess(item, provider) {
     'assuntoPrincipal',
     'subject',
     'assuntos',
+    'cnjSubject',
+    'cnjProcedure',
   ]);
   const date = firstValue(item, [
     'dataInicio',
@@ -114,10 +200,16 @@ function buildKnownProcess(item, provider) {
     provider,
     processNumber,
     cnjDigits: normalizeCnjDigits(processNumber),
+    cnjPattern: parseCnjPattern(processNumber),
     areaBucket: normalizeAreaBucket(area),
-    tribunal: normalizeText(tribunal),
+    tribunal: normalizeTribunal(tribunal),
     uf: normalizeText(uf),
     classOrSubject: normalizeText(classOrSubject),
+    subjects: asArray(item.subjects || item.assuntos),
+    classifications: asArray(item.classifications || item.classes),
+    cnjSubject: normalizeText(item.cnjSubject),
+    cnjBroadSubject: normalizeText(item.cnjBroadSubject),
+    cnjProcedure: normalizeText(item.cnjProcedure || item.tipo),
     date,
   };
 }
@@ -138,35 +230,63 @@ function buildEscavador2Process(item) {
   const area = firstValue(item, ['area']);
   const tribunal = firstValue(item, ['tribunalSigla', 'tribunal']);
   const uf = firstValue(item, ['processUf', 'uf']);
-  const classOrSubject = firstValue(item, ['classe', 'assunto', 'assuntoPrincipal', 'subject']);
+  const classOrSubject = firstValue(item, [
+    'classe',
+    'assunto',
+    'assuntoPrincipal',
+    'subject',
+    'cnjSubject',
+    'cnjProcedure',
+  ]);
   const date = firstValue(item, ['dataInicio', 'ultimaMovimentacao', 'date']);
 
   return {
     processNumber,
     cnjDigits: normalizeCnjDigits(processNumber),
+    cnjPattern: parseCnjPattern(processNumber),
     areaBucket: normalizeAreaBucket(area),
-    tribunal: normalizeText(tribunal),
+    tribunal: normalizeTribunal(tribunal),
     uf: normalizeText(uf),
     classOrSubject: normalizeText(classOrSubject),
+    subjects: asArray(item.subjects),
+    classifications: asArray(item.classifications),
+    cnjSubject: normalizeText(item.cnjSubject),
+    cnjBroadSubject: normalizeText(item.cnjBroadSubject),
+    cnjProcedure: normalizeText(item.cnjProcedure),
     date,
   };
 }
 
 function hasMetadataMatch(source, target, toleranceDays) {
-  if (!source.areaBucket || source.areaBucket !== target.areaBucket) return false;
-  if (!source.classOrSubject || source.classOrSubject !== target.classOrSubject) return false;
-  if (!source.tribunal || source.tribunal !== target.tribunal) return false;
+  if (source.areaBucket && target.areaBucket && source.areaBucket !== target.areaBucket) return false;
+  if (!source.tribunal || !target.tribunal || source.tribunal !== target.tribunal) return false;
   if ((source.uf || target.uf) && source.uf !== target.uf) return false;
 
   const dayDiff = daysBetween(source.date, target.date);
-  return dayDiff !== null && dayDiff <= toleranceDays;
+  if (dayDiff === null || dayDiff > toleranceDays) return false;
+
+  const sourceClass = normalizeText(source.classOrSubject);
+  const targetClass = normalizeText(target.classOrSubject);
+
+  if (sourceClass && targetClass) {
+    if (sourceClass === targetClass) return true;
+    if (hasSubjectOverlap(source, target, 1)) return true;
+    return false;
+  }
+
+  return true;
 }
 
 function findDuplicate(process, knownProcesses, toleranceDays) {
-  const cnjMatch = process.cnjDigits
-    ? knownProcesses.find((known) => known.cnjDigits === process.cnjDigits)
-    : null;
-  if (cnjMatch) return { known: cnjMatch, strength: 'CNJ_FULL' };
+  if (process.cnjDigits) {
+    const fullMatch = knownProcesses.find((known) => known.cnjDigits && known.cnjDigits === process.cnjDigits);
+    if (fullMatch) return { known: fullMatch, strength: 'CNJ_FULL' };
+  }
+
+  if (process.cnjPattern) {
+    const maskedMatch = knownProcesses.find((known) => known.cnjPattern && isPositionalMaskedMatch(process.cnjPattern, known.cnjPattern));
+    if (maskedMatch) return { known: maskedMatch, strength: 'CNJ_MASKED' };
+  }
 
   const metadataMatch = knownProcesses.find((known) => hasMetadataMatch(process, known, toleranceDays));
   return metadataMatch ? { known: metadataMatch, strength: 'metadata' } : null;
@@ -212,5 +332,7 @@ module.exports = {
   normalizeCnjDigits,
   parseCnjPattern,
   isPositionalMaskedMatch,
+  normalizeTribunal,
+  hasSubjectOverlap,
   deduplicateEscavador2Findings,
 };
