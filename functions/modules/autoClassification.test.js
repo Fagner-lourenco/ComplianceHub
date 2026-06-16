@@ -352,6 +352,67 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
         expect(result.criminalFlag).toBe('POSITIVE');
         expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
     });
+
+    it('flags AUTOR A DO FATO BigDataCorp process as criminal POSITIVE', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            bigdatacorpCriminalFlag: 'POSITIVE',
+            bigdatacorpProcessos: [
+                {
+                    numero: '15012855620198260270',
+                    isCriminal: true,
+                    isDirectCpfMatch: true,
+                    specificRole: 'AUTORA DO FATO',
+                    polo: 'PASSIVE',
+                    partyType: null,
+                    courtType: 'CRIMINAL',
+                    cnjSubject: 'LEVE',
+                    status: 'ARQUIVADO',
+                },
+            ],
+            juditProcessos: [],
+            juditRoleSummary: [],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+        expect(result.criminalFlag).toBe('POSITIVE');
+    });
+
+    it('flags PASSIVO Judit role summary as criminal POSITIVE', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            juditCriminalFlag: 'POSITIVE',
+            juditRoleSummary: [
+                {
+                    code: '0001722-07.2015.8.10.0029',
+                    personType: 'PASSIVO',
+                    side: 'Passive',
+                    area: 'DIREITO CRIMINAL',
+                    isCriminal: true,
+                    hasExactCpfMatch: true,
+                },
+            ],
+            bigdatacorpProcessos: [],
+            juditProcessos: [],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+        expect(result.criminalFlag).toBe('POSITIVE');
+    });
 });
 
 describe('createAutoClassificationHandlers', () => {
