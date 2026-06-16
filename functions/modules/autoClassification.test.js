@@ -383,6 +383,7 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
 
         const result = computeAutoClassification(caseData);
         expect(result.criminalFlag).toBe('POSITIVE');
+        expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
     });
 
     it('flags PASSIVO Judit role summary as criminal POSITIVE', () => {
@@ -412,6 +413,7 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
 
         const result = computeAutoClassification(caseData);
         expect(result.criminalFlag).toBe('POSITIVE');
+        expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
     });
 });
 
