@@ -137,6 +137,22 @@ describe('roleClassifier', () => {
             expect(result.category).toBe(category);
             expect(result.riskLevel).toBe(riskLevel);
         });
+
+        it.each([
+            ['VITIMA', 'Criminal', 'VICTIM', 'LOW'],
+            ['V', 'Criminal', 'VICTIM', 'LOW'],
+            ['TESTEMUNHA', 'Criminal', 'WITNESS', 'IGNORE'],
+            ['TESTEMUNHA POLO PASSIVO', 'Criminal', 'WITNESS', 'IGNORE'],
+            ['TESTEMUNHA DE ACUSACAO', 'Criminal', 'WITNESS', 'IGNORE'],
+            ['ADVOGADO', 'Criminal', 'LAWYER', 'IGNORE'],
+            ['TERCEIRO', 'Criminal', 'OTHER', 'IGNORE'],
+            ['INTERESSADO', 'Criminal', 'OTHER', 'IGNORE'],
+            ['AUTOR', 'Criminal', 'PLAINTIFF', 'LOW'],
+        ])('mantem papel de baixo risco/ignorado %s', (role, area, category, riskLevel) => {
+            const result = classifyRole(role, area);
+            expect(result.category).toBe(category);
+            expect(result.riskLevel).toBe(riskLevel);
+        });
     });
 
     describe('getRoleScoreImpact', () => {
