@@ -142,6 +142,9 @@ function computeAutoClassification(caseData, {
     const djenCriminalWeak = false;
     const djenLaborStrong = (caseData.djenLaborFlag === true || caseData.djenLaborFlag === 'POSITIVE') && djenConfirmedLaborItems.length > 0;
     const djenLaborWeak = false;
+    const pushUnique = (list, message) => {
+        if (message && !list.includes(message)) list.push(message);
+    };
     const escavador2Done = ['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus);
     const escavador2Processos = Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [];
     const escavador2NewProcesses = escavador2Done ? escavador2Processos.filter((p) => p.isNewEscavador2Finding === true) : [];
@@ -189,9 +192,6 @@ function computeAutoClassification(caseData, {
     const coverageNotes = [...new Set((overallCoverage.reasons || []).map((code) => coverageReasonLabels[code] || code))];
     const ambiguityNotes = [...new Set((homonymInput.ambiguityReasons || []).map((code) => ambiguityReasonLabels[code] || code))];
 
-    const pushUnique = (list, message) => {
-        if (message && !list.includes(message)) list.push(message);
-    };
     const isLaborCandidate = (candidate) => {
         const area = candidate?.area || '';
         // courtType "Trabalh*" is definitive
