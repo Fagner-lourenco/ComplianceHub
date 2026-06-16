@@ -385,6 +385,142 @@ function selectTopProcessos(caseData, limit = 10) {
         });
     }
 
+    const bdcProcessos = caseData.bigdatacorpProcessos || [];
+    for (const p of bdcProcessos) {
+        const cnj = p.numero || '';
+        const nk = cnj ? normCnj(cnj) : null;
+        const processArea = classifyProcessArea({
+            courtType: p.courtType,
+            cnjBroadSubject: p.cnjBroadSubject,
+            cnjSubject: p.cnjSubject || p.assunto,
+            cnjProcedure: p.cnjProcedure || p.tipo,
+            subject: p.assunto,
+            procedure: p.tipo,
+            tribunal: p.courtName,
+        });
+        if (nk && seen.has(nk)) {
+            const existing = all.find((e) => normCnj(e.cnj) === nk);
+            if (existing) {
+                if (!existing.classe && (p.cnjProcedure || p.tipo)) existing.classe = p.cnjProcedure || p.tipo;
+                if (!existing.assunto && (p.assunto || p.cnjSubject)) existing.assunto = p.assunto || p.cnjSubject;
+                if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
+                if (!existing.specificRole && p.specificRole) existing.specificRole = p.specificRole;
+                if (!existing.comarca && p.courtDistrict) existing.comarca = p.courtDistrict;
+                if (p.status && isWeakProcessStatus(existing.status)) existing.status = p.status;
+                if (p.isDirectCpfMatch && existing.matchType !== 'CPF confirmado') existing.matchType = 'CPF confirmado';
+                if (p.isCriminal && !existing.isCriminal) existing.isCriminal = true;
+                if (p.isLabor && !existing.isTrabalhista) existing.isTrabalhista = true;
+                if (p.isActive && !existing.isActive) existing.isActive = true;
+                if (!existing.courtLevel && p.courtLevel) existing.courtLevel = p.courtLevel;
+                if (!existing.judgingBody && p.judgingBody) existing.judgingBody = p.judgingBody;
+                if (!existing.lastMovementDate && p.lastMovementDate) existing.lastMovementDate = p.lastMovementDate;
+                if (!existing.lawsuitAgeDays && p.lawsuitAgeDays) existing.lawsuitAgeDays = p.lawsuitAgeDays;
+                if (p.isVictim && !existing.isVictim) existing.isVictim = true;
+                if (p.isWitness && !existing.isWitness) existing.isWitness = true;
+                if (p.isDefendant && !existing.isDefendant) existing.isDefendant = true;
+                if (!existing.allDecisions && p.decisions) existing.allDecisions = p.decisions;
+                if (!existing.lastStep && Array.isArray(p.movements) && p.movements[0]?.content) existing.lastStep = p.movements[0].content;
+                mergeProcessParties(existing, { allParties: p.allParties || [], movements: p.movements || [] });
+                if (Array.isArray(p.movements) && p.movements.length > 0) existing.movements = [...(existing.movements || []), ...p.movements];
+                existing.fonte = `${existing.fonte}+BigDataCorp`;
+            }
+            continue;
+        }
+        if (nk) seen.add(nk);
+        all.push({
+            cnj: cnj || 'N/A',
+            area: p.courtType || p.cnjBroadSubject || 'N/A',
+            classe: p.cnjProcedure || p.tipo || null,
+            assunto: p.assunto || p.cnjSubject || null,
+            status: p.status || null,
+            polo: p.polo || p.partyType || 'N/A',
+            tribunal: p.courtName || 'N/A',
+            vara: null,
+            comarca: p.courtDistrict || null,
+            data: p.lastMovementDate || 'N/A',
+            fonte: 'BigDataCorp',
+            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL',
+            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR',
+            isActive: /\bativ/i.test(p.status || '') && !/inat/i.test(p.status || ''),
+            matchType: p.isDirectCpfMatch ? 'CPF confirmado' : 'match por nome',
+            specificRole: p.specificRole || null,
+            decisionSummary: p.decisions?.[0]?.content ? p.decisions[0].content.slice(0, 200) : null,
+            lastStep: null,
+            distributionDate: null,
+            phase: null,
+            instance: null,
+            lastMovementDate: p.lastMovementDate || null,
+            lawsuitAgeDays: p.lawsuitAgeDays || null,
+            courtLevel: p.courtLevel || null,
+            judgingBody: p.judgingBody || null,
+            allDecisions: p.decisions || null,
+            isVictim: !!p.isVictim,
+            isDefendant: !!p.isDefendant,
+            isWitness: !!p.isWitness,
+            parties: [],
+            allParties: Array.isArray(p.allParties) ? p.allParties : [],
+            movements: Array.isArray(p.movements) ? p.movements : [],
+        });
+    }
+
+    for (const p of escavadorProcessos) {
+        const cnj = p.numeroCnj || '';
+        const nk = cnj ? normCnj(cnj) : null;
+        const processArea = classifyProcessArea({
+            area: p.area,
+            className: p.classe,
+            subject: p.assuntoPrincipal,
+            tribunal: p.tribunalSigla,
+        });
+        if (nk && seen.has(nk)) {
+            const existing = all.find((e) => normCnj(e.cnj) === nk);
+            if (existing) {
+                if (!existing.classe && p.classe) existing.classe = p.classe;
+                if (!existing.assunto && p.assuntoPrincipal) existing.assunto = p.assuntoPrincipal;
+                if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
+                if (!existing.specificRole && (p.specificRole || p.tipoNormalizado)) existing.specificRole = p.specificRole || p.tipoNormalizado;
+                if (!existing.comarca && p.processCity) existing.comarca = p.processCity;
+                if (isWeakProcessStatus(existing.status) && p.status) existing.status = p.status;
+                if (!existing.lastStep && p.lastStep) existing.lastStep = p.lastStep;
+                if (!existing.lastMovementDate && p.dataUltimaMovimentacao) existing.lastMovementDate = p.dataUltimaMovimentacao;
+                existing.fonte = `${existing.fonte}+Escavador`;
+            }
+            continue;
+        }
+        if (nk) seen.add(nk);
+        all.push({
+            cnj: cnj || 'N/A',
+            area: p.area || 'N/A',
+            classe: p.classe || null,
+            assunto: p.assuntoPrincipal || null,
+            status: p.status || null,
+            polo: p.polo || p.tipoNormalizado || 'N/A',
+            tribunal: p.tribunalSigla || 'N/A',
+            vara: null,
+            comarca: p.processCity || null,
+            data: p.dataInicio || 'N/A',
+            fonte: 'Escavador',
+            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL' || /penal|criminal|crime/i.test(p.area || ''),
+            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR' || /trabalh/i.test(p.area || ''),
+            isActive: /ativo|em andamento/i.test(p.status || '') && !/finaliz|arquiv|encerr|baixad/i.test(p.status || ''),
+            matchType: p.hasExactCpfMatch || p.tipoMatch === 'CPF' ? 'CPF confirmado' : 'match por nome',
+            specificRole: p.specificRole || p.tipoNormalizado || null,
+            decisionSummary: p.decisions?.[0]?.content ? p.decisions[0].content.slice(0, 200) : null,
+            lastStep: null,
+            distributionDate: p.dataInicio || null,
+            phase: null,
+            instance: null,
+            lastMovementDate: p.dataUltimaMovimentacao || null,
+            lawsuitAgeDays: null,
+            courtLevel: null,
+            judgingBody: null,
+            allDecisions: p.decisions || null,
+            parties: [],
+            allParties: [],
+            movements: [],
+        });
+    }
+
     for (const p of escavador2Processos) {
         const cnj = p.numeroCnj || p.cnj || '';
         const nk = cnj ? normCnj(cnj) : null;
@@ -452,144 +588,6 @@ function selectTopProcessos(caseData, limit = 10) {
             isDefendant: !!p.isDefendant,
             isWitness: !!p.isWitness,
             parties: Array.isArray(p.parties) ? p.parties : [],
-            allParties: Array.isArray(p.allParties) ? p.allParties : [],
-            movements: Array.isArray(p.movements) ? p.movements : [],
-        });
-    }
-
-    for (const p of escavadorProcessos) {
-        const cnj = p.numeroCnj || '';
-        const nk = cnj ? normCnj(cnj) : null;
-        const processArea = classifyProcessArea({
-            area: p.area,
-            className: p.classe,
-            subject: p.assuntoPrincipal,
-            tribunal: p.tribunalSigla,
-        });
-        if (nk && seen.has(nk)) {
-            const existing = all.find((e) => normCnj(e.cnj) === nk);
-            if (existing) {
-                if (!existing.classe && p.classe) existing.classe = p.classe;
-                if (!existing.assunto && p.assuntoPrincipal) existing.assunto = p.assuntoPrincipal;
-                if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
-                if (!existing.specificRole && (p.specificRole || p.tipoNormalizado)) existing.specificRole = p.specificRole || p.tipoNormalizado;
-                if (!existing.comarca && p.processCity) existing.comarca = p.processCity;
-                if (isWeakProcessStatus(existing.status) && p.status) existing.status = p.status;
-                if (!existing.lastStep && p.lastStep) existing.lastStep = p.lastStep;
-                if (!existing.lastMovementDate && p.dataUltimaMovimentacao) existing.lastMovementDate = p.dataUltimaMovimentacao;
-                existing.fonte = `${existing.fonte}+Escavador`;
-            }
-            continue;
-        }
-        if (nk) seen.add(nk);
-        all.push({
-            cnj: cnj || 'N/A',
-            area: p.area || 'N/A',
-            classe: p.classe || null,
-            assunto: p.assuntoPrincipal || null,
-            status: p.status || null,
-            polo: p.polo || p.tipoNormalizado || 'N/A',
-            tribunal: p.tribunalSigla || 'N/A',
-            vara: null,
-            comarca: p.processCity || null,
-            data: p.dataInicio || 'N/A',
-            fonte: 'Escavador',
-            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL' || /penal|criminal|crime/i.test(p.area || ''),
-            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR' || /trabalh/i.test(p.area || ''),
-            isActive: /ativo|em andamento/i.test(p.status || '') && !/finaliz|arquiv|encerr|baixad/i.test(p.status || ''),
-            matchType: p.hasExactCpfMatch || p.tipoMatch === 'CPF' ? 'CPF confirmado' : 'match por nome',
-            specificRole: p.specificRole || p.tipoNormalizado || null,
-            decisionSummary: p.decisions?.[0]?.content ? p.decisions[0].content.slice(0, 200) : null,
-            lastStep: null,
-            distributionDate: p.dataInicio || null,
-            phase: null,
-            instance: null,
-            lastMovementDate: p.dataUltimaMovimentacao || null,
-            lawsuitAgeDays: null,
-            courtLevel: null,
-            judgingBody: null,
-            allDecisions: p.decisions || null,
-            parties: [],
-            allParties: [],
-            movements: [],
-        });
-    }
-
-    const bdcProcessos = caseData.bigdatacorpProcessos || [];
-    for (const p of bdcProcessos) {
-        const cnj = p.numero || '';
-        const nk = cnj ? normCnj(cnj) : null;
-        const processArea = classifyProcessArea({
-            courtType: p.courtType,
-            cnjBroadSubject: p.cnjBroadSubject,
-            cnjSubject: p.cnjSubject || p.assunto,
-            cnjProcedure: p.cnjProcedure || p.tipo,
-            subject: p.assunto,
-            procedure: p.tipo,
-            tribunal: p.courtName,
-        });
-        if (nk && seen.has(nk)) {
-            const existing = all.find((e) => normCnj(e.cnj) === nk);
-            if (existing) {
-                if (!existing.classe && (p.cnjProcedure || p.tipo)) existing.classe = p.cnjProcedure || p.tipo;
-                if (!existing.assunto && (p.assunto || p.cnjSubject)) existing.assunto = p.assunto || p.cnjSubject;
-                if (!existing.decisionSummary && p.decisions?.[0]?.content) existing.decisionSummary = p.decisions[0].content.slice(0, 200);
-                if (!existing.specificRole && p.specificRole) existing.specificRole = p.specificRole;
-                if (!existing.comarca && p.courtDistrict) existing.comarca = p.courtDistrict;
-                if (p.status && isWeakProcessStatus(existing.status)) existing.status = p.status;
-                if (p.isDirectCpfMatch && existing.matchType !== 'CPF confirmado') existing.matchType = 'CPF confirmado';
-                if (p.isCriminal && !existing.isCriminal) existing.isCriminal = true;
-                if (p.isLabor && !existing.isTrabalhista) existing.isTrabalhista = true;
-                if (p.isActive && !existing.isActive) existing.isActive = true;
-                if (!existing.courtLevel && p.courtLevel) existing.courtLevel = p.courtLevel;
-                if (!existing.judgingBody && p.judgingBody) existing.judgingBody = p.judgingBody;
-                if (!existing.lastMovementDate && p.lastMovementDate) existing.lastMovementDate = p.lastMovementDate;
-                if (!existing.lawsuitAgeDays && p.lawsuitAgeDays) existing.lawsuitAgeDays = p.lawsuitAgeDays;
-                if (p.isVictim && !existing.isVictim) existing.isVictim = true;
-                if (p.isWitness && !existing.isWitness) existing.isWitness = true;
-                if (p.isDefendant && !existing.isDefendant) existing.isDefendant = true;
-                if (!existing.allDecisions && p.decisions) existing.allDecisions = p.decisions;
-                if (!existing.lastStep && Array.isArray(p.movements) && p.movements[0]?.content) existing.lastStep = p.movements[0].content;
-                if (!existing.classe && (p.cnjProcedure || p.tipo)) existing.classe = p.cnjProcedure || p.tipo;
-                if (!existing.assunto && (p.assunto || p.cnjSubject)) existing.assunto = p.assunto || p.cnjSubject;
-                mergeProcessParties(existing, { allParties: p.allParties || [], movements: p.movements || [] });
-                if (Array.isArray(p.movements) && p.movements.length > 0) existing.movements = [...(existing.movements || []), ...p.movements];
-                existing.fonte = `${existing.fonte}+BigDataCorp`;
-            }
-            continue;
-        }
-        if (nk) seen.add(nk);
-        all.push({
-            cnj: cnj || 'N/A',
-            area: p.courtType || p.cnjBroadSubject || 'N/A',
-            classe: p.cnjProcedure || p.tipo || null,
-            assunto: p.assunto || p.cnjSubject || null,
-            status: p.status || null,
-            polo: p.polo || p.partyType || 'N/A',
-            tribunal: p.courtName || 'N/A',
-            vara: null,
-            comarca: p.courtDistrict || null,
-            data: p.lastMovementDate || 'N/A',
-            fonte: 'BigDataCorp',
-            isCriminal: !!p.isCriminal || processArea.area === 'CRIMINAL',
-            isTrabalhista: !!p.isLabor || processArea.area === 'LABOR',
-            isActive: /\bativ/i.test(p.status || '') && !/inat/i.test(p.status || ''),
-            matchType: p.isDirectCpfMatch ? 'CPF confirmado' : 'match por nome',
-            specificRole: p.specificRole || null,
-            decisionSummary: p.decisions?.[0]?.content ? p.decisions[0].content.slice(0, 200) : null,
-            lastStep: null,
-            distributionDate: null,
-            phase: null,
-            instance: null,
-            lastMovementDate: p.lastMovementDate || null,
-            lawsuitAgeDays: p.lawsuitAgeDays || null,
-            courtLevel: p.courtLevel || null,
-            judgingBody: p.judgingBody || null,
-            allDecisions: p.decisions || null,
-            isVictim: !!p.isVictim,
-            isDefendant: !!p.isDefendant,
-            isWitness: !!p.isWitness,
-            parties: [],
             allParties: Array.isArray(p.allParties) ? p.allParties : [],
             movements: Array.isArray(p.movements) ? p.movements : [],
         });

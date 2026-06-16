@@ -930,7 +930,7 @@ describe('Deterministic Prefill', () => {
             const result = selectTopProcessos(caseData, 20);
             // Same process from 3 providers: should appear only ONCE (Judit wins, others merged)
             expect(result.length).toBe(1);
-            expect(result[0].fonte).toBe('Judit+Escavador+BigDataCorp');
+            expect(result[0].fonte).toBe('Judit+BigDataCorp+Escavador');
         });
 
         it('selectTopProcessos: Escavador uses hasExactCpfMatch for matchType', () => {
