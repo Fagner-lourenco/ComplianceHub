@@ -52,6 +52,14 @@ function makeCase(overrides = {}) {
     };
 }
 
+function makeCaseWithEscavador2NewFindings(overrides = {}) {
+    return makeCase({
+        escavador2EnrichmentStatus: 'DONE',
+        escavador2Processos: [],
+        ...overrides,
+    });
+}
+
 describe('canRunFinalClassification', () => {
     const hasPendingJuditAsync = vi.fn(() => false);
     const isProviderTerminalForPipeline = vi.fn((status) =>
@@ -233,6 +241,80 @@ describe('computeAutoClassification', () => {
         const result = computeAutoClassification(caseData, mockDeps);
         expect(result.enrichmentOriginalValues.previous).toBe('value');
         expect(result.enrichmentOriginalValues.criminalFlag).toBe(result.criminalFlag);
+    });
+
+    it('does not throw when Escavador2 has new criminal/labor findings', () => {
+        const caseData = makeCase({
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2Processos: [
+                { isNewEscavador2Finding: true, isCriminal: true },
+                { isNewEscavador2Finding: true, isLabor: true },
+            ],
+        });
+        expect(() => computeAutoClassification(caseData, mockDeps)).not.toThrow();
+        const result = computeAutoClassification(caseData, mockDeps);
+        expect(result.criminalNotes).toContain(
+            'Nova consulta processual identificou 1 processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.',
+        );
+        expect(result.laborNotes).toContain(
+            'Nova consulta processual identificou 1 processo(s) trabalhista(s) ativo(s) nao identificado(s) pelos demais provedores.',
+        );
+    });
+
+    it('returns POSITIVE criminal when Escavador2 has a new material criminal finding', () => {
+        const caseData = makeCaseWithEscavador2NewFindings({
+            escavador2Processos: [{
+                numeroCnj: '000XXXX-33.2022.8.17.8201',
+                isNewEscavador2Finding: true,
+                isCriminal: true,
+                isLabor: false,
+                isDefendant: true,
+                isVictim: false,
+                isWitness: false,
+                isMaterialRisk: true,
+                classe: 'TERMO CIRCUNSTANCIADO',
+                assunto: 'Receptacao culposa',
+            }],
+        });
+        const result = computeAutoClassification(caseData, mockDeps);
+        expect(result.criminalFlag).toBe('POSITIVE');
+        expect(result.criminalNotes).toContain('Escavador2');
+    });
+
+    it('returns POSITIVE labor when Escavador2 has a new plaintiff labor finding', () => {
+        const caseData = makeCaseWithEscavador2NewFindings({
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                isNewEscavador2Finding: true,
+                isCriminal: false,
+                isLabor: true,
+                isTrabalhista: true,
+                isPlaintiff: true,
+                isDefendant: false,
+                classe: 'RECLAMACAO TRABALHISTA',
+                assunto: null,
+            }],
+        });
+        const result = computeAutoClassification(caseData, mockDeps);
+        expect(result.laborFlag).toBe('POSITIVE');
+        expect(result.laborNotes).toContain('Escavador2');
+    });
+
+    it('keeps labor NEGATIVE when Escavador2 new finding is only a labor defendant', () => {
+        const caseData = makeCaseWithEscavador2NewFindings({
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                isNewEscavador2Finding: true,
+                isCriminal: false,
+                isLabor: true,
+                isTrabalhista: true,
+                isPlaintiff: false,
+                isDefendant: true,
+                classe: 'RECLAMACAO TRABALHISTA',
+            }],
+        });
+        const result = computeAutoClassification(caseData, mockDeps);
+        expect(result.laborFlag).toBe('NEGATIVE');
     });
 });
 
