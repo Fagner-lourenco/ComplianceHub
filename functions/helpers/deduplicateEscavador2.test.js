@@ -351,4 +351,32 @@ describe('deduplicateEscavador2', () => {
       isNewEscavador2Finding: true,
     }));
   });
+
+  it('does not match unrelated metadata even with rich subject tokens', () => {
+    const result = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: [{
+        numero: '1111111-11.2011.8.11.1111',
+        courtType: 'CIVIL',
+        courtName: 'TJSP',
+        processUf: 'SP',
+        assunto: 'Contratos',
+        lastMovementDate: '2024-01-01',
+      }],
+      escavador2Processos: [{
+        numeroCnj: '2222222-22.2022.8.22.2222',
+        area: 'CIVIL',
+        tribunalSigla: 'TJSP',
+        processUf: 'SP',
+        assunto: 'Obrigações',
+        dataInicio: '2024-01-02',
+        isMaterialRisk: true,
+      }],
+    });
+
+    expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isDuplicate: false,
+      duplicateMatchStrength: null,
+      isNewEscavador2Finding: true,
+    }));
+  });
 });
