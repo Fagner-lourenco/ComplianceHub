@@ -148,8 +148,19 @@ function computeAutoClassification(caseData, {
     const escavador2Done = ['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus);
     const escavador2Processos = Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [];
     const escavador2NewProcesses = escavador2Done ? escavador2Processos.filter((p) => p.isNewEscavador2Finding === true) : [];
+
     const escavador2NewCriminalCount = escavador2NewProcesses.filter((p) => p.isCriminal === true).length;
+    const escavador2NewMaterialCriminalCount = escavador2NewProcesses.filter((p) =>
+        p.isCriminal === true
+        && p.isVictim !== true
+        && p.isWitness !== true
+        && (p.isDefendant === true || p.isMaterialRisk === true)
+    ).length;
     const escavador2NewLaborCount = escavador2NewProcesses.filter((p) => p.isLabor === true).length;
+    const escavador2NewPlaintiffLaborCount = escavador2NewProcesses.filter((p) =>
+        p.isLabor === true && p.isPlaintiff === true
+    ).length;
+
     if (escavador2NewCriminalCount > 0) {
         pushUnique(criminalNotes, `Nova consulta processual identificou ${escavador2NewCriminalCount} processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.`);
     }
