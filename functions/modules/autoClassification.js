@@ -430,12 +430,13 @@ function computeAutoClassification(caseData, {
 
     const laborSourceFailed = fontedataFailed && caseData.enrichmentSources?.labor?.error;
 
-    if (fontedataLabor || bigdatacorpLabor || djenLaborStrong || relevantLaborCandidates.length > 0) {
+    if (fontedataLabor || bigdatacorpLabor || djenLaborStrong || relevantLaborCandidates.length > 0 || escavador2NewPlaintiffLaborCount > 0) {
         result.laborFlag = 'POSITIVE';
         const sources = [];
         if (fontedataLabor) sources.push('FonteData TRT');
         if (bigdatacorpLabor) sources.push('BigDataCorp');
         if (djenLaborStrong) sources.push('DJEN (forte)');
+        if (escavador2NewPlaintiffLaborCount > 0) sources.push('Escavador2');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Escavador')) sources.push('Escavador');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'Judit')) sources.push('Judit');
         if (relevantLaborCandidates.some((candidate) => candidate.source === 'BigDataCorp')) sources.push('BigDataCorp');
