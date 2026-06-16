@@ -5,9 +5,8 @@
 
 const { buildHomonymAnalysisInput } = require('../helpers/aiHomonym');
 const { filterDjenComunicacoesByConfirmedProcess } = require('../helpers/reportHelpers');
+const { HIGH_RISK_CRIMINAL_ROLES } = require('../helpers/roleClassifier');
 const { SAFE_NARRATIVE_TEXTS } = require('./reportEngine');
-
-const HIGH_RISK_CRIMINAL_ROLES = /^(REU|INDICIAD[OA]|AUTOR\s+DO\s+FATO|CONDENAD[OA]|ACUSAD[OA]|INVESTIGAD[OA]|AVERIGUAD[OA]|EXECUTAD[OA]|DENUNCIAD[OA]|FLAGRANTEAD[OA]|APELAN[DT]E|APELAD[OA]|RECORRENT[AE]|RECORRID[OA]|AGRAVANT[AE]|AGRAVAD[OA]|SENTENCIAD[OA]|NOTICIAD[OA])$/i;
 
 /* =========================================================
    LÓGICA PURA: Classificação automática

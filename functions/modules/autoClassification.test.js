@@ -318,6 +318,42 @@ describe('computeAutoClassification', () => {
     });
 });
 
+describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () => {
+  it('flags EXECTDO BigDataCorp process as criminal POSITIVE', () => {
+    const caseData = {
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'DONE',
+      escavadorEnrichmentStatus: 'SKIPPED',
+      escavador2EnrichmentStatus: 'DONE',
+      djenEnrichmentStatus: 'DONE',
+      bigdatacorpCriminalFlag: 'POSITIVE',
+      bigdatacorpProcessos: [
+        {
+          numero: '00023961320168260996',
+          isCriminal: true,
+          isDirectCpfMatch: true,
+          specificRole: 'EXECTDO',
+          polo: 'PASSIVE',
+          partyType: null,
+          courtType: 'CRIMINAL',
+          cnjSubject: 'PENA PRIVATIVA DE LIBERDADE',
+          status: 'ARQUIVADO',
+        },
+      ],
+      juditProcessos: [],
+      juditRoleSummary: [],
+      escavador2Processos: [],
+      djenCommunications: [],
+      bigdatacorpNamesakeCount: 1,
+    };
+
+    const result = computeAutoClassification(caseData);
+
+    expect(result.criminalFlag).toBe('POSITIVE');
+    expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
+  });
+});
+
 describe('createAutoClassificationHandlers', () => {
     const mockDb = {
         runTransaction: vi.fn(async (fn) => fn({
