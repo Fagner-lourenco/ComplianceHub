@@ -276,6 +276,7 @@ function computeAutoClassification(caseData, {
         ...(fontedataCriminal ? ['FonteData'] : []),
         ...(bigdatacorpCriminal ? ['BigDataCorp'] : []),
         ...(djenCriminalStrong ? ['DJEN'] : []),
+        ...(escavador2NewMaterialCriminalCount > 0 ? ['Escavador2'] : []),
         ...relevantCriminalCandidates.map((candidate) => candidate.source),
         ...(hardFacts.has('ACTIVE_WARRANT') ? ['Judit/Warrant'] : []),
         ...(hardFacts.has('PENAL_EXECUTION') ? ['Judit/Execution'] : []),
@@ -285,7 +286,8 @@ function computeAutoClassification(caseData, {
         + (hardFacts.has('ACTIVE_WARRANT') ? 1 : 0)
         + (hardFacts.has('PENAL_EXECUTION') ? 1 : 0)
         + (fontedataCriminal ? 1 : 0)
-        + (djenCriminalStrong ? 1 : 0);
+        + (djenCriminalStrong ? 1 : 0)
+        + escavador2NewMaterialCriminalCount;
     const hasStrongCriminalEvidence = strongCriminalCount > 0;
     const hasWeakCriminalEvidence = weakCriminalCandidates.length > 0 || djenCriminalWeak;
     const hasLowRiskOnly = lowRiskReferenceCandidates.length > 0
