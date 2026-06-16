@@ -2,6 +2,36 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+const MIN_MASKED_CNJ_UNMASKED_POSITIONS = 12;
+
+function parseCnjPattern(value) {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).replace(/[^0-9X]/gi, '').toUpperCase();
+  return normalized.length === 20 ? normalized : null;
+}
+
+function countUnmaskedPositions(pattern) {
+  let count = 0;
+  for (let i = 0; i < pattern.length; i += 1) {
+    if (pattern[i] !== 'X') count += 1;
+  }
+  return count;
+}
+
+function isPositionalMaskedMatch(candidatePattern, knownPattern, minUnmaskedPositions = MIN_MASKED_CNJ_UNMASKED_POSITIONS) {
+  if (!candidatePattern || !knownPattern) return false;
+  if (candidatePattern.length !== 20 || knownPattern.length !== 20) return false;
+  if (countUnmaskedPositions(candidatePattern) < minUnmaskedPositions) return false;
+
+  for (let i = 0; i < 20; i += 1) {
+    const candidateChar = candidatePattern[i];
+    const knownChar = knownPattern[i];
+    if (candidateChar === 'X' || knownChar === 'X') continue;
+    if (candidateChar !== knownChar) return false;
+  }
+  return true;
+}
+
 function normalizeCnjDigits(value) {
   if (value === null || value === undefined) return null;
   const text = String(value);
@@ -180,5 +210,7 @@ function deduplicateEscavador2Findings(caseData = {}, options = {}) {
 
 module.exports = {
   normalizeCnjDigits,
+  parseCnjPattern,
+  isPositionalMaskedMatch,
   deduplicateEscavador2Findings,
 };

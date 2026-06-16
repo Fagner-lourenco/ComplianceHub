@@ -22,6 +22,7 @@ describe('deduplicateEscavador2', () => {
 
     expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
       isDuplicate: true,
+      isDuplicateEscavador2Finding: true,
       duplicateOfProvider: 'bigdatacorp',
       duplicateOfProcessNumber: '0001234-56.2024.8.26.0100',
       duplicateMatchStrength: 'CNJ_FULL',
@@ -43,6 +44,7 @@ describe('deduplicateEscavador2', () => {
 
     expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
       isDuplicate: true,
+      isDuplicateEscavador2Finding: true,
       duplicateOfProvider: 'judit',
       duplicateOfProcessNumber: '5009876-10.2023.4.03.6100',
       duplicateMatchStrength: 'CNJ_FULL',
@@ -72,6 +74,7 @@ describe('deduplicateEscavador2', () => {
 
     expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
       isDuplicate: true,
+      isDuplicateEscavador2Finding: true,
       duplicateOfProvider: 'escavador',
       duplicateMatchStrength: 'metadata',
       isNewEscavador2Finding: false,
@@ -100,6 +103,7 @@ describe('deduplicateEscavador2', () => {
 
     expect(result.escavador2Processos[0]).toEqual(expect.objectContaining({
       isDuplicate: false,
+      isDuplicateEscavador2Finding: false,
       duplicateOfProvider: null,
       duplicateMatchStrength: null,
       isNewEscavador2Finding: true,
@@ -164,5 +168,21 @@ describe('deduplicateEscavador2', () => {
     expect(result.escavador2DuplicateCount).toBe(0);
     expect(result.escavador2NewFindingCount).toBe(1);
     expect(result.escavador2HasNewMaterialRisk).toBe(true);
+  });
+
+  it('parses CNJ pattern preserving X wildcards', () => {
+    const { parseCnjPattern } = deduplicateEscavador2;
+    expect(parseCnjPattern('500XXXX-93.2025.8.21.0007')).toBe('500XXXX9320258210007');
+    expect(parseCnjPattern('0001234-56.2024.8.26.0100')).toBe('00012345620248260100');
+    expect(parseCnjPattern('12345')).toBeNull();
+    expect(parseCnjPattern(null)).toBeNull();
+  });
+
+  it('matches masked CNJ positionally against full CNJ', () => {
+    const { isPositionalMaskedMatch } = deduplicateEscavador2;
+    expect(isPositionalMaskedMatch('500XXXX9320258210007', '50067239320258210007')).toBe(true);
+    expect(isPositionalMaskedMatch('500XXXX9320258210007', '50067239320258210008')).toBe(false);
+    expect(isPositionalMaskedMatch('XXXXXXXXXXXXXXXXXXXX', '50067239320258210007')).toBe(false);
+    expect(isPositionalMaskedMatch('500XXXX9320258210007', '500XXXX9320258210007')).toBe(true);
   });
 });
