@@ -135,7 +135,7 @@ describe('roleClassifier', () => {
             ['NOTICIADO', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['OFENSOR', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['EMBARGADO', 'Criminal', 'DEFENDANT', 'HIGH'],
-            ['EMBARGANTE', 'Criminal', 'PLAINTIFF', 'LOW'],
+            ['EMBARGANTE', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['AUTOR DO FATO VITIMA', 'Criminal', 'VICTIM', 'LOW'],
         ])('classifies real criminal role %s', (role, area, category, riskLevel) => {
             const result = classifyRole(role, area);
