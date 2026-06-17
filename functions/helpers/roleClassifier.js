@@ -53,6 +53,10 @@ const WITNESS_ROLES = /^(TESTEMUNHA|TESTEMUNHA\s+DO\s+JUIZO|TESTEMUNHA\s+POLO\s+
 // Instituições - ignorar
 const AUTHORITY_ROLES = /^(AUTORIDADE|MINISTERIO\s+PUBLICO|MP|JUSTICA|DELEGACIA|ORGAO|INSTITUICAO|JUIZO|VARA|TRIBUNAL|FAZENDA|UNIAO|ESTADO|MUNICIPIO|INSS|RECEITA\s+FEDERAL|CAIXA|BANCO|INSTITUTO|PREFEITURA|SECRETARIA|DEPRECANTE|CONFRONTANTE|COMUNICANTE|JUIZO\s+RECORRENTE|ARROLANTE)$/i;
 
+// Lados/polo passive e active para fallback
+const PASSIVE_SIDE_VALUES = /^(PASSIV[OA]?|PASSI|PASSIVE)$/i;
+const ACTIVE_SIDE_VALUES = /^(ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/i;
+
 // Outros neutros
 const OTHER_NEUTRAL_ROLES = /^(OUTRO|OUTROS(\s+PARTICIPANTES?)?|DESCONHECIDO|NAO\s+INFORMADO|TERCEIRO|INTERESSAD[OA](?:S)?|CONSIGNATARIO|REPRESENTANTE\b.*|ASSISTENCIA|CURADOR|TUTOR|PUPILO|SUCESSOR|TERCEIRO\s+INTERESSADO|NAO\s+APLICAVEL|N\s*A|INDEFINIDO|HERDEIRO|INVENTARIANTE|ESPOLIO(?:\s+REQUERIDO)?|ALIMENTADO|PARTES|TERINTCER|INTERESSADO\s+PGM|REPRESENTANTE\s+REU)$/i;
 
@@ -109,10 +113,10 @@ function classifyRole(role, area = '', side = '') {
         }
 
         // Fallback por lado/polo quando papel não foi reconhecido
-        if (normalizedSide && /^(PASSIVO?|PASSI|PASSIVE|PASSIVA?)$/.test(normalizedSide)) {
+        if (normalizedSide && PASSIVE_SIDE_VALUES.test(normalizedSide)) {
             return { category: 'DEFENDANT', riskLevel: 'HIGH', reason: 'Papel nao classificado, lado passivo em processo criminal' };
         }
-        if (normalizedSide && /^(ATIVO?|ATIVA?|ACTIVE|ATIV|AUTHOR|PLAINTIFF)$/.test(normalizedSide)) {
+        if (normalizedSide && ACTIVE_SIDE_VALUES.test(normalizedSide)) {
             return { category: 'PLAINTIFF', riskLevel: 'LOW', reason: 'Papel nao classificado, lado ativo em processo criminal' };
         }
 
@@ -130,10 +134,10 @@ function classifyRole(role, area = '', side = '') {
         }
 
         // Fallback por lado/polo
-        if (normalizedSide && /^(PASSIVO?|PASSI|PASSIVE|PASSIVA?)$/.test(normalizedSide)) {
+        if (normalizedSide && PASSIVE_SIDE_VALUES.test(normalizedSide)) {
             return { category: 'DEFENDANT', riskLevel: 'LOW', reason: 'Papel nao classificado, lado passivo em processo trabalhista' };
         }
-        if (normalizedSide && /^(ATIVO?|ATIVA?|ACTIVE|ATIV|AUTHOR|PLAINTIFF)$/.test(normalizedSide)) {
+        if (normalizedSide && ACTIVE_SIDE_VALUES.test(normalizedSide)) {
             return { category: 'PLAINTIFF', riskLevel: 'HIGH', reason: 'Papel nao classificado, lado ativo em processo trabalhista' };
         }
 
@@ -159,10 +163,11 @@ function classifyRole(role, area = '', side = '') {
  * Retorna o impacto no score baseado no papel e área
  * @param {string} role - Papel do candidato
  * @param {string} area - Área do processo
+ * @param {string} [side] - Lado/polo do candidato
  * @returns {Object} { include, score, flag, reason }
  */
-function getRoleScoreImpact(role, area) {
-    const classification = classifyRole(role, area);
+function getRoleScoreImpact(role, area, side = '') {
+    const classification = classifyRole(role, area, side);
     const areaUpper = String(area || '').toUpperCase();
 
     if (classification.riskLevel === 'IGNORE') {
@@ -194,10 +199,11 @@ function getRoleScoreImpact(role, area) {
  * Verifica se um papel é de baixo risco (para filtros)
  * @param {string} role - Papel do candidato
  * @param {string} area - Área do processo
+ * @param {string} [side] - Lado/polo do candidato
  * @returns {boolean}
  */
-function isLowRiskRole(role, area) {
-    const classification = classifyRole(role, area);
+function isLowRiskRole(role, area, side = '') {
+    const classification = classifyRole(role, area, side);
     return classification.riskLevel === 'LOW' || classification.riskLevel === 'IGNORE';
 }
 
@@ -205,10 +211,11 @@ function isLowRiskRole(role, area) {
  * Verifica se um papel é de alto risco
  * @param {string} role - Papel do candidato
  * @param {string} area - Área do processo
+ * @param {string} [side] - Lado/polo do candidato
  * @returns {boolean}
  */
-function isHighRiskRole(role, area) {
-    const classification = classifyRole(role, area);
+function isHighRiskRole(role, area, side = '') {
+    const classification = classifyRole(role, area, side);
     return classification.riskLevel === 'HIGH';
 }
 

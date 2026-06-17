@@ -275,6 +275,30 @@ describe('roleClassifier', () => {
                 expect(result.category).toBe('PLAINTIFF');
                 expect(result.riskLevel).toBe('HIGH');
             });
+
+            it('known defendant with active side still returns DEFENDANT/HIGH', () => {
+                const result = classifyRole('REU', 'Criminal', 'Active');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('accented side values work', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'Passivo');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('null/undefined side is treated as missing', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', null);
+                expect(result.category).toBe('UNKNOWN');
+                expect(result.riskLevel).toBe('NEUTRAL');
+            });
+
+            it('whitespace-trimmed side works', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', '  Passive  ');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
         });
     });
 
