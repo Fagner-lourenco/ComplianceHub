@@ -119,6 +119,26 @@ describe('normalizeBigDataCorpKyc', () => {
 });
 
 describe('normalizeBigDataCorpProcesses side fallback', () => {
+    it('normalizes single-letter polo P to Passive for fallback', () => {
+        const result = normalizeBigDataCorpProcesses({
+            Lawsuits: [{
+                Number: '00000000020248000001',
+                CourtType: 'CRIMINAL',
+                MainSubject: 'Homicidio',
+                Type: 'Acao Penal',
+                Parties: [{
+                    Doc: '123.456.789-00',
+                    Polarity: 'P',
+                    PartyType: 'ENVOLVIDO',
+                    PartyDetails: { SpecificType: 'ENVOLVIDO' },
+                }],
+            }],
+        }, '12345678900');
+
+        expect(result.bigdatacorpProcessos[0].roleClassification.category).toBe('DEFENDANT');
+        expect(result.bigdatacorpProcessos[0].roleClassification.riskLevel).toBe('HIGH');
+    });
+
     it('classifies unknown role with polo PASSIVE as DEFENDANT/HIGH in criminal', () => {
         const result = normalizeBigDataCorpProcesses({
             Lawsuits: [{

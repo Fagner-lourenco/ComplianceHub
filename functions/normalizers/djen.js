@@ -335,6 +335,7 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
 
         const confirmation = item._confirmation || {};
         const geoMatch = getDjenGeoMatch(item.siglaTribunal, candidateUfs);
+        const polo = confirmation.polo || findCandidatePolo(item.destinatarios, candidateName);
 
         const processedItem = {
             id: item.id,
@@ -347,10 +348,9 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             area: item._area,
             numeroProcesso: item.numero_processo || null,
             numeroProcessoMascara: item.numeroprocessocommascara || null,
-            polo: confirmation.polo || findCandidatePolo(item.destinatarios, candidateName),
+            polo,
             confirmationLevel: confirmation.level || 'PROCESS_CONFIRMED',
             roleClassification: (() => {
-                const polo = confirmation.polo || findCandidatePolo(item.destinatarios, candidateName);
                 const area = item._area;
                 // Mapear polo para papel aproximado
                 let role = null;
