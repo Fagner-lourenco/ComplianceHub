@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
-const { normalizeBigDataCorpKyc } = require('./bigdatacorp');
+const { normalizeBigDataCorpKyc, normalizeBigDataCorpProcesses } = require('./bigdatacorp');
 
 describe('normalizeBigDataCorpKyc', () => {
     const BASE_KYC = {
@@ -115,5 +115,32 @@ describe('normalizeBigDataCorpKyc', () => {
             const result = normalizeBigDataCorpKyc(kycData);
             expect(result.bigdatacorpKycNotes).toContain('ALERTA: 1 mandado(s) de prisao');
         });
+    });
+});
+
+describe('normalizeBigDataCorpProcesses side fallback', () => {
+    it('classifies unknown role with polo PASSIVE as DEFENDANT/HIGH in criminal', () => {
+        const result = normalizeBigDataCorpProcesses({
+            Lawsuits: [{
+                Number: '00000000020248000000',
+                CourtType: 'CRIMINAL',
+                MainSubject: 'Homicidio',
+                Type: 'Acao Penal',
+                Parties: [{
+                    Doc: '123.456.789-00',
+                    Polarity: 'PASSIVE',
+                    PartyType: 'ENVOLVIDO',
+                    PartyDetails: { SpecificType: 'ENVOLVIDO' },
+                }],
+            }],
+        }, '12345678900');
+
+        expect(result.bigdatacorpProcessos).toHaveLength(1);
+        expect(result.bigdatacorpProcessos[0].roleClassification).toEqual({
+            category: 'DEFENDANT',
+            riskLevel: 'HIGH',
+            reason: expect.stringContaining('lado passivo'),
+        });
+        expect(result.bigdatacorpProcessos[0].isDefendant).toBe(true);
     });
 });
