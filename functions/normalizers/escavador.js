@@ -81,7 +81,13 @@ function normalizeEscavadorProcessos(result, cpf) {
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : area;
-        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole, role?.polo);
+        const rawSide = role?.polo;
+        const side = rawSide === 'P' || /passiv/i.test(rawSide || '')
+            ? 'Passive'
+            : rawSide === 'A' || /ativ/i.test(rawSide || '')
+                ? 'Active'
+                : rawSide;
+        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole, side);
 
         processos.push({
             numeroCnj: item.numero_cnj || null,
