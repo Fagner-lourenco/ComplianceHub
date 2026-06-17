@@ -32,6 +32,19 @@ function normalizeLegalText(value) {
         .trim();
 }
 
+/**
+ * Normaliza valores crus de lado/polo para os termos esperados pelo fallback.
+ * @param {string|null|undefined} rawSide
+ * @returns {string|null}
+ */
+function normalizeSideForClassifier(rawSide) {
+    const normalized = normalizeLegalText(rawSide);
+    if (!normalized) return null;
+    if (/^(P|PASSIV[OA]?|PASSI|PASSIVE)$/.test(normalized)) return 'Passive';
+    if (/^(A|ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/.test(normalized)) return 'Active';
+    return rawSide;
+}
+
 // Roles que cometem crime ou são processados criminalmente
 const HIGH_RISK_CRIMINAL_ROLES = /^(REU|RE\s*$|REU\s+(RE|S|\d+|A)|INDICIAD[OA](?:\s+A)?|INVESTIGAD[OA](?:\s+A)?|AUTOR\s*(?:A)?\s+DO\s+FATO|AUTOR\s+FATO|CONDENAD[OA]|ACUSAD[OA](?:\s+A)?|AVERIGUAD[OA]|EXECUTADO|EXECTD[OA]|EXECD[OA]|REEDUCANDO|BENEFICIARIO|SUJE?TO|AGENTE|DENUNCIAD[OA](?:\s+A)?|NOTICIAD[OA]|AUTUAD[OA]|FLAGRANTEAD[OA]|FLAGRANTEADO\s*\(?A\)?|SENTENCIAD[OA]|EM\s+APURACAO|POLO\s+PASSIVO|PASSIVO|PACIENTE|PROMOVIDO|DEPRECAD[OA](?:\s+A)?|INFRATOR|CORREU|REQUERIDO|REQUERIDA|APELANTE|APELADA|APELADO|RECORRENTE|RECORRIDA|RECORRIDO\s+A|RECORRIDO|AGRAVANTE|AGRAVADO\s+A|AGRAVADO|EMBARGADO|EMBARGANTE|OFENSOR)$/i;
 
@@ -225,6 +238,7 @@ module.exports = {
     isLowRiskRole,
     isHighRiskRole,
     normalizeLegalText,
+    normalizeSideForClassifier,
     HIGH_RISK_CRIMINAL_ROLES,
     CRIMINAL_PLAINTIFF_ROLES,
     HIGH_RISK_LABOR_PLAINTIFF,

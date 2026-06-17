@@ -259,4 +259,37 @@ describe('aiHomonym helpers', () => {
         const escavador2Candidates = result.processCandidates.filter((c) => c.source === 'Escavador2');
         expect(escavador2Candidates.length).toBe(0);
     });
+
+    it('uses Judit side fallback for ENVOLVIDO/Passive criminal process', () => {
+        const result = buildHomonymAnalysisInput({
+            hiringUf: 'CE',
+            juditProcessTotal: 1,
+            juditCriminalCount: 1,
+            juditRoleSummary: [
+                {
+                    code: '0001722-07.2015.8.10.0029',
+                    area: 'DIREITO CRIMINAL',
+                    tribunalAcronym: 'TJCE',
+                    state: 'CE',
+                    city: 'SOBRAL',
+                    personType: 'ENVOLVIDO',
+                    side: 'Passive',
+                    isCriminal: true,
+                    hasExactCpfMatch: true,
+                    isPossibleHomonym: false,
+                },
+            ],
+            juditAllUfs: ['CE'],
+            enrichmentContact: {
+                allUfs: ['CE'],
+                primaryUf: 'CE',
+            },
+        });
+
+        const juditCandidates = result.processCandidates.filter((c) => c.source === 'Judit');
+        expect(juditCandidates.length).toBe(1);
+        expect(juditCandidates[0].roleClassification.category).toBe('DEFENDANT');
+        expect(juditCandidates[0].roleClassification.riskLevel).toBe('HIGH');
+        expect(juditCandidates[0].lowRiskRole).toBe(false);
+    });
 });

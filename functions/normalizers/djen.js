@@ -352,11 +352,11 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             confirmationLevel: confirmation.level || 'PROCESS_CONFIRMED',
             roleClassification: (() => {
                 const area = item._area;
-                // Mapear polo para papel aproximado
+                const side = polo === 'A' ? 'Active' : polo === 'P' ? 'Passive' : null;
+                // Mapear polo para papel aproximado quando conhecido
                 let role = null;
                 if (polo === 'A') role = 'AUTOR';
                 else if (polo === 'P') role = 'REU';
-                const side = polo === 'A' ? 'Active' : polo === 'P' ? 'Passive' : null;
                 return classifyRole(role, area, side);
             })(),
             isDefendant: false, // sera atualizado abaixo

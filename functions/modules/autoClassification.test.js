@@ -415,6 +415,37 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
         expect(result.criminalFlag).toBe('POSITIVE');
         expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
     });
+
+    it('flags ENVOLVIDO/Passive Judit role summary as criminal POSITIVE via side fallback', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            juditCriminalFlag: 'POSITIVE',
+            juditRoleSummary: [
+                {
+                    code: '0001722-07.2015.8.10.0029',
+                    personType: 'ENVOLVIDO',
+                    side: 'Passive',
+                    area: 'DIREITO CRIMINAL',
+                    isCriminal: true,
+                    hasExactCpfMatch: true,
+                    isPossibleHomonym: false,
+                },
+            ],
+            bigdatacorpProcessos: [],
+            juditProcessos: [],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+        expect(result.criminalFlag).toBe('POSITIVE');
+        expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
+    });
 });
 
 describe('createAutoClassificationHandlers', () => {

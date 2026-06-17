@@ -3,6 +3,7 @@ const {
     getRoleScoreImpact,
     isLowRiskRole,
     isHighRiskRole,
+    normalizeSideForClassifier,
 } = require('./roleClassifier');
 
 describe('roleClassifier', () => {
@@ -356,6 +357,40 @@ describe('roleClassifier', () => {
 
         it('returns false for victim', () => {
             expect(isHighRiskRole('Vitima', 'Criminal')).toBe(false);
+        });
+    });
+
+    describe('normalizeSideForClassifier', () => {
+        it('normalizes P to Passive', () => {
+            expect(normalizeSideForClassifier('P')).toBe('Passive');
+        });
+
+        it('normalizes A to Active', () => {
+            expect(normalizeSideForClassifier('A')).toBe('Active');
+        });
+
+        it('normalizes Passivo to Passive', () => {
+            expect(normalizeSideForClassifier('Passivo')).toBe('Passive');
+        });
+
+        it('normalizes Ativo to Active', () => {
+            expect(normalizeSideForClassifier('Ativo')).toBe('Active');
+        });
+
+        it('returns raw value for unknown side', () => {
+            expect(normalizeSideForClassifier('Unknown')).toBe('Unknown');
+        });
+
+        it('returns null for empty side', () => {
+            expect(normalizeSideForClassifier('')).toBeNull();
+        });
+
+        it('does not match impassive as passive', () => {
+            expect(normalizeSideForClassifier('impassive')).toBe('impassive');
+        });
+
+        it('does not match inativo as active', () => {
+            expect(normalizeSideForClassifier('inativo')).toBe('inativo');
         });
     });
 });

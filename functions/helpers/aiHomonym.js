@@ -7,7 +7,7 @@ const UF_REGION_MAP = {
     SE: 'NORTHEAST', TO: 'NORTH',
 };
 
-const { classifyRole } = require('./roleClassifier');
+const { classifyRole, isLowRiskRole, normalizeSideForClassifier } = require('./roleClassifier');
 const { classifyProcessArea } = require('./processClassifier');
 const { isExcludedCrimeType, CONSUMER_CIVIL_NOISE } = require('./crimeTypeFilter');
 
@@ -56,9 +56,8 @@ function parseAddressCityUf(address) {
     };
 }
 
-function hasLowRiskRole(value, area = '') {
-    const classification = classifyRole(value, area);
-    return classification.riskLevel === 'LOW' || classification.riskLevel === 'IGNORE';
+function hasLowRiskRole(value, area = '', side = '') {
+    return isLowRiskRole(value, area, side);
 }
 
 function buildCandidateProfile(caseData = {}) {
@@ -167,8 +166,8 @@ function buildEscavadorProcessCandidates(caseData, candidateProfile) {
         const hasDivergentCpf = processo.hasDivergentCpf === true;
         const viaNameOnly = !hasExactCpfMatch && !hasDivergentCpf;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.processUf, processo.processCity);
-        const roleClassification = classifyRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area);
-        const lowRiskRole = hasLowRiskRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area);
+        const roleClassification = classifyRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area, normalizeSideForClassifier(processo.polo));
+        const lowRiskRole = hasLowRiskRole(processo.tipoNormalizado || processo.tipo || processo.polo, processo.area, normalizeSideForClassifier(processo.polo));
         const matchStrength = hasExactCpfMatch
             ? 'EXACT_CPF'
             : hasDivergentCpf
@@ -211,6 +210,10 @@ function buildEscavadorProcessCandidates(caseData, candidateProfile) {
             matchedRole: processo.tipoNormalizado || processo.tipo || processo.polo || null,
             roleClassification,
             lowRiskRole,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
             matchStrength,
             evidenceOrigin,
             evidenceStrength,
@@ -235,8 +238,8 @@ function buildEscavador2ProcessCandidates(caseData, candidateProfile) {
             const hasDivergentCpf = false;
             const viaNameOnly = !hasExactCpfMatch;
             const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.processUf, processo.processCity);
-            const roleClassification = classifyRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
-            const lowRiskRole = hasLowRiskRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area);
+            const roleClassification = classifyRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area, normalizeSideForClassifier(processo.polo));
+            const lowRiskRole = hasLowRiskRole(processo.tipoPrincipal || processo.polo || processo.roleCategory, processo.area, normalizeSideForClassifier(processo.polo));
             const matchStrength = hasExactCpfMatch
                 ? 'EXACT_CPF'
                 : (processo.tipoMatch === 'NOME_EXATO_UNICO' || processo.matchDocumentoPor === 'NOME_EXATO_UNICO')
@@ -286,10 +289,14 @@ function buildEscavador2ProcessCandidates(caseData, candidateProfile) {
                 processCity: processo.processCity || null,
                 hasExactCpfMatch,
                 hasDivergentCpf,
-                matchedRole: processo.tipoPrincipal || processo.polo || processo.roleCategory || null,
-                roleClassification,
-                lowRiskRole,
-                matchStrength,
+            matchedRole: processo.tipoPrincipal || processo.polo || processo.roleCategory || null,
+            roleClassification,
+            lowRiskRole,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
+            matchStrength,
                 evidenceOrigin,
                 evidenceStrength,
                 analysisScope,
@@ -311,8 +318,8 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
         const hasDivergentCpf = processo.hasDivergentCpf === true;
         const viaNameOnly = usedNameSupplement && !hasExactCpfMatch && !hasDivergentCpf;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.state, processo.city);
-        const roleClassification = classifyRole(processo.personType || processo.side, processo.area);
-        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side, processo.area);
+        const roleClassification = classifyRole(processo.personType || processo.side, processo.area, normalizeSideForClassifier(processo.side));
+        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side, processo.area, normalizeSideForClassifier(processo.side));
         const matchStrength = hasExactCpfMatch
             ? 'EXACT_CPF'
             : hasDivergentCpf
@@ -351,6 +358,10 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
             matchedRole: processo.personType || processo.side || null,
             roleClassification,
             lowRiskRole,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
             matchStrength,
             evidenceOrigin,
             evidenceStrength,
@@ -371,8 +382,8 @@ function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
         const hasExactCpfMatch = processo.isDirectCpfMatch === true;
         const viaNameOnly = !hasExactCpfMatch;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.estado, null);
-        const roleClassification = classifyRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType);
-        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType);
+        const roleClassification = classifyRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType, normalizeSideForClassifier(processo.polo));
+        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType, normalizeSideForClassifier(processo.polo));
         const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
         const evidenceOrigin = resolveEvidenceOrigin('BigDataCorp', hasExactCpfMatch, viaNameOnly, matchStrength);
         const evidenceStrength = resolveEvidenceStrength({
@@ -405,6 +416,10 @@ function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
             matchedRole: processo.specificRole || processo.partyType || processo.polo || null,
             roleClassification,
             lowRiskRole,
+            isDefendant: roleClassification.category === 'DEFENDANT',
+            isPlaintiff: roleClassification.category === 'PLAINTIFF',
+            isVictim: roleClassification.category === 'VICTIM',
+            isLawyer: roleClassification.category === 'LAWYER',
             matchStrength,
             evidenceOrigin,
             evidenceStrength,
