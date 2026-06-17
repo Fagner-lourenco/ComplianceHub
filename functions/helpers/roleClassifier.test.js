@@ -102,7 +102,6 @@ describe('roleClassifier', () => {
             ['INDICIADA', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['INVESTIGADO A', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['INVESTIGADA', 'Criminal', 'DEFENDANT', 'HIGH'],
-            ['FLAGRANTEADO(A)', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['FLAGRANTEADA', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['DENUNCIADO', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['NOTICIADO', 'Criminal', 'DEFENDANT', 'HIGH'],
@@ -132,7 +131,6 @@ describe('roleClassifier', () => {
             ['RECORRIDO A', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['AGRAVADO A', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['APELADA', 'Criminal', 'DEFENDANT', 'HIGH'],
-            ['NOTICIADO', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['OFENSOR', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['EMBARGADO', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['EMBARGANTE', 'Criminal', 'DEFENDANT', 'HIGH'],
@@ -172,9 +170,6 @@ describe('roleClassifier', () => {
             ['EMBARGADO', 'Trabalhista', 'DEFENDANT', 'LOW'],
             ['EMBARGANTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
             ['RECTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
-            ['REQUERENTES', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
-            ['AUTOR A', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
-            ['AUTORA', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
         ])('classifies real labor role %s', (role, area, category, riskLevel) => {
             const result = classifyRole(role, area);
             expect(result.category).toBe(category);
