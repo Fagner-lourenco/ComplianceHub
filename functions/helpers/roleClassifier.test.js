@@ -169,8 +169,6 @@ describe('roleClassifier', () => {
             ['CONSIGNATARIO', 'Trabalhista', 'OTHER', 'IGNORE'],
             ['REPRESENTANTE', 'Trabalhista', 'OTHER', 'IGNORE'],
             ['DEPRECANTE', 'Trabalhista', 'AUTHORITY', 'IGNORE'],
-            ['EMBARGADO', 'Trabalhista', 'DEFENDANT', 'LOW'],
-            ['EMBARGANTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
             ['RECTE', 'Trabalhista', 'PLAINTIFF', 'HIGH'],
         ])('classifies real labor role %s', (role, area, category, riskLevel) => {
             const result = classifyRole(role, area);
@@ -301,6 +299,30 @@ describe('roleClassifier', () => {
                 expect(result.category).toBe('DEFENDANT');
                 expect(result.riskLevel).toBe('HIGH');
             });
+
+            it('classifies EMBARGANTE with active side in labor as PLAINTIFF/HIGH', () => {
+                const result = classifyRole('EMBARGANTE', 'Trabalhista', 'Active');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('classifies EMBARGANTE with passive side in labor as DEFENDANT/LOW', () => {
+                const result = classifyRole('EMBARGANTE', 'Trabalhista', 'Passive');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
+            it('classifies EMBARGADO with active side in labor as PLAINTIFF/HIGH', () => {
+                const result = classifyRole('EMBARGADO', 'Trabalhista', 'Active');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('classifies EMBARGADO with passive side in labor as DEFENDANT/LOW', () => {
+                const result = classifyRole('EMBARGADO', 'Trabalhista', 'Passive');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('LOW');
+            });
         });
     });
 
@@ -376,6 +398,14 @@ describe('roleClassifier', () => {
 
         it('normalizes Ativo to Active', () => {
             expect(normalizeSideForClassifier('Ativo')).toBe('Active');
+        });
+
+        it('normalizes POLO PASSIVO to Passive', () => {
+            expect(normalizeSideForClassifier('POLO PASSIVO')).toBe('Passive');
+        });
+
+        it('normalizes POLO ATIVO to Active', () => {
+            expect(normalizeSideForClassifier('POLO ATIVO')).toBe('Active');
         });
 
         it('returns raw value for unknown side', () => {

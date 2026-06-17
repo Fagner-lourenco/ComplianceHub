@@ -448,6 +448,8 @@ git commit -m "feat(normalizers): passa lado/polo para roleClassifier"
 
 **Contexto:** `autoClassification.js` consome `isDefendant`/`isPlaintiff` gerados pelos normalizadores. `aiHomonym.js` também chama `classifyRole`. Não devemos alterar esses arquivos, mas precisamos garantir que as mudanças não quebram seus testes.
 
+> **Nota:** embora o plano original marcasse `aiHomonym.js` como read-only, a integração com `autoClassification.js` exigiu que os candidatos de homônimo também recebessem os flags `isDefendant`/`isPlaintiff`/`isVictim`/`isLawyer` e que o `side`/`polo` fosse propagado para `classifyRole`. Sem isso, processos classificados como `DEFENDANT/HIGH` pelo fallback nos normalizadores seriam descartados na etapa de homonímia.
+
 - [ ] **Step 1: Rodar testes de autoClassification**
 
 Run:
