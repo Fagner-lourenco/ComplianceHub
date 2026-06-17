@@ -276,6 +276,18 @@ describe('roleClassifier', () => {
                 expect(result.riskLevel).toBe('HIGH');
             });
 
+            it('classifies unknown role with raw side P as DEFENDANT/HIGH in criminal', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'P');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('classifies unknown role with raw side A as PLAINTIFF/LOW in criminal', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'A');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
             it('known defendant with active side still returns DEFENDANT/HIGH', () => {
                 const result = classifyRole('REU', 'Criminal', 'Active');
                 expect(result.category).toBe('DEFENDANT');
@@ -406,6 +418,14 @@ describe('roleClassifier', () => {
 
         it('normalizes POLO ATIVO to Active', () => {
             expect(normalizeSideForClassifier('POLO ATIVO')).toBe('Active');
+        });
+
+        it('normalizes POLO ATIVO PRINCIPAL to Active', () => {
+            expect(normalizeSideForClassifier('POLO ATIVO PRINCIPAL')).toBe('Active');
+        });
+
+        it('normalizes POLO PASSIVO PRINCIPAL to Passive', () => {
+            expect(normalizeSideForClassifier('POLO PASSIVO PRINCIPAL')).toBe('Passive');
         });
 
         it('returns raw value for unknown side', () => {

@@ -41,9 +41,10 @@ function normalizeLegalText(value) {
  */
 function normalizeSideForClassifier(rawSide) {
     const normalized = normalizeLegalText(rawSide).replace(/^POLO\s+/, '');
-    if (!normalized) return null;
-    if (/^(P|PASSIV[OA]?|PASSI|PASSIVE)$/.test(normalized)) return 'Passive';
-    if (/^(A|ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/.test(normalized)) return 'Active';
+    const withoutPrincipal = normalized.replace(/\s+PRINCIPAL$/, '');
+    if (!withoutPrincipal) return null;
+    if (/^(P|PASSIV[OA]?|PASSI|PASSIVE)$/.test(withoutPrincipal)) return 'Passive';
+    if (/^(A|ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/.test(withoutPrincipal)) return 'Active';
     return rawSide;
 }
 
@@ -69,8 +70,8 @@ const WITNESS_ROLES = /^(TESTEMUNHA|TESTEMUNHA\s+DO\s+JUIZO|TESTEMUNHA\s+POLO\s+
 const AUTHORITY_ROLES = /^(AUTORIDADE|MINISTERIO\s+PUBLICO|MP|JUSTICA|DELEGACIA|ORGAO|INSTITUICAO|JUIZO|VARA|TRIBUNAL|FAZENDA|UNIAO|ESTADO|MUNICIPIO|INSS|RECEITA\s+FEDERAL|CAIXA|BANCO|INSTITUTO|PREFEITURA|SECRETARIA|DEPRECANTE|CONFRONTANTE|COMUNICANTE|JUIZO\s+RECORRENTE|ARROLANTE)$/i;
 
 // Lados/polo passive e active para fallback
-const PASSIVE_SIDE_VALUES = /^(PASSIV[OA]?|PASSI|PASSIVE)$/i;
-const ACTIVE_SIDE_VALUES = /^(ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/i;
+const PASSIVE_SIDE_VALUES = /^(P|PASSIV[OA]?|PASSI|PASSIVE)$/i;
+const ACTIVE_SIDE_VALUES = /^(A|ATIV[OA]?|ACTIVE|AUTHOR|PLAINTIFF)$/i;
 
 // Outros neutros
 const OTHER_NEUTRAL_ROLES = /^(OUTRO|OUTROS(\s+PARTICIPANTES?)?|DESCONHECIDO|NAO\s+INFORMADO|TERCEIRO|INTERESSAD[OA](?:S)?|CONSIGNATARIO|REPRESENTANTE\b.*|ASSISTENCIA|CURADOR|TUTOR|PUPILO|SUCESSOR|TERCEIRO\s+INTERESSADO|NAO\s+APLICAVEL|N\s*A|INDEFINIDO|HERDEIRO|INVENTARIANTE|ESPOLIO(?:\s+REQUERIDO)?|ALIMENTADO|PARTES|TERINTCER|INTERESSADO\s+PGM|REPRESENTANTE\s+REU)$/i;
@@ -82,7 +83,9 @@ const CRIMINAL_PLAINTIFF_ROLES = /^(AUTOR(?:\s+A)?|AUTORA(?:\s+A)?|REQUERENTE(?:
  * Classifica um papel em uma categoria de risco
  * @param {string} role - Papel do candidato (ex: "REU", "RECLAMANTE")
  * @param {string} area - Área do processo (ex: "CRIMINAL", "TRABALHISTA", "CIVEL")
- * @param {string} [side] - Lado/polo do candidato (ex: "Passive", "Active", "PASSIVE", "ACTIVE", "Neutral")
+ * @param {string} [side] - Lado/polo do candidato. Aceita valores crus como 'P', 'A',
+ *   'Passive', 'Active', 'PASSIVE', 'ACTIVE', 'POLO PASSIVO', 'POLO ATIVO PRINCIPAL',
+ *   'Neutral', etc. Valores desconhecidos são ignorados.
  * @returns {Object} { category, riskLevel, reason }
  */
 function classifyRole(role, area = '', side = '') {
