@@ -127,6 +127,7 @@ describe('roleClassifier', () => {
             ['AUTOR A', 'Criminal', 'PLAINTIFF', 'LOW'],
             ['AUTORA', 'Criminal', 'PLAINTIFF', 'LOW'],
             ['REU 2', 'Criminal', 'DEFENDANT', 'HIGH'],
+            ['REU 2º', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['REU A', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['RECORRIDA', 'Criminal', 'DEFENDANT', 'HIGH'],
             ['RECORRIDO A', 'Criminal', 'DEFENDANT', 'HIGH'],
