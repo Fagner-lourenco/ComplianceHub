@@ -202,6 +202,80 @@ describe('roleClassifier', () => {
             expect(result.category).toBe(category);
             expect(result.riskLevel).toBe(riskLevel);
         });
+
+        describe('side/polo fallback', () => {
+            it('classifies unknown passive role in criminal as DEFENDANT/HIGH', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'Passive');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('classifies unknown active role in criminal as PLAINTIFF/LOW', () => {
+                const result = classifyRole('REPRESENTADO', 'Criminal', 'Active');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
+            it('classifies unknown passive role in labor as DEFENDANT/LOW', () => {
+                const result = classifyRole('LITISCONSORTE', 'Trabalhista', 'Passive');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
+            it('classifies unknown active role in labor as PLAINTIFF/HIGH', () => {
+                const result = classifyRole('REPRESENTADO', 'Trabalhista', 'Active');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('does not fallback for witnesses', () => {
+                const result = classifyRole('TESTEMUNHA POLO PASSIVO', 'Criminal', 'Passive');
+                expect(result.category).toBe('WITNESS');
+                expect(result.riskLevel).toBe('IGNORE');
+            });
+
+            it('does not fallback for victims', () => {
+                const result = classifyRole('VITIMA DO FATO', 'Criminal', 'Passive');
+                expect(result.category).toBe('VICTIM');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
+            it('does not fallback for lawyers', () => {
+                const result = classifyRole('ADVOGADO REQTE', 'Criminal', 'Passive');
+                expect(result.category).toBe('LAWYER');
+                expect(result.riskLevel).toBe('IGNORE');
+            });
+
+            it('does not fallback for neutral roles', () => {
+                const result = classifyRole('TERCEIRO INTERESSADO', 'Criminal', 'Passive');
+                expect(result.category).toBe('OTHER');
+                expect(result.riskLevel).toBe('IGNORE');
+            });
+
+            it('keeps UNKNOWN for neutral side', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'Neutral');
+                expect(result.category).toBe('UNKNOWN');
+                expect(result.riskLevel).toBe('NEUTRAL');
+            });
+
+            it('keeps UNKNOWN when side is missing', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal');
+                expect(result.category).toBe('UNKNOWN');
+                expect(result.riskLevel).toBe('NEUTRAL');
+            });
+
+            it('normalizes BDC polo values', () => {
+                const result = classifyRole('REPRESENTADO', 'Criminal', 'PASSIVE');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('normalizes active BDC polo values', () => {
+                const result = classifyRole('REPRESENTADO', 'Trabalhista', 'ACTIVE');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+        });
     });
 
     describe('getRoleScoreImpact', () => {

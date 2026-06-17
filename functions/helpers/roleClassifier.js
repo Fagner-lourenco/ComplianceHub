@@ -54,17 +54,22 @@ const WITNESS_ROLES = /^(TESTEMUNHA|TESTEMUNHA\s+DO\s+JUIZO|TESTEMUNHA\s+POLO\s+
 const AUTHORITY_ROLES = /^(AUTORIDADE|MINISTERIO\s+PUBLICO|MP|JUSTICA|DELEGACIA|ORGAO|INSTITUICAO|JUIZO|VARA|TRIBUNAL|FAZENDA|UNIAO|ESTADO|MUNICIPIO|INSS|RECEITA\s+FEDERAL|CAIXA|BANCO|INSTITUTO|PREFEITURA|SECRETARIA|DEPRECANTE|CONFRONTANTE|COMUNICANTE|JUIZO\s+RECORRENTE|ARROLANTE)$/i;
 
 // Outros neutros
-const OTHER_NEUTRAL_ROLES = /^(OUTRO|OUTROS(\s+PARTICIPANTES?)?|DESCONHECIDO|NAO\s+INFORMADO|TERCEIRO|INTERESSAD[OA](?:S)?|CONSIGNATARIO|REPRESENTANTE\b.*|ASSISTENCIA|CURADOR|TUTOR|PUPILO|SUCESSOR|TERCEIRO\s+INTERESSADO|NAO\s+APLICAVEL|N\s*A|INDEFINIDO|HERDEIRO|INVENTARIANTE|ESPOLIO(?:\s+REQUERIDO)?|ALIMENTADO|PARTES|TERINTCER|LITISCONSORTE|INTERESSADO\s+PGM|REPRESENTANTE\s+REU)$/i;
+const OTHER_NEUTRAL_ROLES = /^(OUTRO|OUTROS(\s+PARTICIPANTES?)?|DESCONHECIDO|NAO\s+INFORMADO|TERCEIRO|INTERESSAD[OA](?:S)?|CONSIGNATARIO|REPRESENTANTE\b.*|ASSISTENCIA|CURADOR|TUTOR|PUPILO|SUCESSOR|TERCEIRO\s+INTERESSADO|NAO\s+APLICAVEL|N\s*A|INDEFINIDO|HERDEIRO|INVENTARIANTE|ESPOLIO(?:\s+REQUERIDO)?|ALIMENTADO|PARTES|TERINTCER|INTERESSADO\s+PGM|REPRESENTANTE\s+REU)$/i;
+
+// Autor/Querelante em processo criminal - BAIXO RISCO
+const CRIMINAL_PLAINTIFF_ROLES = /^(AUTOR(?:\s+A)?|AUTORA(?:\s+A)?|REQUERENTE(?:S)?|IMPETRANTE|QUERELANTE|ATIVO|POLO\s+ATIVO(?:\s+PRINCIPAL)?|EXEQUENTE|EXEQTE|REQTE|DEMANDANTE|PROMOVENTE|PARTE\s+AUTORA|RECTE)$/i;
 
 /**
  * Classifica um papel em uma categoria de risco
  * @param {string} role - Papel do candidato (ex: "REU", "RECLAMANTE")
  * @param {string} area - Área do processo (ex: "CRIMINAL", "TRABALHISTA", "CIVEL")
+ * @param {string} [side] - Lado/polo do candidato (ex: "Passive", "Active", "PASSIVE", "ACTIVE", "Neutral")
  * @returns {Object} { category, riskLevel, reason }
  */
-function classifyRole(role, area = '') {
+function classifyRole(role, area = '', side = '') {
     const normalizedRole = normalizeLegalText(role);
     const normalizedArea = normalizeLegalText(area);
+    const normalizedSide = normalizeLegalText(side);
 
     if (!normalizedRole) {
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao informado' };
@@ -99,9 +104,18 @@ function classifyRole(role, area = '') {
             return { category: 'DEFENDANT', riskLevel: 'HIGH', reason: 'Reu/Indiciado em processo criminal' };
         }
         // Autor em criminal (não "autor do fato") = geralmente querelante/vitima = BAIXO
-        if (/^(AUTOR(?:\s+A)?|AUTORA(?:\s+A)?|REQUERENTE(?:S)?|IMPETRANTE|QUERELANTE|ATIVO|POLO\s+ATIVO(?:\s+PRINCIPAL)?|EXEQUENTE|EXEQTE|REQTE|DEMANDANTE|PROMOVENTE|PARTE\s+AUTORA|RECTE)$/.test(normalizedRole)) {
+        if (CRIMINAL_PLAINTIFF_ROLES.test(normalizedRole)) {
             return { category: 'PLAINTIFF', riskLevel: 'LOW', reason: 'Autor/Querelante em processo criminal' };
         }
+
+        // Fallback por lado/polo quando papel não foi reconhecido
+        if (normalizedSide && /^(PASSIVO?|PASSI|PASSIVE|PASSIVA?)$/.test(normalizedSide)) {
+            return { category: 'DEFENDANT', riskLevel: 'HIGH', reason: 'Papel nao classificado, lado passivo em processo criminal' };
+        }
+        if (normalizedSide && /^(ATIVO?|ATIVA?|ACTIVE|ATIV|AUTHOR|PLAINTIFF)$/.test(normalizedSide)) {
+            return { category: 'PLAINTIFF', riskLevel: 'LOW', reason: 'Papel nao classificado, lado ativo em processo criminal' };
+        }
+
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao classificado em processo criminal' };
     }
 
@@ -114,6 +128,15 @@ function classifyRole(role, area = '') {
         if (LOW_RISK_LABOR_DEFENDANT.test(normalizedRole) || /^(PASSIVO|DEFENDANT)$/.test(normalizedRole)) {
             return { category: 'DEFENDANT', riskLevel: 'LOW', reason: 'Reclamado/Reu em acao trabalhista (processado pelo empregado)' };
         }
+
+        // Fallback por lado/polo
+        if (normalizedSide && /^(PASSIVO?|PASSI|PASSIVE|PASSIVA?)$/.test(normalizedSide)) {
+            return { category: 'DEFENDANT', riskLevel: 'LOW', reason: 'Papel nao classificado, lado passivo em processo trabalhista' };
+        }
+        if (normalizedSide && /^(ATIVO?|ATIVA?|ACTIVE|ATIV|AUTHOR|PLAINTIFF)$/.test(normalizedSide)) {
+            return { category: 'PLAINTIFF', riskLevel: 'HIGH', reason: 'Papel nao classificado, lado ativo em processo trabalhista' };
+        }
+
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao classificado em processo trabalhista' };
     }
 
@@ -196,6 +219,7 @@ module.exports = {
     isHighRiskRole,
     normalizeLegalText,
     HIGH_RISK_CRIMINAL_ROLES,
+    CRIMINAL_PLAINTIFF_ROLES,
     HIGH_RISK_LABOR_PLAINTIFF,
     LOW_RISK_LABOR_DEFENDANT,
     VICTIM_ROLES,
