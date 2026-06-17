@@ -123,7 +123,7 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
         }
 
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : courtType;
-        const roleClassification = classifyRole(specificRole || partyType, areaForRole);
+        const roleClassification = classifyRole(specificRole || partyType, areaForRole, polo);
 
         // Extract decisions for criminal processes (top 3, 500 chars max each)
         let decisions = null;

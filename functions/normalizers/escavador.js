@@ -81,7 +81,7 @@ function normalizeEscavadorProcessos(result, cpf) {
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : area;
-        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole);
+        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole, role?.polo);
 
         processos.push({
             numeroCnj: item.numero_cnj || null,

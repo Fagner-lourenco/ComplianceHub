@@ -356,7 +356,8 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
                 let role = null;
                 if (polo === 'A') role = 'AUTOR';
                 else if (polo === 'P') role = 'REU';
-                return classifyRole(role, area);
+                const side = polo === 'A' ? 'Active' : polo === 'P' ? 'Passive' : null;
+                return classifyRole(role, area, side);
             })(),
             isDefendant: false, // sera atualizado abaixo
             isPlaintiff: false,

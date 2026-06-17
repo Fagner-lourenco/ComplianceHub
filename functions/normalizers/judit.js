@@ -134,7 +134,7 @@ function normalizeJuditLawsuits(result, cpf) {
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const isWitness = !!(role?.personType && WITNESS_TYPES.test(role.personType));
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : data.area;
-        const roleClassification = classifyRole(role?.personType, areaForRole);
+        const roleClassification = classifyRole(role?.personType, areaForRole, role?.side);
 
         roleSummary.push({
             code: data.code || null,
