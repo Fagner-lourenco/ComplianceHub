@@ -101,6 +101,20 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
     signature.bigdatacorpActiveWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants)
         ? caseData.bigdatacorpActiveWarrants.map((item) => item?.numero || item?.number || item?.id || item?.status || '').sort()
         : [];
+    signature.escavador2NewFindingsDigest = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+        .filter((item) => item?.isNewEscavador2Finding === true)
+        .map((item) => ({
+            cnj: item.numeroCnj || item.numeroCnjMascarado || null,
+            criminal: item.isCriminal === true,
+            labor: item.isLabor === true,
+            defendant: item.isDefendant === true,
+            plaintiff: item.isPlaintiff === true,
+            victim: item.isVictim === true,
+            witness: item.isWitness === true,
+            materialRisk: item.isMaterialRisk === true,
+            excludedCrimeType: item.isExcludedCrimeType || null,
+        }))
+        .sort((a, b) => String(a.cnj).localeCompare(String(b.cnj)));
     return computeSimpleHash(JSON.stringify(signature));
 }
 
@@ -160,8 +174,10 @@ function computeAutoClassification(caseData, {
         p.isLabor === true && p.isPlaintiff === true
     ).length;
 
-    if (escavador2NewCriminalCount > 0) {
-        pushUnique(criminalNotes, `Nova consulta processual identificou ${escavador2NewCriminalCount} processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.`);
+    if (escavador2NewMaterialCriminalCount > 0) {
+        pushUnique(criminalNotes, `Nova consulta processual identificou ${escavador2NewMaterialCriminalCount} processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.`);
+    } else if (escavador2NewCriminalCount > 0) {
+        pushUnique(criminalNotes, `Nova consulta processual identificou ${escavador2NewCriminalCount} processo(s) criminal(is) novo(s), sem papel material confirmatorio.`);
     }
     if (escavador2NewLaborCount > 0) {
         pushUnique(laborNotes, `Nova consulta processual identificou ${escavador2NewLaborCount} processo(s) trabalhista(s) ativo(s) nao identificado(s) pelos demais provedores.`);

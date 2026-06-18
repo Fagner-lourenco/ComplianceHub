@@ -160,6 +160,39 @@ describe('computeAutoClassifySignature', () => {
         expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"escavador2ProcessTotal":3'));
         expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"escavador2HasNewMaterialRisk":true'));
     });
+
+    it('changes signature when Escavador2 process role changes but counts stay same', () => {
+        const makeCaseWithRole = (isDefendant) => ({
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 1,
+            escavador2CriminalCount: 1,
+            escavador2LaborCount: 0,
+            escavador2NewFindingCount: 1,
+            escavador2DuplicateCount: 0,
+            escavador2HasNewMaterialRisk: false,
+            escavador2Processos: [{
+                numeroCnj: '0001234-56.2024.8.26.0100',
+                isCriminal: true,
+                isLabor: false,
+                isNewEscavador2Finding: true,
+                isDefendant,
+                isPlaintiff: false,
+                isVictim: false,
+                isWitness: false,
+                isMaterialRisk: false,
+                isExcludedCrimeType: false,
+            }],
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            djenEnrichmentStatus: 'SKIPPED',
+            enrichmentStatus: 'SKIPPED',
+        });
+
+        const sigA = computeAutoClassifySignature(makeCaseWithRole(false), { computeSimpleHash });
+        const sigB = computeAutoClassifySignature(makeCaseWithRole(true), { computeSimpleHash });
+        expect(sigA).not.toBe(sigB);
+    });
 });
 
 describe('computeAutoClassification', () => {
@@ -254,7 +287,7 @@ describe('computeAutoClassification', () => {
         expect(() => computeAutoClassification(caseData, mockDeps)).not.toThrow();
         const result = computeAutoClassification(caseData, mockDeps);
         expect(result.criminalNotes).toContain(
-            'Nova consulta processual identificou 1 processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.',
+            'Nova consulta processual identificou 1 processo(s) criminal(is) novo(s), sem papel material confirmatorio.',
         );
         expect(result.laborNotes).toContain(
             'Nova consulta processual identificou 1 processo(s) trabalhista(s) ativo(s) nao identificado(s) pelos demais provedores.',
@@ -278,6 +311,7 @@ describe('computeAutoClassification', () => {
         });
         const result = computeAutoClassification(caseData, mockDeps);
         expect(result.criminalFlag).toBe('POSITIVE');
+        expect(result.criminalNotes).toContain('Nova consulta processual identificou 1 processo(s) criminal(is) material(is) nao identificado(s) pelos demais provedores.');
         expect(result.criminalNotes).toContain('Escavador2');
     });
 
