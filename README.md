@@ -458,6 +458,24 @@ cd functions && npm test        # backend (55 arquivos, 1223 testes)
 
 **Motivação:** `index.js` passou de ~13.366 para ~1.850 linhas (-87%). Cada módulo é testável isoladamente.
 
+### ADR-008 — Escavador2 Classifica Papéis pelo Role Classifier Central
+
+**Decisão:** O normalizador `escavador2.js` usa `classifyRole(role, area, side)` de `helpers/roleClassifier.js` ao invés de atribuir papéis de forma ad-hoc.
+
+**Motivação:** Centralizar regras de classificação reduz inconsistências entre provedores e garante que a área `LABOR` seja normalizada para `Trabalhista` antes da classificação.
+
+### ADR-009 — Processos Escavador2 Visíveis no Portal Ops
+
+**Decisão:** Todos os processos retornados pelo Escavador2 são renderizados no `CasoPage` do portal Ops, separados em "Novos achados" e "Processos confirmatórios/duplicados".
+
+**Motivação:** Auditar processos duplicados/confirmatórios é necessário para supervisores, mesmo quando não alteram prefill ou classificação automática.
+
+### ADR-010 — Pipeline Escavador2 Endurecido contra Dados Stale
+
+**Decisão:** A fase `runEscavador2EnrichmentPhase` limpa campos derivados (`escavador2Processos`, `escavador2NewFinding`, etc.) no início da execução e em caso de falha, preservando apenas `escavador2RawPayloads`. Reruns manuais e em cascade exigem provedores upstream terminalizados.
+
+**Motivação:** Evitar que resultados antigos persistam após reprocessamento, garantindo integridade da classificação automática e do relatório final.
+
 ---
 
 ## 10. Registro de Progresso
@@ -474,6 +492,7 @@ cd functions && npm test        # backend (55 arquivos, 1223 testes)
 2026-05-31  ✅ Phase C: Modularização (26 módulos extraídos, -87% index.js)
 2026-05-31  ✅ Auditorias: correções de segurança, remoção de código morto
 2026-06-01  ✅ Backup Diário: Firestore + Auth, retenção 7 dias
+2026-06-18  ✅ Escavador2: visibilidade Ops, role classifier central e pipeline endurecido
 ```
 
 ### Fase 0 — Relatório Final Completo ✅ 2026-04-03
