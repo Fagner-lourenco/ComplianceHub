@@ -7,6 +7,7 @@
  * IMPORTANT: This component receives already-normalized data from CasoPage state.
  * No API calls are made here — everything is reactive from caseData already in memory.
  */
+import { formatDate } from '../../../core/formatDate';
 import './ProcessInspectionModal.css';
 
 export default function ProcessInspectionModal({ process, djenTimeline, onClose }) {
@@ -133,7 +134,7 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                                 <div className="pim-label">Decisões ({data.decisions.length})</div>
                                 {data.decisions.map((d, i) => (
                                     <div key={i} className="pim-decision-card">
-                                        {d.date && <div className="pim-decision-date">{new Date(d.date).toLocaleDateString('pt-BR')}</div>}
+                                        {d.date && <div className="pim-decision-date">{formatDate(d.date)}</div>}
                                         <div className="pim-decision-content">{d.content}</div>
                                     </div>
                                 ))}
@@ -146,7 +147,7 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                                 <div className="pim-label">Movimentações ({data.movements.length})</div>
                                 {data.movements.map((m, i) => (
                                     <div key={i} className="pim-movement">
-                                        <span className="pim-movement-date">{m.date ? new Date(m.date).toLocaleDateString('pt-BR') : '—'}</span>
+                                        <span className="pim-movement-date">{m.date ? formatDate(m.date) : '—'}</span>
                                         <span className="pim-movement-content">{m.content}</span>
                                     </div>
                                 ))}

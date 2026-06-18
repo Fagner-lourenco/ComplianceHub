@@ -22,7 +22,7 @@
 
 const { getDjenGeoMatch } = require('../helpers/tribunalMap.js');
 const { normalizeText } = require('../helpers/textNormalize.js');
-const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 
 const CRIMINAL_CLASS_REGEX = /criminal|penal|execu[çc][aã]o\s*penal|habeas\s*corpus|a[çc][aã]o\s*penal|inqu[eé]rito\s*policial|medida\s*de\s*seguran[çc]a/i;
 const LABOR_CLASS_REGEX = /trabalh|reclamat[oó]|dissídio/i;
@@ -335,6 +335,7 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
 
         const confirmation = item._confirmation || {};
         const geoMatch = getDjenGeoMatch(item.siglaTribunal, candidateUfs);
+        const polo = confirmation.polo || findCandidatePolo(item.destinatarios, candidateName);
 
         const processedItem = {
             id: item.id,
@@ -347,16 +348,16 @@ function normalizeDjenComunicacoes(apiResult, candidateName, candidateCpf, known
             area: item._area,
             numeroProcesso: item.numero_processo || null,
             numeroProcessoMascara: item.numeroprocessocommascara || null,
-            polo: confirmation.polo || findCandidatePolo(item.destinatarios, candidateName),
+            polo,
             confirmationLevel: confirmation.level || 'PROCESS_CONFIRMED',
             roleClassification: (() => {
-                const polo = confirmation.polo || findCandidatePolo(item.destinatarios, candidateName);
                 const area = item._area;
-                // Mapear polo para papel aproximado
+                const side = normalizeSideForClassifier(polo);
+                // Mapear polo para papel aproximado quando conhecido
                 let role = null;
-                if (polo === 'A') role = 'AUTOR';
-                else if (polo === 'P') role = 'REU';
-                return classifyRole(role, area);
+                if (side === 'Active') role = 'AUTOR';
+                else if (side === 'Passive') role = 'REU';
+                return classifyRole(role, area, side);
             })(),
             isDefendant: false, // sera atualizado abaixo
             isPlaintiff: false,

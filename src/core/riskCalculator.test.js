@@ -114,10 +114,10 @@ describe('calculateRisk — flags POSITIVE', () => {
     });
 });
 
-describe('calculateRisk — flags INCONCLUSIVE / NEGATIVE_PARTIAL', () => {
-    it('criminal INCONCLUSIVE_HOMONYM sozinho → score 45, YELLOW, ATTENTION', () => {
-        const r = calculateRisk({ criminalFlag: 'INCONCLUSIVE_HOMONYM' });
-        expect(r.riskScore).toBe(45);
+describe('calculateRisk — flags INCONCLUSIVE / cobertura parcial', () => {
+    it('criminal INCONCLUSIVE sozinho → score 40, YELLOW, ATTENTION', () => {
+        const r = calculateRisk({ criminalFlag: 'INCONCLUSIVE' });
+        expect(r.riskScore).toBe(40);
         expect(r.riskLevel).toBe('YELLOW');
         expect(r.suggestedVerdict).toBe('ATTENTION');
     });
@@ -128,17 +128,16 @@ describe('calculateRisk — flags INCONCLUSIVE / NEGATIVE_PARTIAL', () => {
         expect(r.riskLevel).toBe('YELLOW');
     });
 
-    it('NEGATIVE_PARTIAL sozinho → score 18, GREEN, FIT (1 sinal < 2 → sem boost)', () => {
-        const r = calculateRisk({ criminalFlag: 'NEGATIVE_PARTIAL' });
-        expect(r.riskScore).toBe(18);
+    it('NEGATIVE com cobertura parcial sozinho → score 0, GREEN, FIT', () => {
+        const r = calculateRisk({ criminalFlag: 'NEGATIVE', criminalEvidenceQuality: 'NEGATIVE_WITH_PARTIAL_COVERAGE' });
+        expect(r.riskScore).toBe(0);
         expect(r.riskLevel).toBe('GREEN');
         expect(r.suggestedVerdict).toBe('FIT');
     });
 
-    it('criminal NEGATIVE_PARTIAL + CPF pendente (2 sinais) → score+15=33, YELLOW', () => {
-        const r = calculateRisk({ criminalFlag: 'NEGATIVE_PARTIAL', cpfPendingRegularization: true });
-        // NEGATIVE_PARTIAL = 18; 2 yellow signals → +15 = 33
-        expect(r.riskScore).toBe(33);
+    it('criminal NEGATIVE com cobertura parcial + CPF pendente → score mínimo cadastral 30, YELLOW', () => {
+        const r = calculateRisk({ criminalFlag: 'NEGATIVE', criminalEvidenceQuality: 'NEGATIVE_WITH_PARTIAL_COVERAGE', cpfPendingRegularization: true });
+        expect(r.riskScore).toBe(30);
         expect(r.riskLevel).toBe('YELLOW');
         expect(r.suggestedVerdict).toBe('ATTENTION');
     });

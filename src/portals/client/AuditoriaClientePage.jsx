@@ -3,6 +3,7 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
 import { useTenantAuditLogs } from '../../hooks/useTenantAuditLogs';
+import { formatDateTimeBR } from '../../core/formatDate';
 import { extractErrorMessage } from '../../core/errorUtils';
 import {
     getActionLabel,
@@ -97,7 +98,7 @@ export default function AuditoriaClientePage() {
                             {getCategoryLabel(log.category)}
                         </span>
                     )}
-                    <span className="auditoria-ledger-card__time">{log.timestamp}</span>
+                    <span className="auditoria-ledger-card__time">{formatDateTimeBR(log.timestamp)}</span>
                 </div>
                 <dl className="auditoria-ledger-card__grid">
                     <div><dt>Responsável</dt><dd>{actor}</dd></div>
@@ -193,7 +194,7 @@ export default function AuditoriaClientePage() {
                                 const entityDetail = getEntityDetail(log.entity);
                                 return (
                                     <tr key={log.id} className="data-table__row">
-                                        <td className="data-table__td data-table__td--mono">{log.timestamp}</td>
+                                        <td className="data-table__td data-table__td--mono">{formatDateTimeBR(log.timestamp)}</td>
                                         <td className="data-table__td">
                                             <div className="auditoria-person">
                                                 <strong>{actor}</strong>

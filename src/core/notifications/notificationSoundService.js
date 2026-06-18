@@ -98,6 +98,9 @@ export function playNotificationSound(notificationType) {
         playTone(440, 0.1, 0.08); // A4
         setTimeout(() => playTone(554.37, 0.1, 0.08), 100); // C#5
         setTimeout(() => playTone(659.25, 0.15, 0.08), 200); // E5
+    } else if (notificationType === 'CASE_RETURNED') {
+        playTone(659.25, 0.12, 0.08);
+        setTimeout(() => playTone(523.25, 0.16, 0.08), 140);
     } else {
         // Default soft ping
         playTone(523.25, 0.15, 0.06);

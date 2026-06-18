@@ -52,9 +52,9 @@ describe('validators', () => {
             expect(validateUrl(undefined)).toBe(true);
         });
 
-        it('aceita handle de rede social com @', () => {
-            expect(validateUrl('@joaosilva')).toBe(true);
-            expect(validateUrl('@empresa_br')).toBe(true);
+        it('rejeita handle de rede social sem URL completa', () => {
+            expect(validateUrl('@joaosilva')).toBe(false);
+            expect(validateUrl('@empresa_br')).toBe(false);
         });
 
         it('aceita URLs validas (https/http)', () => {
@@ -63,10 +63,11 @@ describe('validators', () => {
             expect(validateUrl('https://linkedin.com/in/fulano')).toBe(true);
         });
 
-        it('rejeita strings que nao sao URL nem handle', () => {
+        it('rejeita strings que nao sao URL http/https completa', () => {
             expect(validateUrl('nao-sou-uma-url')).toBe(false);
             expect(validateUrl('joaosilva')).toBe(false);
             expect(validateUrl('www.example.com')).toBe(false); // sem protocolo
+            expect(validateUrl('ftp://example.com')).toBe(false);
         });
     });
 });

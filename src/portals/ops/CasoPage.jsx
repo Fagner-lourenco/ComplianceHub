@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDebouncedField } from '../../hooks/useDebouncedField';
 import useAutoResize from '../../hooks/useAutoResize';
 import { useNavigate, useParams } from 'react-router-dom';
 import RiskChip from '../../ui/components/RiskChip/RiskChip';
@@ -46,18 +47,29 @@ function formatFullCpf(cpf) {
     return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+function formatEscavador2Process(process) {
+    return {
+        cnj: process.numeroCnjMascarado || process.numeroCnj || '—',
+        area: process.area || '—',
+        role: process.tipoPrincipal || process.roleCategory || '—',
+        side: process.polo || '—',
+        materialRisk: process.isMaterialRisk ? 'Sim' : 'Nao',
+        tribunal: process.tribunalSigla || '—',
+        dataInicio: process.dataInicio || '—',
+        isNewFinding: process.isNewEscavador2Finding === true,
+        isCriminal: process.isCriminal === true,
+    };
+}
+
 const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
 const CRIMINAL_OPTIONS = [
     'NEGATIVE',
-    'NEGATIVE_PARTIAL',
     'POSITIVE',
     'INCONCLUSIVE',
-    'INCONCLUSIVE_HOMONYM',
-    'INCONCLUSIVE_LOW_COVERAGE',
     'NOT_FOUND',
 ];
-const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE']);
+const FINAL_CRIMINAL_FLAGS = new Set(['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND']);
 const LABOR_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const WARRANT_OPTIONS = ['NEGATIVE', 'POSITIVE', 'INCONCLUSIVE', 'NOT_FOUND'];
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH'];
@@ -84,6 +96,16 @@ const READ_ONLY_CASE_STATUSES = new Set(['DONE', 'CORRECTION_NEEDED', 'WAITING_I
 
 function isFinalCriminalFlag(value) {
     return !value || FINAL_CRIMINAL_FLAGS.has(value);
+}
+
+function formatPendingJuditPhases(phases = []) {
+    return phases
+        .map((phase) => ({
+            warrant: 'mandados',
+            execution: 'execucao penal',
+            lawsuits: 'processos',
+        }[phase] || phase))
+        .join(' e ');
 }
 
 const TIMELINE_ACTION_LABELS = {
@@ -218,10 +240,10 @@ function getFlagDisplay(value) {
     return {
         POSITIVE: 'Positivo',
         NEGATIVE: 'Negativo',
-        NEGATIVE_PARTIAL: 'Negativo parcial',
+        NEGATIVE_PARTIAL: 'Negativo',
         INCONCLUSIVE: 'Inconclusivo',
-        INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo',
-        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+        INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+        INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
         NOT_FOUND: 'Nao encontrado',
     }[value] || (value || 'N/A');
 }
@@ -741,6 +763,15 @@ function createInitialForm(caseData) {
 }
 
 
+function ApiBadge({ isEnriched, originals, formValue, field }) {
+    if (!isEnriched) return null;
+    if (!(field in originals)) return null;
+    if (formValue === originals[field]) {
+        return <span className="caso-api-badge">via integração</span>;
+    }
+    return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
+}
+
 export default function CasoPage() {
     const { caseId } = useParams();
     const navigate = useNavigate();
@@ -751,6 +782,10 @@ export default function CasoPage() {
     const [loadingCase, setLoadingCase] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
     const [form, setForm] = useState(createInitialForm(null));
+    const formRef = useRef(form);
+    useEffect(() => {
+        formRef.current = form;
+    }, [form]);
     const criminalNotesRef = useAutoResize();
     const laborNotesRef = useAutoResize();
     const warrantNotesRef = useAutoResize();
@@ -758,16 +793,14 @@ export default function CasoPage() {
     const analystCommentRef = useAutoResize();
     const [concluded, setConcluded] = useState(false);
     const [saveError, setSaveError] = useState(null);
+    useEffect(() => {
+        if (!saveError) return undefined;
+        const id = setTimeout(() => setSaveError(null), 2000);
+        return () => clearTimeout(id);
+    }, [saveError]);
     const [saving, setSaving] = useState(false);
     const [reportPreview, setReportPreview] = useState({ open: false, loading: false, html: '', error: '' });
     const [retryingPhase, setRetryingPhase] = useState(null);
-    const formatPendingJuditPhases = (phases = []) => phases
-        .map((phase) => ({
-            warrant: 'mandados',
-            execution: 'execucao penal',
-            lawsuits: 'processos',
-        }[phase] || phase))
-        .join(' e ');
     const [enabledPhases, setEnabledPhases] = useState(LEGACY_PHASES);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnReason, setReturnReason] = useState('');
@@ -777,10 +810,81 @@ export default function CasoPage() {
     const [showHighRiskConfirm, setShowHighRiskConfirm] = useState(false);
     const [showChecklistModal, setShowChecklistModal] = useState(false);
     const [showFinalConclusionModal, setShowFinalConclusionModal] = useState(false);
+    const [showIdentityBypassModal, setShowIdentityBypassModal] = useState(false);
+    const [identityBypassJustification, setIdentityBypassJustification] = useState('');
+    const [identityBypassError, setIdentityBypassError] = useState(null);
     const [overrideRequest, setOverrideRequest] = useState(null);
     const [overrideJustification, setOverrideJustification] = useState('');
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const [pendingNavigationTarget, setPendingNavigationTarget] = useState(null);
+
+    // BUG-R3-001: Debounce text fields to reduce recalculations on keystroke
+    const [localExecutiveSummary, handleExecutiveSummaryChange, flushExecutiveSummary] = useDebouncedField(
+        form.executiveSummary || '',
+        (value) => update('executiveSummary', value),
+        400,
+        () => dirtyFieldsRef.current.add('executiveSummary')
+    );
+    const [localAnalystComment, handleAnalystCommentChange, flushAnalystComment] = useDebouncedField(
+        form.analystComment || '',
+        (value) => update('analystComment', value),
+        400,
+        () => dirtyFieldsRef.current.add('analystComment')
+    );
+    const [localCriminalNotes, handleCriminalNotesChange, flushCriminalNotes] = useDebouncedField(
+        form.criminalNotes || '',
+        (value) => update('criminalNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('criminalNotes')
+    );
+    const [localLaborNotes, handleLaborNotesChange, flushLaborNotes] = useDebouncedField(
+        form.laborNotes || '',
+        (value) => update('laborNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('laborNotes')
+    );
+    const [localWarrantNotes, handleWarrantNotesChange, flushWarrantNotes] = useDebouncedField(
+        form.warrantNotes || '',
+        (value) => update('warrantNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('warrantNotes')
+    );
+    const [localOsintNotes, handleOsintNotesChange, flushOsintNotes] = useDebouncedField(
+        form.osintNotes || '',
+        (value) => update('osintNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('osintNotes')
+    );
+    const [localSocialNotes, handleSocialNotesChange, flushSocialNotes] = useDebouncedField(
+        form.socialNotes || '',
+        (value) => update('socialNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('socialNotes')
+    );
+    const [localDigitalNotes, handleDigitalNotesChange, flushDigitalNotes] = useDebouncedField(
+        form.digitalNotes || '',
+        (value) => update('digitalNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('digitalNotes')
+    );
+    const [localConflictNotes, handleConflictNotesChange, flushConflictNotes] = useDebouncedField(
+        form.conflictNotes || '',
+        (value) => update('conflictNotes', value),
+        400,
+        () => dirtyFieldsRef.current.add('conflictNotes')
+    );
+
+    const flushAllDebouncedFields = useCallback(() => {
+        flushExecutiveSummary();
+        flushAnalystComment();
+        flushCriminalNotes();
+        flushLaborNotes();
+        flushWarrantNotes();
+        flushOsintNotes();
+        flushSocialNotes();
+        flushDigitalNotes();
+        flushConflictNotes();
+    }, [flushExecutiveSummary, flushAnalystComment, flushCriminalNotes, flushLaborNotes, flushWarrantNotes, flushOsintNotes, flushSocialNotes, flushDigitalNotes, flushConflictNotes]);
     const [draftStatus, setDraftStatus] = useState('idle');
     const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
     const [caseTimeline, setCaseTimeline] = useState([]);
@@ -825,6 +929,7 @@ export default function CasoPage() {
 
     // Auto-save dirty fields as draft when switching steps
     const saveDraft = useCallback(async () => {
+        flushAllDebouncedFields();
         if (isDemoMode || !caseData?.id || dirtyFieldsRef.current.size === 0 || concluded) return false;
         if (READ_ONLY_CASE_STATUSES.has(caseData.status)) {
             setSaveError('Este caso está em modo leitura. Rascunhos não podem ser salvos neste status.');
@@ -834,9 +939,9 @@ export default function CasoPage() {
         const dirty = dirtyFieldsRef.current;
         const payload = {};
         for (const field of dirty) {
-            if (form[field] !== undefined) payload[field] = form[field];
+            if (formRef.current[field] !== undefined) payload[field] = formRef.current[field];
         }
-        const draftRisk = calculateRisk(form, enabledPhases);
+        const draftRisk = calculateRisk(formRef.current, enabledPhases);
         payload.riskLevel = draftRisk.riskLevel;
         payload.riskScore = draftRisk.riskScore;
         if (Object.keys(payload).length === 0) return;
@@ -863,7 +968,7 @@ export default function CasoPage() {
             setDraftStatus('error');
             return false;
         }
-    }, [caseData?.id, caseData?.status, form, isDemoMode, concluded, enabledPhases]);
+    }, [caseData?.id, caseData?.status, isDemoMode, concluded, enabledPhases, flushAllDebouncedFields]);
 
     const handleRetryPhase = useCallback(async (phase, scope = 'cascade') => {
         if (isDemoMode || !caseData?.id) return;
@@ -1016,7 +1121,29 @@ export default function CasoPage() {
             description: 'Confirme que esta fase foi revisada manualmente antes da conclusão.',
         })), [steps]);
     const manualChecklist = useChecklistSession(caseData?.id || caseId, manualChecklistItems);
-    const canEditCase = !READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded;
+    const canBypassIdentityGate = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
+
+    const identityGateBlocked = Boolean(
+        caseData?.bigdatacorpGateResult?.passed === false ||
+        caseData?.juditGateResult?.passed === false ||
+        caseData?.enrichmentGateResult?.passed === false ||
+        caseData?.bigdatacorpEnrichmentStatus === 'BLOCKED' ||
+        caseData?.juditEnrichmentStatus === 'BLOCKED' ||
+        caseData?.enrichmentStatus === 'BLOCKED'
+    );
+
+    const canBypassBlockedCorrection =
+        caseData?.status === 'CORRECTION_NEEDED' &&
+        identityGateBlocked &&
+        canBypassIdentityGate &&
+        !concluded;
+
+    const canEditCase =
+        (!READ_ONLY_CASE_STATUSES.has(caseData?.status) && !concluded) ||
+        canBypassBlockedCorrection;
+    const canEditCaseRef = useRef(canEditCase);
+    canEditCaseRef.current = canEditCase;
+
     const hasDirtyDraft = dirtyFieldsRef.current.size > 0;
     const canAssignOthers = ['supervisor', 'admin', 'owner'].includes(userProfile?.role);
 
@@ -1066,21 +1193,21 @@ export default function CasoPage() {
     };
 
     const update = (field, value) => {
-        if (!canEditCase) return;
+        if (!canEditCaseRef.current) return;
         dirtyFieldsRef.current.add(field);
-        setForm((previous) => {
-            const next = { ...previous, [field]: value };
-            // P09: Clear severity when flag leaves POSITIVE (criminal/labor)
-            if (field === 'criminalFlag' && value !== 'POSITIVE') {
-                next.criminalSeverity = '';
-                dirtyFieldsRef.current.add('criminalSeverity');
-            }
-            if (field === 'laborFlag' && value !== 'POSITIVE' && value !== 'INCONCLUSIVE') {
-                next.laborSeverity = '';
-                dirtyFieldsRef.current.add('laborSeverity');
-            }
-            return next;
-        });
+        const previous = formRef.current;
+        const next = { ...previous, [field]: value };
+        // P09: Clear severity when flag leaves POSITIVE (criminal/labor)
+        if (field === 'criminalFlag' && value !== 'POSITIVE') {
+            next.criminalSeverity = '';
+            dirtyFieldsRef.current.add('criminalSeverity');
+        }
+        if (field === 'laborFlag' && value !== 'POSITIVE' && value !== 'INCONCLUSIVE') {
+            next.laborSeverity = '';
+            dirtyFieldsRef.current.add('laborSeverity');
+        }
+        formRef.current = next;
+        setForm(next);
     };
 
     const toggleVector = (field, value) => {
@@ -1088,16 +1215,31 @@ export default function CasoPage() {
         dirtyFieldsRef.current.add(field);
         setForm((previous) => {
             const current = Array.isArray(previous[field]) ? previous[field] : [];
-            return {
+            const next = {
                 ...previous,
                 [field]: current.includes(value)
                     ? current.filter((currentValue) => currentValue !== value)
                     : [...current, value],
             };
+            formRef.current = next;
+            return next;
         });
     };
 
-    const risk = useMemo(() => calculateRisk(form, enabledPhases), [form, enabledPhases]);
+    const risk = useMemo(() => calculateRisk(formRef.current, enabledPhases), // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+        enabledPhases,
+        form.criminalFlag,
+        form.criminalSeverity,
+        form.laborFlag,
+        form.laborSeverity,
+        form.warrantFlag,
+        form.osintLevel,
+        form.socialStatus,
+        form.digitalFlag,
+        form.conflictInterest,
+        form.cpfPendingRegularization,
+    ]);
     const classificationReview = useMemo(() => {
         const fallbackReview = buildFallbackClassificationReview(caseData || {});
         const sourceReview = caseData?.aiClassificationReviewOk && caseData?.aiClassificationReview
@@ -1105,18 +1247,108 @@ export default function CasoPage() {
             : fallbackReview;
         const sanitizedReview = sanitizeClassificationReviewForDisplay(sourceReview, fallbackReview);
         return applyClassificationReviewGuardrails(sanitizedReview, caseData || {});
-    }, [caseData]);
-    const activeWarrantCount = (
+    }, [
+        caseData?.autoClassifiedAt,
+        caseData?.criminalFlag,
+        caseData?.laborFlag,
+        caseData?.warrantFlag,
+        caseData?.criminalEvidenceQuality,
+        caseData?.providerDivergence,
+        caseData?.reviewRecommended,
+        caseData?.coverageLevel,
+        caseData?.ambiguityNotes,
+        caseData?.bigdatacorpGateResult?.passed,
+        caseData?.juditGateResult?.passed,
+        caseData?.enrichmentGateResult?.passed,
+        caseData?.juditIdentity,
+        caseData?.enrichmentIdentity,
+        caseData?.bigdatacorpName,
+        caseData?.bigdatacorpCriminalCount,
+        caseData?.bigdatacorpDirectCriminalCount,
+        caseData?.escavadorCriminalCount,
+        caseData?.bigdatacorpLaborCount,
+        caseData?.bigdatacorpDirectLaborCount,
+        caseData?.escavadorProcessos,
+        caseData?.djenComunicacoes,
+        caseData?.djenLaborFlag,
+        caseData?.bigdatacorpActiveWarrants,
+        caseData?.juditActiveWarrantCount,
+        caseData?.juditWarrants,
+        caseData?.juditCriminalFlag,
+        caseData?.bigdatacorpCriminalFlag,
+        caseData?.bigdatacorpLaborFlag,
+        caseData?.juditEnrichmentStatus,
+        caseData?.bigdatacorpEnrichmentStatus,
+        caseData?.escavadorEnrichmentStatus,
+        caseData?.djenEnrichmentStatus,
+        caseData?.aiClassificationReviewOk,
+        caseData?.aiClassificationReview,
+    ]);
+    const bigdatacorpCriminalProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => p.isCriminal),
+        [caseData?.bigdatacorpProcessos]
+    );
+    const bigdatacorpNonCriminalProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => !p.isCriminal),
+        [caseData?.bigdatacorpProcessos]
+    );
+    const escavadorLaborProcessos = useMemo(() =>
+        (caseData?.escavadorProcessos || []).filter((p) => /trabalh|trt|reclamat/i.test(p.area || '')),
+        [caseData?.escavadorProcessos]
+    );
+    const juditLaborRoles = useMemo(() =>
+        (caseData?.juditRoleSummary || []).filter((r) => /trabalh|trt|reclamat/i.test(r.area || '')),
+        [caseData?.juditRoleSummary]
+    );
+    const bigdatacorpLaborProcessos = useMemo(() =>
+        (caseData?.bigdatacorpProcessos || []).filter((p) => p.isLabor),
+        [caseData?.bigdatacorpProcessos]
+    );
+    const activeWarrantCount = useMemo(() => (
         (caseData?.juditActiveWarrantCount || 0) +
         (Array.isArray(caseData?.bigdatacorpActiveWarrants)
             ? caseData.bigdatacorpActiveWarrants.filter((warrant) => warrant?.isActive !== false).length
             : 0)
-    );
+    ), [caseData?.juditActiveWarrantCount, caseData?.bigdatacorpActiveWarrants]);
+
+    const warrantBadge = useMemo(() => {
+        if (!caseData) return null;
+        const warrantProcesses = new Set();
+        (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
+        (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
+        const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
+        return dedupCount > 0 ? (
+            <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
+                ⚠ {dedupCount} mandado(s)
+            </span>
+        ) : null;
+    }, [caseData?.juditWarrants, caseData?.bigdatacorpActiveWarrants, caseData?.juditActiveWarrantCount]);
+
+    const enrichmentStaleWarning = useMemo(() => {
+        if (!caseData?.draftSavedAt || caseData.status === 'DONE') return null;
+        const draftTs = new Date(caseData.draftSavedAt).getTime();
+        const toMs = (v) => { if (!v) return 0; const d = v.toDate ? v.toDate() : new Date(v); return d.getTime() || 0; };
+        const latestEnrichment = Math.max(
+            toMs(caseData.enrichedAt),
+            toMs(caseData.juditEnrichedAt),
+            toMs(caseData.escavadorEnrichedAt),
+            toMs(caseData.bigdatacorpEnrichedAt),
+            toMs(caseData.djenEnrichedAt),
+            toMs(caseData.escavador2EnrichedAt),
+            toMs(caseData.autoClassifiedAt)
+        );
+        return latestEnrichment > draftTs ? (
+            <div style={{ margin: '0 0 .5rem', padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '.85rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>⚠️</span>
+                <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
+            </div>
+        ) : null;
+    }, [caseData?.draftSavedAt, caseData?.status, caseData?.enrichedAt, caseData?.juditEnrichedAt, caseData?.escavadorEnrichedAt, caseData?.bigdatacorpEnrichedAt, caseData?.djenEnrichedAt, caseData?.escavador2EnrichedAt, caseData?.autoClassifiedAt]);
 
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('criminal') && form.criminalFlag && !isFinalCriminalFlag(form.criminalFlag) && {
-            label: 'Bloqueio: resultado criminal consultivo. Selecione Sem apontamento, Com apontamento ou Inconclusivo.',
+            label: 'Bloqueio: resultado criminal consultivo. Selecione Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.',
             ok: false,
             block: true,
         },
@@ -1149,7 +1381,13 @@ export default function CasoPage() {
             label: 'Nível de risco médio-alto com resultado FIT',
             ok: true, warn: true,
         },
-    ].filter(Boolean), [enabledPhases, form, caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore]);
+    ].filter(Boolean), [
+        enabledPhases,
+        form.criminalFlag, form.laborFlag, form.warrantFlag, form.osintLevel,
+        form.socialStatus, form.digitalFlag, form.conflictInterest, form.finalVerdict,
+        form.analystComment, form.executiveSummary,
+        caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore,
+    ]);
     const allOk = useMemo(() => checklist.every((item) => item.ok), [checklist]);
     const aiHomonymStructured = caseData?.aiHomonymStructured || null;
     const aiHomonymVisible = Boolean(caseData?.aiHomonymTriggered || aiHomonymStructured || caseData?.aiHomonymError);
@@ -1181,16 +1419,7 @@ export default function CasoPage() {
     ].some(isDoneStatus) || Boolean(caseData?.aiAnalysis);
     const enrichedPhase = (phase) => caseData?.enrichmentSources?.[phase] && !caseData.enrichmentSources[phase].error;
 
-    const ApiBadge = ({ field }) => {
-        if (!isEnriched) return null;
-        const originals = caseData?.enrichmentOriginalValues || {};
-        if (!(field in originals)) return null;
-        // Show "via integração" if field still matches the original enriched value
-        if (form[field] === originals[field]) {
-            return <span className="caso-api-badge">via integração</span>;
-        }
-        return <span className="caso-api-badge caso-api-badge--edited">editado</span>;
-    };
+    const apiBadgeOriginals = caseData?.enrichmentOriginalValues || {};
 
     // Determine if a stepper step was auto-filled by enrichment
     const isStepAutoFilled = (stepKey) => {
@@ -1311,20 +1540,29 @@ export default function CasoPage() {
         }
     };
 
-    const submitConclusion = async ({ override = null } = {}) => {
-        if (!caseData || !allOk || saving || !canEditCase) {
+    const submitConclusion = async ({ override = null, identityBypass = false, identityBypassJustification: bypassJustification = '' } = {}) => {
+        const bypassFlow = identityBypass === true;
+        if (!caseData || !allOk || saving || (!canEditCase && !bypassFlow)) {
             return;
         }
 
         setSaveError(null);
+        flushAllDebouncedFields();
+        const latestForm = formRef.current;
+        const latestRisk = calculateRisk(latestForm, enabledPhases);
 
-        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(form.criminalFlag)) {
-            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
+        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
+            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.');
             return;
         }
 
         if (!user) {
             setSaveError('Sua sessao nao esta disponivel para concluir o caso.');
+            return;
+        }
+
+        if (bypassFlow && bypassJustification.trim().length < 15) {
+            setIdentityBypassError('Informe uma justificativa com no minimo 15 caracteres.');
             return;
         }
 
@@ -1334,8 +1572,8 @@ export default function CasoPage() {
         // Empty non-dirty narratives are omitted so backend cascade (resolveNarrativeField) can generate better values.
         const dirty = dirtyFieldsRef.current;
         const optionalNarrative = (field) => {
-            if (dirty.has(field)) return form[field];
-            const val = form[field];
+            if (dirty.has(field)) return latestForm[field];
+            const val = latestForm[field];
             if (!val || (typeof val === 'string' && !val.trim())) return undefined;
             return val;
         };
@@ -1346,61 +1584,73 @@ export default function CasoPage() {
                 payload: {
                     assigneeId: caseData.assigneeId || user.uid,
                     executiveSummary: optionalNarrative('executiveSummary'),
-                    criminalFlag: form.criminalFlag,
-                    criminalSeverity: form.criminalSeverity || null,
+                    criminalFlag: latestForm.criminalFlag,
+                    criminalSeverity: latestForm.criminalSeverity || null,
                     criminalNotes: optionalNarrative('criminalNotes'),
-                    laborFlag: form.laborFlag || null,
-                    laborSeverity: form.laborSeverity || null,
+                    laborFlag: latestForm.laborFlag || null,
+                    laborSeverity: latestForm.laborSeverity || null,
                     laborNotes: optionalNarrative('laborNotes'),
-                    warrantFlag: form.warrantFlag || null,
+                    warrantFlag: latestForm.warrantFlag || null,
                     warrantNotes: optionalNarrative('warrantNotes'),
-                    osintLevel: form.osintLevel,
-                    osintVectors: form.osintVectors,
+                    osintLevel: latestForm.osintLevel,
+                    osintVectors: latestForm.osintVectors,
                     osintNotes: optionalNarrative('osintNotes'),
-                    socialStatus: form.socialStatus,
-                    socialReasons: form.socialReasons,
+                    socialStatus: latestForm.socialStatus,
+                    socialReasons: latestForm.socialReasons,
                     socialNotes: optionalNarrative('socialNotes'),
-                    digitalFlag: form.digitalFlag,
-                    digitalVectors: form.digitalVectors,
+                    digitalFlag: latestForm.digitalFlag,
+                    digitalVectors: latestForm.digitalVectors,
                     digitalNotes: optionalNarrative('digitalNotes'),
-                    conflictInterest: form.conflictInterest,
+                    conflictInterest: latestForm.conflictInterest,
                     conflictNotes: optionalNarrative('conflictNotes'),
-                    finalVerdict: form.finalVerdict,
+                    finalVerdict: latestForm.finalVerdict,
                     keyFindings: dirty.has('keyFindings')
-                        ? normalizeKeyFindings(form.keyFindings)
-                        : (form.keyFindings?.trim() ? normalizeKeyFindings(form.keyFindings) : undefined),
+                        ? normalizeKeyFindings(latestForm.keyFindings)
+                        : (latestForm.keyFindings?.trim() ? normalizeKeyFindings(latestForm.keyFindings) : undefined),
                     analystComment: optionalNarrative('analystComment'),
                     clientVerdictOverride: override,
-                    riskLevel: risk.riskLevel,
-                    riskScore: risk.riskScore,
+                    riskLevel: latestRisk.riskLevel,
+                    riskScore: latestRisk.riskScore,
                     enabledPhases: caseData.enabledPhases || enabledPhases,
                     hasNotes: Boolean(
-                        form.executiveSummary
-                        || form.criminalNotes
-                        || form.laborNotes
-                        || form.warrantNotes
-                        || form.osintNotes
-                        || form.socialNotes
-                        || form.digitalNotes
-                        || form.conflictNotes
-                        || form.analystComment
-                        || form.keyFindings?.trim()
+                        latestForm.executiveSummary
+                        || latestForm.criminalNotes
+                        || latestForm.laborNotes
+                        || latestForm.warrantNotes
+                        || latestForm.osintNotes
+                        || latestForm.socialNotes
+                        || latestForm.digitalNotes
+                        || latestForm.conflictNotes
+                        || latestForm.analystComment
+                        || latestForm.keyFindings?.trim()
                     ),
+                    ...(bypassFlow ? {
+                        identityBypassed: true,
+                        identityBypassJustification: bypassJustification.trim(),
+                    } : {}),
                 },
             });
 
             setCaseData((currentCase) => ({
                 ...currentCase,
-                ...form,
+                ...latestForm,
                 status: 'DONE',
                 assigneeId: currentCase.assigneeId || user.uid,
-                riskLevel: risk.riskLevel,
-                riskScore: risk.riskScore,
+                riskLevel: latestRisk.riskLevel,
+                riskScore: latestRisk.riskScore,
                 hasNotes: true,
                 reviewDraft: undefined,
+                ...(bypassFlow ? {
+                    identityBypassed: true,
+                    identityBypassJustification: bypassJustification.trim(),
+                    identityBypassedBy: userProfile?.email || user?.email || user?.uid,
+                } : {}),
             }));
             setConcluded(true);
             setShowFinalConclusionModal(false);
+            setShowIdentityBypassModal(false);
+            setIdentityBypassJustification('');
+            setIdentityBypassError(null);
             setOverrideRequest(null);
             setOverrideJustification('');
         } catch (error) {
@@ -1422,9 +1672,11 @@ export default function CasoPage() {
         }
 
         setSaveError(null);
+        flushAllDebouncedFields();
+        const latestForm = formRef.current;
 
-        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(form.criminalFlag)) {
-            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento ou Inconclusivo.');
+        if (enabledPhases.includes('criminal') && !isFinalCriminalFlag(latestForm.criminalFlag)) {
+            setSaveError('Selecione um resultado criminal final: Sem apontamento, Com apontamento, Inconclusivo ou Nao encontrado.');
             return;
         }
 
@@ -1571,7 +1823,6 @@ export default function CasoPage() {
                             try {
                                 await navigator.clipboard.writeText(url);
                                 setSaveError('✅ Link copiado!');
-                                setTimeout(() => setSaveError(null), 2000);
                             } catch {
                                 window.open(url, '_blank');
                             }
@@ -1580,6 +1831,16 @@ export default function CasoPage() {
                     {canEditCase && (
                         <button className="caso-btn caso-btn--primary" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                             {saving ? 'Salvando...' : 'Concluir'}
+                        </button>
+                    )}
+                    {canBypassBlockedCorrection && (
+                        <button
+                            className="caso-btn caso-btn--warning"
+                            disabled={!allOk || saving}
+                            onClick={() => setShowIdentityBypassModal(true)}
+                            title="Concluir mesmo com gate de identidade bloqueado mediante justificativa administrativa"
+                        >
+                            Concluir com bypass de identidade
                         </button>
                     )}
                     {canAssignOthers && caseData.assigneeId && (
@@ -1617,17 +1878,7 @@ export default function CasoPage() {
                         {(caseData.juditCriminalCount || 0) + (caseData.bigdatacorpCriminalCount || 0)} criminal(is)
                     </span>
                 )}
-                {(() => {
-                    const warrantProcesses = new Set();
-                    (caseData.juditWarrants || []).forEach((w) => { if (w.code) warrantProcesses.add(w.code.replace(/\D/g, '')); });
-                    (caseData.bigdatacorpActiveWarrants || []).forEach((w) => { if (w.processNumber) warrantProcesses.add(w.processNumber.replace(/\D/g, '')); });
-                    const dedupCount = warrantProcesses.size || Math.max(caseData.juditActiveWarrantCount || 0, caseData.bigdatacorpActiveWarrants?.length || 0);
-                    return dedupCount > 0 ? (
-                        <span style={{ fontSize: '.72rem', padding: '2px 7px', background: 'var(--red-100, #fee2e2)', color: 'var(--red-700, #b91c1c)', borderRadius: '4px', fontWeight: 700, border: '1px solid var(--red-300, #fca5a5)' }}>
-                            ⚠ {dedupCount} mandado(s)
-                        </span>
-                    ) : null;
-                })()}
+                {warrantBadge}
                 {caseData.riskLevel && caseData.status === 'DONE' && (
                     <RiskChip value={caseData.riskLevel} size="sm" />
                 )}
@@ -1644,10 +1895,20 @@ export default function CasoPage() {
                 </div>
             )}
 
+            {caseData?.identityBypassed === true && (
+                <div className="caso-readonly-banner" role="status" style={{ borderColor: 'var(--orange-300)', background: 'var(--orange-50)', color: 'var(--orange-800)' }}>
+                    <strong>Bypass de identidade registrado</strong>
+                    <span>
+                        Este caso foi concluído com bypass do gate de identidade por {caseData.identityBypassedBy || 'usuário autorizado'}.
+                        {caseData.identityBypassJustification ? ` Justificativa: ${caseData.identityBypassJustification}` : ''}
+                    </span>
+                </div>
+            )}
+
             {!isReadOnlyCase && (
                 <div className={`caso-draft-bar caso-draft-bar--${draftStatus}`} role="status" aria-live="polite">
                     <span>{hasDirtyDraft ? 'Rascunho com alterações não salvas' : 'Rascunho sem alterações pendentes'}</span>
-                    {lastDraftSavedAt && <span>Último salvamento: {lastDraftSavedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>}
+                    {lastDraftSavedAt && <span>Último salvamento: {formatDateTimeBR(lastDraftSavedAt)}</span>}
                     {draftStatus === 'error' && <span>Falha no último salvamento. Tente novamente antes de sair.</span>}
                 </div>
             )}
@@ -1669,17 +1930,7 @@ export default function CasoPage() {
 
 
             {/* P09: Warning if enrichment/AI data changed after last draft save */}
-            {caseData.draftSavedAt && caseData.status !== 'DONE' && (() => {
-                const draftTs = new Date(caseData.draftSavedAt).getTime();
-                const toMs = (v) => { if (!v) return 0; const d = v.toDate ? v.toDate() : new Date(v); return d.getTime() || 0; };
-                const latestEnrichment = Math.max(toMs(caseData.enrichedAt), toMs(caseData.juditEnrichedAt), toMs(caseData.escavadorEnrichedAt), toMs(caseData.autoClassifiedAt));
-                return latestEnrichment > draftTs ? (
-                    <div style={{ margin: '0 0 .5rem', padding: '10px 14px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', fontSize: '.85rem', color: '#92400e', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>⚠️</span>
-                        <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
-                    </div>
-                ) : null;
-            })()}
+            {enrichmentStaleWarning}
 
             <div className="stepper">
                 {steps.map((step, index) => (
@@ -1783,7 +2034,7 @@ export default function CasoPage() {
                             )}
                             <div className="caso-field">
                                 <label>Data da solicitacao</label>
-                                <input className="caso-input caso-input--readonly" value={caseData.createdAt} readOnly />
+                                <input className="caso-input caso-input--readonly" value={formatDateTimeBR(caseData.createdAt)} readOnly />
                             </div>
                         </div>
 
@@ -1865,6 +2116,15 @@ export default function CasoPage() {
                             </div>
                         </div>
 
+                        {(caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse) && (
+                            <details id="ai-raw-response" className="caso-assisted-review__raw" style={{ marginTop: 16 }}>
+                                <summary>Resposta bruta da IA para diagnóstico</summary>
+                                <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '.75rem', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 6, padding: 12, maxHeight: 360, overflowY: 'auto', lineHeight: 1.5 }}>
+                                    {caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse}
+                                </pre>
+                            </details>
+                        )}
+
                         <div className="caso-evidence-summary">
                             <h4>Evidências usadas na análise</h4>
                             <div className="caso-evidence-summary__grid">
@@ -1939,7 +2199,7 @@ export default function CasoPage() {
                                     )}
                                 </div>
                                 {caseData.juditIdentity.consultedAt && (
-                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.juditIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                    <p className="caso-identity-consulted">Consultado em: {formatDateTimeBR(caseData.juditIdentity.consultedAt)}</p>
                                 )}
                                 </div>
                             );
@@ -1975,7 +2235,7 @@ export default function CasoPage() {
                                     )}
                                 </div>
                                 {caseData.enrichmentIdentity.consultedAt && (
-                                    <p className="caso-identity-consulted">Consultado em: {new Date(caseData.enrichmentIdentity.consultedAt).toLocaleString('pt-BR')}</p>
+                                    <p className="caso-identity-consulted">Consultado em: {formatDateTimeBR(caseData.enrichmentIdentity.consultedAt)}</p>
                                 )}
                             </div>
                         )}
@@ -2299,6 +2559,94 @@ export default function CasoPage() {
                             <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
                                 Escavador: falha na consulta.
                                 {caseData.escavadorError && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.escavadorError, 'Falha na consulta Escavador.')})</span>}
+                            </div>
+                        )}
+
+                        {/* Escavador2 enrichment display */}
+                        {caseData.escavador2EnrichmentStatus === 'RUNNING' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--running" style={{ marginTop: 16 }}>
+                                <span className="caso-enrichment-spinner" /> Escavador2: consulta em andamento...
+                            </div>
+                        )}
+                        {['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus) && Array.isArray(caseData.escavador2Processos) && caseData.escavador2Processos.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>
+                                    Escavador2 <span className="caso-api-badge">via integração</span>
+                                    {caseData.escavador2HasNewMaterialRisk === true && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>NOVO RISCO MATERIAL</span>}
+                                    {caseData.escavador2CriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
+                                    {caseData.escavador2LaborFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--yellow" style={{ marginLeft: 6 }}>TRABALHISTA</span>}
+                                </h4>
+                                <div className="caso-field-row" style={{ marginTop: 8 }}>
+                                    <div className="caso-field">
+                                        <label>Total</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2ProcessTotal ?? caseData.escavador2Processos.length} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Novos</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2NewFindingCount ?? caseData.escavador2Processos.filter((p) => p.isNewEscavador2Finding).length} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Duplicados</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2DuplicateCount ?? 0} readOnly />
+                                    </div>
+                                    {caseData.escavador2CriminalCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Criminais</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.escavador2CriminalCount} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.escavador2LaborCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Trabalhistas</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.escavador2LaborCount} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 12 }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Área</th>
+                                                <th className="data-table__th">Papel</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Risco material</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Data início</th>
+                                                <th className="data-table__th">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.escavador2Processos.map((proc, i) => {
+                                                const row = formatEscavador2Process(proc);
+                                                return (
+                                                    <tr key={i} className={`data-table__row ${row.isCriminal ? 'data-table__row--criminal' : ''} ${row.isNewFinding ? 'data-table__row--highlight' : ''}`}>
+                                                        <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{row.cnj}</td>
+                                                        <td className="data-table__td">{row.area}</td>
+                                                        <td className="data-table__td">{row.role}</td>
+                                                        <td className="data-table__td">{row.side}</td>
+                                                        <td className="data-table__td">{row.materialRisk}</td>
+                                                        <td className="data-table__td">{row.tribunal}</td>
+                                                        <td className="data-table__td">{row.dataInicio}</td>
+                                                        <td className="data-table__td">
+                                                            {row.isNewFinding ? (
+                                                                <span className="caso-flag-chip caso-flag-chip--red">Novo</span>
+                                                            ) : (
+                                                                <span className="caso-flag-chip caso-flag-chip--neutral">Confirmatório</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                        {caseData.escavador2EnrichmentStatus === 'FAILED' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
+                                Escavador2: falha na consulta.
+                                {caseData.escavador2Error && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.escavador2Error, 'Falha na consulta Escavador2.')})</span>}
                             </div>
                         )}
 
@@ -2757,9 +3105,65 @@ export default function CasoPage() {
                     </div>
                 </Modal>
 
+                <Modal
+                    open={showIdentityBypassModal}
+                    onClose={() => {
+                        setShowIdentityBypassModal(false);
+                        setIdentityBypassError(null);
+                    }}
+                    title="Bypass do gate de identidade"
+                    maxWidth={560}
+                    footer={(
+                        <>
+                            <button type="button" className="btn-secondary" onClick={() => setShowIdentityBypassModal(false)}>
+                                Cancelar
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                disabled={saving || identityBypassJustification.trim().length < 15}
+                                onClick={() => submitConclusion({
+                                    identityBypass: true,
+                                    identityBypassJustification,
+                                })}
+                            >
+                                {saving ? 'Concluindo...' : 'Confirmar bypass e concluir'}
+                            </button>
+                        </>
+                    )}
+                >
+                    <div className="caso-critical-modal">
+                        <p>
+                            Este caso possui gate de identidade bloqueado. O bypass deve ser usado apenas quando um supervisor ou administrador revisou manualmente a divergencia e decidiu concluir mesmo assim.
+                        </p>
+                        <dl>
+                            <div><dt>Candidato</dt><dd>{caseData.candidateName || 'Nao informado'}</dd></div>
+                            <div><dt>Motivo do bloqueio</dt><dd>{caseData.bigdatacorpGateResult?.reason || caseData.juditGateResult?.reason || caseData.enrichmentGateResult?.reason || 'Gate bloqueado'}</dd></div>
+                        </dl>
+                        {identityBypassError && (
+                            <div role="alert" style={{ color: 'var(--red-600)', background: 'var(--red-50)', padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
+                                {identityBypassError}
+                            </div>
+                        )}
+                        <div className="form-group">
+                            <label style={{ fontWeight: 600, fontSize: '.875rem' }}>Justificativa do bypass *</label>
+                            <textarea
+                                className="caso-textarea"
+                                value={identityBypassJustification}
+                                onChange={(event) => setIdentityBypassJustification(event.target.value)}
+                                rows={4}
+                                placeholder="Descreva por que a conclusao deve ser permitida mesmo com gate de identidade bloqueado..."
+                            />
+                            <span style={{ fontSize: '.75rem', color: 'var(--text-tertiary)', marginTop: 4, display: 'block' }}>
+                                Minimo de 15 caracteres. Esta justificativa sera registrada em auditoria.
+                            </span>
+                        </div>
+                    </div>
+                </Modal>
+
                 {currentStepKey === 'criminal' && (
                     <div className="caso-section">
-                        <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge field="criminalFlag" />}</h3>
+                        <h3>Analise criminal {enrichedPhase('criminal') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.criminalFlag} field="criminalFlag" />}</h3>
                         {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
@@ -2798,12 +3202,12 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="criminalNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.criminalNotes} field="criminalNotes" /></label>
                             <textarea
                                 ref={criminalNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.criminalNotes}
-                                onChange={(event) => update('criminalNotes', event.target.value)}
+                                value={localCriminalNotes}
+                                onChange={(event) => handleCriminalNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Descreva os achados desta etapa."
                             />
@@ -2971,7 +3375,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => p.isCriminal).map((proc, i) => (
+                                            {bigdatacorpCriminalProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
@@ -3010,7 +3414,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => !p.isCriminal).map((proc, i) => (
+                                            {bigdatacorpNonCriminalProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
@@ -3111,7 +3515,7 @@ export default function CasoPage() {
 
                 {currentStepKey === 'labor' && (
                     <div className="caso-section">
-                        <h3>Analise trabalhista {enrichedPhase('labor') && <ApiBadge field="laborFlag" />}</h3>
+                        <h3>Analise trabalhista {enrichedPhase('labor') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.laborFlag} field="laborFlag" />}</h3>
                         {enrichmentRunning && <div className="caso-enrichment-skeleton"><div className="caso-skeleton-line" /><div className="caso-skeleton-line caso-skeleton-line--short" /></div>}
                         <div className="caso-grid">
                             <div className="caso-field">
@@ -3150,12 +3554,12 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="laborNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.laborNotes} field="laborNotes" /></label>
                             <textarea
                                 ref={laborNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.laborNotes}
-                                onChange={(event) => update('laborNotes', event.target.value)}
+                                value={localLaborNotes}
+                                onChange={(event) => handleLaborNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Descreva os achados trabalhistas."
                             />
@@ -3177,7 +3581,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.escavadorProcessos.filter((p) => /trabalh|trt|reclamat/i.test(p.area || '')).map((proc, i) => (
+                                            {escavadorLaborProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace' }}>{proc.numeroCnj || '—'}</td>
                                                     <td className="data-table__td">{proc.tribunalSigla || '—'}</td>
@@ -3207,7 +3611,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.juditRoleSummary.filter((r) => /trabalh|trt|reclamat/i.test(r.area || '')).map((r, i) => (
+                                            {juditLaborRoles.map((r, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{r.code || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
@@ -3238,7 +3642,7 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.bigdatacorpProcessos.filter((p) => p.isLabor).map((proc, i) => (
+                                            {bigdatacorpLaborProcessos.map((proc, i) => (
                                                 <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtName || '—'}</td>
@@ -3346,7 +3750,7 @@ export default function CasoPage() {
 
                 {currentStepKey === 'warrant' && (
                     <div className="caso-section">
-                        <h3>Mandado de prisao {enrichedPhase('warrant') && <ApiBadge field="warrantFlag" />}</h3>
+                        <h3>Mandado de prisao {enrichedPhase('warrant') && <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.warrantFlag} field="warrantFlag" />}</h3>
                         {caseData.juditWarrants?.length > 0 && !['POSITIVE', 'INCONCLUSIVE'].includes(form.warrantFlag) && (
                             <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginBottom: 12 }}>
                                 Atenção: a Judit encontrou {caseData.juditActiveWarrantCount || caseData.juditWarrants.length} mandado(s) ativo(s), mas o resultado selecionado é &ldquo;{form.warrantFlag || 'não definido'}&rdquo;. Revise o campo abaixo.
@@ -3380,12 +3784,12 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-field" style={{ marginTop: 16 }}>
-                            <label>Resumo / notas <ApiBadge field="warrantNotes" /></label>
+                            <label>Resumo / notas <ApiBadge isEnriched={isEnriched} originals={apiBadgeOriginals} formValue={form.warrantNotes} field="warrantNotes" /></label>
                             <textarea
                                 ref={warrantNotesRef}
                                 className="caso-textarea caso-textarea--autosize"
-                                value={form.warrantNotes}
-                                onChange={(event) => update('warrantNotes', event.target.value)}
+                                value={localWarrantNotes}
+                                onChange={(event) => handleWarrantNotesChange(event.target.value)}
                                 rows={4}
                                 placeholder="Informacoes sobre mandado de prisao."
                             />
@@ -3554,7 +3958,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo de perfis públicos</label>
-                            <textarea className="caso-textarea" value={form.osintNotes} onChange={(event) => update('osintNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localOsintNotes} onChange={(event) => handleOsintNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3594,7 +3998,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo social</label>
-                            <textarea className="caso-textarea" value={form.socialNotes} onChange={(event) => update('socialNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localSocialNotes} onChange={(event) => handleSocialNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3644,7 +4048,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Resumo da analise digital</label>
-                            <textarea className="caso-textarea" value={form.digitalNotes} onChange={(event) => update('digitalNotes', event.target.value)} rows={4} />
+                            <textarea className="caso-textarea" value={localDigitalNotes} onChange={(event) => handleDigitalNotesChange(event.target.value)} rows={4} />
                         </div>
                         </>)}
 
@@ -3667,7 +4071,7 @@ export default function CasoPage() {
 
                         <div className="caso-field">
                             <label>Notas de conflito</label>
-                            <textarea className="caso-textarea" value={form.conflictNotes} onChange={(event) => update('conflictNotes', event.target.value)} rows={3} />
+                            <textarea className="caso-textarea" value={localConflictNotes} onChange={(event) => handleConflictNotesChange(event.target.value)} rows={3} />
                         </div>
                         </>)}
 
@@ -3764,8 +4168,8 @@ export default function CasoPage() {
                                 ref={executiveSummaryRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Resumo executivo"
-                                value={form.executiveSummary}
-                                onChange={(event) => update('executiveSummary', event.target.value)}
+                                value={localExecutiveSummary}
+                                onChange={(event) => handleExecutiveSummaryChange(event.target.value)}
                                 rows={5}
                             />
                         </div>
@@ -3820,13 +4224,13 @@ export default function CasoPage() {
                                 ref={analystCommentRef}
                                 className="caso-textarea caso-textarea--autosize"
                                 aria-label="Justificativa final do resultado"
-                                value={form.analystComment}
-                                onChange={(event) => update('analystComment', event.target.value)}
+                                value={localAnalystComment}
+                                onChange={(event) => handleAnalystCommentChange(event.target.value)}
                                 rows={4}
                             />
-                            {form.analystComment && (
-                                <span style={{ fontSize: '.75rem', color: form.analystComment.length > 1500 ? 'var(--red-600, #dc2626)' : 'var(--text-tertiary, #94a3b8)', marginTop: 4, display: 'block', textAlign: 'right' }}>
-                                    {form.analystComment.length} / 1500
+                            {localAnalystComment && (
+                                <span style={{ fontSize: '.75rem', color: localAnalystComment.length > 1500 ? 'var(--red-600, #dc2626)' : 'var(--text-tertiary, #94a3b8)', marginTop: 4, display: 'block', textAlign: 'right' }}>
+                                    {localAnalystComment.length} / 1500
                                 </span>
                             )}
                         </div>
@@ -3836,6 +4240,16 @@ export default function CasoPage() {
                             {canEditCase && (
                                 <button className="caso-btn caso-btn--primary caso-btn--conclude" data-conclude disabled={!allOk || saving || isCorrectionNeeded} onClick={handleConclude}>
                                     {saving ? 'Salvando...' : 'Concluir caso'}
+                                </button>
+                            )}
+                            {canBypassBlockedCorrection && (
+                                <button
+                                    className="caso-btn caso-btn--warning caso-btn--conclude"
+                                    disabled={!allOk || saving}
+                                    onClick={() => setShowIdentityBypassModal(true)}
+                                    title="Concluir mesmo com gate de identidade bloqueado mediante justificativa administrativa"
+                                >
+                                    Concluir com bypass de identidade
                                 </button>
                             )}
                         </div>

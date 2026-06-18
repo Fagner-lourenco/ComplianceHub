@@ -55,6 +55,7 @@ export const ACTION_LABELS = {
     CASE_REASSIGNED: { label: 'Caso reatribuído', category: CATEGORY.CASE },
     CASE_UNASSIGNED: { label: 'Responsável removido', category: CATEGORY.CASE },
     CASE_RETURNED: { label: 'Caso devolvido', category: CATEGORY.CASE },
+    CASE_IDENTITY_BYPASSED: { label: 'Bypass de identidade', category: CATEGORY.SECURITY },
     CASE_CORRECTED: { label: 'Caso corrigido', category: CATEGORY.CASE },
     CASE_CONCLUDED: { label: 'Caso concluído', category: CATEGORY.CASE },
     CASE_DRAFT_SAVED: { label: 'Rascunho salvo', category: CATEGORY.CASE },

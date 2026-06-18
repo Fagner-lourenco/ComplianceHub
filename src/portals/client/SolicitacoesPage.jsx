@@ -13,13 +13,13 @@ import { useAuth } from '../../core/auth/useAuth';
 import { ANALYSIS_PHASE_LABELS, callSubmitClientCorrection, callGetClientQuotaStatus, getCasePublicResult, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { buildClientInternalReportPath, getReportAvailability, resolveClientCaseView } from '../../core/clientPortal';
 import { useClientCasesQuery } from '../../hooks/useClientCasesQuery';
-import { formatDate } from '../../core/formatDate';
+import { formatDate, formatDateTimeBR } from '../../core/formatDate';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
 import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
 import FilterPanelMobile from '../../ui/components/FilterPanelMobile/FilterPanelMobile';
 import PaginationControls from '../../ui/components/PaginationControls/PaginationControls';
-import { VERDICT_LABELS } from '../../core/copy';
+
 import './SolicitacoesPage.css';
 
 const PAGE_SIZE = 50;
@@ -199,11 +199,11 @@ const DrawerDetalhesTab = memo(function DrawerDetalhesTab({ selectedCase, select
                                     <input className="correction-form__input" value={correctionForm.cpf} onChange={(event) => setCorrectionForm((current) => ({ ...current, cpf: event.target.value }))} placeholder="000.000.000-00" />
                                 </div>
                                 <div className="correction-form__field">
-                                    <label>LinkedIn (URL ou @)</label>
+                                    <label>LinkedIn (URL completa)</label>
                                     <input className="correction-form__input" value={correctionForm.linkedin} onChange={(event) => setCorrectionForm((current) => ({ ...current, linkedin: event.target.value }))} placeholder="https://linkedin.com/in/..." />
                                 </div>
                                 <div className="correction-form__field">
-                                    <label>Instagram (URL ou @)</label>
+                                    <label>Instagram (URL completa)</label>
                                     <input className="correction-form__input" value={correctionForm.instagram} onChange={(event) => setCorrectionForm((current) => ({ ...current, instagram: event.target.value }))} placeholder="https://instagram.com/..." />
                                 </div>
                             </div>
@@ -265,7 +265,7 @@ const DrawerTimelineTab = memo(function DrawerTimelineTab({ selectedCaseView }) 
                         <div className={`timeline__dot ${event.status === 'risk' ? 'timeline__dot--yellow' : event.status === 'current' ? 'timeline__dot--blue' : 'timeline__dot--green'}`} />
                         <div className="timeline__content">
                             <strong>{event.title}</strong>
-                            <span className="timeline__date">{formatDate(event.at)}</span>
+                            <span className="timeline__date">{formatDateTimeBR(event.at)}</span>
                             {event.description && <span className="timeline__date">{event.description}</span>}
                         </div>
                     </div>

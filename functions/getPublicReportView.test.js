@@ -5,7 +5,7 @@ process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || 'compliance-hub-test'
 process.env.FIREBASE_CONFIG = process.env.FIREBASE_CONFIG || '{}';
 
 const require = createRequire(import.meta.url);
-const mod = require('./index');
+const { getPublicReportViewInner } = require('./modules/exportJobsAndReports');
 const { REPORT_BUILD_VERSION } = require('./reportBuilder.cjs');
 
 function buildMockDb({ reportData, caseData }) {
@@ -31,14 +31,12 @@ function buildMockDb({ reportData, caseData }) {
 }
 
 describe('getPublicReportViewInner', () => {
-    const { _setDb, getPublicReportViewInner } = mod.__test;
-
     beforeEach(() => {
         vi.restoreAllMocks();
     });
 
     it('serve relatório válido sem invalidar por hash diferente do caso atual', async () => {
-        _setDb(buildMockDb({
+        const db = buildMockDb({
             reportData: {
                 html: '<html><body>Relatório publicado</body></html>',
                 active: true,
@@ -57,9 +55,9 @@ describe('getPublicReportViewInner', () => {
                 finalVerdict: 'APROVADO',
                 executiveSummary: 'Conteúdo atual do caso mudou depois da publicação.',
             },
-        }));
+        });
 
-        const result = await getPublicReportViewInner('token-123');
+        const result = await getPublicReportViewInner('token-123', { db, REPORT_BUILD_VERSION, asDate: (v) => v });
 
         expect(result.html).toContain('Relatório publicado');
         expect(result.publicSnapshotHash).toBe('hash-salvo-do-relatorio');
@@ -67,7 +65,7 @@ describe('getPublicReportViewInner', () => {
     });
 
     it('continua rejeitando relatório com template desatualizado', async () => {
-        _setDb(buildMockDb({
+        const db = buildMockDb({
             reportData: {
                 html: '<html><body>Relatório publicado</body></html>',
                 active: true,
@@ -81,8 +79,8 @@ describe('getPublicReportViewInner', () => {
                 status: 'DONE',
                 candidateName: 'Maria Silva',
             },
-        }));
+        });
 
-        await expect(getPublicReportViewInner('token-123')).rejects.toThrow('Relatorio desatualizado');
+        await expect(getPublicReportViewInner('token-123', { db, REPORT_BUILD_VERSION, asDate: (v) => v })).rejects.toThrow('Relatorio desatualizado');
     });
 });

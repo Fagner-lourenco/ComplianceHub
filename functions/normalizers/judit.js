@@ -12,7 +12,7 @@
  */
 
 const WITNESS_TYPES = /testemunha|informante/i;
-const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 const { classifyProcessArea } = require('../helpers/processClassifier');
 
 function firstNumericValue(candidates = []) {
@@ -134,7 +134,7 @@ function normalizeJuditLawsuits(result, cpf) {
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const isWitness = !!(role?.personType && WITNESS_TYPES.test(role.personType));
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : data.area;
-        const roleClassification = classifyRole(role?.personType, areaForRole);
+        const roleClassification = classifyRole(role?.personType, areaForRole, normalizeSideForClassifier(role?.side));
 
         roleSummary.push({
             code: data.code || null,

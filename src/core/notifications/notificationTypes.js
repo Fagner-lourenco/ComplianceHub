@@ -3,6 +3,7 @@
     NEW_CLIENT_SOLICITATION: 'NEW_CLIENT_SOLICITATION',
     CASE_MESSAGE_FROM_CLIENT: 'CASE_MESSAGE_FROM_CLIENT',
     CASE_MESSAGE_FROM_OPS: 'CASE_MESSAGE_FROM_OPS',
+    CASE_RETURNED: 'CASE_RETURNED',
 };
 
 export const NOTIFICATION_COPY = {
@@ -25,5 +26,10 @@ export const NOTIFICATION_COPY = {
         fallbackTitle: 'Nova mensagem da equipe',
         fallbackMessage: 'A equipe enviou uma mensagem sobre uma analise.',
         actionLabel: 'Abrir solicitacao',
+    },
+    CASE_RETURNED: {
+        fallbackTitle: 'Correcao cadastral necessaria',
+        fallbackMessage: 'Uma solicitacao foi devolvida para correcao de dados.',
+        actionLabel: 'Ver solicitacao',
     },
 };

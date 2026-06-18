@@ -52,6 +52,7 @@ async function getAccessToken() {
 
 function toFV(val) {
     if (val === null || val === undefined) return { nullValue: null };
+    if (val instanceof Date) return { timestampValue: val.toISOString() };
     if (typeof val === 'string') return { stringValue: val };
     if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
     if (typeof val === 'boolean') return { booleanValue: val };

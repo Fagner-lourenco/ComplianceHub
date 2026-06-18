@@ -1,290 +1,255 @@
-# Progress Log
+# Progress Log Ativo — Revisao Completa Frontend + Backend
 
-## 2026-05-28
+> **Sessao iniciada:** 2026-06-01
+> **Fase atual:** Hotfix pos-deploy aplicado; Fase 8 manual/staging pendente
+> **Branch:** `refactor/full-local-roadmap`
 
-### Ressalva Automatica E Auditoria De Casos Reais
-- Usuario pediu para remover/alterar a frase `sem incluir ressalva automatica no texto final ao cliente` de `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` em `functions/index.js`.
-- Frase removida por risco operacional: instrucoes internas nunca devem ir para o texto final do cliente. A deteccao de cobertura parcial e responsabilidade do checklist manual do analista antes da conclusao.
-- Atualizado `AGENTS.md` com secao de acesso Firestore REST via OAuth (refresh token do Firebase CLI, client_id, client_secret, endpoint com field masks).
-- Auditoria Firestore REST do caso `QG400ibTd3bnQOr1yVuS` (078.003.675-17): processo `0087537-21.2020.8.05.0001` e de `DIREITO DO CONSUMIDOR`, mas veio com classificacao processual inconsistente (`ACAO PENAL`) que gerou `criminalFlag=POSITIVE` no prefill. Analista ja corrigiu manualmente para `NEGATIVE`.
-- Auditoria Firestore REST do caso `27vc6KqTrO8cbask2Iau` (226.377.488-26): mandado civil de alimentos (`imprisonmentKind=Civil`) foi elevado como hard fact criminal no prefill, gerando `criminalFlag=POSITIVE`. `warrantFlag=POSITIVE` esta correto.
-- Conclusao: ambos sao problemas de qualidade/inconsistencia dos dados dos providers (Judit, BigDataCorp), nao bugs na nossa logica de classificacao. A deteccao deve continuar sendo feita pelo analista humano com apoio do checklist local e IA revisora. Nao ha necessidade de correcao de codigo para esses casos.
-- Arquivos atualizados: `functions/index.js`, `AGENTS.md`, `task_plan.md`, `findings.md`, `progress.md`.
+---
 
-## 2026-05-27
+## Timeline Atual
 
-### Politica Cliente, Checklist Local E Modais De Conclusao
-- Usuario saiu de modo planejamento e autorizou implementacao com garantia de nao regressao, testes e deploy ao final.
-- Carregada skill `planning-with-files`.
-- Catchup inicial com `~/.opencode` falhou: arquivo `session-catchup.py` nao existe nesse caminho.
-- Catchup pelo caminho correto `~/.config/opencode/skills/planning-with-files/scripts/session-catchup.py` executou sem output.
-- `git diff --stat` mostrou mudancas preexistentes em `functions/index.js`, `functions/helpers/deterministicPrefill.test.js` e `graphify-out`; essas alteracoes nao devem ser revertidas.
-- Lidos planning files e `graphify-out/GRAPH_REPORT.md` antes de editar.
-- Auditoria do codigo real confirmou `concludeCaseByAnalyst`, `riskCalculator`, stepper de `CasoPage`, `Modal` reutilizavel e testes existentes.
-- Planejamento persistente atualizado com Phase 15 antes de alterar codigo.
-- Fase 15.1 RED: adicionados testes backend/frontend para `laborFlag: POSITIVE` com `laborSeverity LOW/MEDIUM/HIGH`; LOW e HIGH falharam como esperado porque o score ficava sempre 90.
-- Fase 15.1 GREEN: `functions/shared/riskCalculator.js` e `src/core/riskCalculator.js` agora aplicam `laborSeverity`: LOW=50, MEDIUM/ausente=90, HIGH=95.
-- Verificacao focada Fase 15.1 passou: `npm test -- shared/riskCalculator.test.js` em `functions` e `npm test -- src/core/riskCalculator.test.js` na raiz.
-- Fase 15.2 RED: adicionados testes em `functions/helpers/aiCalibration.test.js` para politica de veredito do cliente; falharam porque `buildClientVerdictPolicy` e `validateClientVerdictPolicy` ainda nao existiam.
-- Fase 15.2 GREEN: adicionados helpers backend para politica trabalhista/criminal, data de corte `CLIENT_VERDICT_POLICY_EFFECTIVE_AT`, validacao de override com `details.code = CLIENT_VERDICT_OVERRIDE_REQUIRED`, export em `__test` e integracao em `concludeCaseByAnalyst`.
-- Fase 15.2 tambem corrigiu `riskInput` de conclusao para incluir `laborSeverity`.
-- Verificacao focada Fase 15.2 passou: `npm test -- helpers/aiCalibration.test.js` em `functions`.
-- Fase 15.3 RED/GREEN: criado `useChecklistSession` com testes para persistencia por caso em `sessionStorage` e isolamento entre casos.
-- Fase 15.4 RED/GREEN: criado `ChecklistModal` reutilizando `Modal`, com teste de renderizacao e toggle.
-- Fase 15.5: `CasoPage.jsx` agora mostra progresso do checklist, bloqueia conclusao localmente quando incompleto, abre modal final de confirmacao e trata `CLIENT_VERDICT_OVERRIDE_REQUIRED` com justificativa de override.
-- Verificacao focada frontend passou: `useChecklistSession.test.jsx`, `ChecklistModal.test.jsx` e `CasoPage.test.jsx`.
-- Verificacao completa passou: `functions npm test` (513), `functions npm run lint`, `npm test` (818), `npm run lint`, `npm run build`.
-- Primeiro `npm run lint` frontend falhou por arquivo temporario de Vite durante execucao paralela; repetido isolado, revelou `sbColor` nao usado em `src/core/reportBuilder.js`. Removido tambem do mirror `functions/reportBuilder.cjs`; lint passou.
-- `graphify update .` executado com sucesso: 1038 nodes, 1953 edges, 140 communities.
-- Deploy backend concluido para Firebase `compliance-hub-br` via CLI depois que o job MCP ficou sem logs; o job MCP tambem terminou como `success` posteriormente.
-- Deploy frontend concluido na Vercel: production `https://compliance-2t2hrw8tx-fagner-alexandro-s-projects.vercel.app`, alias `https://compliance-hub-hazel.vercel.app`.
-- Pos-deploy: consulta de logs `ERROR` para `concludeCaseByAnalyst` nao retornou entradas.
+| Data/Hora | Evento | Detalhes |
+|-----------|--------|----------|
+| 2026-06-01 | Pedido do usuario | Planejar revisao completa de todos os fluxos, funcionalidades, frontend, backend e formularios |
+| 2026-06-01 | Skill carregada | `planning-with-files` carregada para usar `task_plan.md`, `findings.md`, `progress.md` como memoria persistente |
+| 2026-06-01 | Catchup tentativa 1 | Falhou: script nao encontrado em `%USERPROFILE%\.opencode\skills\...` |
+| 2026-06-01 | Catchup tentativa 2 | Rodou com caminho real `%USERPROFILE%\.config\opencode\skills\...`; nao imprimiu relatorio |
+| 2026-06-01 | Contexto lido | Lidos `task_plan.md`, `findings.md`, `progress.md`, `graphify-out/GRAPH_REPORT.md` e `git diff --stat` |
+| 2026-06-01 | Plano ativo criado | Inserido plano completo em `task_plan.md` com Fases 0-9 |
+| 2026-06-01 | Findings atualizados | Inserida secao ativa em `findings.md` com riscos, baseline e proximas acoes |
+| 2026-06-01 | Fase 0 iniciada | Inventario inicial de rotas, paginas e wrappers frontend coletado |
+| 2026-06-01 | Fase 0 backend parcial | Lidos `App.jsx`, exports carregaveis de `functions/index.js`, grep de triggers/callables |
+| 2026-06-01 | Fase 0 concluida | Rotas, permissoes, 49 chamadas frontend, 68 exports backend, triggers e colecoes principais mapeados |
+| 2026-06-01 | Fase 2 iniciada | Corrigido desalinhamento de social URL: frontend agora rejeita `@usuario` e exige `http://` ou `https://`, alinhado ao backend |
+| 2026-06-01 | Testes focados | `npm test -- src/core/validators.test.js` passou: 11 tests; `npm test -- src/portals/client/NovaSolicitacaoPage.test.jsx` passou: 11 tests |
+| 2026-06-01 | Graphify atualizado | `graphify update .` executado apos alteracoes de codigo; grafo recompilado com 1617 nodes e 3000 edges |
+| 2026-06-01 | Fase 1/3 checagem relatorios | Confirmado que telas atuais de relatorios usam callables; `fetchPublicReports()`/`getPublicReport()` parecem legado bloqueado por rules e ficam pendentes para Phase D |
+| 2026-06-01 | Fase 1 cliente/exportacoes | Corrigido contrato de exportacao async: `scopeCode` top-level, chamada a `processExportJob`, leitura de retorno plano `jobId/status` e cancelamento por `jobId` |
+| 2026-06-01 | Fase 2 textos social URL | Corrigidos textos remanescentes `URL ou @`/`@handle`; grep em `src/**/*.jsx` nao encontrou remanescentes |
+| 2026-06-01 | Testes focados | `npm test -- src/portals/client/ExportacoesPage.test.jsx` passou: 9 tests; `SolicitacoesPage.test.jsx` passou: 6 tests; `NovaSolicitacaoPage.test.jsx` passou: 11 tests |
+| 2026-06-01 | Contrato/lint | `node check-frontend-backend-contract.cjs` passou: 50 callables frontend, 68 backend exports, 0 missing; `npm run lint` passou |
+| 2026-06-01 | Graphify atualizado | `graphify update .` executado apos novas alteracoes; grafo recompilado com 1620 nodes, 3006 edges e 202 communities |
+| 2026-06-01 | BUG FilaPage stats | Descoberto desalinhamento: backend `buildOpsCaseStats` retornava `waitingInfo`/`correctionNeeded`, mas FilaPage frontend lia `stats.waiting`/`stats.corrections` — KPIs "Aguardando Info" e "Correcao Pendente" ficariam zerados com dados reais |
+| 2026-06-01 | FIX FilaPage stats | Corrigido `buildOpsCaseStats` em `caseFilters.js` para retornar `waiting`/`corrections`; testes 15+90+4=109 passando |
+| 2026-06-01 | CasoPage contratos | Verificados handlers de conclusao, rascunho, retorno, bypass e reruns — payloads frontend/backend alinhados |
+| 2026-06-01 | Dashboard cliente | Verificado contrato `buildClientDashboardMetricsFromCases` ↔ `DashboardClientePage` — campos `waitingInfo`/`corrections`/`verdicts`/`months`/`topFlags` alinhados |
+| 2026-06-01 | Fase 1 relatorios/auditoria/equipe/metricas | Revisados `PublicReportPage`, `RelatoriosPage`, `RelatoriosClientePage`, `AuditoriaPage`, `AuditoriaClientePage`, `EquipeOpsPage`, `EquipePage`, `MetricasIAPage`, `SaudePage`, `CasosPage` + todos handlers backend — contratos e tenant isolation confirmados; achado menor: `owner` nao listado em `getSystemHealthLogic` |
+| 2026-06-01 | Fase 1 concluida | 21 paginas + handlers backend revisados; 2 bugs corrigidos, 2 achados menores documentados |
+| 2026-06-01 | Fase 2 NovaSolicitacao | Validacao campo a campo contra `createClientSolicitationHandler`: corrigido `fullName` min 3/max 200, `position` max 100, `department` max 100; adicionados spans de erro; 14 testes passando |
+| 2026-06-01 | Fase 2 CasoPage/Equipe/Tenant | Revisados formularios de conclusao, retorno, bypass, criacao de usuario ops/cliente e configuracao de tenant — contratos alinhados; checklist frontend mais restritivo que backend |
+| 2026-06-01 | Fase 3 iniciada | Revisao de callables backend: assignments, reruns, mensagens, notificacoes, export — checklist de auth, tenant isolation, input, audit, rate limit, testes |
+| 2026-06-01 | Fase 3 assign/rerun | Revisados 5 handlers: `assignCaseToCurrentAnalyst`, `assignCaseToAnalyst`, `unassignCase`, `rerunEnrichmentPhase`, `rerunAiAnalysis` — auth e tenant ok; sem rate limit; sem testes de handler dedicados |
+| 2026-06-01 | Fase 3 mensagens/notificacoes | Revisados 4 handlers: `sendCaseMessage`, `markCaseCommunicationRead`, `markNotificationAsRead`, `markAllNotificationsAsRead` — auth e tenant ok; sendCaseMessage sem audit log e sem rate limit; duplicata caseCommunication.js vs notificationService.js |
+| 2026-06-01 | Fase 3 callables restantes | Revisados `getClientCaseById`, `registerClientExport`, `getClientExportCases`, `updateOwnProfile` — auth e tenant ok; export com validacao de input robusta |
+| 2026-06-01 | Fase 3 concluida | 12+ callables verificados; tabela de checklist em findings.md; achados: 7 handlers sem testes dedicados, sendCaseMessage sem audit/rate limit, codigo duplicado entre caseComm e notificationService |
+| 2026-06-01 | Fase 4 pipeline | Revisados gate de identidade (BigDataCorp ✅, FonteData ⚠️), triggers BDC/Judit/Escavador/DJEN, AutoClassify/AI, publishResultOnCaseDone — pipeline chain verificada ponta a ponta |
+| 2026-06-01 | Fase 4 concluida | Pipeline de enriquecimento revisado; 1 achado (FonteData gate sem auto-devolucao); tabela completa em findings.md |
+| 2026-06-01 | Fase 5 rules/indices | Revisado `firestore.rules` (15 coleções); 26 indices remotos vs 26 locais; 2 extras remotos legados, 1 local pendente (`juditWebhookRequests`) |
+| 2026-06-01 | Fase 5 contratos | `PUBLIC_RESULT_FIELDS` frontend deriva do backend; `tenantUsage` sem risco hot document |
+| 2026-06-01 | Fase 5 concluida | Rules, indices, contratos e hot document revisados; 3 achados |
+| 2026-06-01 | Contrato/lint | `node check-frontend-backend-contract.cjs` passou: 50 callables frontend, 68 backend exports, 0 missing; `npm run lint` passou |
+| 2026-06-01 | Fase 6 seguranca | CSP/headers ✅, secrets ✅ .gitignore, `results/` ⚠️ 50+ arquivos, CPF em logs ⚠️ 4 ocorrências, sanitizacao HTML ✅ backend+frontend, RBAC/cross-tenant ✅ |
+| 2026-06-01 | Fase 6 concluida | Seguranca e compliance revisados; 2 achados altos: CPF plaintext em logs e `results/` com dados não auditados |
+| 2026-06-01 | Rodada final — correcoes | Corrigido `owner` em `getSystemHealthLogic`, logs de CPF/nome em providers, `sendCaseMessage` com audit/rate limit/fonte unica e isolamento de `CasoPage.test.jsx` |
+| 2026-06-01 | Testes focados backend | `cd functions && npm test -- modules/systemHealth.test.js modules/enrichmentPhases.test.js modules/notificationService.test.js modules/_shared/sanitizers.test.js` passou: 101 tests |
+| 2026-06-01 | Teste focado frontend | `npm test -- src/portals/ops/CasoPage.test.jsx` passou: 18 tests |
+| 2026-06-01 | Suite raiz | `npm test` passou: 97 arquivos, 1554 testes |
+| 2026-06-01 | Validacao final | `node check-frontend-backend-contract.cjs` passou: 50 frontend callables, 68 backend exports, 0 missing |
+| 2026-06-01 | Lint/build | `npm run lint`, `npm run build`, `cd functions && npm run lint` passaram |
+| 2026-06-01 | Suite backend | `cd functions && npm test` passou: 55 arquivos, 1221 testes |
+| 2026-06-01 | Playwright focado | `npx playwright test e2e/casopage.lazy-render.spec.js` passou: 10 testes |
+| 2026-06-01 | Graphify atualizado | `graphify update .` passou: 1622 nodes, 3010 edges, 200 communities |
+| 2026-06-01 | Hotfix pos-deploy | Investigado `listExportJobs` 500: Firestore exigia indice `exportJobs(clientId ASC, tenantId ASC, createdAt DESC, __name__ DESC)`; indice adicionado e deployado |
+| 2026-06-01 | Hotfix solicitacoes | Investigado `Minhas solicitacoes` vazia: `matchesClientCaseFilters` tratava `status: ALL` como filtro literal; corrigido para ignorar `ALL` e aceitar `verdict/searchTerm` do portal cliente |
+| 2026-06-01 | Testes/deploy hotfix | `cd functions && npm test -- modules/caseManager/caseFilters.test.js modules/caseQueriesAssignments.test.js modules/exportJobsAndReports.test.js` passou: 132 tests; `firebase deploy --only firestore:indexes --project compliance-hub-br` e `firebase deploy --only functions --project compliance-hub-br` concluidos |
+| 2026-06-01 | Verificacao pos-deploy | Indice `exportJobs` confirmado `READY`; logs apos `2026-06-01T23:28:00Z` sem erros para `listExportJobs` e `listClientCases`; `graphify update .` recompilou 1622 nodes, 3011 edges, 192 communities |
 
+---
 
-## 2026-05-25
+## Baseline de Validacao Conhecido
 
-### Remover Contexto Profissional Do Resumo Trabalhista
-- Usuario pediu remover de `laborNotes` tanto o bloco `Contexto profissional cadastral (nao se trata de apontamento trabalhista):` quanto o fallback `Contexto profissional cadastral: dados profissionais nao disponiveis.`.
-- Revisao de escopo: manter dados BigDataCorp de profissao no banco e manter eventual uso em resumo executivo/areas tecnicas; remover apenas da narrativa trabalhista deterministica.
-- Planejamento atualizado como Phase 14 antes de alterar codigo.
-- RED confirmado em `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 4 falhas esperadas porque `buildDetLaborNotes()` ainda inseria contexto profissional e fallback de dados indisponiveis.
-- Removido de `buildDetLaborNotes()` o bloco morto que montava empregador, CNPJ, setor, vinculo, faixa salarial, servidor publico e fallback de dados profissionais indisponiveis.
-- Teste focado `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 82/82 passando.
-- Suite functions `cd functions; npm test`: 17 arquivos, 482/482 testes passando.
-- Lint functions `cd functions; npm run lint`: passou.
-- Suite raiz `npm test`: 52 arquivos, 781/781 testes passando.
-- Lint raiz `npm run lint`: passou.
-- Build `npm run build`: passou.
-- `git diff --check`: sem erros; apenas avisos LF/CRLF.
-- `graphify update .`: executado; grafo atualizado para 1015 nodes, 1910 edges, 137 communities.
+| Comando/checagem | Status | Observacao |
+|------------------|--------|------------|
+| `node check-frontend-backend-contract.cjs` | Passou | 49 callables frontend, 68 backend exports, 0 missing |
+| `cd functions && npm run lint` | Passou | Sem erros |
+| `cd functions && npm test` | Passou | 55 arquivos, 1215 testes |
+| `npm run lint` | Passou | Sem erros |
+| `npm run lint` | Passou | Reexecutado apos ajuste de social URL; sem erros |
+| `npm run build` | Passou | Build Vite OK |
+| `npx playwright test e2e/casopage.lazy-render.spec.js` | Passou | 10 testes |
+| `npm test -- src/core/validators.test.js` | Passou | 11 testes apos ajuste de URL social |
+| `npm test -- src/portals/client/NovaSolicitacaoPage.test.jsx` | Passou | 11 testes apos regressao de `@usuario` |
+| `npm test -- src/portals/client/ExportacoesPage.test.jsx` | Passou | 9 testes apos contrato de export job async |
+| `npm test -- src/portals/client/SolicitacoesPage.test.jsx` | Passou | 6 testes apos alinhamento de textos/fluxo cliente |
+| `grep URL ou @/@handle` | Passou | Nenhum JSX remanescente encontrado |
+| `node check-frontend-backend-contract.cjs` | Passou | 50 callables frontend, 68 backend exports, 0 missing |
+| `npm run lint` | Passou | Reexecutado apos contrato de export job async |
+| `graphify update .` | Passou | 1620 nodes, 3006 edges, 202 communities |
+| `npm test -- src/portals/ops/FilaPage.test.jsx` | Passou | 4 testes apos correcao de stats |
+| `cd functions && npm test -- caseManager/caseFilters.test.js` | Passou | 15 testes |
+| `cd functions && npm test -- modules/caseQueriesAssignments.test.js` | Passou | 90 testes |
+| `npm test -- src/portals/ops/CasoPage.test.jsx` | Passou | 18 testes apos isolamento de `authState`, `navigate` e `sessionStorage` |
+| `npm test` raiz | Passou | 97 arquivos, 1554 testes |
+| `node check-frontend-backend-contract.cjs` | Passou | 50 callables frontend, 68 backend exports, 0 missing |
+| `npm run build` | Passou | Build Vite OK apos rodada final |
+| `cd functions && npm test` | Passou | 55 arquivos, 1221 testes |
+| `npx playwright test e2e/casopage.lazy-render.spec.js` | Passou | 10 testes |
+| `graphify update .` | Passou | 1622 nodes, 3010 edges, 200 communities |
 
-### Resumo Trabalhista Com Contraparte E Status Inteligente
-- Usuario aprovou o novo padrao de resumo trabalhista e pediu implementacao passo a passo sem regressao.
-- Auditoria somente leitura executada antes da implementacao: 68 casos reais com `laborFlag=POSITIVE`, 118 processos trabalhistas, 66 processos com parte passiva bruta e apenas 3 resumos atuais com parte passiva exibida.
-- Confirmado que `Status: N/A` aparece por perda de status melhor durante o merge: BigDataCorp tem status em 116/118 processos, mas `selectTopProcessos()` fixa `N/A` cedo demais quando Judit nao traz status.
-- Confirmado que Judit e BigDataCorp ja preservam partes nos normalizers (`parties[]` e `allParties[]`), mas `selectTopProcessos()` descarta esses arrays no objeto intermediario usado pelo prefill.
-- Risco identificado: alguns fornecedores retornam o proprio candidato em papel passivo recursal ou tecnico; o resumo deve filtrar candidato antes de listar `Parte reclamada/passiva`.
-- Carregada skill `test-driven-development`; a implementacao seguira RED/GREEN com testes em `functions/helpers/deterministicPrefill.test.js` antes de alterar producao.
-- RED confirmado em `cd functions; npm test -- helpers/deterministicPrefill.test.js`: os testes novos falharam porque o resumo ainda exibia `Status: N/A`, `Papel:` e nao exibia contraparte.
-- Backend: `selectTopProcessos()` agora preserva `parties`, `allParties` e `movements`, mescla status/datas/ultimo andamento por CNJ e evita fixar `N/A` cedo demais.
-- Backend: criado formato trabalhista especifico com `Status processual`, `Papel do candidato`, contraparte, `Distribuição | Última movimentação` e `Último andamento`, mantendo o formato generico para criminal.
-- Backend: contraparte trabalhista filtra candidato, nomes menores que 4 caracteres e papeis neutros/tecnicos como advogado/perito/testemunha.
-- Teste focado `cd functions; npm test -- helpers/deterministicPrefill.test.js`: 82/82 passando.
-- Suite functions `cd functions; npm test`: 17 arquivos, 482/482 testes passando.
-- Lint functions `cd functions; npm run lint`: passou.
-- Suite raiz `npm test`: 52 arquivos, 781/781 testes passando.
-- Lint raiz `npm run lint`: passou.
-- Build `npm run build`: passou.
-- Ajuste pos-revisao: quando houver apenas ultima movimentacao sem distribuicao confiavel, o bloco trabalhista nao imprime `Distribuição: data não informada`.
-- Revalidacao apos ajuste: `cd functions; npm test` passou com 17 arquivos e 482/482 testes; `cd functions; npm run lint` passou; `npm test` passou com 52 arquivos e 781/781 testes; `npm run build` passou; `npm run lint` passou.
-- `git diff --check`: sem erros; apenas avisos LF/CRLF.
-- `graphify update .`: executado; grafo atualizado para 1015 nodes, 1910 edges, 136 communities.
+---
 
-## 2026-05-22
+## Proximos Passos Imediatos
 
-### Incidente: Tag Criminal Consultiva Em Caso Concluido
-- Carregadas skills `systematic-debugging` e `test-driven-development` para conduzir a correcao como bug fix com causa raiz e testes antes de codigo.
-- Consulta Firestore MCP falhou/ficou instavel; usado REST Firestore com token da Firebase CLI. `firebase login:list --json` tambem teve timeouts intermitentes, entao os comandos passaram a usar retry.
-- Caso `v5ef9RJ0wBmQLUz4HLf0` confirmado com `criminalFlag=INCONCLUSIVE_HOMONYM`, `riskScore=45`, `riskLevel=YELLOW`, `suggestedVerdict=ATTENTION`, `finalVerdict=FIT`.
-- Evidencia do caso real: Judit criminal negativo count 0, BigDataCorp criminal negativo count 0, trabalhista negativo, mandado negativo, DJEN criminal count 1 com evidencia fraca por nome/comunicacao (`WEAK_NAME_ONLY`).
-- Snapshots afetados confirmados: `cases/v5ef9RJ0wBmQLUz4HLf0/publicResult/latest` e `clientCases/v5ef9RJ0wBmQLUz4HLf0` tambem carregavam `INCONCLUSIVE_HOMONYM` e risco amarelo.
-- TDD backend: adicionado teste em `functions/helpers/aiCalibration.test.js` para `validateConcludeFinalFlags()` rejeitar `INCONCLUSIVE_HOMONYM` e aceitar `NEGATIVE`, `POSITIVE`, `INCONCLUSIVE`; falhou primeiro porque o helper nao existia.
-- TDD frontend: adicionado teste em `src/portals/ops/CasoPage.test.jsx` para bloquear conclusao quando `criminalFlag=INCONCLUSIVE_HOMONYM`; falhou primeiro porque o botao `Concluir` estava habilitado.
-- Backend: criado `FINAL_CRIMINAL_FLAGS` e `validateConcludeFinalFlags()` em `functions/index.js`; `concludeCaseByAnalyst` agora valida a flag efetiva apos fallback de `reviewDraft` e rejeita estados consultivos com `invalid-argument`.
-- Backend: validacao de execucao penal tambem deixou de aceitar `INCONCLUSIVE_HOMONYM`/`INCONCLUSIVE_LOW_COVERAGE` como estado final; aceita apenas `POSITIVE` ou `INCONCLUSIVE`.
-- Frontend: `CasoPage.jsx` agora considera final criminal apenas `NEGATIVE`, `POSITIVE` ou `INCONCLUSIVE`; checklist bloqueia estados consultivos e o botao de conclusao fica desabilitado.
-- Teste frontend ajustado para validar o bloqueio imediato no botao do header, pois o checklist so aparece na etapa de revisao.
-- Verificacao focada backend: `cd functions && npm test -- helpers/aiCalibration.test.js` passou com 35/35.
-- Verificacao focada frontend: `npm test -- src/portals/ops/CasoPage.test.jsx` passou com 15/15.
-- Correcao de dados aplicada via REST Firestore nos tres documentos: `cases/v5ef9RJ0wBmQLUz4HLf0`, `cases/v5ef9RJ0wBmQLUz4HLf0/publicResult/latest`, `clientCases/v5ef9RJ0wBmQLUz4HLf0`.
-- Verificacao pos-correcao: os tres documentos retornam `criminalFlag=NEGATIVE`, `riskScore=0`, `riskLevel=GREEN`, `suggestedVerdict=FIT`, `finalVerdict=FIT` e justificativa sem ressalva generica.
-- Suite completa raiz: `npm test` passou com 52 arquivos, 775/775 testes.
-- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 476/476 testes.
-- `npm run lint` e `cd functions && npm run lint` passaram.
-- `npm run build` passou.
-- `git diff --check` sem erros; apenas avisos LF/CRLF.
-- `graphify update .` executado; grafo atualizado para 999 nodes, 1868 edges, 143 communities.
-- Deploy Firebase Functions: concluido. 55 funcoes atualizadas com sucesso, incluindo `concludeCaseByAnalyst` com `validateConcludeFinalFlags`.
-- Deploy Vercel: concluido. Aliased `https://compliance-hub-hazel.vercel.app`.
+1. Executar validação manual/staging autenticada dos fluxos críticos antes de produção.
+2. Decidir/deployar o índice `juditWebhookRequests(status ASC, createdAt ASC)` sem `--force`.
+3. Revisar diff grande por grupos antes de commit, mantendo `results/` fora do escopo desta rodada.
+4. Fazer commit/deploy somente com aprovação explícita.
 
-### DJEN Consultivo Sem Impacto Isolado
-- Adicionados testes de regressao em `functions/helpers/aiCalibration.test.js` cobrindo DJEN criminal isolado, DJEN trabalhista isolado, DJEN positivo com muitos homonimos e DJEN positivo com poucos homonimos.
-- Adicionados testes em `functions/helpers/deterministicPrefill.test.js` para impedir listagem de DJEN isolado sem CNJ confirmado e permitir DJEN correlacionado ao mesmo CNJ confirmado por BigDataCorp.
-- RED confirmado: `aiCalibration.test.js` falhou em 4 testes porque DJEN ainda alterava `criminalFlag`/`laborFlag`; `deterministicPrefill.test.js` falhou porque `criminalNotes` ainda listava comunicacao DJEN isolada.
-- Backend: criados helpers `getDjenProcessNumber()`, `getConfirmedProviderProcessNumbers()` e `filterDjenComunicacoesByConfirmedProcess()` em `functions/index.js`.
-- Backend: `computeAutoClassification()` deixou de usar confianca por homonimos/geo-score do DJEN isolado e so considera DJEN quando ha CNJ confirmado por Judit/BigDataCorp no mesmo eixo.
-- Backend: `buildDetCriminalNotes()` e `buildDetLaborNotes()` agora filtram DJEN por CNJ confirmado antes de listar comunicacoes em textos finais.
-- Testes focados passaram: `cd functions && npm test -- helpers/aiCalibration.test.js` com 35/35 e `cd functions && npm test -- helpers/deterministicPrefill.test.js` com 79/79.
-- Suite completa raiz: `npm test` passou com 52 arquivos, 778/778 testes.
-- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 479/479 testes.
-- `cd functions && npm run lint` passou.
-- `npm run lint` na raiz falhou uma vez por artefato temporario `vite.config.js.timestamp-...mjs`; rerun passou.
-- `npm run build` passou.
-- `git diff --check` sem erros; apenas avisos LF/CRLF.
-- Deploy nao executado nesta fase.
+---
 
-## 2026-05-21
+## Fase 0 — Evidencias Coletadas
 
-### Incidente: Tag Criminal Consultiva Em Caso Concluido
-- Usuario reportou caso `/ops/caso/v5ef9RJ0wBmQLUz4HLf0` concluido com tag criminal `Precisa de revisao manual`, quando deveria ser `Sem apontamento`.
-- Rodado `session-catchup.py`; sem output.
-- `git diff --stat` mostra mudancas locais extensas da fase anterior ainda nao deployadas.
-- Lidos `task_plan.md`, `findings.md`, `progress.md` e `graphify-out/GRAPH_REPORT.md` antes de investigar.
-- Nova Phase 11 registrada para corrigir dado real e impedir conclusao com tag criminal consultiva.
+| Area | Resultado |
+|------|-----------|
+| Rotas frontend | 83 matches em `src/App.jsx` e teste de `PublicReportPage`; rotas reais e demo centralizadas em `AppRoutes` |
+| Paginas frontend | 21 paginas detectadas por glob |
+| Callables frontend | Busca inicial encontrou wrappers em `src/core/firebase/firestoreService.js` e `src/core/notifications/notificationService.js` |
+| Backend exports | 68 exports publicos carregaveis via `require('./functions/index.js')`, excluindo `__test` |
+| Backend triggers/callables | Grep encontrou callables/triggers em `functions/index.js`, `caseCommunication.js` e modulos: `tenantUserManagement`, `opsReviewHandlers`, `caseQueriesAssignments`, `juditWebhookAndFallback`, `notificationService`, `pdfGeneration`, `systemHealth` |
+| Frontend callables | 49 chamadas encontradas; fonte principal `src/core/firebase/firestoreService.js`; notificacoes em `src/core/notifications/notificationService.js` |
+| Colecoes frontend diretas | `userProfiles`, `tenantSettings`, `tenantUsage`, `cases`, `auditLogs`, `tenantAuditLogs`, `publicReports`, `caseMessages`, `notifications` e subcolecao `cases/{caseId}/publicResult` |
+| Colecoes backend principais | `cases`, `clientCases`, `candidates`, `userProfiles`, `tenantSettings`, `tenantUsage`, `auditLogs`, `tenantAuditLogs`, `exports`, `exportJobs`, `publicReports`, `notifications`, `caseMessages`, `juditWebhookRequests`, `systemHealth`, `systemLocks`, `aiCostLedger` e `cases/{caseId}/publicResult` |
+| Observacao V2 | `listOpsCasesV2` e `listClientCasesV2` estao exportados como `onCall`, mas frontend ainda chama V1 (`listOpsCases`, `listClientCases`) |
 
-### IA Revisora Especializada Por Eixo
-- Usuario pediu implementacao passo a passo com garantia de nao regressao.
-- Rodado `session-catchup.py` pelo caminho real em `~/.config/opencode`; sem output.
-- `git diff --stat` mostra mudancas locais extensas da rodada anterior ja verificadas, incluindo backend/frontend/testes/planning/graphify.
-- Lidos `task_plan.md`, `findings.md`, `progress.md` e inspecionados pontos atuais do backend/UI/testes.
-- Achado principal: `applyClassificationReviewGuardrails()` promovia todos os eixos `AGREE` para `AGREE_WITH_CAUTION` com base em cautela global; isso explica ressalvas genericas em trabalhista/mandado.
-- Planejamento atualizado para Phase 10 antes de novas alteracoes de codigo.
-- TDD backend: adicionados testes em `functions/helpers/aiCalibration.test.js` para contexto por eixo e remocao de cautela generica em trabalhista/mandado negativos bem cobertos.
-- TDD frontend: adicionado teste em `src/portals/ops/CasoPage.test.jsx` garantindo que ressalva criminal nao contamina trabalhista/mandado.
-- Backend: criado `buildAiClassificationReviewContext()` com cobertura por eixo, fontes zeradas, conflitos, materialidade e motivo objetivo de cautela.
-- Backend: `buildAiClassificationReviewPrompt()` agora inclui `reviewContext` e regra explicita de que fonte concluida com zero achados sustenta negativo.
-- Backend: `runAiClassificationReviewAnalysis()` aplica `applyAiClassificationReviewGuardrails()` antes de retornar/persistir resposta estruturada.
-- Frontend: `CasoPage.jsx` ganhou contexto por eixo para display/fallback; `applyClassificationReviewGuardrails()` deixou de promover cautela global para todos os eixos.
-- Frontend: fallback de trabalhista/mandado negativo bem coberto agora usa evidencia forte quando fontes consultadas retornaram zero achados.
-- Erro de teste 1: novo teste frontend encontrou 3 ocorrencias de `Concorda com ressalva`; corrigido com guardrail por eixo.
-- Erro de teste 2: fixture novo nao trazia conflito criminal real e a cautela criminal foi removida; corrigido adicionando Judit criminal positivo e BigDataCorp criminal negativo.
-- Verificacao focada: `cd functions && npm test -- helpers/aiCalibration.test.js` passou com 34/34.
-- Verificacao focada: `npm test -- src/portals/ops/CasoPage.test.jsx` passou com 14/14.
-- Suite completa raiz: `npm test` passou com 52 arquivos, 773/773 testes.
-- Suite completa functions: `cd functions && npm test` passou com 17 arquivos, 475/475 testes.
-- `npm run lint` e `cd functions && npm run lint` passaram.
-- `npm run build` passou.
-- `git diff --check` sem erros; apenas avisos LF/CRLF.
-- `graphify update .` executado; grafo atualizado para 997 nodes, 1865 edges, 137 communities.
-- Deploy nao executado nesta fase.
+---
 
-### AI Review Hardening + DJEN Modal
-- Usuario pediu implementacao passo a passo, com planning files, evitando regressao, e deploy final de Functions + Vercel.
-- Carregada skill `planning-with-files`.
-- Primeira tentativa de catchup com `~/.opencode` falhou; caminho correto e `~/.config/opencode`.
-- Catchup pelo caminho correto nao retornou output.
-- `git diff --stat` mostra alteracoes extensas da rodada anterior ja em working tree, incluindo `functions/index.js`, `CasoPage.jsx`, testes, planning files e `graphify-out`.
-- Lidos `task_plan.md`, `findings.md`, `progress.md`.
-- Atualizados `task_plan.md` e `findings.md` com novo escopo: endurecer IA revisora contra JSON bruto/termos tecnicos, melhorar prompt/parser/UI e tornar DJEN clicavel com modal de movimentacoes.
-- Backend AI hardening iniciado: prompt da IA revisora reforcado para portugues operacional, sem nomes internos em textos livres, com semantica clara de `evidenceStrength`.
-- Backend: `runStructuredAiAnalysis()` ganhou `responseFormat` opt-in e `runAiClassificationReviewAnalysis()` passa `response_format: { type: 'json_object' }`, com fallback automatico sem response_format se a API rejeitar.
-- Backend: removido fallback bruto de `extractFallbackAiClassificationReviewResponse()`; schema quebrado nao vira `summary` valido.
-- Backend: adicionada sanitizacao contra caracteres de controle e textos com JSON/schema/nomes internos em narrativas da IA revisora.
-- Backend: `buildAiClassificationReviewUpdatePayload()` nao persiste `aiClassificationReview` estruturado quando `structuredOk=false`.
-- Teste focado `cd functions && npm test -- helpers/aiCalibration.test.js`: 32/32 passando.
-- Frontend: `CasoPage.jsx` agora sanitiza a analise assistida antes de renderizar, cai em fallback deterministico quando o Firestore tem payload bruto, humaniza cobertura/divergencia e oculta redes sociais vazias na identificacao.
-- `npm test -- src/portals/ops/CasoPage.test.jsx` falhou na primeira tentativa por texto duplicado `Cobertura alta`; teste ajustado para `getAllByText`.
-- `npm test -- src/portals/ops/CasoPage.test.jsx`: 11/11 passando.
-- DJEN modal: `ProcessInspectionModal` agora aceita fonte `DJEN`, badge verde e mostra detalhes da comunicacao selecionada.
-- `CasoPage.jsx`: processo DJEN na aba criminal agora e botao clicavel; abre modal com todas as comunicacoes do mesmo CNJ pela timeline existente.
-- `CasoPage.jsx`: adicionada tabela de comunicacoes DJEN trabalhistas na aba trabalhista, com processo clicavel e mesmo modal.
-- Removido lazy render apenas do bloco DJEN criminal porque o conteudo clicavel dependia de `openedSections` e podia nao renderizar apos abrir `<details>`.
-- `npm test -- src/portals/ops/CasoPage.test.jsx` teve falhas de seletor por textos duplicados (`Criminal`, `Trabalhista`, `DJEN`, tipos); testes ajustados para seletores nao-unicos.
-- `npm test -- src/portals/ops/CasoPage.test.jsx`: 13/13 passando.
-- Proximo passo: rodar suites completas, lint, build, diff-check, graphify e deploy.
-- `npm test`: 52 arquivos, 770/770 testes passando.
-- `cd functions && npm test`: 17 arquivos, 473/473 testes passando.
-- `npm run lint` e `cd functions && npm run lint` falharam inicialmente por `no-control-regex` nas regexes de caracteres de controle.
-- Corrigido `no-control-regex` trocando regex por filtragem `charCodeAt` no backend e frontend.
-- `npm run lint`: passou.
-- `cd functions && npm run lint`: passou.
-- `npm run build`: passou.
-- Como houve alteracao apos suites completas (filtragem charCode), proximo passo e rerodar suites completas antes do deploy.
-- Suites completas rerodadas apos a correcao de lint:
-- `npm test`: 52 arquivos, 770/770 testes passando.
-- `cd functions && npm test`: 17 arquivos, 473/473 testes passando.
-- `git diff --check`: sem erros; apenas avisos LF/CRLF.
-- `git status --short`: confirma mudancas esperadas em backend/frontend/tests/planning/graphify e arquivo untracked preexistente `functions/extract_done_cases.cjs`.
-- `graphify update .`: executado; grafo atualizado para 977 nodes, 1817 edges, 139 communities.
-- Proximo passo: deploy Firebase Functions e Vercel.
+# Progress Log — Refatoração do Monolito ComplianceHub
 
-### IA Revisora Da Autoclassificacao
-- Usuario aprovou reorganizacao da aba `Identificacao do candidato` e solicitou implementacao da nova IA revisora da autoclassificacao.
-- Carregada skill `planning-with-files`.
-- Tentativa inicial de `session-catchup.py` com caminho `~/.opencode` falhou porque a instalacao real esta em `~/.config/opencode`.
-- Repetido `session-catchup.py` com caminho real; sem output.
-- `git diff --stat` antes da implementacao mostrou apenas alteracoes geradas em `graphify-out/`.
-- `task_plan.md` reescrito para o novo escopo: backend `aiClassificationReview`, UI de identificacao reorganizada e testes anti-regressao.
-- Backend: criado schema/parser/sanitizacao/prompt `aiClassificationReview`; integrado em `runAutoClassifyAndAi()` e `rerunAiAnalysis()`.
-- Backend: `npm test -- helpers/aiCalibration.test.js` passou com 30 testes.
-- Frontend: removido bloco global `Síntese da análise automática`; adicionada `Análise assistida da autoclassificação` na aba Identificacao; antigo bloco principal `Análise automática GPT-5.4-nano JSON` removido da experiencia principal.
-- Frontend: homonimos rebaixados para `Detalhes técnicos de homônimos`; `EnrichmentPipeline` agora chama a fase de `Análise assistida` e usa custo/erro de `aiClassificationReview`.
-- `npm test -- src/portals/ops/CasoPage.test.jsx` falhou em 2 testes por expectativas antigas; testes atualizados para a nova UX.
-- `npm test -- src/portals/ops/CasoPage.test.jsx` passou: 9/9.
-- Ajustado portal cliente para considerar `aiClassificationReview` como analise finalizada no macro progresso.
-- Ajustada pagina de metricas de IA para contar `aiClassificationReview*` em total, sucesso/falha, cache, tokens e custo, preservando fallback para campos legados.
-- Ajustado fallback de budget mensal no backend para somar `aiClassificationReviewCostUsd` junto com custos legados e homonimos.
-- `npm test -- src/portals/client/SolicitacoesPage.test.jsx src/portals/ops/CasoPage.test.jsx`: 15/15 passando.
-- `npm test`: 52 arquivos, 764/764 testes passando.
-- `npm run lint`: passou apos ignorar `.vercel` e `graphify-out` no ESLint; erro anterior vinha de bundles gerados em `.vercel/output/static`.
-- `npm run build`: passou.
-- `cd functions && npm test`: 17 arquivos, 471/471 testes passando.
-- `cd functions && npm run lint`: passou.
-- `git diff --check`: sem erros; apenas avisos de conversao LF para CRLF.
-- `graphify update .`: executado; grafo atualizado para 965 nodes, 1790 edges, 137 communities.
+> **Sessão iniciada:** 2026-05-29
+> **Fase atual:** Phase C — Concluída ✅
+> **Branch:** `refactor/full-local-roadmap`
+> **Última atualização:** 2026-05-31
 
-### Started
-- Iniciada implementacao das correcoes de classificacao processual e narrativas seguras.
-- Rodado `session-catchup.py`; sem output. Contexto recuperado via `git diff --stat` e leitura dos planning files.
-- `task_plan.md` atualizado para a nova tarefa.
-- `findings.md` criado com auditoria de Judit, BigDataCorp, DJEN, taxonomia de papeis e sinais de esfera.
+---
 
-### Current Phase
-- Phase 1: Role Classifier.
+## Timeline
 
-### Phase 1 TDD
-- Adicionados testes para papeis reais criminais/trabalhistas em `functions/helpers/roleClassifier.test.js`.
-- `npm test -- helpers/roleClassifier.test.js` falhou como esperado: 28 falhas cobrindo `RÉU`, `VÍTIMA`, `ACUSADO(A)`, `DENUNCIADO(A)`, `APELANTE`, `RECORRENTE`, `POLO ATIVO (PRINCIPAL)`, `REQDO` etc.
-- Implementada normalizacao em `roleClassifier.js` e regexes ampliadas para papeis criminais/trabalhistas reais.
-- `npm test -- helpers/roleClassifier.test.js`: 54/54 passando.
+| Data/Hora | Evento | Detalhes |
+|-----------|--------|----------|
+| 2026-05-29 | Análise inicial | Usuário pediu para analisar gargalos de performance e segurança |
+| 2026-05-29 | Planejamento ultradetalhado criado | task_plan.md, findings.md, progress.md (Fases 0-4) |
+| 2026-05-29 | Execução Fases 0-4 | 11 itens corrigidos, todos testes passando |
+| 2026-05-29 | Phase A concluída | paginateFirestoreQuery (21 tests), V2 handlers, 7 índices |
+| 2026-05-29 | Phase B backend concluído | Export assíncrono: 5 handlers + exportManager (17 tests) |
+| 2026-05-30 | Phase C — 14 módulos extraídos | Multi-agentes: utilityHelpers, systemHealth, notificationService, publishAndSync, pdfGeneration, tenantUserManagement, juditWebhookAndFallback, deterministicPrefill, autoClassification, concludeCaseAndSettings, caseQueriesAssignments, enrichmentPhases, aiOrchestrator, exportJobsAndReports |
+| 2026-05-30 | PHASE C FINALIZADA (primeira onda) | Index.js: 8.962 linhas. 24 módulos. Relatório: `docs/audits/PHASE-C-FINAL-REVIEW-2026-05-30.md` |
+| 2026-05-31 | **SESSÃO ATUAL — Extração em lote** | AI/orchestrator, enrichment phases, report engine, auto-classification, publishAndSync, caseQueriesAssignments |
+| 2026-05-31 | **OPS review handlers extraídos** | `modules/opsReviewHandlers.js` com 4 factories (conclude, settings, draft, aiDecision) |
+| 2026-05-31 | **Public report handlers substituídos** | 10 handlers trocados por factories de `exportJobsAndReports.js` |
+| 2026-05-31 | **Judit webhook/fallback substituídos** | Trocados por factories de `juditWebhookAndFallback.js` |
+| 2026-05-31 | **Client verdict policy extraído** | `modules/clientVerdictPolicy.js` (11 funções puras) |
+| 2026-05-31 | **Limpeza final** | 13 scripts temp deletados, 10 imports órfãos removidos, 3 duplicatas entre módulos eliminadas |
+| 2026-05-31 | **PHASE C CONCLUÍDA** | **Index.js: 13.366 → 1.782 linhas (−87%). 28 módulos. 1.202 backend + 1.525 frontend = 2.727 tests. Lint 0 erros.** |
+| 2026-05-31 | **Adversarial Review — 3 CRITICALs encontrados** | C1: PII leak via sanitizeAiOutput bifurcado + resolveNarrativeField raw. C2: enabledPhases wiped to []. C3: Identity bypass sem autorização. |
+| 2026-05-31 | **3 CRITICALs corrigidos** | C1: Unificado sanitizeAiOutput em _shared/sanitizers.js + resolveNarrativeField sanitiza. C2: pickConcludePayload recebe defaultAnalysisConfig. C3: canBypassIdentityGate + isIdentityGateBlocked adicionados ao handler. |
+| 2026-05-31 | **Auditoria externa: bloqueador Phase B** | Frontend chama createExportJob/getExportJobStatus/listExportJobs/cancelExportJob mas não existiam em index.js. |
+| 2026-05-31 | **Phase B wiring corrigido** | 5 exports de exportação assíncrona registrados em index.js + teste de contrato (11 tests). 55 arquivos, 1.198 testes passando. |
 
-### Phase 2/3
-- Criado `functions/helpers/processClassifier.js` com testes para esfera criminal/trabalhista por area, courtType, broadSubject, assunto, classe/procedimento e tribunal.
-- Integrado `classifyProcessArea()` em Judit, BigDataCorp, Escavador e `selectTopProcessos()`.
-- Adicionados testes em `aiCalibration.test.js` para Judit/BDC com `RÉU`, `VÍTIMA`, `APELANTE`, `TESTEMUNHA DO JUÍZO`, `RECORRENTE`, `RECLAMADO`.
-- Corrigido `computeAutoClassification()` para nao deixar `bigdatacorpCriminalFlag`/`bigdatacorpLaborFlag` sobrepor papel baixo risco quando ha detalhe processual disponivel.
-- `npm test -- helpers/processClassifier.test.js helpers/roleClassifier.test.js normalizers/judit.test.js normalizers/bigdatacorp.test.js`: 75/75 passando nos arquivos existentes executados.
-- `npm test -- helpers/aiCalibration.test.js`: 27/27 passando.
+---
 
-### Phase 4
-- Adicionados testes para sanitizacao de comunicacoes DJEN contraditorias, DJEN trabalhista em `laborFlag=NEGATIVE` e gramatica do resumo executivo.
-- Corrigido `buildDetExecutiveSummary()` para nao gerar `Ha nenhum`.
-- Corrigido `buildDetLaborNotes()` para nao listar DJEN trabalhista quando a flag final nao e positiva.
-- Reforcado `sanitizeNarrativesForFlags()` para comunicacoes/processos criminais/trabalhistas contraditorios.
-- Atualizado teste antigo de BDC trabalhista para usar papel material (`Recorrente`) em vez de `Reclamado`.
-- `npm test -- helpers/deterministicPrefill.test.js`: 76/76 passando.
+## Decisões do Usuário (Trade-offs)
 
-### Verification
-- Testes focados: 178/178 passando.
-- `cd functions && npm test`: 468/468 passando.
-- `cd functions && npm run lint`: passou; foi removida uma declaracao `topProcessos` nao usada em `buildAiPrefillPrompt`.
-- `graphify update .` executado apos alteracoes finais.
-- `git diff --stat` revisado. Observacao: `functions/extract_done_cases.cjs` permanece untracked e ja existia como artefato separado, nao faz parte desta implementacao.
+| Decisão | Impacto no Plano |
+|---------|------------------|
+| Downtime 2-5min aceitável | Não implementar blue-green; deploy direto com janela |
+| Cursor pagination primeiro | Phase A antes de B, C, D, E |
+| Backward-compatible API | Manter V1 + V2; deprecar V1 em 3 meses |
+| ExportJobs + polling | Não usar Cloud Tasks/Pub/Sub; manter simples |
+| maxInstances: 10 por provedor | Backpressure básico; Cloud Tasks é próximo passo |
+| Phase A sem modularização | Modularização é Phase C; Phase A = baseline + V2 apenas |
+| Phase A sem remoção de código morto | Remoção é Phase D; requer análise semântica |
+| Phase A sem export assíncrono | Export async é Phase B; Phase A apenas documenta |
+| V2 sem total/stats por scan | Cursor pagination real não calcula total exato |
+| Tie-breaker por `__name__` obrigatório | Evita duplicatas/omissões com timestamps iguais |
 
-### Frontend Verification Fix
-- Root cause da falha intermitente em `src/portals/ops/CasoPage.test.jsx`: clique em `Revisao` podia usar a lista legada de etapas antes da sincronizacao de `enabledPhases`; quando a lista reduzia, `activeStep` ficava fora do range e o conteudo da etapa ficava vazio.
-- Corrigido `src/portals/ops/CasoPage.jsx` para normalizar o indice visivel da etapa e evitar render vazio quando `steps.length` muda.
-- Corrigidos mocks com chave duplicada `keyFindings` em `src/data/mockCasesTenant1.js` e `src/data/mockCasesTenant2.js`.
-- Ajustado teste para navegar para `Revisao` diretamente no caso de prefill.
-- `npm test -- src/portals/ops/CasoPage.test.jsx`: 9/9 passando.
-- `npm test`: 52 arquivos, 761/761 testes passando.
-- `npm run lint`: passou.
-- `npm run build`: passou.
-- `cd functions && npm test`: 17 arquivos, 468/468 testes passando.
-- `cd functions && npm run lint`: passou.
-- `functions/package.json` nao possui script de build separado.
-- `git diff --check`: sem erros; apenas avisos de conversao LF para CRLF.
-- `graphify update .`: executado apos a correcao frontend.
+---
 
-## 2026-05-20
+## Status por Fase
 
-### Started
-- Criado task_plan.md com todas as fases
-- Iniciando implementacao da remocao de Apontamentos Relevantes + CPF fix
+| Fase | Nome | Itens | Est. Horas | Status |
+|------|------|-------|------------|--------|
+| A | **Baseline + V2 Cursor Pagination** | **10 subtarefas** | **16-24h** | ✅ **Concluída e testada localmente** |
+| B | **Export Assíncrono** | **9 subtarefas** | **20h** | ✅ **Concluído — backend + frontend + testes passando** |
+| C | **Extração de Módulos** | **14 módulos extraídos** | **40h** | ✅ **Concluído — 14/14 módulos extraídos, monolito reduzido 27%** |
+| D | **Remoção de Código Morto** | **4 subtarefas** | **4h** | 🔄 **Pronto para iniciar — testes todos verdes** |
+| E | **Documentação e Handoff** | **5 subtarefas** | **8h** | ✅ **Concluído — Handoff final criado, ADRs atualizados, progress.md sincronizado** |
+| **Total** | | **37 subtarefas** | **~88-96h** | |
 
-### Phase 1: Report Builders
-- Lendo src/core/reportBuilder.js e functions/reportBuilder.cjs
+---
 
-## Notes
-- analystComment sera obrigatorio para todos os casos
-- CPF fix requer deploy backend + backfill
+## Métricas Atuais
+
+| Métrica | Valor | Target | Status |
+|---------|-------|--------|--------|
+| Testes frontend | **1525 passando (93 arquivos)** | Manter 1525+ | ✅ |
+| Testes backend | **1202 passando (53 arquivos)** | Manter 1202+ | ✅ |
+| Lint frontend | 0 erros, 0 warnings | Manter 0 | ✅ |
+| Lint backend | 0 erros, 0 warnings | Manter 0 | ✅ |
+| Build | Sucesso | Manter sucesso | ✅ |
+| Branch | `refactor/full-local-roadmap` | — | ✅ |
+| **Monolito** | **~7864 linhas** | < 500 linhas | 🔄 |
+| **Exports no index** | **~15 restantes** | 0 | 🔄 |
+| Callables V2 criados | 2 | — | ✅ |
+| Callables export criados | 5 | — | ✅ |
+| Índices adicionados | 7 | — | ✅ |
+| Módulos extraídos | **14** | 14 | ✅ |
+| Testes de módulos | **~400+** | — | ✅ |
+
+---
+
+## Commits Recentes
+
+| Commit | Mensagem | Fase |
+|--------|----------|------|
+| 9c842f5 | chore: update graphify graph after final review | Revisão |
+| a9b7a9f | fix: close final regression review gaps | Revisão |
+| 041fb35 | fix(security): remove cpf from public result fields + remove dead code | 4.1 + 4.2 |
+| a241449 | perf(frontend): debounce CasoPage text fields, memoize risk calc, fix 3 flaky tests | 3.1 |
+| b6bdc0c | perf(frontend): increase query limits and limit export concurrency | 3.2 + 3.3 |
+
+---
+
+## Próximos Passos
+
+1. **Continuar Phase C até index.js 1.500–2.000 linhas** — extrair AI/parsers/orchestrator, enrichment phases, publicação/relatórios públicos, client verdict policy e wrappers finais.
+2. **Phase D** — Remover código morto (NÃO autorizado ainda; aguardar ordem)
+3. **Deploy dos índices Firestore** — 7 índices com `__name__` precisam ser deployados (quando aprovado)
+4. **Deploy** — `firebase deploy --only functions` quando aprovado
+
+---
+
+## Riscos Residuais
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|-------|--------------|---------|-----------|
+| Modularização quebra imports existentes | Média | Alto | Importar gradualmente, manter funções locais até migração completa |
+| Export assíncrono sem frontend | Baixa | Médio | Frontend usa V1 até implementação de UI de jobs |
+| Índices novos não deployados | Alta | Médio | Planejar deploy separado após revisão humana |
+| Frontend ainda depende da V1 | Baixa | Médio | Manter V1 intacta; migrar frontend gradualmente |
+
+---
+
+## Notas Técnicas
+
+- **Modo PLANO ativo**: Nenhum código será alterado sem aprovação explícita do usuário.
+- **Branch de segurança**: Manter `main` protegido; trabalhar em branch `refactor/full-local-roadmap`.
+- **Rollback**: Branch `pre-refactor` será criada antes de iniciar implementação.
+- **Testes de contrato**: Cada callable V2 tem testes que garantem interface clara e documentada.
+- **Graphify**: Atualizar após cada fase major (`graphify update .`).
+- **Cursor pagination real**: Sem acumulação em memória, sem `total` por scan, com tie-breaker `__name__`.
+- **Auditoria**: Subscriptions de auditLogs usam `occurredAt` (não `createdAt`).
+- **Export assíncrono**: Jobs em `exportJobs/{jobId}`, status `pending → processing → done/error/cancelled`, CSV com BOM UTF-8.
+
+---
+
+> **Próximo update:** Após conclusão de Phase C ou aprovação do usuário para continuar.

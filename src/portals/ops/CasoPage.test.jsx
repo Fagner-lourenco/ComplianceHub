@@ -51,6 +51,9 @@ const { default: CasoPage } = await import('./CasoPage');
 
 describe('CasoPage', () => {
     beforeEach(() => {
+        casoPageMocks.authState.userProfile = { role: 'admin' };
+        casoPageMocks.navigate.mockReset();
+        window.sessionStorage.clear();
         casoPageMocks.subscribeToCaseDoc.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockReset();
         casoPageMocks.subscribeToCaseAuditLogs.mockImplementation(() => () => {});
@@ -134,7 +137,7 @@ describe('CasoPage', () => {
                 cpf: '10794180329',
                 createdAt: '2026-04-04',
                 enabledPhases: ['criminal', 'labor', 'warrant'],
-                criminalFlag: 'NEGATIVE_PARTIAL',
+                criminalFlag: 'NEGATIVE',
                 laborFlag: 'NEGATIVE',
                 warrantFlag: 'NEGATIVE',
                 coverageLevel: 'LOW_COVERAGE',
@@ -298,8 +301,8 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
-        fireEvent.click(screen.getAllByText('Criminal')[0]);
-        fireEvent.click(screen.getByText(/Comunicações judiciais DJEN \(2\)/));
+        fireEvent.click(screen.getByRole('button', { name: /Criminal/i }));
+        fireEvent.click(await screen.findByText(/Comunicações judiciais DJEN \(2\)/, {}, { timeout: 3000 }));
         fireEvent.click(screen.getAllByRole('button', { name: '0001234-56.2025.8.16.0001' })[0]);
 
         expect(screen.getAllByText('DJEN').length).toBeGreaterThan(0);
@@ -339,7 +342,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Maria Silva')).toBeInTheDocument();
         fireEvent.click(screen.getAllByText('Trabalhista')[0]);
-        expect(screen.getByText(/Comunicações judiciais DJEN \(1\)/)).toBeInTheDocument();
+        expect(await screen.findByText(/Comunicações judiciais DJEN \(1\)/, {}, { timeout: 3000 })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '0009999-88.2025.5.09.0001' }));
         expect(screen.getByText('Publicações no Diário (DJEN) · 1 ocorrência(s)')).toBeInTheDocument();
         expect(screen.getAllByText('Notificação').length).toBeGreaterThan(0);
@@ -374,7 +377,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Revisao'));
+        fireEvent.click(screen.getByRole('button', { name: /Revisao/i }));
 
         expect(await screen.findByLabelText('Resumo executivo')).toHaveValue('Resumo consolidado com mandado ativo, processos criminais relevantes e ressalva de divergencia entre fontes de dados.');
         expect(screen.getByLabelText('Principais apontamentos')).toHaveValue('Mandado ativo pendente de cumprimento.\nHa processo criminal confirmado com suporte cruzado.');
@@ -406,7 +409,7 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText('Mandado de Prisao'));
+        fireEvent.click(screen.getByRole('button', { name: /Mandado de Prisao/i }));
 
         const warrantTextarea = await screen.findByDisplayValue('Nenhum mandado confirmado ate o momento.', {}, { timeout: 3000 });
         fireEvent.change(warrantTextarea, { target: { value: 'Analista revisando o mandado com cautela.' } });
@@ -481,8 +484,8 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Proximo'));
-        await waitFor(() => expect(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.')).toBeInTheDocument());
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
+        await waitFor(() => expect(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.')).toBeInTheDocument(), { timeout: 3000 });
         fireEvent.change(screen.getByDisplayValue('Nenhum processo criminal confirmado nas fontes consultadas.'), {
             target: { value: 'Analista revisou a cobertura criminal e manteve a classificacao negativa.' },
         });
@@ -520,14 +523,15 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Rafael Nunes')).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Proximo'));
-        fireEvent.click(screen.getByText('Proximo'));
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
+        expect(await screen.findByRole('heading', { name: /Mandado de prisao/i })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
 
-        expect(screen.getByText(/Bloqueio: flag de mandado negativa com 1 mandado/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Bloqueio: flag de mandado negativa com 1 mandado/i, {}, { timeout: 3000 })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Concluir caso/i })).toBeDisabled();
     });
 
-    it('bloqueia conclusao quando resultado criminal ainda e consultivo', async () => {
+    it('permite conclusao quando resultado criminal e inconclusivo final', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -537,7 +541,7 @@ describe('CasoPage', () => {
                 tenantId: 'tenant-1',
                 createdAt: '2026-05-22',
                 enabledPhases: ['criminal'],
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
                 criminalNotes: 'Sem apontamento criminal.',
                 finalVerdict: 'FIT',
                 analystComment: 'Nao foram identificados apontamentos criminais nas fontes consultadas.',
@@ -548,9 +552,7 @@ describe('CasoPage', () => {
         render(<CasoPage />);
 
         expect(await screen.findByText('Andressa de Souza Pereira')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /^Concluir$/i })).toBeDisabled();
-        fireEvent.click(screen.getByRole('button', { name: /^Concluir$/i }));
-        expect(casoPageMocks.callConcludeCaseByAnalyst).not.toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: /^Concluir$/i })).not.toBeDisabled();
     });
 
     it('exibe revisao consultiva da autoclassificacao sem alterar o nivel de atencao calculado', async () => {
@@ -695,5 +697,139 @@ describe('CasoPage', () => {
         expect(screen.getAllByText('Concorda com ressalva')).toHaveLength(1);
         expect(screen.getAllByText('Concorda').length).toBeGreaterThanOrEqual(2);
         expect(screen.queryByText('Cobertura parcial pode esconder achados.')).not.toBeInTheDocument();
+    });
+
+    it('exibe botao de bypass para supervisor quando caso esta em CORRECTION_NEEDED com gate bloqueado', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+        expect(screen.getByText('Concluir com bypass de identidade')).toBeInTheDocument();
+    });
+
+    it('nao exibe botao de bypass para analista comum', async () => {
+        casoPageMocks.authState.userProfile = { role: 'analyst' };
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+        expect(screen.queryByText('Concluir com bypass de identidade')).not.toBeInTheDocument();
+
+    });
+
+    it('abre modal de bypass e envia payload correto ao concluir', async () => {
+        casoPageMocks.authState.userProfile = { role: 'admin' };
+        casoPageMocks.callConcludeCaseByAnalyst.mockResolvedValue({});
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'CORRECTION_NEEDED',
+                candidateName: 'Joao Silva',
+                cpf: '12345678901',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Caso analisado e sem apontamentos relevantes',
+                bigdatacorpGateResult: { passed: false, reason: 'CPF cancelado' },
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
+
+        const bypassButton = screen.getByText('Concluir com bypass de identidade');
+        fireEvent.click(bypassButton);
+
+        expect(await screen.findByText('Bypass do gate de identidade')).toBeInTheDocument();
+
+        const textarea = screen.getByPlaceholderText('Descreva por que a conclusao deve ser permitida mesmo com gate de identidade bloqueado...');
+        fireEvent.change(textarea, { target: { value: 'Justificativa de teste com mais de 15 caracteres' } });
+
+        const confirmButton = screen.getByText('Confirmar bypass e concluir');
+        fireEvent.click(confirmButton);
+
+        await waitFor(() => {
+            expect(casoPageMocks.callConcludeCaseByAnalyst).toHaveBeenCalledWith(expect.objectContaining({
+                caseId: 'CASE-999',
+                payload: expect.objectContaining({
+                    identityBypassed: true,
+                    identityBypassJustification: 'Justificativa de teste com mais de 15 caracteres',
+                }),
+            }));
+        });
+    });
+
+    it('renderiza processos Escavador2 quando presentes', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Escavador2 Teste',
+                cpf: '12345678901',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                escavador2EnrichmentStatus: 'DONE',
+                escavador2ProcessTotal: 2,
+                escavador2NewFindingCount: 1,
+                escavador2DuplicateCount: 1,
+                escavador2Processos: [
+                    { numeroCnj: '0001234-56.2024.8.26.0100', area: 'CRIMINAL', tipoPrincipal: 'Reu', polo: 'PASSIVO', isMaterialRisk: true, isCriminal: true, isNewEscavador2Finding: true, tribunalSigla: 'TJSP', dataInicio: '2024-01-01' },
+                    { numeroCnj: '0005678-90.2023.5.09.0001', area: 'LABOR', tipoPrincipal: 'Reclamante', polo: 'ATIVO', isMaterialRisk: false, isLabor: true, isNewEscavador2Finding: false, tribunalSigla: 'TRT9', dataInicio: '2023-03-10' },
+                ],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Escavador2 Teste')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Escavador2 via integração/ })).toBeInTheDocument();
+        expect(screen.getByText('0001234-56.2024.8.26.0100')).toBeInTheDocument();
+        expect(screen.getByText('0005678-90.2023.5.09.0001')).toBeInTheDocument();
+        expect(screen.getAllByText('Novo').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('Confirmatório').length).toBeGreaterThanOrEqual(1);
     });
 });

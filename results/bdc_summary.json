@@ -1,0 +1,238 @@
+﻿[
+    {
+        "caseId":  "nif9RulGdcx5L0nMrlRF",
+        "name":  "LIANDRA MIRELY DE PAIVA PINHEIRO",
+        "cpfStatus":  "REGULAR",
+        "birthDate":  "2004-10-17T00:00:00Z",
+        "age":  21,
+        "gender":  "F",
+        "motherName":  "",
+        "hasDeathRecord":  false,
+        "totalLawsuits":  0,
+        "laborLawsuits":  0,
+        "sanctionsCount":  0,
+        "isPEP":  false,
+        "lawsuits":  [
+
+                     ]
+    },
+    {
+        "caseId":  "nXyhDszN1v6wHm3RFrMj",
+        "name":  "BRENO DE SANTA ISABEL SANT ANA",
+        "cpfStatus":  "REGULAR",
+        "birthDate":  "2005-06-27T00:00:00Z",
+        "age":  20,
+        "gender":  "M",
+        "motherName":  "RITA MARIA DE SANTA ISABEL SANT ANA",
+        "hasDeathRecord":  false,
+        "totalLawsuits":  0,
+        "laborLawsuits":  0,
+        "sanctionsCount":  0,
+        "isPEP":  false,
+        "lawsuits":  [
+
+                     ]
+    },
+    {
+        "caseId":  "QcPGd484G4a8DJTrSLMN",
+        "name":  "DANIEL SHAYD LIMA DE SANTANA",
+        "cpfStatus":  "REGULAR",
+        "birthDate":  "2002-07-29T00:00:00Z",
+        "age":  23,
+        "gender":  "M",
+        "motherName":  "",
+        "hasDeathRecord":  false,
+        "totalLawsuits":  2,
+        "laborLawsuits":  1,
+        "sanctionsCount":  52,
+        "isPEP":  false,
+        "lawsuits":  [
+                         {
+                             "number":  "00003532820245050004",
+                             "subject":  "DESCONFIGURACAO DE JUSTA CAUSA",
+                             "type":  "TRABALHISTA",
+                             "court":  "TRT5",
+                             "parties":  [
+                                             {
+                                                 "Doc":  "86811475528",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "DANIEL SHAYD LIMA DE SANTANA",
+                                                 "Polarity":  "ACTIVE",
+                                                 "Type":  "CLAIMANT",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECLAMANTE"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             },
+                                             {
+                                                 "Doc":  "94252025591",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "MARCOS ANTONIO BATISTA DE LIMA",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             },
+                                             {
+                                                 "Doc":  "05809221548",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "RAFAEL OLIVEIRA DE CARVALHO",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             },
+                                             {
+                                                 "Doc":  "48113081000162",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "CONSORCIO REQUALIFICA SALVADOR",
+                                                 "Polarity":  "PASSIVE",
+                                                 "Type":  "CLAIMED",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECLAMADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             },
+                                             {
+                                                 "Doc":  "15270565000166",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "LIGA ENGENHARIA LTDA",
+                                                 "Polarity":  "PASSIVE",
+                                                 "Type":  "CLAIMED",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECLAMADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             },
+                                             {
+                                                 "Doc":  "91650615515",
+                                                 "IsPartyActive":  false,
+                                                 "Name":  "CYNTIA MARIA DE POSSIDIO OLIVEIRA LIMA",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-06-06T23:43:28"
+                                             },
+                                             {
+                                                 "Doc":  "24962147587",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "SYLVIO GARCEZ JUNIOR",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:02"
+                                             }
+                                         ],
+                             "status":  "DISTRIBUIDO"
+                         },
+                         {
+                             "number":  "00003532820245050004",
+                             "subject":  "DESCONFIGURACAO DE JUSTA CAUSA",
+                             "type":  "TRABALHISTA",
+                             "court":  "TRT5",
+                             "parties":  [
+                                             {
+                                                 "Doc":  "13348043549",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "MARIZETE MENEZES CORREA",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "REPORTER",
+                                                 "IsInference":  true,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RELATOR"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "48113081000162",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "CONSORCIO REQUALIFICA SALVADOR",
+                                                 "Polarity":  "ACTIVE",
+                                                 "Type":  "CLAIMANT",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECORRENTE"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "15270565000166",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "LIGA ENGENHARIA LTDA",
+                                                 "Polarity":  "ACTIVE",
+                                                 "Type":  "CLAIMANT",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECORRENTE"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "24962147587",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "SYLVIO GARCEZ JUNIOR",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "86811475528",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "DANIEL SHAYD LIMA DE SANTANA",
+                                                 "Polarity":  "PASSIVE",
+                                                 "Type":  "CLAIMED",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "RECORRIDO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "94252025591",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "MARCOS ANTONIO BATISTA DE LIMA",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             },
+                                             {
+                                                 "Doc":  "05809221548",
+                                                 "IsPartyActive":  true,
+                                                 "Name":  "RAFAEL OLIVEIRA DE CARVALHO",
+                                                 "Polarity":  "NEUTRAL",
+                                                 "Type":  "LAWYER",
+                                                 "IsInference":  false,
+                                                 "PartyDetails":  {
+                                                                      "SpecificType":  "ADVOGADO"
+                                                                  },
+                                                 "LastCaptureDate":  "2025-12-23T04:46:59"
+                                             }
+                                         ],
+                             "status":  "INDEFINIDO"
+                         }
+                     ]
+    }
+]

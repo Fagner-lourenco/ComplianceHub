@@ -11,10 +11,10 @@ const {
     normalizeJuditLawsuits,
     normalizeJuditWarrants,
 } = require('../normalizers/judit');
+const { computeAutoClassification } = require('../modules/autoClassification');
 const { __test } = require('../index');
 
 const {
-    computeAutoClassification,
     buildDeterministicPrefill,
     evaluateComplexityTriggers,
     buildDetCriminalNotes,
@@ -421,21 +421,20 @@ describe('Deterministic Prefill', () => {
 
             // Diego should have partial coverage
             if (caseData.coverageLevel !== 'HIGH_COVERAGE') {
-                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
+                const hasCovRef = /nenhum apontamento|nao identificou apontamentos|analise identificou/i.test(result.executiveSummary);
                 expect(hasCovRef).toBe(true);
             }
         });
 
-        it('NEGATIVE_PARTIAL yields ATTENTION verdict', () => {
+        it('NEGATIVE with partial coverage keeps sem apontamento wording', () => {
             const caseData = classifyAndMerge(buildDiegoCase());
             const result = buildDeterministicPrefill(caseData);
 
-            if (caseData.criminalFlag === 'NEGATIVE_PARTIAL') {
-                // v6: risk level shown in badge, text shows analysis content
-                const hasCovRef = /nenhum apontamento|analise identificou/i.test(result.executiveSummary);
-                expect(hasCovRef).toBe(true);
-                expect(result.finalJustification).toContain('avaliacao operacional');
-            }
+            expect(caseData.criminalFlag).toBe('NEGATIVE');
+            expect(caseData.criminalEvidenceQuality).toBe('NEGATIVE_WITH_PARTIAL_COVERAGE');
+            const hasCovRef = /nenhum apontamento|nao identificou apontamentos|analise identificou/i.test(result.executiveSummary);
+            expect(hasCovRef).toBe(true);
+            expect(result.finalJustification).not.toMatch(/negativo parcial|parcial/i);
         });
     });
 
@@ -518,7 +517,7 @@ describe('Deterministic Prefill', () => {
                 criminalEvidenceQuality: 'MIXED_STRONG_AND_WEAK',
                 providerDivergence: 'HIGH',
                 coverageLevel: 'LOW_COVERAGE',
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
                 warrantFlag: 'INCONCLUSIVE',
             });
             expect(result.isComplex).toBe(true);
@@ -931,7 +930,7 @@ describe('Deterministic Prefill', () => {
             const result = selectTopProcessos(caseData, 20);
             // Same process from 3 providers: should appear only ONCE (Judit wins, others merged)
             expect(result.length).toBe(1);
-            expect(result[0].fonte).toBe('Judit+Escavador+BigDataCorp');
+            expect(result[0].fonte).toBe('Judit+BigDataCorp+Escavador');
         });
 
         it('selectTopProcessos: Escavador uses hasExactCpfMatch for matchType', () => {
@@ -1183,13 +1182,12 @@ describe('Deterministic Prefill', () => {
             expect(summary).not.toMatch(/Ha nenhum|Há nenhum|Ha nao|Há nao/i);
         });
 
-        it('NEGATIVE_PARTIAL uses operational warning text instead of client-facing inconclusive caveat', () => {
-            const result = sanitizeNarrativesForFlags({ criminalFlag: 'NEGATIVE_PARTIAL' }, {
+        it('NEGATIVE replaces criminal caveats with safe sem apontamento text', () => {
+            const result = sanitizeNarrativesForFlags({ criminalFlag: 'NEGATIVE' }, {
                 criminalNotes: 'Resultado inconclusivo com apontamento criminal pendente de validacao.',
             });
 
-            expect(result.narratives.criminalNotes).toContain('Nao houve apontamento criminal confirmado');
-            expect(result.narratives.criminalNotes).toContain('revisao operacional');
+            expect(result.narratives.criminalNotes).toContain('Nao foram identificados apontamentos criminais materiais');
             expect(result.narratives.criminalNotes).not.toMatch(/inconclusivo|baixa cobertura/i);
             expect(result.warnings).toHaveLength(1);
         });
@@ -1197,8 +1195,8 @@ describe('Deterministic Prefill', () => {
         it('DEFAULT_JUDIT_CONFIG has entity OFF by default', () => {
             // Judit cadastro must be disabled by default — BDC is primary
             // This test validates the config is correct at code level
-            const indexSrc = fs.readFileSync(path.resolve(__dirname, '../index.js'), 'utf-8');
-            expect(indexSrc).toContain("entity: false,");
+            const providerSrc = fs.readFileSync(path.resolve(__dirname, '../modules/_shared/providerConfigs.js'), 'utf-8');
+            expect(providerSrc).toContain("entity: false,");
         });
     });
 
@@ -1359,10 +1357,11 @@ describe('Deterministic Prefill', () => {
             expect(result.executiveSummary).toContain('sanção ativa');
         });
 
-        // 10. criminalFlag=INCONCLUSIVE_HOMONYM + 0 processes
-        it('criminalNotes INCONCLUSIVE_HOMONYM with 0 processes has explanatory body', () => {
+        // 10. criminalFlag=INCONCLUSIVE + homonym evidence + 0 processes
+        it('criminalNotes INCONCLUSIVE with homonym evidence and 0 processes has explanatory body', () => {
             const caseData = {
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 escavadorProcessos: [],
                 juditRoleSummary: [],
                 bigdatacorpProcessos: [],
@@ -1374,7 +1373,8 @@ describe('Deterministic Prefill', () => {
 
         it('criminalNotes nao lista DJEN isolado sem CNJ confirmado por Judit ou BigDataCorp', () => {
             const notes = buildDetCriminalNotes({
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 candidateName: 'NOME COMUM',
                 bigdatacorpNamesakeCount: 200,
                 juditRoleSummary: [],
@@ -1515,7 +1515,8 @@ describe('Deterministic Prefill', () => {
         it('namesakeCount=0 produces valid caveat text', () => {
             const caseData = {
                 candidateName: 'NOME UNICO',
-                criminalFlag: 'INCONCLUSIVE_HOMONYM',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'WEAK_NAME_ONLY',
                 bigdatacorpNamesakeCount: 0,
                 escavadorProcessos: [{
                     numeroCnj: '12345678901234567890',
@@ -2120,6 +2121,37 @@ describe('Deterministic Prefill', () => {
             const block = formatProcessBlock(proc, {});
             expect(block).toContain('Status: ATIVO');
             expect(block).not.toContain('Status: ARQUIVADO');
+        });
+
+        it('selectTopProcessos includes new Escavador2 labor finding and prefill lists it', () => {
+            const caseData = {
+                candidateName: 'CANDIDATO TESTE',
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'POSITIVE',
+                warrantFlag: 'NEGATIVE',
+                escavador2Processos: [{
+                    numeroCnj: '015XXXX-22.2009.5.06.0014',
+                    isNewEscavador2Finding: true,
+                    isCriminal: false,
+                    isLabor: true,
+                    isTrabalhista: true,
+                    isPlaintiff: true,
+                    classe: 'RECLAMACAO TRABALHISTA',
+                    assunto: null,
+                    tribunalSigla: 'TRT6',
+                    status: 'Ativo',
+                    polo: 'ATIVO',
+                    dataInicio: '2009-09-15',
+                }],
+            };
+            const top = selectTopProcessos(caseData, 10);
+            expect(top.length).toBe(1);
+            expect(top[0].isTrabalhista).toBe(true);
+            expect(top[0].fonte).toBe('Escavador2');
+
+            const notes = buildDetLaborNotes(caseData);
+            expect(notes).toContain('015XXXX-22.2009.5.06.0014');
+            expect(notes).toContain('RECLAMACAO TRABALHISTA');
         });
     });
 });

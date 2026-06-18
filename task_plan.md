@@ -1,236 +1,748 @@
-# Task Plan: IA Revisora da Autoclassificacao
+# Task Plan Ativo: Revisao Completa Frontend + Backend ComplianceHub
+
+> **Status:** Fases 0-7 concluidas; hotfix pos-deploy aplicado; Fase 8 manual/staging pendente
+> **Criado em:** 2026-06-01
+> **Branch:** `refactor/full-local-roadmap`
+> **Objetivo:** revisar todos os fluxos, funcionalidades, formularios, callables, triggers, regras, relatorios e integracoes do ComplianceHub antes de qualquer deploy de Functions refatoradas.
+
+---
+
+## Escopo
+
+Revisao end-to-end de produto e engenharia cobrindo:
+- Portal Ops (`/ops/*`): fila, detalhe de caso, auditoria, metricas, relatorios, equipe, clientes, configuracoes, exportacoes e saude.
+- Portal Cliente (`/client/*`): dashboard, solicitacoes, nova solicitacao, relatorios, auditoria, equipe/usuarios, exportacoes e quota.
+- Relatorio publico (`/r/:token`) e demo routes.
+- Backend Firebase Functions: todos callables, triggers Firestore, scheduler, webhook Judit, PDF, exports, notifications, RBAC e rate limiting.
+- Firestore: regras, indices, colecoes, contratos de privacidade e consistencia `cases` <-> `clientCases` <-> `publicResult`.
+- Integracoes externas: Judit, Escavador, FonteData, BigDataCorp, DJEN e OpenAI.
+
+---
+
+## Principios da Revisao
+
+- Nao alterar dados reais sem confirmacao.
+- Nao fazer deploy de Functions ate fechar checklist e testes.
+- Nao usar `--force` em Firestore indexes.
+- Separar achados em: bloqueador, alto, medio, baixo.
+- Toda descoberta relevante vai para `findings.md`.
+- Todo teste/erro/resultado vai para `progress.md`.
+- A cada 2 leituras/buscas relevantes, atualizar arquivos de planejamento.
+
+---
+
+## Estado Inicial Conhecido
+
+- Working tree esta suja com varias mudancas acumuladas da refatoracao/auditoria.
+- `functions` lint passou.
+- `functions` tests passaram: 55 arquivos, 1215 testes.
+- Contrato frontend/backend passou: 49 callables frontend, 68 backend exports, 0 missing.
+- `npm run lint` passou.
+- `npm run build` passou.
+- Playwright focado `e2e/casopage.lazy-render.spec.js` passou: 10 tests.
+- `npm test` raiz ainda falha intermitentemente em `src/portals/ops/CasoPage.test.jsx` quando executado junto com toda a suite, embora o arquivo isolado passe.
+- Novo indice local pendente de deploy: `juditWebhookRequests(status ASC, createdAt ASC)`.
+- Indice `caseMessages` ja foi adicionado e deployado anteriormente.
+
+---
+
+## Fases
+
+### Fase 0 — Inventario e Baseline
+
+**Status:** done
+
+Objetivo: congelar o escopo real antes da revisao.
+
+Checklist:
+- [x] Listar todas rotas frontend reais em `src/App.jsx`.
+- [x] Listar todas paginas em `src/pages`, `src/portals/ops`, `src/portals/client`.
+- [x] Listar todos callables usados em `src/core/firebase/firestoreService.js`.
+- [x] Listar todos exports backend em `functions/index.js`.
+- [x] Listar todos triggers/schedulers/onRequest backend.
+- [x] Mapear colecoes Firestore usadas por frontend, backend e rules.
+- [x] Registrar baseline de testes, lint, build e flakiness conhecida.
+
+Saida esperada:
+- Matriz inicial `rota -> componente -> dados -> callable/subscription -> permissao` registrada em `findings.md`.
+- Matriz inicial `callable/trigger -> modulo -> auth -> input -> output -> testes` iniciada em `findings.md`; detalhamento por input/output/teste segue na Fase 3.
+
+Resumo de conclusao:
+- `src/App.jsx` centraliza todas as rotas reais e demo.
+- Frontend usa 49 chamadas para backend via `firestoreService.js` e `notificationService.js`.
+- Backend carrega 68 exports publicos excluindo `__test`.
+- Frontend ainda usa `listOpsCases`/`listClientCases` V1; V2 existe no backend mas nao esta adotado.
+- Colecoes principais diretas: `userProfiles`, `tenantSettings`, `tenantUsage`, `cases`, `clientCases`, `candidates`, `auditLogs`, `tenantAuditLogs`, `exports`, `exportJobs`, `publicReports`, `systemHealth`, `notifications`, `caseMessages`, `juditWebhookRequests`, `systemLocks` e subcolecao `cases/{caseId}/publicResult`.
+
+---
+
+### Fase 1 — Revisao Frontend: Rotas, Telas e Navegacao
+
+**Status:** done
+
+Checklist Ops:
+- [ ] Login/acesso/redirect por role.
+- [x] `/ops/fila`: filtros, paginacao, status, assign, SLA, tenants — revisada; corrigido desalinhamento de chaves `waiting`/`corrections`.
+- [x] `/ops/casos/:caseId`: contratos de conclusao, rascunho, retorno, bypass, rerun — verificados e alinhados.
+- [ ] Auditoria ops: filtros, logs, tenant isolation.
+- [ ] Metricas/IA/saude: carregamento, estados vazios, erro, permissao.
+- [ ] Equipe ops/clientes/configuracoes: formularios, validacao, RBAC.
+- [ ] Exportacoes/relatorios: job flow, download, erro, cancelamento.
+
+Checklist Cliente:
+- [x] Dashboard cliente: KPIs, quota, status e cards — contratos alinhados.
+- [x] Nova solicitacao: social URLs alinhadas com backend; CPF/nome ja cobertos por testes focados.
+- [x] Solicitacoes/listagem: filtros, status, paginacao e correcao cliente revisados em pontos criticos.
+- [ ] Relatorio cliente: campos publicos, PDF, revogacao/expiracao.
+- [ ] Auditoria cliente: tenant isolation e filtros.
+- [ ] Equipe/usuarios cliente: roles, convite/criacao, desativacao.
+- [x] Exportacoes cliente: contrato de job async corrigido para enviar `scopeCode`, disparar `processExportJob`, aceitar retorno `jobId/status` e normalizar status.
+
+Checklist Public/Demo:
+- [x] `/r/:token`: expirado, inexistente, valido, privacidade, render HTML seguro — contratos alinhados.
+- [ ] `/demo/*`: nao depende de auth real, nao chama writes reais.
+
+---
+
+### Fase 2 — Revisao Frontend: Formularios e Validadores
+
+**Status:** done — validacao campo a campo concluida; correcoes aplicadas com regressao
+
+Checklist:
+- [ ] Inventariar todos `<form>`, inputs e textareas.
+- [ ] Comparar validacao frontend vs backend para cada campo.
+- [ ] Validar labels/acessibilidade basica (`label`, `aria-label`, foco, erros).
+- [ ] Validar estados loading/saving/error/success.
+- [ ] Validar debounce/dirty tracking em `CasoPage`.
+- [x] Corrigir desalinhamento conhecido: social URL aceita `@usuario` no front e backend rejeita.
+- [ ] Revisar mensagens em PT-BR e dados sensiveis em erros.
+
+---
+
+### Fase 3 — Revisao Backend: Callables
+
+**Status:** done — 12+ callables revisados contra checklist; achados de cobertura de testes e duplicacao documentados
+
+Checklist por callable:
+- [ ] Auth obrigatoria e role correta.
+- [ ] Tenant isolation.
+- [ ] Validacao de input.
+- [ ] Sanitizacao de output.
+- [ ] Rate limit quando aplicavel.
+- [ ] Audit log quando ha write/acao sensivel.
+- [ ] Idempotencia/concorrencia.
+- [ ] Teste unitario/contrato cobrindo sucesso e negacao.
+
+Grupos:
+- [ ] Cases/listagens/assignments/reruns.
+- [ ] Solicitacoes cliente e quotas.
+- [ ] Conclusao, rascunho, retorno ao cliente e settings.
+- [ ] Relatorios publicos e PDF.
+- [ ] Export jobs.
+- [ ] Usuarios ops/clientes/claims.
+- [ ] Auditoria e notificacoes.
+- [ ] Saude do sistema.
+
+---
+
+### Fase 4 — Revisao Backend: Triggers, Pipeline e Integracoes
+
+**Status:** done — pipeline completo revisado; gate, triggers, classificacao e publicacao verificados
+
+Checklist:
+- [ ] Trigger de criacao/correcao do caso inicia fases corretas.
+- [ ] Gate de identidade reprova divergencia real e nao reprova erro tecnico.
+- [ ] BigDataCorp: success, failed, blocked, rerun e lock.
+- [ ] Judit: sync, async, webhook, fallback, pending phases, timeout, retry, stale generation.
+- [ ] Escavador: condicional por config/necessidade, erro tecnico, rerun.
+- [ ] DJEN: filtros por processo/nome, erro tecnico, classificacao final.
+- [ ] AutoClassify/AI: readiness, lock, prompt, parser, custos, secrets, modelo.
+- [ ] Publicacao `publicResult/latest`: privacidade, TTL, sync, revogacao.
+- [ ] Notifications: destinatarios, duplicidade, retries.
+- [ ] Export worker: status, cancelamento, Storage, CSV/PDF.
+
+---
+
+### Fase 5 — Firestore, Rules, Indices e Dados
+
+**Status:** done — rules, indices e contratos de campos revisados
+
+Checklist:
+- [ ] Revisar `firestore.rules` por colecao e role.
+- [ ] Validar rules com testes existentes.
+- [ ] Confirmar indices locais vs remotos, sem `--force`.
+- [ ] Investigar 2 indices remotos nao presentes no arquivo local.
+- [ ] Deployar apenas indices aprovados, se necessario.
+- [ ] Revisar contratos `PUBLIC_RESULT_FIELDS` vs `RESULT_ONLY_FIELDS`.
+- [ ] Revisar risco de hot document em `tenantUsage/{tenantId}`.
+
+---
+
+### Fase 6 — Segurança, Privacidade e Compliance
+
+**Status:** done — CSP, secrets, logs, sanitização e RBAC revisados
+
+Checklist:
+- [ ] Public report sem `tenantId`, requester, email, filiacao materna e campos internos.
+- [ ] CSP/headers em `vercel.json`.
+- [ ] Secrets e arquivos locais (`.env.local`, `users.json`, outputs em `results/`).
+- [ ] Logs sem PII excessiva.
+- [ ] RBAC: owner/admin/supervisor/analyst/client roles.
+- [ ] Auto-promocao bloqueada.
+- [ ] Cross-tenant reads/writes bloqueados.
+- [ ] HTML/PDF sanitizados.
+
+---
+
+### Fase 7 — Testes Automatizados e Flakiness
+
+**Status:** done — suite raiz, backend, lint, build e Playwright focado verdes em 2026-06-01
+
+Checklist:
+- [x] Estabilizar `src/portals/ops/CasoPage.test.jsx` na suite completa.
+- [x] Rodar `npm test` raiz ate suite completa verde sem rerun seletivo.
+- [x] Rodar `cd functions && npm test`.
+- [x] Rodar `npm run lint` e `cd functions && npm run lint`.
+- [x] Rodar `npm run build`.
+- [x] Rodar Playwright focado e, se viavel, suite completa.
+- [x] Registrar todos resultados em `progress.md`.
+
+---
+
+### Fase 8 — Validacao Manual/Staging End-to-End
+
+**Status:** pending
+
+Checklist minimo:
+- [ ] Login ops/admin/supervisor/analyst.
+- [ ] Login cliente manager/operator/viewer.
+- [ ] Criar solicitacao valida.
+- [ ] Criar solicitacao com CPF/nome divergente e confirmar devolucao automatica.
+- [ ] Simular erro tecnico de provider e confirmar `FAILED` sem devolucao indevida.
+- [ ] Acompanhar pipeline completo ate classificacao.
+- [ ] Salvar rascunho e concluir caso.
+- [ ] Publicar/abrir relatorio publico.
+- [ ] Gerar PDF/export.
+- [ ] Mensagens cliente/ops.
+- [ ] Auditoria gerada para acoes criticas.
+
+---
+
+### Fase 9 — Relatorio Final, Commit e Decisao de Deploy
+
+**Status:** partial — relatorio final criado; commit/deploy dependem de aprovacao explicita
+
+Checklist:
+- [x] Consolidar achados em `docs/audits/`.
+- [x] Classificar bloqueadores restantes.
+- [x] Revisar `git status`, `git diff --stat`, diffs sensiveis e arquivos ignorados.
+- [ ] Garantir que artefatos sensiveis nao entram no commit.
+- [ ] Commit detalhado se aprovado.
+- [ ] Plano de deploy/rollback de Functions.
+- [ ] Deploy somente apos aprovacao explicita.
+
+---
+
+## Errors Encountered
+
+| Erro | Tentativa | Resolucao |
+|------|-----------|-----------|
+| `session-catchup.py` nao encontrado em `%USERPROFILE%\.opencode` | 1 | Usado caminho real `%USERPROFILE%\.config\opencode\skills\planning-with-files\scripts\session-catchup.py` |
+| `npm test` raiz falha intermitentemente em `CasoPage.test.jsx` | 1 | Corrigido isolamento de teste: reset de `authState.userProfile`, `navigate` e `sessionStorage`; suite raiz passou 97/97 arquivos, 1554/1554 testes |
+
+---
+
+## Criterio de Conclusao Geral
+
+A revisao completa so sera considerada concluida quando:
+- Todas as fases 0-9 estiverem completas ou explicitamente dispensadas pelo usuario.
+- Nao houver bloqueadores abertos.
+- Lint/test/build backend e frontend estiverem verdes.
+- Validacao manual/staging dos fluxos criticos estiver registrada.
+- Indices pendentes estiverem decididos/deployados sem `--force`.
+- Relatorio final existir em `docs/audits/`.
+
+---
+
+# Task Plan: Refatoração Zero-Risco do Monolito ComplianceHub
+
+> **Status:** Planejamento em execução — Phase A corrigida detalhada, Fases B-E estruturadas
+> **Criado em:** 2026-05-29
+> **Última revisão:** 2026-05-29
+> **Scope:** Refatoração do monolito `functions/index.js` (~13.556 linhas, 47 callables, 10 triggers Firestore, 1 onRequest, 1 onSchedule) com paginação por cursor Firestore, export assíncrono via Cloud Storage, e remoção de código morto — mantendo 100% dos testes passando, zero regressão de API pública, e compatibilidade backward-compatible.
+
+---
 
 ## Goal
-Criar e endurecer a analise assistida que atua como segundo analista consultivo: auditar a autoclassificacao deterministica, apontar possiveis erros/inconsistencias, orientar a revisao humana e reorganizar a aba `Identificacao do candidato` para priorizar identidade, validacao da classificacao, evidencias usadas e dados tecnicos recolhidos. Nesta rodada, corrigir o vazamento de JSON bruto/termos tecnicos da IA revisora, melhorar o prompt/parser, reduzir ruido visual, tornar comunicacoes DJEN clicaveis nas abas criminal/trabalhista com modal de movimentacoes por processo e especializar a revisao por eixo para impedir ressalvas genericas em negativos bem cobertos.
 
-## Scope
-- Backend Firebase Functions: novo prompt/schema/parser/persistencia para `aiClassificationReview` e guardrails determinísticos de conclusao/classificacao.
-- Frontend Ops `CasoPage`: remover a experiencia principal baseada em `aiStructured`, `aiHomonymStructured` e `prefillNarratives`; usar `aiClassificationReview` como bloco principal de analise assistida.
-- UI da aba `Identificacao do candidato`:
-  - Cabecalho de identidade.
-  - Verificacao de identidade.
-  - Analise assistida da autoclassificacao.
-  - Evidencias usadas na analise.
-  - Dados tecnicos recolhidos.
-- Testes backend e frontend anti-regressao.
-- UI Ops: comunicacoes judiciais DJEN em abas criminal/trabalhista devem abrir modal semelhante aos modais de BigDataCorp/Judit, agrupando todas as movimentacoes/comunicacoes do processo clicado.
-- IA revisora especializada por eixo: fonte consultada com sucesso e zero achados deve sustentar negativo, nao gerar ressalva generica.
-- Frontend Ops: guardrails nao devem transformar todos os eixos `AGREE` em `AGREE_WITH_CAUTION`; cautela deve ser especifica do eixo afetado.
-- Incidente de producao: caso `v5ef9RJ0wBmQLUz4HLf0` foi concluido com tag criminal `Precisa de revisao manual`; corrigir para `Sem apontamento` quando apropriado e impedir conclusao futura com tags que nao sejam estados finais validos.
-- DJEN deve permanecer consultivo: comunicacao isolada por nome nao pode alterar flags, score, veredito ou textos finais; so pode entrar em prefill/autoclassificacao quando correlacionada por mesmo CNJ confirmado por Judit/BigDataCorp.
+Implementar cursor pagination real para listagens, substituir export síncrono por job assíncrono com Cloud Storage, dividir o monolito em módulos coesos testáveis, e eliminar código morto confirmado — mantendo V1 operante durante toda a transição.
 
-## Non-Goals
-- Nao permitir que DJEN isolado por nome/comunicacao altere a decisao deterministica em `computeAutoClassification()`.
-- Nao permitir que a IA altere flags, score ou veredito automaticamente.
-- Nao fazer backfill automatico de casos `DONE`.
-- Nao remover campos legados do banco nesta rodada; eles podem existir para compatibilidade/auditoria, mas nao devem comandar a nova experiencia principal.
-- Nao alterar `reportBuilder` ou relatorio publico nesta rodada, salvo se teste revelar regressao direta.
-- Nao alterar a semantica deterministica das flags ao tornar DJEN clicavel; mudanca deve ser apenas de navegacao/inspecao de evidencias.
+---
 
-## Decisions
-- A nova IA deve ser dedicada: `aiClassificationReview`, nao uma adaptacao de `aiStructured`.
-- A IA revisora valida a coerencia das flags (`criminalFlag`, `laborFlag`, `warrantFlag`) e retorna `AGREE`, `AGREE_WITH_CAUTION`, `DISAGREE` ou `INSUFFICIENT_DATA` por eixo.
-- O prompt deve tratar match por CPF/hasExactCpfMatch/isDirectCpfMatch como fato forte.
-- DJEN e achados por nome entram como evidencia complementar/ambigua, nao como motor principal da classificacao.
-- `aiHomonymStructured`, quando existir, vira insumo consultivo para interpretar ambiguidades.
-- `prefillNarratives` continua podendo alimentar campos finais legados, mas nao deve aparecer como bloco principal da aba `Identificacao`.
-- A UI deve esconder a antiga `Síntese da análise automática` e rebaixar dados tecnicos da IA antiga para detalhes tecnicos, se mantidos.
-- Resposta invalida da IA revisora nao pode ser persistida como `aiClassificationReviewOk=true` nem aparecer como JSON bruto na UI.
-- Prompt da IA revisora deve produzir portugues operacional; enums e nomes internos podem existir apenas em campos controlados do JSON, nunca em texto livre.
-- Comunicacoes DJEN em abas criminal/trabalhista devem ser clicaveis sem quebrar os modais existentes de BigDataCorp/Judit.
-- Ausencia de achado em fonte consultada e concluida e evidencia negativa valida para aquela fonte.
-- `AGREE_WITH_CAUTION` exige motivo concreto por eixo: falha/parcialidade de fonte relevante, divergencia material, homonimo, papel ambiguo ou conflito entre achado e flag.
-- Ressalva generica sobre cobertura futura ou bases externas nao deve aparecer quando as fontes configuradas retornaram sem apontamento.
-- Tags consultivas/de revisao (`Precisa de revisao manual`, equivalentes) nao sao resultado final criminal valido para conclusao; o analista deve escolher `Sem apontamento`, `Com apontamento` ou `Inconclusivo`.
-- DJEN por nome/comunicacao isolada e fonte consultiva. Para impactar autoclassificacao ou texto final, a comunicacao deve ter o mesmo CNJ de processo confirmado por CPF em Judit ou BigDataCorp.
+## Constraints & Preferences
+
+- **Respostas em português**
+- **TDD:** Testes RED → Implementação → Testes GREEN para cada módulo
+- **Não alterar interfaces públicas de callables sem versionamento**
+- **Verificar `lint`, `test` frontend (~891), `test` backend (~571) antes de cada commit**
+- **Deploy separado:** backend primeiro, frontend depois, com janela de observação de 5 minutos
+- **Modo PLANO para refatoração:** análise profunda primeiro, execução depois de aprovação explícita
+- **Métricas baseline documentadas:** monolito 13.556 linhas, 1110 nós graphify, 2062 edges
+
+---
+
+## Current Phase
+
+**Phase A corrigida — baseline/documentos + V2 cursor pagination side-by-side**
+
+---
+
+## Decisões de Trade-off (Aprovadas)
+
+| # | Pergunta | Decisão | Rationale |
+|---|----------|---------|-----------|
+| 1 | Downtime aceitável? | **(A)** 2-5min de indisponibilidade | Blue-green é overkill; janela de manutenção aceitável |
+| 2 | Prioridade? | **(A)** Cursor pagination primeiro | Resolve dor imediata dos usuários (listagens truncadas/lentas) |
+| 3 | Compatibilidade API? | **(A)** 100% backward-compatible | V1 intacta + V2 side-by-side; frontend adapta gradualmente |
+| 4 | Arquitetura export? | **(D)** Coleção `exportJobs` + polling | Simples, transparente, sem infra extra de Cloud Tasks/Pub/Sub |
+| 5 | Backpressure? | **(A)** `maxInstances: 10` + circuit breaker | Cloud Tasks é próximo passo após estabilizar |
+| 6 | Phase A inclui modularização? | **(NÃO)** Modularização é Phase C | Phase A = baseline + V2 cursor apenas |
+| 7 | Phase A inclui remoção de código morto? | **(NÃO)** Remoção é Phase D | Phase A = zero alterações em código existente |
+| 8 | Phase A inclui export assíncrono? | **(NÃO)** Export async é Phase B | Phase A = apenas documentar necessidade |
+
+---
+
+## Baseline Pré-Refatoração (Confirmado por Busca Estática)
+
+| Métrica | Valor Atual | Target Pós-Refatoração |
+|---------|-------------|------------------------|
+| Tamanho monolito | **13.556 linhas** | < 500 linhas (wiring apenas) |
+| Callables no index.js | **47** | 0 (delegados para módulos) |
+| Triggers Firestore no index.js | **10** | 0 (delegados para módulos) |
+| onRequest no index.js | **1** | 0 (delegados para módulos) |
+| onSchedule no index.js | **1** | 0 (delegados para módulos) |
+| Total exports detectados | **~59** | 0 (delegados) |
+| Funções no index.js | ~300 | ~0 |
+| Testes frontend | ~891 (39 arquivos) | Manter 891+ |
+| Testes backend | ~571 (48 arquivos) | Manter 571+ |
+| Lint frontend | 0 erros, 0 warnings | Manter 0 |
+| Lint backend | 0 erros, 0 warnings | Manter 0 |
+| Nós graphify | 1110 | Esperado: 1200+ (mais granular) |
+| Listagens com cursor real | 0% | 100% (após migração frontend) |
+| Export síncrono | 100% | 0% (após Phase B) |
+| Código morto identificado | Candidatos não confirmados | 0 (após Phase D) |
+
+**Nota:** Números de testes e exports detectados por busca estática. Contagem semântica pode divergir.
+
+---
 
 ## Phases
 
-### Phase 0: Persistent Planning
-- [x] Rodar `session-catchup.py`.
-- [x] Ler `task_plan.md`, `findings.md`, `progress.md`.
-- [x] Registrar novo escopo e erro de caminho da skill.
+### Phase A corrigida: Baseline/Documentos + V2 Cursor Pagination Side-by-Side
 
-### Phase 1: Backend Schema And Prompt
-- [x] Criar `AI_CLASSIFICATION_REVIEW_JSON_SCHEMA`.
-- [x] Criar sanitizacao/validacao/parser para `aiClassificationReview`.
-- [x] Criar `AI_CLASSIFICATION_REVIEW_SYSTEM_MESSAGE`.
-- [x] Criar `buildAiClassificationReviewPrompt(caseData)` com payload enxuto e estruturado.
-- [x] Exportar helpers em `exports.__test`.
+**Objetivo:** Criar baseline documental do código real, implementar cursor pagination real em V2 side-by-side com V1, sem alterar callables existentes, sem modularizar, sem remover código morto, e sem implementar export assíncrono.
+**Status:** pending → **a iniciar após aprovação**
+**Estimativa:** 16-24 horas
+**Risco:** Médio — cria V2 novo, mas V1 permanece inalterado
 
-### Phase 2: Backend Execution And Persistence
-- [x] Criar `runAiClassificationReviewAnalysis()`.
-- [x] Criar `buildAiClassificationReviewUpdatePayload()`.
-- [x] Integrar no fluxo `runAutoClassifyAndAi()` apos homonimos, substituindo a IA geral como experiencia principal.
-- [x] Integrar em `rerunAiAnalysis` para atualizar a nova analise em reprocessamentos.
-- [x] Preservar campos legados sem usa-los como UI principal.
+---
 
-### Phase 3: Backend Tests
-- [x] Testar schema valido/invalido.
-- [x] Testar prompt contem autoclassificacao, cobertura, evidencias fortes e ambiguas.
-- [x] Testar prompt nao trata CPF mascarado como ausencia de CPF.
-- [ ] Testar caso com vitima/testemunha como possivel erro se flag criminal positiva.
-- [x] Testar DJEN fraco como evidencia complementar.
+#### A.0 — Baseline Real e Contrato V1
 
-### Phase 4: Frontend UX
-- [x] Criar helpers/componentes para renderizar `aiClassificationReview`.
-- [x] Remover bloco global `✦ Síntese da análise automática`.
-- [x] Reorganizar `Identificacao do candidato` em identidade, verificacao, analise assistida, evidencias e dados tecnicos.
-- [x] Rebaixar/remover visual principal de `Análise automática GPT-5.4-nano JSON`.
-- [x] Manter a acao `Re-analisar` funcionando via pipeline.
+**Objetivo:** Documentar o estado real do código antes de qualquer alteração.
 
-### Phase 5: Frontend Tests
-- [x] Atualizar `CasoPage.test.jsx` para nova analise assistida.
-- [x] Remover fluxo visual de aplicar sugestao IA legada; teste agora valida que a revisao consultiva nao chama `setAiDecisionByAnalyst`.
-- [x] Garantir que caso sem `aiClassificationReview` tem fallback deterministico legivel.
+**Checklist:**
+- [ ] **A.0.1** Confirmar linhas reais de `functions/index.js`: **13.556 linhas**
+- [ ] **A.0.2** Confirmar contagem real de `onCall`: **47 callables**
+- [ ] **A.0.3** Confirmar contagem real de triggers Firestore diretos (`onDocumentCreated/Updated/Deleted`): **10 triggers**
+- [ ] **A.0.4** Confirmar contagem real de `onRequest`: **1**
+- [ ] **A.0.5** Confirmar contagem real de `onSchedule`: **1**
+- [ ] **A.0.6** Confirmar total de exports detectados por busca estática: **~59**
+- [ ] **A.0.7** Mapear contratos atuais de `listOpsCases`:
+  - Parâmetros: `tenantId`, `pageSize` (max 100), `page` (numérica), `filters`, `queueOnly`, `assigneeUid`, `sortField`, `sortDir`
+  - Retorno: `{ cases, total, stats, page, pageSize, totalPages, hasMore, meta }`
+  - Implementação: carrega todos os docs via `fetchTenantCaseDocuments`, filtra/sorta em memória, faz `slice`
+- [ ] **A.0.8** Mapear contratos atuais de `listClientCases`:
+  - Parâmetros: `pageSize` (max 100), `page` (numérica), `filters`, `sortField`, `sortDir`
+  - Retorno: `{ cases, total, stats, page, pageSize, totalPages, hasMore, meta }`
+  - Implementação: pagina internamente com `startAfter`, mas acumula `allMatches` em memória, depois filtra/sorta e faz `slice`
+- [ ] **A.0.9** Mapear contrato atual de `getClientExportCases`:
+  - Parâmetros: `scopeCode` (ALL/DONE/PENDING/RED), `dateFrom`, `dateTo`
+  - Retorno: `{ cases, total, pendingCount, meta }`
+  - Implementação: carrega todos os docs via `fetchTenantCaseDocuments`, filtra em memória
+- [ ] **A.0.10** Mapear consumidores frontend V1:
+  - `callListOpsCases` → `src/hooks/useOpsCasesQuery.js`
+  - `callListClientCases` → `src/hooks/useClientCasesQuery.js`
+  - `callGetClientExportCases` → `src/portals/client/ExportacoesPage.jsx`
+- [ ] **A.0.11** Registrar que V1 será **preservada sem alteração funcional**
+- [ ] **A.0.12** Registrar que V2 será **criada side-by-side** (novas callables)
+- [ ] **A.0.13** Registrar que **frontend não será migrado automaticamente nesta fase**
 
-### Phase 6: Verification
-- [x] `npm test -- src/portals/ops/CasoPage.test.jsx`.
-- [x] `npm test`.
-- [x] `npm run lint`.
-- [x] `npm run build`.
-- [x] `cd functions && npm test`.
-- [x] `cd functions && npm run lint`.
-- [x] `git diff --check`.
-- [x] `graphify update .`.
+**Critério de aceite:** Documento de baseline com números reais, contratos V1 mapeados, e decisão arquitetural registrada.
 
-### Phase 7: AI Review Hardening
-- [x] Atualizar prompt `AI_CLASSIFICATION_REVIEW_SYSTEM_MESSAGE` para portugues operacional, sem nomes internos em textos livres, sem JSON bruto e com semantica clara de `evidenceStrength`.
-- [x] Adicionar `response_format` JSON para `runAiClassificationReviewAnalysis()` quando chamar OpenAI.
-- [x] Remover fallback bruto de `extractFallbackAiClassificationReviewResponse()`; resposta quebrada deve virar `ok=false` ou fallback seguro sem payload cru.
-- [x] Sanitizar/rejeitar textos contaminados por JSON, schema, nomes internos ou caracteres de controle.
-- [x] Blindar `CasoPage.jsx` para nao renderizar `summary`/rationales/listas contaminadas e cair em fallback deterministico seguro.
-- [x] Humanizar cobertura/divergencia/valores ausentes na UI operacional.
-- [x] Ocultar redes sociais vazias na aba de identificacao.
+---
 
-### Phase 8: DJEN Clickable Modal
-- [x] Mapear como BigDataCorp/Judit ja abrem modal de processos em `CasoPage.jsx`.
-- [x] Localizar renderizacao de `Comunicacoes judiciais DJEN (...)` nas abas criminal e trabalhista.
-- [x] Criar agrupamento por CNJ/processo para DJEN e abrir modal ao clicar no item/processo.
-- [x] Reutilizar ou adaptar modal existente para listar todas as movimentacoes/comunicacoes daquele processo, preservando dados essenciais: data, classe, area, polo, tipo de comunicacao, texto/resumo.
-- [x] Garantir acessibilidade basica: botao clicavel, teclado, titulo do modal, fechamento sem quebrar modais existentes.
+#### A.1 — Auditar todas as queries de listagem
 
-### Phase 9: Tests And Deploy
-- [x] Testes backend anti-regressao para parser/prompt/sanitizacao da IA revisora.
-- [x] Testes frontend para JSON bruto oculto, labels humanizados, redes sociais vazias ocultas e DJEN modal clicavel.
-- [x] Rodar verificacoes focadas.
-- [x] Rodar suite completa raiz e functions, lint, build e diff-check.
-- [x] Rodar `graphify update .`.
-- [x] Deploy Firebase Functions.
-- [x] Deploy Vercel producao e verificar alias.
+**Arquivos alvo:**
+- `src/core/firebase/firestoreService.js` (subscriptions)
+- `functions/index.js` (callables: `listOpsCases`, `listClientCases`, `getClientExportCases`)
 
-### Phase 10: Axis-Specific AI Review Semantics
-- [x] Recuperar contexto persistido e revisar diff/planning files.
-- [x] Adicionar testes backend para negativo trabalhista/mandado bem coberto sem ressalva generica.
-- [x] Adicionar testes frontend para garantir que cautela criminal nao contamina trabalhista/mandado.
-- [x] Criar contexto deterministico por eixo para a IA revisora: criminal, trabalhista, mandado e identidade.
-- [x] Incluir o contexto por eixo no prompt da IA revisora.
-- [x] Aplicar guardrails backend pos-IA para remover cautela generica sem motivo objetivo do eixo.
-- [x] Corrigir fallback/guardrails frontend para respeitar cautela especifica por eixo.
-- [x] Rodar testes focados backend/frontend.
-- [x] Rodar suites completas, lint, build, diff-check e graphify.
+**Checklist:**
+- [ ] **A.1.1** Listar todas as funções que fazem `.get()` sem cursor real no retorno
+- [ ] **A.1.2** Mapear collections: `cases`, `clientCases`, `auditLogs`, `notifications`, `tenantAuditLogs`
+- [ ] **A.1.3** Documentar filtros atuais (where clauses), ordenação, limites
+- [ ] **A.1.4** Identificar queries que usam paginação interna mas acumulam em memória
+- [ ] **A.1.5** Identificar queries com `.orderBy()` implícito ou ausente
+- [ ] **A.1.6** Verificar quais queries são usadas por subscriptions realtime (não devem usar cursor)
+- [ ] **A.1.7** Documentar em `findings.md` com tabela: Collection | Filtros | Ordem | Limit | Cursor real? | Usada em
 
-### Phase 11: Incident - Criminal Review Tag Cannot Conclude
-- [x] Recuperar contexto persistido e revisar planning/diff/grafo.
-- [x] Consultar caso real `v5ef9RJ0wBmQLUz4HLf0` e identificar campos incorretos.
-- [x] Localizar origem da tag `Precisa de revisao manual` e fluxo de conclusao.
-- [x] Adicionar validação frontend para bloquear conclusao com tag criminal nao-final.
-- [x] Adicionar validação backend em `concludeCaseByAnalyst` para rejeitar tag criminal nao-final.
-- [x] Corrigir dados do caso real para `Sem apontamento`/flag negativa conforme evidencia.
-- [x] Adicionar testes anti-regressao frontend/backend.
-- [x] Rodar verificacoes focadas e completas.
-- [x] Atualizar graphify/planning.
+**Critério de aceite:** Toda query de listagem (>50 docs potenciais) está mapeada com decisão: "mantém subscription", "migra para cursor pagination", ou "requer análise adicional".
 
-### Phase 12: DJEN Consultivo Sem Impacto Isolado
-- [x] Adicionar testes backend para DJEN criminal isolado nao alterar `criminalFlag` nem notas finais.
-- [x] Adicionar testes backend para DJEN trabalhista isolado nao alterar `laborFlag` nem notas finais.
-- [x] Adicionar testes backend para DJEN positivo com muitos/poucos homonimos permanecer consultivo.
-- [x] Adicionar testes de prefill para nao listar DJEN isolado sem CNJ confirmado.
-- [x] Permitir DJEN em prefill quando correlacionado ao mesmo CNJ confirmado por BigDataCorp/Judit.
-- [x] Implementar filtro de comunicacoes DJEN por CNJ confirmado em `computeAutoClassification()`.
-- [x] Implementar filtro de comunicacoes DJEN por CNJ confirmado em `buildDetCriminalNotes()` e `buildDetLaborNotes()`.
-- [x] Rodar testes focados, suites completas, lint, build e diff-check.
+---
+
+#### A.2 — Projetar índices compostos para cursor pagination
+
+**Arquivo alvo:** `firestore.indexes.json` (planejamento apenas, sem deploy)
+
+**Checklist:**
+- [ ] **A.2.1** Para cada query paginada V2: definir `orderBy` fields + `cursorField` + tie-breaker `__name__`
+- [ ] **A.2.2** `cases`: `(tenantId, status, createdAt DESC, __name__ DESC)`, `(tenantId, assigneeId, createdAt DESC, __name__ DESC)`, `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.3** `clientCases`: `(tenantId, createdAt DESC, __name__ DESC)`, `(tenantId, status, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.4** `auditLogs`: `(tenantId, occurredAt DESC, __name__ DESC)` — **nota: usar `occurredAt`, não `createdAt`**
+- [ ] **A.2.5** `tenantAuditLogs`: `(tenantId, occurredAt DESC, __name__ DESC)` — **nota: usar `occurredAt`, não `createdAt`**
+- [ ] **A.2.6** `notifications`: `(recipientUid, read, createdAt DESC, __name__ DESC)`
+- [ ] **A.2.7** Validar contra índices existentes (16 índices atuais)
+- [ ] **A.2.8** Criar tabela obrigatória:
+
+| Collection | Query V2 | Where | OrderBy | Índice necessário | Já existia? |
+|------------|----------|-------|---------|-------------------|-------------|
+| cases | listOpsCasesV2 | tenantId | createdAt DESC, __name__ DESC | (tenantId, createdAt DESC, __name__ DESC) | NÃO |
+| cases | listOpsCasesV2 + status | tenantId, status | createdAt DESC, __name__ DESC | (tenantId, status, createdAt DESC, __name__ DESC) | NÃO |
+| clientCases | listClientCasesV2 | tenantId | createdAt DESC, __name__ DESC | (tenantId, createdAt DESC, __name__ DESC) | SIM (parcial) |
+| auditLogs | (futuro) | tenantId | occurredAt DESC, __name__ DESC | (tenantId, occurredAt DESC, __name__ DESC) | SIM |
+
+- [ ] **A.2.9** **NÃO remover índices nesta fase**
+- [ ] **A.2.10** **NÃO fazer deploy de índices nesta tarefa de documentação**
+
+**Critério de aceite:** Nenhuma query paginada V2 sem índice correspondente planejado; tabela de índices completa.
+
+---
+
+#### A.3 — Implementar `paginateFirestoreQuery`
+
+**Arquivo:** `functions/helpers/paginateFirestoreQuery.js` (novo)
+**Teste:** `functions/helpers/paginateFirestoreQuery.test.js` (novo)
+
+**Checklist:**
+- [ ] **A.3.1** Definir interface: `async paginateFirestoreQuery(query, { cursor, limit, cursorField })`
+- [ ] **A.3.2** Suporte a `startAfter()` com **cursor composto** (array de valores: `[fieldValue, docId]`)
+- [ ] **A.3.3** **Tie-breaker obrigatório por `__name__`** (document ID) para evitar duplicatas/omissões
+- [ ] **A.3.4** **Buscar `limit + 1` docs** para calcular `hasMore` sem necessidade de contagem total
+- [ ] **A.3.5** Encoder de cursor: **Base64 URL-safe** do JSON do array `[fieldValue, docId]`
+- [ ] **A.3.6** Decoder de cursor: inverso do encoder, validação de schema
+- [ ] **A.3.7** Retorno: `{ results: DocumentSnapshot[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.3.8** Validação: `limit` entre 1 e 1000 (limite Firestore)
+- [ ] **A.3.9** Validação: `cursorField` existe no schema da collection
+- [ ] **A.3.10** Tratamento de cursor inválido: throw `invalid-argument`
+- [ ] **A.3.11** Teste 1: primeira página sem cursor
+- [ ] **A.3.12** Teste 2: segunda página com cursor
+- [ ] **A.3.13** Teste 3: página vazia (fim dos resultados)
+- [ ] **A.3.14** Teste 4: limite customizado (1, 50, 100, 1000)
+- [ ] **A.3.15** Teste 5: cursor inválido
+- [ ] **A.3.16** Teste 6: **timestamps iguais** — verificar que tie-breaker por `__name__` evita duplicatas
+- [ ] **A.3.17** Teste 7: **omissão** — verificar que nenhum doc é pulado entre páginas
+- [ ] **A.3.18** Teste 8: múltiplos filtros + paginação
+
+**Critério de aceite:** 100% cobertura de testes, zero dependência de Firebase Admin (mockável), < 50ms overhead por query.
+
+---
+
+#### A.4 — Criar `listOpsCasesV2` (side-by-side com V1)
+
+**Arquivo:** Callable registrado em `functions/index.js` atual (não criar `functions/modules/caseManager/index.js` nesta fase)
+**Teste:** `functions/index.test.js` ou novo `functions/listOpsCasesV2.test.js`
+
+**Checklist:**
+- [ ] **A.4.1** Copiar lógica de autorização de `listOpsCases` atual como baseline
+- [ ] **A.4.2** Adicionar parâmetros: `cursor` (string | null), `limit` (default 50, max 500)
+- [ ] **A.4.3** **Remover parâmetro `page` (numérico)** — V2 usa cursor, não paginação numérica
+- [ ] **A.4.4** Manter parâmetros: `filters`, `sortField`, `sortDir`, `queueOnly`, `assigneeUid`
+- [ ] **A.4.5** Usar `paginateFirestoreQuery` com índice `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.4.6** Se `cursor` omitido, retorna primeira página
+- [ ] **A.4.7** Se `nextCursor` null, indica fim dos resultados
+- [ ] **A.4.8** Retorno: `{ results: Case[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.4.9** **NÃO retornar `totalCount` ou `totalPages`** se isso exigir scan completo
+- [ ] **A.4.10** **NÃO retornar `stats`** por scan completo; `stats` pode ser `null` ou omitido
+- [ ] **A.4.11** Filtros não suportados por Firestore (ex: search textual) devem ser:
+  - **Rejeitados** com erro claro, OU
+  - **Documentados** como não suportados, OU
+  - **Caírem para V1** com flag explícita (`fallbackToV1: true`), nunca de forma silenciosa
+- [ ] **A.4.12** Teste 1: sem cursor → primeira página
+- [ ] **A.4.13** Teste 2: com cursor → próxima página
+- [ ] **A.4.14** Teste 3: limite custom (10, 50, 100, 500)
+- [ ] **A.4.15** Teste 4: filtros combinados + paginação
+- [ ] **A.4.16** Teste 5: permission denied (role inválido)
+- [ ] **A.4.17** Teste 6: tenant isolation (não vê cases de outro tenant)
+- [ ] **A.4.18** Teste 7: **timestamps iguais** — verificar duplicatas/omissões
+
+**Critério de aceite:** Resposta < 500ms para 50 docs, < 2s para 500 docs; V1 intacta e operante.
+
+---
+
+#### A.5 — Criar `listClientCasesV2` (side-by-side com V1)
+
+**Arquivo:** Callable registrado em `functions/index.js` atual (não criar `functions/modules/clientPortal/index.js` nesta fase)
+**Teste:** `functions/listClientCasesV2.test.js`
+
+**Checklist:**
+- [ ] **A.5.1** Copiar lógica de autorização de `listClientCases` atual como baseline
+- [ ] **A.5.2** Adicionar parâmetros: `cursor` (string | null), `limit` (default 50, max 500)
+- [ ] **A.5.3** **Remover parâmetro `page` (numérico)**
+- [ ] **A.5.4** Usar `paginateFirestoreQuery` com índice `(tenantId, createdAt DESC, __name__ DESC)`
+- [ ] **A.5.5** `tenantId` deve vir do `profile` (autorização), **não do payload do cliente**
+- [ ] **A.5.6** Retorno: `{ results: ClientCase[], nextCursor: string | null, hasMore: boolean }`
+- [ ] **A.5.7** **NÃO retornar `totalCount`, `totalPages`, ou `stats` por scan completo**
+- [ ] **A.5.8** Filtros não suportados: rejeitar, documentar, ou cair para V1 com flag explícita
+- [ ] **A.5.9** Teste 1: sem cursor → primeira página
+- [ ] **A.5.10** Teste 2: com cursor → próxima página
+- [ ] **A.5.11** Teste 3: filtros + paginação
+- [ ] **A.5.12** Teste 4: client isolation (usuário só vê seus cases)
+- [ ] **A.5.13** Teste 5: permission denied
+- [ ] **A.5.14** Teste 6: **timestamps iguais** — verificar duplicatas/omissões
+
+**Critério de aceite:** Mesmo padrão de A.4, mas com isolation por `tenantId` do profile.
+
+---
+
+#### A.6 — Auditoria documental de subscriptions de auditoria (não criar callables V2)
+
+**Arquivo alvo:** `src/core/firebase/firestoreService.js`
+
+**Checklist:**
+- [ ] **A.6.1** Mapear subscriptions de auditoria atuais:
+  - `subscribeToAuditLogs` — usa `occurredAt` (não `createdAt`)
+  - `subscribeToTenantAuditLogs` — usa `occurredAt` (não `createdAt`)
+- [ ] **A.6.2** Verificar que índices de auditoria existentes usam `occurredAt`
+- [ ] **A.6.3** Registrar que subscriptions realtime **não devem usar cursor pagination** (natureza realtime)
+- [ ] **A.6.4** **NÃO criar `listAuditLogsV2` ou `listTenantAuditLogsV2` como callables nesta fase**
+- [ ] **A.6.5** Registrar que eventual migração de auditoria para cursor pagination será **decisão futura**, não Phase A
+
+**Critério de aceite:** Documento de auditoria com decisão registrada: "subscriptions realtime mantidas; callables de auditoria não são parte da Phase A".
+
+---
+
+#### A.7 — Planejar índices Firestore (sem deploy)
+
+**Checklist:**
+- [ ] **A.7.1** Gerar tabela de índices necessários (ver A.2.8)
+- [ ] **A.7.2** Validar contra índices existentes (16 índices atuais)
+- [ ] **A.7.3** **NÃO remover índices nesta fase**
+- [ ] **A.7.4** **Adicionar apenas índices estritamente necessários** para V2
+- [ ] **A.7.5** Documentar que deploy de índices será feito em etapa separada, antes da ativação de V2
+- [ ] **A.7.6** **NÃO fazer deploy nesta tarefa de documentação**
+
+**Critério de aceite:** Tabela de índices completa, validada, e pronta para deploy futuro.
+
+---
+
+#### A.8 — Testes de carga end-to-end (local/emulador apenas)
+
+**Script:** `scripts/load-test-pagination.cjs` (novo)
+
+**Checklist:**
+- [ ] **A.8.1** Script deve **abortar em produção** — verificar `process.env.FIRESTORE_EMULATOR_HOST`
+- [ ] **A.8.2** Exigir `FIRESTORE_EMULATOR_HOST` ou `ALLOW_LOCAL_LOAD_TEST=true` para prosseguir
+- [ ] **A.8.3** Usar tenant fake (ex: `test-tenant-load`)
+- [ ] **A.8.4** Inserir 1.000 cases mockados via batch
+- [ ] **A.8.5** Iterar todas as páginas via `listOpsCasesV2` (limit 100)
+- [ ] **A.8.6** Verificar: total recuperado == 1.000
+- [ ] **A.8.7** Verificar: ordem correta (createdAt DESC)
+- [ ] **A.8.8** Verificar: sem duplicatas ou omissões
+- [ ] **A.8.9** Medir latência por página (log em console, não em `progress.md`)
+- [ ] **A.8.10** Testar cenário: deletar case no meio da paginação (verificar consistência)
+- [ ] **A.8.11** **NÃO alterar `progress.md` automaticamente pelo script**
+
+**Critério de aceite:** < 3s por página de 500, memória estável, zero duplicatas/omissões.
+
+---
+
+#### A.9 — Documentar migration path e contratos V2
+
+**Arquivo:** `docs/migrations/v2-pagination.md` (novo)
+
+**Checklist:**
+- [ ] **A.9.1** Explicar diferença V1 vs V2:
+  - V1: paginação numérica (`page`, `pageSize`), carrega tudo em memória
+  - V2: cursor pagination (`cursor`, `limit`), sem acumulação em memória
+- [ ] **A.9.2** Documentar que V2 **não retorna `total` nem `totalPages`** (a menos que contador barato seja implementado)
+- [ ] **A.9.3** Documentar que V2 **não retorna `stats` por scan completo** — `stats` pode ser `null`
+- [ ] **A.9.4** Exemplo de código: como iterar todas as páginas com cursor
+- [ ] **A.9.5** Timeline de deprecação da V1: **3 meses após frontend migrado e validado**
+- [ ] **A.9.6** Checklist de migração para frontend:
+  1. Criar hook `useOpsCasesQueryV2` side-by-side com `useOpsCasesQuery`
+  2. Testar com feature flag
+  3. Migrar `useClientCasesQuery` para V2
+  4. Remover V1 após 3 meses estável
+- [ ] **A.9.7** Documentar que V1 só será depreciada após frontend migrado e validado
+- [ ] **A.9.8** Documentar plano de fallback: se V2 falhar, frontend pode voltar para V1 imediatamente
+
+**Critério de aceite:** Qualquer dev consegue seguir o doc para migrar uma listagem.
+
+---
+
+### Phase B: Export Assíncrono + Cloud Storage
+
+**Objetivo:** Eliminar timeout de 120s do `getClientExportCases`. Substituir por job background com Storage.
+**Status:** pending
+**Estimativa:** 20 horas
+**Risco:** Médio — nova arquitetura, mas isolada
+
+**Nota:** Phase B fica **fora da Phase A**. Não implementar nesta rodada.
+
+---
+
+### Phase C: Extração de Módulos do Monolito
+
+**Objetivo:** Dividir `functions/index.js` em módulos coesos testáveis independentemente.
+**Status:** pending
+**Estimativa:** 40 horas
+**Risco:** Alto — altera estrutura fundamental do backend
+
+**Nota:** Phase C fica **fora da Phase A**. Modularização só começa após Phase A e B concluídas e estáveis.
+
+#### C.0 — Preparação e contratos
+
+**Checklist:**
+- [ ] **C.0.1** Criar diretório `functions/modules/` (apenas na Phase C)
+- [ ] **C.0.2** Criar `functions/modules/_contracts/` com interfaces TypeScript (JSDoc)
+- [ ] **C.0.3** Definir contrato `ICaseManager`: métodos, parâmetros, retornos, erros
+- [ ] **C.0.4** Definir contrato `IEnrichmentPipeline`: adapters, circuit breaker, retry
+- [ ] **C.0.5** Definir contrato `IReportEngine`: HTML, PDF, publicação
+- [ ] **C.0.6** Definir contrato `IUserManager`: CRUD, roles, claims
+- [ ] **C.0.7** Definir contrato `IClientPortal`: clientCases, quotas, export, mirror
+- [ ] **C.0.8** Definir contrato `IAuditManager`: logs, eventos, query
+- [ ] **C.0.9** Definir contrato `INotificationManager`: notificações, push, email
+- [ ] **C.0.10** Criar `functions/modules/_shared/` para utilitários compartilhados (db, auth, logger)
+
+**Critério de aceite:** Todos os contratos documentados, revisados, e aprovados.
+
+#### C.1-C.9 — Extração de módulos (detalhado na execução da Phase C)
+
+**Módulos a extrair:**
+- `caseManager` — CRUD cases, listagem V1/V2, busca
+- `enrichmentPipeline` — Judit, Escavador, BigDataCorp, DJEN, IA
+- `reportEngine` — HTML, PDF, publicação
+- `userManager` — Auth, roles, claims
+- `clientPortal` — clientCases, quotas, export, mirror
+- `auditManager` — Logs, eventos, query
+- `notificationManager` — Notificações, push
+
+**Critério de aceite:** `index.js` < 500 linhas, nenhuma função de negócio inline.
+
+---
+
+### Phase D: Remoção de Código Morto
+
+**Objetivo:** Limpar exports não utilizados e funções órfãs.
+**Status:** pending
+**Estimativa:** 4 horas
+**Risco:** Baixo — apenas remove código confirmado como morto
+
+**Nota:** Phase D fica **fora da Phase A**. Remoção de código morto só ocorre após modularização (Phase C).
+
+#### D.1 — Classificação de candidatos a remoção
+
+**Checklist:**
+- [ ] **D.1.1** `ENTITY_TYPE` — analisar uso em `writeAuditEvent.js` (não apenas grep)
+- [ ] **D.1.2** `ACTOR_TYPE` — analisar uso em `writeAuditEvent.js`
+- [ ] **D.1.3** `getActionConfig` — analisar uso em `writeAuditEvent.js`
+- [ ] **D.1.4** Classificar cada candidato:
+  - **REMOVÍVEL COM SEGURANÇA** — nenhuma referência, testes cobrem ausência
+  - **PROVAVELMENTE REMOVÍVEL, MAS PRECISA TESTE** — referências indiretas ou dinâmicas
+  - **NÃO CONFIRMADO** — requer análise manual
+  - **NÃO REMOVER** — usado em fluxo crítico
+- [ ] **D.1.5** Documentar classificação em `findings.md`
+
+#### D.2 — Remoção de código morto confirmado
+
+**Checklist:**
+- [ ] **D.2.1** Remover funções classificadas como REMOVÍVEL COM SEGURANÇA
+- [ ] **D.2.2** Remover imports não usados
+- [ ] **D.2.3** Remover variáveis não usadas
+- [ ] **D.2.4** Atualizar testes se necessário
+- [ ] **D.2.5** `npm run lint` → 0 erros
+- [ ] **D.2.6** `npm test` → todos passam
+
+**Critério de aceite:** Lint passa, testes passam, zero código morto confirmado removido.
+
+---
+
+### Phase E: Documentação e Handoff
+
+**Objetivo:** Documentar arquitetura nova e garantir manutenibilidade futura.
+**Status:** pending
+**Estimativa:** 8 horas
+**Risco:** Baixo — apenas documentação
+
+**Nota:** Phase E fica **fora da Phase A**.
+
+---
+
+## Key Questions
+
+1. **Aprovação do plano:** Confirma que todas as fases e subtarefas estão claras?
+2. **Prioridade de fases:** A → B → C → D → E, ou prefere paralelizar algumas?
+3. **Timeline:** Urgente (1 semana), moderado (1 mês), ou conservador (2 meses)?
+4. **Orçamento de instâncias:** Limite de `maxInstances` para teste de carga?
+5. **Cloud Storage bucket:** Usar bucket padrão do Firebase ou criar dedicado para exports?
+
+## Decisions Made
+
+| Decision | Rationale |
+|----------|-----------|
+| Preservar CPF em clientCases (autenticado) | Busca por CPF necessária; removido apenas de publicResult |
+| backfillClientCasesMirror sem merge: true | Evita campos stale no espelho |
+| syncClientCaseOnUpdate sincroniza DONE | Classificação precisa refletir no portal do cliente |
+| DEFAULT_QUERY_LIMIT conservador em 500 | Evita timeouts em collections grandes |
+| Debounce com queueMicrotask + cleanup | Performance + segurança de memória |
+| limitToLast(50) para mensagens | Evita índice descending extra |
+| Browser Puppeteer sem estado de erro permanente | Sempre tenta relançar |
+| Refatoração não começa sem plano aprovado | Prevenir regressão em produção |
+| Downtime 2-5min aceitável | Blue-green é overkill para escopo atual |
+| Cursor pagination primeiro | Resolve dor imediata dos usuários |
+| Backward-compatible API | V1 intacta + V2 side-by-side |
+| ExportJobs + polling | Simples, transparente, sem infra extra |
+| maxInstances: 10 por provedor | Suficiente para backpressure inicial |
+| Phase A sem modularização | Modularização é Phase C; Phase A = baseline + V2 apenas |
+| Phase A sem remoção de código morto | Remoção é Phase D; requer análise semântica, não grep |
+| Phase A sem export assíncrono | Export async é Phase B; Phase A apenas documenta |
+| V2 sem total/stats por scan | Cursor pagination real não calcula total exato |
+| Tie-breaker por `__name__` obrigatório | Evita duplicatas/omissões com timestamps iguais |
+| Buscar `limit + 1` para hasMore | Evita necessidade de contagem total |
+| Cursor em Base64 URL-safe | Seguro para URLs e JSON |
+| Filtros não suportados: rejeitar ou flag | Nunca fallback silencioso para V1 |
 
 ## Errors Encountered
+
 | Error | Attempt | Resolution |
-|-------|---------|------------|
-| `python "$env:USERPROFILE\\.opencode\\skills\\planning-with-files\\scripts\\session-catchup.py"` falhou com arquivo nao encontrado | 1 | Skill instalada em `~/.config/opencode`; repetir com caminho real `~/.config/opencode/skills/planning-with-files/scripts/session-catchup.py` |
-| `session-catchup.py` com caminho real nao retornou output | 1 | Sem contexto pendente; seguir com leitura dos planning files e `git diff --stat` |
-| `CasoPage.test.jsx` falhou procurando `Evidencias ambiguas` apos remover bloco `aiStructured` | 1 | Atualizar expectativa para `Achados ambiguos` do card deterministico de cobertura |
-| `CasoPage.test.jsx` falhou procurando texto de `aiStructured.evidenciasAmbiguas` removido da UI principal | 2 | Atualizar teste para `ambiguityNotes` realmente exibido |
-| `CasoPage.test.jsx` encontrou texto duplicado de `ambiguityNotes` | 3 | Usar `getAllByText` para validar presenca sem assumir unicidade |
-| `npm run lint` na raiz analisou `.vercel/output/static` e reportou erros de bundles gerados | 1 | Adicionar `.vercel` e `graphify-out` em `globalIgnores` do ESLint, mantendo `dist` ignorado |
-| `python "$env:USERPROFILE\.opencode\skills\planning-with-files\scripts\session-catchup.py"` falhou novamente nesta rodada | 1 | Usar caminho real `~/.config/opencode/skills/planning-with-files/scripts/session-catchup.py` |
-| `CasoPage.test.jsx` falhou porque `getByText('Cobertura alta')` encontrou duas ocorrencias validas | 1 | Trocar para `getAllByText(...).length > 0`, pois a label pode aparecer no resumo de evidencias e na leitura tecnica |
-| `CasoPage.test.jsx` falhou ao clicar `Criminal`/`Trabalhista` porque os textos tambem aparecem na analise assistida | 1 | Usar `getAllByText(...)[0]` para clicar na aba da stepper |
-| `CasoPage.test.jsx` nao encontrou botao DJEN dentro do `<details>` aberto porque o conteudo dependia de `openedSections` | 1 | Remover lazy render apenas do bloco DJEN para garantir conteudo clicavel e evitar dessicronia do evento `toggle` |
-| `CasoPage.test.jsx` falhou por textos DJEN/tipo de comunicacao duplicados entre pipeline, tabela e modal | 1 | Usar `getAllByText(...).length > 0` nas assercoes de presenca |
-| `npm run lint` e `functions npm run lint` falharam com `no-control-regex` nas regexes de caracteres de controle | 1 | Substituir regex por filtragem via `charCodeAt`, preservando tab/newline/CR |
-| `session-catchup.py` nao retornou output nesta retomada | 1 | Prosseguir com `git diff --stat` e leitura dos planning files existentes |
-| Teste frontend novo esperava 1 ressalva, mas o guardrail antigo ainda mostrava 3 | 1 | Implementar contexto por eixo e impedir promocao global de `AGREE` para `AGREE_WITH_CAUTION` |
-| Teste frontend novo ficou sem ressalva criminal porque o fixture nao trazia conflito criminal por fonte | 2 | Ajustar fixture com Judit criminal positivo e BigDataCorp criminal negativo para representar divergencia criminal real |
-| MCP Firestore falhou com timeout ao consultar o caso real | 1 | Usar REST Firestore com token da Firebase CLI e retry em `firebase login:list` |
-| `firebase login:list --json` retornou timeout de forma intermitente | 1 | Adicionar loop de retry antes de usar o access token |
-| Teste frontend da Phase 11 procurava mensagem de checklist fora da etapa de revisao | 1 | Validar o bloqueio pelo botao `Concluir` do header desabilitado, que e o comportamento imediato esperado |
-| `npm run lint` na raiz falhou com `ENOENT` em `vite.config.js.timestamp-...mjs` | 1 | Reexecutar `npm run lint`; o arquivo temporario sumiu e o lint passou |
+|-------|---------|-----------|
+| — | — | — |
 
-## Current Status
-- Phase 7 (`AI Review Hardening`) concluida localmente.
-- Phase 8 (`DJEN Clickable Modal`) concluida localmente.
-- Testes completos, lint, build, diff-check e graphify passaram.
-- Phase 10 concluida localmente: revisao especializada por eixo implementada, testes completos/lint/build/diff-check/graphify passaram.
-- Phase 11 concluida localmente: bloqueio frontend/backend para flag criminal consultiva implementado, caso real corrigido nos documentos `cases`, `publicResult/latest` e `clientCases`, testes/lint/build/diff-check/graphify passaram.
-- Phase 12 concluida localmente: DJEN isolado ficou consultivo e nao impacta flags/prefill; testes/lint/build/diff-check passaram.
-- Deploy das mudancas Phase 12 segue pendente; nao foi executado nesta fase.
+## Notes
 
-### Phase 15: Politica Cliente, Checklist Local E Modais De Conclusao
-- [x] Carregar skill `planning-with-files`.
-- [x] Rodar catchup inicial; caminho `~/.opencode` falhou porque a skill real esta em `~/.config/opencode`.
-- [x] Rodar catchup pelo caminho correto; sem output.
-- [x] Ler `task_plan.md`, `findings.md`, `progress.md` e `graphify-out/GRAPH_REPORT.md`.
-- [x] Auditar codigo real antes de implementar: `riskCalculator`, `concludeCaseByAnalyst`, `selectTopProcessos`, `CasoPage`, `Modal`, testes existentes.
-- [x] Fase 15.1: Corrigir `laborSeverity` no `riskCalculator` backend/frontend com testes espelhados.
-- [x] Fase 15.2: Implementar politica obrigatoria do cliente no backend com data de corte, override confirmado e justificativa.
-- [x] Fase 15.3: Implementar checklist manual local por fase usando `sessionStorage` e hook dedicado.
-- [x] Fase 15.4: Implementar modais reutilizando `Modal`: checklist por fase, conclusao final e veredito divergente.
-- [x] Fase 15.5: Integrar bloqueio local nos dois botoes de conclusao e atalho `Ctrl+Enter`.
-- [x] Fase 15.6: Adicionar testes backend/frontend e validar que checklist local nao substitui regras backend.
-- [x] Fase 15.7: Rodar suites, lint, build, diff-check e `graphify update .`.
-- [x] Fase 15.8: Deploy backend primeiro e frontend depois, se todas as verificacoes passarem.
+- **Modo PLANO ativo**: Após aprovação do usuário, finalizar plano e criar arquivos de execução.
+- **Métricas baselines** (pré-refatoração):
+  - Frontend: ~891 testes, 39 arquivos, ~10s
+  - Backend: ~571 testes, 48 arquivos
+  - Monolito: 13.556 linhas, 47 callables, 10 triggers, 1 onRequest, 1 onSchedule, ~59 exports
+  - Nós graphify: 1110
+- **Deploy seguro**: backend primeiro, aguardar 5min, deploy frontend.
+- **Rollback**: manter branch `pre-refactor` como backup.
+- **Código morto identificado**: candidatos não confirmados em `auditCatalog.js`; análise semântica requerida antes de remoção.
+- **Graphify**: Atualizar após cada fase major (`graphify update .`).
+- **Phase A corrigida**: Não modulariza, não remove código morto, não implementa export async, não altera índices existentes.
 
-#### Phase 15 Decisions
-- Checklist manual sera local por fase/aba usando `sessionStorage` com chave `compliancehub:case-checklist:{caseId}`.
-- Checklist manual nao sera persistido no backend e nao criara AuditLog nesta etapa.
-- Checklist manual bloqueia apenas visualmente/localmente a conclusao.
-- Regras criticas de veredito/override continuam obrigatorias no backend.
-- Casos antigos nao serao reprocessados; novas regras valem apenas apos data de corte do deploy.
-- Nao havera feature flag nesta etapa.
-- Execucao sera passo a passo, com testes depois de cada fase relevante.
+---
 
-### Phase 13: Resumo Trabalhista Com Contraparte E Status Inteligente
-- [x] Auditar todos os casos reais com `laborFlag=POSITIVE` em modo somente leitura.
-- [x] Confirmar formatos normalizados de Judit, BigDataCorp e Escavador para processos trabalhistas.
-- [x] Definir padrao final aprovado para bloco trabalhista: `Status processual`, `Papel do candidato`, `Parte reclamada/passiva`, datas e `Ultimo andamento`.
-- [x] Adicionar testes de regressao antes da implementacao.
-- [x] Preservar `parties`/`allParties`/`movements` em `selectTopProcessos()`.
-- [x] Implementar merge inteligente por CNJ para status, datas, ultimo andamento e partes.
-- [x] Implementar formatacao trabalhista especifica sem alterar formato criminal/mandado.
-- [x] Filtrar contraparte para remover candidato, nomes curtos e papeis neutros/tecnicos.
-- [x] Rodar testes focados e suites completas.
-- [x] Atualizar graphify apos alteracoes de codigo.
-
-### Phase 14: Remover Contexto Profissional Do Resumo Trabalhista
-- [x] Confirmar que o bloco profissional cadastral e gerado em `buildDetLaborNotes()` a partir de campos BigDataCorp `occupation_data`.
-- [x] Decidir escopo: remover apenas de `laborNotes`, preservando dados profissionais e resumo executivo.
-- [x] Atualizar testes para garantir ausencia de `Contexto profissional cadastral`, `Ultimo empregador` e `dados profissionais nao disponiveis` em `laborNotes`.
-- [x] Remover bloco morto de contexto profissional em `buildDetLaborNotes()`.
-- [x] Rodar testes focados, suites completas, lint, build e diff-check.
-- [x] Atualizar graphify apos alteracoes de codigo.
-
-### Phase 16: Ressalva Automatica E Auditoria De Casos Reais
-- [x] Remover frase `sem incluir ressalva automatica no texto final ao cliente` de `SAFE_NARRATIVE_TEXTS.criminalNegativePartial` em `functions/index.js`.
-- [x] Decisao: risco de enviar instrucoes operacionais ao cliente e inaceitavel; checklist manual do analista deve detectar cobertura parcial antes da conclusao.
-- [x] Auditoria Firestore REST de caso `QG400ibTd3bnQOr1yVuS` (078.003.675-17): processo `0087537-21.2020.8.05.0001` classificado como criminal positivo, mas e processo de `DIREITO DO CONSUMIDOR` (CUMPRIMENTO DE SENTENCA, RESPONSABILIDADE DO FORNECEDOR). Causa: metadado processual inconsistente (`ACAO PENAL - PROCEDIMENTO ORDINARIO`) misturado com area civel. Analista ja corrigiu manualmente para `NEGATIVE`.
-- [x] Auditoria Firestore REST de caso `27vc6KqTrO8cbask2Iau` (226.377.488-26): `criminalFlag=POSITIVE` por mandado ativo, mas mandado e `Civil` (prisao civil por inadimplencia alimentar). Causa: pipeline elevou mandado civil como hard fact criminal. `warrantFlag` permanece `POSITIVE` corretamente.
-- [x] Conclusao dos 2 casos: nao sao bugs no codigo atual, mas inconsistencias de dados dos providers que devem ser detectadas pelo analista humano antes do envio ao cliente. Nao ha necessidade de correcao de codigo nestes casos especificos.
-- [x] Atualizar `AGENTS.md` com secao de acesso Firestore REST via OAuth.
+> **Próximo passo:** Aguardar aprovação do usuário para iniciar Phase A corrigida (baseline/documentos + V2 cursor pagination side-by-side).

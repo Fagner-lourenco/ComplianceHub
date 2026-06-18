@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'module';
+import { formatDateKey, formatMonthKey } from './modules/utilityHelpers';
 
 // Set minimal Firebase env so initializeApp() + getFirestore() succeed at require-time
 const origGcloud = process.env.GCLOUD_PROJECT;
@@ -31,7 +32,7 @@ afterEach(() => {
 const describeIfLoaded = describe;
 
 describeIfLoaded('enforceTenantSubmissionLimits', () => {
-    const { enforceTenantSubmissionLimits, formatDateKey, formatMonthKey, _setDb, _setWriteAuditEvent } = mod.__test;
+    const { enforceTenantSubmissionLimits, _setDb, _setWriteAuditEvent } = mod.__test;
 
     const TODAY = new Date('2026-04-10T15:00:00Z');
     const DAY_KEY = formatDateKey(TODAY);

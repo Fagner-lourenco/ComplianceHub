@@ -200,7 +200,7 @@ function inspectCase(caseData, options = {}) {
     if (caseData.warrantFlag === 'POSITIVE' && !hasAny(fields, warrantPositivePatterns)) {
         issues.push('POSITIVE_WARRANT_WITHOUT_CONTEXT_TEXT');
     }
-    if (caseData.finalVerdict === 'FIT' && ['POSITIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag)) {
+    if (caseData.finalVerdict === 'FIT' && ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.criminalFlag)) {
         issues.push('FIT_WITH_CRIMINAL_RISK_FLAG');
     }
     if (caseData.finalVerdict === 'FIT' && caseData.warrantFlag === 'POSITIVE') {

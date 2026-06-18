@@ -97,6 +97,13 @@ const AUDIT_ACTIONS = {
         summaryTemplate: 'Caso devolvido ao cliente — {reason}',
         clientSummaryTemplate: 'Caso devolvido para correção — {reason}',
     },
+    CASE_IDENTITY_BYPASSED: {
+        category: CATEGORY.CASE,
+        level: LEVEL.SECURITY,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Bypass do gate de identidade realizado por {actorName} — {justification}',
+    },
     CASE_CORRECTED: {
         category: CATEGORY.CASE,
         level: LEVEL.AUDIT,

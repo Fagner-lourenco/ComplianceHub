@@ -50,6 +50,7 @@ describe('NovaSolicitacaoPage', () => {
         };
         firestoreMocks.callGetClientQuotaStatus.mockResolvedValue({ hasLimits: false });
         firestoreMocks.callCreateClientSolicitation.mockResolvedValue({ success: true, caseId: 'c-1' });
+        firestoreMocks.getEnabledPhases.mockReturnValue([]);
     });
 
     it('bloqueia o envio quando a franquia ainda nao foi confirmada', () => {
@@ -78,8 +79,20 @@ describe('NovaSolicitacaoPage', () => {
         fireEvent.change(nomeInput, { target: { value: 'Joao Silva' } });
         fireEvent.change(cpfInput, { target: { value: '111.111.111-11' } });
 
+        expect(screen.getByText(/CPF inválido/i)).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Enviar solicitação' })).toBeDisabled();
         expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
+    });
+
+    it('mostra mensagem clara quando CPF esta incompleto', () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        renderPage();
+
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247' } });
+
+        expect(screen.getByText(/CPF incompleto/i)).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: /CPF/i })).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByRole('button', { name: 'Enviar solicitação' })).toBeDisabled();
     });
 
     it('chama createClientSolicitation com CPF valido sem exigir UF de trabalho', async () => {
@@ -108,6 +121,24 @@ describe('NovaSolicitacaoPage', () => {
 
         // Deve mostrar tela de sucesso
         expect(await screen.findByText(/Solicitação enviada com sucesso/i)).toBeInTheDocument();
+    });
+
+    it('rejeita handle social sem URL completa antes de chamar o backend', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        firestoreMocks.getEnabledPhases.mockReturnValue(['social']);
+        renderPage();
+
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects[1], { target: { value: 'MG' } });
+
+        fireEvent.click(await screen.findByRole('button', { name: /Perfis nas redes sociais/i }));
+        fireEvent.change(screen.getByPlaceholderText('https://instagram.com/usuario'), { target: { value: '@maria' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        expect(screen.getByText(/Informe uma URL válida começando com http:\/\/ ou https:\/\//i)).toBeInTheDocument();
+        expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
     });
 
     it('mostra quota bloqueada quando limite diario atingido sem allowExceedance', async () => {
@@ -197,6 +228,55 @@ describe('NovaSolicitacaoPage', () => {
         await waitFor(() => {
             expect(firestoreMocks.callCreateClientSolicitation).toHaveBeenCalledTimes(1);
         });
+    });
+
+    it('rejeita nome com menos de 3 caracteres antes de chamar backend', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        renderPage();
+
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'AB' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects5 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects5[1], { target: { value: 'MG' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        expect(screen.getByText(/Nome deve ter ao menos 3 caracteres/i)).toBeInTheDocument();
+        expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
+    });
+
+    it('rejeita nome com mais de 200 caracteres', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        renderPage();
+
+        const longName = 'A'.repeat(201);
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: longName } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects6 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects6[1], { target: { value: 'MG' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        expect(screen.getByText(/Nome deve ter no maximo 200 caracteres/i)).toBeInTheDocument();
+        expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
+    });
+
+    it('rejeita cargo com mais de 100 caracteres', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        firestoreMocks.getEnabledPhases.mockReturnValue([]);
+        renderPage();
+
+        const longPosition = 'A'.repeat(101);
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects7 = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects7[1], { target: { value: 'MG' } });
+        fireEvent.change(screen.getByPlaceholderText('Ex.: Analista Financeiro Sênior'), { target: { value: longPosition } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        expect(screen.getByText(/Cargo deve ter no maximo 100 caracteres/i)).toBeInTheDocument();
+        expect(firestoreMocks.callCreateClientSolicitation).not.toHaveBeenCalled();
     });
 
     it('abre modal de descarte ao cancelar com formulario preenchido', () => {

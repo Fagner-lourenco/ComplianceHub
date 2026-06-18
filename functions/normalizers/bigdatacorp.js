@@ -11,7 +11,7 @@
  *   - occupation_data → employment/profession history
  */
 
-const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 const { classifyProcessArea } = require('../helpers/processClassifier');
 const CRIMINAL_COURT_TYPES = /criminal|penal/i;
 const LABOR_COURT_TYPES = /trabalh/i;
@@ -123,7 +123,7 @@ function normalizeBigDataCorpProcesses(processesData, candidateCpf) {
         }
 
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : courtType;
-        const roleClassification = classifyRole(specificRole || partyType, areaForRole);
+        const roleClassification = classifyRole(specificRole || partyType, areaForRole, normalizeSideForClassifier(polo));
 
         // Extract decisions for criminal processes (top 3, 500 chars max each)
         let decisions = null;

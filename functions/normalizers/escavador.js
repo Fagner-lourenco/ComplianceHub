@@ -5,7 +5,7 @@
  * plus a `_source` key for audit trail.
  */
 
-const { classifyRole } = require('../helpers/roleClassifier');
+const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 const { classifyProcessArea } = require('../helpers/processClassifier');
 const CRIMINAL_AREAS = /penal|criminal|crime|crim\.?|a[çc][aã]o\s*penal|inqu[ée]rito|inquerito|termo\s*circunstanciado|contraven[çc][aã]o|viol[eê]ncia\s*dom[eé]stica|maria\s*da\s*penha|medida\s*protetiva/i;
 
@@ -81,7 +81,7 @@ function normalizeEscavadorProcessos(result, cpf) {
         const hasDivergentCpf = role?.hasDivergentCpf === true;
         const hasExactCpfMatch = !!role && !hasDivergentCpf;
         const areaForRole = isCriminal ? 'Criminal' : isLabor ? 'Trabalhista' : area;
-        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole);
+        const roleClassification = classifyRole(role?.tipoNormalizado || role?.tipo, areaForRole, normalizeSideForClassifier(role?.polo));
 
         processos.push({
             numeroCnj: item.numero_cnj || null,

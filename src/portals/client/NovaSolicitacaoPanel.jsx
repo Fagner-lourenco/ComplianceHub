@@ -234,13 +234,18 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const validate = () => {
         const next = {};
-        if (!form.fullName.trim()) next.fullName = 'Nome obrigatório — é o identificador principal da solicitação.';
+        const name = form.fullName.trim();
+        if (!name) next.fullName = 'Nome obrigatório — é o identificador principal da solicitação.';
+        else if (name.length < 3) next.fullName = 'Nome deve ter ao menos 3 caracteres.';
+        else if (name.length > 200) next.fullName = 'Nome deve ter no maximo 200 caracteres.';
         if (!form.cpf.trim()) next.cpf = 'Informe o CPF para iniciar a análise.';
         else if (!validateCpf(form.cpf)) next.cpf = 'CPF inválido — verifique os dígitos.';
         if (!form.candidateResidenceUf) next.candidateResidenceUf = 'UF de residência atual é obrigatória.';
+        if (form.position.trim().length > 100) next.position = 'Cargo deve ter no maximo 100 caracteres.';
+        if (form.department.trim().length > 100) next.department = 'Departamento deve ter no maximo 100 caracteres.';
         SOCIAL_FIELDS.forEach((field) => {
             if (form[field] && !validateUrl(form[field])) {
-                next[field] = 'Informe uma URL válida (https://...) ou um @usuário.';
+                next[field] = 'Informe uma URL válida começando com http:// ou https://.';
             }
         });
         setErrors(next);
@@ -318,7 +323,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
     const addOtherSocial = () => {
         if (!otherUrl.trim()) return;
-        if (!validateUrl(otherUrl)) { setOtherUrlError('Informe uma URL válida ou um @usuário.'); return; }
+        if (!validateUrl(otherUrl)) { setOtherUrlError('Informe uma URL válida começando com http:// ou https://.'); return; }
         setForm((prev) => ({ ...prev, otherSocialUrls: [...prev.otherSocialUrls, { label: otherLabel || 'Outro', url: otherUrl }] }));
         setOtherUrlError('');
         setOtherLabel('');
@@ -329,6 +334,16 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     const removeOtherSocial = (index) => {
         setForm((prev) => ({ ...prev, otherSocialUrls: prev.otherSocialUrls.filter((_, i) => i !== index) }));
     };
+
+    const cpfDigits = form.cpf.replace(/\D/g, '');
+    const cpfValidationMessage = errors.cpf || (
+        form.cpf.trim() && !validateCpf(form.cpf)
+            ? cpfDigits.length < 11
+                ? 'CPF incompleto — digite os 11 números.'
+                : 'CPF inválido — confira se os 11 números foram digitados corretamente.'
+            : null
+    );
+    const cpfDescribedBy = cpfValidationMessage ? 'help-cpf err-cpf' : 'help-cpf';
 
     const isValid = form.fullName.trim() && form.cpf.trim() && validateCpf(form.cpf)
         && form.candidateResidenceUf;
@@ -466,10 +481,11 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
 
                                 <div className="ns-grid ns-grid--2">
                                     <div className="ns-field">
-                                        <label className="ns-label">
+                                        <label className="ns-label" htmlFor="ns-fullName">
                                             Nome completo <span className="ns-required" aria-label="obrigatório">*</span>
                                         </label>
                                         <input
+                                            id="ns-fullName"
                                             type="text"
                                             className={`ns-input${errors.fullName ? ' ns-input--error' : ''}`}
                                             value={form.fullName}
@@ -482,22 +498,24 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                     </div>
 
                                     <div className="ns-field">
-                                        <label className="ns-label">
+                                        <label className="ns-label" htmlFor="ns-cpf">
                                             CPF <span className="ns-required" aria-label="obrigatório">*</span>
                                         </label>
                                         <input
+                                            id="ns-cpf"
                                             type="text"
-                                            className={`ns-input${errors.cpf ? ' ns-input--error' : ''}`}
+                                            className={`ns-input${cpfValidationMessage ? ' ns-input--error' : ''}`}
                                             value={form.cpf}
                                             onChange={(e) => update('cpf', formatCpf(e.target.value))}
                                             placeholder="000.000.000-00"
                                             maxLength={14}
                                             aria-required="true"
                                             inputMode="numeric"
-                                            aria-describedby="help-cpf"
+                                            aria-invalid={Boolean(cpfValidationMessage)}
+                                            aria-describedby={cpfDescribedBy}
                                         />
                                         <span id="help-cpf" className="ns-help">Identificador principal da solicitação — será mascarado no painel após o envio.</span>
-                                        {errors.cpf && <span className="ns-error" role="alert">{errors.cpf}</span>}
+                                        {cpfValidationMessage && <span id="err-cpf" className="ns-error" role="alert">{cpfValidationMessage}</span>}
                                     </div>
 
                                     <div className="ns-field">
@@ -515,22 +533,24 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         <label className="ns-label">Cargo pretendido</label>
                                         <input
                                             type="text"
-                                            className="ns-input"
+                                            className={`ns-input${errors.position ? ' ns-input--error' : ''}`}
                                             value={form.position}
                                             onChange={(e) => update('position', normalizeUpper(e.target.value))}
                                             placeholder="Ex.: Analista Financeiro Sênior"
                                         />
+                                        {errors.position && <span className="ns-error" role="alert">{errors.position}</span>}
                                     </div>
 
                                     <div className="ns-field">
                                         <label className="ns-label">Departamento / Setor</label>
                                         <input
                                             type="text"
-                                            className="ns-input"
+                                            className={`ns-input${errors.department ? ' ns-input--error' : ''}`}
                                             value={form.department}
                                             onChange={(e) => update('department', normalizeUpper(e.target.value))}
                                             placeholder="Ex.: Financeiro, RH, Operações"
                                         />
+                                        {errors.department && <span className="ns-error" role="alert">{errors.department}</span>}
                                     </div>
 
                                     <div className="ns-field">
@@ -616,7 +636,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                         {(!isMobile && !openSections.social) ? (
                                             <p className="ns-section__summary">{socialSummary}</p>
                                         ) : (
-                                            <p className="ns-section__desc">Informe ao menos uma rede para ajudar na análise de imagem pública. Use a URL completa do perfil ou @usuário.</p>
+                                            <p className="ns-section__desc">Informe ao menos uma rede para ajudar na análise de imagem pública. Use a URL completa do perfil.</p>
                                         )}
                                     </div>
                                     {!isMobile && (
@@ -630,11 +650,11 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                 <div className="ns-section__accordion-body">
                                 <div className="ns-grid ns-grid--2">
                                     {[
-                                        { key: 'instagram', icon: 'IG', label: 'Instagram', placeholder: '@usuario ou https://instagram.com/usuario' },
+                                        { key: 'instagram', icon: 'IG', label: 'Instagram', placeholder: 'https://instagram.com/usuario' },
                                         { key: 'facebook', icon: 'FB', label: 'Facebook', placeholder: 'https://facebook.com/usuario' },
                                         { key: 'linkedin', icon: 'IN', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/usuario', help: 'Prefira a URL completa do perfil público para maior precisão na busca.' },
-                                        { key: 'tiktok', icon: 'TT', label: 'TikTok', placeholder: '@usuario ou https://tiktok.com/@usuario' },
-                                        { key: 'twitter', icon: 'X', label: 'Twitter / X', placeholder: '@usuario ou https://x.com/usuario' },
+                                        { key: 'tiktok', icon: 'TT', label: 'TikTok', placeholder: 'https://tiktok.com/@usuario' },
+                                        { key: 'twitter', icon: 'X', label: 'Twitter / X', placeholder: 'https://x.com/usuario' },
                                         { key: 'youtube', icon: 'YT', label: 'YouTube', placeholder: 'https://youtube.com/@canal' },
                                     ].map(({ key, icon, label, placeholder, help }) => (
                                         <div key={key} className="ns-field ns-field--social">
@@ -686,7 +706,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                                             className="ns-input ns-input--sm"
                                             value={otherUrl}
                                             onChange={(e) => { setOtherUrl(e.target.value); if (otherUrlError) setOtherUrlError(''); }}
-                                            placeholder="URL completa ou @handle"
+                                            placeholder="https://exemplo.com/perfil"
                                         />
                                         {otherUrlError && <span className="ns-error ns-error--inline" role="alert">{otherUrlError}</span>}
                                         <button type="button" className="ns-btn ns-btn--sm ns-btn--primary" onClick={addOtherSocial}>Adicionar</button>

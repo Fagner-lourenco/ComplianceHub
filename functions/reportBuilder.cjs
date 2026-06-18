@@ -10,7 +10,7 @@ function esc(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-const CRIMINAL_LABEL  = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', INCONCLUSIVE: 'Inconclusivo', NOT_FOUND: 'Não Encontrado', NEGATIVE_PARTIAL: 'Negativo parcial', INCONCLUSIVE_HOMONYM: 'Inconclusivo por homonimo', INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura' };
+const CRIMINAL_LABEL  = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', INCONCLUSIVE: 'Inconclusivo', NOT_FOUND: 'Não Encontrado', NEGATIVE_PARTIAL: 'Negativo', INCONCLUSIVE_HOMONYM: 'Inconclusivo', INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo' };
 const LABOR_LABEL     = { ...CRIMINAL_LABEL };
 const WARRANT_LABEL   = { POSITIVE: 'Positivo', NEGATIVE: 'Negativo', NOT_FOUND: 'Não Encontrado', INCONCLUSIVE: 'Inconclusivo' };
 const OSINT_LABEL     = { LOW: 'Baixo', MEDIUM: 'Médio', HIGH: 'Alto', UNKNOWN: 'Desconhecido' };
@@ -110,7 +110,7 @@ function socialLinkHtml(href, label, icon) {
 
 function flagColor(v) {
     if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
-    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','NEGATIVE_PARTIAL','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
+    if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
     if (['NEGATIVE','APPROVED','FIT','CLEAN','LOW','NOT_FOUND','NO','NEUTRAL'].includes(v)) return 'green';
     return 'gray';
 }
@@ -144,6 +144,12 @@ function phaseRow(icon, name, resultBadge, sevBadge, notes, tags, color) {
 function listBlock(title, items) {
     if (!Array.isArray(items) || items.length === 0) return '';
     return `<div class="sec"><div class="sec__t">${esc(title)}</div><ul class="blist">${items.map((item) => `<li>${esc(item)}</li>`).join('')}</ul></div>`;
+}
+
+function getEscavador2NewFindings(caseData = {}) {
+    return (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+        .filter((item) => item?.isNewEscavador2Finding === true)
+        .slice(0, 5);
 }
 
 function timelineHtml(items) {
@@ -240,6 +246,11 @@ function buildCaseBody(c, generatedAt) {
     const phasesSec = rows.length > 0
         ? `<div class="sec"><div class="sec__t">Análises Realizadas</div><div class="plist">${rows.join('')}</div></div>` : '';
 
+    const escavador2NewFindings = getEscavador2NewFindings(c);
+    const escavador2Sec = escavador2NewFindings.length > 0
+        ? `<div class="sec"><div class="sec__t">Achados complementares Escavador2</div><p>O Escavador2 identificou processo(s) novo(s) não encontrado(s) nas demais fontes automatizadas.</p><ul class="blist">${escavador2NewFindings.map((item) => `<li>${esc(item.numeroCnj || 'Processo sem CNJ completo')} · ${esc(item.area || 'Área não identificada')} · ${esc(item.tribunalSigla || 'Tribunal não identificado')}</li>`).join('')}</ul></div>`
+        : '';
+
     const commentSec = c.analystComment
         ? `<div class="sec"><div class="sec__t">Justificativa Final</div><div class="cbox">${esc(c.analystComment)}</div></div>` : '';
     const executiveSec = (c.executiveSummary || c.statusSummary || c.sourceSummary)
@@ -263,6 +274,7 @@ function buildCaseBody(c, generatedAt) {
   ${executiveSec}
   ${findingsSec}
   ${phasesSec}
+  ${escavador2Sec}
   ${commentSec}
   ${nextStepsSec}
   ${timelineSec}

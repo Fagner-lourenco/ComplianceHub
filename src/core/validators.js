@@ -18,10 +18,9 @@ export function validateCpf(cpf) {
 
 export function validateUrl(url) {
     if (!url) return true;
-    if (url.startsWith('@')) return true;
     try {
-        new URL(url);
-        return true;
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
     } catch {
         return false;
     }

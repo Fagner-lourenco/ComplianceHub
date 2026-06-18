@@ -54,7 +54,7 @@ function injectPublicVerificationBanner(html, reportData, token) {
     const candidateName = escapeHtml(reportData?.candidateName || 'Candidato');
     const tenantName = escapeHtml(reportData?.tenantName || '');
     const expiresAt = reportData?.expiresAt
-        ? new Date(reportData.expiresAt).toLocaleDateString('pt-BR')
+        ? new Date(reportData.expiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
         : '';
 
     const banner = `

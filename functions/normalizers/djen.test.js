@@ -164,6 +164,27 @@ describe('normalizeDjenComunicacoes', () => {
         expect(result.djenComunicacoes[1].area).toBe('trabalhista');
     });
 
+    it('classifies polo P as DEFENDANT/HIGH in criminal', () => {
+        const result = normalizeDjenComunicacoes(
+            {
+                count: 1,
+                items: [makeItem({
+                    destinatarios: [
+                        { nome: 'DIEGO FERNANDO PIRES', polo: 'P' },
+                        { nome: 'MINISTÉRIO PÚBLICO DO ESTADO DE MINAS GERAIS', polo: 'A' },
+                    ],
+                })],
+                _request: { endpoint: '/comunicacao' },
+            },
+            'DIEGO FERNANDO PIRES',
+        );
+
+        expect(result.djenComunicacoes).toHaveLength(1);
+        expect(result.djenComunicacoes[0].roleClassification.category).toBe('DEFENDANT');
+        expect(result.djenComunicacoes[0].roleClassification.riskLevel).toBe('HIGH');
+        expect(result.djenComunicacoes[0].isDefendant).toBe(true);
+    });
+
     it('handles empty result', () => {
         const result = normalizeDjenComunicacoes(
             { count: 0, items: [], _request: {} },

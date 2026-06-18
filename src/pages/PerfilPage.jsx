@@ -5,6 +5,7 @@ import { useAuth } from '../core/auth/useAuth';
 import { callUpdateOwnProfile } from '../core/firebase/firestoreService';
 import { formatRoleLabel, getPortal } from '../core/rbac/permissions';
 import { extractErrorMessage, getUserFriendlyMessage } from '../core/errorUtils';
+import { formatDate, formatDateTimeBR } from '../core/formatDate';
 import {
     EmailAuthProvider,
     reauthenticateWithCredential,
@@ -120,10 +121,10 @@ export default function PerfilPage() {
 
     /* ── Account info ── */
     const createdAt = user?.metadata?.creationTime
-        ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+        ? formatDate(user.metadata.creationTime)
         : '—';
     const lastLogin = user?.metadata?.lastSignInTime
-        ? new Date(user.metadata.lastSignInTime).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        ? formatDateTimeBR(user.metadata.lastSignInTime)
         : '—';
 
     const providerLabel = useMemo(() => {

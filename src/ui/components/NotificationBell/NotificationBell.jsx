@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../../core/notifications/useNotifications';
 import { NOTIFICATION_COPY } from '../../../core/notifications/notificationTypes';
+import { formatDate } from '../../../core/formatDate';
 import './NotificationBell.css';
 
 function timeAgo(date) {
@@ -17,7 +18,7 @@ function timeAgo(date) {
     if (diffMins < 60) return `há ${diffMins} min`;
     if (diffHours < 24) return `há ${diffHours} h`;
     if (diffDays < 7) return `há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
-    return then.toLocaleDateString('pt-BR');
+    return formatDate(then);
 }
 
 export default function NotificationBell() {

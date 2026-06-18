@@ -1,5 +1,12 @@
 // NOTE: PUBLIC_RESULT_FIELDS duplicates the backend list in functions/index.js.
 // Any field additions on the backend must be mirrored here to avoid silent drift.
+const TIMEZONE = 'America/Sao_Paulo';
+const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+    month: 'short',
+    year: '2-digit',
+    timeZone: TIMEZONE,
+});
+
 const PUBLIC_RESULT_FIELDS = [
     'candidateName', 'cpfMasked', 'candidatePosition', 'hiringUf', 'tenantId', 'createdAt',
     'requestedBy', 'requestedByName', 'requestedByEmail',
@@ -68,11 +75,11 @@ export const CLIENT_STATUS_TONES = {
 const ATTENTION_REASON_RULES = [
     {
         label: 'Antecedentes criminais',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.criminalFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.criminalFlag),
     },
     {
         label: 'Processos trabalhistas',
-        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE', 'INCONCLUSIVE_HOMONYM', 'INCONCLUSIVE_LOW_COVERAGE'].includes(caseData.laborFlag),
+        match: (caseData) => ['POSITIVE', 'INCONCLUSIVE'].includes(caseData.laborFlag),
     },
     {
         label: 'Mandados de prisao',
@@ -144,8 +151,12 @@ export function sanitizeCaseForClient(caseData) {
     return sanitized;
 }
 
-export function getCaseTimeline(caseData) {
+export function getCaseTimeline(caseData, publicResult) {
     if (!caseData) return [];
+    // Preferir timeline rica do publicResult (backend) sobre o caseData espelhado
+    if (Array.isArray(publicResult?.timelineEvents) && publicResult.timelineEvents.length > 0) {
+        return publicResult.timelineEvents;
+    }
     if (Array.isArray(caseData.timelineEvents) && caseData.timelineEvents.length > 0) {
         return caseData.timelineEvents;
     }
@@ -203,7 +214,7 @@ export function resolveClientCaseView(caseData, publicResult) {
             : (Array.isArray(resolvedPublicResult.keyFindings) ? resolvedPublicResult.keyFindings : []),
         nextSteps: Array.isArray(caseData.nextSteps) ? caseData.nextSteps : [],
         clientNotes: caseData.clientNotes || '',
-        timelineEvents: getCaseTimeline(caseData),
+        timelineEvents: getCaseTimeline(caseData, publicResult),
     };
 }
 
@@ -335,7 +346,7 @@ export function getClientDashboardMetrics(cases) {
         const key = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}`;
         months.push({
             key,
-            label: currentMonth.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+            label: monthFormatter.format(currentMonth),
             count: countCasesByMonth(cases, key),
             doneCount: countCompletedCasesByMonth(cases, key),
         });

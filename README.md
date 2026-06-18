@@ -1,7 +1,7 @@
-# ComplianceHub — Planejamento Técnico e Funcional de Evolução
+# ComplianceHub — Planejamento Técnico e Funcional
 
-> Documento vivo. Atualizado em 2026-04-05.
-> Stack: React + Vite → Vercel | Firebase Cloud Functions (Node 22, Gen2, southamerica-east1) | Firestore | OpenAI GPT
+> Documento vivo. Atualizado em 2026-06-01.
+> Stack: React 19 + Vite 7 → Vercel | Firebase Cloud Functions (Node 22, Gen2, southamerica-east1) | Firestore | OpenAI GPT
 
 ---
 
@@ -10,23 +10,20 @@
 1. [Visão Geral do Produto](#1-visão-geral-do-produto)
 2. [Arquitetura Atual](#2-arquitetura-atual)
 3. [Diagnóstico — Estado do Sistema](#3-diagnóstico--estado-do-sistema)
-4. [Gap Central: Relatório Final Incompleto](#4-gap-central-relatório-final-incompleto)
-5. [Itens de Implementação Imediata (Fase 0)](#5-itens-de-implementação-imediata-fase-0)
-6. [Fase 1 — Inteligência Contextual no Painel do Analista](#6-fase-1--inteligência-contextual-no-painel-do-analista)
-7. [Fase 2 — Portal do Cliente Aprimorado](#7-fase-2--portal-do-cliente-aprimorado)
-8. [Fase 3 — Confiabilidade e Operações](#8-fase-3--confiabilidade-e-operações)
-9. [Referência de APIs e Provedores](#9-referência-de-apis-e-provedores)
-10. [Referência de Campos do Firestore](#10-referência-de-campos-do-firestore)
-11. [Comandos de Deploy](#11-comandos-de-deploy)
-12. [Decisões de Arquitetura (ADRs)](#12-decisões-de-arquitetura-adrs)
-13. [Registro de Progresso](#13-registro-de-progresso)
-14. [Próximas Fases — Plano de Implementação](#14-próximas-fases--plano-de-implementação)
+4. [Fluxo de Enriquecimento](#4-fluxo-de-enriquecimento)
+5. [Sistema de Backup Automatizado](#5-sistema-de-backup-automatizado)
+6. [Referência de APIs e Provedores](#6-referência-de-apis-e-provedores)
+7. [Referência de Campos do Firestore](#7-referência-de-campos-do-firestore)
+8. [Comandos de Deploy](#8-comandos-de-deploy)
+9. [Decisões de Arquitetura (ADRs)](#9-decisões-de-arquitetura-adrs)
+10. [Registro de Progresso](#10-registro-de-progresso)
+11. [Próximas Fases](#11-próximas-fases)
 
 ---
 
 ## 1. Visão Geral do Produto
 
-O **ComplianceHub** é uma plataforma SaaS B2B de análise de antecedentes e due diligence para compliance trabalhista e criminal em empresas brasileiras. O sistema automatiza a coleta de dados em múltiplas fontes externas (Judit, Escavador, FonteData), aplica IA (GPT) para triagem de homônimos e síntese, e entrega um relatório HTML altamente estruturado ao analista e, opcionalmente, ao cliente.
+O **ComplianceHub** é uma plataforma SaaS B2B de análise de antecedentes e *due diligence* para compliance trabalhista e criminal em empresas brasileiras. O sistema automatiza a coleta de dados em múltiplas fontes externas (Judit, Escavador, FonteData, BigDataCorp, DJEN), aplica IA (OpenAI GPT) para triagem de homônimos e síntese, e entrega um relatório HTML estruturado ao analista e, opcionalmente, ao cliente.
 
 ### Objetivos de Negócio
 
@@ -36,11 +33,12 @@ O **ComplianceHub** é uma plataforma SaaS B2B de análise de antecedentes e due
 | Cobertura processual CPF | ≥ 95% dos casos com CPF utilizado |
 | Satisfação do cliente final | Zero falsos positivos criminais entregues |
 | Confiabilidade da plataforma | Uptime ≥ 99,5% / mês |
+| Backup e recuperação | Backup diário automatizado, retenção 7 dias |
 
 ### Personas
 
 - **Analista Ops** — usa o painel interno (`/ops/*`) para revisar, anotar e concluir casos
-- **Gestor / Admin** — configura tenants, fases habilitadas, limites de SLA
+- **Gestor / Admin** — configura tenants, fases habilitadas, limites de SLA, gerencia usuários
 - **Cliente Final** — acessa o portal de leitura (`/client/*`) para ver status e, quando liberado, o relatório
 
 ---
@@ -50,454 +48,268 @@ O **ComplianceHub** é uma plataforma SaaS B2B de análise de antecedentes e due
 ```
 Usuário / Cliente
     │
-    ├──► Vercel (React 18 + Vite)
-    │        ├── Portal Ops   (src/portals/ops/)
-    │        ├── Portal Client (src/portals/client/)
-    │        └── Página Relatório Público (src/pages/PublicReportPage.jsx)
+    ├──► Vercel (React 19 + Vite 7) — SPA
+    │        ├── Portal Ops    (/ops/*)     → analistas, supervisores, admins, owners
+    │        ├── Portal Client (/client/*)  → clientes finais (viewer, operator, manager)
+    │        └── Relatório Público (/r/:token) → acesso sem login
     │
     └──► Firebase (southamerica-east1)
-             ├── Cloud Functions (22+ endpoints onCall/onDocumentUpdated)
-             │       ├── Enriquecimento: fetchJuditLawsuits, fetchJuditWarrants,
-             │       │   fetchEscavadorByCpf, fetchFontedataFinanceiro...
+             ├── Cloud Functions Gen2 (Node 22) — 50+ endpoints
+             │       ├── Enriquecimento: BigDataCorp (gate), Judit, Escavador, DJEN
+             │       │   FonteData (fallback)
              │       ├── Conclusão: concludeCaseByAnalyst
              │       ├── Relatório Público: createAnalystPublicReport
-             │       └── Triggers: publishResultOnCaseDone, syncClientCaseOnUpdate
+             │       ├── Exportações: createExportJob, processExportJob (assíncrono)
+             │       ├── PDF: generateClientCasePdf, generatePublicReportPdf
+             │       ├── Backup: backupDaily (Cloud Scheduler, diário)
+             │       └── Triggers: publishResultOnCaseDone, syncClientCaseOn*
              ├── Firestore
-             │       ├── cases/{caseId}          ← documento principal (~150 campos)
+             │       ├── cases/{caseId}           ← documento principal (~150 campos)
              │       ├── cases/{caseId}/publicResult/latest  ← campos públicos
-             │       ├── publicReports/{token}   ← HTML + expiresAt
-             │       └── clientCases/{caseId}    ← visão do cliente
-             └── Hosting (index.html fallback)
+             │       ├── publicReports/{token}    ← HTML + expiresAt
+             │       ├── clientCases/{caseId}     ← visão do cliente
+             │       ├── auditLogs/{logId}        ← auditoria OPS
+             │       ├── tenantAuditLogs/{logId}  ← auditoria cliente
+             │       └── systemHealth/{provider}  ← health checks
+             └── Firebase Auth — autenticação com custom claims (role, tenantId)
 ```
 
-### Fluxo de Enriquecimento
+### RBAC
 
-```
-Criação do Caso
-    │
-    ▼
-Judit — Processos (fetchJuditLawsuits)
-    │  └─ juditRoleSummary[], juditCriminalCount, juditLaborCount...
-    ▼
-Judit — Mandados (fetchJuditWarrants)
-    │  └─ juditWarrants[], juditActiveWarrantCount
-    ▼
-Escavador — Processos/CPF (fetchEscavadorByCpf)  [condicional]
-    │  └─ escavadorProcessos[], escavadorCriminalCount...
-    ▼
-FonteData — Financeiro/Dívida  [condicional]
-    │  └─ fontedataDebitoTotal, fontedataFlags...
-    ▼
-IA — Triagem Homônimos (aiHomonymCheck)  [se necessário]
-    │  └─ aiHomonymResult, aiHomonymJustification
-    ▼
-IA — Estruturação Semântica (aiStructured)
-    │  └─ { resumo, evidencias[], riskScore, riskLevel... }
-    ▼
-[ANALISTA CONCLUI] → concludeCaseByAnalyst
-    │  └─ Salva form fields + computa processHighlights/warrantFindings/keyFindings/executiveSummary
-    ▼
-publishResultOnCaseDone (trigger)
-    │  └─ Copia PUBLIC_RESULT_FIELDS → publicResult/latest
-    ▼
-Relatório disponível via buildCaseReportHtml(caseData)
-```
+8 roles, 10 permissions via custom claims no Firebase Auth:
+
+| Role | Escopo | Acesso |
+|------|--------|--------|
+| `owner` | Global | Tudo + backfill + repair claims |
+| `admin` | Global | Gestão de tenants, usuários, auditoria |
+| `supervisor` | Tenant | Atribuir casos, bypass gate, auditoria |
+| `analyst` | Tenant | Analisar, concluir, rerun AI |
+| `client_manager` | Tenant | Criar solicitações, exportar, gerar relatórios |
+| `client_operator` | Tenant | Criar solicitações, ver status |
+| `client_viewer` | Tenant | Somente leitura |
+| `CLIENT` (legacy) | Tenant | Compatibilidade reversa |
+
+### Módulos Extraídos (Phase C)
+
+O backend foi modularizado em 26 módulos:
+
+| Módulo | Responsabilidade |
+|--------|-----------------|
+| `aiOrchestrator.js` | Prompts, runners, payload builders, custo IA |
+| `aiParsers.js` | Sanitização e parsing de respostas OpenAI |
+| `autoClassification.js` | Classificação automática + handlers AI |
+| `backupWorker.js` | Backup diário Firestore + Auth |
+| `caseQueriesAssignments.js` | Listagens V1/V2, métricas, assignments, reruns |
+| `clientSolicitations.js` | Criação e correção de solicitações |
+| `clientVerdictPolicy.js` | Política de veredito do cliente |
+| `concludeCaseAndSettings.js` | Funções puras: pickConcludePayload, syncPublicResult |
+| `deterministicPrefill.js` | Prefill determinístico |
+| `enrichmentPhases.js` | Fases: FonteData, Escavador, BigDataCorp, Judit, DJEN |
+| `enrichmentTriggers.js` | 6 triggers Firestore (onDocument) |
+| `exportJobsAndReports.js` | Export jobs + relatórios públicos |
+| `juditWebhookAndFallback.js` | Webhook + fallback async Judit |
+| `notificationService.js` | Notificações push/email |
+| `opsReviewHandlers.js` | Handlers: conclude, settings, draft, aiDecision |
+| `pdfGeneration.js` | Geração de PDF via Puppeteer |
+| `publishAndSync.js` | Sincronização cases↔clientCases + publicação |
+| `rateLimitMiddleware.js` | Rate limiting via Firestore |
+| `reportEngine.js` | Geração e sanitização de relatórios |
+| `systemHealth.js` | Saúde do sistema + quotas |
+| `tenantUserManagement.js` | Gestão de usuários por tenant |
+| `utilityHelpers.js` | formatDateKey, formatMonthKey |
+| `_shared/auth.js` | Autenticação e autorização |
+| `_shared/fieldConstants.js` | Constantes de campos |
+| `_shared/sanitizers.js` | Sanitização de dados |
+| `_shared/providerConfigs.js` | Configuração de provedores |
 
 ---
 
 ## 3. Diagnóstico — Estado do Sistema
 
-### Correções Concluídas (Sessões Anteriores)
+### Métricas Atuais
 
-| ID | Descrição | Status |
-|---|---|---|
-| FIX-A | Análise com CPF ausente travava o enriquecimento | ✅ Deployed |
-| FIX-B | Trigger `publishResultOnCaseDone` não disparava em re-conclusão | ✅ Deployed |
-| FIX-C | Filtro de homônimos descartava CPFs válidos em casos multi-CPF | ✅ Deployed |
-| FIX-D | Webhook Judit recebia payloads duplicados | ✅ Deployed |
-| FIX-E | `syncClientCaseOnUpdate` falha silenciosa em tenant sem config | ✅ Deployed |
+| Métrica | Valor |
+|---------|-------|
+| **Testes backend** | 55 arquivos, 1223 testes |
+| **Testes frontend** | 55+ arquivos, ~1200 testes |
+| **Testes totais** | ~2400+ passando |
+| **Lint** | 0 erros (root + functions) |
+| **Build** | Limpo, sem warnings |
+| **Cobertura Segurança** | CSP, CORS em 21/22 callables, rate limiting, circuit breaker |
+| **Deploy** | Vercel + Firebase Functions (`compliance-hub-br`) |
+| **Branch ativa** | `main` |
 
-Coverage: **51/51 testes passando** em 16 arquivos de teste.
+### Stack Tecnológico
 
-### Diagnóstico de Código Atual
+| Camada | Tecnologia | Versão |
+|--------|-----------|--------|
+| **Frontend** | React | 19.2 |
+| **Router** | React Router DOM | 7.13 |
+| **Build** | Vite | 7.3 |
+| **Backend** | Firebase Cloud Functions Gen2 | Node 22 |
+| **Admin SDK** | firebase-admin | 13.7 |
+| **Functions SDK** | firebase-functions | 7.2 |
+| **Database** | Firestore (NoSQL) | Standard, southamerica-east1 |
+| **Auth** | Firebase Auth + custom claims | — |
+| **PDF/Print** | Puppeteer-core + @sparticuz/chromium | 24.4 / 148 |
+| **Testes Frontend** | Vitest + jsdom + @testing-library/react | 4.0 |
+| **Testes Backend** | Vitest | 2.0 |
+| **E2E** | Playwright | 1.58 |
+| **Lint** | ESLint 9 (flat config) | — |
+| **Hospedagem** | Vercel (frontend), Firebase (backend) | — |
 
-| Arquivo | Situação |
-|---|---|
-| `functions/normalizers/judit.js` | ✅ OK — `juditRoleSummary` e `juditWarrants` bem estruturados |
-| `functions/normalizers/escavador.js` | ✅ OK — `escavadorProcessos[]` com todos os campos necessários |
-| `src/core/reportBuilder.js` | ✅ OK — `processHighlightsHtml()`, `warrantFindingsHtml()` 100% implementados |
-| `functions/index.js` — `concludeCaseByAnalyst` | ✅ RESOLVIDO — computa `processHighlights`, `warrantFindings`, `keyFindings`, `executiveSummary` |
-| `functions/index.js` — `RESULT_ONLY_FIELDS` | ✅ RESOLVIDO — 4 campos novos incluídos |
-| `src/core/clientPortal.js` — `PUBLIC_RESULT_FIELDS` | ✅ RESOLVIDO — espelhado do backend |
-| `src/pages/PublicReportPage.jsx` | ✅ RESOLVIDO — verifica `expiresAt`; erros diferenciados (expirado/não encontrado) |
-| `src/portals/ops/CasoPage.jsx` — `createInitialForm` | ✅ RESOLVIDO — `analystComment` pré-preenchido com `aiStructured.resumo` |
+### Circuit Breakers
 
----
-
-## 4. Gap Central: Relatório Final Incompleto
-
-### Causa Raiz
-
-A função `concludeCaseByAnalyst` usa `pickConcludePayload()` para filtrar estritamente os campos do formulário. Ela **nunca deriva** `processHighlights`, `warrantFindings`, `keyFindings` ou `executiveSummary` a partir dos dados de enriquecimento já armazenados no Firestore.
-
-Os renderizadores em `reportBuilder.js` estão 100% prontos mas recebem arrays/strings vazios:
-
-```
-caseData.processHighlights  → []      ← nunca populado
-caseData.warrantFindings    → []      ← nunca populado
-caseData.keyFindings        → []      ← nunca populado
-caseData.executiveSummary   → ''      ← nunca populado
-```
-
-### Cadeia de Propagação Após a Correção
-
-```
-concludeCaseByAnalyst()
-  └─ computa os 4 campos a partir de caseData
-  └─ caseRef.update(updatePayload)  ← inclui os 4 campos
-        │
-        ├─ Listener Firestore em CasoPage.jsx atualiza caseData
-        │    └─ buildCaseReportHtml(caseData) renderiza seções ricas
-        │
-        └─ publishResultOnCaseDone (trigger)
-             └─ copia PUBLIC_RESULT_FIELDS → publicResult/latest
-                  └─ buildCaseReportHtml no portal do cliente ← também rico
-```
+| Provedor | Threshold | Cooldown |
+|----------|-----------|----------|
+| Judit | 5 falhas | 10 min |
+| Escavador | 5 falhas | 10 min |
+| FonteData | 5 falhas | 10 min |
+| OpenAI | 3 falhas | 5 min |
 
 ---
 
-## 5. Itens de Implementação Imediata (Fase 0)
+## 4. Fluxo de Enriquecimento
 
-### 5.1 — Helpers de Derivação no Backend
+> Atual: **BigDataCorp-first** (async desabilitado por padrão).
 
-**Arquivo:** `functions/index.js` — inserir antes de `exports.concludeCaseByAnalyst`
-
-```js
-function buildProcessHighlights(caseData) {
-  const juditItems = caseData.juditRoleSummary || [];
-  const escItems   = caseData.escavadorProcessos || [];
-  const seenCnj    = new Set();
-  const relevant   = [];
-
-  for (const p of juditItems) {
-    if (p.secrecyLevel > 0) continue;                        // segredo de justiça
-    if (!p.isCriminal && !p.hasExactCpfMatch && p.status !== 'ATIVO') continue;
-    if (p.isPossibleHomonym && !p.hasExactCpfMatch) continue;
-    if (p.code) seenCnj.add(p.code);
-    relevant.push({ processNumber: p.code, area: p.area, status: p.status,
-      court: p.tribunalAcronym, classification: (p.classifications || [])[0] || null,
-      stage: p.phase, source: 'Judit', isCriminal: p.isCriminal });
-  }
-  for (const p of escItems) {
-    const cnj = p.numeroCnj || '';
-    if (cnj && seenCnj.has(cnj)) continue; // dedup cross-provider
-    const isCriminal = /penal|criminal/i.test(p.area || '');
-    const isActive   = /ativo/i.test(p.status || '');
-    if (!isCriminal && !isActive) continue;
-    relevant.push({ processNumber: cnj || null, area: p.area, status: p.status,
-      court: p.tribunalSigla, classification: p.assuntoPrincipal || null,
-      stage: p.grauFormatado || null, source: 'Escavador', isCriminal });
-  }
-
-  const byArea = {};
-  for (const p of relevant.slice(0, 30)) {
-    const area = p.area || 'Outros';
-    if (!byArea[area]) byArea[area] = [];
-    byArea[area].push(p);
-  }
-  return Object.entries(byArea).map(([area, items]) => ({
-    title: area, area, source: 'Judit / Escavador', total: items.length,
-    summary: `${items.length} registro(s) identificado(s) na área ${area}.`,
-    items: items.map((p) => ({
-      processNumber: p.processNumber || 'Nº não disponível',
-      status: p.status, court: p.court,
-      classification: p.classification, stage: p.stage,
-    })),
-  }));
-}
-
-function buildWarrantFindings(caseData) {
-  return (caseData.juditWarrants || []).map((w) => ({
-    status:    w.status || 'Status não informado',
-    court:     w.court || w.tribunalAcronym || null,
-    reference: w.code || null,
-    source:    'Judit',
-    summary:   [
-      w.warrantType,
-      w.arrestType,
-      w.issueDate     ? `Emitido em ${w.issueDate}`  : null,
-      w.regime        ? `Regime: ${w.regime}`        : null,
-    ].filter(Boolean).join('. '),
-  }));
-}
-
-function buildKeyFindings(caseData, formPayload) {
-  const findings = [];
-  const aiEvidencias = (caseData.aiStructured?.evidencias || []).slice(0, 5);
-  findings.push(...aiEvidencias.filter((e) => typeof e === 'string'));
-  if ((caseData.juditActiveWarrantCount || 0) > 0)
-    findings.push(`${caseData.juditActiveWarrantCount} mandado(s) de prisão pendente(s) de cumprimento.`);
-  const criminalFlag = formPayload?.criminalFlag || caseData.criminalFlag;
-  if (criminalFlag === 'POSITIVE' && (caseData.juditCriminalCount || 0) > 0)
-    findings.push(`${caseData.juditCriminalCount} processo(s) criminal(is) confirmado(s).`);
-  return [...new Set(findings)].slice(0, 7);
-}
-
-function buildExecutiveSummary(caseData) {
-  return caseData.aiStructured?.resumo || '';
-}
+```
+Criação do Caso
+    │
+    ▼
+BigDataCorp — Gate de Identidade (R$ 0,03)
+    │  └─ valida CPF ativo + similaridade nome + óbito
+    │  └─ Fallback: FonteData receita-federal-pf (R$ 0,54) se gate falhar
+    ▼ (gate passou)
+BigDataCorp — Processos (R$ 0,07) + Judit sync datalake (R$ 0,50)
+    │
+    ▼
+PARALELO: Mandados Judit (R$ 1,00) + Execução Penal Judit (R$ 0,50)
+    │
+    ▼
+Escavador — Cross-validação [condicional: criminal/warrant/execution flags]
+    │
+    ▼
+DJEN — Comunicações processuais [condicional]
+    │
+    ▼
+IA — Triagem de Homônimos (se ambiguidade detectada)
+    │
+    ▼
+IA — Estruturação Semântica + Classificação
+    │  └─ { resumo, evidencias[], riskScore, riskLevel, autoClassification... }
+    │
+    ▼
+[ANALISTA CONCLUI] → concludeCaseByAnalyst
+    │  └─ Computa: processHighlights, warrantFindings, keyFindings, executiveSummary
+    │  └─ Calcula: riskScore, riskLevel
+    ▼
+publishResultOnCaseDone (trigger)
+    │  └─ Copia campos públicos → publicResult/latest
+    ▼
+Relatório disponível (frontend + backend reportBuilder)
 ```
 
-### 5.2 — Plugar Helpers em `concludeCaseByAnalyst`
+### Estados do Caso
 
-**Arquivo:** `functions/index.js` — antes de `await caseRef.update(updatePayload)`
-
-```js
-updatePayload.processHighlights = buildProcessHighlights(caseData);
-updatePayload.warrantFindings   = buildWarrantFindings(caseData);
-updatePayload.keyFindings       = buildKeyFindings(caseData, updatePayload);
-updatePayload.executiveSummary  = buildExecutiveSummary(caseData);
-```
-
-### 5.3 — Expandir `RESULT_ONLY_FIELDS`
-
-**Arquivo:** `functions/index.js`
-
-```js
-const RESULT_ONLY_FIELDS = [
-    // ... campos existentes ...
-    'enabledPhases',
-    'processHighlights',   // ← novo
-    'warrantFindings',     // ← novo
-    'keyFindings',         // ← novo
-    'executiveSummary',    // ← novo
-];
-```
-
-### 5.4 — Espelhar no `clientPortal.js`
-
-**Arquivo:** `src/core/clientPortal.js` — adicionar ao final do array `PUBLIC_RESULT_FIELDS`
-
-```js
-    'processHighlights',
-    'warrantFindings',
-    'keyFindings',
-    'executiveSummary',
-```
-
-### 5.5 — TTL do Relatório Público: 30 → 14 dias
-
-**Arquivo:** `functions/index.js` — em `createAnalystPublicReport`
-
-```js
-const TTL_DAYS = 14; // era 30
-```
-
-### 5.6 — Verificação de Expiração em `PublicReportPage.jsx`
-
-**Arquivo:** `src/pages/PublicReportPage.jsx`
-
-- Adicionar verificação `report.expiresAt` antes de usar `report.html`
-- Diferenciar estados de erro: `'expired'` vs `'not-found'` vs `'network'`
-- Exibir mensagem clara de expiração com data formatada
-
-### 5.7 — Pré-preenchimento do `analystComment`
-
-**Arquivo:** `src/portals/ops/CasoPage.jsx` — em `createInitialForm`
-
-```js
-analystComment: caseData?.analystComment
-    || caseData?.aiStructured?.resumo
-    || '',
-```
-
-O label do campo deve indicar visualmente `(pré-preenchido pela IA)` quando o valor veio do `aiStructured.resumo` e ainda não foi editado manualmente.
+| Status | Significado |
+|--------|-------------|
+| `PENDING` | Aguardando enriquecimento |
+| `IN_PROGRESS` | Em análise pelo analista |
+| `DONE` | Concluído, relatório disponível |
+| `CORRECTION_NEEDED` | Devolvido ao cliente para correção |
+| `BLOCKED` | Gate de identidade bloqueado |
+| `REJECTED` | Rejeitado manualmente |
 
 ---
 
-## 6. Fase 1 — Inteligência Contextual no Painel do Analista ✅ CONCLUÍDA
+## 5. Sistema de Backup Automatizado
 
-> Implementada em 2026-04-05.
+### Visão Geral
 
-### 6.1 — Scorecard de Risco no Cabeçalho do Caso ✅
+Backup diário automático do Firestore e Firebase Auth, implementado em **2026-06-01**.
 
-**Onde:** `CasoPage.jsx` — `caso-header__meta`
+```
+Cloud Scheduler (02:00 BRT)
+    │
+    ▼
+Cloud Function: backupDaily (onSchedule)
+    │
+    ├──► Firestore managed export → gs://backups-compliance-hub-br/firestore/<data>/
+    │    └─ API: POST /v1/projects/.../databases/(default):exportDocuments
+    │
+    └──► Auth export → gs://backups-compliance-hub-br/auth/<data>/users.json
+         └─ admin.auth().listUsers() paginado + admin.storage().bucket().file().save()
+    │
+    ▼
+GCS Lifecycle: auto-delete objetos > 7 dias
+```
 
-Chips inline implementados: contagem criminal, contagem mandados, `riskLevel` + `riskScore` pts (apenas para `DONE`).
+### Configuração
 
-### 6.2 — Painel de Evidências IA ✅
+| Item | Valor |
+|------|-------|
+| **Bucket** | `gs://backups-compliance-hub-br` |
+| **Região** | `southamerica-east1` |
+| **Agenda** | Todo dia às 02:00 (horário de Brasília) |
+| **Retenção** | 7 dias (lifecycle GCS) |
+| **Função** | `backupDaily` (Cloud Function Gen2, onSchedule) |
+| **Timeout** | 300s |
+| **Memória** | 512 MiB |
+| **IAM Projeto** | `roles/datastore.importExportAdmin` → service account |
+| **IAM Bucket** | `roles/storage.objectAdmin` → service account |
 
-**Onde:** `CasoPage.jsx` — `<details>` "Síntese da IA" entre EnrichmentPipeline e stepper
+### Estrutura no Bucket
 
-Exibe `aiStructured.resumo` + `aiStructured.evidencias[]` em painel colapsável. Oculto quando `aiStructured` vazio.
+```
+backups-compliance-hub-br/
+├── firestore/
+│   ├── 2026-06-01/       ← managed export (metadados + dados)
+│   └── 2026-06-02/
+├── auth/
+│   ├── 2026-06-01/
+│   │   └── users.json    ← todos os usuários (uid, email, claims, providers)
+│   └── 2026-06-02/
+│       └── users.json
+```
 
-### 6.3 — Validação em Tempo Real do Formulário ✅
+### Restauração de Emergência
 
-**Onde:** `CasoPage.jsx` — `handleConclude()`
+```bash
+# Restaurar Firestore
+gcloud firestore import gs://backups-compliance-hub-br/firestore/2026-06-01/ \
+  --project=compliance-hub-br
 
-Modal `showHighRiskConfirm` quando `riskScore ≥ 70` e `finalVerdict === 'FIT'`. Exige confirmação explícita.
+# Auth — script de recriação a partir do users.json
+# (usuários precisam redefinir senha; dados + customClaims são preservados)
+```
 
-### 6.4 — Timeline de Eventos do Caso ✅
+### Arquivos Relacionados
 
-**Onde:** `CasoPage.jsx` — `<details>` "🕒 Histórico do caso" no final da página
-
-- Nova função `subscribeToCaseAuditLogs(caseId)` em `firestoreService.js`
-- Firestore query: `where('target', '==', caseId)` + `orderBy('timestamp', 'desc')` + `limit(50)`
-- Índice composto `(target ASC, timestamp DESC)` deployado em `firestore.indexes.json`
-- Constante `TIMELINE_ACTION_LABELS` mapeia 7 ações para labels em PT-BR
-
----
-
-## 7. Fase 2 — Portal do Cliente Aprimorado (PARCIALMENTE CONCLUÍDA)
-
-> Itens 7.1, 7.3 e 7.4 concluídos. Item 7.2 adiado.
-
-### 7.1 — Progresso Visual de Fases ✅
-
-**Onde:** `SolicitacoesPage.jsx` — aba "Detalhes" do drawer
-
-Seção "Fases da análise" com chips por fase usando `ANALYSIS_PHASE_LABELS`. ✓ verde quando `DONE`, ○ cinza quando pendente.
-
-### 7.2 — Notificações Push (Web) ⏳ ADIADA
-
-Requisitos de infraestrutura (FCM + service worker + opt-in do navegador) são pesados demais para sprint atual. Prioridade baixa — o cliente já recebe email de conclusão.
-
-### 7.3 — Download do Relatório em PDF ✅ (JÁ EXISTIA)
-
-**Onde:** `PublicReportPage.jsx` — botão "Imprimir / Salvar PDF" → `window.print()`. CSS `@media print` já implementado.
-
-### 7.4 — Histórico de Relatórios Públicos ✅
-
-**Onde:** Nova página `src/portals/ops/RelatoriosPage.jsx` + CSS
-
-- Tabela com token (link clicável), candidato, criado em, expira em, status, botão revogar
-- Nova função `fetchPublicReports(tenantId)` e `revokePublicReport(token)` em `firestoreService.js`
-- Rota `/ops/relatorios` + `/demo/ops/relatorios` em `App.jsx`
-- Item "Relatórios" no sidebar com permissão `AUDIT_VIEW`
-
----
-
-## 8. Fase 3 — Confiabilidade e Operações
-
-### Fase 3A — Qualidade da Análise ✅ CONCLUÍDA
-
-> Implementada em 2026-04-05.
-
-#### 8.2 — Circuit Breaker por Provedor ✅
-
-**Arquivo:** `functions/helpers/circuitBreaker.js` (novo)
-
-- `checkCircuit(providerId)` — lê `systemHealth/{providerId}`, retorna `{ open, reason, halfOpen }`
-- `recordSuccess(providerId)` — reseta failCount, atualiza lastSuccess
-- `recordFailure(providerId, errorMessage)` — incrementa failCount, se >= maxFails seta `disabledUntil`
-- Defaults: judit/escavador/fontedata (5 falhas, 10min cooldown), openai (3 falhas, 5min cooldown)
-- Integrado nos 3 adapters: FonteData, Escavador, Judit em `functions/index.js`
-- Endpoint `getSystemHealth` callable — retorna status de todos provedores
-
-#### NEW-1 — Dashboard de Saúde dos Provedores ✅
-
-**Onde:** `src/portals/ops/SaudePage.jsx` + CSS
-
-- Cards por provedor (judit, escavador, fontedata, openai) com status saudável/degradado/indisponível
-- Exibe: failCount, último sucesso, última falha, bloqueado até, último erro
-- Rota `/ops/saude` + `/demo/ops/saude`; item "Saúde APIs" no sidebar com permissão `AUDIT_VIEW`
-- Firestore rules: `systemHealth/{providerId}` — analyst read, Cloud Functions write
-
-#### NEW-2 — Checklist de Conclusão Inteligente ✅
-
-**Onde:** `CasoPage.jsx` — checklist de conclusão expandida
-
-4 warnings de qualidade de dados (não-bloqueantes, `ok: true, warn: true`):
-- `criminalFlag === 'NEGATIVE'` mas `juditCriminalCount > 0`
-- `warrantFlag === 'NEGATIVE'` mas `juditActiveWarrantCount > 0`
-- `analystComment` < 20 chars
-- `riskScore` 50-69 com veredito FIT
-
-Estilo amber (⚠) via classe `.caso-checklist__item--warn`.
-
-#### NEW-3 — Comparativo IA vs Analista ✅
-
-**Onde:** `CasoPage.jsx` — `<details>` "Comparativo IA vs Analista" entre Síntese IA e stepper
-
-- Grid 2 colunas: IA (azul) vs Analista (verde) com score, riskLevel, veredicto
-- Badge de concordância: alta (≤10 pts diff), média (≤25), baixa (>25)
-- Visível apenas para casos DONE com `aiStructured.riskScore` disponível
-
-### Fase 3B — UX e Eficiência do Analista ✅ CONCLUÍDA
-
-> Implementada em 2026-04-05.
-
-#### NEW-4 — Bulk Actions na FilaPage ✅
-
-**Onde:** `FilaPage.jsx` + CSS
-
-- Checkbox por linha + "Selecionar todos" no header
-- Barra de ação bulk: quantidade selecionada + "Assumir selecionados" + "Limpar"
-- Execução sequencial (`callAssignCaseToCurrentAnalyst` por caso)
-- Feedback de falha (`X de Y caso(s) falharam`)
-- Classe `.fila-table__row--selected` com highlight
-
-#### NEW-5 — Atalhos de Teclado no CasoPage ✅
-
-**Onde:** `CasoPage.jsx` — `useEffect` com `keydown` listener
-
-- `Ctrl+S` / `⌘+S` → salva draft
-- `Ctrl+Enter` / `⌘+Enter` → clica no botão Concluir (via `data-conclude`)
-- `←` / `→` → navega entre steps (apenas quando foco não está em input/textarea/select)
-- Indicador ⌨ no stepper com tooltip explicativo
-
-#### NEW-6 — Filtros Avançados no CasosPage ✅
-
-**Onde:** `CasosPage.jsx` — 3 novos filtros
-
-- **Risco:** ALL / HIGH / MEDIUM / LOW (filtra por `riskLevel`)
-- **Veredito:** ALL / FIT / ATTENTION / NOT_RECOMMENDED (filtra por `finalVerdict`)
-- **Enriquecimento:** ALL / DONE / RUNNING / PARTIAL / FAILED (filtra por `getOverallEnrichmentStatus`)
-
-#### NEW-7 — Dark Mode ✅
-
-**Onde:** `src/index.css` — `@media (prefers-color-scheme: dark)`
-
-- Override completo de tokens semânticos: surfaces, text, borders, shadows, semantic colors
-- Sidebar, cards, modals, drawers todos adaptados
-- `<meta name="color-scheme" content="light dark">` em `index.html`
-- Respeita preferência do sistema operacional automaticamente
-
-### 8.3 — Alertas de Expiração de Token ⏳
-
-Job diário (Cloud Scheduler) que verifica tokens de `publicReports` próximos de expirar (< 48h) e notifica o analista por email.
-
-### 8.4 — Cache de Resultados Escavador ⏳
-
-Armazenar respostas do Escavador em `escavadorCache/{cpf}` com TTL de 7 dias. Evitar re-chamadas desnecessárias em casos de mesmo candidato em tenants diferentes.
-
-### 8.5 — Observabilidade ⏳
-
-- Adicionar `structuredLog()` em cada Cloud Function com campos: `caseId`, `tenantId`, `providerId`, `durationMs`, `statusCode`
-- Dashboard Cloud Monitoring com alertas em p95 latência > 10s
+| Arquivo | Descrição |
+|---------|-----------|
+| `functions/modules/backupWorker.js` | Cloud Function de backup diário |
+| `scripts/setup-backup-bucket.cjs` | Script one-time de criação do bucket |
 
 ---
 
-## 9. Referência de APIs e Provedores
+## 6. Referência de APIs e Provedores
 
-| Provedor | Endpoint | Campos Derivados | Custo |
-|---|---|---|---|
-| **Judit** | `/lawsuits` por CPF | `juditRoleSummary[]`, `juditCriminalCount`, `juditLaborCount`, `juditTotalCount` | Por requisição |
-| **Judit** | `/warrants` por CPF | `juditWarrants[]`, `juditActiveWarrantCount` | Por requisição |
-| **Escavador** | `/processos` por CPF | `escavadorProcessos[]`, `escavadorCriminalCount`, `escavadorTotalCount` | Por requisição |
-| **Escavador** | `/processos` por nome | `escavadorByName*` | Por requisição |
-| **FonteData** | `/financeiro` | `fontedataDebitoTotal`, `fontedataFlags[]` | Por requisição |
-| **OpenAI GPT** | Chat Completions | `aiStructured.resumo`, `aiStructured.evidencias[]`, `aiStructured.riskScore` | Por token |
+| Provedor | Dados | Adapter | Gate | Custo Aprox. |
+|----------|-------|---------|------|-------------|
+| **BigDataCorp** | KYC, processos, profissão | `adapters/bigdatacorp.js` | ✅ Primário | R$ 0,03-0,07 |
+| **Judit** | Processos, mandados, execução criminal, entity data lake | `adapters/judit.js` | — | R$ 0,50-1,00 |
+| **Escavador** | Processos por CPF/nome | `adapters/escavador.js` | — | Por requisição |
+| **FonteData** | Receita Federal, financeiro, identidade | `adapters/fontedata.js` | ⚠️ Fallback | R$ 0,54 |
+| **DJEN** | Comunicações processuais | `adapters/djen.js` | — | Gratuito |
+| **OpenAI GPT** | Análise estruturada, triagem homônimos | inline em `aiOrchestrator.js` | — | Por token |
 
 ### Campos Estruturados por Provedor
 
 **`juditRoleSummary` (por processo):**
 ```js
 {
-  code,           // número CNJ
-  area,           // Criminal / Cível / Trabalhista / ...
-  status,         // ATIVO / ARQUIVADO / ...
-  isCriminal,     // boolean
+  code, area, status, isCriminal,
   hasExactCpfMatch, hasDivergentCpf,
   tribunalAcronym, distributionDate,
   personType, side,
@@ -528,7 +340,7 @@ Armazenar respostas do Escavador em `escavadorCache/{cpf}` com TTL de 7 dias. Ev
 
 ---
 
-## 10. Referência de Campos do Firestore
+## 7. Referência de Campos do Firestore
 
 ### `cases/{caseId}` — Campos Principais
 
@@ -536,26 +348,29 @@ Armazenar respostas do Escavador em `escavadorCache/{cpf}` com TTL de 7 dias. Ev
 |---|---|---|---|
 | `candidateName` | string | Nome do candidato | Criação |
 | `cpf` | string | CPF sem formatação | Criação |
-| `cpfMasked` | string | CPF mascarado (***) | Criação |
 | `tenantId` | string | ID do tenant | Criação |
-| `status` | string | PENDING / IN_PROGRESS / DONE / ... | Ops |
+| `status` | string | PENDING / IN_PROGRESS / DONE / CORRECTION_NEEDED / BLOCKED | Sistema |
+| `bigdatacorpGateResult` | object | Resultado do gate BDC | Enriquecimento |
+| `bigdatacorpProcessos` | array | Processos BigDataCorp | Enriquecimento |
 | `juditRoleSummary` | array | Processos Judit normalizados | Enriquecimento |
 | `juditWarrants` | array | Mandados Judit normalizados | Enriquecimento |
 | `juditCriminalCount` | number | Processos criminais confirmados | Enriquecimento |
 | `juditActiveWarrantCount` | number | Mandados pendentes | Enriquecimento |
-| `escavadorProcessos` | array | Processos Escavador normalizados | Enriquecimento |
+| `escavadorProcessos` | array | Processos Escavador | Enriquecimento |
+| `djenComunicacoes` | array | Comunicações DJEN | Enriquecimento |
 | `aiStructured` | object | Saída estruturada da IA | Enriquecimento |
-| `aiStructured.resumo` | string | Resumo executivo IA | Enriquecimento |
-| `aiStructured.evidencias` | array | Evidências chave identificadas | Enriquecimento |
-| `processHighlights` | array | Destaques processuais computados | `concludeCaseByAnalyst` |
-| `warrantFindings` | array | Achados de mandados computados | `concludeCaseByAnalyst` |
+| `aiHomonymStructured` | object | Resultado da triagem de homônimos | Enriquecimento |
+| `processHighlights` | array | Destaques processuais | `concludeCaseByAnalyst` |
+| `warrantFindings` | array | Achados de mandados | `concludeCaseByAnalyst` |
 | `keyFindings` | array | Principais apontamentos | `concludeCaseByAnalyst` |
 | `executiveSummary` | string | Resumo executivo final | `concludeCaseByAnalyst` |
-| `criminalFlag` | string | POSITIVE / NEGATIVE / NOT_FOUND | Formulário analista |
-| `riskScore` | number | 0-100 | Calculado no conclude |
-| `riskLevel` | string | HIGH / MEDIUM / LOW | Calculado no conclude |
-| `finalVerdict` | string | APPROVED / REPROVED / INCONCLUSIVE | Formulário analista |
-| `analystComment` | string | Comentário analista (editável) | Formulário analista |
+| `deterministicPrefill` | object | Prefill determinístico (v5) | `concludeCaseByAnalyst` |
+| `criminalFlag` | string | POSITIVE / NEGATIVE / INCONCLUSIVE / NOT_FOUND | Formulário analista |
+| `warrantFlag` | string | POSITIVE / NEGATIVE / NOT_FOUND | Formulário analista |
+| `riskScore` | number | 0-100 | `concludeCaseByAnalyst` |
+| `riskLevel` | string | HIGH / MEDIUM / LOW | `concludeCaseByAnalyst` |
+| `finalVerdict` | string | FIT / ATTENTION / NOT_RECOMMENDED | Formulário analista |
+| `analystComment` | string | Comentário do analista | Formulário analista |
 
 ### `publicReports/{token}` — Campos
 
@@ -563,163 +378,256 @@ Armazenar respostas do Escavador em `escavadorCache/{cpf}` com TTL de 7 dias. Ev
 |---|---|---|
 | `html` | string | HTML sanitizado do relatório |
 | `createdAt` | Timestamp | Data de criação |
-| `expiresAt` | Date | Data de expiração (TTL_DAYS a partir da criação) |
+| `expiresAt` | Date | Data de expiração (14 dias) |
 | `caseId` | string | Referência ao caso |
 | `tenantId` | string | Tenant dono do relatório |
 | `active` | boolean | `false` = revogado manualmente |
+| `token` | string | Token público de acesso |
 
 ---
 
-## 11. Comandos de Deploy
+## 8. Comandos de Deploy
 
 ```bash
 # Deploy apenas das Cloud Functions
-firebase deploy --only functions
+firebase deploy --only functions --project=compliance-hub-br
+
+# Deploy de função específica
+firebase deploy --only functions:backupDaily --project=compliance-hub-br
 
 # Deploy do frontend
 npm run build && vercel --prod --yes
 
 # Deploy completo
-firebase deploy --only functions && npm run build && vercel --prod --yes
+firebase deploy --only functions --project=compliance-hub-br && npm run build && vercel --prod --yes
 
-# Rodar testes antes do deploy
-npm test
+# Rodar todos os testes
+npm test                        # frontend (55+ arquivos)
+cd functions && npm test        # backend (55 arquivos, 1223 testes)
 ```
 
 ### Pré-condições para Deploy Seguro
 
-1. `npm test` — 51/51 passing
-2. `npm run build` — zero erros de compilação
-3. Variáveis de ambiente validadas: `JUDIT_API_KEY`, `ESCAVADOR_API_KEY`, `OPENAI_API_KEY`
-4. Revisão de `RESULT_ONLY_FIELDS` vs `PUBLIC_RESULT_FIELDS` em sincronia
+1. `npm test` — 55+ arquivos frontend passando
+2. `cd functions && npm test` — 55 arquivos backend, 1223 testes passando
+3. `npm run build` — zero erros de compilação
+4. Variáveis de ambiente validadas: `JUDIT_API_KEY`, `ESCAVADOR_API_KEY`, `OPENAI_API_KEY`
+5. `RESULT_ONLY_FIELDS` (backend) e `PUBLIC_RESULT_FIELDS` (frontend) em sincronia
 
 ---
 
-## 12. Decisões de Arquitetura (ADRs)
+## 9. Decisões de Arquitetura (ADRs)
 
 ### ADR-001 — Derivação de Campos no Conclude (não no Enriquecimento)
 
 **Decisão:** `processHighlights`, `warrantFindings`, `keyFindings` e `executiveSummary` são computados na hora da conclusão, não durante o enriquecimento.
 
-**Motivação:** O analista pode re-categorizar flags (ex: `criminalFlag`) que afetam quais processos são destaques. Derivar no conclude garante que o relatório sempre reflita a decisão final do analista, não uma interpretação intermediária da IA.
-
-**Trade-off:** Se o analista não conclui o caso, esses campos ficam vazios. Casos em progresso têm relatório parcial — aceitável.
+**Motivação:** O analista pode re-categorizar flags que afetam quais processos são destaques. Derivar no conclude garante que o relatório sempre reflita a decisão final do analista.
 
 ### ADR-002 — Campos Derivados não Passam pelo `ALLOWED_CONCLUDE_FIELDS`
 
-**Decisão:** Os 4 novos campos são adicionados diretamente ao `updatePayload` no servidor, NUNCA ao `ALLOWED_CONCLUDE_FIELDS`.
+**Decisão:** Os campos derivados são adicionados diretamente ao `updatePayload` no servidor, NUNCA ao `ALLOWED_CONCLUDE_FIELDS`.
 
-**Motivação:** Esses campos são computados pelo servidor a partir de dados confiáveis (Firestore). Permitir que o cliente os envie seria uma superfície de injeção de conteúdo no relatório público.
+**Motivação:** Campos computados pelo servidor a partir de dados confiáveis. Permitir que o cliente os envie seria superfície de injeção de conteúdo.
 
 ### ADR-003 — Relatório Público com TTL de 14 dias
 
-**Decisão:** Reduzir o TTL de 30 para 14 dias.
+**Decisão:** TTL de 14 dias para links de relatório público.
 
-**Motivação:** Links de dados sensíveis de candidatos têm ciclo de vida curto em compliance. 14 dias cobre o período de análise e aprovação, com menor janela de exposição.
+**Motivação:** Links de dados sensíveis têm ciclo de vida curto em compliance. 14 dias cobre o período de análise com menor janela de exposição.
 
 ### ADR-004 — `PublicReportPage` diferencia erros de expiração
 
-**Decisão:** Verificar `expiresAt` no frontend antes de renderizar o HTML. Exibir mensagem específica para link expirado vs. não encontrado.
+**Decisão:** Verificar `expiresAt` no frontend antes de renderizar. Exibir mensagem específica para link expirado vs. não encontrado.
 
-**Motivação:** Melhor UX para o destinatário do relatório que recebe um link via e-mail dias depois.
+### ADR-005 — Backup Diário Automatizado
+
+**Decisão:** Implementar backup diário do Firestore (managed export) e Firebase Auth (listUsers) com retenção de 7 dias via lifecycle GCS.
+
+**Motivação:** Garantir recuperação de dados em caso de falha catastrófica. Managed export é operação server-side sem impacto no tráfego de produção.
+
+### ADR-006 — BigDataCorp como Gate Primário
+
+**Decisão:** BigDataCorp é o gate de identidade primário. FonteData é fallback quando BDC falha.
+
+**Motivação:** BigDataCorp tem menor custo (R$ 0,03 vs R$ 0,54) e oferece validação de CPF ativo + óbito + nome.
+
+### ADR-007 — Modularização (Phase C)
+
+**Decisão:** Extrair lógica de negócio do `index.js` para 26 módulos especializados com factory pattern + injeção de dependência.
+
+**Motivação:** `index.js` passou de ~13.366 para ~1.850 linhas (-87%). Cada módulo é testável isoladamente.
+
+### ADR-008 — Escavador2 Classifica Papéis pelo Role Classifier Central
+
+**Decisão:** O normalizador `escavador2.js` usa `classifyRole(role, area, side)` de `helpers/roleClassifier.js` ao invés de atribuir papéis de forma ad-hoc.
+
+**Motivação:** Centralizar regras de classificação reduz inconsistências entre provedores e garante que a área `LABOR` seja normalizada para `Trabalhista` antes da classificação.
+
+### ADR-009 — Processos Escavador2 Visíveis no Portal Ops
+
+**Decisão:** Todos os processos retornados pelo Escavador2 são renderizados no `CasoPage` do portal Ops, separados em "Novos achados" e "Processos confirmatórios/duplicados".
+
+**Motivação:** Auditar processos duplicados/confirmatórios é necessário para supervisores, mesmo quando não alteram prefill ou classificação automática.
+
+### ADR-010 — Pipeline Escavador2 Endurecido contra Dados Stale
+
+**Decisão:** A fase `runEscavador2EnrichmentPhase` limpa campos derivados (`escavador2Processos`, `escavador2NewFinding`, etc.) no início da execução e em caso de falha, preservando apenas `escavador2RawPayloads`. Reruns manuais e em cascade exigem provedores upstream terminalizados.
+
+**Motivação:** Evitar que resultados antigos persistam após reprocessamento, garantindo integridade da classificação automática e do relatório final.
 
 ---
 
-## 13. Registro de Progresso
+## 10. Registro de Progresso
 
-### Fase 0 — Relatório Final Completo ✅ Deployed 2026-04-03
+### Linha do Tempo
+
+```
+2026-04-03  ✅ Fase 0: Relatório Final Completo
+2026-04-05  ✅ Fase 1: Inteligência Contextual
+2026-04-05  ✅ Fase 2: Portal do Cliente
+2026-04-05  ✅ Fase 3A: Qualidade da Análise (Circuit Breaker, Saúde, Checklist)
+2026-04-05  ✅ Fase 3B: UX e Eficiência (Bulk Actions, Atalhos, Filtros, Dark Mode)
+2026-05-31  ✅ Phase B: Exportação Assíncrona (5 callables + contrato)
+2026-05-31  ✅ Phase C: Modularização (26 módulos extraídos, -87% index.js)
+2026-05-31  ✅ Auditorias: correções de segurança, remoção de código morto
+2026-06-01  ✅ Backup Diário: Firestore + Auth, retenção 7 dias
+2026-06-18  ✅ Escavador2: visibilidade Ops, role classifier central e pipeline endurecido
+```
+
+### Fase 0 — Relatório Final Completo ✅ 2026-04-03
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| 5.1 | 4 helpers backend (`buildProcessHighlights`, `buildWarrantFindings`, `buildKeyFindings`, `buildExecutiveSummary`) | ✅ |
+| 5.1 | 4 helpers backend | ✅ |
 | 5.2 | Helpers plugados em `concludeCaseByAnalyst` | ✅ |
 | 5.3 | `RESULT_ONLY_FIELDS` expandido (+4 campos) | ✅ |
-| 5.4 | `PUBLIC_RESULT_FIELDS` espelhado em `clientPortal.js` | ✅ |
-| 5.5 | `TTL_DAYS = 14` | ✅ |
-| 5.6 | `PublicReportPage` verifica `expiresAt` + erros diferenciados | ✅ |
-| 5.7 | `analystComment` pré-preenchido com `aiStructured.resumo` | ✅ |
+| 5.4 | `PUBLIC_RESULT_FIELDS` espelhado no frontend | ✅ |
+| 5.5 | TTL 14 dias | ✅ |
+| 5.6 | `PublicReportPage` verifica `expiresAt` | ✅ |
+| 5.7 | `analystComment` pré-preenchido com IA | ✅ |
 
-### Fase 1 — Inteligência Contextual ✅ Deployed 2026-04-05
+### Fase 1 — Inteligência Contextual ✅ 2026-04-05
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| 6.1 | Scorecard chips no cabeçalho (criminal, mandados, risk) | ✅ |
+| 6.1 | Scorecard chips no cabeçalho | ✅ |
 | 6.2 | Painel "Síntese da IA" colapsável | ✅ |
 | 6.3 | Modal de confirmação risco alto + FIT | ✅ |
 | 6.4 | Timeline de auditoria no CasoPage | ✅ |
 
-### Fase 2 — Portal do Cliente ✅ Deployed 2026-04-05
+### Fase 2 — Portal do Cliente ✅ 2026-04-05
 
 | Item | Descrição | Status |
 |------|-----------|--------|
 | 7.1 | Phase stepper no drawer do cliente | ✅ |
 | 7.2 | Notificações Push | ⏳ Adiada |
-| 7.3 | PDF Download | ✅ (já existia) |
+| 7.3 | PDF Download | ✅ |
 | 7.4 | Página Relatórios Públicos (ops) | ✅ |
 
-### Correções de Auditoria — 2026-04-05
+### Fase 3A — Qualidade da Análise ✅ 2026-04-05
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| AUD-1 | Rota demo `/demo/ops/relatorios` faltante | ✅ Corrigido |
-| AUD-2 | Índice Firestore `(target, timestamp)` para auditLogs | ✅ Deployado |
+| 8.2 | Circuit Breaker + `getSystemHealth` | ✅ |
+| NEW-1 | SaudePage — `/ops/saude` | ✅ |
+| NEW-2 | Checklist de Conclusão Inteligente | ✅ |
+| NEW-3 | Comparativo IA vs Analista | ✅ |
 
-### Fase 3A — Qualidade da Análise ✅ Deployed 2026-04-05
-
-| Item | Descrição | Status |
-|------|-----------|--------|
-| 8.2 | Circuit Breaker (`circuitBreaker.js` + integrado em 3 adapters + `getSystemHealth`) | ✅ |
-| NEW-1 | SaudePage — dashboard `/ops/saude` com cards por provedor | ✅ |
-| NEW-2 | Checklist de Conclusão Inteligente — 4 warnings de qualidade | ✅ |
-| NEW-3 | Comparativo IA vs Analista — grid com concordância | ✅ |
-
-### Fase 3B — UX e Eficiência ✅ Deployed 2026-04-05
+### Fase 3B — UX e Eficiência ✅ 2026-04-05
 
 | Item | Descrição | Status |
 |------|-----------|--------|
-| NEW-4 | Bulk Actions na FilaPage — checkbox + assumir selecionados | ✅ |
-| NEW-5 | Atalhos de Teclado — Ctrl+S, Ctrl+Enter, ←/→ | ✅ |
-| NEW-6 | Filtros Avançados CasosPage — risco, veredito, enriquecimento | ✅ |
-| NEW-7 | Dark Mode — `prefers-color-scheme: dark` completo | ✅ |
+| NEW-4 | Bulk Actions na FilaPage | ✅ |
+| NEW-5 | Atalhos de Teclado (Ctrl+S, Ctrl+Enter) | ✅ |
+| NEW-6 | Filtros Avançados CasosPage | ✅ |
+| NEW-7 | Dark Mode | ✅ |
 
-### Estado Atual
+### Phase B — Exportação Assíncrona ✅ 2026-05-31
 
-- **Testes:** 51/51 passando (16 suites)
-- **Build:** ✅ Limpo, sem warnings
+| Item | Descrição | Status |
+|------|-----------|--------|
+| EXP-1 | `createExportJob` callable | ✅ |
+| EXP-2 | `getExportJobStatus` callable | ✅ |
+| EXP-3 | `listExportJobs` callable | ✅ |
+| EXP-4 | `cancelExportJob` callable | ✅ |
+| EXP-5 | `processExportJob` callable | ✅ |
+| EXP-6 | Teste de contrato export jobs | ✅ |
+
+### Phase C — Modularização ✅ 2026-05-31
+
+| Item | Descrição | Status |
+|------|-----------|--------|
+| MOD-1 | Extração de 26 módulos | ✅ |
+| MOD-2 | Factory pattern + dependency injection | ✅ |
+| MOD-3 | `index.js`: 13.366 → ~1.850 linhas (-87%) | ✅ |
+| MOD-4 | Todos os 1223 testes adaptados | ✅ |
+
+### Correções e Melhorias — 2026-05-31
+
+| Item | Descrição | Status |
+|------|-----------|--------|
+| FIX-1 | Remoção de CPF dos campos públicos | ✅ |
+| FIX-2 | Remoção de código morto | ✅ |
+| FIX-3 | Skip syncClientCaseOnUpdate para auto-classify | ✅ |
+| FIX-4 | Debounce campos de texto CasoPage | ✅ |
+| FIX-5 | Aumento limites de query exportação | ✅ |
+
+### Sistema de Backup ✅ 2026-06-01
+
+| Item | Descrição | Status |
+|------|-----------|--------|
+| BKP-1 | Bucket GCS `backups-compliance-hub-br` | ✅ |
+| BKP-2 | Lifecycle auto-delete 7 dias | ✅ |
+| BKP-3 | IAM `datastore.importExportAdmin` | ✅ |
+| BKP-4 | IAM `storage.objectAdmin` | ✅ |
+| BKP-5 | Cloud Function `backupDaily` (onSchedule) | ✅ |
+| BKP-6 | Script `setup-backup-bucket.cjs` | ✅ |
+
+### Estado Atual (2026-06-01)
+
+- **Testes backend:** 55 arquivos, 1223 testes passando
+- **Testes frontend:** 55+ arquivos, ~1200 testes passando
+- **Lint:** 0 erros (root + functions)
+- **Build:** Limpo
 - **Vercel:** https://compliance-hub-hazel.vercel.app
-- **Firebase Functions:** Deployed
+- **Firebase:** compliance-hub-br (southamerica-east1)
+- **Backup:** Diário, 02:00 BRT, retenção 7 dias
 
 ---
 
-## 14. Próximas Fases — Plano de Implementação
+## 11. Próximas Fases
 
-### Fase 4 — Confiabilidade e Infraestrutura (próxima sprint)
+### Fase 4 — Confiabilidade e Infraestrutura
 
-| Prio | Item | Descrição | Impacto | Complexidade |
-|:---:|------|-----------|---------|:---:|
-| P0 | 8.4 | **Cache de Resultados Escavador** — `escavadorCache/{cpf}` com TTL 7d | Economia de custo em re-consultas | Média |
-| P0 | 8.5 | **Observabilidade** — `structuredLog()` em Cloud Functions: caseId, tenantId, provider, durationMs | Base para alertas e diagnóstico | Média |
-| P1 | 8.3 | **Alertas de Expiração de Token** — Cloud Scheduler diário, `publicReports.expiresAt < now + 48h` | Proativo antes do link expirar | Baixa |
-| P1 | NEW-8 | **Rate Limiting por Tenant** — enforced no backend, `dailyLimit`/`monthlyLimit` do tenant config | Segurança contra abuso | Média |
-| P2 | 7.2 | **Notificações Push (Web)** — FCM quando caso muda para DONE | Nice-to-have para clientes | Alta |
+| Prio | Item | Descrição | Complexidade |
+|:---:|------|-----------|:---:|
+| P0 | 8.4 | **Cache Escavador** — `escavadorCache/{cpf}` TTL 7d | Média |
+| P0 | 8.5 | **Observabilidade** — structured logging por Cloud Function | Média |
+| P1 | 8.3 | **Alertas de Expiração** — Cloud Scheduler, avisa < 48h | Baixa |
+| P1 | NEW-8 | **Rate Limiting por Tenant** — dailyLimit/monthlyLimit | Média |
+| P2 | 7.2 | **Notificações Push (Web)** — FCM | Alta |
 
-### Fase 5 — Produto Premium (longo prazo)
+### Fase 5 — Produto Premium
 
-| Prio | Item | Descrição | Impacto | Complexidade |
-|:---:|------|-----------|---------|:---:|
-| P1 | NEW-9 | **API REST para Integrações** — `/api/v1/cases` autenticado por API key por tenant | Abre canal B2B enterprise | Alta |
-| P1 | NEW-10 | **White-label do Relatório Público** — tenant configura logo, cores, texto de rodapé | Diferencial competitivo | Média |
-| P2 | NEW-11 | **Audit Trail Exportável** — exportar logs filtrados como CSV | Requisito compliance bancário | Baixa |
-| P2 | NEW-12 | **SLA Dashboard** — tempo médio de conclusão, % em < 24h, aging report | Gestão de performance | Média |
+| Prio | Item | Descrição | Complexidade |
+|:---:|------|-----------|:---:|
+| P1 | NEW-9 | **API REST para Integrações** — `/api/v1/cases` com API key | Alta |
+| P1 | NEW-10 | **White-label Relatório** — logo, cores, rodapé por tenant | Média |
+| P2 | NEW-11 | **Audit Trail Exportável** — CSV | Baixa |
+| P2 | NEW-12 | **SLA Dashboard** — tempo médio, aging report | Média |
 
 ### Ordem de Implementação Recomendada
 
 ```
-✅ Fase 0:  Relatório Final Completo       — deployed 2026-04-03
-✅ Fase 1:  Inteligência Contextual         — deployed 2026-04-05
-✅ Fase 2:  Portal do Cliente               — deployed 2026-04-05
-✅ Fase 3A: Qualidade da Análise            — deployed 2026-04-05
-✅ Fase 3B: UX e Eficiência do Analista     — deployed 2026-04-05
+✅ Fase 0:   Relatório Final Completo       — 2026-04-03
+✅ Fase 1:   Inteligência Contextual         — 2026-04-05
+✅ Fase 2:   Portal do Cliente               — 2026-04-05
+✅ Fase 3A:  Qualidade da Análise            — 2026-04-05
+✅ Fase 3B:  UX e Eficiência                 — 2026-04-05
+✅ Phase B:  Exportação Assíncrona           — 2026-05-31
+✅ Phase C:  Modularização                   — 2026-05-31
+✅ Backup:   Sistema de Backup Diário        — 2026-06-01
 
 Próxima sprint (Fase 4):
   1. 8.4  Cache Escavador               ← economia

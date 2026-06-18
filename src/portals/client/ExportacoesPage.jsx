@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { asyncPool } from '../../utils/asyncPool';
 import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import { useAuth } from '../../core/auth/useAuth';
@@ -7,10 +8,16 @@ import {
     callRegisterClientExport,
     subscribeToExports,
     getCasePublicResult,
+    callCreateExportJob,
+    callGetExportJobStatus,
+    callProcessExportJob,
+    callListExportJobs,
+    callCancelExportJob,
 } from '../../core/firebase/firestoreService';
 import { getMockCaseById, getMockExports, MOCK_CASES } from '../../data/mockData';
 import { buildBatchReportHtml } from '../../core/reportBuilder';
 import { extractErrorMessage } from '../../core/errorUtils';
+import { formatDateTimeBR, formatDate } from '../../core/formatDate';
 import { ROLES } from '../../core/rbac/permissions';
 import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import MobileDataCardList from '../../ui/components/MobileDataCardList/MobileDataCardList';
@@ -59,12 +66,16 @@ const PRI_MAP = {
 const FLAG_MAP = {
     POSITIVE: 'Positivo',
     NEGATIVE: 'Negativo',
-    NEGATIVE_PARTIAL: 'Negativo parcial',
+    NEGATIVE_PARTIAL: 'Negativo',
     INCONCLUSIVE: 'Inconclusivo',
-    INCONCLUSIVE_HOMONYM: 'Inconclusivo por homônimo',
-    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo por cobertura',
+    INCONCLUSIVE_HOMONYM: 'Inconclusivo',
+    INCONCLUSIVE_LOW_COVERAGE: 'Inconclusivo',
     NOT_FOUND: 'Não encontrado',
 };
+
+function normalizeJobStatus(status) {
+    return String(status || '').toLowerCase();
+}
 
 function escapeCsvField(value, delimiter = ';') {
     const str = String(value ?? '');
@@ -100,16 +111,13 @@ function buildMainAlerts(c) {
 
     if (
         c.criminalFlag === 'POSITIVE' ||
-        c.criminalFlag === 'INCONCLUSIVE_HOMONYM' ||
-        c.criminalFlag === 'INCONCLUSIVE_LOW_COVERAGE'
+        c.criminalFlag === 'INCONCLUSIVE'
     ) {
         alerts.push(`Criminal: ${FLAG_MAP[c.criminalFlag] || c.criminalFlag}`);
     }
 
     if (
         c.laborFlag === 'POSITIVE' ||
-        c.laborFlag === 'INCONCLUSIVE_HOMONYM' ||
-        c.laborFlag === 'INCONCLUSIVE_LOW_COVERAGE' ||
         c.laborFlag === 'INCONCLUSIVE'
     ) {
         alerts.push(`Trabalhista: ${FLAG_MAP[c.laborFlag] || c.laborFlag}`);
@@ -200,7 +208,7 @@ function buildCsvContent(rows) {
             c.candidateName || '',
             c.cpfMasked || '',
             c.candidatePosition || 'Cargo não informado',
-            c.createdAt || '',
+            formatDateTimeBR(c.createdAt) || '',
             STATUS_MAP[c.status] || c.status || '',
             getCoverageLabel(c),
             PRI_MAP[c.priority] || c.priority || '',
@@ -224,7 +232,7 @@ function esc(str) {
 
 function buildPrintableHtml(rows, scopeLabel, tenantName) {
     const now = new Date();
-    const nowLabel = now.toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+    const nowLabel = formatDateTimeBR(now);
 
     const statusMap = {
         PENDING: 'Pendente',
@@ -305,7 +313,7 @@ function buildPrintableHtml(rows, scopeLabel, tenantName) {
         <td><span class="coverage">${esc(coverageLabel(c))}</span></td>
         <td>${riskBadge(c.riskLevel)}</td>
         <td>${verdictBadge(c.finalVerdict)}</td>
-        <td>${esc(c.createdAt || '-')}</td>
+        <td>${esc(formatDateTimeBR(c.createdAt) || '-')}</td>
     </tr>`).join('');
 
     const pendingWarning = summary.pending > 0
@@ -876,6 +884,17 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(url);
 }
 
+function downloadBlobFromUrl(url, filename) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 function openHtmlBlob(html) {
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -906,6 +925,128 @@ export default function ExportacoesPage() {
         loading: !isDemoMode,
         error: null,
     });
+
+    // Estados para exportação assíncrona (Phase B)
+    const [asyncJobs, setAsyncJobs] = useState([]);
+    const [currentJobId, setCurrentJobId] = useState(null);
+    const [currentJobStatus, setCurrentJobStatus] = useState(null);
+    const pollingRef = useRef(null);
+
+    const loadAsyncJobs = async () => {
+        if (isDemoMode || !tenantId) return;
+        try {
+            const result = await callListExportJobs({ limit: 10 });
+            setAsyncJobs(result?.jobs || []);
+        } catch (err) {
+            console.error('Erro ao carregar jobs de exportação:', err);
+        }
+    };
+
+    const pollJobStatus = async (jobId) => {
+        try {
+            const result = await callGetExportJobStatus(jobId);
+            const job = result?.job || result || null;
+            setCurrentJobStatus(job);
+            const status = normalizeJobStatus(job?.status);
+            if (status === 'done' || status === 'error' || status === 'cancelled') {
+                if (pollingRef.current) {
+                    window.clearInterval(pollingRef.current);
+                    pollingRef.current = null;
+                }
+                setCurrentJobId(null);
+                loadAsyncJobs();
+            }
+        } catch (err) {
+            console.error('Erro no polling do job:', err);
+        }
+    };
+
+    const startPolling = (jobId) => {
+        if (pollingRef.current) window.clearInterval(pollingRef.current);
+        setCurrentJobId(jobId);
+        setCurrentJobStatus(null);
+        pollJobStatus(jobId);
+        pollingRef.current = window.setInterval(() => pollJobStatus(jobId), 3000);
+    };
+
+    const handleCreateExportJob = async () => {
+        if (exporting || currentJobId) return;
+        setExporting(true);
+        setFeedback('Iniciando exportação assíncrona...');
+        try {
+            const result = await callCreateExportJob({
+                format: 'csv',
+                scopeCode: exportScope,
+                filters: {
+                    scopeCode: exportScope,
+                    dateFrom: dateFrom || null,
+                    dateTo: dateTo || null,
+                },
+            });
+            if (result?.jobId) {
+                setFeedback('Exportação iniciada. Acompanhando progresso...');
+                startPolling(result.jobId);
+                loadAsyncJobs();
+                callProcessExportJob(result.jobId).catch((err) => {
+                    setFeedback(`Erro ao processar exportação: ${extractErrorMessage(err)}`);
+                    pollJobStatus(result.jobId);
+                });
+            } else {
+                setFeedback('Erro ao iniciar exportação.');
+            }
+        } catch (err) {
+            setFeedback(`Erro: ${extractErrorMessage(err)}`);
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const handleCancelJob = async (jobId) => {
+        try {
+            await callCancelExportJob(jobId);
+            setFeedback('Exportação cancelada.');
+            loadAsyncJobs();
+            if (currentJobId === jobId && pollingRef.current) {
+                window.clearInterval(pollingRef.current);
+                pollingRef.current = null;
+                setCurrentJobId(null);
+                setCurrentJobStatus(null);
+            }
+        } catch (err) {
+            setFeedback(`Erro ao cancelar: ${extractErrorMessage(err)}`);
+        }
+    };
+
+    const handleDownloadJob = async (jobId) => {
+        setFeedback('Obtendo arquivo...');
+        try {
+            const result = await callGetExportJobStatus(jobId);
+            const job = result?.job || result || null;
+            if (job?.downloadUrl) {
+                downloadBlobFromUrl(job.downloadUrl, `exportacao-${jobId}.csv`);
+                setFeedback('Download iniciado.');
+                loadAsyncJobs();
+            } else {
+                setFeedback('Arquivo ainda não disponível. Tente novamente.');
+            }
+        } catch (err) {
+            setFeedback(`Erro ao obter arquivo: ${extractErrorMessage(err)}`);
+        }
+    };
+
+    useEffect(() => {
+        if (!isDemoMode && tenantId) {
+            callListExportJobs({ limit: 10 })
+                .then((result) => setAsyncJobs(result?.jobs || []))
+                .catch((err) => console.error('Erro ao carregar jobs de exportação:', err));
+        }
+        return () => {
+            if (pollingRef.current) {
+                window.clearInterval(pollingRef.current);
+                pollingRef.current = null;
+            }
+        };
+    }, [isDemoMode, tenantId]);
 
     useEffect(() => {
         if (isDemoMode || !tenantId) {
@@ -977,7 +1118,7 @@ export default function ExportacoesPage() {
     const history = isDemoMode ? getMockExports(tenantId) : exportsState.exports;
 
     const prepareExportArtifact = (casesToExport = filteredCases) => {
-        const ts = new Date().toISOString().slice(0, 10);
+        const ts = formatDate(new Date()).replace(/\//g, '-');
         if (exportType === 'CSV') {
             return {
                 mode: 'download',
@@ -1014,20 +1155,18 @@ export default function ExportacoesPage() {
             });
         }
 
-        const enriched = await Promise.all(
-            casesToEnrich.map(async (c) => {
-                if (c.status !== 'DONE') return c;
-                try {
-                    const publicResult = await getCasePublicResult(c.id);
-                    if (publicResult) {
-                        return { ...c, ...publicResult };
-                    }
-                } catch {
-                    // Fallback to caseData if publicResult unavailable
+        const enriched = await asyncPool(5, casesToEnrich, async (c) => {
+            if (c.status !== 'DONE') return c;
+            try {
+                const publicResult = await getCasePublicResult(c.id);
+                if (publicResult) {
+                    return { ...c, ...publicResult };
                 }
-                return c;
-            }),
-        );
+            } catch {
+                // Fallback to caseData if publicResult unavailable
+            }
+            return c;
+        });
         return enriched;
     };
 
@@ -1177,6 +1316,129 @@ export default function ExportacoesPage() {
                 {feedback && <p role="status" aria-live="polite" className="export-feedback">{feedback}</p>}
             </div>
 
+            {/* Exportação Assíncrona — Phase B */}
+            {!isDemoMode && (
+                <div className="export-async">
+                    <h3>Exportação em nuvem</h3>
+                    <p className="export-async__hint">
+                        Gere arquivos grandes de forma assíncrona. O processamento ocorre no servidor e você será notificado quando concluir.
+                    </p>
+
+                    <div className="export-async__form">
+                        <button
+                            type="button"
+                            className="export-btn export-btn--async"
+                            onClick={handleCreateExportJob}
+                            disabled={exporting || currentJobId || casesLoading || Boolean(casesError) || invalidDateRange || recordCount === 0}
+                        >
+                            {currentJobId ? 'Processando...' : exporting ? 'Iniciando...' : 'Exportar para nuvem'}
+                        </button>
+                    </div>
+
+                    {currentJobStatus && (
+                        <div className="export-async__status-card">
+                            <div className="export-async__status-header">
+                                <span className="export-async__status-label">Job em andamento</span>
+                                <StatusBadge status={currentJobStatus.status || 'PENDING'} />
+                            </div>
+                            {currentJobStatus.totalRecords > 0 && (
+                                <div className="export-async__progress">
+                                    <div className="export-async__progress-bar">
+                                        <div
+                                            className="export-async__progress-fill"
+                                            style={{ width: `${Math.round(((currentJobStatus.recordsProcessed || 0) / currentJobStatus.totalRecords) * 100)}%` }}
+                                        />
+                                    </div>
+                                    <span className="export-async__progress-text">
+                                        {currentJobStatus.recordsProcessed || 0} de {currentJobStatus.totalRecords} registros
+                                    </span>
+                                </div>
+                            )}
+                            <div className="export-async__status-actions">
+                                {normalizeJobStatus(currentJobStatus.status) === 'done' && currentJobStatus.downloadUrl && (
+                                    <a href={currentJobStatus.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">
+                                        Baixar arquivo
+                                    </a>
+                                )}
+                                {(normalizeJobStatus(currentJobStatus.status) === 'pending' || normalizeJobStatus(currentJobStatus.status) === 'processing') && (
+                                    <button type="button" className="export-btn export-btn--secondary" onClick={() => handleCancelJob(currentJobStatus.jobId || currentJobStatus.id)}>
+                                        Cancelar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {asyncJobs.length > 0 && (
+                        <div className="export-async__history">
+                            <h4>Jobs recentes</h4>
+                            <div className="export-table-wrapper">
+                                <table className="data-table" aria-label="Jobs de exportação em nuvem">
+                                    <thead>
+                                        <tr>
+                                            <th className="data-table__th" scope="col">ID</th>
+                                            <th className="data-table__th" scope="col">Formato</th>
+                                            <th className="data-table__th" scope="col">Escopo</th>
+                                            <th className="data-table__th" scope="col">Registros</th>
+                                            <th className="data-table__th" scope="col">Status</th>
+                                            <th className="data-table__th" scope="col">Progresso</th>
+                                            <th className="data-table__th" scope="col">Data</th>
+                                            <th className="data-table__th" scope="col">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {asyncJobs.map((job) => {
+                                            const jobStatus = normalizeJobStatus(job.status);
+                                            const progressPct = job.totalRecords > 0
+                                                ? Math.round(((job.recordsProcessed || 0) / job.totalRecords) * 100)
+                                                : 0;
+                                            return (
+                                                <tr key={job.jobId || job.id} className="data-table__row">
+                                                    <td className="data-table__td data-table__td--mono">{(job.jobId || job.id || '').slice(0, 8)}</td>
+                                                    <td className="data-table__td">{job.format?.toUpperCase()}</td>
+                                                    <td className="data-table__td">{job.scopeCode || job.scope || '-'}</td>
+                                                    <td className="data-table__td">{job.totalRecords ?? '-'}</td>
+                                                    <td className="data-table__td"><StatusBadge status={job.status || 'PENDING'} /></td>
+                                                    <td className="data-table__td">
+                                                        {job.totalRecords > 0 ? (
+                                                            <div className="export-async__progress--inline">
+                                                                <div className="export-async__progress-bar--inline">
+                                                                    <div className="export-async__progress-fill--inline" style={{ width: `${progressPct}%` }} />
+                                                                </div>
+                                                                <span className="export-async__progress-text--inline">{progressPct}%</span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="export-async__progress-text--inline">-</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="data-table__td">{formatDateTimeBR(job.createdAt) || '-'}</td>
+                                                    <td className="data-table__td">
+                                                        {jobStatus === 'done' && (job.downloadUrl ? (
+                                                            <a href={job.downloadUrl} className="export-link" target="_blank" rel="noopener noreferrer">Baixar</a>
+                                                        ) : (
+                                                            <button type="button" className="export-btn--small" onClick={() => handleDownloadJob(job.jobId || job.id)}>Baixar</button>
+                                                        ))}
+                                                        {(jobStatus === 'pending' || jobStatus === 'processing') && (
+                                                            <button type="button" className="export-btn--small" onClick={() => handleCancelJob(job.jobId || job.id)}>Cancelar</button>
+                                                        )}
+                                                        {jobStatus === 'error' && (
+                                                            <span className="export-artifact-note">Falhou</span>
+                                                        )}
+                                                        {jobStatus === 'cancelled' && (
+                                                            <span className="export-artifact-note">Cancelado</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="export-history">
                 <h3>Histórico de exportações locais</h3>
                 <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
@@ -1195,7 +1457,7 @@ export default function ExportacoesPage() {
                             <div className="mobile-card__meta">
                                 <span className="mobile-card__meta-item">{item.scope}</span>
                                 <span className="mobile-card__meta-item">{item.records} solicitação(ões)</span>
-                                <span className="mobile-card__meta-item">{item.createdAt}</span>
+                                <span className="mobile-card__meta-item">{formatDateTimeBR(item.createdAt)}</span>
                                 <span className="mobile-card__meta-item">Gerado por: {item.createdByName || item.createdByEmail || 'Não informado'}</span>
                             </div>
                             <div className="mobile-card__actions">
@@ -1245,7 +1507,7 @@ export default function ExportacoesPage() {
                                         <td className="data-table__td">{item.scope}</td>
                                         <td className="data-table__td">{item.records}</td>
                                         <td className="data-table__td">{item.createdByName || item.createdByEmail || 'Não informado'}</td>
-                                        <td className="data-table__td">{item.createdAt}</td>
+                                        <td className="data-table__td">{formatDateTimeBR(item.createdAt)}</td>
                                         <td className="data-table__td"><StatusBadge status={item.status || 'DONE'} /></td>
                                         <td className="data-table__td">
                                             {isDemoMode && item.artifactCaseId ? (

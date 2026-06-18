@@ -111,6 +111,18 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
                             {error && (
                                 <span className="enrichment-pipeline__error-msg" title={error}>⚠ {error}</span>
                             )}
+                            {status === 'FAILED_SCHEMA' && (caseData.aiClassificationReviewRawResponse || caseData.aiRawResponse) && (
+                                <button
+                                    type="button"
+                                    className="enrichment-pipeline__inspect"
+                                    onClick={() => {
+                                        const el = document.getElementById('ai-raw-response');
+                                        if (el) { el.open = true; el.scrollIntoView({ behavior: 'smooth' }); }
+                                    }}
+                                >
+                                    Inspecionar resposta bruta
+                                </button>
+                            )}
                             {canRetry && (
                                 <button
                                     type="button"

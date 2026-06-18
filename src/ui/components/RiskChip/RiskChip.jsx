@@ -6,11 +6,11 @@ function buildConfig(audience) {
     return {
         // Criminal / General risk
         NEGATIVE: { label: isOps ? 'Negativo' : 'Sem apontamento', icon: 'OK', color: 'green' },
-        NEGATIVE_PARTIAL: { label: isOps ? 'Negativo parcial' : 'Parcial', icon: '!', color: 'yellow' },
+        NEGATIVE_PARTIAL: { label: isOps ? 'Negativo' : 'Sem apontamento', icon: 'OK', color: 'green' },
         POSITIVE: { label: isOps ? 'Positivo' : 'Com apontamento', icon: '!', color: 'red' },
         INCONCLUSIVE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
-        INCONCLUSIVE_HOMONYM: { label: isOps ? 'Inconclusivo por homônimo' : 'Precisa de revisão manual', icon: '?', color: 'yellow' },
-        INCONCLUSIVE_LOW_COVERAGE: { label: 'Inconclusivo por cobertura', icon: '?', color: 'yellow' },
+        INCONCLUSIVE_HOMONYM: { label: 'Inconclusivo', icon: '?', color: 'blue' },
+        INCONCLUSIVE_LOW_COVERAGE: { label: 'Inconclusivo', icon: '?', color: 'blue' },
         NOT_FOUND: { label: 'Não encontrado', icon: '-', color: 'gray' },
         HIGH_COVERAGE: { label: 'Cobertura alta', icon: 'OK', color: 'green' },
         PARTIAL_COVERAGE: { label: 'Cobertura parcial', icon: '!', color: 'yellow' },

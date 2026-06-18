@@ -1,18 +1,12 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../core/auth/useAuth';
 import { subscribeToCaseMessages, callSendCaseMessage, callMarkCaseCommunicationRead } from '../../../core/firebase/firestoreService';
+import { formatDateTimeBR } from '../../../core/formatDate';
 import './CaseCommunicationPanel.css';
 
 function formatMessageDate(date) {
     if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    return formatDateTimeBR(date);
 }
 
 function getInitials(name) {
@@ -90,6 +84,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
     };
 
     const currentUid = user?.uid;
+    const getMessageBody = (message) => message?.body || message?.content || '';
 
     return (
         <div className="case-communication-panel">
@@ -118,7 +113,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
                     if (isSystem) {
                         return (
                             <div key={msg.id} className="case-message-system">
-                                <span className="case-message-system-text">{msg.body}</span>
+                                <span className="case-message-system-text">{getMessageBody(msg)}</span>
                                 <span className="case-message-system-time">{formatMessageDate(msg.createdAt)}</span>
                             </div>
                         );
@@ -137,7 +132,7 @@ export default function CaseCommunicationPanel({ caseId, caseData, portal = 'ops
                                     <span className="case-message-name">{msg.senderName}</span>
                                     <span className="case-message-time">{formatMessageDate(msg.createdAt)}</span>
                                 </div>
-                                <div className="case-message-body">{msg.body}</div>
+                                <div className="case-message-body">{getMessageBody(msg)}</div>
                             </div>
                         </div>
                     );
