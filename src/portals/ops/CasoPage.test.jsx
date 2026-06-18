@@ -800,4 +800,36 @@ describe('CasoPage', () => {
             }));
         });
     });
+
+    it('renderiza processos Escavador2 quando presentes', async () => {
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Escavador2 Teste',
+                cpf: '12345678901',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                enabledPhases: ['criminal', 'labor', 'warrant'],
+                escavador2EnrichmentStatus: 'DONE',
+                escavador2ProcessTotal: 2,
+                escavador2NewFindingCount: 1,
+                escavador2DuplicateCount: 1,
+                escavador2Processos: [
+                    { numeroCnj: '0001234-56.2024.8.26.0100', area: 'CRIMINAL', tipoPrincipal: 'Reu', polo: 'PASSIVO', isMaterialRisk: true, isCriminal: true, isNewEscavador2Finding: true, tribunalSigla: 'TJSP', dataInicio: '2024-01-01' },
+                    { numeroCnj: '0005678-90.2023.5.09.0001', area: 'LABOR', tipoPrincipal: 'Reclamante', polo: 'ATIVO', isMaterialRisk: false, isLabor: true, isNewEscavador2Finding: false, tribunalSigla: 'TRT9', dataInicio: '2023-03-10' },
+                ],
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Escavador2 Teste')).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /Escavador2 via integração/ })).toBeInTheDocument();
+        expect(screen.getByText('0001234-56.2024.8.26.0100')).toBeInTheDocument();
+        expect(screen.getByText('0005678-90.2023.5.09.0001')).toBeInTheDocument();
+        expect(screen.getAllByText('Novo').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('Confirmatório').length).toBeGreaterThanOrEqual(1);
+    });
 });

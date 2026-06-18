@@ -47,6 +47,20 @@ function formatFullCpf(cpf) {
     return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+function formatEscavador2Process(process) {
+    return {
+        cnj: process.numeroCnjMascarado || process.numeroCnj || '—',
+        area: process.area || '—',
+        role: process.tipoPrincipal || process.roleCategory || '—',
+        side: process.polo || '—',
+        materialRisk: process.isMaterialRisk ? 'Sim' : 'Nao',
+        tribunal: process.tribunalSigla || '—',
+        dataInicio: process.dataInicio || '—',
+        isNewFinding: process.isNewEscavador2Finding === true,
+        isCriminal: process.isCriminal === true,
+    };
+}
+
 const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
 
 const CRIMINAL_OPTIONS = [
@@ -1318,6 +1332,9 @@ export default function CasoPage() {
             toMs(caseData.enrichedAt),
             toMs(caseData.juditEnrichedAt),
             toMs(caseData.escavadorEnrichedAt),
+            toMs(caseData.bigdatacorpEnrichedAt),
+            toMs(caseData.djenEnrichedAt),
+            toMs(caseData.escavador2EnrichedAt),
             toMs(caseData.autoClassifiedAt)
         );
         return latestEnrichment > draftTs ? (
@@ -1326,7 +1343,7 @@ export default function CasoPage() {
                 <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
             </div>
         ) : null;
-    }, [caseData?.draftSavedAt, caseData?.status, caseData?.enrichedAt, caseData?.juditEnrichedAt, caseData?.escavadorEnrichedAt, caseData?.autoClassifiedAt]);
+    }, [caseData?.draftSavedAt, caseData?.status, caseData?.enrichedAt, caseData?.juditEnrichedAt, caseData?.escavadorEnrichedAt, caseData?.bigdatacorpEnrichedAt, caseData?.djenEnrichedAt, caseData?.escavador2EnrichedAt, caseData?.autoClassifiedAt]);
 
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
@@ -2542,6 +2559,94 @@ export default function CasoPage() {
                             <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
                                 Escavador: falha na consulta.
                                 {caseData.escavadorError && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.escavadorError, 'Falha na consulta Escavador.')})</span>}
+                            </div>
+                        )}
+
+                        {/* Escavador2 enrichment display */}
+                        {caseData.escavador2EnrichmentStatus === 'RUNNING' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--running" style={{ marginTop: 16 }}>
+                                <span className="caso-enrichment-spinner" /> Escavador2: consulta em andamento...
+                            </div>
+                        )}
+                        {['DONE', 'PARTIAL'].includes(caseData.escavador2EnrichmentStatus) && Array.isArray(caseData.escavador2Processos) && caseData.escavador2Processos.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>
+                                    Escavador2 <span className="caso-api-badge">via integração</span>
+                                    {caseData.escavador2HasNewMaterialRisk === true && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>NOVO RISCO MATERIAL</span>}
+                                    {caseData.escavador2CriminalFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--red" style={{ marginLeft: 6 }}>CRIMINAL</span>}
+                                    {caseData.escavador2LaborFlag === 'POSITIVE' && <span className="caso-api-badge caso-api-badge--yellow" style={{ marginLeft: 6 }}>TRABALHISTA</span>}
+                                </h4>
+                                <div className="caso-field-row" style={{ marginTop: 8 }}>
+                                    <div className="caso-field">
+                                        <label>Total</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2ProcessTotal ?? caseData.escavador2Processos.length} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Novos</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2NewFindingCount ?? caseData.escavador2Processos.filter((p) => p.isNewEscavador2Finding).length} readOnly />
+                                    </div>
+                                    <div className="caso-field">
+                                        <label>Duplicados</label>
+                                        <input className="caso-input caso-input--readonly" value={caseData.escavador2DuplicateCount ?? 0} readOnly />
+                                    </div>
+                                    {caseData.escavador2CriminalCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Criminais</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.escavador2CriminalCount} readOnly />
+                                        </div>
+                                    )}
+                                    {caseData.escavador2LaborCount > 0 && (
+                                        <div className="caso-field">
+                                            <label>Trabalhistas</label>
+                                            <input className="caso-input caso-input--readonly" value={caseData.escavador2LaborCount} readOnly />
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{ maxHeight: 300, overflow: 'auto', marginTop: 12 }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Área</th>
+                                                <th className="data-table__th">Papel</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Risco material</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Data início</th>
+                                                <th className="data-table__th">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {caseData.escavador2Processos.map((proc, i) => {
+                                                const row = formatEscavador2Process(proc);
+                                                return (
+                                                    <tr key={i} className={`data-table__row ${row.isCriminal ? 'data-table__row--criminal' : ''} ${row.isNewFinding ? 'data-table__row--highlight' : ''}`}>
+                                                        <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem' }}>{row.cnj}</td>
+                                                        <td className="data-table__td">{row.area}</td>
+                                                        <td className="data-table__td">{row.role}</td>
+                                                        <td className="data-table__td">{row.side}</td>
+                                                        <td className="data-table__td">{row.materialRisk}</td>
+                                                        <td className="data-table__td">{row.tribunal}</td>
+                                                        <td className="data-table__td">{row.dataInicio}</td>
+                                                        <td className="data-table__td">
+                                                            {row.isNewFinding ? (
+                                                                <span className="caso-flag-chip caso-flag-chip--red">Novo</span>
+                                                            ) : (
+                                                                <span className="caso-flag-chip caso-flag-chip--neutral">Confirmatório</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                        {caseData.escavador2EnrichmentStatus === 'FAILED' && (
+                            <div className="caso-enrichment-banner caso-enrichment-banner--failed" style={{ marginTop: 16 }}>
+                                Escavador2: falha na consulta.
+                                {caseData.escavador2Error && <span className="caso-enrichment-error"> ({extractErrorMessage(caseData.escavador2Error, 'Falha na consulta Escavador2.')})</span>}
                             </div>
                         )}
 

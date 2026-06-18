@@ -22,6 +22,13 @@ const DEFAULT_ENRICHMENT = {
     ai: { enabled: false },
     bigdatacorp: { enabled: true, phases: { basicData: true, processes: true, kyc: true, occupation: true }, processLimit: 100 },
     escavador: { enabled: false, phases: { processos: true }, filters: { incluirHomonimos: true } },
+    escavador2: {
+        enabled: false,
+        phases: { processos: true },
+        request: { detalhar: true, movimentacoes: 'risk_only', documentos: 'risk_only', limit_movimentacoes: 20, limit_documentos: 20 },
+        dedupe: { dateToleranceDays: 90 },
+        persistence: { saveRawPayloads: true },
+    },
     judit: { enabled: true, phases: { entity: false, lawsuits: true, warrant: true, execution: false }, filters: { useAsync: false }, nameSearchSupplement: { enabled: true, maxCpfsComNome: 3, preferSync: true } },
     djen: { enabled: true, phases: { comunicacoes: true }, searchStrategy: 'hybrid', maxPages: 3, filters: { siglaTribunal: '' } },
 };
@@ -30,6 +37,7 @@ const COST_TABLE = {
     bigdatacorp: { basicData: 0.03, processes: 0.07, kyc: 0.05, occupation: 0.05 },
     judit: { entity: 0.12, lawsuits: 0.50, warrant: 1.00, execution: 0.50 },
     escavador: 3.00,
+    escavador2: 0,
     fontedata: { identity: 0.24, criminal: 1.65, warrant: 1.08, labor: 0.54 },
     djen: 0,
     ai: 0.01,
@@ -43,10 +51,11 @@ function computeEstimatedCost(enrichment) {
         ? Object.entries(COST_TABLE.judit).reduce((sum, [key, cost]) => sum + (enrichment.judit?.phases?.[key] ? cost : 0), 0)
         : 0;
     const escavador = enrichment.escavador?.enabled ? COST_TABLE.escavador : 0;
+    const escavador2 = enrichment.escavador2?.enabled ? COST_TABLE.escavador2 : 0;
     const djen = 0; // DJEN is free
     const fontedata = Object.entries(COST_TABLE.fontedata).reduce((sum, [key, cost]) => sum + (enrichment.phases?.[key] ? cost : 0), 0);
     const ai = enrichment.ai?.enabled ? COST_TABLE.ai : 0;
-    return { bigdatacorp: bdc, judit, escavador, djen, fontedata, ai, total: bdc + judit + fontedata + ai };
+    return { bigdatacorp: bdc, judit, escavador, escavador2, djen, fontedata, ai, total: bdc + judit + escavador + escavador2 + fontedata + ai };
 }
 
 function mergeEnrichment(saved) {
@@ -69,6 +78,14 @@ function mergeEnrichment(saved) {
             ...(saved.escavador || {}),
             phases: { ...DEFAULT_ENRICHMENT.escavador.phases, ...(saved.escavador?.phases || {}) },
             filters: { ...DEFAULT_ENRICHMENT.escavador.filters, ...(saved.escavador?.filters || {}) },
+        },
+        escavador2: {
+            ...DEFAULT_ENRICHMENT.escavador2,
+            ...(saved.escavador2 || {}),
+            phases: { ...DEFAULT_ENRICHMENT.escavador2.phases, ...(saved.escavador2?.phases || {}) },
+            request: { ...DEFAULT_ENRICHMENT.escavador2.request, ...(saved.escavador2?.request || {}) },
+            dedupe: { ...DEFAULT_ENRICHMENT.escavador2.dedupe, ...(saved.escavador2?.dedupe || {}) },
+            persistence: { ...DEFAULT_ENRICHMENT.escavador2.persistence, ...(saved.escavador2?.persistence || {}) },
         },
         judit: {
             ...DEFAULT_ENRICHMENT.judit,
@@ -405,6 +422,7 @@ export default function TenantSettingsPage() {
                                         {cost.judit > 0 && <span className="ts-cost-card__item">Judit R${cost.judit.toFixed(2)}</span>}
                                         {cost.fontedata > 0 && <span className="ts-cost-card__item">FonteData R${cost.fontedata.toFixed(2)}</span>}
                                         {cost.ai > 0 && <span className="ts-cost-card__item">IA R${cost.ai.toFixed(2)}</span>}
+                                        {enrichment.escavador2?.enabled && <span className="ts-cost-card__item">Escavador2 R${cost.escavador2.toFixed(2)}</span>}
                                         {cost.escavador > 0 && <span className="ts-cost-card__item ts-cost-card__item--conditional">Escavador +R${cost.escavador.toFixed(2)} <span className="ts-hint">(condicional)</span></span>}
                                     </div>
                                     <span className="ts-cost-card__total">
@@ -660,10 +678,86 @@ export default function TenantSettingsPage() {
                                         )}
                                     </div>
 
-                                    {/* 4. FonteData */}
+                                    {/* 4. Escavador2 */}
+                                    <div className="ts-enrichment-section">
+                                        <h4 className="ts-enrichment-title">
+                                            <span className="ts-provider-number">4</span> Escavador2
+                                            <span style={{ fontSize: '.65rem', fontWeight: 600, padding: '1px 8px', borderRadius: 999, background: 'var(--green-100, #dcfce7)', color: 'var(--green-700, #15803d)', marginLeft: 8, verticalAlign: 'middle' }}>R$ 0,00</span>
+                                        </h4>
+                                        <p className="ts-hint" style={{ marginBottom: 8 }}>
+                                            Provedor complementar. Roda como fase final apos os demais provedores e adiciona achados novos sem bloquear a classificacao em caso de falha.
+                                        </p>
+                                        <div className="ts-toggle-row">
+                                            <span className="ts-toggle-label" style={{ fontWeight: 500 }}>Habilitado</span>
+                                            <button
+                                                type="button"
+                                                className={`ts-toggle ${enrichment.escavador2?.enabled ? 'ts-toggle--on' : 'ts-toggle--off'}`}
+                                                onClick={() => setEnrichment((prev) => ({
+                                                    ...prev,
+                                                    escavador2: { ...prev.escavador2, enabled: !prev.escavador2?.enabled },
+                                                }))}
+                                                aria-label="Toggle Escavador2"
+                                            >
+                                                <span className="ts-toggle__knob" />
+                                            </button>
+                                        </div>
+                                        {enrichment.escavador2?.enabled && (
+                                            <div className="ts-sub-section">
+                                                <div className="ts-toggle-row ts-toggle-row--locked">
+                                                    <span className="ts-toggle-label">Processos judiciais <span className="ts-hint">(fase final, sempre ativa)</span></span>
+                                                    <button type="button" className="ts-toggle ts-toggle--on ts-toggle--disabled" disabled aria-label="Escavador2 processos sempre ativo">
+                                                        <span className="ts-toggle__knob" />
+                                                    </button>
+                                                </div>
+                                                <div className="ts-toggle-row">
+                                                    <span className="ts-toggle-label">Detalhar processos <span className="ts-hint">(movimentacoes/documentos sob demanda)</span></span>
+                                                    <button
+                                                        type="button"
+                                                        className={`ts-toggle ${enrichment.escavador2?.request?.detalhar ? 'ts-toggle--on' : 'ts-toggle--off'}`}
+                                                        onClick={() => setEnrichment((prev) => ({
+                                                            ...prev,
+                                                            escavador2: {
+                                                                ...prev.escavador2,
+                                                                request: {
+                                                                    ...prev.escavador2?.request,
+                                                                    detalhar: !prev.escavador2?.request?.detalhar,
+                                                                },
+                                                            },
+                                                        }))}
+                                                        aria-label="Toggle detalhamento Escavador2"
+                                                    >
+                                                        <span className="ts-toggle__knob" />
+                                                    </button>
+                                                </div>
+                                                <div className="ts-form-group" style={{ marginTop: 8 }}>
+                                                    <label className="ts-label">Tolerancia de deduplicacao <span className="ts-hint">(dias)</span></label>
+                                                    <input
+                                                        type="number"
+                                                        className="ts-input ts-input--sm"
+                                                        min={0}
+                                                        max={365}
+                                                        value={enrichment.escavador2?.dedupe?.dateToleranceDays ?? 90}
+                                                        onChange={(e) => {
+                                                            const val = Number(e.target.value);
+                                                            const days = Number.isFinite(val) ? Math.min(365, Math.max(0, val)) : 90;
+                                                            setEnrichment((prev) => ({
+                                                                ...prev,
+                                                                escavador2: {
+                                                                    ...prev.escavador2,
+                                                                    dedupe: { ...prev.escavador2?.dedupe, dateToleranceDays: days },
+                                                                },
+                                                            }));
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 5. FonteData */}
                                     <div className="ts-enrichment-section">
                                         <details>
-                                            <summary className="ts-enrichment-title" style={{ cursor: 'pointer' }}><span className="ts-provider-number ts-provider-number--muted">4</span> FonteData <span className="ts-hint">(legado / fallback)</span></summary>
+                                            <summary className="ts-enrichment-title" style={{ cursor: 'pointer' }}><span className="ts-provider-number ts-provider-number--muted">5</span> FonteData <span className="ts-hint">(legado / fallback)</span></summary>
                                             <p className="ts-hint" style={{ marginBottom: 8, marginTop: 4 }}>
                                                 Integrações legadas. Usadas como fonte complementar ou sob demanda manual.
                                             </p>
@@ -704,9 +798,9 @@ export default function TenantSettingsPage() {
                                         </details>
                                     </div>
 
-                                    {/* 5. IA */}
+                                    {/* 6. IA */}
                                     <div className="ts-enrichment-section">
-                                        <h4 className="ts-enrichment-title"><span className="ts-provider-number">5</span> Análise Automática</h4>
+                                        <h4 className="ts-enrichment-title"><span className="ts-provider-number">6</span> Análise Automática</h4>
                                         <p className="ts-hint" style={{ marginBottom: 8 }}>
                                             Detecta homonimos, resolve ambiguidades e gera resumo executivo com recomendacao.
                                         </p>
