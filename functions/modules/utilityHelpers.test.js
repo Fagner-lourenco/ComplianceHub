@@ -49,6 +49,26 @@ describe('computeNameSimilarity', () => {
         expect(computeNameSimilarity('', 'João Silva')).toBe(0);
         expect(computeNameSimilarity('João Silva', '')).toBe(0);
     });
+
+    it('ignora pontuação no final dos nomes', () => {
+        const sim = computeNameSimilarity('JANINE FERREIRA DOS SANTOS.', 'JANINE FERREIRA DOS SANTOS');
+        expect(sim).toBe(1);
+    });
+
+    it('ignora ordem dos tokens', () => {
+        const sim = computeNameSimilarity('Silva João', 'João Silva');
+        expect(sim).toBe(1);
+    });
+
+    it('penaliza pouco nomes com um token extra', () => {
+        const sim = computeNameSimilarity('João Silva Santos', 'João Silva');
+        expect(sim).toBeGreaterThan(0.6);
+    });
+
+    it('penaliza pouco nomes com abreviatura', () => {
+        const sim = computeNameSimilarity('J. Silva Santos', 'João Silva Santos');
+        expect(sim).toBeGreaterThan(0.75);
+    });
 });
 
 describe('formatDateKey', () => {

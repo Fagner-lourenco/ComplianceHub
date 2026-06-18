@@ -5,6 +5,7 @@ export function getOverallEnrichmentStatus(caseData) {
         caseData?.enrichmentStatus,
         caseData?.bigdatacorpEnrichmentStatus,
         caseData?.djenEnrichmentStatus,
+        caseData?.escavador2EnrichmentStatus,
         caseData?.aiStatus,
     ].filter(Boolean);
 

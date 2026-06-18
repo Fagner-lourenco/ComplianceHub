@@ -6,6 +6,7 @@ const PROVIDERS = [
     { key: 'judit', label: 'Judit', statusField: 'juditEnrichmentStatus', errorField: 'juditError', costField: null },
     { key: 'escavador', label: 'Escavador', statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', costField: null },
     { key: 'djen', label: 'DJEN', statusField: 'djenEnrichmentStatus', errorField: 'djenError', costField: null, free: true },
+    { key: 'escavador2', label: 'Escavador2', statusField: 'escavador2EnrichmentStatus', errorField: 'escavador2Error', costField: 'escavador2CostBRL', free: true },
     { key: 'autoclass', label: 'Auto-classificação', statusField: null, errorField: null, costField: null },
     { key: 'ai', label: 'Análise assistida', statusField: null, errorField: 'aiClassificationReviewError', costField: 'aiClassificationReviewCostUsd' },
     { key: 'fontedata', label: 'FonteData', statusField: 'enrichmentStatus', errorField: 'enrichmentError', costField: null, fallback: true },
@@ -27,9 +28,10 @@ function getProviderStatus(caseData, provider) {
     if (provider.key === 'autoclass') {
         if (caseData.autoClassifiedAt) return 'DONE';
         const escDone = ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED'].includes(caseData.escavadorEnrichmentStatus);
+        const esc2Done = !caseData.escavador2EnrichmentStatus || ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED'].includes(caseData.escavador2EnrichmentStatus);
         const juditDone = ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED'].includes(caseData.juditEnrichmentStatus);
-        if (escDone && juditDone && !caseData.autoClassifiedAt) return 'RUNNING';
-        if (juditDone && !escDone) return 'WAITING';
+        if (escDone && esc2Done && juditDone && !caseData.autoClassifiedAt) return 'RUNNING';
+        if (juditDone && (!escDone || !esc2Done)) return 'WAITING';
         return 'WAITING';
     }
     if (provider.key === 'ai') {
@@ -70,7 +72,7 @@ function getProviderStatus(caseData, provider) {
 
 function canRetryProvider(provider, status, error, onRetryPhase) {
     if (!onRetryPhase) return false;
-    if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
+    if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
     return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
 }
 

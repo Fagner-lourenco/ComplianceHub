@@ -9,21 +9,52 @@ function normalizeNameForGate(name) {
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\b(de|da|dos|das|do|e)\b/g, '')
+        .replace(/[.,;:!?()\]{}'"\\/|-]/g, ' ')
+        .replace(/\b(de|da|dos|das|do|e)\b/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
-function computeNameSimilarity(nameA, nameB) {
-    const tokensA = new Set(normalizeNameForGate(nameA).split(' ').filter(Boolean));
-    const tokensB = new Set(normalizeNameForGate(nameB).split(' ').filter(Boolean));
-    if (tokensA.size === 0 || tokensB.size === 0) return 0;
-    let intersection = 0;
-    for (const t of tokensA) {
-        if (tokensB.has(t)) intersection++;
+function isTokenMatch(a, b) {
+    if (a === b) return true;
+    if (a.length === 1 || b.length === 1) {
+        return a[0] === b[0];
     }
-    const union = new Set([...tokensA, ...tokensB]).size;
-    return union === 0 ? 0 : intersection / union;
+    return false;
+}
+
+function countTokenMatches(tokensA, tokensB) {
+    const used = new Set();
+    let matches = 0;
+    for (const tokenA of tokensA) {
+        for (let i = 0; i < tokensB.length; i++) {
+            if (used.has(i)) continue;
+            if (isTokenMatch(tokenA, tokensB[i])) {
+                matches++;
+                used.add(i);
+                break;
+            }
+        }
+    }
+    return matches;
+}
+
+function computeNameSimilarity(nameA, nameB) {
+    const tokensA = normalizeNameForGate(nameA).split(' ').filter(Boolean).sort();
+    const tokensB = normalizeNameForGate(nameB).split(' ').filter(Boolean).sort();
+    if (tokensA.length === 0 || tokensB.length === 0) return 0;
+
+    const exactMatches = countTokenMatches(tokensA, tokensB);
+    const maxLength = Math.max(tokensA.length, tokensB.length);
+
+    if (exactMatches === maxLength) return 1;
+
+    const unionSize = new Set([...tokensA, ...tokensB]).size;
+    const jaccard = unionSize === 0 ? 0 : exactMatches / unionSize;
+
+    const coverage = exactMatches / maxLength;
+
+    return parseFloat(Math.max(jaccard, coverage * 0.95).toFixed(4));
 }
 
 function formatDateKey(date, timeZone = 'America/Sao_Paulo') {

@@ -56,8 +56,34 @@ function formatEscavador2Process(process) {
         materialRisk: process.isMaterialRisk ? 'Sim' : 'Nao',
         tribunal: process.tribunalSigla || '—',
         dataInicio: process.dataInicio || '—',
+        status: process.status || '—',
         isNewFinding: process.isNewEscavador2Finding === true,
         isCriminal: process.isCriminal === true,
+        isLabor: process.isLabor === true,
+    };
+}
+
+function isEscavador2CriminalProcess(process) {
+    return process?.isCriminal === true || /criminal|penal/i.test(String(process?.area || ''));
+}
+
+function isEscavador2LaborProcess(process) {
+    return process?.isLabor === true || /labor|trabalh|trt|reclamat/i.test(String(process?.area || process?.tribunalSigla || ''));
+}
+
+function buildEscavador2InspectionData(process = {}) {
+    return {
+        ...process,
+        tribunalAcronym: process.tribunalSigla || process.tribunalAcronym,
+        courtType: process.area || process.courtType,
+        status: process.status || (process.isNewEscavador2Finding ? 'Novo' : 'Confirmatorio'),
+        isCriminal: isEscavador2CriminalProcess(process),
+        isLabor: isEscavador2LaborProcess(process),
+        parties: [{
+            name: process.nomeParte || process.candidateName || 'Candidato',
+            personType: process.tipoPrincipal || process.roleCategory,
+            side: process.polo,
+        }].filter((party) => party.personType || party.side),
     };
 }
 
@@ -367,9 +393,15 @@ function buildDisplayReviewContext(caseData = {}) {
     const criminalJuditCount = countReviewItems(caseData.juditCriminalCount);
     const criminalBdcCount = countReviewItems(caseData.bigdatacorpCriminalCount || caseData.bigdatacorpDirectCriminalCount);
     const criminalEscavadorCount = countReviewItems(caseData.escavadorCriminalCount);
+    const criminalEscavador2Count = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+        .filter(isEscavador2CriminalProcess)
+        .length;
     const laborBdcCount = countReviewItems(caseData.bigdatacorpLaborCount || caseData.bigdatacorpDirectLaborCount);
     const laborEscavadorCount = (Array.isArray(caseData.escavadorProcessos) ? caseData.escavadorProcessos : [])
         .filter((item) => item?.isLabor === true || /trabalh/i.test(String(item?.area || item?.tribunal || '')))
+        .length;
+    const laborEscavador2Count = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
+        .filter(isEscavador2LaborProcess)
         .length;
     const laborDjenCount = (Array.isArray(caseData.djenComunicacoes) ? caseData.djenComunicacoes : [])
         .filter((item) => isPositiveReviewFlag(caseData.djenLaborFlag) || /trabalh/i.test(String(item?.area || item?.inferredArea || item?.classe || '')))
@@ -383,8 +415,9 @@ function buildDisplayReviewContext(caseData = {}) {
             buildDisplayReviewSource('Judit', caseData.juditEnrichmentStatus, criminalJuditCount),
             buildDisplayReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, criminalBdcCount),
             buildDisplayReviewSource('Escavador', caseData.escavadorEnrichmentStatus, criminalEscavadorCount),
+            buildDisplayReviewSource('Escavador2', caseData.escavador2EnrichmentStatus, criminalEscavador2Count),
         ], {
-            hasMaterialFinding: (criminalJuditCount > 0 || criminalBdcCount > 0 || criminalEscavadorCount > 0) && !lowRiskCriminalOnly,
+            hasMaterialFinding: (criminalJuditCount > 0 || criminalBdcCount > 0 || criminalEscavadorCount > 0 || criminalEscavador2Count > 0) && !lowRiskCriminalOnly,
             hasProviderConflict: (isPositiveReviewFlag(caseData.juditCriminalFlag) && isNegativeReviewFlag(caseData.bigdatacorpCriminalFlag))
                 || (isPositiveReviewFlag(caseData.bigdatacorpCriminalFlag) && isNegativeReviewFlag(caseData.juditCriminalFlag)),
             hasAmbiguousRole: lowRiskCriminalOnly && isPositiveReviewFlag(caseData.juditCriminalFlag),
@@ -392,6 +425,7 @@ function buildDisplayReviewContext(caseData = {}) {
         labor: summarizeDisplayAxisContext('labor', caseData.laborFlag, [
             buildDisplayReviewSource('BigDataCorp', caseData.bigdatacorpEnrichmentStatus, laborBdcCount),
             buildDisplayReviewSource('Escavador', caseData.escavadorEnrichmentStatus, laborEscavadorCount),
+            buildDisplayReviewSource('Escavador2', caseData.escavador2EnrichmentStatus, laborEscavador2Count),
             buildDisplayReviewSource('DJEN', caseData.djenEnrichmentStatus, laborDjenCount, { isWeak: true }),
         ], {
             hasProviderConflict: isPositiveReviewFlag(caseData.bigdatacorpLaborFlag) && isNegativeReviewFlag(caseData.laborFlag),
@@ -1247,43 +1281,8 @@ export default function CasoPage() {
             : fallbackReview;
         const sanitizedReview = sanitizeClassificationReviewForDisplay(sourceReview, fallbackReview);
         return applyClassificationReviewGuardrails(sanitizedReview, caseData || {});
-    }, [
-        caseData?.autoClassifiedAt,
-        caseData?.criminalFlag,
-        caseData?.laborFlag,
-        caseData?.warrantFlag,
-        caseData?.criminalEvidenceQuality,
-        caseData?.providerDivergence,
-        caseData?.reviewRecommended,
-        caseData?.coverageLevel,
-        caseData?.ambiguityNotes,
-        caseData?.bigdatacorpGateResult?.passed,
-        caseData?.juditGateResult?.passed,
-        caseData?.enrichmentGateResult?.passed,
-        caseData?.juditIdentity,
-        caseData?.enrichmentIdentity,
-        caseData?.bigdatacorpName,
-        caseData?.bigdatacorpCriminalCount,
-        caseData?.bigdatacorpDirectCriminalCount,
-        caseData?.escavadorCriminalCount,
-        caseData?.bigdatacorpLaborCount,
-        caseData?.bigdatacorpDirectLaborCount,
-        caseData?.escavadorProcessos,
-        caseData?.djenComunicacoes,
-        caseData?.djenLaborFlag,
-        caseData?.bigdatacorpActiveWarrants,
-        caseData?.juditActiveWarrantCount,
-        caseData?.juditWarrants,
-        caseData?.juditCriminalFlag,
-        caseData?.bigdatacorpCriminalFlag,
-        caseData?.bigdatacorpLaborFlag,
-        caseData?.juditEnrichmentStatus,
-        caseData?.bigdatacorpEnrichmentStatus,
-        caseData?.escavadorEnrichmentStatus,
-        caseData?.djenEnrichmentStatus,
-        caseData?.aiClassificationReviewOk,
-        caseData?.aiClassificationReview,
-    ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [caseData?.id, caseData?.updatedAt]);
     const bigdatacorpCriminalProcessos = useMemo(() =>
         (caseData?.bigdatacorpProcessos || []).filter((p) => p.isCriminal),
         [caseData?.bigdatacorpProcessos]
@@ -1291,6 +1290,10 @@ export default function CasoPage() {
     const bigdatacorpNonCriminalProcessos = useMemo(() =>
         (caseData?.bigdatacorpProcessos || []).filter((p) => !p.isCriminal),
         [caseData?.bigdatacorpProcessos]
+    );
+    const escavador2CriminalProcessos = useMemo(() =>
+        (caseData?.escavador2Processos || []).filter(isEscavador2CriminalProcess),
+        [caseData?.escavador2Processos]
     );
     const escavadorLaborProcessos = useMemo(() =>
         (caseData?.escavadorProcessos || []).filter((p) => /trabalh|trt|reclamat/i.test(p.area || '')),
@@ -1303,6 +1306,10 @@ export default function CasoPage() {
     const bigdatacorpLaborProcessos = useMemo(() =>
         (caseData?.bigdatacorpProcessos || []).filter((p) => p.isLabor),
         [caseData?.bigdatacorpProcessos]
+    );
+    const escavador2LaborProcessos = useMemo(() =>
+        (caseData?.escavador2Processos || []).filter(isEscavador2LaborProcess),
+        [caseData?.escavador2Processos]
     );
     const activeWarrantCount = useMemo(() => (
         (caseData?.juditActiveWarrantCount || 0) +
@@ -1322,7 +1329,7 @@ export default function CasoPage() {
                 ⚠ {dedupCount} mandado(s)
             </span>
         ) : null;
-    }, [caseData?.juditWarrants, caseData?.bigdatacorpActiveWarrants, caseData?.juditActiveWarrantCount]);
+    }, [caseData]);
 
     const enrichmentStaleWarning = useMemo(() => {
         if (!caseData?.draftSavedAt || caseData.status === 'DONE') return null;
@@ -1343,7 +1350,8 @@ export default function CasoPage() {
                 <span>Dados da consulta automática ou análise automática foram atualizados após o último rascunho salvo. Revise os campos antes de concluir.</span>
             </div>
         ) : null;
-    }, [caseData?.draftSavedAt, caseData?.status, caseData?.enrichedAt, caseData?.juditEnrichedAt, caseData?.escavadorEnrichedAt, caseData?.bigdatacorpEnrichedAt, caseData?.djenEnrichedAt, caseData?.escavador2EnrichedAt, caseData?.autoClassifiedAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [caseData?.draftSavedAt, caseData?.status, caseData?.updatedAt]);
 
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
@@ -3214,7 +3222,7 @@ export default function CasoPage() {
                         </div>
 
                         {/* Consolidated process summary from all sources */}
-                        {(caseData.escavadorProcessTotal > 0 || caseData.juditProcessTotal > 0 || caseData.processTotal > 0 || caseData.bigdatacorpProcessTotal > 0 || caseData.djenComunicacaoTotal > 0) && (
+                        {(caseData.escavadorProcessTotal > 0 || caseData.escavador2ProcessTotal > 0 || caseData.juditProcessTotal > 0 || caseData.processTotal > 0 || caseData.bigdatacorpProcessTotal > 0 || caseData.djenComunicacaoTotal > 0) && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <h4>Resumo consolidado de processos</h4>
                                 <div className="caso-grid caso-grid--3">
@@ -3232,6 +3240,15 @@ export default function CasoPage() {
                                             <span className="caso-stat-card__value">{caseData.escavadorProcessTotal} processos</span>
                                             {caseData.escavadorCriminalCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--red">{caseData.escavadorCriminalCount} criminais</span>}
                                             {caseData.escavadorActiveCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--yellow">{caseData.escavadorActiveCount} ativos</span>}
+                                        </div>
+                                    )}
+                                    {caseData.escavador2ProcessTotal > 0 && (
+                                        <div className="caso-stat-card">
+                                            <span className="caso-stat-card__label">Escavador2</span>
+                                            <span className="caso-stat-card__value">{caseData.escavador2ProcessTotal} processos</span>
+                                            {caseData.escavador2CriminalCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--red">{caseData.escavador2CriminalCount} criminais</span>}
+                                            {caseData.escavador2LaborCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--yellow">{caseData.escavador2LaborCount} trabalhistas</span>}
+                                            {caseData.escavador2NewFindingCount > 0 && <span className="caso-stat-card__flag caso-stat-card__flag--gray">{caseData.escavador2NewFindingCount} novos</span>}
                                         </div>
                                     )}
                                     {caseData.processTotal > 0 && caseData.enrichmentStatus && caseData.enrichmentStatus !== 'PENDING' && (
@@ -3388,6 +3405,43 @@ export default function CasoPage() {
                                                     </td>
                                                 </tr>
                                             ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {escavador2CriminalProcessos.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Processos criminais <span className="caso-api-badge">Escavador2</span></h4>
+                                <div style={{ maxHeight: 300, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Area</th>
+                                                <th className="data-table__th">Papel</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {escavador2CriminalProcessos.map((proc, i) => {
+                                                const row = formatEscavador2Process(proc);
+                                                return (
+                                                    <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'ESCAVADOR2', cnj: proc.numeroCnj || proc.numeroCnjMascarado, data: buildEscavador2InspectionData(proc) })} title="Clique para inspecionar este processo">
+                                                        <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{row.cnj}</td>
+                                                        <td className="data-table__td">{row.area}</td>
+                                                        <td className="data-table__td">{row.role}</td>
+                                                        <td className="data-table__td">{row.side}</td>
+                                                        <td className="data-table__td">{row.tribunal}</td>
+                                                        <td className="data-table__td">
+                                                            {row.isNewFinding ? <span className="caso-flag-chip caso-flag-chip--red">Novo</span> : <span className="caso-flag-chip caso-flag-chip--neutral">Confirmatório</span>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -3652,6 +3706,43 @@ export default function CasoPage() {
                                                     <td className="data-table__td">{proc.isDirectCpfMatch ? '✓ Exato' : '—'}</td>
                                                 </tr>
                                             ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {escavador2LaborProcessos.length > 0 && (
+                            <div className="caso-identity-block" style={{ marginTop: 16 }}>
+                                <h4>Processos trabalhistas <span className="caso-api-badge">Escavador2</span></h4>
+                                <div style={{ maxHeight: 250, overflow: 'auto' }}>
+                                    <table className="data-table" style={{ fontSize: '.75rem' }}>
+                                        <thead>
+                                            <tr>
+                                                <th className="data-table__th">CNJ</th>
+                                                <th className="data-table__th">Tribunal</th>
+                                                <th className="data-table__th">Papel</th>
+                                                <th className="data-table__th">Polo</th>
+                                                <th className="data-table__th">Data início</th>
+                                                <th className="data-table__th">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {escavador2LaborProcessos.map((proc, i) => {
+                                                const row = formatEscavador2Process(proc);
+                                                return (
+                                                    <tr key={i} className="data-table__row" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'ESCAVADOR2', cnj: proc.numeroCnj || proc.numeroCnjMascarado, data: buildEscavador2InspectionData(proc) })} title="Clique para inspecionar este processo">
+                                                        <td className="data-table__td" style={{ fontFamily: 'monospace', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{row.cnj}</td>
+                                                        <td className="data-table__td">{row.tribunal}</td>
+                                                        <td className="data-table__td">{row.role}</td>
+                                                        <td className="data-table__td">{row.side}</td>
+                                                        <td className="data-table__td">{row.dataInicio}</td>
+                                                        <td className="data-table__td">
+                                                            {row.isNewFinding ? <span className="caso-flag-chip caso-flag-chip--red">Novo</span> : <span className="caso-flag-chip caso-flag-chip--neutral">Confirmatório</span>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

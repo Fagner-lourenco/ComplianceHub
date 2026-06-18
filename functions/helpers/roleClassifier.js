@@ -91,7 +91,7 @@ const CRIMINAL_PLAINTIFF_ROLES = /^(AUTOR(?:\s+A)?|AUTORA(?:\s+A)?|REQUERENTE(?:
 function classifyRole(role, area = '', side = '') {
     const normalizedRole = normalizeLegalText(role);
     const normalizedArea = normalizeLegalText(area);
-    const normalizedSide = normalizeLegalText(side);
+    const normalizedSide = normalizeLegalText(normalizeSideForClassifier(side));
 
     if (!normalizedRole) {
         return { category: 'UNKNOWN', riskLevel: 'NEUTRAL', reason: 'Papel nao informado' };

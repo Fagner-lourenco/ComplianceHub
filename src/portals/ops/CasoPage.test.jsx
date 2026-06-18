@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { vi } from 'vitest';
 
 const casoPageMocks = vi.hoisted(() => ({
@@ -801,7 +801,7 @@ describe('CasoPage', () => {
         });
     });
 
-    it('renderiza processos Escavador2 quando presentes', async () => {
+    it('renderiza processos Escavador2 na identificacao e nas abas criminal/trabalhista', async () => {
         casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
             setTimeout(() => callback({
                 id: caseId,
@@ -831,5 +831,20 @@ describe('CasoPage', () => {
         expect(screen.getByText('0005678-90.2023.5.09.0001')).toBeInTheDocument();
         expect(screen.getAllByText('Novo').length).toBeGreaterThanOrEqual(1);
         expect(screen.getAllByText('Confirmatório').length).toBeGreaterThanOrEqual(1);
+
+        fireEvent.click(screen.getByRole('button', { name: /Criminal/i }));
+        const criminalSection = screen.getByRole('heading', { name: /Processos criminais Escavador2/ }).closest('.caso-identity-block');
+        expect(within(criminalSection).getByText('0001234-56.2024.8.26.0100')).toBeInTheDocument();
+        expect(within(criminalSection).getByText('Reu')).toBeInTheDocument();
+
+        fireEvent.click(within(criminalSection).getByText('0001234-56.2024.8.26.0100'));
+        expect(screen.getAllByText('ESCAVADOR2').length).toBeGreaterThan(0);
+        expect(screen.getByText('Publicações no Diário (DJEN) · 0 ocorrência(s)')).toBeInTheDocument();
+        fireEvent.click(screen.getByLabelText('Fechar'));
+
+        fireEvent.click(screen.getAllByText('Trabalhista')[0]);
+        const laborSection = screen.getByRole('heading', { name: /Processos trabalhistas Escavador2/ }).closest('.caso-identity-block');
+        expect(within(laborSection).getByText('0005678-90.2023.5.09.0001')).toBeInTheDocument();
+        expect(within(laborSection).getByText('Reclamante')).toBeInTheDocument();
     });
 });

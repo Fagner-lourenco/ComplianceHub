@@ -312,6 +312,18 @@ describe('roleClassifier', () => {
                 expect(result.riskLevel).toBe('HIGH');
             });
 
+            it('normalizes raw POLO PASSIVO side inside classifyRole', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'POLO PASSIVO');
+                expect(result.category).toBe('DEFENDANT');
+                expect(result.riskLevel).toBe('HIGH');
+            });
+
+            it('normalizes raw POLO ATIVO PRINCIPAL side inside classifyRole', () => {
+                const result = classifyRole('ENVOLVIDO', 'Criminal', 'POLO ATIVO PRINCIPAL');
+                expect(result.category).toBe('PLAINTIFF');
+                expect(result.riskLevel).toBe('LOW');
+            });
+
             it('classifies EMBARGANTE with active side in labor as PLAINTIFF/HIGH', () => {
                 const result = classifyRole('EMBARGANTE', 'Trabalhista', 'Active');
                 expect(result.category).toBe('PLAINTIFF');

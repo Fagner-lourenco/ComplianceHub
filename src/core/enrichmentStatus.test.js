@@ -52,4 +52,12 @@ describe('getOverallEnrichmentStatus', () => {
     it('reflects djenEnrichmentStatus FAILED mixed with DONE', () => {
         expect(getOverallEnrichmentStatus({ juditEnrichmentStatus: 'DONE', djenEnrichmentStatus: 'FAILED' })).toBe('PARTIAL');
     });
+
+    it('reflects escavador2EnrichmentStatus RUNNING', () => {
+        expect(getOverallEnrichmentStatus({ juditEnrichmentStatus: 'DONE', escavador2EnrichmentStatus: 'RUNNING' })).toBe('RUNNING');
+    });
+
+    it('reflects escavador2EnrichmentStatus DONE', () => {
+        expect(getOverallEnrichmentStatus({ escavador2EnrichmentStatus: 'DONE' })).toBe('DONE');
+    });
 });
