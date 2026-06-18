@@ -1528,6 +1528,10 @@ exports.rerunEnrichmentPhase = onCall(
                 applyDeleteFields(target, escavadorDataFields);
                 applyDeleteFields(target, djenDataFields);
                 applyDeleteFields(target, escavador2DataFields);
+            } else if (currentPhase === 'escavador') {
+                target.escavador2EnrichmentStatus = 'PENDING';
+                target.escavador2Error = null;
+                applyDeleteFields(target, escavador2DataFields.filter((f) => f !== 'escavador2RawPayloads'));
             } else if (currentPhase === 'djen') {
                 target.escavador2EnrichmentStatus = 'PENDING';
                 target.escavador2Error = null;
@@ -1557,6 +1561,19 @@ exports.rerunEnrichmentPhase = onCall(
         // Escavador requires Judit to be done
         if (phase === 'escavador' && !isDoneOrPartial(caseData.juditEnrichmentStatus)) {
             throw new HttpsError('failed-precondition', 'Judit precisa estar concluido antes do rerun do Escavador.');
+        }
+        if (phase === 'escavador2') {
+            const terminalStatuses = ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'];
+            const isTerminal = (status) => terminalStatuses.includes(status);
+            const unsettledProviders = [
+                !isTerminal(caseData.bigdatacorpEnrichmentStatus) ? 'BigDataCorp' : null,
+                !isTerminal(caseData.juditEnrichmentStatus) ? 'Judit' : null,
+                caseData.juditNeedsEscavador === true && !isTerminal(caseData.escavadorEnrichmentStatus) ? 'Escavador' : null,
+                caseData.djenEnrichmentStatus && !isTerminal(caseData.djenEnrichmentStatus) ? 'DJEN' : null,
+            ].filter(Boolean);
+            if (unsettledProviders.length > 0) {
+                throw new HttpsError('failed-precondition', `Judit precisa estar terminalizado antes do rerun do Escavador2. Provedores pendentes: ${unsettledProviders.join(', ')}.`);
+            }
         }
 
         if (!caseData.tenantId) {
@@ -1611,6 +1628,7 @@ exports.rerunEnrichmentPhase = onCall(
                 for (const field of phaseMeta.escavador.derived) {
                     invalidateFields[field] = field === 'reportReady' ? false : FieldValue.delete();
                 }
+                applyCascadeReset(invalidateFields, 'escavador');
                 invalidateFields.updatedAt = FieldValue.serverTimestamp();
                 await caseRef.update(invalidateFields);
             }

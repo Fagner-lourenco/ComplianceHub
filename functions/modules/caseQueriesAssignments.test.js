@@ -24,6 +24,7 @@ const {
   matchesOpsCaseFiltersFull,
   buildOpsMetricsFromCases,
   buildClientDashboardMetricsFromCases,
+  createRerunEnrichmentPhaseHandler,
 } = require('./caseQueriesAssignments');
 
 /* =========================================================
@@ -220,6 +221,117 @@ describe('buildProviderRunIds', () => {
   });
 });
 
+describe('createRerunEnrichmentPhaseHandler', () => {
+  function makeRerunDeps(overrides = {}) {
+    const caseData = {
+      tenantId: 'tenant-1',
+      candidateName: 'Pessoa Teste',
+      status: 'IN_ANALYSIS',
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'DONE',
+      escavadorEnrichmentStatus: 'SKIPPED',
+      djenEnrichmentStatus: 'DONE',
+      escavador2EnrichmentStatus: 'DONE',
+      ...(overrides.caseData || {}),
+    };
+    const caseRef = {
+      get: vi.fn(async () => ({ exists: true, data: () => caseData })),
+      update: vi.fn(async () => {}),
+    };
+    const deps = {
+      db: { collection: vi.fn(() => ({ doc: vi.fn(() => caseRef) })) },
+      getOpsUserProfile: vi.fn(async () => ({ email: 'ops@example.com', role: 'admin' })),
+      assertOpsCanAccessCase: vi.fn(),
+      isDoneOrPartial: vi.fn((status) => status === 'DONE' || status === 'PARTIAL'),
+      loadBigDataCorpConfig: vi.fn(async () => ({ enabled: true })),
+      loadFonteDataConfig: vi.fn(async () => ({ enabled: true })),
+      loadJuditConfig: vi.fn(async () => ({ enabled: true })),
+      loadEscavadorConfig: vi.fn(async () => ({ enabled: true })),
+      loadEscavador2Config: vi.fn(async () => ({ enabled: true })),
+      loadDjenConfig: vi.fn(async () => ({ enabled: true })),
+      runBigDataCorpEnrichmentPhase: vi.fn(async () => {}),
+      runFonteDataEnrichmentPhase: vi.fn(async () => {}),
+      runJuditEnrichmentPhase: vi.fn(async () => {}),
+      runEscavadorEnrichmentPhase: vi.fn(async () => {}),
+      runEscavador2EnrichmentPhase: vi.fn(async () => {}),
+      runDjenEnrichmentPhase: vi.fn(async () => {}),
+      acquirePhaseRun: vi.fn(async () => ({ acquired: true })),
+      maybeRunAutoClassifyAndAi: vi.fn(async () => {}),
+      markPendingJuditRequestsStale: vi.fn(async () => 0),
+      buildProviderRunIds: vi.fn(() => buildProviderRunIds('case-1')),
+      rerunAiForCase: vi.fn(async () => ({ success: true })),
+      writeAuditEvent: vi.fn(async () => {}),
+      getClientIp: vi.fn(() => '127.0.0.1'),
+      ACTOR_TYPE: { OPS_USER: 'OPS_USER' },
+      SOURCE: { PORTAL_OPS: 'PORTAL_OPS' },
+      ...overrides,
+    };
+
+    return { deps, caseRef, caseData };
+  }
+
+  it('aceita rerun individual do Escavador2 no factory modular', async () => {
+    const { deps, caseRef, caseData } = makeRerunDeps();
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    const result = await handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'escavador2', scope: 'single' },
+    });
+
+    expect(deps.loadEscavador2Config).toHaveBeenCalledWith('tenant-1');
+    expect(deps.runEscavador2EnrichmentPhase).toHaveBeenCalledWith(caseRef, 'case-1', caseData, { enabled: true });
+    expect(result).toMatchObject({ success: true, phase: 'escavador2', status: 'DONE' });
+  });
+
+  it('bloqueia rerun do Escavador2 quando provedores upstream nao estao terminalizados', async () => {
+    const caseData = {
+      tenantId: 'tenant-1',
+      candidateName: 'Pessoa Teste',
+      status: 'IN_ANALYSIS',
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'RUNNING',
+      escavadorEnrichmentStatus: 'SKIPPED',
+      djenEnrichmentStatus: 'DONE',
+      escavador2EnrichmentStatus: 'FAILED',
+    };
+    const { deps } = makeRerunDeps({ caseData });
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    await expect(handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'escavador2', scope: 'single' },
+    })).rejects.toThrow('Judit precisa estar terminalizado');
+
+    expect(deps.runEscavador2EnrichmentPhase).not.toHaveBeenCalled();
+  });
+
+  it('reseta Escavador2 para PENDING no rerun cascade de escavador', async () => {
+    const caseData = {
+      tenantId: 'tenant-1',
+      candidateName: 'Pessoa Teste',
+      status: 'IN_ANALYSIS',
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'DONE',
+      escavadorEnrichmentStatus: 'DONE',
+      escavador2EnrichmentStatus: 'DONE',
+      escavador2Processos: [{ numeroCnj: '0001234-56.2024.8.26.0100' }],
+    };
+    const { deps, caseRef } = makeRerunDeps({ caseData });
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    await handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'escavador', scope: 'cascade' },
+    });
+
+    const updateCalls = caseRef.update.mock.calls;
+    const resetCall = updateCalls.find((call) => call[0].escavador2EnrichmentStatus === 'PENDING');
+    expect(resetCall).toBeDefined();
+    expect(resetCall[0].escavador2Processos).toBeInstanceOf(Object);
+  });
+});
+
 /* =========================================================
    Enrichment status
    ========================================================= */
@@ -273,6 +385,16 @@ describe('getOverallEnrichmentStatusBackend', () => {
 
   it('retorna PENDING quando não há status', () => {
     expect(getOverallEnrichmentStatusBackend({})).toBe('PENDING');
+  });
+
+  it('considera escavador2EnrichmentStatus no status geral', () => {
+    expect(getOverallEnrichmentStatusBackend({
+      juditEnrichmentStatus: 'DONE',
+      escavador2EnrichmentStatus: 'RUNNING',
+    })).toBe('RUNNING');
+    expect(getOverallEnrichmentStatusBackend({
+      escavador2EnrichmentStatus: 'FAILED',
+    })).toBe('FAILED');
   });
 });
 

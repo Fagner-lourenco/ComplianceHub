@@ -593,4 +593,58 @@ describe('runEscavador2EnrichmentPhase', () => {
     }));
     expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 failed');
   });
+
+  it('skips when processos phase is disabled in config', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, phases: { processos: false } });
+
+    expect(result.status).toBe('SKIPPED');
+    expect(mocks.consultarEscavador2).not.toHaveBeenCalled();
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      escavador2EnrichmentStatus: 'SKIPPED',
+      escavador2CostBRL: 0,
+    }));
+    expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 phase disabled');
+  });
+
+  it('clears stale derived fields when phase starts running', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'DONE' }, processos: [] });
+    mocks.normalizeEscavador2Response.mockReturnValue({ escavador2ApiStatus: 'DONE', escavador2ProcessTotal: 0, escavador2Processos: [] });
+
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+
+    const runningUpdate = caseRef.update.mock.calls.find((call) => call[0].escavador2EnrichmentStatus === 'RUNNING');
+    expect(runningUpdate).toBeDefined();
+    expect(runningUpdate[0]).toMatchObject({
+      escavador2ProcessTotal: 'DELETE',
+      escavador2Processos: 'DELETE',
+      escavador2CriminalCount: 'DELETE',
+      escavador2LaborCount: 'DELETE',
+      escavador2NewFindingCount: 'DELETE',
+    });
+  });
+
+  it('clears derived fields on failure while preserving raw payloads', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef({ escavador2RawPayloads: { response: { old: true } } });
+    mocks.consultarEscavador2.mockRejectedValue(new Error('Escavador2 HTTP 502'));
+
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+
+    const failureUpdate = caseRef.update.mock.calls.find((call) => call[0].escavador2EnrichmentStatus === 'FAILED');
+    expect(failureUpdate).toBeDefined();
+    expect(failureUpdate[0]).toMatchObject({
+      escavador2ProcessTotal: 'DELETE',
+      escavador2Processos: 'DELETE',
+      escavador2NewFindingCount: 'DELETE',
+    });
+    expect(failureUpdate[0].escavador2RawPayloads).toBeUndefined();
+  });
 });

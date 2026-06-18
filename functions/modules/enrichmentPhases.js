@@ -1579,6 +1579,17 @@ function createEnrichmentPhases(deps) {
       return { status: 'FAILED', error };
     }
 
+    if (escavador2Config.enabled === true && escavador2Config.phases?.processos === false) {
+      await caseRef.update({
+        escavador2EnrichmentStatus: 'SKIPPED',
+        escavador2Error: null,
+        escavador2CostBRL: 0,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 phase disabled');
+      return { status: 'SKIPPED', error: null };
+    }
+
     const esc2Circuit = await checkCircuit('escavador2');
     if (esc2Circuit.open) {
       await caseRef.update({
@@ -1590,11 +1601,22 @@ function createEnrichmentPhases(deps) {
       return { status: 'SKIPPED', error: esc2Circuit.reason };
     }
 
-    await caseRef.update({
+    const runningUpdate = {
       escavador2EnrichmentStatus: 'RUNNING',
       escavador2Error: null,
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+    for (const field of [
+      'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
+      'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
+      'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
+      'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
+      'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
+      'escavador2EnrichedAt',
+    ]) {
+      runningUpdate[field] = FieldValue.delete();
+    }
+    await caseRef.update(runningUpdate);
 
     try {
       const raw = await consultarEscavador2({
@@ -1632,6 +1654,15 @@ function createEnrichmentPhases(deps) {
         escavador2EnrichmentStatus: 'FAILED',
         escavador2Error: errMsg,
         escavador2EnrichedAt: FieldValue.serverTimestamp(),
+        escavador2ProcessTotal: FieldValue.delete(),
+        escavador2Processos: FieldValue.delete(),
+        escavador2CriminalFlag: FieldValue.delete(),
+        escavador2CriminalCount: FieldValue.delete(),
+        escavador2LaborFlag: FieldValue.delete(),
+        escavador2LaborCount: FieldValue.delete(),
+        escavador2DuplicateCount: FieldValue.delete(),
+        escavador2NewFindingCount: FieldValue.delete(),
+        escavador2HasNewMaterialRisk: FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp(),
       });
       await recordFailure('escavador2', errMsg).catch((e) => console.warn('[Escavador2] recordFailure error:', e.message));

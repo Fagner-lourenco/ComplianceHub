@@ -192,6 +192,10 @@ const FULL_RERUN_DERIVED_FIELDS = [
    Funções puras — Enrichment status / SLA
    ========================================================= */
 
+function isTerminalEnrichmentStatus(status) {
+  return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
+}
+
 function getOverallEnrichmentStatusBackend(caseData) {
   const statuses = [
     caseData?.juditEnrichmentStatus,
@@ -199,6 +203,7 @@ function getOverallEnrichmentStatusBackend(caseData) {
     caseData?.enrichmentStatus,
     caseData?.bigdatacorpEnrichmentStatus,
     caseData?.djenEnrichmentStatus,
+    caseData?.escavador2EnrichmentStatus,
     caseData?.aiStatus,
   ].filter(Boolean);
 
@@ -1516,11 +1521,13 @@ function createRerunEnrichmentPhaseHandler({
   loadFonteDataConfig,
   loadJuditConfig,
   loadEscavadorConfig,
+  loadEscavador2Config,
   loadDjenConfig,
   runBigDataCorpEnrichmentPhase,
   runFonteDataEnrichmentPhase,
   runJuditEnrichmentPhase,
   runEscavadorEnrichmentPhase,
+  runEscavador2EnrichmentPhase,
   runDjenEnrichmentPhase,
   acquirePhaseRun,
   maybeRunAutoClassifyAndAi,
@@ -1531,7 +1538,7 @@ function createRerunEnrichmentPhaseHandler({
   getClientIp,
   ACTOR_TYPE,
   SOURCE,
-  secrets,
+  secrets = [],
   memory,
 }) {
   return onCall(
@@ -1544,7 +1551,7 @@ function createRerunEnrichmentPhaseHandler({
       if (!caseId || typeof caseId !== 'string') {
         throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
       }
-      if (!['fontedata', 'escavador', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
+      if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
         throw new HttpsError('invalid-argument', 'Fase invalida para rerun.');
       }
       if (!['single', 'cascade'].includes(scope)) {
@@ -1579,6 +1586,7 @@ function createRerunEnrichmentPhaseHandler({
           caseData.juditEnrichmentStatus === 'RUNNING' ? 'Judit' : null,
           caseData.djenEnrichmentStatus === 'RUNNING' ? 'DJEN' : null,
           caseData.escavadorEnrichmentStatus === 'RUNNING' ? 'Escavador' : null,
+          caseData.escavador2EnrichmentStatus === 'RUNNING' ? 'Escavador2' : null,
         ].filter(Boolean);
 
         if (runningProviders.length > 0 && !force) {
@@ -1598,11 +1606,13 @@ function createRerunEnrichmentPhaseHandler({
           juditEnrichmentStatus: 'PENDING',
           djenEnrichmentStatus: 'PENDING',
           escavadorEnrichmentStatus: 'PENDING',
+          escavador2EnrichmentStatus: 'PENDING',
           enrichmentStatus: 'PENDING',
           bigdatacorpError: null,
           juditError: null,
           djenError: null,
           escavadorError: null,
+          escavador2Error: null,
           enrichmentError: null,
           fullRerunRequestedAt: FieldValue.serverTimestamp(),
           fullRerunRequestedBy: uid,
@@ -1656,6 +1666,7 @@ function createRerunEnrichmentPhaseHandler({
       const phaseMeta = {
         fontedata: { statusField: 'enrichmentStatus', errorField: 'enrichmentError', label: 'FonteData' },
         escavador: { statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', label: 'Escavador' },
+        escavador2: { statusField: 'escavador2EnrichmentStatus', errorField: 'escavador2Error', label: 'Escavador2' },
         judit: { statusField: 'juditEnrichmentStatus', errorField: 'juditError', label: 'Judit' },
         bigdatacorp: { statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', label: 'BigDataCorp' },
         djen: { statusField: 'djenEnrichmentStatus', errorField: 'djenError', label: 'DJEN' },
@@ -1674,6 +1685,17 @@ function createRerunEnrichmentPhaseHandler({
       }
       if (phase === 'escavador' && !isDoneOrPartial(caseData.juditEnrichmentStatus)) {
         throw new HttpsError('failed-precondition', 'Judit precisa estar concluido antes do rerun do Escavador.');
+      }
+      if (phase === 'escavador2') {
+        const unsettledProviders = [
+          !isTerminalEnrichmentStatus(caseData.bigdatacorpEnrichmentStatus) ? 'BigDataCorp' : null,
+          !isTerminalEnrichmentStatus(caseData.juditEnrichmentStatus) ? 'Judit' : null,
+          caseData.juditNeedsEscavador === true && !isTerminalEnrichmentStatus(caseData.escavadorEnrichmentStatus) ? 'Escavador' : null,
+          caseData.djenEnrichmentStatus && !isTerminalEnrichmentStatus(caseData.djenEnrichmentStatus) ? 'DJEN' : null,
+        ].filter(Boolean);
+        if (unsettledProviders.length > 0) {
+          throw new HttpsError('failed-precondition', `Judit precisa estar terminalizado antes do rerun do Escavador2. Provedores pendentes: ${unsettledProviders.join(', ')}.`);
+        }
       }
 
       if (!caseData.tenantId) {
@@ -1713,9 +1735,30 @@ function createRerunEnrichmentPhaseHandler({
           throw new HttpsError('failed-precondition', 'Escavador desabilitado para este tenant.');
         }
         if (scope === 'cascade') {
-          await caseRef.update({ updatedAt: FieldValue.serverTimestamp() });
+          const invalidateFields = {
+            escavador2EnrichmentStatus: 'PENDING',
+            escavador2Error: null,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+          for (const field of FULL_RERUN_DERIVED_FIELDS) {
+            if (field.startsWith('escavador2') && field !== 'escavador2RawPayloads') {
+              invalidateFields[field] = FieldValue.delete();
+            }
+          }
+          await caseRef.update(invalidateFields);
         }
         await runEscavadorEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavadorConfig);
+      }
+
+      if (phase === 'escavador2') {
+        const escavador2Config = await loadEscavador2Config(caseData.tenantId);
+        if (!escavador2Config.enabled) {
+          throw new HttpsError('failed-precondition', 'Escavador2 desabilitado para este tenant.');
+        }
+        if (scope === 'cascade') {
+          await caseRef.update({ updatedAt: FieldValue.serverTimestamp() });
+        }
+        await runEscavador2EnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavador2Config);
       }
 
       if (phase === 'judit') {
@@ -1748,7 +1791,17 @@ function createRerunEnrichmentPhaseHandler({
           throw new HttpsError('failed-precondition', 'DJEN desabilitado para este tenant.');
         }
         if (scope === 'cascade') {
-          await caseRef.update({ updatedAt: FieldValue.serverTimestamp() });
+          const invalidateFields = {
+            escavador2EnrichmentStatus: 'PENDING',
+            escavador2Error: null,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+          for (const field of FULL_RERUN_DERIVED_FIELDS) {
+            if (field.startsWith('escavador2') && field !== 'escavador2RawPayloads') {
+              invalidateFields[field] = FieldValue.delete();
+            }
+          }
+          await caseRef.update(invalidateFields);
         }
         await runDjenEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), djenConfig);
       }
