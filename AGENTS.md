@@ -429,12 +429,13 @@ MADERO_UID=
 
 ---
 
-## 11. Estado Atual do Projeto (2026-05-31)
+## 11. Estado Atual do Projeto (2026-06-18)
 
 - **Phase C — Modularização:** CONCLUÍDA. `functions/index.js` de ~13.366 para ~1.800 linhas (−87%). 26 módulos extraídos com factories e wrappers de dependência.
 - **Phase B — Async Export:** CONCLUÍDA. 5 callables de exportação assíncrona registrados + teste de contrato.
-- **Testes:** 55 arquivos backend + 55+ frontend = ~2.400+ testes passando.
-- **Lint:** 0 erros (root + functions).
+- **Escavador2 — Visibilidade Ops + Pipeline Hardening:** CONCLUÍDO. Normalizador usa `roleClassifier` central, auto-classificação consome digest Escavador2, rerun/cascade endurecidos e processos são exibidos no `CasoPage` do portal Ops.
+- **Testes:** backend 1.454 testes + frontend 1.820 testes passando (exceto 1 teste flaky do `CasoPage` que passa isolado).
+- **Lint:** 0 erros (root + functions); 2 warnings preexistentes em `CasoPage.jsx` (exhaustive-deps).
 - **Deploy ativo:** Vercel + Firebase Functions (`compliance-hub-br`). Nenhum deploy da branch `refactor/full-local-roadmap`.
 - **Sem CI/CD:** Deploy é manual via CLI. Não há GitHub Actions configurado.
 - **Segurança:** CSP atualizado (`*.cloudfunctions.net` → domínio específico). CORS restrito em 21 de 22 callables. Rate limiter wireado via middleware.
@@ -446,7 +447,12 @@ MADERO_UID=
 2. **ADR-002:** Campos derivados nunca passam pelo `ALLOWED_CONCLUDE_FIELDS` (segurança).
 3. **ADR-003:** TTL de relatórios públicos = 14 dias.
 4. **ADR-004:** `PublicReportPage` diferencia erros de expiração vs. não encontrado.
-5. **ADR-005:** Escavador2 é um provedor complementar separado da integração oficial do Escavador, usando apenas campos `escavador2*`.
+5. **ADR-005:** Backup diário automatizado do Firestore e Firebase Auth com retenção de 7 dias.
+6. **ADR-006:** BigDataCorp é o gate de identidade primário; FonteData é fallback.
+7. **ADR-007:** Modularização Phase C — extração de 26 módulos especializados do `index.js`.
+8. **ADR-008:** Escavador2 classifica papéis pelo `roleClassifier` central.
+9. **ADR-009:** Processos Escavador2 são visíveis no portal Ops para auditoria.
+10. **ADR-010:** Pipeline Escavador2 é endurecido contra dados stale, com limpeza de campos derivados e guards de rerun/cascade.
 
 ---
 
