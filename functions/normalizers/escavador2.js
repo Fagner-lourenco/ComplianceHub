@@ -3,6 +3,7 @@ function asArray(value) {
 }
 
 const { isExcludedCrimeType, hasCriminalIndicator } = require('../helpers/crimeTypeFilter');
+const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
@@ -34,20 +35,17 @@ function normalizeStatus(value) {
   return null;
 }
 
-function normalizeRoleFlags(role = {}) {
-  const text = [role.categoria, role.tipo_principal, role.polo_principal]
-    .filter(Boolean)
-    .join(' ')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase();
+function normalizeRoleFlags(role = {}, area = '') {
+  const tipoPrincipal = role.tipo_principal || role.categoria || null;
+  const polo = role.polo_principal || null;
+  const roleClassification = classifyRole(tipoPrincipal, area, normalizeSideForClassifier(polo));
 
   return {
-    isDefendant: /DEFENDANT|REU|RECLAMAD|REQUERID|EXECUTAD|PASSIVO/.test(text),
-    isPlaintiff: /PLAINTIFF|AUTOR|RECLAMANTE|REQUERENTE|EXEQUENTE|ATIVO/.test(text),
-    isVictim: /VICTIM|VITIMA|OFENDID|PREJUDICAD|AGRAVIAD/.test(text),
-    isWitness: /WITNESS|TESTEMUNH|INFORMANTE/.test(text),
-    isLawyer: /LAWYER|ADVOGAD|PROCURADOR/.test(text),
+    isDefendant: roleClassification.category === 'DEFENDANT',
+    isPlaintiff: roleClassification.category === 'PLAINTIFF',
+    isVictim: roleClassification.category === 'VICTIM',
+    isWitness: roleClassification.category === 'WITNESS',
+    isLawyer: roleClassification.category === 'LAWYER',
   };
 }
 
@@ -58,10 +56,11 @@ function mapProcess(processo = {}, index = 0) {
   const match = processo.normalizado?.match || {};
   const papel = processo.papel_candidato || {};
   const area = normalizeArea(processo.classificacao?.area);
+  const areaForRole = area === 'CRIMINAL' ? 'Criminal' : area === 'LABOR' ? 'Trabalhista' : area;
   const fullCnj = cnj.valor_completo_extraido || (!cnj.mascarado ? cnj.valor : null);
   const numeroCnj = fullCnj || cnj.valor || null;
   const status = normalizeStatus(processo.status);
-  const roleFlags = normalizeRoleFlags(papel);
+  const roleFlags = normalizeRoleFlags(papel, areaForRole);
   const tipoNormalizado = papel.tipo_principal || papel.categoria || null;
 
   const subjects = Array.isArray(dados.subjects) ? dados.subjects : (Array.isArray(processo.subjects) ? processo.subjects : []);

@@ -151,6 +151,57 @@ describe('normalizeEscavador2Response', () => {
       _sourceEscavador2: expect.objectContaining({ provider: 'escavador2' }),
     }));
   });
+
+  it('classifies ambiguous roles using central roleClassifier with side fallback', () => {
+    const response = {
+      consulta: { status: 'DONE' },
+      processos: [
+        {
+          cnj: { valor: '0001111-11.2024.8.26.0100' },
+          classificacao: { area: 'CRIMINAL', risco_material: true },
+          papel_candidato: { tipo_principal: 'ENVOLVIDO', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
+          normalizado: {
+            match: { has_exact_cpf_match: true },
+            dados: { classe: 'Acao Penal', assunto: 'Roubo', tribunal_sigla: 'TJSP', uf: 'SP', data_inicio: '2024-01-01' },
+          },
+        },
+        {
+          cnj: { valor: '0002222-22.2024.5.09.0001' },
+          classificacao: { area: 'LABOR' },
+          papel_candidato: { tipo_principal: 'Reclamante', polo_principal: 'ATIVO', categoria: 'PLAINTIFF' },
+          normalizado: {
+            match: { has_exact_cpf_match: true },
+            dados: { classe: 'Reclamacao Trabalhista', tribunal_sigla: 'TRT9', uf: 'PR', data_inicio: '2023-03-10' },
+          },
+        },
+        {
+          cnj: { valor: '0003333-33.2024.8.26.0001' },
+          classificacao: { area: 'CRIMINAL' },
+          papel_candidato: { tipo_principal: 'Vitima', polo_principal: 'PASSIVO', categoria: 'VICTIM' },
+          normalizado: {
+            match: { has_exact_cpf_match: true },
+            dados: { classe: 'Acao Penal', assunto: 'Lesao Corporal', tribunal_sigla: 'TJSP', uf: 'SP', data_inicio: '2024-02-01' },
+          },
+        },
+      ],
+    };
+
+    const normalized = normalizeEscavador2Response(response);
+    const [criminalDefendant, laborPlaintiff, criminalVictim] = normalized.escavador2Processos;
+
+    expect(criminalDefendant.isDefendant).toBe(true);
+    expect(criminalDefendant.isPlaintiff).toBe(false);
+    expect(criminalDefendant.isVictim).toBe(false);
+    expect(criminalDefendant.roleCategory).toBe('DEFENDANT');
+
+    expect(laborPlaintiff.isPlaintiff).toBe(true);
+    expect(laborPlaintiff.isDefendant).toBe(false);
+    expect(laborPlaintiff.roleCategory).toBe('PLAINTIFF');
+
+    expect(criminalVictim.isVictim).toBe(true);
+    expect(criminalVictim.isDefendant).toBe(false);
+    expect(criminalVictim.roleCategory).toBe('VICTIM');
+  });
 });
 
 describe('normalizeArea', () => {
