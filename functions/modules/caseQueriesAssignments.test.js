@@ -25,6 +25,7 @@ const {
   buildOpsMetricsFromCases,
   buildClientDashboardMetricsFromCases,
   createRerunEnrichmentPhaseHandler,
+  createRerunAiAnalysisHandler,
 } = require('./caseQueriesAssignments');
 
 /* =========================================================
@@ -260,6 +261,7 @@ describe('createRerunEnrichmentPhaseHandler', () => {
       markPendingJuditRequestsStale: vi.fn(async () => 0),
       buildProviderRunIds: vi.fn(() => buildProviderRunIds('case-1')),
       rerunAiForCase: vi.fn(async () => ({ success: true })),
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: true })),
       writeAuditEvent: vi.fn(async () => {}),
       getClientIp: vi.fn(() => '127.0.0.1'),
       ACTOR_TYPE: { OPS_USER: 'OPS_USER' },
@@ -306,6 +308,34 @@ describe('createRerunEnrichmentPhaseHandler', () => {
     expect(deps.runEscavador2EnrichmentPhase).not.toHaveBeenCalled();
   });
 
+  it('bloqueia rerun de IA quando IA esta desabilitada para o tenant', async () => {
+    const { deps } = makeRerunDeps({
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'IA desabilitada para este tenant.' })),
+    });
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    await expect(handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'ai', scope: 'single' },
+    })).rejects.toThrow('IA desabilitada para este tenant.');
+
+    expect(deps.rerunAiForCase).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia rerun de IA quando budget mensal foi excedido', async () => {
+    const { deps } = makeRerunDeps({
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'Budget mensal excedido ($12.0000/$10)' })),
+    });
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    await expect(handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'ai', scope: 'single' },
+    })).rejects.toThrow('Budget mensal excedido');
+
+    expect(deps.rerunAiForCase).not.toHaveBeenCalled();
+  });
+
   it('reseta Escavador2 para PENDING no rerun cascade de escavador', async () => {
     const caseData = {
       tenantId: 'tenant-1',
@@ -329,6 +359,76 @@ describe('createRerunEnrichmentPhaseHandler', () => {
     const resetCall = updateCalls.find((call) => call[0].escavador2EnrichmentStatus === 'PENDING');
     expect(resetCall).toBeDefined();
     expect(resetCall[0].escavador2Processos).toBeInstanceOf(Object);
+  });
+});
+
+describe('createRerunAiAnalysisHandler', () => {
+  function makeAiRerunDeps(overrides = {}) {
+    const caseData = {
+      tenantId: 'tenant-1',
+      candidateName: 'Pessoa Teste',
+      status: 'IN_ANALYSIS',
+      bigdatacorpEnrichmentStatus: 'DONE',
+      juditEnrichmentStatus: 'DONE',
+      escavadorEnrichmentStatus: 'SKIPPED',
+      ...(overrides.caseData || {}),
+    };
+    const caseRef = {
+      get: vi.fn(async () => ({ exists: true, data: () => caseData })),
+      update: vi.fn(async () => {}),
+    };
+    const deps = {
+      db: { collection: vi.fn(() => ({ doc: vi.fn(() => caseRef) })) },
+      getOpsUserProfile: vi.fn(async () => ({ email: 'ops@example.com', role: 'admin' })),
+      assertOpsCanAccessCase: vi.fn(),
+      rerunAiForCase: vi.fn(async () => ({ success: true })),
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: true })),
+      openaiApiKey: { value: vi.fn(() => 'test-key') },
+      ...overrides,
+    };
+    return { deps, caseRef, caseData };
+  }
+
+  it('executa rerun de IA quando habilitada', async () => {
+    const { deps, caseRef, caseData } = makeAiRerunDeps();
+    const handler = createRerunAiAnalysisHandler(deps);
+
+    const result = await handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1' },
+    });
+
+    expect(deps.isAiEnabledForTenant).toHaveBeenCalledWith('tenant-1', deps.db);
+    expect(deps.rerunAiForCase).toHaveBeenCalledWith(caseRef, 'case-1', caseData, 'ops-1', expect.any(Object), expect.any(Object));
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it('bloqueia rerun de IA quando desabilitada', async () => {
+    const { deps } = makeAiRerunDeps({
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'IA desabilitada para este tenant.' })),
+    });
+    const handler = createRerunAiAnalysisHandler(deps);
+
+    await expect(handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1' },
+    })).rejects.toThrow('IA desabilitada para este tenant.');
+
+    expect(deps.rerunAiForCase).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia rerun de IA quando budget foi excedido', async () => {
+    const { deps } = makeAiRerunDeps({
+      isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'Budget mensal excedido ($12.0000/$10)' })),
+    });
+    const handler = createRerunAiAnalysisHandler(deps);
+
+    await expect(handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1' },
+    })).rejects.toThrow('Budget mensal excedido');
+
+    expect(deps.rerunAiForCase).not.toHaveBeenCalled();
   });
 });
 

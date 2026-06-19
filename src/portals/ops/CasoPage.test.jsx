@@ -16,6 +16,7 @@ const casoPageMocks = vi.hoisted(() => ({
     callSetAiDecisionByAnalyst: vi.fn(),
     callReturnCaseToClient: vi.fn(),
     callConcludeCaseByAnalyst: vi.fn(),
+    getTenantSettings: vi.fn(),
 }));
 
 vi.mock('../../core/auth/useAuth', () => ({
@@ -35,6 +36,7 @@ vi.mock('../../core/firebase/firestoreService', async (importOriginal) => {
         callSetAiDecisionByAnalyst: (...args) => casoPageMocks.callSetAiDecisionByAnalyst(...args),
         callReturnCaseToClient: (...args) => casoPageMocks.callReturnCaseToClient(...args),
         callConcludeCaseByAnalyst: (...args) => casoPageMocks.callConcludeCaseByAnalyst(...args),
+        getTenantSettings: (...args) => casoPageMocks.getTenantSettings(...args),
     };
 });
 
@@ -71,6 +73,8 @@ describe('CasoPage', () => {
         casoPageMocks.callReturnCaseToClient.mockResolvedValue({});
         casoPageMocks.callConcludeCaseByAnalyst.mockReset();
         casoPageMocks.callConcludeCaseByAnalyst.mockResolvedValue({});
+        casoPageMocks.getTenantSettings.mockReset();
+        casoPageMocks.getTenantSettings.mockResolvedValue({ enrichmentConfig: { ai: { enabled: true } } });
     });
 
     it('nao exibe caso mock quando a rota real nao existe', async () => {
@@ -614,8 +618,31 @@ describe('CasoPage', () => {
 
         expect(await screen.findByText('Helena Prado')).toBeInTheDocument();
         expect(screen.getByText('Concorda com ressalva')).toBeInTheDocument();
-        expect(screen.getByText(/Sugestão consultiva: Revisar antes de concluir/i)).toBeInTheDocument();
+        expect(screen.getByText(/^Sugestão consultiva: Revisar antes de concluir$/i)).toBeInTheDocument();
         expect(casoPageMocks.callSetAiDecisionByAnalyst).not.toHaveBeenCalled();
+    });
+
+    it('exibe banner de IA desabilitada e subtitulo deterministico quando tenant desligou IA', async () => {
+        casoPageMocks.getTenantSettings.mockResolvedValue({ enrichmentConfig: { ai: { enabled: false } } });
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Helena Prado',
+                cpf: '11122233344',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                criminalFlag: 'NEGATIVE',
+                autoClassifiedAt: '2026-05-22T00:47:59.994Z',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+
+        expect(await screen.findByText('Helena Prado')).toBeInTheDocument();
+        expect(await screen.findByText(/IA desabilitada/i)).toBeInTheDocument();
+        expect(screen.getByText(/modo determinístico/i)).toBeInTheDocument();
     });
 
     it('nao propaga ressalva criminal para eixos trabalhista e mandado negativos bem cobertos', async () => {

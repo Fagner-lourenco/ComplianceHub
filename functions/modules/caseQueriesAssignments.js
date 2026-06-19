@@ -1483,6 +1483,7 @@ function createRerunAiAnalysisHandler({
   getOpsUserProfile,
   assertOpsCanAccessCase,
   rerunAiForCase,
+  isAiEnabledForTenant,
   openaiApiKey,
 }) {
   const options = { region: 'southamerica-east1', cors: true };
@@ -1506,6 +1507,11 @@ function createRerunAiAnalysisHandler({
       if (!caseDoc.exists) throw new HttpsError('not-found', 'Caso nao encontrado.');
       const caseData = caseDoc.data() || {};
       assertOpsCanAccessCase(profile, caseData, caseId);
+
+      const aiCheck = await isAiEnabledForTenant(caseData.tenantId, db);
+      if (!aiCheck.enabled) {
+        throw new HttpsError('failed-precondition', aiCheck.reason || 'IA desabilitada para este tenant.');
+      }
 
       return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
     },
@@ -1534,6 +1540,7 @@ function createRerunEnrichmentPhaseHandler({
   markPendingJuditRequestsStale,
   buildProviderRunIds,
   rerunAiForCase,
+  isAiEnabledForTenant,
   writeAuditEvent,
   getClientIp,
   ACTOR_TYPE,
@@ -1569,6 +1576,10 @@ function createRerunEnrichmentPhaseHandler({
       if (phase === 'ai') {
         if (typeof rerunAiForCase !== 'function') {
           throw new HttpsError('failed-precondition', 'Reexecucao de IA nao configurada neste handler.');
+        }
+        const aiCheck = await isAiEnabledForTenant(caseData.tenantId, db);
+        if (!aiCheck.enabled) {
+          throw new HttpsError('failed-precondition', aiCheck.reason || 'IA desabilitada para este tenant.');
         }
         return rerunAiForCase(caseRef, caseId, caseData, uid, profile, request);
       }

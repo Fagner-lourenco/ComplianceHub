@@ -513,6 +513,7 @@ describe('createAutoClassificationHandlers', () => {
             computeAutoClassification: vi.fn(() => ({ criminalFlag: 'NEGATIVE', warrantFlag: 'NEGATIVE', laborFlag: 'NEGATIVE' })),
             asDate: vi.fn((val) => val ? new Date(val) : null),
             getTenantSettingsData: vi.fn(async () => null),
+            isAiEnabledForTenant: vi.fn(async () => ({ enabled: false })),
             loadEscavadorConfig: vi.fn(async () => ({ enabled: false })),
             evaluateNegativePartialSafetyNet: vi.fn(() => ({ eligible: false, reasons: [], action: 'NONE' })),
             buildHomonymAnalysisInput: mockBuildHomonymAnalysisInput,
@@ -614,6 +615,64 @@ describe('createAutoClassificationHandlers', () => {
         const result = await handlers.maybeRunAutoClassifyAndAi(mockCaseRef, 'case-1', 'Test', { skipAutoClassify: true });
         expect(result.ran).toBe(false);
         expect(result.reason).toBe('skipAutoClassify');
+    });
+
+    it('runAutoClassifyAndAi seta aiStatus SKIPPED quando IA desabilitada', async () => {
+        const deps = buildDeps({
+            isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'IA desabilitada para este tenant.' })),
+            buildHomonymAnalysisInput: vi.fn(() => ({ needsAnalysis: true, ambiguityReasons: ['multiplos cpfs'], hardFacts: {} })),
+        });
+        const handlers = createAutoClassificationHandlers(deps);
+        const caseRef = {
+            get: vi.fn(async () => ({ exists: true, data: () => ({ tenantId: 'tenant-1' }) })),
+            update: vi.fn(async () => {}),
+        };
+
+        await handlers.runAutoClassifyAndAi(caseRef, 'case-1', { tenantId: 'tenant-1' });
+
+        const updateCalls = caseRef.update.mock.calls;
+        const lastCall = updateCalls[updateCalls.length - 1][0];
+        expect(lastCall.aiStatus).toBe('SKIPPED');
+        expect(lastCall.aiError).toBe('IA desabilitada para este tenant.');
+        expect(lastCall.aiHomonymError).toBe('IA desabilitada para este tenant.');
+        expect(deps.runAiHomonymAnalysis).not.toHaveBeenCalled();
+        expect(deps.runAiClassificationReviewAnalysis).not.toHaveBeenCalled();
+    });
+
+    it('runAutoClassifyAndAi executa IA quando habilitada e dentro do budget', async () => {
+        const deps = buildDeps({
+            isAiEnabledForTenant: vi.fn(async () => ({ enabled: true, totalCost: 5, budget: 10 })),
+            buildHomonymAnalysisInput: vi.fn(() => ({ needsAnalysis: false })),
+        });
+        const handlers = createAutoClassificationHandlers(deps);
+        const caseRef = {
+            get: vi.fn(async () => ({ exists: true, data: () => ({ tenantId: 'tenant-1' }) })),
+            update: vi.fn(async () => {}),
+        };
+
+        await handlers.runAutoClassifyAndAi(caseRef, 'case-1', { tenantId: 'tenant-1' });
+
+        expect(deps.runAiClassificationReviewAnalysis).toHaveBeenCalled();
+    });
+
+    it('runAutoClassifyAndAi pula IA quando budget excedido', async () => {
+        const deps = buildDeps({
+            isAiEnabledForTenant: vi.fn(async () => ({ enabled: false, reason: 'Budget mensal excedido ($12.0000/$10)' })),
+            buildHomonymAnalysisInput: vi.fn(() => ({ needsAnalysis: false })),
+        });
+        const handlers = createAutoClassificationHandlers(deps);
+        const caseRef = {
+            get: vi.fn(async () => ({ exists: true, data: () => ({ tenantId: 'tenant-1' }) })),
+            update: vi.fn(async () => {}),
+        };
+
+        await handlers.runAutoClassifyAndAi(caseRef, 'case-1', { tenantId: 'tenant-1' });
+
+        const updateCalls = caseRef.update.mock.calls;
+        const lastCall = updateCalls[updateCalls.length - 1][0];
+        expect(lastCall.aiStatus).toBe('SKIPPED');
+        expect(lastCall.aiError).toMatch(/Budget mensal excedido/);
+        expect(deps.runAiClassificationReviewAnalysis).not.toHaveBeenCalled();
     });
 
     it('runAutoClassifyAndAi skips when lock not acquired', async () => {

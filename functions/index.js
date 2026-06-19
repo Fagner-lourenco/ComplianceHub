@@ -175,6 +175,7 @@ const {
     runAiClassificationReviewAnalysis: runAiClassificationReviewAnalysisWithDb,
     recordAiCostLedger,
 } = require('./modules/aiOrchestrator');
+const { isAiEnabledForTenant } = require('./modules/_shared/aiEnabledHelper');
 const {
     canRunFinalClassification,
     computeAutoClassifySignature: computeAutoClassifySignatureBase,
@@ -324,6 +325,7 @@ const {
     computeAutoClassification,
     asDate,
     getTenantSettingsData,
+    isAiEnabledForTenant,
     loadEscavadorConfig,
     evaluateNegativePartialSafetyNet,
     buildHomonymAnalysisInput,
@@ -1151,6 +1153,11 @@ async function rerunAiForCase(caseRef, caseId, caseData, uid, profile, request =
         throw new HttpsError('failed-precondition', 'Nenhuma fonte de enriquecimento concluida ou parcial para reexecutar a IA.');
     }
 
+    const aiCheck = await isAiEnabledForTenant(caseData.tenantId, db);
+    if (!aiCheck.enabled) {
+        throw new HttpsError('failed-precondition', aiCheck.reason || 'IA desabilitada para este tenant.');
+    }
+
     const aiKey = openaiApiKey.value();
     if (!aiKey) throw new HttpsError('internal', 'Chave OpenAI nao configurada.');
 
@@ -1277,6 +1284,7 @@ exports.rerunAiAnalysis = caseQueriesAssignments.createRerunAiAnalysisHandler({
     getOpsUserProfile,
     assertOpsCanAccessCase,
     rerunAiForCase,
+    isAiEnabledForTenant,
     openaiApiKey,
 });
 

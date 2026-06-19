@@ -24,7 +24,7 @@ const STATE_CONFIG = {
     WAITING:  { icon: '⏳', label: 'Aguardando', cls: 'pending' },
 };
 
-function getProviderStatus(caseData, provider) {
+function getProviderStatus(caseData, provider, aiEnabled) {
     if (provider.key === 'autoclass') {
         if (caseData.autoClassifiedAt) return 'DONE';
         const escDone = ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED'].includes(caseData.escavadorEnrichmentStatus);
@@ -40,6 +40,10 @@ function getProviderStatus(caseData, provider) {
         const hasHomonymResult = Boolean(caseData.aiHomonymStructured);
         const hasGeneralError = Boolean(caseData.aiClassificationReviewError || caseData.aiError);
         const hasHomonymError = Boolean(caseData.aiHomonymError);
+        // Quando IA esta desabilitada no tenant, reflete imediatamente como SKIPPED.
+        if (aiEnabled === false && !hasGeneralResult && !hasHomonymResult && !hasGeneralError && !hasHomonymError) {
+            return 'SKIPPED';
+        }
         // BUG-7 fix: If homonym succeeded but general AI failed (or vice versa), show PARTIAL.
         // Also check aiHomonymError for FAILED status.
         if ((hasGeneralResult || hasHomonymResult) && (hasGeneralError || hasHomonymError)) return 'PARTIAL';
@@ -70,13 +74,15 @@ function getProviderStatus(caseData, provider) {
     return status;
 }
 
-function canRetryProvider(provider, status, error, onRetryPhase) {
+function canRetryProvider(provider, status, error, onRetryPhase, aiEnabled) {
     if (!onRetryPhase) return false;
     if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
+    // Nao permite reexecutar IA quando ela esta desabilitada no tenant (SKIPPED por config).
+    if (provider.key === 'ai' && aiEnabled === false && status === 'SKIPPED') return false;
     return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
 }
 
-export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPhase = null }) {
+export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPhase = null, aiEnabled = null }) {
     if (!caseData) return null;
 
     return (
@@ -84,14 +90,14 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
             <h4 className="enrichment-pipeline__title">Consulta automática</h4>
             <div className="enrichment-pipeline__list">
                 {PROVIDERS.map((provider) => {
-                    const status = getProviderStatus(caseData, provider);
+                    const status = getProviderStatus(caseData, provider, aiEnabled);
                     const cfg = STATE_CONFIG[status] || STATE_CONFIG.PENDING;
                     const rawError = provider.errorField ? caseData[provider.errorField] : null;
                     const error = rawError ? extractErrorMessage(rawError, 'Erro no provedor.') : null;
                     const cost = provider.costField
                         ? (caseData[provider.costField] || 0) + (provider.key === 'ai' ? (caseData.aiHomonymCostUsd || 0) : 0)
                         : null;
-                    const canRetry = canRetryProvider(provider, status, error, onRetryPhase);
+                    const canRetry = canRetryProvider(provider, status, error, onRetryPhase, aiEnabled);
                     const isRetrying = retryingPhase === provider.key;
 
                     // Hide FonteData fallback if it was never used

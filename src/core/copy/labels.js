@@ -138,6 +138,16 @@ export const PROVIDER_NAMES = {
   openai: 'OpenAI',
 };
 
+// ── AI Status Labels ────────────────────────────────────────────────────────
+
+export const AI_LABELS = {
+  disabledBannerTitle: 'Análise assistida por IA desabilitada',
+  disabledBannerBody: 'A revisão abaixo é uma inferência determinística baseada nos dados consultados. A decisão final continua sendo do analista.',
+  deterministicSubtitle: 'Revisão de coerência (modo determinístico).',
+  reviewTabDisabledTitle: 'IA desabilitada para esta empresa',
+  reviewTabDisabledBody: 'A auto-classificação e o preenchimento dos campos continuam funcionando normalmente em modo determinístico.',
+};
+
 // ── Role Labels ─────────────────────────────────────────────────────────────
 
 export const ROLE_LABELS = {

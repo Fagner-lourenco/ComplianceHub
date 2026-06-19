@@ -7,6 +7,7 @@ const { buildHomonymAnalysisInput } = require('../helpers/aiHomonym');
 const { filterDjenComunicacoesByConfirmedProcess } = require('../helpers/reportHelpers');
 const { HIGH_RISK_CRIMINAL_ROLES } = require('../helpers/roleClassifier');
 const { SAFE_NARRATIVE_TEXTS } = require('./reportEngine');
+const { isAiEnabledForTenant: isAiEnabledForTenantHelper } = require('./_shared/aiEnabledHelper');
 
 /* =========================================================
    LÓGICA PURA: Classificação automática
@@ -578,7 +579,7 @@ function createAutoClassificationHandlers(deps) {
         computeAutoClassifySignature: computeAutoClassifySignatureFn,
         computeAutoClassification: computeAutoClassificationFn,
         asDate,
-        getTenantSettingsData,
+        isAiEnabledForTenant,
         loadEscavadorConfig,
         evaluateNegativePartialSafetyNet,
         buildHomonymAnalysisInput,
@@ -603,6 +604,8 @@ function createAutoClassificationHandlers(deps) {
         sanitizeNarrativesForFlags,
         recordAiCostLedger,
     } = deps;
+
+    const isAiEnabledForTenantFn = isAiEnabledForTenant || isAiEnabledForTenantHelper;
 
     async function acquireAutoClassifyRun(caseRef, caseId) {
         const owner = `${caseId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -678,46 +681,14 @@ function createAutoClassificationHandlers(deps) {
 
             const tenantId = freshData.tenantId;
             let aiEnabled = false;
-            let tenantData = null;
+            let aiDisabledReason = null;
             if (tenantId) {
                 try {
-                    tenantData = await getTenantSettingsData(tenantId);
-                    if (tenantData) {
-                        aiEnabled = tenantData.enrichmentConfig?.ai?.enabled === true;
-
-                        if (aiEnabled && tenantData.enrichmentConfig?.ai?.monthlyBudgetUsd) {
-                            const budget = tenantData.enrichmentConfig.ai.monthlyBudgetUsd;
-                            // BUG-R5-002: Use tenant-level AI cost ledger instead of O(n) case scan.
-                            // Fallback to case scan only if ledger doesn't exist (backward compat).
-                            const now = new Date();
-                            const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                            const ledgerRef = db.collection('tenantSettings').doc(tenantId).collection('aiCostLedger').doc(monthKey);
-                            const ledgerSnap = await ledgerRef.get();
-                            let totalCost = 0;
-                            if (ledgerSnap.exists) {
-                                totalCost = ledgerSnap.data().totalCostUsd || 0;
-                            } else {
-                                // Fallback: O(n) scan for backward compatibility. Warn about performance.
-                                console.warn(`[AI Budget] Tenant ${tenantId}: aiCostLedger missing for ${monthKey}. Falling back to O(n) case scan. Consider running backfill.`);
-                                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                                const costSnapshot = await db.collection('cases')
-                                    .where('tenantId', '==', tenantId)
-                                    .where('aiExecutedAt', '>=', monthStart)
-                                    .select('aiCostUsd', 'aiHomonymCostUsd', 'aiClassificationReviewCostUsd')
-                                    .get();
-                                costSnapshot.forEach((docSnap) => {
-                                    const data = docSnap.data();
-                                    totalCost += (data.aiCostUsd || 0)
-                                        + (data.aiHomonymCostUsd || 0)
-                                        + (data.aiClassificationReviewCostUsd || 0);
-                                });
-                            }
-                            if (totalCost >= budget) {
-                                console.warn(`Case ${caseId}: AI budget exceeded ($${totalCost.toFixed(4)} >= $${budget}). Skipping AI.`);
-                                updatePayload.aiError = `Budget mensal excedido ($${totalCost.toFixed(4)}/$${budget})`;
-                                aiEnabled = false;
-                            }
-                        }
+                    const aiCheck = await isAiEnabledForTenantFn(tenantId, db);
+                    aiEnabled = aiCheck.enabled;
+                    aiDisabledReason = aiCheck.reason || null;
+                    if (!aiEnabled && aiDisabledReason) {
+                        updatePayload.aiError = aiDisabledReason;
                     }
                 } catch (err) {
                     console.warn(`Case ${caseId}: tenant AI config read failed:`, err.message);

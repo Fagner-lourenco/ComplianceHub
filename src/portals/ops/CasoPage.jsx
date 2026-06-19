@@ -7,6 +7,7 @@ import StatusBadge from '../../ui/components/StatusBadge/StatusBadge';
 import SocialLinks from '../../ui/components/SocialLinks/SocialLinks';
 import EnrichmentPipeline from '../../ui/components/EnrichmentPipeline/EnrichmentPipeline';
 import Modal from '../../ui/components/Modal/Modal';
+import { AI_LABELS } from '../../core/copy/labels';
 import { useAuth } from '../../core/auth/useAuth';
 import {
     DEFAULT_ANALYSIS_CONFIG,
@@ -836,6 +837,7 @@ export default function CasoPage() {
     const [reportPreview, setReportPreview] = useState({ open: false, loading: false, html: '', error: '' });
     const [retryingPhase, setRetryingPhase] = useState(null);
     const [enabledPhases, setEnabledPhases] = useState(LEGACY_PHASES);
+    const [tenantEnrichmentConfig, setTenantEnrichmentConfig] = useState(null);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [returnReason, setReturnReason] = useState('');
     const [returnNotes, setReturnNotes] = useState('');
@@ -1114,6 +1116,7 @@ export default function CasoPage() {
         } else if (caseData?.tenantId && !isDemoMode) {
             getTenantSettings(caseData.tenantId).then((settings) => {
                 setEnabledPhases(getEnabledPhases(settings.analysisConfig));
+                setTenantEnrichmentConfig(settings.enrichmentConfig || null);
             }).catch(() => {});
         } else if (caseData) {
             setEnabledPhases(LEGACY_PHASES);
@@ -1419,6 +1422,7 @@ export default function CasoPage() {
     const isEnriched = overallEnrichmentStatus === 'DONE' || overallEnrichmentStatus === 'PARTIAL';
     const enrichmentRunning = overallEnrichmentStatus === 'RUNNING';
     const isDoneStatus = (status) => status === 'DONE';
+    const isAiDisabled = tenantEnrichmentConfig?.ai?.enabled === false;
     const hasConsultedSources = [
         caseData?.enrichmentStatus,
         caseData?.escavadorEnrichmentStatus,
@@ -1926,6 +1930,7 @@ export default function CasoPage() {
                 caseData={caseData}
                 onRetryPhase={canEditCase ? handleRetryPhase : undefined}
                 retryingPhase={retryingPhase}
+                aiEnabled={tenantEnrichmentConfig?.ai?.enabled === true}
             />
             {/* Case Communication Panel */}
             <div className='caso-section' style={{ marginTop: 16 }}>
@@ -2047,10 +2052,16 @@ export default function CasoPage() {
                         </div>
 
                         <div className="caso-assisted-review">
+                            {isAiDisabled && (
+                                <div className="caso-assisted-review__disabled-banner" style={{ marginBottom: 12, padding: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 8 }}>
+                                    <strong>{AI_LABELS.disabledBannerTitle}</strong>
+                                    <p style={{ margin: '4px 0 0' }}>{AI_LABELS.disabledBannerBody}</p>
+                                </div>
+                            )}
                             <div className="caso-assisted-review__header">
                                 <div>
                                     <h4>Análise assistida da autoclassificação</h4>
-                                    <p>Revisão consultiva da IA sobre a coerência das flags calculadas automaticamente.</p>
+                                    <p>{isAiDisabled ? AI_LABELS.deterministicSubtitle : 'Revisão consultiva da IA sobre a coerência das flags calculadas automaticamente.'}</p>
                                 </div>
                                 <span className={`caso-assisted-review__confidence caso-assisted-review__confidence--${String(classificationReview.confidence || 'LOW').toLowerCase()}`}>
                                     Confiança {getHomonymRiskLabel(classificationReview.confidence || 'LOW')}
@@ -4176,6 +4187,13 @@ export default function CasoPage() {
                 {currentStepKey === 'review' && (
                     <div className="caso-section">
                         <h3>Revisao e conclusao</h3>
+
+                        {isAiDisabled && (
+                            <div className="caso-hint" style={{ marginBottom: 16, padding: 12, background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: 8 }}>
+                                <strong>{AI_LABELS.reviewTabDisabledTitle}</strong>
+                                <p style={{ margin: '4px 0 0' }}>{AI_LABELS.reviewTabDisabledBody}</p>
+                            </div>
+                        )}
 
                         <div className="caso-risk-summary">
                             <div className="caso-risk-item">
