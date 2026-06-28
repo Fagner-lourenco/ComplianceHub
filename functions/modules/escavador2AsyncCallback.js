@@ -57,7 +57,7 @@ function readInternalKey(req) {
 
 function normalizeCallbackStatus(value) {
     const status = String(value || '').trim().toUpperCase();
-    if (status === 'DONE' || status === 'PARTIAL' || status === 'FAILED') return status;
+    if (status === 'DONE' || status === 'PARTIAL' || status === 'FAILED' || status === 'SKIPPED') return status;
     return null;
 }
 
@@ -70,11 +70,16 @@ function resolveCallbackIdentity(req, body = {}) {
     return { caseId, enrichmentGeneration, taskId };
 }
 
-async function markTask(taskRef, FieldValue, payload) {
-    await taskRef.set({
+function markTask(transaction, taskRef, FieldValue, payload) {
+    transaction.update(taskRef, {
         ...payload,
         updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
+    });
+}
+
+function buildAutoClassifyContext(caseData, caseRef, caseId, reason) {
+    if (!caseData || caseData.status === 'DONE' || caseData.status === 'CORRECTION_NEEDED') return null;
+    return { caseRef, caseId, reason };
 }
 
 async function handleEscavador2CallbackLogic({
@@ -106,93 +111,114 @@ async function handleEscavador2CallbackLogic({
     }
 
     const taskRef = db.collection('escavador2Tasks').doc(escavador2RunDocId(caseId, enrichmentGeneration));
-    const taskSnap = await taskRef.get();
-    if (!taskSnap.exists) {
-        return { status: 200, body: { ok: true, ignored: true, reason: 'unknown_task' } };
-    }
-
-    const taskData = taskSnap.data() || {};
-    if (['DONE', 'PARTIAL', 'FAILED', 'STALE'].includes(taskData.status) || taskData.processedAt) {
-        return { status: 200, body: { ok: true, ignored: true, reason: 'already_processed' } };
-    }
-
     const caseRef = db.collection('cases').doc(caseId);
-    const caseSnap = await caseRef.get();
-    if (!caseSnap.exists) {
-        await markTask(taskRef, FieldValue, { status: 'FAILED', failReason: 'case_not_found', processedAt: FieldValue.serverTimestamp() });
-        return { status: 200, body: { ok: true, ignored: true, reason: 'case_not_found' } };
-    }
 
-    const caseData = caseSnap.data() || {};
-    const currentGeneration = caseData.enrichmentGeneration || 0;
-    const taskGeneration = taskData.enrichmentGeneration ?? enrichmentGeneration;
-    if (taskGeneration !== currentGeneration) {
-        await markTask(taskRef, FieldValue, {
-            status: 'STALE',
-            staleReason: `generation_mismatch:${taskGeneration}->${currentGeneration}`,
-            staleAt: FieldValue.serverTimestamp(),
-        });
-        return { status: 200, body: { ok: true, ignored: true, reason: 'stale_generation' } };
-    }
+    const { result, autoClassify } = await db.runTransaction(async (transaction) => {
+        const taskSnap = await transaction.get(taskRef);
+        if (!taskSnap.exists) {
+            return { result: { status: 200, body: { ok: true, ignored: true, reason: 'unknown_task' } }, autoClassify: null };
+        }
 
-    if (status === 'FAILED') {
-        const error = String(body.error || 'Falha final no Escavador2.').slice(0, 1000);
-        await caseRef.update({
-            escavador2EnrichmentStatus: 'FAILED',
-            escavador2CallbackStatus: 'FAILED',
-            escavador2Error: error,
+        const taskData = taskSnap.data() || {};
+        if (['DONE', 'PARTIAL', 'FAILED', 'STALE', 'SKIPPED'].includes(taskData.status) || taskData.processedAt) {
+            return { result: { status: 200, body: { ok: true, ignored: true, reason: 'already_processed' } }, autoClassify: null };
+        }
+
+        const caseSnap = await transaction.get(caseRef);
+        if (!caseSnap.exists) {
+            markTask(transaction, taskRef, FieldValue, {
+                status: 'FAILED',
+                failReason: 'case_not_found',
+                processedAt: FieldValue.serverTimestamp(),
+            });
+            return { result: { status: 200, body: { ok: true, ignored: true, reason: 'case_not_found' } }, autoClassify: null };
+        }
+
+        const caseData = caseSnap.data() || {};
+        const currentGeneration = caseData.enrichmentGeneration || 0;
+        const taskGeneration = taskData.enrichmentGeneration ?? enrichmentGeneration;
+        if (taskGeneration !== currentGeneration) {
+            markTask(transaction, taskRef, FieldValue, {
+                status: 'STALE',
+                staleReason: `generation_mismatch:${taskGeneration}->${currentGeneration}`,
+                staleAt: FieldValue.serverTimestamp(),
+            });
+            return { result: { status: 200, body: { ok: true, ignored: true, reason: 'stale_generation' } }, autoClassify: null };
+        }
+
+        if (status === 'FAILED') {
+            const error = String(body.error || 'Falha final no Escavador2.').slice(0, 1000);
+            transaction.update(caseRef, {
+                escavador2EnrichmentStatus: 'FAILED',
+                escavador2CallbackStatus: 'FAILED',
+                escavador2Error: error,
+                escavador2EnrichedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            markTask(transaction, taskRef, FieldValue, {
+                status: 'FAILED',
+                taskId: taskId || taskData.taskId || null,
+                error,
+                processedAt: FieldValue.serverTimestamp(),
+            });
+            return {
+                result: { status: 200, body: { ok: true, caseId, status: 'FAILED' } },
+                autoClassify: buildAutoClassifyContext(caseData, caseRef, caseId, 'Escavador2 callback failed'),
+            };
+        }
+
+        const resultPayload = body.result || {};
+        const normalized = normalizeEscavador2Response(resultPayload, { consultedAt: new Date().toISOString() });
+        const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, { dateToleranceDays: caseData.escavador2DedupeDateToleranceDays || 90 });
+        const finalStatus = status === 'SKIPPED'
+            ? 'SKIPPED'
+            : status === 'PARTIAL' || normalized.escavador2ApiStatus === 'PARTIAL'
+                ? 'PARTIAL'
+                : 'DONE';
+
+        transaction.update(caseRef, {
+            ...normalized,
+            ...deduped,
+            escavador2EnrichmentStatus: finalStatus,
+            escavador2CallbackStatus: finalStatus,
+            escavador2Error: null,
+            escavador2CostBRL: 0,
             escavador2EnrichedAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
-        await markTask(taskRef, FieldValue, {
-            status: 'FAILED',
+
+        markTask(transaction, taskRef, FieldValue, {
+            status: finalStatus,
             taskId: taskId || taskData.taskId || null,
-            error,
+            processTotal: normalized.escavador2ProcessTotal || 0,
             processedAt: FieldValue.serverTimestamp(),
         });
-        if (maybeRunAutoClassifyAndAi && caseData.status !== 'DONE' && caseData.status !== 'CORRECTION_NEEDED') {
-            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 callback failed');
-        }
-        return { status: 200, body: { ok: true, caseId, status: 'FAILED' } };
-    }
 
-    const resultPayload = body.result || {};
-    const normalized = normalizeEscavador2Response(resultPayload, { consultedAt: new Date().toISOString() });
-    const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, { dateToleranceDays: caseData.escavador2DedupeDateToleranceDays || 90 });
-    const finalStatus = status === 'PARTIAL' || normalized.escavador2ApiStatus === 'PARTIAL' ? 'PARTIAL' : 'DONE';
-
-    await caseRef.update({
-        ...normalized,
-        ...deduped,
-        escavador2EnrichmentStatus: finalStatus,
-        escavador2CallbackStatus: finalStatus,
-        escavador2Error: null,
-        escavador2CostBRL: 0,
-        escavador2EnrichedAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        return {
+            result: { status: 200, body: { ok: true, caseId, status: finalStatus } },
+            autoClassify: buildAutoClassifyContext(caseData, caseRef, caseId, 'Escavador2 callback completed'),
+        };
     });
 
-    await markTask(taskRef, FieldValue, {
-        status: finalStatus,
-        taskId: taskId || taskData.taskId || null,
-        processTotal: normalized.escavador2ProcessTotal || 0,
-        processedAt: FieldValue.serverTimestamp(),
-    });
-
-    if (maybeRunAutoClassifyAndAi && caseData.status !== 'DONE' && caseData.status !== 'CORRECTION_NEEDED') {
-        await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 callback completed');
+    if (autoClassify && maybeRunAutoClassifyAndAi) {
+        await maybeRunAutoClassifyAndAi(autoClassify.caseRef, autoClassify.caseId, autoClassify.reason);
     }
 
-    return { status: 200, body: { ok: true, caseId, status: finalStatus } };
+    return result;
 }
 
 function createEscavador2CallbackHandler(deps) {
-    const { escavador2ApiKey, openaiApiKey } = deps;
+    const { escavador2ApiKey } = deps;
     return onRequest(
-        { region: 'southamerica-east1', cors: false, secrets: [escavador2ApiKey, openaiApiKey] },
+        { region: 'southamerica-east1', cors: false, secrets: [escavador2ApiKey] },
         async (req, res) => {
-            const result = await handleEscavador2CallbackLogic({ req, ...deps });
-            res.status(result.status).json(result.body);
+            try {
+                const result = await handleEscavador2CallbackLogic({ req, ...deps });
+                res.status(result.status).json(result.body);
+            } catch (err) {
+                console.error('Erro no callback Escavador2:', err);
+                res.status(500).json({ ok: false, error: 'internal_error' });
+            }
         },
     );
 }
