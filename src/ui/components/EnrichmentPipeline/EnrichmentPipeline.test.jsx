@@ -68,4 +68,19 @@ describe('EnrichmentPipeline', () => {
         fireEvent.click(screen.getByTitle('Reexecutar Análise assistida'));
         expect(onRetry).toHaveBeenCalledWith('ai');
     });
+
+    it('shows Escavador2 queued status when callback status is QUEUED', () => {
+        render(<EnrichmentPipeline caseData={{
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            djenEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'RUNNING',
+            escavador2CallbackStatus: 'QUEUED',
+            escavador2TaskId: 'projects/p/locations/l/queues/q/tasks/t1',
+        }} />);
+
+        expect(screen.getByText(/Escavador2/i)).toBeInTheDocument();
+        expect(screen.getByText(/Em fila/i)).toBeInTheDocument();
+    });
 });

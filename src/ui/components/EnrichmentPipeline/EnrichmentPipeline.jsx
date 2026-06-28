@@ -82,6 +82,22 @@ function canRetryProvider(provider, status, error, onRetryPhase, aiEnabled) {
     return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
 }
 
+function getProviderStatusLabel(provider, caseData, status) {
+    if (provider.key === 'escavador2' && caseData?.escavador2CallbackStatus === 'QUEUED') {
+        return 'Em fila';
+    }
+    const labels = {
+        PENDING: 'Pendente',
+        RUNNING: 'Executando',
+        DONE: 'Concluído',
+        PARTIAL: 'Parcial',
+        SKIPPED: 'Ignorado',
+        FAILED: 'Falhou',
+        BLOCKED: 'Bloqueado',
+    };
+    return labels[status] || status;
+}
+
 export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPhase = null, aiEnabled = null }) {
     if (!caseData) return null;
 
@@ -108,7 +124,7 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
                             <span className="enrichment-pipeline__dot">{cfg.icon}</span>
                             <div className="enrichment-pipeline__info">
                                 <span className="enrichment-pipeline__label">{provider.label}</span>
-                                <span className="enrichment-pipeline__status">{cfg.label}</span>
+                                <span className="enrichment-pipeline__status">{getProviderStatusLabel(provider, caseData, status)}</span>
                                 {provider.key === 'judit' && (status === 'RUNNING' || status === 'PARTIAL') && Array.isArray(caseData.juditPendingAsyncPhases) && caseData.juditPendingAsyncPhases.length > 0 && (
                                     <span className="enrichment-pipeline__detail">
                                         Aguardando: {caseData.juditPendingAsyncPhases.map(p => ({ warrant: 'mandados', execution: 'execução penal', lawsuits: 'processos' }[p] || p)).join(', ')}
