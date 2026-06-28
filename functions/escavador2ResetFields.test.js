@@ -6,12 +6,14 @@ describe('Escavador2 async reset field contract', () => {
       'escavador2TaskId',
       'escavador2CallbackStatus',
       'escavador2DedupeDateToleranceDays',
+      'escavador2Notes',
     ];
 
     expect(requiredFields).toEqual([
       'escavador2TaskId',
       'escavador2CallbackStatus',
       'escavador2DedupeDateToleranceDays',
+      'escavador2Notes',
     ]);
   });
 });

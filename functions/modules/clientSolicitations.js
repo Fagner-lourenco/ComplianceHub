@@ -457,6 +457,7 @@ function submitClientCorrectionHandler(deps) {
             escavador2TaskId: FieldValue.delete(),
             escavador2CallbackStatus: FieldValue.delete(),
             escavador2DedupeDateToleranceDays: FieldValue.delete(),
+            escavador2Notes: FieldValue.delete(),
             escavador2ApiStatus: FieldValue.delete(),
             escavador2ProcessTotal: FieldValue.delete(),
             escavador2Processos: FieldValue.delete(),
