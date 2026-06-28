@@ -190,6 +190,7 @@ const runAiPrefillAnalysis = (caseData, apiKey, options = {}) => runAiPrefillAna
 const runAiClassificationReviewAnalysis = (caseData, apiKey, options = {}) => runAiClassificationReviewAnalysisWithDb(caseData, apiKey, options, db);
 const { createEnrichmentPhases, evaluateEscavadorNeed, evaluateNegativePartialSafetyNet } = require('./modules/enrichmentPhases');
 const { markPendingJuditRequestsStale, createJuditWebhookHandler, createJuditAsyncFallbackHandler } = require('./modules/juditWebhookAndFallback');
+const escavador2AsyncCallback = require('./modules/escavador2AsyncCallback');
 const {
     buildCanonicalReportHtml: _buildCanonicalReportHtml,
     prepareCanonicalReport: _prepareCanonicalReport,
@@ -352,6 +353,14 @@ const {
 });
 
 const {
+    buildEscavador2CallbackUrl,
+    registerEscavador2Task,
+    handleEscavador2CallbackLogic,
+    createEscavador2CallbackHandler,
+    buildEscavador2CaseCallbackUrl,
+} = escavador2AsyncCallback;
+
+const {
     runFonteDataEnrichmentPhase,
     runEscavadorEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
@@ -369,6 +378,11 @@ const {
     bigdatacorpTokenId,
     maybeRunAutoClassifyAndAi,
     returnCaseForIdentityGateBlock,
+    helpers: {
+        buildEscavador2CallbackUrl,
+        buildEscavador2CaseCallbackUrl,
+        registerEscavador2Task,
+    },
 });
 
 /* =========================================================
@@ -1773,6 +1787,14 @@ exports.juditAsyncFallback = createJuditAsyncFallbackHandler({
     maybeRunAutoClassifyAndAi,
 });
 
+exports.escavador2Callback = createEscavador2CallbackHandler({
+    db,
+    FieldValue,
+    escavador2ApiKey,
+    openaiApiKey,
+    maybeRunAutoClassifyAndAi,
+});
+
 const repairAllClaimsInner = (request) => tenantUserManagement.repairAllClaimsInner({ db, getAuth, request });
 const getClientQuotaStatusInner = (uid) => systemHealth.getClientQuotaStatusInner({
     db,
@@ -1846,6 +1868,9 @@ exports.__test = {
     canBypassIdentityGate,
     buildIdentityGateCorrectionMessage,
     returnCaseForIdentityGateBlock,
+    // Escavador2 callback helpers
+    handleEscavador2CallbackLogic,
+    buildEscavador2CallbackUrl,
     // Handlers V2 para testes (usam db dinamicamente)
     listOpsCasesV2Handler: (request) => caseQueriesAssignments.createListOpsCasesV2Handler({ db, getOpsUserProfile })(request),
     listClientCasesV2Handler: (request) => caseQueriesAssignments.createListClientCasesV2Handler({ db, getClientUserProfile })(request),
