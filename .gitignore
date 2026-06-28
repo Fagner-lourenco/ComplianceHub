@@ -45,6 +45,9 @@ firebase-debug.log
 # Graphify AST caches
 graphify-out/cache/
 
+# Superpowers local progress ledger
+.superpowers/
+
 .vercel
 
 # Auditoria e dados sensíveis
