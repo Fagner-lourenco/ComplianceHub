@@ -66,6 +66,10 @@ const DEFAULT_ESCAVADOR2_CONFIG = {
         limit_movimentacoes: 20,
         limit_documentos: 20,
     },
+    async: {
+        enabled: true,
+        callbackUrlEnv: 'ESCAVADOR2_CALLBACK_URL',
+    },
     dedupe: {
         dateToleranceDays: 90,
     },
@@ -207,6 +211,10 @@ async function loadEscavador2Config(tenantId) {
         request: {
             ...DEFAULT_ESCAVADOR2_CONFIG.request,
             ...(rawConfig.request || {}),
+        },
+        async: {
+            ...DEFAULT_ESCAVADOR2_CONFIG.async,
+            ...(rawConfig.async || {}),
         },
         dedupe: {
             ...DEFAULT_ESCAVADOR2_CONFIG.dedupe,

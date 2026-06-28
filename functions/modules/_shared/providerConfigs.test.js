@@ -226,6 +226,39 @@ describe('providerConfigs', () => {
       expect(result.dedupe.dateToleranceDays).toBe(30);
       expect(result.persistence.saveRawPayloads).toBe(true);
     });
+
+    it('loads Escavador2 async defaults and merges tenant overrides', async () => {
+      const {
+        loadEscavador2Config,
+        _setDb,
+      } = await import('./providerConfigs.js');
+
+      _setDb({
+        collection: () => ({
+          doc: () => ({
+            get: async () => ({
+              exists: true,
+              data: () => ({
+                enrichmentConfig: {
+                  escavador2: {
+                    enabled: true,
+                    async: { enabled: false },
+                  },
+                },
+              }),
+            }),
+          }),
+        }),
+      });
+
+      const config = await loadEscavador2Config('tenant-1');
+
+      expect(config.enabled).toBe(true);
+      expect(config.async).toEqual({
+        enabled: false,
+        callbackUrlEnv: 'ESCAVADOR2_CALLBACK_URL',
+      });
+    });
   });
 
   describe('loadJuditConfig', () => {
