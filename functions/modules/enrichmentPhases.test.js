@@ -548,6 +548,7 @@ describe('runEscavador2EnrichmentPhase', () => {
 
     const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
       enabled: true,
+      async: { enabled: false },
       request: { detalhar: true, movimentacoes: 'risk_only', documentos: 'risk_only', limit_movimentacoes: 20, limit_documentos: 20 },
       dedupe: { dateToleranceDays: 90 },
     });
@@ -571,7 +572,7 @@ describe('runEscavador2EnrichmentPhase', () => {
     mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'PARTIAL' }, processos: [] });
     mocks.normalizeEscavador2Response.mockReturnValue({ escavador2ApiStatus: 'PARTIAL', escavador2ProcessTotal: 0, escavador2Processos: [] });
 
-    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, async: { enabled: false }, request: {}, dedupe: { dateToleranceDays: 90 } });
 
     expect(result.status).toBe('PARTIAL');
     expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({ escavador2EnrichmentStatus: 'PARTIAL' }));
@@ -584,7 +585,7 @@ describe('runEscavador2EnrichmentPhase', () => {
     const caseRef = makeCaseRef();
     mocks.consultarEscavador2.mockRejectedValue(new Error('Escavador2 HTTP 502'));
 
-    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+    const result = await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, async: { enabled: false }, request: {}, dedupe: { dateToleranceDays: 90 } });
 
     expect(result.status).toBe('FAILED');
     expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
@@ -617,7 +618,7 @@ describe('runEscavador2EnrichmentPhase', () => {
     mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'DONE' }, processos: [] });
     mocks.normalizeEscavador2Response.mockReturnValue({ escavador2ApiStatus: 'DONE', escavador2ProcessTotal: 0, escavador2Processos: [] });
 
-    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, async: { enabled: false }, request: {}, dedupe: { dateToleranceDays: 90 } });
 
     const runningUpdate = caseRef.update.mock.calls.find((call) => call[0].escavador2EnrichmentStatus === 'RUNNING');
     expect(runningUpdate).toBeDefined();
@@ -636,7 +637,7 @@ describe('runEscavador2EnrichmentPhase', () => {
     const caseRef = makeCaseRef({ escavador2RawPayloads: { response: { old: true } } });
     mocks.consultarEscavador2.mockRejectedValue(new Error('Escavador2 HTTP 502'));
 
-    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, request: {}, dedupe: { dateToleranceDays: 90 } });
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, { enabled: true, async: { enabled: false }, request: {}, dedupe: { dateToleranceDays: 90 } });
 
     const failureUpdate = caseRef.update.mock.calls.find((call) => call[0].escavador2EnrichmentStatus === 'FAILED');
     expect(failureUpdate).toBeDefined();
@@ -646,5 +647,53 @@ describe('runEscavador2EnrichmentPhase', () => {
       escavador2NewFindingCount: 'DELETE',
     });
     expect(failureUpdate[0].escavador2RawPayloads).toBeUndefined();
+  });
+
+  it('enqueues Escavador2 async and waits for callback before auto-classification', async () => {
+    const updates = [];
+    const caseRef = { update: vi.fn(async (payload) => updates.push(payload)) };
+    const maybeRunAutoClassifyAndAi = vi.fn(async () => {});
+    const registerEscavador2Task = vi.fn(async () => {});
+
+    const phases = createEnrichmentPhases({
+      db: {},
+      FieldValue: {
+        serverTimestamp: () => 'SERVER_TIMESTAMP',
+        delete: () => ({ __delete: true }),
+      },
+      escavador2ApiKey: { value: () => 'secret' },
+      maybeRunAutoClassifyAndAi,
+      adapters: {
+        consultarEscavador2Async: vi.fn(async () => ({ status: 'QUEUED', task_id: 'projects/p/locations/l/queues/q/tasks/t1' })),
+      },
+      helpers: {
+        checkCircuit: vi.fn(async () => ({ open: false })),
+        buildEscavador2CallbackUrl: vi.fn(() => 'https://example.com/escavador2Callback'),
+        buildEscavador2CaseCallbackUrl: vi.fn(({ baseUrl, caseId, enrichmentGeneration }) => `${baseUrl}?caseId=${caseId}&generation=${enrichmentGeneration}`),
+        registerEscavador2Task,
+      },
+    });
+
+    const result = await phases.runEscavador2EnrichmentPhase(
+      caseRef,
+      'case-1',
+      { tenantId: 'tenant-1', cpf: '12345678909', candidateName: 'Maria Silva', enrichmentGeneration: 7 },
+      { enabled: true, async: { enabled: true }, request: {}, dedupe: { dateToleranceDays: 90 } },
+    );
+
+    expect(result).toEqual({ status: 'RUNNING', error: null, queued: true, taskId: 'projects/p/locations/l/queues/q/tasks/t1' });
+    expect(updates.at(-1)).toMatchObject({
+      escavador2EnrichmentStatus: 'RUNNING',
+      escavador2CallbackStatus: 'QUEUED',
+      escavador2TaskId: 'projects/p/locations/l/queues/q/tasks/t1',
+      escavador2DedupeDateToleranceDays: 90,
+      escavador2CostBRL: 0,
+    });
+    expect(registerEscavador2Task).toHaveBeenCalledWith(expect.objectContaining({
+      taskId: 'projects/p/locations/l/queues/q/tasks/t1',
+      caseId: 'case-1',
+      enrichmentGeneration: 7,
+    }));
+    expect(maybeRunAutoClassifyAndAi).not.toHaveBeenCalled();
   });
 });

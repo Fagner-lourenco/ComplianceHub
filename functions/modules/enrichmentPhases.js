@@ -65,6 +65,7 @@ const {
 } = require('../normalizers/djen');
 const {
   consultarEscavador2: default_consultarEscavador2,
+  consultarEscavador2Async: default_consultarEscavador2Async,
   Escavador2Error: default_Escavador2Error,
 } = require('../adapters/escavador2');
 const {
@@ -88,6 +89,11 @@ const {
   buildJuditCallbackUrl: default_buildJuditCallbackUrl,
   registerJuditWebhookRequest: default_registerJuditWebhookRequest,
 } = require('./juditWebhookAndFallback');
+const {
+  buildEscavador2CallbackUrl: default_buildEscavador2CallbackUrl,
+  buildEscavador2CaseCallbackUrl: default_buildEscavador2CaseCallbackUrl,
+  registerEscavador2Task: default_registerEscavador2Task,
+} = require('./escavador2AsyncCallback');
 const { maskCpf } = require('./_shared/sanitizers');
 
 /* =========================================================
@@ -141,6 +147,7 @@ function createEnrichmentPhases(deps) {
   const DjenError = adapters.DjenError || default_DjenError;
 
   const consultarEscavador2 = adapters.consultarEscavador2 || default_consultarEscavador2;
+  const consultarEscavador2Async = adapters.consultarEscavador2Async || default_consultarEscavador2Async;
   const Escavador2Error = adapters.Escavador2Error || default_Escavador2Error;
 
   // Normalizers com fallback
@@ -177,6 +184,9 @@ function createEnrichmentPhases(deps) {
   const buildJuditCallbackUrl = helpers.buildJuditCallbackUrl || default_buildJuditCallbackUrl;
   const registerJuditWebhookRequest = helpers.registerJuditWebhookRequest || default_registerJuditWebhookRequest;
   const deduplicateEscavador2Findings = helpers.deduplicateEscavador2Findings || default_deduplicateEscavador2Findings;
+  const buildEscavador2CallbackUrl = helpers.buildEscavador2CallbackUrl || default_buildEscavador2CallbackUrl;
+  const buildEscavador2CaseCallbackUrl = helpers.buildEscavador2CaseCallbackUrl || default_buildEscavador2CaseCallbackUrl;
+  const registerEscavador2Task = helpers.registerEscavador2Task || default_registerEscavador2Task;
 
   /* =========================================================
      FONTEDATA — Enrichment Phase
@@ -1619,6 +1629,52 @@ function createEnrichmentPhases(deps) {
     await caseRef.update(runningUpdate);
 
     try {
+      if (escavador2Config.async?.enabled !== false) {
+        const baseCallbackUrl = buildEscavador2CallbackUrl();
+        const callbackUrl = buildEscavador2CaseCallbackUrl({
+          baseUrl: baseCallbackUrl,
+          caseId,
+          enrichmentGeneration: caseData.enrichmentGeneration || 0,
+        });
+        const enqueueResult = await consultarEscavador2Async({
+          cpf,
+          nome: caseData.candidateName || '',
+          apiKey,
+          callbackUrl,
+          callbackHeaders: { 'X-Internal-Api-Key': apiKey },
+          options: escavador2Config.request || {},
+        });
+        const taskId = enqueueResult.task_id || enqueueResult.taskId || null;
+        if (!taskId || enqueueResult.status !== 'QUEUED') {
+          throw new Escavador2Error('Escavador2 async nao retornou QUEUED/task_id.', null, JSON.stringify(enqueueResult));
+        }
+
+        await registerEscavador2Task({
+          db,
+          FieldValue,
+          taskId,
+          caseId,
+          enrichmentGeneration: caseData.enrichmentGeneration || 0,
+          request: {
+            cpf,
+            nome: caseData.candidateName || '',
+            options: escavador2Config.request || {},
+          },
+        });
+
+        await caseRef.update({
+          escavador2EnrichmentStatus: 'RUNNING',
+          escavador2CallbackStatus: 'QUEUED',
+          escavador2TaskId: taskId,
+          escavador2DedupeDateToleranceDays: escavador2Config.dedupe?.dateToleranceDays ?? 90,
+          escavador2Error: null,
+          escavador2CostBRL: 0,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return { status: 'RUNNING', error: null, queued: true, taskId };
+      }
+
       const raw = await consultarEscavador2({
         cpf,
         nome: caseData.candidateName || '',
@@ -1634,6 +1690,8 @@ function createEnrichmentPhases(deps) {
         ...normalized,
         ...deduped,
         escavador2EnrichmentStatus: status,
+        escavador2CallbackStatus: FieldValue.delete(),
+        escavador2TaskId: FieldValue.delete(),
         escavador2Error: null,
         escavador2CostBRL: 0,
         escavador2EnrichedAt: FieldValue.serverTimestamp(),
@@ -1652,6 +1710,8 @@ function createEnrichmentPhases(deps) {
         : (err.message || 'Erro desconhecido no Escavador2');
       await caseRef.update({
         escavador2EnrichmentStatus: 'FAILED',
+        escavador2CallbackStatus: FieldValue.delete(),
+        escavador2TaskId: FieldValue.delete(),
         escavador2Error: errMsg,
         escavador2EnrichedAt: FieldValue.serverTimestamp(),
         escavador2ProcessTotal: FieldValue.delete(),
