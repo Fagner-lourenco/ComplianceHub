@@ -1427,6 +1427,7 @@ exports.rerunEnrichmentPhase = onCall(
                 'enrichmentSources', 'enrichmentIdentity', 'enrichmentGateResult', 'enrichmentPrimaryUf',
                 'enrichmentAllUfs', 'fontedataCriminalFlag', 'fontedataWarrantFlag', 'fontedataLaborFlag',
                 'enrichedAt',
+                'escavador2TaskId', 'escavador2CallbackStatus', 'escavador2DedupeDateToleranceDays',
                 'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
                 'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
                 'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
@@ -1516,6 +1517,7 @@ exports.rerunEnrichmentPhase = onCall(
             'djenSources', 'djenCostBRL', 'djenElapsedMs', 'djenQueryDate', 'djenEnrichedAt',
         ];
         const escavador2DataFields = [
+            'escavador2TaskId', 'escavador2CallbackStatus', 'escavador2DedupeDateToleranceDays',
             'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2Processos',
             'escavador2CriminalFlag', 'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
             'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
