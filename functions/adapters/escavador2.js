@@ -26,6 +26,18 @@ function buildEscavador2Payload({ cpf, nome, options = {} }) {
     };
 }
 
+function buildEscavador2AsyncPayload({ cpf, nome, options = {}, callbackUrl, callbackHeaders = {} }) {
+    if (!callbackUrl) {
+        throw new Error('ESCAVADOR2_CALLBACK_URL nao configurado.');
+    }
+
+    return {
+        ...buildEscavador2Payload({ cpf, nome, options }),
+        callback_url: callbackUrl,
+        callback_headers: callbackHeaders,
+    };
+}
+
 async function consultarEscavador2({
     cpf,
     nome,
@@ -86,10 +98,74 @@ async function consultarEscavador2({
     }
 }
 
+async function consultarEscavador2Async({
+    cpf,
+    nome,
+    apiKey,
+    callbackUrl,
+    callbackHeaders = {},
+    options = {},
+    baseUrl = DEFAULT_BASE_URL,
+    timeoutMs = 30000,
+}) {
+    const payload = buildEscavador2AsyncPayload({ cpf, nome, options, callbackUrl, callbackHeaders });
+
+    if (payload.cpf.length !== 11) {
+        throw new Error('CPF invalido para Escavador2.');
+    }
+
+    if (!apiKey) {
+        throw new Error('ESCAVADOR2_API_KEY nao configurado.');
+    }
+
+    const requestInit = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Internal-Api-Key': apiKey,
+        },
+        body: JSON.stringify(payload),
+    };
+
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    let timeoutId;
+    let didTimeout = false;
+
+    if (controller) {
+        requestInit.signal = controller.signal;
+        timeoutId = setTimeout(() => {
+            didTimeout = true;
+            controller.abort();
+        }, timeoutMs);
+    }
+
+    try {
+        const response = await fetch(`${baseUrl}/escavador2/consultar/async`, requestInit);
+
+        if (!response.ok) {
+            const responseBody = await response.text();
+            throw new Escavador2Error('Falha ao enfileirar Escavador2.', response.status, responseBody);
+        }
+
+        return response.json();
+    } catch (error) {
+        if (didTimeout || error?.name === 'AbortError') {
+            throw new Escavador2Error(`Escavador2 async timeout apos ${timeoutMs}ms`, null, null);
+        }
+        throw error;
+    } finally {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+    }
+}
+
 module.exports = {
     DEFAULT_BASE_URL,
     DEFAULT_TIMEOUT_MS,
     Escavador2Error,
+    buildEscavador2AsyncPayload,
     buildEscavador2Payload,
     consultarEscavador2,
+    consultarEscavador2Async,
 };

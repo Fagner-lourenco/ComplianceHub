@@ -8,6 +8,7 @@ const {
     Escavador2Error,
     buildEscavador2Payload,
     consultarEscavador2,
+    consultarEscavador2Async,
 } = require('./escavador2.js');
 
 describe('Escavador2Error', () => {
@@ -252,5 +253,82 @@ describe('consultarEscavador2', () => {
         })).rejects.toThrow('CPF invalido para Escavador2.');
 
         expect(fetch).not.toHaveBeenCalled();
+    });
+});
+
+describe('consultarEscavador2Async', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+        vi.useRealTimers();
+    });
+
+    it('posts to the async endpoint with callback URL and callback headers', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({ status: 'QUEUED', task_id: 'projects/p/locations/l/queues/q/tasks/t1' }),
+        }));
+
+        const result = await consultarEscavador2Async({
+            cpf: '123.456.789-09',
+            nome: 'Maria Silva',
+            apiKey: 'secret-key',
+            callbackUrl: 'https://example.com/escavador2Callback',
+            callbackHeaders: { 'X-Internal-Api-Key': 'callback-secret' },
+        });
+
+        expect(result).toEqual({ status: 'QUEUED', task_id: 'projects/p/locations/l/queues/q/tasks/t1' });
+        expect(fetch).toHaveBeenCalledWith(`${DEFAULT_BASE_URL}/escavador2/consultar/async`, expect.objectContaining({
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Api-Key': 'secret-key',
+            },
+            body: JSON.stringify({
+                cpf: '12345678909',
+                nome: 'Maria Silva',
+                detalhar: true,
+                movimentacoes: 'risk_only',
+                documentos: 'risk_only',
+                limit_movimentacoes: 20,
+                limit_documentos: 20,
+                callback_url: 'https://example.com/escavador2Callback',
+                callback_headers: { 'X-Internal-Api-Key': 'callback-secret' },
+            }),
+            signal: expect.any(AbortSignal),
+        }));
+    });
+
+    it('throws before fetch when callbackUrl is missing', async () => {
+        vi.stubGlobal('fetch', vi.fn());
+
+        await expect(consultarEscavador2Async({
+            cpf: '12345678909',
+            nome: 'Maria Silva',
+            apiKey: 'secret-key',
+            callbackHeaders: { 'X-Internal-Api-Key': 'callback-secret' },
+        })).rejects.toThrow('ESCAVADOR2_CALLBACK_URL nao configurado.');
+
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('throws Escavador2Error when async enqueue returns non-ok HTTP response', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+            ok: false,
+            status: 502,
+            text: async () => 'enqueue failed',
+        }));
+
+        await expect(consultarEscavador2Async({
+            cpf: '12345678909',
+            nome: 'Maria Silva',
+            apiKey: 'secret-key',
+            callbackUrl: 'https://example.com/escavador2Callback',
+            callbackHeaders: { 'X-Internal-Api-Key': 'callback-secret' },
+        })).rejects.toMatchObject({
+            name: 'Escavador2Error',
+            statusCode: 502,
+            responseBody: 'enqueue failed',
+        });
     });
 });
