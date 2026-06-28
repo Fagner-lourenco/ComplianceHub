@@ -86,16 +86,7 @@ function getProviderStatusLabel(provider, caseData, status) {
     if (provider.key === 'escavador2' && caseData?.escavador2CallbackStatus === 'QUEUED') {
         return 'Em fila';
     }
-    const labels = {
-        PENDING: 'Pendente',
-        RUNNING: 'Executando',
-        DONE: 'Concluído',
-        PARTIAL: 'Parcial',
-        SKIPPED: 'Ignorado',
-        FAILED: 'Falhou',
-        BLOCKED: 'Bloqueado',
-    };
-    return labels[status] || status;
+    return (STATE_CONFIG[status] || STATE_CONFIG.PENDING).label;
 }
 
 export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPhase = null, aiEnabled = null }) {
