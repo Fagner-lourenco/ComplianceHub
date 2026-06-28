@@ -53,6 +53,10 @@ A Escavador2 executa como **última fase do pipeline**, após BigDataCorp, Judit
 - **Relatório:** o relatório público/ops só menciona a Escavador2 quando há achados novos e não-duplicados; achados duplicados servem apenas para comparação.
 - **Classificação:** a lógica de prontidão (`readiness`) e os sinais determinísticos precisam reconhecer `escavador2*` como entrada válida.
 
+## Atualização 2026-06-28 — Modo assíncrono
+
+A integração operacional do Escavador2 passou a preferir o endpoint `/escavador2/consultar/async`, com fila Cloud Tasks no serviço Escavador2 e callback para o ComplianceHub. A decisão detalhada está registrada em `docs/audits/ADR-011-escavador2-async-callback.md`.
+
 ## Próximos Passos
 
 1. Criar adapter, normalizer e helper de deduplicação com testes unitários.
