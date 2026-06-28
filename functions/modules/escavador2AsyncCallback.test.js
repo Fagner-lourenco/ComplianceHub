@@ -26,7 +26,7 @@ function createDoc(initial = {}) {
   return {
     get data() { return data; },
     ref: {
-      set: vi.fn(async (payload) => { data = { ...data, ...payload }; }),
+      set: vi.fn(async (payload, options) => { data = options?.merge ? { ...data, ...payload } : { ...payload }; }),
       update: vi.fn(async (payload) => { data = { ...data, ...payload }; }),
     },
     snap() { return { exists: true, data: () => data, ref: this.ref }; },
@@ -159,6 +159,31 @@ describe('registerEscavador2Task', () => {
       createdAt: 'SERVER_TIMESTAMP',
       updatedAt: 'SERVER_TIMESTAMP',
     });
+  });
+
+  it('replaces stale processed task state when the same generation is queued again', async () => {
+    const { db, taskDoc } = createDb({
+      caseData: {},
+      taskData: { status: 'DONE', processedAt: 'OLD_TIMESTAMP', staleField: true },
+    });
+
+    await registerEscavador2Task({
+      db,
+      FieldValue,
+      taskId: 'projects/p/locations/l/queues/q/tasks/t2',
+      caseId: 'case-1',
+      enrichmentGeneration: 2,
+      request: { cpf: '12345678909' },
+    });
+
+    expect(taskDoc.data).toMatchObject({
+      caseId: 'case-1',
+      enrichmentGeneration: 2,
+      status: 'QUEUED',
+      request: { cpf: '12345678909' },
+    });
+    expect(taskDoc.data.processedAt).toBeUndefined();
+    expect(taskDoc.data.staleField).toBeUndefined();
   });
 });
 

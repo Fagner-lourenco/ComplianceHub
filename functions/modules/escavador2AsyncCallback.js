@@ -42,12 +42,12 @@ async function registerEscavador2Task({ db, FieldValue, taskId, caseId, enrichme
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
     };
-    await db.collection('escavador2Tasks').doc(escavador2RunDocId(caseId, enrichmentGeneration)).set(payload, { merge: true });
+    await db.collection('escavador2Tasks').doc(escavador2RunDocId(caseId, enrichmentGeneration)).set(payload);
     if (taskId) {
         await db.collection('escavador2Tasks').doc(taskDocId(taskId)).set({
             ...payload,
             aliasOf: escavador2RunDocId(caseId, enrichmentGeneration),
-        }, { merge: true });
+        });
     }
 }
 
