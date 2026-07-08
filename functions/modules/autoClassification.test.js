@@ -484,6 +484,35 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
         expect(result.criminalEvidenceQuality).not.toBe('NEUTRAL_ROLE_REVIEW');
     });
 
+    it('does not flag criminal POSITIVE from a defendant-role finding with divergent CPF (proven homonym)', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            bigdatacorpProcessos: [],
+            juditProcessos: [],
+            juditRoleSummary: [
+                {
+                    code: '0002744-16.2013.8.19.0031',
+                    area: 'Criminal',
+                    isCriminal: true,
+                    hasExactCpfMatch: false,
+                    hasDivergentCpf: true,
+                    personType: 'REU',
+                },
+            ],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+
+        expect(result.criminalFlag).not.toBe('POSITIVE');
+    });
+
     it('flags PASSIVO Judit role summary as criminal POSITIVE', () => {
         const caseData = {
             bigdatacorpEnrichmentStatus: 'DONE',

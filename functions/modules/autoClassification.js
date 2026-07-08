@@ -255,6 +255,8 @@ function computeAutoClassification(caseData, {
 
     const relevantCriminalCandidates = dedupedReferenceCandidates.filter((candidate) => {
         if (!candidate.isCriminal) return false;
+        // CPF divergente = comprovadamente de homonimo; nao pode puxar POSITIVO.
+        if (candidate.evidenceStrength === 'DISCARDED_DIFFERENT_CPF') return false;
         return classifyCriminalMateriality(candidate).isMaterial;
     });
     const attentionCriminalCandidates = dedupedReferenceCandidates.filter((candidate) => {

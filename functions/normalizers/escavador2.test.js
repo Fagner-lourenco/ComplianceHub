@@ -278,6 +278,31 @@ describe('normalizeEscavador2Response', () => {
       isCriminal: false,
     }));
   });
+
+  it('does not mark traffic-crime exclusion (TRANSITO) as isCriminal even with a canonical indicator present', () => {
+    const normalized = normalizeEscavador2Response({
+      resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },
+      processos: [{
+        cnj: { valor: '0900123-45.2024.8.19.0001' },
+        classificacao: { area: 'CRIMINAL', risco_material: false },
+        papel_candidato: { tipo_principal: 'Réu', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Auto de Prisão em Flagrante',
+            assunto: 'Embriaguez ao Volante - Art. 306 do CTB',
+            tribunal_sigla: 'TJRJ',
+          },
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      area: 'CRIMINAL',
+      isCriminal: false,
+      isExcludedCrimeType: 'TRANSITO',
+    }));
+  });
 });
 
 describe('normalizeArea', () => {
