@@ -279,7 +279,7 @@ describe('normalizeEscavador2Response', () => {
     }));
   });
 
-  it('does not mark traffic-crime exclusion (TRANSITO) as isCriminal even with a canonical indicator present', () => {
+  it('keeps traffic-crime exclusion (TRANSITO) as isCriminal so it reaches the ATTENTION tier, tagged with the exclusion', () => {
     const normalized = normalizeEscavador2Response({
       resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },
       processos: [{
@@ -299,7 +299,7 @@ describe('normalizeEscavador2Response', () => {
 
     expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
       area: 'CRIMINAL',
-      isCriminal: false,
+      isCriminal: true,
       isExcludedCrimeType: 'TRANSITO',
     }));
   });

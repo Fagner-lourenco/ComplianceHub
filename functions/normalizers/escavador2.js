@@ -2,7 +2,7 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-const { isExcludedCrimeType, hasCriminalIndicator } = require('../helpers/crimeTypeFilter');
+const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 const { classifyCriminalMateriality } = require('../helpers/criminalMateriality');
 
@@ -85,10 +85,14 @@ function mapProcess(processo = {}, index = 0) {
   };
   const excludedCrimeType = isExcludedCrimeType(criminalFacts);
   const hasIndicator = hasCriminalIndicator(criminalFacts);
+  // Consumer/civil rotulado como criminal pela API = falso positivo puro; some.
+  // Demais exclusoes (TRANSITO/AMBIENTAL/HTE/CARTA_PRECATORIA_NOISE) continuam
+  // isCriminal para cair no tier ATTENTION de criminalMateriality, nao em POSITIVE.
+  const isCivilFalsePositive = excludedCrimeType === CONSUMER_CIVIL_NOISE;
   // Guard anti-falso-positivo da API: sem indicador criminal canonico nem
   // risco_material do provider, area=CRIMINAL sozinha nao marca o processo.
   const isCriminal = area === 'CRIMINAL'
-    && !excludedCrimeType
+    && !isCivilFalsePositive
     && (hasIndicator || processo.classificacao?.risco_material === true);
 
   return {
