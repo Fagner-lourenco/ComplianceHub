@@ -101,7 +101,10 @@ function isSamePersonName(a, b) {
 
 function isWeakProcessStatus(status) {
     const normalized = normalizePartyName(status);
-    return !normalized || ['N A', 'NA', 'NAO INFORMADO', 'NÃO INFORMADO', 'INDEFINIDO'].includes(normalized);
+    if (!normalized || ['N A', 'NA', 'NAO INFORMADO', 'NÃO INFORMADO', 'INDEFINIDO'].includes(normalized)) return true;
+    // Vocabulario de pipeline persistido em casos antigos (ex.: Escavador2
+    // "detalhes: DONE | movimentacoes: DONE") nao eh status processual.
+    return /\b(DONE|PENDING|RUNNING|SKIPPED|FAILED|PARTIAL)\b/.test(normalized);
 }
 
 function inferStatusFromLastStep(lastStep) {
@@ -116,7 +119,8 @@ function inferStatusFromLastStep(lastStep) {
 
 function resolveProcessStatus(proc) {
     if (proc && !isWeakProcessStatus(proc.status)) return proc.status;
-    return inferStatusFromLastStep(firstMovementContent(proc)) || proc?.status || null;
+    // Status fraco/pipeline nunca volta como fallback — melhor omitir a linha.
+    return inferStatusFromLastStep(firstMovementContent(proc)) || null;
 }
 
 function isPassiveLaborParty(party) {
@@ -194,7 +198,8 @@ function formatLaborProcessBlock(proc, options = {}) {
     lines.push(`${indent}Processo: ${formatCnj(proc.cnj)}`);
     if (proc.classe) lines.push(`${indent}Tipo: ${proc.classe}`);
     if (proc.assunto) lines.push(`${indent}Assunto: ${proc.assunto}`);
-    lines.push(`${indent}Status processual: ${resolveProcessStatus(proc) || 'N/A'}`);
+    const laborStatus = resolveProcessStatus(proc);
+    if (laborStatus) lines.push(`${indent}Status processual: ${laborStatus}`);
     if (proc.tribunal && proc.tribunal !== 'N/A') {
         const varaStr = proc.vara ? ` | Vara: ${proc.vara}` : '';
         lines.push(`${indent}Tribunal: ${proc.tribunal}${varaStr}`);
@@ -307,8 +312,12 @@ function formatProcessBlock(proc, options = {}) {
     if (proc.classe) lines.push(`${indent}Tipo: ${proc.classe}`);
     if (proc.assunto) lines.push(`${indent}Assunto: ${proc.assunto}`);
     const resolvedStatus = resolveProcessStatus(proc);
-    const statusStr = proc.phase ? `${resolvedStatus} (fase: ${proc.phase})` : resolvedStatus;
-    lines.push(`${indent}Status: ${statusStr || 'N/A'}`);
+    if (resolvedStatus) {
+        const statusStr = proc.phase ? `${resolvedStatus} (fase: ${proc.phase})` : resolvedStatus;
+        lines.push(`${indent}Status: ${statusStr}`);
+    } else if (proc.phase) {
+        lines.push(`${indent}Fase: ${proc.phase}`);
+    }
     if (options.penalty) lines.push(`${indent}Pena: ${options.penalty}`);
     if (options.regime) lines.push(`${indent}Regime: ${options.regime}`);
     if (options.situation) lines.push(`${indent}Situação: ${options.situation}`);

@@ -279,6 +279,28 @@ describe('normalizeEscavador2Response', () => {
     }));
   });
 
+  it('does not turn the scraper task-status object into a fake court status', () => {
+    const normalized = normalizeEscavador2Response(response);
+    // response.processos[0].status = { detalhes: 'DONE', ... } eh status da
+    // coleta, nao do processo — nao pode virar "Status: detalhes: DONE | ..."
+    // no relatorio do cliente.
+    expect(normalized.escavador2Processos[0].status).toBeNull();
+  });
+
+  it('keeps a real court status string untouched', () => {
+    const normalized = normalizeEscavador2Response({
+      resumo: { total_processos: 1 },
+      processos: [{
+        status: 'ARQUIVADO',
+        cnj: { valor: '0009999-00.2023.5.09.0001' },
+        classificacao: { area: 'LABOR' },
+        papel_candidato: { tipo_principal: 'Reclamado', polo_principal: 'PASSIVO' },
+        normalizado: { match: { has_exact_cpf_match: true }, dados: { classe: 'Reclamacao Trabalhista' } },
+      }],
+    });
+    expect(normalized.escavador2Processos[0].status).toBe('ARQUIVADO');
+  });
+
   it('keeps traffic-crime exclusion (TRANSITO) as isCriminal so it reaches the ATTENTION tier, tagged with the exclusion', () => {
     const normalized = normalizeEscavador2Response({
       resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },

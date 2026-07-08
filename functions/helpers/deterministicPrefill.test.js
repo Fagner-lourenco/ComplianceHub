@@ -1704,6 +1704,61 @@ describe('Deterministic Prefill', () => {
             expect(block).not.toContain('Status: N/A');
         });
 
+        // T6b: pipeline junk status persisted in old case data must never render
+        it('formatProcessBlock: status de pipeline (detalhes: DONE | ...) nao vaza pro bloco', () => {
+            const proc = {
+                cnj: '0600170-63.2021.8.04.5800',
+                classe: 'AÇÃO PENAL',
+                assunto: 'FURTO',
+                status: 'detalhes: DONE | movimentacoes: DONE | documentos: SKIPPED',
+                polo: 'RÉU',
+                tribunal: 'TJSP',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).not.toContain('DONE');
+            expect(block).not.toContain('SKIPPED');
+            expect(block).not.toContain('Status:');
+        });
+
+        // T6c: no status data at all -> omit the Status line instead of "Status: N/A"
+        it('formatProcessBlock: omite linha Status quando nao ha status confiavel', () => {
+            const proc = {
+                cnj: '0600170-63.2021.8.04.5800',
+                classe: 'AÇÃO PENAL',
+                assunto: 'FURTO',
+                status: null,
+                polo: 'RÉU',
+                tribunal: 'TJSP',
+                isCriminal: true,
+                isTrabalhista: false,
+            };
+            const block = formatProcessBlock(proc, {});
+            expect(block).not.toContain('Status:');
+        });
+
+        // T6d: labor block same rule
+        it('formatProcessBlock trabalhista: omite Status processual sem dado e nao vaza pipeline', () => {
+            const junk = formatProcessBlock({
+                cnj: '0009999-00.2023.5.09.0001',
+                classe: 'RECLAMAÇÃO TRABALHISTA',
+                status: 'detalhes: DONE | movimentacoes: PENDING',
+                isTrabalhista: true,
+            }, {});
+            expect(junk).not.toContain('DONE');
+            expect(junk).not.toContain('PENDING');
+            expect(junk).not.toContain('Status processual:');
+
+            const empty = formatProcessBlock({
+                cnj: '0009999-00.2023.5.09.0001',
+                classe: 'RECLAMAÇÃO TRABALHISTA',
+                status: null,
+                isTrabalhista: true,
+            }, {});
+            expect(empty).not.toContain('Status processual: N/A');
+        });
+
         // T7: formatProcessBlock shows lastStep text
         it('formatProcessBlock: mostra Último andamento quando lastStep presente', () => {
             const proc = {

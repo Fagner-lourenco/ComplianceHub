@@ -25,14 +25,8 @@ function normalizeArea(value) {
 function normalizeStatus(value) {
   if (!value) return null;
   if (typeof value === 'string') return value;
-  if (typeof value !== 'object' || Array.isArray(value)) return String(value);
-
-  const details = [
-    value.detalhes && `detalhes: ${value.detalhes}`,
-    value.movimentacoes && `movimentacoes: ${value.movimentacoes}`,
-    value.documentos && `documentos: ${value.documentos}`,
-  ].filter(Boolean);
-  if (details.length > 0) return details.join(' | ');
+  // Forma-objeto ({detalhes, movimentacoes, documentos}) eh status da COLETA
+  // (DONE/PENDING/...), nao status processual — nao pode virar texto de relatorio.
   return null;
 }
 
