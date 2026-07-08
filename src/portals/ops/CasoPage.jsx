@@ -37,6 +37,7 @@ import PageShell from '../../ui/layouts/PageShell';
 import PageHeader from '../../ui/components/PageHeader/PageHeader';
 import CaseCommunicationPanel from '../../ui/components/CaseCommunication/CaseCommunicationPanel';
 import { calculateRisk } from '../../core/riskCalculator';
+import { getProcessReviewTone } from '../../core/processReviewTone';
 import './CasoPage.css';
 import ProcessInspectionModal from '../../ui/components/ProcessInspectionModal/ProcessInspectionModal';
 import ChecklistModal from './components/ChecklistModal';
@@ -3351,8 +3352,10 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {caseData.juditRoleSummary.map((r, i) => (
-                                                <tr key={i} className={`data-table__row ${r.isCriminal ? 'data-table__row--criminal' : ''} ${r.isWitness ? 'data-table__row--witness' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
+                                            {caseData.juditRoleSummary.map((r, i) => {
+                                                const reviewTone = getProcessReviewTone(r);
+                                                return (
+                                                <tr key={i} className={`data-table__row ${r.isCriminal ? 'data-table__row--criminal' : ''} ${reviewTone.level === 'review' ? 'data-table__row--attention' : ''} ${r.isWitness ? 'data-table__row--witness' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'JUDIT', cnj: r.code, data: r })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{r.code || '—'}</td>
                                                     <td className="data-table__td">{r.area || '—'}</td>
                                                     <td className="data-table__td">{r.tribunalAcronym || '—'}</td>
@@ -3368,10 +3371,12 @@ export default function CasoPage() {
                                                     <td className="data-table__td">{r.status || '—'}</td>
                                                     <td className="data-table__td">
                                                         {r.isCriminal && <span className="caso-flag-chip caso-flag-chip--red">Criminal</span>}
+                                                        {r.isCriminal && <span className={`caso-flag-chip ${reviewTone.className}`}>{reviewTone.label}</span>}
                                                         {r.isPossibleHomonym && <span className="caso-flag-chip caso-flag-chip--yellow">Homonimo?</span>}
                                                     </td>
                                                 </tr>
-                                            ))}
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -3403,8 +3408,10 @@ export default function CasoPage() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {bigdatacorpCriminalProcessos.map((proc, i) => (
-                                                <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
+                                            {bigdatacorpCriminalProcessos.map((proc, i) => {
+                                                const reviewTone = getProcessReviewTone(proc);
+                                                return (
+                                                <tr key={i} className={`data-table__row data-table__row--criminal ${reviewTone.level === 'review' ? 'data-table__row--attention' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'BIGDATACORP', cnj: proc.numero, data: proc })} title="Clique para inspecionar este processo">
                                                     <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{proc.numero || '—'}</td>
                                                     <td className="data-table__td">{proc.courtType || proc.tipo || '—'}</td>
                                                     <td className="data-table__td">{proc.assunto || proc.cnjSubject || '—'}</td>
@@ -3412,10 +3419,12 @@ export default function CasoPage() {
                                                     <td className="data-table__td">{proc.status || '—'}</td>
                                                     <td className="data-table__td">
                                                         <span className="caso-flag-chip caso-flag-chip--red">Criminal</span>
+                                                        <span className={`caso-flag-chip ${reviewTone.className}`}>{reviewTone.label}</span>
                                                         {proc.isDirectCpfMatch && <span className="caso-flag-chip caso-flag-chip--green">CPF</span>}
                                                     </td>
                                                 </tr>
-                                            ))}
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -3440,14 +3449,16 @@ export default function CasoPage() {
                                         <tbody>
                                             {escavador2CriminalProcessos.map((proc, i) => {
                                                 const row = formatEscavador2Process(proc);
+                                                const reviewTone = getProcessReviewTone(proc);
                                                 return (
-                                                    <tr key={i} className="data-table__row data-table__row--criminal" style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'ESCAVADOR2', cnj: proc.numeroCnj || proc.numeroCnjMascarado, data: buildEscavador2InspectionData(proc) })} title="Clique para inspecionar este processo">
+                                                    <tr key={i} className={`data-table__row data-table__row--criminal ${reviewTone.level === 'review' ? 'data-table__row--attention' : ''}`} style={{ cursor: 'pointer' }} onClick={() => setInspectedProcess({ source: 'ESCAVADOR2', cnj: proc.numeroCnj || proc.numeroCnjMascarado, data: buildEscavador2InspectionData(proc) })} title="Clique para inspecionar este processo">
                                                         <td className="data-table__td" style={{ fontFamily: 'monospace', fontSize: '.75rem', color: 'var(--blue-600, #2563eb)', textDecoration: 'underline' }}>{row.cnj}</td>
                                                         <td className="data-table__td">{row.area}</td>
                                                         <td className="data-table__td">{row.role}</td>
                                                         <td className="data-table__td">{row.side}</td>
                                                         <td className="data-table__td">{row.tribunal}</td>
                                                         <td className="data-table__td">
+                                                            <span className={`caso-flag-chip ${reviewTone.className}`}>{reviewTone.label}</span>
                                                             {row.isNewFinding ? <span className="caso-flag-chip caso-flag-chip--red">Novo</span> : <span className="caso-flag-chip caso-flag-chip--neutral">Confirmatório</span>}
                                                         </td>
                                                     </tr>

@@ -5,7 +5,7 @@
 
 const { buildHomonymAnalysisInput } = require('../helpers/aiHomonym');
 const { filterDjenComunicacoesByConfirmedProcess } = require('../helpers/reportHelpers');
-const { HIGH_RISK_CRIMINAL_ROLES } = require('../helpers/roleClassifier');
+const { classifyCriminalMateriality } = require('../helpers/criminalMateriality');
 const { SAFE_NARRATIVE_TEXTS } = require('./reportEngine');
 const { isAiEnabledForTenant: isAiEnabledForTenantHelper } = require('./_shared/aiEnabledHelper');
 
@@ -164,12 +164,7 @@ function computeAutoClassification(caseData, {
     const escavador2NewProcesses = escavador2Done ? escavador2Processos.filter((p) => p.isNewEscavador2Finding === true) : [];
 
     const escavador2NewCriminalCount = escavador2NewProcesses.filter((p) => p.isCriminal === true).length;
-    const escavador2NewMaterialCriminalCount = escavador2NewProcesses.filter((p) =>
-        p.isCriminal === true
-        && p.isVictim !== true
-        && p.isWitness !== true
-        && (p.isDefendant === true || p.isMaterialRisk === true)
-    ).length;
+    const escavador2NewMaterialCriminalCount = escavador2NewProcesses.filter((p) => classifyCriminalMateriality(p).isMaterial).length;
     const escavador2NewLaborCount = escavador2NewProcesses.filter((p) => p.isLabor === true).length;
     const escavador2NewPlaintiffLaborCount = escavador2NewProcesses.filter((p) =>
         p.isLabor === true && p.isPlaintiff === true
@@ -260,12 +255,14 @@ function computeAutoClassification(caseData, {
 
     const relevantCriminalCandidates = dedupedReferenceCandidates.filter((candidate) => {
         if (!candidate.isCriminal) return false;
-        if (candidate.lowRiskRole) return false;
-        if (candidate.roleClassification?.category === 'VICTIM') return false;
-        if (candidate.isExcludedCrimeType) return false;
-        const matchedRole = String(candidate.matchedRole || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
-        const isActive = candidate.isDefendant === true || HIGH_RISK_CRIMINAL_ROLES.test(matchedRole);
-        return isActive;
+        return classifyCriminalMateriality(candidate).isMaterial;
+    });
+    const attentionCriminalCandidates = dedupedReferenceCandidates.filter((candidate) => {
+        if (!candidate.isCriminal) return false;
+        // CPF divergente = comprovadamente de homonimo; nao pode puxar INCONCLUSIVE.
+        if (candidate.evidenceStrength === 'DISCARDED_DIFFERENT_CPF') return false;
+        const materiality = classifyCriminalMateriality(candidate);
+        return materiality.requiresAttention === true && materiality.isMaterial !== true;
     });
     const relevantLaborCandidates = dedupedReferenceCandidates.filter(
         (candidate) => isLaborCandidate(candidate) && !candidate.lowRiskRole && candidate.roleClassification?.category === 'PLAINTIFF',
@@ -359,6 +356,10 @@ function computeAutoClassification(caseData, {
             pushUnique(criminalNotes, `DJEN: ${caseData.djenCriminalCount || 0} comunicacao(oes) no Diario de Justica Eletronico desconsiderada(s) como evidencia forte — nome com ${namesakeCount} homonimos no Brasil.`);
         }
         ambiguityNotes.forEach((note) => pushUnique(criminalNotes, note));
+    } else if (attentionCriminalCandidates.length > 0) {
+        result.criminalFlag = 'INCONCLUSIVE';
+        result.criminalEvidenceQuality = 'NEUTRAL_ROLE_REVIEW';
+        pushUnique(criminalNotes, `Criminal INCONCLUSIVO: ${attentionCriminalCandidates.length} achado(s) criminal(is) com CPF confirmado exigem revisao do papel processual antes da conclusao.`);
     } else if (escavadorFailed && juditFailed && fontedataFailed) {
         result.criminalFlag = 'NOT_FOUND';
         result.criminalEvidenceQuality = 'NO_PROVIDER_RESPONSE';
@@ -480,7 +481,7 @@ function computeAutoClassification(caseData, {
     }
 
     result.reviewRecommended = hasWeakCriminalEvidence
-        || ['WEAK_NAME_ONLY', 'LOW_COVERAGE_ONLY'].includes(result.criminalEvidenceQuality)
+        || ['WEAK_NAME_ONLY', 'LOW_COVERAGE_ONLY', 'NEUTRAL_ROLE_REVIEW'].includes(result.criminalEvidenceQuality)
         || result.providerDivergence === 'HIGH';
 
     // BigDataCorp KYC: PEP and Sanctions as NEW classification dimensions

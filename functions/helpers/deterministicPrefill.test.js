@@ -1900,6 +1900,72 @@ describe('Deterministic Prefill', () => {
             expect(findings).toContain('Apontamento trabalhista material identificado.');
         });
 
+        it('buildDetKeyFindings: não publica achado criminal material quando criminalFlag é negativa', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'CASO FLAG NEGATIVA',
+                cpf: '44444444444',
+                hiringUf: 'RJ',
+                city: 'RIO DE JANEIRO',
+                ddd: '21',
+            });
+            caseData.criminalFlag = 'NEGATIVE';
+            caseData.criminalEvidenceQuality = 'LOW_RISK_ROLE_ONLY';
+            caseData.bigdatacorpProcessos = [
+                {
+                    numero: '00027441620138190031',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'HOMICIDIO QUALIFICADO',
+                    courtDistrict: 'NITEROI',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: true,
+                    isVictim: false,
+                    isWitness: false,
+                    specificRole: 'REU',
+                },
+            ];
+
+            const findings = buildDetKeyFindings(caseData);
+
+            expect(findings.join('\n')).not.toMatch(/processo\(s\) criminal\(is\) com CPF confirmado/i);
+            expect(findings.join('\n')).not.toMatch(/condena[cç][aã]o criminal/i);
+        });
+
+        it('buildDetCriminalNotes: mostra achado criminal de revisão no prefill determinístico', () => {
+            const caseData = buildCaseBase({
+                candidateName: 'CASO REVISAO CRIMINAL',
+                cpf: '44444444444',
+                hiringUf: 'RJ',
+                city: 'RIO DE JANEIRO',
+                ddd: '21',
+            });
+            caseData.criminalFlag = 'INCONCLUSIVE';
+            caseData.criminalEvidenceQuality = 'NEUTRAL_ROLE_REVIEW';
+            caseData.bigdatacorpProcessos = [
+                {
+                    numero: '00027441620138190031',
+                    courtType: 'CRIMINAL',
+                    cnjProcedure: 'ACAO PENAL',
+                    assunto: 'HOMICIDIO QUALIFICADO',
+                    courtDistrict: 'NITEROI',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    isDefendant: false,
+                    isVictim: false,
+                    isWitness: false,
+                    specificRole: 'INTERESSADO',
+                },
+            ];
+
+            const notes = buildDetCriminalNotes(caseData);
+
+            expect(notes).toMatch(/Resultado criminal inconclusivo/i);
+            expect(notes).toMatch(/0002744-16\.2013\.8\.19\.0031|00027441620138190031/);
+            expect(notes).toMatch(/HOMICIDIO QUALIFICADO|Homicidio qualificado/i);
+            expect(notes).toMatch(/INTERESSADO/i);
+        });
+
         it('buildDetKeyFindings: em caso misto conta apenas processo criminal material', () => {
             const caseData = buildCaseBase({
                 candidateName: 'CASO MISTO',

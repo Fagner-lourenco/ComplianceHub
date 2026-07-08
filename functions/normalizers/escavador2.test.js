@@ -202,6 +202,82 @@ describe('normalizeEscavador2Response', () => {
     expect(criminalVictim.isDefendant).toBe(false);
     expect(criminalVictim.roleCategory).toBe('VICTIM');
   });
+
+  it('marks material criminal rogatory letter with defendant role as criminal', () => {
+    const normalized = normalizeEscavador2Response({
+      resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1, total_riscos_materiais: 1 },
+      processos: [{
+        cnj: { valor: '000XXXX-16.2013.8.19.0031', mascarado: true },
+        classificacao: { area: 'CRIMINAL', risco_material: true },
+        papel_candidato: { tipo_principal: 'Réu', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Carta Precatória Criminal',
+            assunto: 'Aplicação, Revovação, Cumprimento / Medidas de Segurança',
+            tribunal_sigla: 'TJRJ',
+          },
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      area: 'CRIMINAL',
+      isCriminal: true,
+      isDefendant: true,
+      isMaterialRisk: true,
+      isExcludedCrimeType: null,
+    }));
+  });
+
+  it('keeps consumer/civil false positive as non-criminal even when provider area is criminal', () => {
+    const normalized = normalizeEscavador2Response({
+      resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },
+      processos: [{
+        cnj: { valor: '1003506-56.2025.4.01.3902' },
+        classificacao: { area: 'CRIMINAL', risco_material: false },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO', categoria: 'PLAINTIFF' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Procedimento do Juizado Especial Cível',
+            assunto: 'Pessoa com Deficiência / Direito do Consumidor / Indenização por Dano Moral',
+            tribunal_sigla: 'TRF1',
+          },
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      area: 'CRIMINAL',
+      isCriminal: false,
+      isExcludedCrimeType: 'CONSUMER_CIVIL_NOISE',
+    }));
+  });
+
+  it('does not mark provider-mislabeled criminal area as criminal without indicator or material risk', () => {
+    const normalized = normalizeEscavador2Response({
+      resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },
+      processos: [{
+        cnj: { valor: '0800321-44.2024.8.19.0001' },
+        classificacao: { area: 'CRIMINAL', risco_material: false },
+        papel_candidato: { tipo_principal: 'Réu', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Alvará Judicial - Lei 6858/80',
+            assunto: 'Inventário e Partilha / Levantamento de Valor',
+            tribunal_sigla: 'TJRJ',
+          },
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      area: 'CRIMINAL',
+      isCriminal: false,
+    }));
+  });
 });
 
 describe('normalizeArea', () => {

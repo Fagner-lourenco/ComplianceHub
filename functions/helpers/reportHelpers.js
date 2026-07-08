@@ -5,6 +5,7 @@
 
 const { classifyProcessArea } = require('./processClassifier');
 const { isExcludedCrimeType } = require('./crimeTypeFilter');
+const { classifyCriminalMateriality } = require('./criminalMateriality');
 
 function normCnj(cnj) { return (cnj || '').replace(/\D/g, ''); }
 
@@ -604,18 +605,11 @@ function selectTopProcessos(caseData, limit = 10) {
 }
 
 function isLowRiskCriminalProcess(process = {}) {
-    if (!process.isCriminal) return false;
-    const role = String(process.specificRole || process.polo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-    return process.isVictim === true
-        || process.isWitness === true
-        || /\b(VITIMA|OFENDID[OA]|PREJUDICAD[OA]|AGRAVIAD[OA]|LESAD[OA]|TESTEMUNHA|INFORMANTE)\b/.test(role);
+    return classifyCriminalMateriality(process).isLowRiskRole === true;
 }
 
 function isMaterialCriminalProcess(process = {}) {
-    if (process.isCriminal !== true) return false;
-    if (isLowRiskCriminalProcess(process)) return false;
-    if (isExcludedCrimeType(process)) return false;
-    return true;
+    return classifyCriminalMateriality(process).isMaterial === true;
 }
 
 module.exports = {

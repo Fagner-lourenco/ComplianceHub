@@ -2,8 +2,9 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-const { isExcludedCrimeType, hasCriminalIndicator } = require('../helpers/crimeTypeFilter');
+const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
+const { classifyCriminalMateriality } = require('../helpers/criminalMateriality');
 
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
@@ -41,6 +42,7 @@ function normalizeRoleFlags(role = {}, area = '') {
   const roleClassification = classifyRole(tipoPrincipal, area, normalizeSideForClassifier(polo));
 
   return {
+    roleClassification,
     isDefendant: roleClassification.category === 'DEFENDANT',
     isPlaintiff: roleClassification.category === 'PLAINTIFF',
     isVictim: roleClassification.category === 'VICTIM',
@@ -69,7 +71,7 @@ function mapProcess(processo = {}, index = 0) {
   const cnjBroadSubject = dados.cnj_broad_subject || processo.cnjBroadSubject || null;
   const cnjProcedure = dados.cnj_procedure || processo.cnjProcedure || null;
 
-  const excludedCrimeType = isExcludedCrimeType({
+  const criminalFacts = {
     area,
     classe: dados.classe,
     tipo: dados.tipo,
@@ -80,7 +82,15 @@ function mapProcess(processo = {}, index = 0) {
     cnjBroadSubject,
     subjects,
     classifications,
-  });
+  };
+  const excludedCrimeType = isExcludedCrimeType(criminalFacts);
+  const hasIndicator = hasCriminalIndicator(criminalFacts);
+  const isCivilFalsePositive = excludedCrimeType === CONSUMER_CIVIL_NOISE;
+  // Guard anti-falso-positivo da API: sem indicador criminal canonico nem
+  // risco_material do provider, area=CRIMINAL sozinha nao marca o processo.
+  const isCriminal = area === 'CRIMINAL'
+    && !isCivilFalsePositive
+    && (hasIndicator || processo.classificacao?.risco_material === true);
 
   return {
     escavador2Index: index,
@@ -90,7 +100,7 @@ function mapProcess(processo = {}, index = 0) {
     numeroCnjCompletoExtraido: cnj.valor_completo_extraido || null,
     cnjResolutionStatus: cnj.status_resolucao || null,
     area,
-    isCriminal: area === 'CRIMINAL' && hasCriminalIndicator({ area, classe: dados.classe, assunto: dados.assunto, tipo: dados.tipo, natureza: dados.natureza, subjects, classifications }) && !excludedCrimeType,
+    isCriminal,
     isLabor: area === 'LABOR',
     isTrabalhista: area === 'LABOR',
     isExcludedCrimeType: excludedCrimeType || null,

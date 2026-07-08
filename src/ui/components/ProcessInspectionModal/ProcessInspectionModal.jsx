@@ -8,12 +8,15 @@
  * No API calls are made here — everything is reactive from caseData already in memory.
  */
 import { formatDate } from '../../../core/formatDate';
+import { getProcessReviewTone } from '../../../core/processReviewTone';
 import './ProcessInspectionModal.css';
 
 export default function ProcessInspectionModal({ process, djenTimeline, onClose }) {
     if (!process) return null;
     const { source, cnj, data } = process;
     const sourceColor = source === 'JUDIT' ? 'purple' : source === 'DJEN' ? 'green' : 'blue';
+    const tone = getProcessReviewTone(data);
+    const reviewTone = tone.level === 'neutral' ? null : tone;
 
     // Determine parties array (Judit uses `parties`, BDC uses `allParties`)
     const parties = data.parties || data.allParties || [];
@@ -36,6 +39,18 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
 
                     {/* ── LEFT COLUMN: Source details ── */}
                     <div className="pim-col-left">
+
+                        {reviewTone && (
+                            <section className={`pim-review-callout pim-review-callout--${reviewTone.level}`} aria-label="Orientação de revisão criminal">
+                                <div className="pim-review-callout__eyebrow">{reviewTone.label}</div>
+                                <div className="pim-review-callout__message">{reviewTone.message}</div>
+                                <div className="pim-review-callout__meta">
+                                    {(data.specificRole || data.personType || data.tipoPrincipal || data.partyType || data.polo) && <span>Papel: {data.specificRole || data.personType || data.tipoPrincipal || data.partyType || data.polo}</span>}
+                                    {(data.isDirectCpfMatch || data.hasExactCpfMatch) && <span>CPF confirmado</span>}
+                                    {(data.matchType || data.matchDocumentoPor) && <span>Match: {data.matchType || data.matchDocumentoPor}</span>}
+                                </div>
+                            </section>
+                        )}
 
                         {/* Tribunal / Court */}
                         <div className="pim-section">

@@ -1186,6 +1186,14 @@
     opacity: .55;
 }
 
+.data-table__row--attention td {
+    background: color-mix(in srgb, var(--yellow-50, #fffbeb) 72%, transparent);
+}
+
+.data-table__row--attention:hover td {
+    background: var(--yellow-100, #fef3c7);
+}
+
 /* ========== Flag chips (Criminal, Homonimo, etc.) ========== */
 .caso-flag-chip {
     display: inline-block;

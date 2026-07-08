@@ -318,8 +318,9 @@ function buildJuditProcessCandidates(caseData, candidateProfile) {
         const hasDivergentCpf = processo.hasDivergentCpf === true;
         const viaNameOnly = usedNameSupplement && !hasExactCpfMatch && !hasDivergentCpf;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.state, processo.city);
-        const roleClassification = classifyRole(processo.personType || processo.side, processo.area, normalizeSideForClassifier(processo.side));
-        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side, processo.area, normalizeSideForClassifier(processo.side));
+        const areaForRole = processo.isCriminal === true ? 'Criminal' : processo.area;
+        const roleClassification = classifyRole(processo.personType || processo.side, areaForRole, normalizeSideForClassifier(processo.side));
+        const lowRiskRole = hasLowRiskRole(processo.personType || processo.side, areaForRole, normalizeSideForClassifier(processo.side));
         const matchStrength = hasExactCpfMatch
             ? 'EXACT_CPF'
             : hasDivergentCpf
@@ -382,8 +383,9 @@ function buildBigDataCorpProcessCandidates(caseData, candidateProfile) {
         const hasExactCpfMatch = processo.isDirectCpfMatch === true;
         const viaNameOnly = !hasExactCpfMatch;
         const geoConsistency = getGeoConsistencyBucket(candidateProfile, processo.estado, null);
-        const roleClassification = classifyRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType, normalizeSideForClassifier(processo.polo));
-        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo, processo.courtType, normalizeSideForClassifier(processo.polo));
+        const areaForRole = processo.isCriminal === true ? 'Criminal' : processo.courtType;
+        const roleClassification = classifyRole(processo.specificRole || processo.partyType || processo.polo, areaForRole, normalizeSideForClassifier(processo.polo));
+        const lowRiskRole = hasLowRiskRole(processo.specificRole || processo.partyType || processo.polo, areaForRole, normalizeSideForClassifier(processo.polo));
         const matchStrength = hasExactCpfMatch ? 'EXACT_CPF' : 'NAME_ONLY';
         const evidenceOrigin = resolveEvidenceOrigin('BigDataCorp', hasExactCpfMatch, viaNameOnly, matchStrength);
         const evidenceStrength = resolveEvidenceStrength({

@@ -185,6 +185,33 @@ describe('aiHomonym helpers', () => {
         expect(bdcCandidates[0].lowRiskRole).toBe(false);
     });
 
+    it('buildHomonymAnalysisInput classifies BDC criminal defendant even without recognizable courtType', () => {
+        const result = buildHomonymAnalysisInput({
+            hiringUf: 'SP',
+            bigdatacorpEnrichmentStatus: 'DONE',
+            bigdatacorpProcessos: [
+                {
+                    numero: '0001234-56.2023.8.26.0100',
+                    courtType: null,
+                    status: 'Ativo',
+                    isDirectCpfMatch: true,
+                    isCriminal: true,
+                    specificRole: 'INDICIADO',
+                },
+            ],
+            bigdatacorpCriminalCount: 1,
+            enrichmentContact: {
+                allUfs: ['SP'],
+                primaryUf: 'SP',
+            },
+        });
+
+        const bdcCandidates = result.processCandidates.filter((c) => c.source === 'BigDataCorp');
+        expect(bdcCandidates.length).toBe(1);
+        expect(bdcCandidates[0].roleClassification.category).toBe('DEFENDANT');
+        expect(bdcCandidates[0].isDefendant).toBe(true);
+    });
+
     it('buildHomonymAnalysisInput skips BigDataCorp when status is not DONE/PARTIAL', () => {
         const result = buildHomonymAnalysisInput({
             hiringUf: 'SP',

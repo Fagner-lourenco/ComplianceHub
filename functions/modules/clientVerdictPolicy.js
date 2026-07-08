@@ -6,8 +6,8 @@ const {
     getProcessParties,
     resolveCounterpartyNames,
     selectTopProcessos,
-    isLowRiskCriminalProcess,
 } = require('../helpers/reportHelpers');
+const { classifyCriminalMateriality } = require('../helpers/criminalMateriality');
 
 const CLIENT_VERDICT_POLICY_EFFECTIVE_AT = new Date('2026-05-27T00:00:00.000Z');
 const CLIENT_VERDICT_RANK = { FIT: 0, ATTENTION: 1, NOT_RECOMMENDED: 2 };
@@ -77,9 +77,13 @@ function classifyClientCriminalCategory(process = {}) {
 }
 
 function isClientMaterialCriminalProcess(process = {}) {
-    if (!process.isCriminal || isLowRiskCriminalProcess(process)) return false;
-    const role = getProcessRoleText(process);
-    return process.isDefendant === true || /REU|INVESTIGAD|ACUSAD|INDICIAD|AUTOR DO FATO|EXECUTAD|DENUNCIAD/.test(role);
+    return classifyCriminalMateriality(process).isMaterial === true;
+}
+
+function isClientAttentionCriminalProcess(process = {}) {
+    // requiresAttention ja exclui papeis de baixo risco (vitima/testemunha).
+    const materiality = classifyCriminalMateriality(process);
+    return materiality.requiresAttention === true && materiality.isMaterial !== true;
 }
 
 function buildClientVerdictPolicy(caseData = {}) {
@@ -129,6 +133,10 @@ function buildClientVerdictPolicy(caseData = {}) {
         }
     }
 
+    if (topProcessos.some(isClientAttentionCriminalProcess)) {
+        requireVerdict('ATTENTION', 'Achado criminal confirmado com papel neutro/indeterminado exige Atencao e revisao operacional.', { area: 'criminal' });
+    }
+
     return { requiredVerdict, reasons, evidence };
 }
 
@@ -168,6 +176,7 @@ module.exports = {
     isCandidateActiveLaborProcess,
     classifyClientCriminalCategory,
     isClientMaterialCriminalProcess,
+    isClientAttentionCriminalProcess,
     buildClientVerdictPolicy,
     hasValidClientVerdictOverride,
     validateClientVerdictPolicy,

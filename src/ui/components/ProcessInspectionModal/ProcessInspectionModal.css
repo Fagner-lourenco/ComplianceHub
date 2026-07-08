@@ -73,6 +73,65 @@
 .pim-court-name { font-weight: 600; color: #374151; font-size: .95rem; }
 .pim-court-details { color: #6b7280; font-size: .8rem; margin-top: 2px; }
 
+.pim-review-callout {
+    border: 1px solid #e5e7eb;
+    border-left-width: 4px;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 18px;
+    background: #fff;
+}
+
+.pim-review-callout--material {
+    border-color: #fecaca;
+    border-left-color: #dc2626;
+    background: #fef2f2;
+}
+
+.pim-review-callout--review {
+    border-color: #fde68a;
+    border-left-color: #d97706;
+    background: #fffbeb;
+}
+
+.pim-review-callout--low {
+    border-color: #e5e7eb;
+    border-left-color: #6b7280;
+    background: #f9fafb;
+}
+
+.pim-review-callout__eyebrow {
+    color: #111827;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.pim-review-callout__message {
+    color: #374151;
+    font-size: .83rem;
+    line-height: 1.45;
+}
+
+.pim-review-callout__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.pim-review-callout__meta span {
+    background: rgba(255, 255, 255, .72);
+    border: 1px solid rgba(17, 24, 39, .08);
+    border-radius: 999px;
+    color: #4b5563;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+}
+
 .pim-label {
     font-size: .72rem; font-weight: 600; color: #9ca3af;
     text-transform: uppercase; letter-spacing: 0.04em;

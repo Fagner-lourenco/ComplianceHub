@@ -406,7 +406,9 @@ function buildDetKeyFindings(caseData) {
     const findings = [];
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
-    const materialCriminalProcesses = criminalProcesses.filter(isMaterialCriminalProcess);
+    const materialCriminalProcesses = caseData.criminalFlag === 'POSITIVE'
+        ? criminalProcesses.filter(isMaterialCriminalProcess)
+        : [];
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const juditActiveWarrants = Number(caseData.juditActiveWarrantCount) || 0;
     const bdcWarrants = caseData.bigdatacorpActiveWarrants || [];

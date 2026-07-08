@@ -420,6 +420,70 @@ describe('autoClassification uses roleClassifier HIGH_RISK_CRIMINAL_ROLES', () =
         expect(result.criminalEvidenceQuality).toBe('HARD_FACT');
     });
 
+    it('classifies serious criminal BigDataCorp process with neutral role as INCONCLUSIVE for review', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            bigdatacorpCriminalFlag: 'POSITIVE',
+            bigdatacorpProcessos: [
+                {
+                    numero: '00027441620138190031',
+                    isCriminal: true,
+                    isDirectCpfMatch: true,
+                    specificRole: 'INTERESSADO',
+                    polo: null,
+                    partyType: null,
+                    courtType: 'CRIMINAL',
+                    cnjSubject: 'HOMICIDIO QUALIFICADO',
+                    status: 'ARQUIVADO',
+                },
+            ],
+            juditProcessos: [],
+            juditRoleSummary: [],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+
+        expect(result.criminalFlag).toBe('INCONCLUSIVE');
+        expect(result.criminalEvidenceQuality).toBe('NEUTRAL_ROLE_REVIEW');
+        expect(result.reviewRecommended).toBe(true);
+    });
+
+    it('does not flag NEUTRAL_ROLE_REVIEW from divergent-CPF criminal finding (proven homonym)', () => {
+        const caseData = {
+            bigdatacorpEnrichmentStatus: 'DONE',
+            juditEnrichmentStatus: 'DONE',
+            escavadorEnrichmentStatus: 'SKIPPED',
+            escavador2EnrichmentStatus: 'DONE',
+            djenEnrichmentStatus: 'DONE',
+            bigdatacorpProcessos: [],
+            juditProcessos: [],
+            juditRoleSummary: [
+                {
+                    code: '0002744-16.2013.8.19.0031',
+                    area: 'Criminal',
+                    isCriminal: true,
+                    hasExactCpfMatch: false,
+                    hasDivergentCpf: true,
+                    personType: 'INTERESSADO',
+                },
+            ],
+            escavador2Processos: [],
+            djenCommunications: [],
+            bigdatacorpNamesakeCount: 1,
+        };
+
+        const result = computeAutoClassification(caseData);
+
+        expect(result.criminalEvidenceQuality).not.toBe('NEUTRAL_ROLE_REVIEW');
+    });
+
     it('flags PASSIVO Judit role summary as criminal POSITIVE', () => {
         const caseData = {
             bigdatacorpEnrichmentStatus: 'DONE',
