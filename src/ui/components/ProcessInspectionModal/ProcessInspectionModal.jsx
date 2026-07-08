@@ -11,12 +11,17 @@ import { formatDate } from '../../../core/formatDate';
 import { getProcessReviewTone } from '../../../core/processReviewTone';
 import './ProcessInspectionModal.css';
 
+// Status de pipeline persistido em casos antigos (ex.: "detalhes: DONE | ...")
+// nao eh status processual — nao pode aparecer no badge.
+const PIPELINE_STATUS_PATTERN = /\b(DONE|PENDING|RUNNING|SKIPPED|FAILED|PARTIAL)\b/;
+
 export default function ProcessInspectionModal({ process, djenTimeline, onClose }) {
     if (!process) return null;
     const { source, cnj, data } = process;
     const sourceColor = source === 'JUDIT' ? 'purple' : source === 'DJEN' ? 'green' : 'blue';
     const tone = getProcessReviewTone(data);
     const reviewTone = tone.level === 'neutral' ? null : tone;
+    const displayStatus = data.status && !PIPELINE_STATUS_PATTERN.test(String(data.status)) ? data.status : null;
 
     // Determine parties array (Judit uses `parties`, BDC uses `allParties`)
     const parties = data.parties || data.allParties || [];
@@ -31,7 +36,7 @@ export default function ProcessInspectionModal({ process, djenTimeline, onClose 
                     <span className={`pim-badge pim-badge--${sourceColor}`}>{source}</span>
                     {data.isCriminal && <span className="pim-badge pim-badge--red">CRIMINAL</span>}
                     {data.isLabor && <span className="pim-badge pim-badge--yellow">TRABALHISTA</span>}
-                    {data.status && <span className="pim-badge pim-badge--gray">{data.status}</span>}
+                    {displayStatus && <span className="pim-badge pim-badge--gray">{displayStatus}</span>}
                 </div>
 
                 {/* ── BODY: 2 COLUMNS ── */}

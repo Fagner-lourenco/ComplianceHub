@@ -94,8 +94,13 @@ function isExcludedCrimeType(process = {}) {
         return CARTA_PRECATORIA_NOISE;
     }
 
-    // Consumer/civil com flag criminal erronea do Escavador2
-    if (CONSUMER_CIVIL_NOISE_PATTERN.test(text)) return CONSUMER_CIVIL_NOISE;
+    // Consumer/civil com flag criminal erronea do Escavador2.
+    // Indicador criminal canonico presente = crime real cuja modalidade cita
+    // termo de consumo (ex.: "Estelionato / Cartao de Credito") — NAO excluir,
+    // mesmo racional do override de homicidio acima.
+    if (CONSUMER_CIVIL_NOISE_PATTERN.test(text) && !CRIMINAL_INDICATOR_PATTERN.test(text)) {
+        return CONSUMER_CIVIL_NOISE;
+    }
 
     return null;
 }

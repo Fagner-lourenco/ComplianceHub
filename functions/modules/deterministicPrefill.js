@@ -473,8 +473,16 @@ function buildDetKeyFindings(caseData) {
         findings.push(laborText);
     }
 
+    if (caseData.criminalFlag === 'INCONCLUSIVE') {
+        findings.push(caseData.criminalEvidenceQuality === 'NEUTRAL_ROLE_REVIEW'
+            ? 'Apontamento criminal inconclusivo — papel processual neutro exige revisão operacional'
+            : 'Apontamento criminal inconclusivo — exige revisão operacional antes da conclusão');
+    }
+
     const negatives = [];
-    if (laborProcesses.length === 0 && caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
+    // "Nenhum apontamento" so para resultado negativo confirmado.
+    if (laborProcesses.length === 0 && caseData.laborFlag !== 'POSITIVE'
+        && caseData.laborFlag !== 'INCONCLUSIVE' && caseData.laborFlag !== 'NOT_FOUND') negatives.push('trabalhista');
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('sanções');
     if (caseData.pepFlag !== 'POSITIVE') negatives.push('PEP');
     if (negatives.length >= 2) {
@@ -532,6 +540,9 @@ function buildDetExecutiveSummary(caseData) {
         findingsSentences.push(convictionText);
     } else if (cf === 'INCONCLUSIVE') {
         findingsSentences.push('apontamento criminal inconclusivo pendente de confirmação');
+    } else if (cf === 'NOT_FOUND') {
+        // Sem resposta das fontes != negativa confirmada — nao afirmar ausencia.
+        findingsSentences.push('ficou sem resposta aproveitavel das fontes criminais, nao sendo possivel atestar ausencia de apontamentos');
     } else {
         findingsSentences.push('nenhum apontamento criminal material identificado');
     }
@@ -545,8 +556,15 @@ function buildDetExecutiveSummary(caseData) {
         findingsSentences.push(wText);
     }
 
+    const lf = caseData.laborFlag;
+    if (lf === 'INCONCLUSIVE' || lf === 'NOT_FOUND') {
+        findingsSentences.push('resultado trabalhista inconclusivo pendente de validacao');
+    }
+
     const negatives = [];
-    if (caseData.laborFlag !== 'POSITIVE') negatives.push('trabalhista');
+    // "Nenhum apontamento" so quando o resultado eh negativo confirmado —
+    // inconclusivo/sem resposta nao pode virar afirmacao de ausencia.
+    if (lf !== 'POSITIVE' && lf !== 'INCONCLUSIVE' && lf !== 'NOT_FOUND') negatives.push('trabalhista');
     if (caseData.pepFlag !== 'POSITIVE') negatives.push('exposicao politica');
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') negatives.push('alertas restritivos');
     if (negatives.length > 0) {
@@ -563,6 +581,9 @@ function buildDetExecutiveSummary(caseData) {
             }
             if (sentence.startsWith('nenhum apontamento ')) {
                 return sentence.replace(/^nenhum apontamento (.+) identificado$/, 'nao identificou apontamentos $1');
+            }
+            if (sentence.startsWith('ficou sem resposta')) {
+                return sentence;
             }
             return `identificou ${sentence}`;
         });
@@ -637,7 +658,14 @@ function buildDetFinalJustification(caseData) {
         parts.push(crimParagraph);
     } else if (cf === 'INCONCLUSIVE') {
         parts.push('');
-        parts.push('Foram identificados apontamentos criminais, porém sem confirmação inequívoca de identidade. Recomenda-se análise complementar.');
+        if (caseData.criminalEvidenceQuality === 'NEUTRAL_ROLE_REVIEW') {
+            parts.push('Foram identificados apontamentos criminais com CPF confirmado, porém em papel processual neutro ou indeterminado. Recomenda-se revisão operacional do papel antes da conclusão.');
+        } else {
+            parts.push('Foram identificados apontamentos criminais, porém sem confirmação inequívoca de identidade. Recomenda-se análise complementar.');
+        }
+    } else if (cf === 'NOT_FOUND') {
+        parts.push('');
+        parts.push('Nao foi possivel obter resposta aproveitavel das fontes criminais consultadas — nao e possivel atestar ausencia de apontamentos. Recomenda-se nova consulta ou verificacao manual.');
     } else {
         parts.push('');
         parts.push(SAFE_NARRATIVE_TEXTS.criminalNegative);
@@ -672,8 +700,12 @@ function buildDetFinalJustification(caseData) {
     }
 
     const secondaries = [];
-    if (caseData.laborFlag !== 'POSITIVE') {
+    if (caseData.laborFlag !== 'POSITIVE' && caseData.laborFlag !== 'INCONCLUSIVE' && caseData.laborFlag !== 'NOT_FOUND') {
         secondaries.push('apontamentos trabalhistas');
+    }
+    if (caseData.laborFlag === 'INCONCLUSIVE' || caseData.laborFlag === 'NOT_FOUND') {
+        parts.push('');
+        parts.push('Resultado trabalhista inconclusivo — recomenda-se validacao complementar.');
     }
     if (caseData.sanctionFlag !== 'POSITIVE' && caseData.sanctionFlag !== 'HISTORICAL') {
         secondaries.push('alertas restritivos');

@@ -107,6 +107,21 @@ describe('isExcludedCrimeType', () => {
         expect(isExcludedCrimeType({})).toBeNull();
     });
 
+    it('does not treat genuine criminal case as consumer noise when a criminal indicator is present', () => {
+        // "Estelionato / Cartao de Credito" — crime real cuja modalidade cita
+        // termo de consumo; nao pode ser descartado como ruido civel.
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: 'Acao Penal',
+            assunto: 'Estelionato / Cartao de Credito',
+        })).toBeNull();
+        expect(isExcludedCrimeType({
+            area: 'CRIMINAL',
+            classe: 'Inquerito Policial',
+            assunto: 'Roubo / Cobranca',
+        })).toBeNull();
+    });
+
     it('returns null when only area is CRIMINAL with no transito/ambiental markers', () => {
         expect(isExcludedCrimeType({
             area: 'CRIMINAL',

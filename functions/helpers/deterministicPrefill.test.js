@@ -606,6 +606,61 @@ describe('Deterministic Prefill', () => {
             expect(findings).toContain('Apontamento trabalhista material identificado.');
         });
 
+        it('executiveSummary NOT_FOUND nao afirma ausencia de apontamentos criminais', () => {
+            const summary = buildDetExecutiveSummary({
+                criminalFlag: 'NOT_FOUND',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+            });
+            expect(summary).not.toMatch(/nao identificou apontamentos criminais/i);
+            expect(summary).toMatch(/sem resposta aproveitavel|nao foi possivel consultar/i);
+        });
+
+        it('executiveSummary trabalhista INCONCLUSIVE nao vira "nenhum apontamento trabalhista"', () => {
+            const summary = buildDetExecutiveSummary({
+                criminalFlag: 'NEGATIVE',
+                laborFlag: 'INCONCLUSIVE',
+                warrantFlag: 'NEGATIVE',
+            });
+            expect(summary).not.toMatch(/apontamentos trabalhista/i);
+            expect(summary).toMatch(/trabalhista inconclusiv/i);
+        });
+
+        it('keyFindings inclui achado criminal inconclusivo em vez de silenciar', () => {
+            const findings = buildDetKeyFindings({
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'NEUTRAL_ROLE_REVIEW',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+                juditRoleSummary: [],
+                bigdatacorpProcessos: [],
+            });
+            expect(findings.join('\n')).toMatch(/criminal inconclusiv/i);
+        });
+
+        it('finalJustification NEUTRAL_ROLE_REVIEW fala de papel processual, nao de identidade', () => {
+            const text = buildDetFinalJustification({
+                candidateName: 'JOAO TESTE',
+                criminalFlag: 'INCONCLUSIVE',
+                criminalEvidenceQuality: 'NEUTRAL_ROLE_REVIEW',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+            });
+            expect(text).not.toMatch(/sem confirmação inequívoca de identidade/i);
+            expect(text).toMatch(/papel processual/i);
+        });
+
+        it('finalJustification NOT_FOUND nao afirma negativa nem se contradiz', () => {
+            const text = buildDetFinalJustification({
+                candidateName: 'JOAO TESTE',
+                criminalFlag: 'NOT_FOUND',
+                laborFlag: 'NEGATIVE',
+                warrantFlag: 'NEGATIVE',
+            });
+            expect(text).not.toContain('Nao foram identificados apontamentos criminais materiais');
+            expect(text).toMatch(/nao (foi possivel|retornaram)|sem resposta aproveitavel|não localizado/i);
+        });
+
         it('buildDetExecutiveSummary covers all dimensions', () => {
             const caseData = classifyAndMerge(buildFranciscoCase());
             const summary = buildDetExecutiveSummary(caseData);
@@ -931,6 +986,27 @@ describe('Deterministic Prefill', () => {
             // Same process from 3 providers: should appear only ONCE (Judit wins, others merged)
             expect(result.length).toBe(1);
             expect(result[0].fonte).toBe('Judit+BigDataCorp+Escavador');
+        });
+
+        it('selectTopProcessos: campos ausentes viram null, nunca literal N/A', () => {
+            const caseData = {
+                juditRoleSummary: [{
+                    code: '0202743-72.2022.8.06.0167', isCriminal: true,
+                    hasExactCpfMatch: true,
+                }],
+                escavador2Processos: [{
+                    numeroCnj: '0012198-45.2022.8.06.0199', area: 'CRIMINAL',
+                    isCriminal: true, isNewEscavador2Finding: true, hasExactCpfMatch: true,
+                }],
+            };
+            const result = selectTopProcessos(caseData, 20);
+            for (const proc of result) {
+                for (const field of ['area', 'polo', 'tribunal', 'data']) {
+                    expect(proc[field], `${proc.fonte}.${field}`).not.toBe('N/A');
+                }
+                const block = formatProcessBlock(proc, {});
+                expect(block).not.toContain('N/A');
+            }
         });
 
         it('selectTopProcessos: Escavador uses hasExactCpfMatch for matchType', () => {
