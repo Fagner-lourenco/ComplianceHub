@@ -398,6 +398,63 @@ describe('normalizeEscavador2Response', () => {
     expect(Object.keys(input.estatisticas)).toHaveLength(20000);
   });
 
+  it('includes truncation markers in each process-removal budget check', () => {
+    const maxBytes = 128 * 1024;
+    const firstProcess = {
+      cnj: { valor: '0000001-11.2026.5.01.0001', mascarado: false },
+      lista: { polo_ativo: 'CANDIDATO PRESERVADO', polo_passivo: 'EMPRESA PRESERVADA' },
+      classificacao: { area: 'LABOR', risco_material: true },
+      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+      normalizado: { match: { tipo: 'CPF' }, dados: { classe: 'Acao Trabalhista' } },
+    };
+    const paddedProcess = {
+      cnj: { valor: '0000002-22.2026.5.01.0002', mascarado: false },
+      classificacao: { area: 'CIVIL', risco_material: false },
+      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+      normalizado: { match: { tipo: 'NOME' }, dados: { assunto: '' } },
+    };
+    const lastProcess = {
+      cnj: { valor: '0000003-33.2026.5.01.0003', mascarado: false },
+      classificacao: { area: 'CIVIL', risco_material: false },
+      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+      normalizado: { match: { tipo: 'NOME' }, dados: { assunto: 'Processo removido primeiro' } },
+    };
+    const baseInput = {
+      consulta: { cpf: '86730864508', nome: 'CANDIDATO PRESERVADO', status: 'DONE' },
+      resumo: { total_processos: 3 },
+      processos: [firstProcess, paddedProcess],
+    };
+    const baseRaw = normalizeEscavador2Response(baseInput).escavador2RawPayloads.response;
+    const paddingLength = maxBytes - Buffer.byteLength(JSON.stringify(baseRaw), 'utf8') - 8;
+    paddedProcess.normalizado.dados.assunto = 'A'.repeat(paddingLength);
+
+    const boundaryRaw = normalizeEscavador2Response(baseInput).escavador2RawPayloads.response;
+    const boundaryWithMarkers = {
+      ...boundaryRaw,
+      truncado: true,
+      processosOmitidos: 1,
+    };
+    expect(Buffer.byteLength(JSON.stringify(boundaryRaw), 'utf8')).toBeLessThanOrEqual(maxBytes);
+    expect(Buffer.byteLength(JSON.stringify(boundaryWithMarkers), 'utf8')).toBeGreaterThan(maxBytes);
+
+    const input = { ...baseInput, processos: [firstProcess, paddedProcess, lastProcess] };
+    const original = structuredClone(input);
+    const raw = normalizeEscavador2Response(input).escavador2RawPayloads.response;
+
+    expect(Buffer.byteLength(JSON.stringify(raw), 'utf8')).toBeLessThanOrEqual(maxBytes);
+    expect(raw.processos).toHaveLength(1);
+    expect(raw.processos[0].cnj).toEqual(firstProcess.cnj);
+    expect(raw.processos[0].lista).toEqual(expect.objectContaining({
+      polo_ativo: 'CANDIDATO PRESERVADO',
+      polo_passivo: 'EMPRESA PRESERVADA',
+    }));
+    expect(raw.processos[0].classificacao).toEqual(firstProcess.classificacao);
+    expect(raw.processos[0].papel_candidato).toEqual(firstProcess.papel_candidato);
+    expect(raw.truncado).toBe(true);
+    expect(raw.processosOmitidos).toBe(2);
+    expect(input).toEqual(original);
+  });
+
   it('keeps only finite non-negative counts in process fetch summaries', () => {
     const normalized = normalizeEscavador2Response({
       processos: [{

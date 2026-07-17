@@ -206,8 +206,6 @@ function buildCompactRawResponse(response = {}) {
 
   while (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.processos.length > 0) {
     compact.processos.pop();
-  }
-  if (compact.processos.length < originalCount) {
     compact.truncado = true;
     compact.processosOmitidos = originalCount - compact.processos.length;
   }
