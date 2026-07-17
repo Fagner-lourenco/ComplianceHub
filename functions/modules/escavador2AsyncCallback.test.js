@@ -237,6 +237,61 @@ describe('handleEscavador2CallbackLogic', () => {
     expect(maybeRunAutoClassifyAndAi).toHaveBeenCalledTimes(1);
   });
 
+  it('reapplies the persisted budget after callback deduplication', async () => {
+    const { db, caseDoc } = createDb({
+      caseData: { tenantId: 'tenant-1', cpf: '12345678909', enrichmentGeneration: 3, status: 'PENDING' },
+      taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+    });
+    const hugeUnicode = 'evidencia complementar çã 🚨 '.repeat(100);
+    const processes = Array.from({ length: 120 }, (_, index) => ({
+      escavador2Index: index,
+      numeroCnj: `${String(index).padStart(7, '0')}-00.2026.5.01.0001`,
+      isLabor: true,
+      isNewEscavador2Finding: index === 119,
+      parties: [{ name: `${hugeUnicode}${index}`, role: 'Polo Ativo', side: 'ACTIVE' }],
+    }));
+
+    await handleEscavador2CallbackLogic(createBaseDeps({
+      req: createValidCallbackReq(),
+      db,
+      normalizeEscavador2Response: vi.fn(() => ({
+        escavador2ApiStatus: 'DONE',
+        escavador2ProcessTotal: processes.length,
+        escavador2Processos: processes.map((process) => Object.fromEntries(
+          Object.entries(process).filter(([key]) => key !== 'parties'),
+        )),
+      })),
+      deduplicateEscavador2Findings: vi.fn(() => ({
+        escavador2Processos: processes,
+        escavador2DuplicateCount: 119,
+        escavador2NewFindingCount: 1,
+        escavador2HasNewMaterialRisk: false,
+      })),
+    }));
+
+    const escavador2Fields = Object.fromEntries(Object.entries(caseDoc.data).filter(([key]) => key.startsWith('escavador2')));
+    expect(Buffer.byteLength(JSON.stringify(escavador2Fields), 'utf8')).toBeLessThanOrEqual(320 * 1024);
+    expect(caseDoc.data.escavador2Processos).toEqual(expect.arrayContaining([
+      expect.objectContaining({ numeroCnj: '0000119-00.2026.5.01.0001', isNewEscavador2Finding: true }),
+    ]));
+    expect(caseDoc.data.escavador2ProcessOmissions).toEqual(expect.objectContaining({
+      original: processes.length,
+      omitted: expect.any(Number),
+    }));
+  });
+
+  it('deletes stale omission markers after a normal callback completion without omissions', async () => {
+    const { db, caseDoc } = createDb({
+      caseData: { tenantId: 'tenant-1', cpf: '12345678909', enrichmentGeneration: 3, status: 'PENDING' },
+      taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+    });
+
+    await handleEscavador2CallbackLogic(createBaseDeps({ req: createValidCallbackReq(), db }));
+
+    expect(caseDoc.data.escavador2ProcessOmissions).toEqual({ __delete: true });
+    expect(caseDoc.data.escavador2TechnicalOmissions).toEqual({ __delete: true });
+  });
+
   it('marks FAILED callbacks as terminal and runs auto-classification', async () => {
     const { db, caseDoc, taskDoc } = createDb({
       caseData: { tenantId: 'tenant-1', cpf: '12345678909', enrichmentGeneration: 3, status: 'PENDING' },

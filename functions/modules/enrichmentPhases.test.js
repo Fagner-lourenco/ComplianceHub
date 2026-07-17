@@ -565,6 +565,72 @@ describe('runEscavador2EnrichmentPhase', () => {
     expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalledWith(caseRef, 'c1', 'Escavador2 completed');
   });
 
+  it('reapplies the persisted budget after synchronous deduplication', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    const hugeUnicode = 'evidencia complementar çã 🚨 '.repeat(100);
+    const processes = Array.from({ length: 120 }, (_, index) => ({
+      escavador2Index: index,
+      numeroCnj: `${String(index).padStart(7, '0')}-00.2026.5.01.0001`,
+      isLabor: true,
+      isNewEscavador2Finding: index === 119,
+      parties: [{ name: `${hugeUnicode}${index}`, role: 'Polo Ativo', side: 'ACTIVE' }],
+    }));
+    mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'DONE' } });
+    mocks.normalizeEscavador2Response.mockReturnValue({
+      escavador2ApiStatus: 'DONE',
+      escavador2ProcessTotal: processes.length,
+      escavador2Processos: processes.map((process) => Object.fromEntries(
+        Object.entries(process).filter(([key]) => key !== 'parties'),
+      )),
+    });
+    mocks.deduplicateEscavador2Findings.mockReturnValue({
+      escavador2Processos: processes,
+      escavador2DuplicateCount: 119,
+      escavador2NewFindingCount: 1,
+      escavador2HasNewMaterialRisk: false,
+    });
+
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      enabled: true,
+      async: { enabled: false },
+      request: {},
+      dedupe: { dateToleranceDays: 90 },
+    });
+
+    const persisted = caseRef.update.mock.calls.find(([payload]) => payload.escavador2EnrichmentStatus === 'DONE')[0];
+    const escavador2Fields = Object.fromEntries(Object.entries(persisted).filter(([key]) => key.startsWith('escavador2')));
+    expect(Buffer.byteLength(JSON.stringify(escavador2Fields), 'utf8')).toBeLessThanOrEqual(320 * 1024);
+    expect(persisted.escavador2Processos).toEqual(expect.arrayContaining([
+      expect.objectContaining({ numeroCnj: '0000119-00.2026.5.01.0001', isNewEscavador2Finding: true }),
+    ]));
+    expect(persisted.escavador2ProcessOmissions).toEqual(expect.objectContaining({
+      original: processes.length,
+      omitted: expect.any(Number),
+    }));
+  });
+
+  it('deletes stale omission markers after a normal synchronous completion without omissions', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    mocks.consultarEscavador2.mockResolvedValue({ consulta: { status: 'DONE' } });
+    mocks.normalizeEscavador2Response.mockReturnValue({ escavador2ApiStatus: 'DONE', escavador2Processos: [] });
+
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      enabled: true,
+      async: { enabled: false },
+      request: {},
+      dedupe: { dateToleranceDays: 90 },
+    });
+
+    expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
+      escavador2ProcessOmissions: 'DELETE',
+      escavador2TechnicalOmissions: 'DELETE',
+    }));
+  });
+
   it('stores partial data as PARTIAL and does not fail the pipeline', async () => {
     const { mocks, ...deps } = makeEscavador2Deps();
     const phases = createEnrichmentPhases(deps);

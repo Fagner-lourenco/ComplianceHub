@@ -2,6 +2,8 @@ const { onRequest } = require('firebase-functions/v2/https');
 const {
     normalizeEscavador2Response: defaultNormalizeEscavador2Response,
     buildMinimalEscavador2Persistence: defaultBuildMinimalEscavador2Persistence,
+    enforceEscavador2PersistedBudget: defaultEnforceEscavador2PersistedBudget,
+    ESCAVADOR2_PERSISTED_MAX_BYTES,
 } = require('../normalizers/escavador2');
 const { deduplicateEscavador2Findings: defaultDeduplicateEscavador2Findings } = require('../helpers/deduplicateEscavador2');
 
@@ -98,6 +100,7 @@ async function handleEscavador2CallbackLogic({
     normalizeEscavador2Response = defaultNormalizeEscavador2Response,
     deduplicateEscavador2Findings = defaultDeduplicateEscavador2Findings,
     buildMinimalEscavador2Persistence = defaultBuildMinimalEscavador2Persistence,
+    enforceEscavador2PersistedBudget = defaultEnforceEscavador2PersistedBudget,
     maybeRunAutoClassifyAndAi,
 }) {
     if (req.method && req.method !== 'POST') {
@@ -181,7 +184,10 @@ async function handleEscavador2CallbackLogic({
         const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, { dateToleranceDays: caseData.escavador2DedupeDateToleranceDays || 90 });
         const persistencePayload = useSizeFallback
             ? buildMinimalEscavador2Persistence({ ...normalized, ...deduped })
-            : { ...normalized, ...deduped };
+            : enforceEscavador2PersistedBudget(
+                { ...normalized, ...deduped },
+                ESCAVADOR2_PERSISTED_MAX_BYTES - 2048,
+            );
         const finalStatus = status === 'SKIPPED'
             ? 'SKIPPED'
             : status === 'PARTIAL' || normalized.escavador2ApiStatus === 'PARTIAL'
@@ -190,6 +196,8 @@ async function handleEscavador2CallbackLogic({
 
         transaction.update(caseRef, {
             ...persistencePayload,
+            escavador2ProcessOmissions: persistencePayload.escavador2ProcessOmissions || FieldValue.delete(),
+            escavador2TechnicalOmissions: persistencePayload.escavador2TechnicalOmissions || FieldValue.delete(),
             ...(useSizeFallback ? {
                 escavador2RawPayloads: FieldValue.delete(),
                 escavador2PartialErrors: FieldValue.delete(),

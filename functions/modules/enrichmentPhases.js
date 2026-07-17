@@ -70,6 +70,8 @@ const {
 } = require('../adapters/escavador2');
 const {
   normalizeEscavador2Response: default_normalizeEscavador2Response,
+  enforceEscavador2PersistedBudget: default_enforceEscavador2PersistedBudget,
+  ESCAVADOR2_PERSISTED_MAX_BYTES,
 } = require('../normalizers/escavador2');
 const {
   deduplicateEscavador2Findings: default_deduplicateEscavador2Findings,
@@ -172,6 +174,7 @@ function createEnrichmentPhases(deps) {
 
   const normalizeDjenComunicacoes = normalizers.normalizeDjenComunicacoes || default_normalizeDjenComunicacoes;
   const normalizeEscavador2Response = normalizers.normalizeEscavador2Response || default_normalizeEscavador2Response;
+  const enforceEscavador2PersistedBudget = normalizers.enforceEscavador2PersistedBudget || default_enforceEscavador2PersistedBudget;
 
   // Helpers com fallback
   const checkCircuit = helpers.checkCircuit || default_checkCircuit;
@@ -1685,10 +1688,15 @@ function createEnrichmentPhases(deps) {
       const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, {
         dateToleranceDays: escavador2Config.dedupe?.dateToleranceDays ?? 90,
       });
+      const persistencePayload = enforceEscavador2PersistedBudget(
+        { ...normalized, ...deduped },
+        ESCAVADOR2_PERSISTED_MAX_BYTES - 2048,
+      );
       const status = normalized.escavador2ApiStatus === 'PARTIAL' ? 'PARTIAL' : 'DONE';
       const updatePayload = {
-        ...normalized,
-        ...deduped,
+        ...persistencePayload,
+        escavador2ProcessOmissions: persistencePayload.escavador2ProcessOmissions || FieldValue.delete(),
+        escavador2TechnicalOmissions: persistencePayload.escavador2TechnicalOmissions || FieldValue.delete(),
         escavador2EnrichmentStatus: status,
         escavador2CallbackStatus: FieldValue.delete(),
         escavador2TaskId: FieldValue.delete(),

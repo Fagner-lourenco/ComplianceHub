@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { createRequire } from 'node:module';
-import { normalizeArea, normalizeEscavador2Response } from './escavador2.js';
+import {
+  buildMinimalEscavador2Persistence,
+  enforceEscavador2PersistedBudget,
+  normalizeArea,
+  normalizeEscavador2Response,
+} from './escavador2.js';
 
 const require = createRequire(import.meta.url);
 const { deduplicateEscavador2Findings } = require('../helpers/deduplicateEscavador2');
@@ -305,7 +310,7 @@ describe('normalizeEscavador2Response', () => {
     expect(JSON.stringify(raw)).not.toContain(oversized);
   });
 
-  it('keeps normalized fields at 320 KiB and deduplicated persistence below 384 KiB with Unicode-heavy lists', () => {
+  it('keeps deduplicated persistence within 320 KiB with Unicode-heavy lists', () => {
     const huge = 'metadado técnico çã 🚨 '.repeat(100);
     const processos = Array.from({ length: 500 }, (_, index) => ({
       cnj: { valor: `${String(index).padStart(7, '0')}-00.2026.5.01.0001`, mascarado: false },
@@ -330,19 +335,93 @@ describe('normalizeEscavador2Response', () => {
       estatisticas: Object.fromEntries(Array.from({ length: 1000 }, (_, index) => [`métrica_${index}`, huge])),
     });
     const deduped = deduplicateEscavador2Findings(normalized);
-    const persistedFields = Object.fromEntries(Object.entries({ ...normalized, ...deduped })
+    const persistedFields = Object.fromEntries(Object.entries(enforceEscavador2PersistedBudget({ ...normalized, ...deduped }))
       .filter(([field]) => field.startsWith('escavador2')));
 
-    expect(Buffer.byteLength(JSON.stringify(persistedFields), 'utf8')).toBeLessThanOrEqual(384 * 1024);
-    expect(normalized.escavador2Processos.some((process) => process.numeroCnj.startsWith('0000499'))).toBe(true);
-    expect(normalized.escavador2ProcessOmissions).toEqual(expect.objectContaining({
+    expect(Buffer.byteLength(JSON.stringify(persistedFields), 'utf8')).toBeLessThanOrEqual(320 * 1024);
+    expect(persistedFields.escavador2Processos.some((process) => process.numeroCnj.startsWith('0000499'))).toBe(true);
+    expect(persistedFields.escavador2ProcessOmissions).toEqual(expect.objectContaining({
       omitted: expect.any(Number),
       original: 500,
     }));
-    expect(normalized.escavador2ProcessOmissions.omitted).toBeGreaterThan(0);
-    expect(normalized.escavador2Processos.every((process) => (
+    expect(persistedFields.escavador2ProcessOmissions.omitted).toBeGreaterThan(0);
+    expect(persistedFields.escavador2Processos.every((process) => (
       !process._sourceEscavador2?.normalizado && !process._sourceEscavador2?.classificacao
     ))).toBe(true);
+  });
+
+  it('rejects structured identity/status metadata and keeps Unicode payload within 320 KiB', () => {
+    const hugeUnicode = 'metadado estruturado çã 🚨 '.repeat(30000);
+    const normalized = normalizeEscavador2Response({
+      consulta: {
+        cpf: { nested: hugeUnicode },
+        nome: [hugeUnicode],
+        status: { nested: hugeUnicode },
+      },
+      perfil: {
+        cpf: ['12345678909'],
+        nome: { nested: hugeUnicode },
+        data_nascimento: hugeUnicode,
+      },
+      resumo: { total_processos: 0 },
+      processos: [],
+    }, { consultedAt: hugeUnicode });
+
+    expect(normalized.escavador2ApiStatus).toBeNull();
+    expect(normalized.escavador2Sources.consulta).toEqual({});
+    expect(normalized.escavador2Sources.perfil).toEqual({});
+    expect(normalized.escavador2Sources.consultedAt).toBeNull();
+    expect(Buffer.byteLength(JSON.stringify(normalized), 'utf8')).toBeLessThanOrEqual(320 * 1024);
+  });
+
+  it('always degrades minimal persistence with structured metadata below 96 KiB', () => {
+    const hugeUnicode = '🚨'.repeat(100000);
+    const minimal = buildMinimalEscavador2Persistence({
+      escavador2ApiStatus: { nested: hugeUnicode },
+      escavador2ProcessTotal: { nested: hugeUnicode },
+      escavador2CostBRL: [hugeUnicode],
+      escavador2Processos: [{
+        escavador2Index: 0,
+        numeroCnj: '0001234-56.2024.8.26.0100',
+        isNewEscavador2Finding: true,
+        parties: [{ name: hugeUnicode, role: hugeUnicode, side: hugeUnicode }],
+        duplicateOfProcessNumber: hugeUnicode,
+      }],
+    });
+
+    expect(Buffer.byteLength(JSON.stringify(minimal), 'utf8')).toBeLessThanOrEqual(96 * 1024);
+    expect(minimal.escavador2ApiStatus).toBeNull();
+    expect(minimal.escavador2ProcessTotal).toBe(0);
+    expect(minimal.escavador2CostBRL).toBe(0);
+    expect(minimal.escavador2Processos).toHaveLength(1);
+    expect(JSON.stringify(minimal)).not.toContain(hugeUnicode);
+  });
+
+  it('prioritizes a new finding over equivalent duplicates when compacting a large list', () => {
+    const largeText = 'parte preservada '.repeat(200);
+    const duplicate = (index) => ({
+      escavador2Index: index,
+      numeroCnj: `${String(index).padStart(7, '0')}-00.2026.5.01.0001`,
+      isLabor: true,
+      hasExactCpfMatch: true,
+      isDuplicateEscavador2Finding: true,
+      isNewEscavador2Finding: false,
+      parties: [{ name: `${largeText}${index}`, role: 'Polo Ativo', side: 'ACTIVE' }],
+    });
+    const processes = Array.from({ length: 200 }, (_, index) => duplicate(index));
+    processes.push({
+      ...duplicate(200),
+      numeroCnj: '9999999-00.2026.5.01.0001',
+      isDuplicateEscavador2Finding: false,
+      isNewEscavador2Finding: true,
+    });
+
+    const minimal = buildMinimalEscavador2Persistence({ escavador2Processos: processes });
+
+    expect(Buffer.byteLength(JSON.stringify(minimal), 'utf8')).toBeLessThanOrEqual(96 * 1024);
+    expect(minimal.escavador2Processos).toEqual(expect.arrayContaining([
+      expect.objectContaining({ numeroCnj: '9999999-00.2026.5.01.0001', isNewEscavador2Finding: true }),
+    ]));
   });
 
   it('keeps the compact raw fallback below 128 KiB', () => {
