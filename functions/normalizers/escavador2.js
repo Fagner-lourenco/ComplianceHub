@@ -510,6 +510,8 @@ function nonNegativeNumber(value, fallback = 0) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
+// Compacta campos individuais sem omitir processos; o teto global so pode ser
+// aplicado depois da deduplicacao, quando a prioridade de achados novos existe.
 function sanitizePersistedPayload(value = {}) {
   const source = asObject(value);
   const payload = {
@@ -675,7 +677,7 @@ function normalizeEscavador2Response(response = {}, options = {}) {
   if (partialErrorsOmitted > 0 || statsOmitted > 0) {
     payload.escavador2TechnicalOmissions = { partialErrors: partialErrorsOmitted, stats: statsOmitted };
   }
-  return enforceEscavador2PersistedBudget(payload);
+  return sanitizePersistedPayload(payload);
 }
 
 module.exports = {

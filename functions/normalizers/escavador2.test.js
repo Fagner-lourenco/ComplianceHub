@@ -350,6 +350,61 @@ describe('normalizeEscavador2Response', () => {
     ))).toBe(true);
   });
 
+  it('preserves every canonical process until dedupe can prioritize a new finding at the end', () => {
+    const processCount = 420;
+    const partyPadding = 'EVIDENCIA PROCESSUAL '.repeat(35);
+    const processNumber = (index) => `${String(index).padStart(7, '0')}-00.2026.5.01.0001`;
+    const processos = Array.from({ length: processCount }, (_, index) => ({
+      cnj: { valor: processNumber(index), mascarado: false },
+      lista: {
+        polo_ativo: `CANDIDATO ${index} ${partyPadding}`,
+        polo_passivo: `EMPRESA ${index} ${partyPadding}`,
+      },
+      classificacao: { area: 'LABOR', risco_material: false },
+      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+      normalizado: {
+        match: { tipo: 'CPF', has_exact_cpf_match: true },
+        dados: { classe: 'Reclamacao Trabalhista', assunto: 'Horas extras' },
+      },
+    }));
+    const knownProcesses = processos.slice(0, -1).map((_, index) => ({
+      numeroCnj: processNumber(index),
+      area: 'LABOR',
+    }));
+
+    const normalized = normalizeEscavador2Response({
+      consulta: { cpf: '86730864508', nome: 'CANDIDATO TESTE', status: 'DONE' },
+      resumo: { total_processos: processCount },
+      processos,
+    });
+    const deduped = deduplicateEscavador2Findings({
+      bigdatacorpProcessos: knownProcesses,
+      ...normalized,
+    });
+    const persisted = enforceEscavador2PersistedBudget(
+      { ...normalized, ...deduped },
+      (318 * 1024),
+    );
+
+    expect(normalized.escavador2Processos).toHaveLength(processCount);
+    expect(deduped.escavador2NewFindingCount).toBe(1);
+    expect(deduped.escavador2Processos.at(-1)).toEqual(expect.objectContaining({
+      numeroCnj: processNumber(processCount - 1),
+      isNewEscavador2Finding: true,
+    }));
+    expect(persisted.escavador2Processos).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        numeroCnj: processNumber(processCount - 1),
+        isNewEscavador2Finding: true,
+      }),
+    ]));
+    expect(persisted.escavador2ProcessOmissions).toEqual(expect.objectContaining({
+      original: processCount,
+      omitted: expect.any(Number),
+    }));
+    expect(Buffer.byteLength(JSON.stringify(persisted), 'utf8')).toBeLessThanOrEqual(318 * 1024);
+  });
+
   it('rejects structured identity/status metadata and keeps Unicode payload within 320 KiB', () => {
     const hugeUnicode = 'metadado estruturado çã 🚨 '.repeat(30000);
     const normalized = normalizeEscavador2Response({

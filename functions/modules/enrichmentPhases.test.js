@@ -611,6 +611,55 @@ describe('runEscavador2EnrichmentPhase', () => {
     }));
   });
 
+  it('runs the real sync normalize-dedupe-enforce pipeline before omitting processes', async () => {
+    const { mocks, ...deps } = makeEscavador2Deps();
+    deps.normalizers = {};
+    delete deps.helpers.deduplicateEscavador2Findings;
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+    const processCount = 260;
+    const partyPadding = 'EVIDENCIA PROCESSUAL '.repeat(30);
+    const processNumber = (index) => `${String(index).padStart(7, '0')}-00.2026.5.01.0001`;
+    const rawProcesses = Array.from({ length: processCount }, (_, index) => ({
+      cnj: { valor: processNumber(index), mascarado: false },
+      lista: {
+        polo_ativo: `CANDIDATO ${index} ${partyPadding}`,
+        polo_passivo: `EMPRESA ${index} ${partyPadding}`,
+      },
+      classificacao: { area: 'LABOR', risco_material: false },
+      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+      normalizado: {
+        match: { tipo: 'CPF', has_exact_cpf_match: true },
+        dados: { classe: 'Reclamacao Trabalhista', assunto: 'Horas extras' },
+      },
+    }));
+    mocks.consultarEscavador2.mockResolvedValue({
+      consulta: { status: 'DONE' },
+      resumo: { total_processos: processCount },
+      processos: rawProcesses,
+    });
+    const caseData = {
+      cpf: VALID_CPF,
+      candidateName: 'CANDIDATO TESTE',
+      bigdatacorpProcessos: rawProcesses.slice(0, -1).map((_, index) => ({ numeroCnj: processNumber(index), area: 'LABOR' })),
+    };
+
+    await phases.runEscavador2EnrichmentPhase(caseRef, 'c1', caseData, {
+      enabled: true,
+      async: { enabled: false },
+      request: {},
+      dedupe: { dateToleranceDays: 90 },
+    });
+
+    const persisted = caseRef.update.mock.calls.find(([payload]) => payload.escavador2EnrichmentStatus === 'DONE')[0];
+    const escavador2Fields = Object.fromEntries(Object.entries(persisted).filter(([key]) => key.startsWith('escavador2')));
+    expect(persisted.escavador2NewFindingCount).toBe(1);
+    expect(persisted.escavador2Processos).toEqual(expect.arrayContaining([
+      expect.objectContaining({ numeroCnj: processNumber(processCount - 1), isNewEscavador2Finding: true }),
+    ]));
+    expect(Buffer.byteLength(JSON.stringify(escavador2Fields), 'utf8')).toBeLessThanOrEqual(320 * 1024);
+  });
+
   it('deletes stale omission markers after a normal synchronous completion without omissions', async () => {
     const { mocks, ...deps } = makeEscavador2Deps();
     const phases = createEnrichmentPhases(deps);
@@ -628,6 +677,8 @@ describe('runEscavador2EnrichmentPhase', () => {
     expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
       escavador2ProcessOmissions: 'DELETE',
       escavador2TechnicalOmissions: 'DELETE',
+      escavador2PersistenceTruncated: 'DELETE',
+      escavador2PersistenceFallback: 'DELETE',
     }));
   });
 

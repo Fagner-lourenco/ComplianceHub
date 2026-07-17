@@ -198,6 +198,7 @@ async function handleEscavador2CallbackLogic({
             ...persistencePayload,
             escavador2ProcessOmissions: persistencePayload.escavador2ProcessOmissions || FieldValue.delete(),
             escavador2TechnicalOmissions: persistencePayload.escavador2TechnicalOmissions || FieldValue.delete(),
+            escavador2PersistenceTruncated: persistencePayload.escavador2PersistenceTruncated || FieldValue.delete(),
             ...(useSizeFallback ? {
                 escavador2RawPayloads: FieldValue.delete(),
                 escavador2PartialErrors: FieldValue.delete(),

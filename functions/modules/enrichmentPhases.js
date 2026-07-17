@@ -1697,6 +1697,8 @@ function createEnrichmentPhases(deps) {
         ...persistencePayload,
         escavador2ProcessOmissions: persistencePayload.escavador2ProcessOmissions || FieldValue.delete(),
         escavador2TechnicalOmissions: persistencePayload.escavador2TechnicalOmissions || FieldValue.delete(),
+        escavador2PersistenceTruncated: persistencePayload.escavador2PersistenceTruncated || FieldValue.delete(),
+        escavador2PersistenceFallback: persistencePayload.escavador2PersistenceFallback || FieldValue.delete(),
         escavador2EnrichmentStatus: status,
         escavador2CallbackStatus: FieldValue.delete(),
         escavador2TaskId: FieldValue.delete(),

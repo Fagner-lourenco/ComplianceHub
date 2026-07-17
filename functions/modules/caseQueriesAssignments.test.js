@@ -286,7 +286,7 @@ describe('createRerunEnrichmentPhaseHandler', () => {
     expect(result).toMatchObject({ success: true, phase: 'escavador2', status: 'DONE' });
   });
 
-  it('limpa marcadores de omissao no inicio do rerun individual do Escavador2', async () => {
+  it('limpa marcadores de omissao e fallback no inicio do rerun individual do Escavador2', async () => {
     const { deps, caseRef } = makeRerunDeps();
     const handler = createRerunEnrichmentPhaseHandler(deps);
 
@@ -298,9 +298,31 @@ describe('createRerunEnrichmentPhaseHandler', () => {
     expect(caseRef.update).toHaveBeenCalledWith(expect.objectContaining({
       escavador2ProcessOmissions: expect.anything(),
       escavador2TechnicalOmissions: expect.anything(),
+      escavador2PersistenceTruncated: expect.anything(),
+      escavador2PersistenceFallback: expect.anything(),
     }));
     const reset = caseRef.update.mock.calls.find(([payload]) => payload.escavador2ProcessOmissions);
     expect(reset[0].escavador2ProcessOmissions).toEqual(reset[0].escavador2TechnicalOmissions);
+    expect(reset[0].escavador2ProcessOmissions).toEqual(reset[0].escavador2PersistenceTruncated);
+    expect(reset[0].escavador2ProcessOmissions).toEqual(reset[0].escavador2PersistenceFallback);
+  });
+
+  it('limpa marcadores de omissao e fallback no rerun completo', async () => {
+    const { deps, caseRef } = makeRerunDeps();
+    const handler = createRerunEnrichmentPhaseHandler(deps);
+
+    await handler.run({
+      auth: { uid: 'ops-1' },
+      data: { caseId: 'case-1', phase: 'all', reason: 'teste' },
+    });
+
+    const resetCall = caseRef.update.mock.calls.find(([payload]) => payload.escavador2EnrichmentStatus === 'PENDING');
+    expect(resetCall[0]).toEqual(expect.objectContaining({
+      escavador2ProcessOmissions: expect.anything(),
+      escavador2TechnicalOmissions: expect.anything(),
+      escavador2PersistenceTruncated: expect.anything(),
+      escavador2PersistenceFallback: expect.anything(),
+    }));
   });
 
   it('bloqueia rerun do Escavador2 quando provedores upstream nao estao terminalizados', async () => {
@@ -378,6 +400,8 @@ describe('createRerunEnrichmentPhaseHandler', () => {
     expect(resetCall[0].escavador2Processos).toBeInstanceOf(Object);
     expect(resetCall[0].escavador2ProcessOmissions).toBeInstanceOf(Object);
     expect(resetCall[0].escavador2TechnicalOmissions).toBeInstanceOf(Object);
+    expect(resetCall[0].escavador2PersistenceTruncated).toBeInstanceOf(Object);
+    expect(resetCall[0].escavador2PersistenceFallback).toBeInstanceOf(Object);
   });
 });
 

@@ -174,7 +174,8 @@ const FULL_RERUN_DERIVED_FIELDS = [
   'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
   'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
   'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
-  'escavador2ProcessOmissions', 'escavador2TechnicalOmissions', 'escavador2PersistenceFallback',
+  'escavador2ProcessOmissions', 'escavador2TechnicalOmissions', 'escavador2PersistenceTruncated',
+  'escavador2PersistenceFallback',
   'bigdatacorpBasicData', 'bigdatacorpGateResult', 'bigdatacorpName', 'bigdatacorpCpfStatus',
   'bigdatacorpProcessTotal', 'bigdatacorpCriminalFlag', 'bigdatacorpCriminalCount',
   'bigdatacorpDirectCriminalCount', 'bigdatacorpPossibleHomonymCriminalCount',
@@ -1770,6 +1771,8 @@ function createRerunEnrichmentPhaseHandler({
         await caseRef.update({
           escavador2ProcessOmissions: FieldValue.delete(),
           escavador2TechnicalOmissions: FieldValue.delete(),
+          escavador2PersistenceTruncated: FieldValue.delete(),
+          escavador2PersistenceFallback: FieldValue.delete(),
           updatedAt: FieldValue.serverTimestamp(),
         });
         await runEscavador2EnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavador2Config);
