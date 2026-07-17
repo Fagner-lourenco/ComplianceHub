@@ -246,6 +246,32 @@ describe('computeAutoClassifySignature', () => {
         expect(computeAutoClassifySignature(baseCase, { computeSimpleHash: contentHash }))
             .not.toBe(computeAutoClassifySignature(changed, { computeSimpleHash: contentHash }));
     });
+
+    it('changes signature when only normalized Escavador2 party documents change', () => {
+        const baseCase = {
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                parties: [{
+                    name: 'CANDIDATO TESTE',
+                    side: 'ACTIVE',
+                    role: 'Polo Ativo',
+                    documents: [
+                        { type: 'CPF', number: '12345678909' },
+                        { type: 'RG', value: '1234567' },
+                    ],
+                }],
+            }],
+        };
+        const changed = structuredClone(baseCase);
+        changed.escavador2Processos[0].parties[0].documents[0].number = '98765432100';
+        const reordered = structuredClone(baseCase);
+        reordered.escavador2Processos[0].parties[0].documents.reverse();
+        const contentHash = (value) => value;
+
+        const originalSignature = computeAutoClassifySignature(baseCase, { computeSimpleHash: contentHash });
+        expect(originalSignature).not.toBe(computeAutoClassifySignature(changed, { computeSimpleHash: contentHash }));
+        expect(originalSignature).toBe(computeAutoClassifySignature(reordered, { computeSimpleHash: contentHash }));
+    });
 });
 
 describe('computeAutoClassification', () => {
@@ -769,6 +795,37 @@ describe('createAutoClassificationHandlers', () => {
         };
         const current = structuredClone(previous);
         current.escavador2Processos[0].judgingBody = '2a Vara do Trabalho';
+        current.autoClassifySignature = computeSignature(previous);
+        current.autoClassifiedAt = new Date();
+        const deps = buildDeps({ computeAutoClassifySignature: computeSignature });
+        const handlers = createAutoClassificationHandlers(deps);
+        const caseRef = {
+            get: vi.fn(async () => ({ exists: true, data: () => current })),
+        };
+
+        const result = await handlers.acquireAutoClassifyRun(caseRef, 'case-1');
+
+        expect(result.acquired).toBe(true);
+        expect(result.reason).toBeNull();
+    });
+
+    it('invalidates already_current when only Escavador2 party documents change', async () => {
+        const computeSignature = (caseData) => computeAutoClassifySignature(caseData, { computeSimpleHash: (value) => value });
+        const previous = {
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 1,
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                parties: [{
+                    name: 'CANDIDATO TESTE',
+                    role: 'Polo Ativo',
+                    side: 'ACTIVE',
+                    documents: [{ type: 'CPF', number: '12345678909' }],
+                }],
+            }],
+        };
+        const current = structuredClone(previous);
+        current.escavador2Processos[0].parties[0].documents[0].number = '98765432100';
         current.autoClassifySignature = computeSignature(previous);
         current.autoClassifiedAt = new Date();
         const deps = buildDeps({ computeAutoClassifySignature: computeSignature });

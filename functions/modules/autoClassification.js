@@ -57,6 +57,25 @@ function canRunFinalClassification(caseData = {}, { hasPendingJuditAsync: hasPen
 }
 
 function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {}) {
+    const normalizeDocumentValue = (value) => {
+        if (value === null || value === undefined) return null;
+        const normalized = String(value).trim();
+        return normalized || null;
+    };
+    const normalizePartyDocuments = (documents) => (Array.isArray(documents) ? documents : [])
+        .map((document) => {
+            if (typeof document === 'string' || typeof document === 'number') {
+                return { type: null, number: null, value: normalizeDocumentValue(document) };
+            }
+            if (!document || typeof document !== 'object') return null;
+            return {
+                type: normalizeDocumentValue(document.type),
+                number: normalizeDocumentValue(document.number),
+                value: normalizeDocumentValue(document.value),
+            };
+        })
+        .filter((document) => document && Object.values(document).some((value) => value !== null))
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
     const signatureFields = [
         'enrichmentGeneration',
         'bigdatacorpEnrichmentStatus',
@@ -125,6 +144,7 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
                 side: party?.side || null,
                 role: party?.role || party?.personType || null,
                 document: party?.document || party?.documento || party?.cpf || party?.documentNumber || party?.taxId || null,
+                documents: normalizePartyDocuments(party?.documents),
             })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
         }))
         .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
