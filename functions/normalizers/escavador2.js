@@ -5,6 +5,8 @@ function asArray(value) {
 const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 
+const RAW_AUDIT_MAX_BYTES = 128 * 1024;
+
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
 }
@@ -70,6 +72,88 @@ function normalizeStatus(value) {
   // Forma-objeto ({detalhes, movimentacoes, documentos}) eh status da COLETA
   // (DONE/PENDING/...), nao status processual — nao pode virar texto de relatorio.
   return null;
+}
+
+function compactFetchSummary(value) {
+  if (Array.isArray(value)) return { total: value.length };
+  if (!value || typeof value !== 'object') return value || null;
+  return {
+    total: value.total ?? null,
+    coletadas: value.coletadas ?? null,
+    coletados: value.coletados ?? null,
+  };
+}
+
+function compactProcessForAudit(processo = {}) {
+  processo = asObject(processo);
+  const normalizado = asObject(processo.normalizado);
+  return {
+    status: normalizeStatus(processo.status),
+    cnj: processo.cnj || null,
+    classificacao: processo.classificacao || null,
+    papel_candidato: processo.papel_candidato || null,
+    lista: processo.lista ? {
+      polo_ativo: processo.lista.polo_ativo || null,
+      polo_passivo: processo.lista.polo_passivo || null,
+      papeis_pessoa_pesquisada: processo.lista.papeis_pessoa_pesquisada || null,
+    } : null,
+    normalizado: {
+      cnj: normalizado.cnj || null,
+      match: normalizado.match || null,
+      dados: normalizado.dados || null,
+      status_fetch: normalizado.status_fetch || null,
+    },
+    detalhes: processo.detalhes?.processo ? {
+      processo: {
+        polo_ativo: processo.detalhes.processo.polo_ativo || null,
+        polo_passivo: processo.detalhes.processo.polo_passivo || null,
+      },
+    } : null,
+  };
+}
+
+function rawByteLength(value) {
+  return Buffer.byteLength(JSON.stringify(value), 'utf8');
+}
+
+function buildCompactRawResponse(response = {}) {
+  response = asObject(response);
+  const compact = {
+    consulta: response.consulta || null,
+    perfil: response.perfil || null,
+    resumo: response.resumo || null,
+    erros_parciais: asArray(response.erros_parciais),
+    estatisticas: response.estatisticas || {},
+    processos: asArray(response.processos).map(compactProcessForAudit),
+  };
+  const originalCount = compact.processos.length;
+
+  while (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.processos.length > 0) {
+    compact.processos.pop();
+  }
+  if (compact.processos.length < originalCount) {
+    compact.truncado = true;
+    compact.processosOmitidos = originalCount - compact.processos.length;
+  }
+  if (rawByteLength(compact) <= RAW_AUDIT_MAX_BYTES) return compact;
+
+  const fallback = {
+    consulta: {
+      cpf: response.consulta?.cpf || null,
+      nome: response.consulta?.nome || null,
+      status: response.consulta?.status || null,
+    },
+    resumo: {
+      total_processos: response.resumo?.total_processos ?? originalCount,
+      total_criminais: response.resumo?.total_criminais ?? null,
+      total_trabalhistas: response.resumo?.total_trabalhistas ?? null,
+    },
+    truncado: true,
+    processosOmitidos: originalCount,
+  };
+  if (rawByteLength(fallback) <= RAW_AUDIT_MAX_BYTES) return fallback;
+
+  return { truncado: true, processosOmitidos: originalCount };
 }
 
 function normalizeRoleFlags(role = {}, area = '') {
@@ -179,14 +263,19 @@ function mapProcess(processo = {}, index = 0) {
     judgingBody,
     parties,
     ...roleFlags,
-    movimentacoesResumo: processo.movimentacoes_resumo || null,
-    documentosResumo: processo.documentos_resumo || null,
+    movimentacoesResumo: compactFetchSummary(processo.movimentacoes_resumo),
+    documentosResumo: compactFetchSummary(processo.documentos_resumo),
     _sourceEscavador2: {
       provider: 'escavador2',
       cnj,
       classificacao: processo.classificacao || null,
       papel_candidato: papel,
-      normalizado: processo.normalizado || null,
+      normalizado: {
+        cnj: processo.normalizado?.cnj || null,
+        match,
+        dados,
+        status_fetch: processo.normalizado?.status_fetch || null,
+      },
     },
   };
 }
@@ -219,7 +308,7 @@ function normalizeEscavador2Response(response = {}, options = {}) {
       consultedAt: options.consultedAt || null,
     },
     escavador2RawPayloads: {
-      response,
+      response: buildCompactRawResponse(response),
     },
     escavador2CostBRL: 0,
   };

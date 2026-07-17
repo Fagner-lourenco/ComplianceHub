@@ -215,7 +215,70 @@ describe('normalizeEscavador2Response', () => {
       resumo: response.resumo,
       consultedAt: '2026-06-12T19:00:00.000Z',
     }));
-    expect(normalized.escavador2RawPayloads).toEqual({ response });
+    expect(normalized.escavador2RawPayloads.response).toEqual(expect.objectContaining({
+      consulta: response.consulta,
+      perfil: response.perfil,
+      resumo: response.resumo,
+    }));
+    expect(normalized.escavador2RawPayloads.response.processos[0]).toEqual(expect.objectContaining({
+      cnj: response.processos[0].cnj,
+      classificacao: response.processos[0].classificacao,
+      papel_candidato: response.processos[0].papel_candidato,
+    }));
+    expect(response).toEqual(original);
+  });
+
+  it('compacts verbose raw payload below 128 KiB without anonymizing evidence', () => {
+    const verbose = 'conteudo processual '.repeat(20000);
+    const input = {
+      consulta: { cpf: '86730864508', nome: 'RODRIGO HENRIQUE', status: 'DONE' },
+      resumo: { total_processos: 1 },
+      processos: [{
+        lista: {
+          polo_ativo: 'RODRIGO HENRIQUE',
+          polo_passivo: 'Madero Industria e Comercio S.A',
+        },
+        cnj: { valor: '010XXXX-48.2026.5.01.0062', mascarado: true },
+        classificacao: { area: 'LABOR', risco_material: true },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: { classe: 'Acao Trabalhista', cidade: 'Rio de Janeiro' },
+          movimentacoes_resumo: [{ conteudo_resumo: verbose }],
+        },
+        detalhes: {
+          processo: { polo_passivo: 'Madero Industria e Comercio S.A' },
+          raw: { resumo: verbose, html: verbose },
+        },
+        movimentacoes: { items: [{ conteudo: verbose }] },
+        documentos: [{ conteudo: verbose }],
+      }],
+    };
+
+    const normalized = normalizeEscavador2Response(input);
+    const raw = normalized.escavador2RawPayloads.response;
+
+    expect(Buffer.byteLength(JSON.stringify(raw), 'utf8')).toBeLessThanOrEqual(128 * 1024);
+    expect(JSON.stringify(raw)).toContain('86730864508');
+    expect(JSON.stringify(raw)).toContain('Madero Industria e Comercio S.A');
+    expect(JSON.stringify(raw)).not.toContain(verbose);
+    expect(input.processos[0].detalhes.raw.resumo).toBe(verbose);
+  });
+
+  it('keeps the compact raw fallback below 128 KiB', () => {
+    const oversizedMetadata = 'metadado tecnico '.repeat(20000);
+    const normalized = normalizeEscavador2Response({
+      consulta: { cpf: oversizedMetadata, nome: oversizedMetadata, status: 'DONE' },
+      perfil: { html: oversizedMetadata },
+      resumo: { total_processos: 0, detalhes: oversizedMetadata },
+      erros_parciais: [{ detalhes: oversizedMetadata }],
+      estatisticas: { detalhes: oversizedMetadata },
+    });
+
+    const raw = normalized.escavador2RawPayloads.response;
+
+    expect(Buffer.byteLength(JSON.stringify(raw), 'utf8')).toBeLessThanOrEqual(128 * 1024);
+    expect(raw).toEqual({ truncado: true, processosOmitidos: 0 });
   });
 
   it('does not generate consultedAt when no timestamp is provided', () => {
