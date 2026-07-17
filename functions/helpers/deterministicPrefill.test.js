@@ -1162,6 +1162,109 @@ describe('Deterministic Prefill', () => {
             expect(notes).toContain('Vara: 62a Vara do Trabalho do Rio de Janeiro');
         });
 
+        it('prefill merges masked Escavador2 duplicate into the canonical CNJ from the real deduplicator', () => {
+            const canonicalCnj = '5006723-93.2025.8.21.0007';
+            const baseCase = {
+                bigdatacorpProcessos: [{
+                    numero: canonicalCnj,
+                    courtType: 'LABOR',
+                    courtName: 'TRT5',
+                    processUf: 'BA',
+                    status: null,
+                }],
+            };
+            const normalized = normalizeEscavador2Response({
+                processos: [{
+                    cnj: { valor: '500XXXX-93.2025.8.21.0007', mascarado: true },
+                    lista: { polo_ativo: 'CANDIDATO TESTE', polo_passivo: 'EMPRESA TESTE' },
+                    classificacao: { area: 'LABOR' },
+                    papel_candidato: { tipo_principal: 'Reclamante', polo_principal: 'ATIVO' },
+                    normalizado: {
+                        match: { tipo: 'CPF', has_exact_cpf_match: true },
+                        dados: {
+                            tribunal_sigla: 'TRT-5',
+                            uf: 'BA',
+                            cidade: 'Salvador',
+                            orgao_julgador: '12a Vara do Trabalho de Salvador',
+                            status_predito: 'ATIVO',
+                        },
+                    },
+                }],
+            });
+            const deduped = deduplicateEscavador2Findings({ ...baseCase, ...normalized });
+            const [process] = selectTopProcessos({ ...baseCase, ...normalized, ...deduped }, 20);
+
+            expect(deduped.escavador2Processos[0]).toEqual(expect.objectContaining({
+                duplicateMatchStrength: 'CNJ_MASKED',
+                duplicateOfProcessNumber: canonicalCnj,
+                isNewEscavador2Finding: false,
+            }));
+            expect(process).toEqual(expect.objectContaining({
+                cnj: canonicalCnj,
+                comarca: 'Salvador',
+                vara: '12a Vara do Trabalho de Salvador',
+                status: 'ATIVO',
+            }));
+            expect(process.parties).toEqual(expect.arrayContaining([
+                expect.objectContaining({ name: 'CANDIDATO TESTE' }),
+                expect.objectContaining({ name: 'EMPRESA TESTE' }),
+            ]));
+        });
+
+        it('prefill merges metadata Escavador2 duplicate into the canonical CNJ from the real deduplicator', () => {
+            const canonicalCnj = '0004321-11.2024.8.26.0100';
+            const baseCase = {
+                escavadorProcessos: [{
+                    numeroCnj: canonicalCnj,
+                    area: 'CRIMINAL',
+                    tribunalSigla: 'TJSP',
+                    processUf: 'SP',
+                    classe: 'Acao Penal',
+                    dataInicio: '2024-01-15',
+                }],
+            };
+            const normalized = normalizeEscavador2Response({
+                processos: [{
+                    cnj: { valor: '9999999-99.2024.8.26.0100', mascarado: false },
+                    lista: { polo_ativo: 'MINISTERIO PUBLICO', polo_passivo: 'CANDIDATO TESTE' },
+                    classificacao: { area: 'CRIMINAL', risco_material: true },
+                    papel_candidato: { tipo_principal: 'Reu', polo_principal: 'PASSIVO' },
+                    normalizado: {
+                        match: { tipo: 'CPF', has_exact_cpf_match: true },
+                        dados: {
+                            classe: 'Ação Penal',
+                            tribunal_sigla: 'TJSP',
+                            uf: 'SP',
+                            data_inicio: '2024-03-01',
+                            cidade: 'Sao Paulo',
+                            orgao_julgador: '5a Vara Criminal',
+                            status_predito: 'ATIVO',
+                        },
+                    },
+                }],
+            });
+            const deduped = deduplicateEscavador2Findings({ ...baseCase, ...normalized });
+            const [process] = selectTopProcessos({ ...baseCase, ...normalized, ...deduped }, 20);
+
+            expect(deduped.escavador2Processos[0]).toEqual(expect.objectContaining({
+                duplicateMatchStrength: 'metadata',
+                duplicateOfProcessNumber: canonicalCnj,
+                isNewEscavador2Finding: false,
+            }));
+            expect(process).toEqual(expect.objectContaining({
+                cnj: canonicalCnj,
+                comarca: 'Sao Paulo',
+                vara: '5a Vara Criminal',
+                status: 'ATIVO',
+                specificRole: 'Reu',
+                matchType: 'CPF confirmado',
+            }));
+            expect(process.parties).toEqual(expect.arrayContaining([
+                expect.objectContaining({ name: 'MINISTERIO PUBLICO' }),
+                expect.objectContaining({ name: 'CANDIDATO TESTE' }),
+            ]));
+        });
+
         it('selectTopProcessos: BDC duplicate with second criminal merges isCriminal flag', () => {
             const caseData = {
                 bigdatacorpProcessos: [

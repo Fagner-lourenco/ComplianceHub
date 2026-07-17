@@ -219,6 +219,33 @@ describe('computeAutoClassifySignature', () => {
 
         expect(nameOnly).not.toBe(exactCpf);
     });
+
+    it('changes signature when complementary evidence on an Escavador2 duplicate changes', () => {
+        const baseCase = {
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 1,
+            escavador2DuplicateCount: 1,
+            escavador2NewFindingCount: 0,
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                duplicateOfProcessNumber: '0151234-22.2009.5.06.0014',
+                isDuplicateEscavador2Finding: true,
+                isNewEscavador2Finding: false,
+                processCity: 'Recife',
+                judgingBody: '1a Vara do Trabalho',
+                specificRole: 'Reclamante',
+                hasExactCpfMatch: true,
+                parties: [{ name: 'CANDIDATO TESTE', side: 'ACTIVE', role: 'Polo Ativo', document: '12345678909' }],
+            }],
+        };
+        const changed = structuredClone(baseCase);
+        changed.escavador2Processos[0].processCity = 'Olinda';
+        changed.escavador2Processos[0].parties[0].role = 'Reclamado';
+
+        const contentHash = (value) => value;
+        expect(computeAutoClassifySignature(baseCase, { computeSimpleHash: contentHash }))
+            .not.toBe(computeAutoClassifySignature(changed, { computeSimpleHash: contentHash }));
+    });
 });
 
 describe('computeAutoClassification', () => {
@@ -719,6 +746,41 @@ describe('createAutoClassificationHandlers', () => {
         const result = await handlers.acquireAutoClassifyRun(caseRef, 'case-1');
         expect(result.acquired).toBe(false);
         expect(result.reason).toBe('already_current');
+    });
+
+    it('invalidates already_current when duplicate complementary evidence changes', async () => {
+        const computeSignature = (caseData) => computeAutoClassifySignature(caseData, { computeSimpleHash: (value) => value });
+        const previous = {
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 1,
+            escavador2DuplicateCount: 1,
+            escavador2NewFindingCount: 0,
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                duplicateOfProcessNumber: '0151234-22.2009.5.06.0014',
+                isDuplicateEscavador2Finding: true,
+                isNewEscavador2Finding: false,
+                processCity: 'Recife',
+                judgingBody: '1a Vara do Trabalho',
+                specificRole: 'Reclamante',
+                hasExactCpfMatch: true,
+                parties: [{ name: 'CANDIDATO TESTE', role: 'Polo Ativo', side: 'ACTIVE', document: '12345678909' }],
+            }],
+        };
+        const current = structuredClone(previous);
+        current.escavador2Processos[0].judgingBody = '2a Vara do Trabalho';
+        current.autoClassifySignature = computeSignature(previous);
+        current.autoClassifiedAt = new Date();
+        const deps = buildDeps({ computeAutoClassifySignature: computeSignature });
+        const handlers = createAutoClassificationHandlers(deps);
+        const caseRef = {
+            get: vi.fn(async () => ({ exists: true, data: () => current })),
+        };
+
+        const result = await handlers.acquireAutoClassifyRun(caseRef, 'case-1');
+
+        expect(result.acquired).toBe(true);
+        expect(result.reason).toBeNull();
     });
 
     it('releases lock and returns rerun flag', async () => {

@@ -560,7 +560,12 @@ function selectTopProcessos(caseData, limit = 10) {
 
     for (const p of escavador2Processos) {
         const cnj = p.numeroCnj || p.cnj || '';
-        const nk = cnj ? normCnj(cnj) : null;
+        const canonicalDuplicateCnj = p.isNewEscavador2Finding === false
+            && ['CNJ_MASKED', 'metadata'].includes(p.duplicateMatchStrength)
+            ? p.duplicateOfProcessNumber || ''
+            : '';
+        const targetCnj = canonicalDuplicateCnj || cnj;
+        const nk = targetCnj ? normCnj(targetCnj) : null;
         const processArea = classifyProcessArea({
             area: p.area,
             className: p.classe,

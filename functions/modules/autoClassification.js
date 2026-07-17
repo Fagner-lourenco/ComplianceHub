@@ -102,10 +102,12 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
     signature.bigdatacorpActiveWarrants = Array.isArray(caseData.bigdatacorpActiveWarrants)
         ? caseData.bigdatacorpActiveWarrants.map((item) => item?.numero || item?.number || item?.id || item?.status || '').sort()
         : [];
-    signature.escavador2NewFindingsDigest = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
-        .filter((item) => item?.isNewEscavador2Finding === true)
+    signature.escavador2ProcessDigest = (Array.isArray(caseData.escavador2Processos) ? caseData.escavador2Processos : [])
         .map((item) => ({
             cnj: item.numeroCnj || item.numeroCnjMascarado || null,
+            duplicateOf: item.duplicateOfProcessNumber || null,
+            duplicateMatchStrength: item.duplicateMatchStrength || null,
+            isNew: item.isNewEscavador2Finding === true,
             criminal: item.isCriminal === true,
             labor: item.isLabor === true,
             defendant: item.isDefendant === true,
@@ -115,8 +117,17 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
             materialRisk: item.isMaterialRisk === true,
             exactCpfMatch: item.hasExactCpfMatch === true,
             excludedCrimeType: item.isExcludedCrimeType || null,
+            city: item.processCity || item.comarca || null,
+            courtUnit: item.judgingBody || item.vara || null,
+            role: item.specificRole || item.tipoNormalizado || item.tipoPrincipal || null,
+            parties: (Array.isArray(item.parties) ? item.parties : []).map((party) => ({
+                name: party?.name || null,
+                side: party?.side || null,
+                role: party?.role || party?.personType || null,
+                document: party?.document || party?.documento || party?.cpf || party?.documentNumber || party?.taxId || null,
+            })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))),
         }))
-        .sort((a, b) => String(a.cnj).localeCompare(String(b.cnj)));
+        .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
     return computeSimpleHash(JSON.stringify(signature));
 }
 
