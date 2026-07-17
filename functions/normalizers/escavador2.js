@@ -189,6 +189,21 @@ function buildCompactRawResponse(response = {}) {
   };
   const originalCount = compact.processos.length;
 
+  // Evidencias processuais tem prioridade sobre metadados tecnicos agregados.
+  if (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.erros_parciais.length > 0) {
+    compact.errosParciaisOmitidos = compact.erros_parciais.length;
+    compact.erros_parciais = [];
+  }
+  const statsCount = Object.keys(compact.estatisticas).length;
+  if (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && statsCount > 0) {
+    compact.estatisticasOmitidas = statsCount;
+    compact.estatisticas = {};
+  }
+  if (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && Object.keys(compact.perfil).length > 0) {
+    compact.perfilOmitido = true;
+    compact.perfil = {};
+  }
+
   while (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.processos.length > 0) {
     compact.processos.pop();
   }

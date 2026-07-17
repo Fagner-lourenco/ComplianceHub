@@ -347,6 +347,57 @@ describe('normalizeEscavador2Response', () => {
     expect(input).toEqual(original);
   });
 
+  it('drops aggregate technical blocks before omitting short process evidence', () => {
+    const partialErrors = Array.from({ length: 6000 }, (_, index) => ({
+      codigo: `ERROR_${index}`,
+      erro: 'falha curta',
+    }));
+    const stats = Object.fromEntries(Array.from(
+      { length: 20000 },
+      (_, index) => [`metric_${index}`, index],
+    ));
+    const input = {
+      consulta: { cpf: '86730864508', nome: 'RODRIGO HENRIQUE', status: 'DONE' },
+      perfil: { nome: 'RODRIGO HENRIQUE' },
+      resumo: { total_processos: 1 },
+      erros_parciais: partialErrors,
+      estatisticas: stats,
+      processos: [{
+        cnj: { valor: '010XXXX-48.2026.5.01.0062', mascarado: true },
+        lista: {
+          polo_ativo: 'RODRIGO HENRIQUE',
+          polo_passivo: 'Madero Industria e Comercio S.A',
+        },
+        classificacao: { area: 'LABOR', risco_material: true },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: { classe: 'Acao Trabalhista', assunto: 'Horas extras' },
+        },
+      }],
+    };
+
+    const raw = normalizeEscavador2Response(input).escavador2RawPayloads.response;
+    const serialized = JSON.stringify(raw);
+
+    expect(Buffer.byteLength(serialized, 'utf8')).toBeLessThanOrEqual(128 * 1024);
+    expect(raw.processos).toHaveLength(1);
+    expect(raw.processosOmitidos).toBeUndefined();
+    expect(raw.erros_parciais).toEqual([]);
+    expect(raw.errosParciaisOmitidos).toBe(6000);
+    expect(raw.estatisticas).toEqual({});
+    expect(raw.estatisticasOmitidas).toBe(20000);
+    expect(raw.perfil).toEqual({ nome: 'RODRIGO HENRIQUE' });
+    expect(raw.perfilOmitido).toBeUndefined();
+    expect(serialized).toContain('86730864508');
+    expect(serialized).toContain('010XXXX-48.2026.5.01.0062');
+    expect(serialized).toContain('Madero Industria e Comercio S.A');
+    expect(raw.processos[0].classificacao).toEqual(input.processos[0].classificacao);
+    expect(raw.processos[0].papel_candidato).toEqual(input.processos[0].papel_candidato);
+    expect(input.erros_parciais).toHaveLength(6000);
+    expect(Object.keys(input.estatisticas)).toHaveLength(20000);
+  });
+
   it('keeps only finite non-negative counts in process fetch summaries', () => {
     const normalized = normalizeEscavador2Response({
       processos: [{
