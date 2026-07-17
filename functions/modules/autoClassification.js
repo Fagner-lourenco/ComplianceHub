@@ -113,6 +113,7 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
             victim: item.isVictim === true,
             witness: item.isWitness === true,
             materialRisk: item.isMaterialRisk === true,
+            exactCpfMatch: item.hasExactCpfMatch === true,
             excludedCrimeType: item.isExcludedCrimeType || null,
         }))
         .sort((a, b) => String(a.cnj).localeCompare(String(b.cnj)));

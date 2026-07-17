@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { createRequire } from 'node:module';
 import { normalizeArea, normalizeEscavador2Response } from './escavador2.js';
+
+const require = createRequire(import.meta.url);
+const { deduplicateEscavador2Findings } = require('../helpers/deduplicateEscavador2');
 
 const response = {
   consulta: { cpf: '12345678901', nome: 'JOAO TESTE', status: 'PARTIAL' },
@@ -265,6 +269,82 @@ describe('normalizeEscavador2Response', () => {
     expect(input.processos[0].detalhes.raw.resumo).toBe(verbose);
   });
 
+  it('keeps a minimal raw process when allowed subject arrays contain oversized Unicode values', () => {
+    const oversized = 'ação trabalhista 🚨 '.repeat(20000);
+    const input = {
+      processos: [{
+        cnj: { valor: '010XXXX-48.2026.5.01.0062', mascarado: true },
+        lista: { polo_ativo: 'RODRIGO HENRIQUE', polo_passivo: 'Madero Industria e Comercio S.A' },
+        classificacao: { area: 'LABOR', risco_material: true },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Acao Trabalhista',
+            assunto: oversized,
+            subjects: ['Horas extras', oversized],
+            classifications: [oversized, 'Reclamacao Trabalhista'],
+          },
+        },
+      }],
+    };
+
+    const raw = normalizeEscavador2Response(input).escavador2RawPayloads.response;
+
+    expect(Buffer.byteLength(JSON.stringify(raw), 'utf8')).toBeLessThanOrEqual(128 * 1024);
+    expect(raw.processos).toHaveLength(1);
+    expect(raw.processos[0]).toEqual(expect.objectContaining({
+      cnj: input.processos[0].cnj,
+      classificacao: input.processos[0].classificacao,
+      papel_candidato: input.processos[0].papel_candidato,
+      lista: expect.objectContaining(input.processos[0].lista),
+    }));
+    expect(raw.processos[0].normalizado.dados.subjects).toEqual(['Horas extras']);
+    expect(raw.processos[0].normalizado.dados.classifications).toEqual(['Reclamacao Trabalhista']);
+    expect(raw.processosOmitidos).toBeUndefined();
+    expect(JSON.stringify(raw)).not.toContain(oversized);
+  });
+
+  it('keeps normalized fields at 320 KiB and deduplicated persistence below 384 KiB with Unicode-heavy lists', () => {
+    const huge = 'metadado técnico çã 🚨 '.repeat(100);
+    const processos = Array.from({ length: 500 }, (_, index) => ({
+      cnj: { valor: `${String(index).padStart(7, '0')}-00.2026.5.01.0001`, mascarado: false },
+      lista: { polo_ativo: `CANDIDATO ${index}`, polo_passivo: `EMPRESA ${index}` },
+      classificacao: { area: index === 499 ? 'CRIMINAL' : 'CIVIL', risco_material: index === 499 },
+      papel_candidato: { tipo_principal: index === 499 ? 'Réu' : 'Autor', polo_principal: index === 499 ? 'PASSIVO' : 'ATIVO' },
+      normalizado: {
+        match: { tipo: 'CPF', has_exact_cpf_match: true },
+        dados: {
+          classe: index === 499 ? 'Ação Penal' : 'Ação Cível',
+          subjects: [huge, `Assunto ${index}`],
+          classifications: Array.from({ length: 10 }, (_, item) => `${huge}-${item}`),
+        },
+      },
+    }));
+    const normalized = normalizeEscavador2Response({
+      consulta: { cpf: '86730864508', nome: 'NOME ÍNTEGRO', status: 'DONE', debug: huge },
+      perfil: { nome: 'NOME ÍNTEGRO', debug: huge },
+      resumo: { total_processos: processos.length },
+      processos,
+      erros_parciais: Array.from({ length: 1000 }, (_, index) => ({ codigo: `ERRO_${index}`, mensagem: huge })),
+      estatisticas: Object.fromEntries(Array.from({ length: 1000 }, (_, index) => [`métrica_${index}`, huge])),
+    });
+    const deduped = deduplicateEscavador2Findings(normalized);
+    const persistedFields = Object.fromEntries(Object.entries({ ...normalized, ...deduped })
+      .filter(([field]) => field.startsWith('escavador2')));
+
+    expect(Buffer.byteLength(JSON.stringify(persistedFields), 'utf8')).toBeLessThanOrEqual(384 * 1024);
+    expect(normalized.escavador2Processos.some((process) => process.numeroCnj.startsWith('0000499'))).toBe(true);
+    expect(normalized.escavador2ProcessOmissions).toEqual(expect.objectContaining({
+      omitted: expect.any(Number),
+      original: 500,
+    }));
+    expect(normalized.escavador2ProcessOmissions.omitted).toBeGreaterThan(0);
+    expect(normalized.escavador2Processos.every((process) => (
+      !process._sourceEscavador2?.normalizado && !process._sourceEscavador2?.classificacao
+    ))).toBe(true);
+  });
+
   it('keeps the compact raw fallback below 128 KiB', () => {
     const oversizedMetadata = 'metadado tecnico '.repeat(20000);
     const normalized = normalizeEscavador2Response({
@@ -340,9 +420,14 @@ describe('normalizeEscavador2Response', () => {
       data_inicio: '2026-05-25',
       ultima_movimentacao: '2026-07-01',
     });
-    expect(normalized.escavador2Processos[0]._sourceEscavador2.normalizado.dados).toEqual(
-      raw.processos[0].normalizado.dados,
-    );
+    expect(normalized.escavador2Processos[0]._sourceEscavador2).toEqual({ provider: 'escavador2' });
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      numeroCnj: '010XXXX-48.2026.5.01.0062',
+      classe: 'Acao Trabalhista',
+      assunto: 'Horas extras',
+      processCity: 'Rio de Janeiro',
+      judgingBody: '62a Vara do Trabalho',
+    }));
     expect(serialized).not.toContain(verbose);
     expect(input).toEqual(original);
   });
@@ -398,60 +483,37 @@ describe('normalizeEscavador2Response', () => {
     expect(Object.keys(input.estatisticas)).toHaveLength(20000);
   });
 
-  it('includes truncation markers in each process-removal budget check', () => {
+  it('records raw process omissions only after minimizing every process', () => {
     const maxBytes = 128 * 1024;
-    const firstProcess = {
-      cnj: { valor: '0000001-11.2026.5.01.0001', mascarado: false },
-      lista: { polo_ativo: 'CANDIDATO PRESERVADO', polo_passivo: 'EMPRESA PRESERVADA' },
-      classificacao: { area: 'LABOR', risco_material: true },
+    const processos = Array.from({ length: 40 }, (_, index) => ({
+      cnj: { valor: `${String(index).padStart(7, '0')}-11.2026.5.01.0001`, mascarado: false },
+      lista: {
+        polo_ativo: index === 0 ? 'CANDIDATO PRESERVADO' : `CANDIDATO ${index} ${'A'.repeat(1600)}`,
+        polo_passivo: index === 0 ? 'EMPRESA PRESERVADA' : `EMPRESA ${index} ${'B'.repeat(1600)}`,
+      },
+      classificacao: { area: index === 0 ? 'LABOR' : 'CIVIL', risco_material: index === 0 },
       papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
       normalizado: { match: { tipo: 'CPF' }, dados: { classe: 'Acao Trabalhista' } },
-    };
-    const paddedProcess = {
-      cnj: { valor: '0000002-22.2026.5.01.0002', mascarado: false },
-      classificacao: { area: 'CIVIL', risco_material: false },
-      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
-      normalizado: { match: { tipo: 'NOME' }, dados: { assunto: '' } },
-    };
-    const lastProcess = {
-      cnj: { valor: '0000003-33.2026.5.01.0003', mascarado: false },
-      classificacao: { area: 'CIVIL', risco_material: false },
-      papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
-      normalizado: { match: { tipo: 'NOME' }, dados: { assunto: 'Processo removido primeiro' } },
-    };
-    const baseInput = {
+    }));
+    const input = {
       consulta: { cpf: '86730864508', nome: 'CANDIDATO PRESERVADO', status: 'DONE' },
-      resumo: { total_processos: 3 },
-      processos: [firstProcess, paddedProcess],
+      resumo: { total_processos: processos.length },
+      processos,
     };
-    const baseRaw = normalizeEscavador2Response(baseInput).escavador2RawPayloads.response;
-    const paddingLength = maxBytes - Buffer.byteLength(JSON.stringify(baseRaw), 'utf8') - 8;
-    paddedProcess.normalizado.dados.assunto = 'A'.repeat(paddingLength);
-
-    const boundaryRaw = normalizeEscavador2Response(baseInput).escavador2RawPayloads.response;
-    const boundaryWithMarkers = {
-      ...boundaryRaw,
-      truncado: true,
-      processosOmitidos: 1,
-    };
-    expect(Buffer.byteLength(JSON.stringify(boundaryRaw), 'utf8')).toBeLessThanOrEqual(maxBytes);
-    expect(Buffer.byteLength(JSON.stringify(boundaryWithMarkers), 'utf8')).toBeGreaterThan(maxBytes);
-
-    const input = { ...baseInput, processos: [firstProcess, paddedProcess, lastProcess] };
     const original = structuredClone(input);
     const raw = normalizeEscavador2Response(input).escavador2RawPayloads.response;
 
     expect(Buffer.byteLength(JSON.stringify(raw), 'utf8')).toBeLessThanOrEqual(maxBytes);
-    expect(raw.processos).toHaveLength(1);
-    expect(raw.processos[0].cnj).toEqual(firstProcess.cnj);
+    expect(raw.processos.length).toBeGreaterThan(0);
+    expect(raw.processos.length).toBeLessThan(processos.length);
+    expect(raw.processos[0].cnj).toEqual(processos[0].cnj);
     expect(raw.processos[0].lista).toEqual(expect.objectContaining({
       polo_ativo: 'CANDIDATO PRESERVADO',
       polo_passivo: 'EMPRESA PRESERVADA',
     }));
-    expect(raw.processos[0].classificacao).toEqual(firstProcess.classificacao);
-    expect(raw.processos[0].papel_candidato).toEqual(firstProcess.papel_candidato);
+    expect(raw.processosMinimizados).toBe(40);
     expect(raw.truncado).toBe(true);
-    expect(raw.processosOmitidos).toBe(2);
+    expect(raw.processosOmitidos).toBe(40 - raw.processos.length);
     expect(input).toEqual(original);
   });
 
@@ -654,6 +716,26 @@ describe('normalizeEscavador2Response', () => {
     // coleta, nao do processo — nao pode virar "Status: detalhes: DONE | ..."
     // no relatorio do cliente.
     expect(normalized.escavador2Processos[0].status).toBeNull();
+  });
+
+  it('uses the classified role instead of conflicting provider category and side labels', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        classificacao: { area: 'LABOR' },
+        papel_candidato: {
+          tipo_principal: 'Reclamado',
+          categoria: 'PLAINTIFF',
+          polo_principal: 'ATIVO',
+        },
+        normalizado: { match: {}, dados: {} },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      roleCategory: 'DEFENDANT',
+      isDefendant: true,
+      isPlaintiff: false,
+    }));
   });
 
   it('falls back to predicted status when process status is a collection object', () => {

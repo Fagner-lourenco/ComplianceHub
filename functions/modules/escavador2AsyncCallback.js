@@ -1,5 +1,8 @@
 const { onRequest } = require('firebase-functions/v2/https');
-const { normalizeEscavador2Response: defaultNormalizeEscavador2Response } = require('../normalizers/escavador2');
+const {
+    normalizeEscavador2Response: defaultNormalizeEscavador2Response,
+    buildMinimalEscavador2Persistence: defaultBuildMinimalEscavador2Persistence,
+} = require('../normalizers/escavador2');
 const { deduplicateEscavador2Findings: defaultDeduplicateEscavador2Findings } = require('../helpers/deduplicateEscavador2');
 
 function escavador2RunDocId(caseId, enrichmentGeneration) {
@@ -82,6 +85,11 @@ function buildAutoClassifyContext(caseData, caseRef, caseId, reason) {
     return { caseRef, caseId, reason };
 }
 
+function isFirestoreDocumentSizeError(error) {
+    const message = String(error?.message || '');
+    return /document.{0,80}(?:exceeds|too large|maximum size|1048576|1\s*MiB)|(?:maximum size|1048576|1\s*MiB).{0,80}document|longer than 1048487 bytes|entity too large/i.test(message);
+}
+
 async function handleEscavador2CallbackLogic({
     req,
     db,
@@ -89,6 +97,7 @@ async function handleEscavador2CallbackLogic({
     escavador2ApiKey,
     normalizeEscavador2Response = defaultNormalizeEscavador2Response,
     deduplicateEscavador2Findings = defaultDeduplicateEscavador2Findings,
+    buildMinimalEscavador2Persistence = defaultBuildMinimalEscavador2Persistence,
     maybeRunAutoClassifyAndAi,
 }) {
     if (req.method && req.method !== 'POST') {
@@ -113,7 +122,7 @@ async function handleEscavador2CallbackLogic({
     const taskRef = db.collection('escavador2Tasks').doc(escavador2RunDocId(caseId, enrichmentGeneration));
     const caseRef = db.collection('cases').doc(caseId);
 
-    const { result, autoClassify } = await db.runTransaction(async (transaction) => {
+    const runCallbackTransaction = (useSizeFallback) => db.runTransaction(async (transaction) => {
         const taskSnap = await transaction.get(taskRef);
         if (!taskSnap.exists) {
             return { result: { status: 200, body: { ok: true, ignored: true, reason: 'unknown_task' } }, autoClassify: null };
@@ -170,6 +179,9 @@ async function handleEscavador2CallbackLogic({
         const resultPayload = body.result || {};
         const normalized = normalizeEscavador2Response(resultPayload, { consultedAt: new Date().toISOString() });
         const deduped = deduplicateEscavador2Findings({ ...caseData, ...normalized }, { dateToleranceDays: caseData.escavador2DedupeDateToleranceDays || 90 });
+        const persistencePayload = useSizeFallback
+            ? buildMinimalEscavador2Persistence({ ...normalized, ...deduped })
+            : { ...normalized, ...deduped };
         const finalStatus = status === 'SKIPPED'
             ? 'SKIPPED'
             : status === 'PARTIAL' || normalized.escavador2ApiStatus === 'PARTIAL'
@@ -177,8 +189,14 @@ async function handleEscavador2CallbackLogic({
                 : 'DONE';
 
         transaction.update(caseRef, {
-            ...normalized,
-            ...deduped,
+            ...persistencePayload,
+            ...(useSizeFallback ? {
+                escavador2RawPayloads: FieldValue.delete(),
+                escavador2PartialErrors: FieldValue.delete(),
+                escavador2Stats: FieldValue.delete(),
+                escavador2Sources: FieldValue.delete(),
+            } : {}),
+            escavador2PersistenceFallback: useSizeFallback ? 'DOCUMENT_SIZE' : FieldValue.delete(),
             escavador2EnrichmentStatus: finalStatus,
             escavador2CallbackStatus: finalStatus,
             escavador2Error: null,
@@ -191,14 +209,28 @@ async function handleEscavador2CallbackLogic({
             status: finalStatus,
             taskId: taskId || taskData.taskId || null,
             processTotal: normalized.escavador2ProcessTotal || 0,
+            sizeFallback: useSizeFallback || FieldValue.delete(),
             processedAt: FieldValue.serverTimestamp(),
         });
 
         return {
-            result: { status: 200, body: { ok: true, caseId, status: finalStatus } },
+            result: {
+                status: 200,
+                body: { ok: true, caseId, status: finalStatus, ...(useSizeFallback ? { sizeFallback: true } : {}) },
+            },
             autoClassify: buildAutoClassifyContext(caseData, caseRef, caseId, 'Escavador2 callback completed'),
         };
     });
+
+    let transactionResult;
+    try {
+        transactionResult = await runCallbackTransaction(false);
+    } catch (error) {
+        if (!isFirestoreDocumentSizeError(error)) throw error;
+        console.warn(`Case ${caseId} [Escavador2]: documento excedeu 1 MiB; repetindo callback com persistencia minima.`);
+        transactionResult = await runCallbackTransaction(true);
+    }
+    const { result, autoClassify } = transactionResult;
 
     if (autoClassify && maybeRunAutoClassifyAndAi) {
         await maybeRunAutoClassifyAndAi(autoClassify.caseRef, autoClassify.caseId, autoClassify.reason);
@@ -231,4 +263,5 @@ module.exports = {
     registerEscavador2Task,
     handleEscavador2CallbackLogic,
     createEscavador2CallbackHandler,
+    isFirestoreDocumentSizeError,
 };

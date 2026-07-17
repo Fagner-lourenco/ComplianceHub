@@ -6,6 +6,13 @@ const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = requ
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 
 const RAW_AUDIT_MAX_BYTES = 128 * 1024;
+// Reserva margem para os demais campos do caso e para marcadores adicionados pela deduplicacao.
+const ESCAVADOR2_PERSISTED_MAX_BYTES = 320 * 1024;
+const ESCAVADOR2_CALLBACK_MINIMAL_MAX_BYTES = 96 * 1024;
+const SEMANTIC_ARRAY_MAX_ITEMS = 20;
+const SEMANTIC_TEXT_MAX_BYTES = 1024;
+const NORMALIZED_TEXT_MAX_BYTES = 4096;
+const TECHNICAL_ITEMS_MAX = 100;
 
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
@@ -24,6 +31,11 @@ function textOrNull(value) {
   if (typeof value !== 'string') return null;
   const text = value.trim();
   return text || null;
+}
+
+function boundedTextOrNull(value, maxBytes = NORMALIZED_TEXT_MAX_BYTES) {
+  const text = textOrNull(value);
+  return text && Buffer.byteLength(text, 'utf8') <= maxBytes ? text : null;
 }
 
 function collectProcessParties(processo = {}) {
@@ -94,15 +106,28 @@ function pickFields(value, fields) {
   return Object.fromEntries(fields.filter((field) => source[field] !== undefined).map((field) => [field, source[field]]));
 }
 
+function compactSemanticArray(value) {
+  const source = asArray(value);
+  const values = [];
+  let omitted = 0;
+  for (const item of source) {
+    const text = textOrNull(item);
+    if (!text || Buffer.byteLength(text, 'utf8') > SEMANTIC_TEXT_MAX_BYTES || values.length >= SEMANTIC_ARRAY_MAX_ITEMS) {
+      omitted += 1;
+      continue;
+    }
+    values.push(text);
+  }
+  return { values, omitted };
+}
+
 function compactNormalizedData(value) {
-  return pickFields(value, [
+  const compact = pickFields(value, [
     'classe',
     'tipo',
     'natureza',
     'assunto',
     'subject',
-    'subjects',
-    'classifications',
     'cnj_subject',
     'cnj_broad_subject',
     'cnj_procedure',
@@ -117,12 +142,37 @@ function compactNormalizedData(value) {
     'data_fim',
     'ultima_movimentacao',
   ]);
+  const omittedFields = [];
+  for (const [field, item] of Object.entries(compact)) {
+    const valid = (typeof item === 'string' && Buffer.byteLength(item, 'utf8') <= NORMALIZED_TEXT_MAX_BYTES)
+      || typeof item === 'number'
+      || typeof item === 'boolean'
+      || item === null;
+    if (!valid) {
+      delete compact[field];
+      omittedFields.push(field);
+    }
+  }
+  const subjects = compactSemanticArray(asObject(value).subjects);
+  const classifications = compactSemanticArray(asObject(value).classifications);
+  if (subjects.values.length > 0) compact.subjects = subjects.values;
+  if (subjects.omitted > 0) compact.subjectsOmitidos = subjects.omitted;
+  if (classifications.values.length > 0) compact.classifications = classifications.values;
+  if (classifications.omitted > 0) compact.classificationsOmitidas = classifications.omitted;
+  if (omittedFields.length > 0) compact.camposOmitidos = omittedFields;
+  return compact;
 }
 
 function isShortMetadataValue(value) {
   return (typeof value === 'number' && Number.isFinite(value))
     || typeof value === 'boolean'
     || (typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 256);
+}
+
+function compactIdentityFields(value, fields) {
+  return Object.fromEntries(Object.entries(pickFields(value, fields)).filter(([, item]) => (
+    typeof item !== 'string' || Buffer.byteLength(item, 'utf8') <= 4096
+  )));
 }
 
 function compactPartialError(value) {
@@ -141,9 +191,9 @@ function compactProcessForAudit(processo = {}) {
   const normalizado = asObject(processo.normalizado);
   return {
     status: normalizeStatus(processo.status),
-    cnj: processo.cnj || null,
-    classificacao: processo.classificacao || null,
-    papel_candidato: processo.papel_candidato || null,
+    cnj: pickFields(processo.cnj, ['valor', 'mascarado', 'valor_completo_extraido', 'status_resolucao']),
+    classificacao: pickFields(processo.classificacao, ['area', 'risco_material']),
+    papel_candidato: pickFields(processo.papel_candidato, ['tipo_principal', 'polo_principal', 'categoria']),
     lista: processo.lista ? {
       polo_ativo: processo.lista.polo_ativo || null,
       polo_passivo: processo.lista.polo_passivo || null,
@@ -151,7 +201,7 @@ function compactProcessForAudit(processo = {}) {
     } : null,
     normalizado: {
       cnj: normalizado.cnj || null,
-      match: normalizado.match || null,
+      match: pickFields(normalizado.match, ['tipo', 'has_exact_cpf_match']),
       dados: compactNormalizedData(normalizado.dados),
       status_fetch: normalizado.status_fetch || null,
     },
@@ -161,6 +211,25 @@ function compactProcessForAudit(processo = {}) {
         polo_passivo: processo.detalhes.processo.polo_passivo || null,
       },
     } : null,
+  };
+}
+
+function minimizeProcessForAudit(process = {}) {
+  const dados = asObject(process.normalizado?.dados);
+  return {
+    status: process.status || null,
+    cnj: process.cnj || {},
+    classificacao: process.classificacao || {},
+    papel_candidato: process.papel_candidato || {},
+    lista: process.lista || null,
+    normalizado: {
+      match: process.normalizado?.match || {},
+      dados: pickFields(dados, [
+        'classe', 'assunto', 'tribunal_sigla', 'uf', 'cidade', 'orgao_julgador',
+        'status_predito', 'data_inicio', 'data_fim', 'ultima_movimentacao', 'camposOmitidos',
+      ]),
+    },
+    detalhes: process.detalhes || null,
   };
 }
 
@@ -202,6 +271,11 @@ function buildCompactRawResponse(response = {}) {
   if (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && Object.keys(compact.perfil).length > 0) {
     compact.perfilOmitido = true;
     compact.perfil = {};
+  }
+
+  if (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.processos.length > 0) {
+    compact.processos = compact.processos.map(minimizeProcessForAudit);
+    compact.processosMinimizados = compact.processos.length;
   }
 
   while (rawByteLength(compact) > RAW_AUDIT_MAX_BYTES && compact.processos.length > 0) {
@@ -249,32 +323,35 @@ function mapProcess(processo = {}, index = 0) {
   processo = asObject(processo);
   const cnj = processo.cnj || {};
   const dados = processo.normalizado?.dados || {};
+  const compactDados = compactNormalizedData(dados);
   const match = processo.normalizado?.match || {};
   const papel = processo.papel_candidato || {};
   const area = normalizeArea(processo.classificacao?.area);
   const areaForRole = area === 'CRIMINAL' ? 'Criminal' : area === 'LABOR' ? 'Trabalhista' : area;
   const fullCnj = cnj.valor_completo_extraido || (!cnj.mascarado ? cnj.valor : null);
   const numeroCnj = fullCnj || cnj.valor || null;
-  const status = normalizeStatus(processo.status) || normalizeStatus(dados.status_predito);
-  const processCity = textOrNull(dados.cidade);
-  const judgingBody = textOrNull(dados.orgao_julgador);
+  const status = normalizeStatus(processo.status) || normalizeStatus(compactDados.status_predito);
+  const processCity = boundedTextOrNull(compactDados.cidade);
+  const judgingBody = boundedTextOrNull(compactDados.orgao_julgador);
   const parties = collectProcessParties(processo);
   const roleFlags = normalizeRoleFlags(papel, areaForRole);
   const tipoNormalizado = papel.tipo_principal || papel.categoria || null;
 
-  const subjects = Array.isArray(dados.subjects) ? dados.subjects : (Array.isArray(processo.subjects) ? processo.subjects : []);
-  const classifications = Array.isArray(dados.classifications) ? dados.classifications : (Array.isArray(processo.classifications) ? processo.classifications : []);
-  const cnjSubject = dados.cnj_subject || processo.cnjSubject || null;
-  const cnjBroadSubject = dados.cnj_broad_subject || processo.cnjBroadSubject || null;
-  const cnjProcedure = dados.cnj_procedure || processo.cnjProcedure || null;
+  const compactSubjects = compactSemanticArray(Array.isArray(dados.subjects) ? dados.subjects : processo.subjects);
+  const compactClassifications = compactSemanticArray(Array.isArray(dados.classifications) ? dados.classifications : processo.classifications);
+  const subjects = compactSubjects.values;
+  const classifications = compactClassifications.values;
+  const cnjSubject = boundedTextOrNull(compactDados.cnj_subject || processo.cnjSubject);
+  const cnjBroadSubject = boundedTextOrNull(compactDados.cnj_broad_subject || processo.cnjBroadSubject);
+  const cnjProcedure = boundedTextOrNull(compactDados.cnj_procedure || processo.cnjProcedure);
 
   const criminalFacts = {
     area,
-    classe: dados.classe,
-    tipo: dados.tipo,
-    natureza: dados.natureza,
-    assunto: dados.assunto,
-    subject: dados.subject,
+    classe: compactDados.classe,
+    tipo: compactDados.tipo,
+    natureza: compactDados.natureza,
+    assunto: compactDados.assunto,
+    subject: compactDados.subject,
     cnjSubject,
     cnjBroadSubject,
     subjects,
@@ -310,19 +387,19 @@ function mapProcess(processo = {}, index = 0) {
     cnjSubject,
     cnjBroadSubject,
     cnjProcedure,
-    tribunalSigla: dados.tribunal_sigla || null,
-    tribunal: dados.tribunal_sigla || null,
-    processUf: dados.uf || null,
-    classe: dados.classe || null,
-    assunto: dados.assunto || null,
-    assuntoPrincipal: dados.assunto || null,
-    dataInicio: dados.data_inicio || null,
-    data: dados.data_inicio || null,
-    distributionDate: dados.data_inicio || null,
-    ultimaMovimentacao: dados.ultima_movimentacao || null,
-    dataUltimaMovimentacao: dados.ultima_movimentacao || null,
-    lastMovementDate: dados.ultima_movimentacao || null,
-    roleCategory: papel.categoria || 'UNKNOWN',
+    tribunalSigla: compactDados.tribunal_sigla || null,
+    tribunal: compactDados.tribunal_sigla || null,
+    processUf: compactDados.uf || null,
+    classe: compactDados.classe || null,
+    assunto: compactDados.assunto || null,
+    assuntoPrincipal: compactDados.assunto || null,
+    dataInicio: compactDados.data_inicio || null,
+    data: compactDados.data_inicio || null,
+    distributionDate: compactDados.data_inicio || null,
+    ultimaMovimentacao: compactDados.ultima_movimentacao || null,
+    dataUltimaMovimentacao: compactDados.ultima_movimentacao || null,
+    lastMovementDate: compactDados.ultima_movimentacao || null,
+    roleCategory: roleFlags.roleClassification.category,
     tipoPrincipal: papel.tipo_principal || null,
     tipoNormalizado,
     specificRole: tipoNormalizado,
@@ -339,19 +416,132 @@ function mapProcess(processo = {}, index = 0) {
     ...roleFlags,
     movimentacoesResumo: compactFetchSummary(processo.movimentacoes_resumo),
     documentosResumo: compactFetchSummary(processo.documentos_resumo),
-    _sourceEscavador2: {
-      provider: 'escavador2',
-      cnj,
-      classificacao: processo.classificacao || null,
-      papel_candidato: papel,
-      normalizado: {
-        cnj: processo.normalizado?.cnj || null,
-        match,
-        dados: compactNormalizedData(dados),
-        status_fetch: processo.normalizado?.status_fetch || null,
-      },
+    semanticOmissions: compactSubjects.omitted > 0 || compactClassifications.omitted > 0 || compactDados.camposOmitidos ? {
+      subjects: compactSubjects.omitted,
+      classifications: compactClassifications.omitted,
+      fields: compactDados.camposOmitidos || [],
+    } : null,
+    _sourceEscavador2: { provider: 'escavador2' },
+  };
+}
+
+function minimizeCanonicalProcess(process = {}) {
+  const compact = pickFields(process, [
+    'escavador2Index', 'numeroCnj', 'cnj', 'numeroCnjMascarado', 'numeroCnjCompletoExtraido',
+    'cnjResolutionStatus', 'area', 'isCriminal', 'isLabor', 'isTrabalhista', 'isExcludedCrimeType',
+    'isMaterialRisk', 'subjects', 'classifications', 'cnjSubject', 'cnjBroadSubject', 'cnjProcedure',
+    'tribunalSigla', 'tribunal', 'processUf', 'classe', 'assunto', 'assuntoPrincipal', 'status',
+    'dataInicio', 'data', 'distributionDate', 'ultimaMovimentacao', 'dataUltimaMovimentacao',
+    'lastMovementDate', 'roleCategory', 'tipoPrincipal', 'tipoNormalizado', 'specificRole', 'polo',
+    'hasExactCpfMatch', 'matchType', 'tipoMatch', 'processCity', 'comarca', 'vara', 'judgingBody',
+    'parties', 'roleClassification', 'isDefendant', 'isPlaintiff', 'isVictim', 'isWitness',
+    'isLawyer', 'semanticOmissions',
+    'isDuplicate', 'isDuplicateEscavador2Finding', 'duplicateOfProvider', 'duplicateOfProcessNumber',
+    'duplicateMatchStrength', 'isNewEscavador2Finding',
+  ]);
+  const originalSubjects = asArray(compact.subjects);
+  const originalClassifications = asArray(compact.classifications);
+  const originalParties = asArray(compact.parties);
+  compact.subjects = originalSubjects.slice(0, 5);
+  compact.classifications = originalClassifications.slice(0, 5);
+  compact.parties = originalParties.slice(0, 50);
+  if (originalSubjects.length > compact.subjects.length
+    || originalClassifications.length > compact.classifications.length
+    || originalParties.length > compact.parties.length) {
+    compact.persistenceOmissions = {
+      subjects: originalSubjects.length - compact.subjects.length,
+      classifications: originalClassifications.length - compact.classifications.length,
+      parties: originalParties.length - compact.parties.length,
+    };
+  }
+  compact._sourceEscavador2 = { provider: 'escavador2' };
+  return compact;
+}
+
+function processPriority(process = {}) {
+  return (process.isMaterialRisk === true ? 16 : 0)
+    + (process.isCriminal === true ? 8 : 0)
+    + (process.isLabor === true ? 4 : 0)
+    + (process.hasExactCpfMatch === true ? 2 : 0);
+}
+
+function enforcePersistedBudget(payload) {
+  if (rawByteLength(payload) <= ESCAVADOR2_PERSISTED_MAX_BYTES) return payload;
+
+  const originalErrors = payload.escavador2PartialErrors.length;
+  const originalStats = Object.keys(payload.escavador2Stats).length;
+  const previousOmissions = payload.escavador2TechnicalOmissions || {};
+  payload.escavador2PartialErrors = [];
+  payload.escavador2Stats = {};
+  payload.escavador2TechnicalOmissions = {
+    partialErrors: Number(previousOmissions.partialErrors || 0) + originalErrors,
+    stats: Number(previousOmissions.stats || 0) + originalStats,
+  };
+  if (rawByteLength(payload) <= ESCAVADOR2_PERSISTED_MAX_BYTES) return payload;
+
+  payload.escavador2Sources = {
+    consulta: compactIdentityFields(payload.escavador2Sources.consulta, ['cpf', 'nome', 'status']),
+    consultedAt: payload.escavador2Sources.consultedAt || null,
+    compacted: true,
+  };
+  payload.escavador2Processos = payload.escavador2Processos.map(minimizeCanonicalProcess);
+  if (rawByteLength(payload) <= ESCAVADOR2_PERSISTED_MAX_BYTES) return payload;
+
+  const rawProcessCount = payload.escavador2RawPayloads?.response?.processos?.length || 0;
+  payload.escavador2RawPayloads = {
+    response: {
+      consulta: compactIdentityFields(payload.escavador2Sources.consulta, ['cpf', 'nome', 'status']),
+      truncado: true,
+      processosOmitidos: rawProcessCount,
     },
   };
+
+  const originalProcesses = payload.escavador2Processos;
+  const prioritized = [...originalProcesses].sort((left, right) => (
+    processPriority(right) - processPriority(left)
+    || Number(left.escavador2Index || 0) - Number(right.escavador2Index || 0)
+  ));
+  payload.escavador2Processos = [];
+  payload.escavador2ProcessOmissions = { original: originalProcesses.length, omitted: originalProcesses.length };
+  for (const process of prioritized) {
+    payload.escavador2Processos.push(process);
+    payload.escavador2ProcessOmissions.omitted -= 1;
+    if (rawByteLength(payload) > ESCAVADOR2_PERSISTED_MAX_BYTES) {
+      payload.escavador2Processos.pop();
+      payload.escavador2ProcessOmissions.omitted += 1;
+    }
+  }
+  payload.escavador2Processos.sort((left, right) => Number(left.escavador2Index || 0) - Number(right.escavador2Index || 0));
+  if (payload.escavador2ProcessOmissions.omitted === 0) delete payload.escavador2ProcessOmissions;
+  return payload;
+}
+
+function buildMinimalEscavador2Persistence(normalized = {}) {
+  const payload = pickFields(normalized, [
+    'escavador2ApiStatus', 'escavador2ProcessTotal', 'escavador2CriminalFlag',
+    'escavador2CriminalCount', 'escavador2LaborFlag', 'escavador2LaborCount',
+    'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
+    'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
+    'escavador2CostBRL',
+  ]);
+  const originalProcesses = asArray(normalized.escavador2Processos).map(minimizeCanonicalProcess);
+  const prioritized = [...originalProcesses].sort((left, right) => (
+    processPriority(right) - processPriority(left)
+    || Number(left.escavador2Index || 0) - Number(right.escavador2Index || 0)
+  ));
+  payload.escavador2Processos = [];
+  payload.escavador2ProcessOmissions = { original: originalProcesses.length, omitted: originalProcesses.length };
+  for (const process of prioritized) {
+    payload.escavador2Processos.push(process);
+    payload.escavador2ProcessOmissions.omitted -= 1;
+    if (rawByteLength(payload) > ESCAVADOR2_CALLBACK_MINIMAL_MAX_BYTES) {
+      payload.escavador2Processos.pop();
+      payload.escavador2ProcessOmissions.omitted += 1;
+    }
+  }
+  payload.escavador2Processos.sort((left, right) => Number(left.escavador2Index || 0) - Number(right.escavador2Index || 0));
+  if (payload.escavador2ProcessOmissions.omitted === 0) delete payload.escavador2ProcessOmissions;
+  return payload;
 }
 
 function normalizeEscavador2Response(response = {}, options = {}) {
@@ -362,7 +552,7 @@ function normalizeEscavador2Response(response = {}, options = {}) {
   const criminalCount = Number(resumo.total_criminais ?? processos.filter((item) => item.isCriminal).length);
   const laborCount = Number(resumo.total_trabalhistas ?? processos.filter((item) => item.isLabor).length);
 
-  return {
+  const payload = {
     escavador2ApiStatus: response.consulta?.status || null,
     escavador2ProcessTotal: Number(resumo.total_processos ?? processos.length),
     escavador2Processos: processos,
@@ -373,8 +563,8 @@ function normalizeEscavador2Response(response = {}, options = {}) {
     escavador2MaterialRiskCount: Number(resumo.total_riscos_materiais || 0),
     escavador2CnjMaskedCount: Number(resumo.total_cnj_mascarado || 0),
     escavador2CnjExtractedCount: Number(resumo.total_cnj_completo_extraido || 0),
-    escavador2PartialErrors: asArray(response.erros_parciais),
-    escavador2Stats: response.estatisticas || {},
+    escavador2PartialErrors: asArray(response.erros_parciais).slice(0, TECHNICAL_ITEMS_MAX).map(compactPartialError),
+    escavador2Stats: Object.fromEntries(Object.entries(compactStats(response.estatisticas)).slice(0, TECHNICAL_ITEMS_MAX)),
     escavador2Sources: {
       consulta: response.consulta || null,
       perfil: response.perfil || null,
@@ -386,9 +576,17 @@ function normalizeEscavador2Response(response = {}, options = {}) {
     },
     escavador2CostBRL: 0,
   };
+  const partialErrorsOmitted = Math.max(0, asArray(response.erros_parciais).length - payload.escavador2PartialErrors.length);
+  const statsOmitted = Math.max(0, Object.keys(asObject(response.estatisticas)).length - Object.keys(payload.escavador2Stats).length);
+  if (partialErrorsOmitted > 0 || statsOmitted > 0) {
+    payload.escavador2TechnicalOmissions = { partialErrors: partialErrorsOmitted, stats: statsOmitted };
+  }
+  return enforcePersistedBudget(payload);
 }
 
 module.exports = {
   normalizeEscavador2Response,
   normalizeArea,
+  ESCAVADOR2_PERSISTED_MAX_BYTES,
+  buildMinimalEscavador2Persistence,
 };

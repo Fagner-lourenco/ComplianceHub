@@ -193,6 +193,32 @@ describe('computeAutoClassifySignature', () => {
         const sigB = computeAutoClassifySignature(makeCaseWithRole(true), { computeSimpleHash });
         expect(sigA).not.toBe(sigB);
     });
+
+    it('changes signature when Escavador2 identity improves from name to exact CPF', () => {
+        const baseCase = {
+            escavador2EnrichmentStatus: 'DONE',
+            escavador2ProcessTotal: 1,
+            escavador2LaborCount: 1,
+            escavador2NewFindingCount: 1,
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                isNewEscavador2Finding: true,
+                isLabor: true,
+                isPlaintiff: true,
+            }],
+        };
+
+        const nameOnly = computeAutoClassifySignature({
+            ...baseCase,
+            escavador2Processos: [{ ...baseCase.escavador2Processos[0], hasExactCpfMatch: false }],
+        }, { computeSimpleHash });
+        const exactCpf = computeAutoClassifySignature({
+            ...baseCase,
+            escavador2Processos: [{ ...baseCase.escavador2Processos[0], hasExactCpfMatch: true }],
+        }, { computeSimpleHash });
+
+        expect(nameOnly).not.toBe(exactCpf);
+    });
 });
 
 describe('computeAutoClassification', () => {

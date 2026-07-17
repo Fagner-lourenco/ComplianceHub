@@ -449,6 +449,90 @@ describe('handleEscavador2CallbackLogic', () => {
     expect(db.runTransaction).toHaveBeenCalledTimes(2);
     expect(maybeRunAutoClassifyAndAi).toHaveBeenCalledTimes(1);
   });
+
+  it('retries with minimal persistence when Firestore rejects the case document size', async () => {
+    const { db, caseDoc, taskDoc } = createDb({
+      caseData: { tenantId: 'tenant-1', cpf: '12345678909', enrichmentGeneration: 3, status: 'PENDING' },
+      taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+    });
+    const sizeError = Object.assign(
+      new Error('The value of the document exceeds the maximum size of 1048576 bytes.'),
+      { code: 3 },
+    );
+    db.runTransaction.mockRejectedValueOnce(sizeError);
+    const maybeRunAutoClassifyAndAi = vi.fn(async () => {});
+    const verbose = 'conteudo tecnico '.repeat(10000);
+
+    const result = await handleEscavador2CallbackLogic({
+      req: createValidCallbackReq(),
+      db,
+      FieldValue,
+      escavador2ApiKey: { value: () => 'secret' },
+      normalizeEscavador2Response: vi.fn(() => ({
+        escavador2ApiStatus: 'DONE',
+        escavador2ProcessTotal: 1,
+        escavador2Processos: [{
+          numeroCnj: '0001234-56.2024.8.26.0100',
+          area: 'LABOR',
+          isLabor: true,
+          isTrabalhista: true,
+          isPlaintiff: true,
+          hasExactCpfMatch: true,
+          parties: [{ name: 'NOME INTEGRAL', role: 'Polo Ativo', side: 'ACTIVE' }],
+          _sourceEscavador2: { normalizado: { debug: verbose } },
+        }],
+        escavador2RawPayloads: { response: { debug: verbose } },
+        escavador2PartialErrors: [{ debug: verbose }],
+        escavador2Stats: { debug: verbose },
+        escavador2Sources: { debug: verbose },
+        escavador2CostBRL: 0,
+      })),
+      deduplicateEscavador2Findings: vi.fn((data) => ({
+        escavador2Processos: data.escavador2Processos.map((process) => ({
+          ...process,
+          isNewEscavador2Finding: true,
+        })),
+        escavador2DuplicateCount: 0,
+        escavador2NewFindingCount: 1,
+        escavador2HasNewMaterialRisk: false,
+      })),
+      maybeRunAutoClassifyAndAi,
+    });
+
+    expect(result).toEqual({
+      status: 200,
+      body: { ok: true, caseId: 'case-1', status: 'DONE', sizeFallback: true },
+    });
+    expect(db.runTransaction).toHaveBeenCalledTimes(2);
+    expect(caseDoc.data).toMatchObject({
+      escavador2EnrichmentStatus: 'DONE',
+      escavador2CallbackStatus: 'DONE',
+      escavador2PersistenceFallback: 'DOCUMENT_SIZE',
+      escavador2RawPayloads: { __delete: true },
+    });
+    expect(caseDoc.data.escavador2Processos[0]).toEqual(expect.objectContaining({
+      numeroCnj: '0001234-56.2024.8.26.0100',
+      isNewEscavador2Finding: true,
+      parties: [{ name: 'NOME INTEGRAL', role: 'Polo Ativo', side: 'ACTIVE' }],
+    }));
+    expect(caseDoc.data.escavador2Processos[0]._sourceEscavador2?.normalizado).toBeUndefined();
+    expect(taskDoc.data).toMatchObject({ status: 'DONE', sizeFallback: true });
+    expect(maybeRunAutoClassifyAndAi).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry a generic transaction failure as a document-size error', async () => {
+    const { db } = createDb({
+      caseData: { tenantId: 'tenant-1', cpf: '12345678909', enrichmentGeneration: 3, status: 'PENDING' },
+      taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+    });
+    db.runTransaction.mockRejectedValueOnce(new Error('transaction blowup'));
+
+    await expect(handleEscavador2CallbackLogic(createBaseDeps({
+      req: createValidCallbackReq(),
+      db,
+    }))).rejects.toThrow('transaction blowup');
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('createEscavador2CallbackHandler', () => {
