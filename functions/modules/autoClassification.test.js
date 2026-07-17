@@ -323,6 +323,7 @@ describe('computeAutoClassification', () => {
                 isCriminal: false,
                 isLabor: true,
                 isTrabalhista: true,
+                hasExactCpfMatch: true,
                 isPlaintiff: true,
                 isDefendant: false,
                 classe: 'RECLAMACAO TRABALHISTA',
@@ -332,6 +333,28 @@ describe('computeAutoClassification', () => {
         const result = computeAutoClassification(caseData, mockDeps);
         expect(result.laborFlag).toBe('POSITIVE');
         expect(result.laborNotes).toContain('Escavador2');
+    });
+
+    it('keeps labor NEGATIVE for an Escavador2 plaintiff matched only by name', () => {
+        const caseData = makeCaseWithEscavador2NewFindings({
+            escavador2Processos: [{
+                numeroCnj: '015XXXX-22.2009.5.06.0014',
+                isNewEscavador2Finding: true,
+                isCriminal: false,
+                isLabor: true,
+                isTrabalhista: true,
+                hasExactCpfMatch: false,
+                matchType: 'NOME',
+                isPlaintiff: true,
+                isDefendant: false,
+                classe: 'RECLAMACAO TRABALHISTA',
+            }],
+        });
+
+        const result = computeAutoClassification(caseData, mockDeps);
+
+        expect(result.laborFlag).toBe('NEGATIVE');
+        expect(result.laborNotes).not.toContain('Trabalhista POSITIVO confirmado por: Escavador2');
     });
 
     it('keeps labor NEGATIVE when Escavador2 new finding is only a labor defendant', () => {

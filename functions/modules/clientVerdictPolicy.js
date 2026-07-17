@@ -54,6 +54,7 @@ function getProcessRoleText(process = {}) {
 
 function isCandidateActiveLaborProcess(process = {}, candidateName = '') {
     if (!process.isTrabalhista) return false;
+    if (/Escavador2/.test(process.fonte || '') && process.matchType !== 'CPF confirmado') return false;
     const role = getProcessRoleText(process);
     if (/RECLAMANTE|AUTOR|REQUERENTE|EXEQUENTE|RECORRENTE|POLO ATIVO|ATIVO/.test(role)) return true;
     if (/RECLAMAD|REU|REQUERID|EXECUTAD|POLO PASSIVO|PASSIVO|RECORRIDO/.test(role)) return false;

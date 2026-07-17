@@ -167,7 +167,7 @@ function computeAutoClassification(caseData, {
     const escavador2NewMaterialCriminalCount = escavador2NewProcesses.filter((p) => classifyCriminalMateriality(p).isMaterial).length;
     const escavador2NewLaborCount = escavador2NewProcesses.filter((p) => p.isLabor === true).length;
     const escavador2NewPlaintiffLaborCount = escavador2NewProcesses.filter((p) =>
-        p.isLabor === true && p.isPlaintiff === true
+        p.isLabor === true && p.isPlaintiff === true && p.hasExactCpfMatch === true
     ).length;
 
     if (escavador2NewMaterialCriminalCount > 0) {
