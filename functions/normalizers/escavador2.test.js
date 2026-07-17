@@ -281,6 +281,100 @@ describe('normalizeEscavador2Response', () => {
     expect(raw).toEqual({ truncado: true, processosOmitidos: 0 });
   });
 
+  it('removes verbose technical metadata before omitting short process evidence', () => {
+    const verbose = 'metadado tecnico '.repeat(20000);
+    const input = {
+      consulta: { cpf: '86730864508', nome: 'RODRIGO HENRIQUE', status: 'DONE' },
+      perfil: { nome: 'RODRIGO HENRIQUE', html: verbose },
+      resumo: { total_processos: 1 },
+      erros_parciais: [{ codigo: 'DETAILS_TIMEOUT', erro: verbose }],
+      estatisticas: { elapsed_ms: 1234, debug: verbose },
+      processos: [{
+        cnj: { valor: '010XXXX-48.2026.5.01.0062', mascarado: true },
+        lista: {
+          polo_ativo: 'RODRIGO HENRIQUE',
+          polo_passivo: 'Madero Industria e Comercio S.A',
+        },
+        classificacao: { area: 'LABOR', risco_material: true },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+        normalizado: {
+          match: { tipo: 'CPF', has_exact_cpf_match: true },
+          dados: {
+            classe: 'Acao Trabalhista',
+            assunto: 'Horas extras',
+            tribunal_sigla: 'TRT1',
+            uf: 'RJ',
+            cidade: 'Rio de Janeiro',
+            orgao_julgador: '62a Vara do Trabalho',
+            status_predito: 'ATIVO',
+            data_inicio: '2026-05-25',
+            ultima_movimentacao: '2026-07-01',
+            html: verbose,
+            debug: { payload: verbose },
+          },
+        },
+      }],
+    };
+    const original = structuredClone(input);
+
+    const normalized = normalizeEscavador2Response(input);
+    const raw = normalized.escavador2RawPayloads.response;
+    const serialized = JSON.stringify(raw);
+
+    expect(Buffer.byteLength(serialized, 'utf8')).toBeLessThanOrEqual(128 * 1024);
+    expect(raw.processos).toHaveLength(1);
+    expect(raw.processosOmitidos).toBeUndefined();
+    expect(serialized).toContain('86730864508');
+    expect(serialized).toContain('RODRIGO HENRIQUE');
+    expect(serialized).toContain('010XXXX-48.2026.5.01.0062');
+    expect(serialized).toContain('Madero Industria e Comercio S.A');
+    expect(raw.processos[0].classificacao).toEqual(input.processos[0].classificacao);
+    expect(raw.processos[0].normalizado.dados).toEqual({
+      classe: 'Acao Trabalhista',
+      assunto: 'Horas extras',
+      tribunal_sigla: 'TRT1',
+      uf: 'RJ',
+      cidade: 'Rio de Janeiro',
+      orgao_julgador: '62a Vara do Trabalho',
+      status_predito: 'ATIVO',
+      data_inicio: '2026-05-25',
+      ultima_movimentacao: '2026-07-01',
+    });
+    expect(normalized.escavador2Processos[0]._sourceEscavador2.normalizado.dados).toEqual(
+      raw.processos[0].normalizado.dados,
+    );
+    expect(serialized).not.toContain(verbose);
+    expect(input).toEqual(original);
+  });
+
+  it('keeps only finite non-negative counts in process fetch summaries', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        movimentacoes_resumo: {
+          total: '20',
+          coletadas: [1, 2],
+          coletados: { valor: 2 },
+        },
+        documentos_resumo: {
+          total: 5,
+          coletadas: 3,
+          coletados: Number.POSITIVE_INFINITY,
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0].movimentacoesResumo).toEqual({
+      total: null,
+      coletadas: null,
+      coletados: null,
+    });
+    expect(normalized.escavador2Processos[0].documentosResumo).toEqual({
+      total: 5,
+      coletadas: 3,
+      coletados: null,
+    });
+  });
+
   it('does not generate consultedAt when no timestamp is provided', () => {
     const normalized = normalizeEscavador2Response(response);
 

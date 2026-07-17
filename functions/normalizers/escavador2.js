@@ -76,12 +76,64 @@ function normalizeStatus(value) {
 
 function compactFetchSummary(value) {
   if (Array.isArray(value)) return { total: value.length };
-  if (!value || typeof value !== 'object') return value || null;
+  if (!value || typeof value !== 'object') {
+    return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+  }
+  const countOrNull = (count) => (
+    typeof count === 'number' && Number.isFinite(count) && count >= 0 ? count : null
+  );
   return {
-    total: value.total ?? null,
-    coletadas: value.coletadas ?? null,
-    coletados: value.coletados ?? null,
+    total: countOrNull(value.total),
+    coletadas: countOrNull(value.coletadas),
+    coletados: countOrNull(value.coletados),
   };
+}
+
+function pickFields(value, fields) {
+  const source = asObject(value);
+  return Object.fromEntries(fields.filter((field) => source[field] !== undefined).map((field) => [field, source[field]]));
+}
+
+function compactNormalizedData(value) {
+  return pickFields(value, [
+    'classe',
+    'tipo',
+    'natureza',
+    'assunto',
+    'subject',
+    'subjects',
+    'classifications',
+    'cnj_subject',
+    'cnj_broad_subject',
+    'cnj_procedure',
+    'tribunal',
+    'tribunal_sigla',
+    'uf',
+    'cidade',
+    'orgao_julgador',
+    'status',
+    'status_predito',
+    'data_inicio',
+    'data_fim',
+    'ultima_movimentacao',
+  ]);
+}
+
+function isShortMetadataValue(value) {
+  return (typeof value === 'number' && Number.isFinite(value))
+    || typeof value === 'boolean'
+    || (typeof value === 'string' && Buffer.byteLength(value, 'utf8') <= 256);
+}
+
+function compactPartialError(value) {
+  return Object.fromEntries(Object.entries(pickFields(
+    value,
+    ['processo', 'cnj', 'codigo', 'erro', 'mensagem', 'fase', 'status'],
+  )).filter(([, item]) => isShortMetadataValue(item)));
+}
+
+function compactStats(value) {
+  return Object.fromEntries(Object.entries(asObject(value)).filter(([, item]) => isShortMetadataValue(item)));
 }
 
 function compactProcessForAudit(processo = {}) {
@@ -100,7 +152,7 @@ function compactProcessForAudit(processo = {}) {
     normalizado: {
       cnj: normalizado.cnj || null,
       match: normalizado.match || null,
-      dados: normalizado.dados || null,
+      dados: compactNormalizedData(normalizado.dados),
       status_fetch: normalizado.status_fetch || null,
     },
     detalhes: processo.detalhes?.processo ? {
@@ -119,11 +171,20 @@ function rawByteLength(value) {
 function buildCompactRawResponse(response = {}) {
   response = asObject(response);
   const compact = {
-    consulta: response.consulta || null,
-    perfil: response.perfil || null,
-    resumo: response.resumo || null,
-    erros_parciais: asArray(response.erros_parciais),
-    estatisticas: response.estatisticas || {},
+    consulta: pickFields(response.consulta, ['cpf', 'nome', 'status']),
+    perfil: pickFields(response.perfil, ['cpf', 'nome', 'nome_completo', 'data_nascimento']),
+    resumo: pickFields(response.resumo, [
+      'total_processos',
+      'tem_criminal',
+      'total_criminais',
+      'tem_trabalhista',
+      'total_trabalhistas',
+      'total_riscos_materiais',
+      'total_cnj_mascarado',
+      'total_cnj_completo_extraido',
+    ]),
+    erros_parciais: asArray(response.erros_parciais).map(compactPartialError),
+    estatisticas: compactStats(response.estatisticas),
     processos: asArray(response.processos).map(compactProcessForAudit),
   };
   const originalCount = compact.processos.length;
@@ -273,7 +334,7 @@ function mapProcess(processo = {}, index = 0) {
       normalizado: {
         cnj: processo.normalizado?.cnj || null,
         match,
-        dados,
+        dados: compactNormalizedData(dados),
         status_fetch: processo.normalizado?.status_fetch || null,
       },
     },
