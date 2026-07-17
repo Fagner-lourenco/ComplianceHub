@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 const require = createRequire(import.meta.url);
 const { normalizeEscavadorProcessos } = require('../normalizers/escavador');
+const { normalizeEscavador2Response } = require('../normalizers/escavador2');
+const { deduplicateEscavador2Findings } = require('./deduplicateEscavador2');
 const {
     normalizeJuditExecution,
     normalizeJuditLawsuits,
@@ -2429,6 +2431,71 @@ describe('Deterministic Prefill', () => {
             const notes = buildDetLaborNotes(caseData);
             expect(notes).toContain('015XXXX-22.2009.5.06.0014');
             expect(notes).toContain('RECLAMACAO TRABALHISTA');
+        });
+
+        it('integrates Escavador2 labor parties through normalization, classification and prefill', () => {
+            const normalized = normalizeEscavador2Response({
+                consulta: { status: 'DONE', nome: 'RODRIGO HENRIQUE' },
+                processos: [{
+                    lista: {
+                        polo_ativo: 'RODRIGO HENRIQUE',
+                        polo_passivo: 'Madero Industria e Comercio S.A',
+                    },
+                    cnj: { valor: '010XXXX-48.2026.5.01.0062', mascarado: true },
+                    classificacao: { area: 'LABOR', risco_material: true },
+                    papel_candidato: {
+                        tipo_principal: 'Autor',
+                        polo_principal: 'ATIVO',
+                        categoria: 'PLAINTIFF',
+                    },
+                    normalizado: {
+                        match: { tipo: 'CPF', has_exact_cpf_match: true },
+                        dados: {
+                            classe: 'Acao Trabalhista - Rito Sumarissimo',
+                            assunto: 'Acumulo de Funcao',
+                            tribunal_sigla: 'TRT-1',
+                            cidade: 'Rio de Janeiro',
+                            orgao_julgador: '62a Vara do Trabalho do Rio de Janeiro',
+                            status_predito: 'ATIVO',
+                        },
+                    },
+                }],
+            });
+            const deduped = deduplicateEscavador2Findings(normalized);
+            const caseData = {
+                candidateName: 'RODRIGO HENRIQUE',
+                enrichmentStatus: 'DONE',
+                bigdatacorpEnrichmentStatus: 'DONE',
+                juditEnrichmentStatus: 'DONE',
+                escavadorEnrichmentStatus: 'DONE',
+                escavador2EnrichmentStatus: 'DONE',
+                djenEnrichmentStatus: 'DONE',
+                juditNeedsEscavador: false,
+                fontedataCriminalFlag: 'NEGATIVE',
+                fontedataLaborFlag: 'NEGATIVE',
+                bigdatacorpCriminalFlag: 'NEGATIVE',
+                bigdatacorpLaborFlag: 'NEGATIVE',
+                djenCriminalFlag: 'NEGATIVE',
+                ...normalized,
+                ...deduped,
+            };
+            const classification = computeAutoClassification(caseData);
+            const classifiedCase = { ...caseData, ...classification };
+            const [process] = classifiedCase.escavador2Processos;
+            const prefill = buildDeterministicPrefill(classifiedCase);
+
+            expect(process).toEqual(expect.objectContaining({
+                isNewEscavador2Finding: true,
+                hasExactCpfMatch: true,
+                roleCategory: 'PLAINTIFF',
+                isPlaintiff: true,
+                isDefendant: false,
+            }));
+            expect(classification.laborFlag).toBe('POSITIVE');
+            expect(prefill.laborNotes).toContain('Parte reclamada/passiva: Madero Industria e Comercio S.A');
+            expect(prefill.laborNotes).toContain('Status processual: ATIVO');
+            expect(prefill.laborNotes).toContain('Comarca: Rio de Janeiro');
+            expect(prefill.laborNotes).toContain('Vara: 62a Vara do Trabalho do Rio de Janeiro');
         });
     });
 });
