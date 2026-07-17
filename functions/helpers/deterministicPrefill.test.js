@@ -1098,7 +1098,7 @@ describe('Deterministic Prefill', () => {
 
         it('prefill merges Escavador2 location and parties into an existing CNJ without overwriting provider data', () => {
             const cnj = '0009999-00.2023.5.01.0001';
-            const caseData = {
+            const baseCase = {
                 candidateName: 'Madero Industria e Comercio S.A',
                 laborFlag: 'POSITIVE',
                 juditRoleSummary: [{
@@ -1111,22 +1111,40 @@ describe('Deterministic Prefill', () => {
                     hasExactCpfMatch: true,
                     isLabor: true,
                     parties: [
-                        { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE' },
-                    ],
-                }],
-                escavador2Processos: [{
-                    numeroCnj: cnj,
-                    area: 'LABOR',
-                    isLabor: true,
-                    isNewEscavador2Finding: true,
-                    hasExactCpfMatch: true,
-                    processCity: 'Rio de Janeiro',
-                    judgingBody: '62a Vara do Trabalho do Rio de Janeiro',
-                    parties: [
-                        { name: 'RODRIGO HENRIQUE', role: 'Polo Ativo', side: 'ACTIVE' },
+                        { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE', document: '11111111111' },
                     ],
                 }],
             };
+            const normalized = normalizeEscavador2Response({
+                consulta: { status: 'DONE' },
+                processos: [{
+                    cnj: { valor: cnj, mascarado: false },
+                    lista: {
+                        polo_ativo: 'RODRIGO HENRIQUE',
+                        polo_passivo: 'Madero Industria e Comercio S.A',
+                    },
+                    classificacao: { area: 'LABOR' },
+                    papel_candidato: { tipo_principal: 'Reclamado', polo_principal: 'PASSIVO' },
+                    normalizado: {
+                        match: { tipo: 'CPF', has_exact_cpf_match: true },
+                        dados: {
+                            cidade: 'Rio de Janeiro',
+                            orgao_julgador: '62a Vara do Trabalho do Rio de Janeiro',
+                        },
+                    },
+                }],
+            });
+            normalized.escavador2Processos[0].parties.push(
+                { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE', document: '11111111111' },
+                { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE', document: '22222222222' },
+            );
+            const deduped = deduplicateEscavador2Findings({ ...baseCase, ...normalized });
+            const caseData = { ...baseCase, ...normalized, ...deduped };
+
+            expect(caseData.escavador2Processos[0]).toEqual(expect.objectContaining({
+                isDuplicateEscavador2Finding: true,
+                isNewEscavador2Finding: false,
+            }));
 
             const [process] = selectTopProcessos(caseData, 20);
             const notes = buildDetLaborNotes(caseData);
@@ -1137,6 +1155,8 @@ describe('Deterministic Prefill', () => {
                 expect.objectContaining({ name: 'Madero Industria e Comercio S.A' }),
                 expect.objectContaining({ name: 'RODRIGO HENRIQUE' }),
             ]));
+            expect(process.parties.filter((party) => party.document === '11111111111')).toHaveLength(1);
+            expect(process.parties.filter((party) => party.document === '22222222222')).toHaveLength(1);
             expect(notes).toContain('Parte autora/ativa: RODRIGO HENRIQUE');
             expect(notes).toContain('Comarca: Niteroi');
             expect(notes).toContain('Vara: 62a Vara do Trabalho do Rio de Janeiro');

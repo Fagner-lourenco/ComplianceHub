@@ -188,8 +188,35 @@ function firstMovementContent(proc) {
 function mergeProcessParties(existing, incoming) {
     const incomingParties = Array.isArray(incoming.parties) ? incoming.parties : [];
     const incomingAllParties = Array.isArray(incoming.allParties) ? incoming.allParties : [];
-    if (incomingParties.length > 0) existing.parties = [...(existing.parties || []), ...incomingParties];
-    if (incomingAllParties.length > 0) existing.allParties = [...(existing.allParties || []), ...incomingAllParties];
+    const mergeList = (current, additions) => {
+        const merged = [];
+        const byIdentity = new Map();
+        for (const party of [...(Array.isArray(current) ? current : []), ...additions]) {
+            if (!party || typeof party !== 'object') continue;
+            const documents = Array.isArray(party.documents)
+                ? party.documents.map((item) => normalizePartyName(item?.number || item?.value || item)).sort().join('|')
+                : '';
+            const document = party.document || party.documento || party.cpf || party.documentNumber || party.taxId || documents;
+            const key = [party.side, party.role || party.personType, party.name, document]
+                .map(normalizePartyName)
+                .join(':');
+            const duplicate = byIdentity.get(key);
+            if (duplicate) {
+                for (const [field, value] of Object.entries(party)) {
+                    if ((duplicate[field] === null || duplicate[field] === undefined || duplicate[field] === '') && value !== undefined) {
+                        duplicate[field] = value;
+                    }
+                }
+                continue;
+            }
+            const preserved = { ...party };
+            byIdentity.set(key, preserved);
+            merged.push(preserved);
+        }
+        return merged;
+    };
+    existing.parties = mergeList(existing.parties, incomingParties);
+    existing.allParties = mergeList(existing.allParties, incomingAllParties);
 }
 
 function formatLaborProcessBlock(proc, options = {}) {
@@ -344,7 +371,7 @@ function formatProcessBlock(proc, options = {}) {
 
 function selectTopProcessos(caseData, limit = 10) {
     const escavadorProcessos = caseData.escavadorProcessos || [];
-    const escavador2Processos = (caseData.escavador2Processos || []).filter((p) => p?.isNewEscavador2Finding === true);
+    const escavador2Processos = caseData.escavador2Processos || [];
     const juditRoleSummary = caseData.juditRoleSummary || [];
     const seen = new Set();
     const all = [];
@@ -571,6 +598,7 @@ function selectTopProcessos(caseData, limit = 10) {
             }
             continue;
         }
+        if (p.isNewEscavador2Finding !== true) continue;
         if (nk) seen.add(nk);
         all.push({
             cnj: cnj || 'CNJ_MASCARADO',
