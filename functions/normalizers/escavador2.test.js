@@ -41,11 +41,24 @@ const response = {
     },
     {
       cnj: { valor: '0009999-00.2023.5.09.0001', mascarado: false, status_resolucao: 'FULL_FROM_LIST' },
+      lista: {
+        polo_ativo: 'RODRIGO HENRIQUE',
+        polo_passivo: 'Madero Industria e Comercio S.A',
+      },
       classificacao: { area: 'LABOR', risco_material: false },
       papel_candidato: { tipo_principal: 'Reclamado', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
       normalizado: {
         match: { has_exact_cpf_match: true },
-        dados: { classe: 'Reclamacao Trabalhista', assunto: 'Verbas Rescisorias', tribunal_sigla: 'TRT9', uf: 'PR', data_inicio: '2023-03-10' },
+        dados: {
+          classe: 'Acao Trabalhista - Rito Sumarissimo',
+          assunto: 'Acumulo de Funcao',
+          tribunal_sigla: 'TRT-1',
+          uf: 'RJ',
+          cidade: 'Rio de Janeiro',
+          orgao_julgador: '62a Vara do Trabalho do Rio de Janeiro',
+          status_predito: 'ATIVO',
+          data_inicio: '2026-05-25',
+        },
       },
     },
   ],
@@ -98,6 +111,68 @@ describe('normalizeEscavador2Response', () => {
     expect(second.numeroCnj).toBe('0009999-00.2023.5.09.0001');
     expect(second.numeroCnjMascarado).toBeNull();
     expect(first._sourceEscavador2).toEqual(expect.objectContaining({ provider: 'escavador2' }));
+  });
+
+  it('maps labor parties, predicted status, city and court unit', () => {
+    const normalized = normalizeEscavador2Response(response);
+    const labor = normalized.escavador2Processos[1];
+
+    expect(labor).toEqual(expect.objectContaining({
+      status: 'ATIVO',
+      processCity: 'Rio de Janeiro',
+      comarca: 'Rio de Janeiro',
+      vara: '62a Vara do Trabalho do Rio de Janeiro',
+      judgingBody: '62a Vara do Trabalho do Rio de Janeiro',
+      parties: [
+        { name: 'RODRIGO HENRIQUE', role: 'Polo Ativo', side: 'ACTIVE' },
+        { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE' },
+      ],
+    }));
+  });
+
+  it('deduplicates parties collected from list, details and involved people', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        lista: { polo_ativo: 'CANDIDATA TESTE', polo_passivo: 'EMPRESA TESTE LTDA' },
+        detalhes: {
+          processo: { polo_passivo: 'EMPRESA TESTE LTDA' },
+          raw: {
+            fontes: [{ envolvidos: [
+              { nome: 'CANDIDATA TESTE', polo: 'ATIVO' },
+              { nome: 'EMPRESA TESTE LTDA', polo: 'PASSIVO' },
+            ] }],
+          },
+        },
+        classificacao: { area: 'LABOR' },
+        papel_candidato: { tipo_principal: 'Autor', polo_principal: 'ATIVO' },
+        normalizado: { dados: {}, match: {} },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0].parties).toEqual([
+      { name: 'CANDIDATA TESTE', role: 'Polo Ativo', side: 'ACTIVE' },
+      { name: 'EMPRESA TESTE LTDA', role: 'Polo Passivo', side: 'PASSIVE' },
+    ]);
+  });
+
+  it('collects involved people when sources and involved values are objects', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        detalhes: {
+          raw: {
+            fontes: {
+              envolvidos: { nome: 'Nome Integral Preservado', polo: 'PASSIVO' },
+            },
+          },
+        },
+        classificacao: { area: 'CIVIL' },
+        normalizado: { dados: {}, match: {} },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0].parties).toEqual([
+      { name: 'Nome Integral Preservado', role: 'Polo Passivo', side: 'PASSIVE' },
+    ]);
   });
 
   it('preserves response source payloads without mutating input', () => {

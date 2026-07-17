@@ -14,6 +14,43 @@ function asObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
+function asObjectArray(value) {
+  if (Array.isArray(value)) return value.filter((item) => item && typeof item === 'object');
+  return value && typeof value === 'object' ? [value] : [];
+}
+
+function collectProcessParties(processo = {}) {
+  const parties = [];
+  const seen = new Set();
+  const add = (name, side) => {
+    const cleanName = String(name || '').trim();
+    if (!cleanName || !side) return;
+    const key = `${side}:${cleanName.toLocaleUpperCase('pt-BR')}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    parties.push({
+      name: cleanName,
+      role: side === 'ACTIVE' ? 'Polo Ativo' : 'Polo Passivo',
+      side,
+    });
+  };
+  const addPoles = (source) => {
+    const data = asObject(source);
+    add(data.polo_ativo, 'ACTIVE');
+    add(data.polo_passivo, 'PASSIVE');
+  };
+
+  addPoles(processo.lista);
+  addPoles(processo.detalhes?.processo);
+  for (const fonte of asObjectArray(processo.detalhes?.raw?.fontes)) {
+    for (const envolvido of asObjectArray(fonte.envolvidos)) {
+      const polo = String(envolvido.polo || '').toUpperCase();
+      add(envolvido.nome, polo === 'ATIVO' ? 'ACTIVE' : polo === 'PASSIVO' ? 'PASSIVE' : null);
+    }
+  }
+  return parties;
+}
+
 function normalizeArea(value) {
   const area = String(value || '').trim().toUpperCase();
   if (/CRIM|PENAL/.test(area)) return 'CRIMINAL';
@@ -55,7 +92,10 @@ function mapProcess(processo = {}, index = 0) {
   const areaForRole = area === 'CRIMINAL' ? 'Criminal' : area === 'LABOR' ? 'Trabalhista' : area;
   const fullCnj = cnj.valor_completo_extraido || (!cnj.mascarado ? cnj.valor : null);
   const numeroCnj = fullCnj || cnj.valor || null;
-  const status = normalizeStatus(processo.status);
+  const status = normalizeStatus(processo.status) || normalizeStatus(dados.status_predito);
+  const processCity = dados.cidade || null;
+  const judgingBody = dados.orgao_julgador || null;
+  const parties = collectProcessParties(processo);
   const roleFlags = normalizeRoleFlags(papel, areaForRole);
   const tipoNormalizado = papel.tipo_principal || papel.categoria || null;
 
@@ -128,6 +168,11 @@ function mapProcess(processo = {}, index = 0) {
     matchType: match.tipo || null,
     tipoMatch: match.tipo || null,
     status,
+    processCity,
+    comarca: processCity,
+    vara: judgingBody,
+    judgingBody,
+    parties,
     ...roleFlags,
     movimentacoesResumo: processo.movimentacoes_resumo || null,
     documentosResumo: processo.documentos_resumo || null,
