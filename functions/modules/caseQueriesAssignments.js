@@ -174,6 +174,7 @@ const FULL_RERUN_DERIVED_FIELDS = [
   'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
   'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
   'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
+  'escavador2ProcessOmissions', 'escavador2TechnicalOmissions', 'escavador2PersistenceFallback',
   'bigdatacorpBasicData', 'bigdatacorpGateResult', 'bigdatacorpName', 'bigdatacorpCpfStatus',
   'bigdatacorpProcessTotal', 'bigdatacorpCriminalFlag', 'bigdatacorpCriminalCount',
   'bigdatacorpDirectCriminalCount', 'bigdatacorpPossibleHomonymCriminalCount',
@@ -1766,9 +1767,11 @@ function createRerunEnrichmentPhaseHandler({
         if (!escavador2Config.enabled) {
           throw new HttpsError('failed-precondition', 'Escavador2 desabilitado para este tenant.');
         }
-        if (scope === 'cascade') {
-          await caseRef.update({ updatedAt: FieldValue.serverTimestamp() });
-        }
+        await caseRef.update({
+          escavador2ProcessOmissions: FieldValue.delete(),
+          escavador2TechnicalOmissions: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
         await runEscavador2EnrichmentPhase(caseRef, caseId, await getFreshCaseData(), escavador2Config);
       }
 
