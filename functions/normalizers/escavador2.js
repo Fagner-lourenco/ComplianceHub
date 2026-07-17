@@ -4,7 +4,6 @@ function asArray(value) {
 
 const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
-const { classifyCriminalMateriality } = require('../helpers/criminalMateriality');
 
 function positiveFlag(value, count) {
   return value === true || Number(count || 0) > 0 ? 'POSITIVE' : 'NEGATIVE';
@@ -19,11 +18,17 @@ function asObjectArray(value) {
   return value && typeof value === 'object' ? [value] : [];
 }
 
+function textOrNull(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text || null;
+}
+
 function collectProcessParties(processo = {}) {
   const parties = [];
   const seen = new Set();
   const add = (name, side) => {
-    const cleanName = String(name || '').trim();
+    const cleanName = textOrNull(name);
     if (!cleanName || !side) return;
     const key = `${side}:${cleanName.toLocaleUpperCase('pt-BR')}`;
     if (seen.has(key)) return;
@@ -44,7 +49,7 @@ function collectProcessParties(processo = {}) {
   addPoles(processo.detalhes?.processo);
   for (const fonte of asObjectArray(processo.detalhes?.raw?.fontes)) {
     for (const envolvido of asObjectArray(fonte.envolvidos)) {
-      const polo = String(envolvido.polo || '').toUpperCase();
+      const polo = textOrNull(envolvido.polo)?.toUpperCase();
       add(envolvido.nome, polo === 'ATIVO' ? 'ACTIVE' : polo === 'PASSIVO' ? 'PASSIVE' : null);
     }
   }
@@ -93,8 +98,8 @@ function mapProcess(processo = {}, index = 0) {
   const fullCnj = cnj.valor_completo_extraido || (!cnj.mascarado ? cnj.valor : null);
   const numeroCnj = fullCnj || cnj.valor || null;
   const status = normalizeStatus(processo.status) || normalizeStatus(dados.status_predito);
-  const processCity = dados.cidade || null;
-  const judgingBody = dados.orgao_julgador || null;
+  const processCity = textOrNull(dados.cidade);
+  const judgingBody = textOrNull(dados.orgao_julgador);
   const parties = collectProcessParties(processo);
   const roleFlags = normalizeRoleFlags(papel, areaForRole);
   const tipoNormalizado = papel.tipo_principal || papel.categoria || null;

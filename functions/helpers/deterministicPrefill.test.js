@@ -1060,6 +1060,86 @@ describe('Deterministic Prefill', () => {
             expect(result[0].comarca).toBe('Sobral');
         });
 
+        it('prefill preserves counterparty, city and court unit from a new Escavador2 finding', () => {
+            const caseData = {
+                candidateName: 'Madero Industria e Comercio S.A',
+                laborFlag: 'POSITIVE',
+                escavador2Processos: [{
+                    numeroCnj: '0009999-00.2023.5.01.0001',
+                    area: 'LABOR',
+                    isLabor: true,
+                    isNewEscavador2Finding: true,
+                    hasExactCpfMatch: true,
+                    status: 'ATIVO',
+                    tribunalSigla: 'TRT-1',
+                    specificRole: 'Reclamado',
+                    processCity: 'Rio de Janeiro',
+                    judgingBody: '62a Vara do Trabalho do Rio de Janeiro',
+                    parties: [
+                        { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE' },
+                    ],
+                    allParties: [
+                        { name: 'RODRIGO HENRIQUE', role: 'Polo Ativo', side: 'ACTIVE' },
+                    ],
+                }],
+            };
+
+            const [process] = selectTopProcessos(caseData, 20);
+            const notes = buildDetLaborNotes(caseData);
+
+            expect(process.parties).toHaveLength(1);
+            expect(process.allParties).toHaveLength(1);
+            expect(notes).toContain('Parte autora/ativa: RODRIGO HENRIQUE');
+            expect(notes).toContain('Comarca: Rio de Janeiro');
+            expect(notes).toContain('Vara: 62a Vara do Trabalho do Rio de Janeiro');
+        });
+
+        it('prefill merges Escavador2 location and parties into an existing CNJ without overwriting provider data', () => {
+            const cnj = '0009999-00.2023.5.01.0001';
+            const caseData = {
+                candidateName: 'Madero Industria e Comercio S.A',
+                laborFlag: 'POSITIVE',
+                juditRoleSummary: [{
+                    code: cnj,
+                    area: 'Trabalhista',
+                    tribunalAcronym: 'TRT-1',
+                    city: 'Niteroi',
+                    personType: 'RECLAMADO',
+                    side: 'Passive',
+                    hasExactCpfMatch: true,
+                    isLabor: true,
+                    parties: [
+                        { name: 'Madero Industria e Comercio S.A', role: 'Polo Passivo', side: 'PASSIVE' },
+                    ],
+                }],
+                escavador2Processos: [{
+                    numeroCnj: cnj,
+                    area: 'LABOR',
+                    isLabor: true,
+                    isNewEscavador2Finding: true,
+                    hasExactCpfMatch: true,
+                    processCity: 'Rio de Janeiro',
+                    judgingBody: '62a Vara do Trabalho do Rio de Janeiro',
+                    parties: [
+                        { name: 'RODRIGO HENRIQUE', role: 'Polo Ativo', side: 'ACTIVE' },
+                    ],
+                }],
+            };
+
+            const [process] = selectTopProcessos(caseData, 20);
+            const notes = buildDetLaborNotes(caseData);
+
+            expect(process.comarca).toBe('Niteroi');
+            expect(process.vara).toBe('62a Vara do Trabalho do Rio de Janeiro');
+            expect(process.parties).toEqual(expect.arrayContaining([
+                expect.objectContaining({ name: 'Madero Industria e Comercio S.A' }),
+                expect.objectContaining({ name: 'RODRIGO HENRIQUE' }),
+            ]));
+            expect(notes).toContain('Parte autora/ativa: RODRIGO HENRIQUE');
+            expect(notes).toContain('Comarca: Niteroi');
+            expect(notes).toContain('Vara: 62a Vara do Trabalho do Rio de Janeiro');
+        });
+
         it('selectTopProcessos: BDC duplicate with second criminal merges isCriminal flag', () => {
             const caseData = {
                 bigdatacorpProcessos: [

@@ -135,11 +135,11 @@ describe('normalizeEscavador2Response', () => {
       processos: [{
         lista: { polo_ativo: 'CANDIDATA TESTE', polo_passivo: 'EMPRESA TESTE LTDA' },
         detalhes: {
-          processo: { polo_passivo: 'EMPRESA TESTE LTDA' },
+          processo: { polo_passivo: 'empresa teste ltda' },
           raw: {
             fontes: [{ envolvidos: [
-              { nome: 'CANDIDATA TESTE', polo: 'ATIVO' },
-              { nome: 'EMPRESA TESTE LTDA', polo: 'PASSIVO' },
+              { nome: 'candidata teste', polo: 'ATIVO' },
+              { nome: 'Empresa Teste Ltda', polo: 'PASSIVO' },
             ] }],
           },
         },
@@ -153,6 +153,35 @@ describe('normalizeEscavador2Response', () => {
       { name: 'CANDIDATA TESTE', role: 'Polo Ativo', side: 'ACTIVE' },
       { name: 'EMPRESA TESTE LTDA', role: 'Polo Passivo', side: 'PASSIVE' },
     ]);
+  });
+
+  it('ignores non-textual party names, city and court unit', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        lista: { polo_ativo: { nome: 'NAO COAGIR' }, polo_passivo: ['NAO COAGIR'] },
+        detalhes: {
+          processo: { polo_ativo: ['NAO COAGIR'] },
+          raw: {
+            fontes: { envolvidos: { nome: { valor: 'NAO COAGIR' }, polo: 'ATIVO' } },
+          },
+        },
+        normalizado: {
+          dados: {
+            cidade: { nome: 'NAO COAGIR' },
+            orgao_julgador: ['NAO COAGIR'],
+          },
+          match: {},
+        },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0]).toEqual(expect.objectContaining({
+      processCity: null,
+      comarca: null,
+      vara: null,
+      judgingBody: null,
+      parties: [],
+    }));
   });
 
   it('collects involved people when sources and involved values are objects', () => {
@@ -360,6 +389,28 @@ describe('normalizeEscavador2Response', () => {
     // coleta, nao do processo — nao pode virar "Status: detalhes: DONE | ..."
     // no relatorio do cliente.
     expect(normalized.escavador2Processos[0].status).toBeNull();
+  });
+
+  it('falls back to predicted status when process status is a collection object', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        status: { detalhes: 'DONE' },
+        normalizado: { dados: { status_predito: 'ATIVO' }, match: {} },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0].status).toBe('ATIVO');
+  });
+
+  it('prioritizes a court status string over predicted status', () => {
+    const normalized = normalizeEscavador2Response({
+      processos: [{
+        status: 'ARQUIVADO',
+        normalizado: { dados: { status_predito: 'ATIVO' }, match: {} },
+      }],
+    });
+
+    expect(normalized.escavador2Processos[0].status).toBe('ARQUIVADO');
   });
 
   it('keeps a real court status string untouched', () => {

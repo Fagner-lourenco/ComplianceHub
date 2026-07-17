@@ -548,9 +548,14 @@ function selectTopProcessos(caseData, limit = 10) {
         if (nk && seen.has(nk)) {
             const existing = all.find((e) => normCnj(e.cnj) === nk);
             if (existing) {
+                const incomingVara = p.vara || p.judgingBody;
+                const incomingComarca = p.comarca || p.processCity;
                 if (!existing.classe && p.classe) existing.classe = p.classe;
                 if (!existing.assunto && (p.assunto || p.assuntoPrincipal)) existing.assunto = p.assunto || p.assuntoPrincipal;
                 if (!existing.specificRole && (p.specificRole || p.tipoNormalizado || p.tipoPrincipal)) existing.specificRole = p.specificRole || p.tipoNormalizado || p.tipoPrincipal;
+                if (!existing.vara && incomingVara) existing.vara = incomingVara;
+                if (!existing.judgingBody && incomingVara) existing.judgingBody = incomingVara;
+                if (!existing.comarca && incomingComarca) existing.comarca = incomingComarca;
                 if (isWeakProcessStatus(existing.status) && p.status) existing.status = p.status;
                 if (!existing.lastMovementDate && (p.lastMovementDate || p.dataUltimaMovimentacao)) existing.lastMovementDate = p.lastMovementDate || p.dataUltimaMovimentacao;
                 if (!existing.distributionDate && (p.distributionDate || p.dataInicio)) existing.distributionDate = p.distributionDate || p.dataInicio;
@@ -561,6 +566,7 @@ function selectTopProcessos(caseData, limit = 10) {
                 if (p.isVictim && !existing.isVictim) existing.isVictim = true;
                 if (p.isWitness && !existing.isWitness) existing.isWitness = true;
                 if (p.isDefendant && !existing.isDefendant) existing.isDefendant = true;
+                mergeProcessParties(existing, p);
                 existing.fonte = `${existing.fonte}+Escavador2`;
             }
             continue;
@@ -574,8 +580,8 @@ function selectTopProcessos(caseData, limit = 10) {
             status: p.status || null,
             polo: p.polo || p.tipoNormalizado || p.tipoPrincipal || null,
             tribunal: p.tribunalSigla || p.tribunal || null,
-            vara: null,
-            comarca: p.processUf || null,
+            vara: p.vara || p.judgingBody || null,
+            comarca: p.comarca || p.processCity || null,
             data: p.dataInicio || p.data || null,
             fonte: 'Escavador2',
             isCriminal: effectiveCriminal,
@@ -592,7 +598,7 @@ function selectTopProcessos(caseData, limit = 10) {
             lastMovementDate: p.lastMovementDate || p.dataUltimaMovimentacao || null,
             lawsuitAgeDays: null,
             courtLevel: null,
-            judgingBody: null,
+            judgingBody: p.judgingBody || p.vara || null,
             allDecisions: Array.isArray(p.decisions) ? p.decisions : null,
             isVictim: !!p.isVictim,
             isDefendant: !!p.isDefendant,
