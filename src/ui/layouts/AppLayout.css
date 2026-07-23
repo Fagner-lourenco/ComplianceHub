@@ -57,7 +57,9 @@
     }
 }
 
-.app-layout--sidebar-collapsed { --sidebar-width: 68px; }
+@media (min-width: 769px) {
+    .app-layout--sidebar-collapsed { --sidebar-width: 68px; }
+}
 
 .sidebar-overlay {
     position: fixed;
