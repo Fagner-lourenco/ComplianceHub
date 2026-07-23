@@ -34,6 +34,13 @@ function matchesDemoCase(caseData, filters = {}, { queueOnly = false, assigneeUi
     return true;
 }
 
+export function computeDemoUrgencyRank(caseData, now) {
+    const slaStatus = getSlaStatus(caseData, now);
+    if (slaStatus.state === 'no_sla') return Number.MAX_SAFE_INTEGER;
+    const highBoost = caseData.priority === 'HIGH' ? -1800000 : 0;
+    return slaStatus.remainingMs + highBoost;
+}
+
 function buildStats(cases) {
     return cases.reduce((acc, caseData) => {
         acc.total += 1;
@@ -66,7 +73,16 @@ export function useOpsCasesQuery({ tenantId, isDemoMode, page, pageSize, filters
         const tenantCases = tenantId ? MOCK_CASES.filter((caseData) => caseData.tenantId === tenantId) : MOCK_CASES;
         const statsBase = queueOnly ? tenantCases.filter((caseData) => caseData.status !== 'DONE') : tenantCases;
         const allMatches = tenantCases.filter((caseData) => matchesDemoCase(caseData, filters || {}, { queueOnly, assigneeUid }));
-        allMatches.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
+        if (sortField === 'urgency') {
+            const now = new Date();
+            allMatches.sort((left, right) => {
+                const diff = computeDemoUrgencyRank(left, now) - computeDemoUrgencyRank(right, now);
+                if (diff !== 0) return diff;
+                return String(left.createdAt || '').localeCompare(String(right.createdAt || ''));
+            });
+        } else {
+            allMatches.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
+        }
         const start = (page - 1) * pageSize;
         return {
             cases: allMatches.slice(start, start + pageSize),
@@ -77,7 +93,7 @@ export function useOpsCasesQuery({ tenantId, isDemoMode, page, pageSize, filters
             stats: buildStats(statsBase),
             meta: { source: 'demo' },
         };
-    }, [assigneeUid, filters, page, pageSize, queueOnly, tenantId]);
+    }, [assigneeUid, filters, page, pageSize, queueOnly, sortField, tenantId]);
 
     useEffect(() => {
         if (isDemoMode) return undefined;

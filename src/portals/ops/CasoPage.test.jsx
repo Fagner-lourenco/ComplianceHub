@@ -52,6 +52,10 @@ vi.mock('react-router-dom', async () => {
 const { default: CasoPage } = await import('./CasoPage');
 
 describe('CasoPage', () => {
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     beforeEach(() => {
         casoPageMocks.authState.userProfile = { role: 'admin' };
         casoPageMocks.navigate.mockReset();
@@ -873,5 +877,84 @@ describe('CasoPage', () => {
         const laborSection = screen.getByRole('heading', { name: /Processos trabalhistas Escavador2/ }).closest('.caso-identity-block');
         expect(within(laborSection).getByText('0005678-90.2023.5.09.0001')).toBeInTheDocument();
         expect(within(laborSection).getByText('Reclamante')).toBeInTheDocument();
+    });
+
+    it('apos conclusao, mostra contagem e redireciona para a fila em 5s', async () => {
+        vi.useFakeTimers();
+        window.sessionStorage.setItem(
+            'compliancehub:case-checklist:CASE-999',
+            JSON.stringify({ identification: true, warrant: true, review: true }),
+        );
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Marcos Vinicius Lima',
+                cpf: '12345678901',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                enabledPhases: ['warrant'],
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Analise concluida sem apontamentos relevantes para o caso.',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+        expect(screen.getByText('Marcos Vinicius Lima')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Concluir' }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Confirmar conclusão' }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        expect(screen.getByText(/retornando para a fila em 5s/i)).toBeInTheDocument();
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+
+        expect(casoPageMocks.navigate).toHaveBeenCalledWith('/ops/fila');
+    });
+
+    it('botao "Ficar nesta pagina" cancela o retorno automatico', async () => {
+        vi.useFakeTimers();
+        window.sessionStorage.setItem(
+            'compliancehub:case-checklist:CASE-999',
+            JSON.stringify({ identification: true, warrant: true, review: true }),
+        );
+        casoPageMocks.subscribeToCaseDoc.mockImplementation((caseId, callback) => {
+            setTimeout(() => callback({
+                id: caseId,
+                status: 'IN_PROGRESS',
+                candidateName: 'Beatriz Andrade Melo',
+                cpf: '10794180329',
+                tenantId: 'tenant-1',
+                createdAt: '2026-04-04',
+                enabledPhases: ['warrant'],
+                warrantFlag: 'NEGATIVE',
+                finalVerdict: 'FIT',
+                analystComment: 'Analise concluida sem apontamentos relevantes para o caso.',
+            }, null), 0);
+            return () => {};
+        });
+
+        render(<CasoPage />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+        expect(screen.getByText('Beatriz Andrade Melo')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Concluir' }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Confirmar conclusão' }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        expect(screen.getByText(/retornando para a fila em 5s/i)).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /ficar nesta p[aá]gina/i }));
+        await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
+
+        expect(casoPageMocks.navigate).not.toHaveBeenCalledWith('/ops/fila');
     });
 });

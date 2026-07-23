@@ -31,6 +31,14 @@ function LocationProbe() {
     return <div data-testid="location">{location.pathname}</div>;
 }
 
+function renderSidebar({ initialPath = '/ops/fila', ...props } = {}) {
+    return render(
+        <MemoryRouter initialEntries={[initialPath]}>
+            <Sidebar isOpen onClose={() => {}} {...props} />
+        </MemoryRouter>,
+    );
+}
+
 describe('Sidebar', () => {
     beforeEach(() => {
         sidebarMocks.logout.mockReset();
@@ -98,5 +106,19 @@ describe('Sidebar', () => {
 
         expect(screen.queryByRole('link', { name: /Arquivos gerados/i })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /Links compartilhados/i })).not.toBeInTheDocument();
+    });
+
+    it('renderiza botao de recolher e chama onToggleCollapse', () => {
+        const onToggleCollapse = vi.fn();
+        renderSidebar({ collapsed: false, onToggleCollapse });
+        const toggle = screen.getByRole('button', { name: /recolher menu/i });
+        fireEvent.click(toggle);
+        expect(onToggleCollapse).toHaveBeenCalledTimes(1);
+    });
+
+    it('em modo recolhido, aside recebe classe sidebar--collapsed e botao vira "Expandir menu"', () => {
+        renderSidebar({ collapsed: true, onToggleCollapse: vi.fn() });
+        expect(document.querySelector('.sidebar')).toHaveClass('sidebar--collapsed');
+        expect(screen.getByRole('button', { name: /expandir menu/i })).toBeInTheDocument();
     });
 });

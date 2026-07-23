@@ -611,6 +611,32 @@ describe('compareOpsCases', () => {
   });
 });
 
+describe('compareOpsCases urgency', () => {
+  const NOW = new Date('2026-07-23T12:00:00.000Z');
+  const mk = (id, createdAt, priority = 'NORMAL', slaHours = 48) => ({ id, createdAt, priority, slaHours, status: 'PENDING' });
+
+  it('vencido ha mais tempo vem primeiro', () => {
+    const older = mk('older', '2026-07-19T12:00:00.000Z'); // vencido ha 48h
+    const newer = mk('newer', '2026-07-20T12:00:00.000Z'); // vencido ha 24h
+    const sorted = [newer, older].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted.map((c) => c.id)).toEqual(['older', 'newer']);
+  });
+
+  it('vencido vem antes de dentro do prazo', () => {
+    const overdue = mk('overdue', '2026-07-20T12:00:00.000Z');
+    const onTime = mk('ontime', '2026-07-23T00:00:00.000Z');
+    const sorted = [onTime, overdue].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted[0].id).toBe('overdue');
+  });
+
+  it('priority HIGH desempata dentro do mesmo estado', () => {
+    const normal = mk('normal', '2026-07-23T00:00:00.000Z');
+    const high = { ...mk('high', '2026-07-23T00:00:00.000Z'), priority: 'HIGH' };
+    const sorted = [normal, high].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted[0].id).toBe('high');
+  });
+});
+
 describe('compareClientCases', () => {
   const a = { id: '1', candidateName: 'Ana', createdAt: '2024-01-10' };
   const b = { id: '2', candidateName: 'Bruno', createdAt: '2024-01-11' };

@@ -80,6 +80,17 @@ describe('FilaPage', () => {
         });
     });
 
+    it('ordena a fila por urgencia por padrao', async () => {
+        render(<FilaPage />);
+
+        await vi.waitFor(() => {
+            expect(filaPageMocks.callListOpsCases).toHaveBeenCalledWith(expect.objectContaining({
+                sortField: 'urgency',
+                sortDir: 'asc',
+            }));
+        });
+    });
+
     it('filtra "Meus casos" pelo uid do usuario autenticado, nao por string fixa', () => {
         filaPageMocks.callListOpsCases.mockResolvedValue({
             cases: [

@@ -87,6 +87,8 @@ export default function FilaPage() {
         filters: queryFilters,
         queueOnly: true,
         assigneeUid: user?.uid || null,
+        sortField: 'urgency',
+        sortDir: 'asc',
         refreshKey,
     });
     const safeCurrentPage = Math.min(currentPage, totalPages);
