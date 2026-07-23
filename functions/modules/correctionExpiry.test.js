@@ -186,6 +186,35 @@ describe('runAutoExpireCorrections handler', () => {
         expect(updates).toHaveLength(1);
     });
 
+    it('isola falha na transaction de um caso e continua processando os demais candidatos', async () => {
+        const queryCases = [
+            { id: 'case-fail', status: 'CORRECTION_NEEDED', correctionRequestedAt: '2026-07-21T11:00:00.000Z', tenantId: 'tenant-1' },
+            { id: 'case-ok', status: 'CORRECTION_NEEDED', correctionRequestedAt: '2026-07-20T11:00:00.000Z', tenantId: 'tenant-1' },
+        ];
+        const { db, updates } = buildDb({ queryCases });
+        const realRunTransaction = db.runTransaction;
+        db.runTransaction = vi.fn()
+            .mockImplementationOnce(async () => { throw new Error('contention no Firestore'); })
+            .mockImplementation(realRunTransaction);
+
+        const createSystemCaseMessage = vi.fn(async () => 'msg-ok');
+        const writeAuditEvent = vi.fn(async () => 'audit-ok');
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        await expect(
+            runAutoExpireCorrections({ db, createSystemCaseMessage, writeAuditEvent }, NOW),
+        ).resolves.toEqual({ expiredCount: 1, candidateCount: 2 });
+
+        expect(updates).toHaveLength(1);
+        expect(updates[0].id).toBe('case-ok');
+        expect(updates[0].payload.status).toBe('DONE');
+        expect(updates[0].payload.conclusionType).toBe('AUTO_EXPIRED_CORRECTION');
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('case-fail'), expect.anything());
+
+        consoleErrorSpy.mockRestore();
+    });
+
     it('caso sem createdAt gera turnaroundHours null', async () => {
         const queryCases = [{
             id: 'case-5',

@@ -100,8 +100,9 @@ async function expireCaseInTransaction({ db, caseId, now }) {
  * Handler principal: busca casos CORRECTION_NEEDED, filtra os expirados
  * (cap de AUTO_EXPIRE_BATCH_LIMIT por execucao) e encerra cada um.
  * Depois de cada expiracao bem-sucedida: mensagem de sistema no caso
- * (systemType CORRECTION_EXPIRED) + evento de auditoria. Falhas nessas
- * etapas pos-transaction sao logadas e nao interrompem o loop.
+ * (systemType CORRECTION_EXPIRED) + evento de auditoria. Cada candidato
+ * (transaction + etapas pos-transaction) e isolado em try/catch: uma falha
+ * (ex.: contencao no Firestore) e logada e nao aborta os demais casos do lote.
  */
 async function runAutoExpireCorrections({ db, createSystemCaseMessage, writeAuditEvent }, now = new Date()) {
     const snapshot = await db.collection('cases').where('status', '==', 'CORRECTION_NEEDED').get();
@@ -112,35 +113,40 @@ async function runAutoExpireCorrections({ db, createSystemCaseMessage, writeAudi
     let expiredCount = 0;
 
     for (const candidate of expiredCandidates) {
-        const expiredData = await expireCaseInTransaction({ db, caseId: candidate.id, now });
-        if (!expiredData) continue;
-        expiredCount += 1;
-
         try {
-            await createSystemCaseMessage({
-                caseId: candidate.id,
-                tenantId: expiredData.tenantId || null,
-                systemType: 'CORRECTION_EXPIRED',
-                body: buildExpiredSystemMessageBody(expiredData),
-                db,
-            });
-        } catch (err) {
-            console.warn(`[correctionExpiry] falha ao criar mensagem de sistema para ${candidate.id}:`, err.message);
-        }
+            const expiredData = await expireCaseInTransaction({ db, caseId: candidate.id, now });
+            if (!expiredData) continue;
+            expiredCount += 1;
 
-        try {
-            await writeAuditEvent({
-                action: 'CASE_AUTO_EXPIRED_CORRECTION',
-                tenantId: expiredData.tenantId || null,
-                actor: { type: ACTOR_TYPE.SYSTEM, id: 'system', email: 'cloud-function' },
-                entity: { type: 'CASE', id: candidate.id, label: expiredData.candidateName || candidate.id },
-                related: { caseId: candidate.id },
-                source: SOURCE.CLOUD_FUNCTION,
-                detail: `Caso encerrado automaticamente apos ${DEFAULT_AUTO_EXPIRE_HOURS}h sem correcao (motivo original: ${expiredData.correctionReason || 'nao informado'}).`,
-                templateVars: { hours: DEFAULT_AUTO_EXPIRE_HOURS },
-            });
+            try {
+                await createSystemCaseMessage({
+                    caseId: candidate.id,
+                    tenantId: expiredData.tenantId || null,
+                    systemType: 'CORRECTION_EXPIRED',
+                    body: buildExpiredSystemMessageBody(expiredData),
+                    db,
+                });
+            } catch (err) {
+                console.warn(`[correctionExpiry] falha ao criar mensagem de sistema para ${candidate.id}:`, err.message);
+            }
+
+            try {
+                await writeAuditEvent({
+                    action: 'CASE_AUTO_EXPIRED_CORRECTION',
+                    tenantId: expiredData.tenantId || null,
+                    actor: { type: ACTOR_TYPE.SYSTEM, id: 'system', email: 'cloud-function' },
+                    entity: { type: 'CASE', id: candidate.id, label: expiredData.candidateName || candidate.id },
+                    related: { caseId: candidate.id },
+                    source: SOURCE.CLOUD_FUNCTION,
+                    detail: `Caso encerrado automaticamente apos ${DEFAULT_AUTO_EXPIRE_HOURS}h sem correcao (motivo original: ${expiredData.correctionReason || 'nao informado'}).`,
+                    templateVars: { hours: DEFAULT_AUTO_EXPIRE_HOURS },
+                });
+            } catch (err) {
+                console.warn(`[correctionExpiry] falha ao gravar evento de auditoria para ${candidate.id}:`, err.message);
+            }
         } catch (err) {
-            console.warn(`[correctionExpiry] falha ao gravar evento de auditoria para ${candidate.id}:`, err.message);
+            console.error(`[correctionExpiry] falha ao expirar caso ${candidate.id}:`, err.message);
+            continue;
         }
     }
 
