@@ -152,6 +152,8 @@ describe('identityGate helpers', () => {
             expect(updateCall.correctionNotes).toBe('CPF cancelado');
             expect(updateCall.correctionRequestedBy).toBe('system_gate');
             expect(updateCall.bigdatacorpEnrichmentStatus).toBe('BLOCKED');
+            expect(typeof updateCall.correctionRequestedAt).toBe('string');
+            expect(new Date(updateCall.correctionRequestedAt).toString()).not.toBe('Invalid Date');
             expect(result.status).toBe('BLOCKED');
             expect(result.error).toBe('CPF cancelado');
         });

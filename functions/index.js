@@ -281,6 +281,7 @@ function returnCaseForIdentityGateBlock({ caseRef, caseId, provider, providerLab
         correctionReason: 'identity_gate_blocked',
         correctionNotes: gateReason || 'Gate de identidade bloqueado',
         correctionRequestedBy: 'system_gate',
+        correctionRequestedAt: new Date().toISOString(),
         ...(updateFields || {}),
     };
     return caseRef.update(updatePayload).then(() => ({
