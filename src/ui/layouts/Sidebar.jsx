@@ -6,7 +6,7 @@ import { formatRoleLabel, hasPermission } from '../../core/rbac/permissions';
 import { CLIENT_NAV, OPS_NAV, ICONS, CONTEXT_LABELS } from '../../core/copy/navigation.jsx';
 import './Sidebar.css';
 
-export default function Sidebar({ isOpen, onClose }) {
+export default function Sidebar({ isOpen, onClose, collapsed = false, onToggleCollapse }) {
     const { logout, userProfile } = useAuth();
     const {
         canSelectTenant,
@@ -53,10 +53,21 @@ export default function Sidebar({ isOpen, onClose }) {
     };
 
     return (
-        <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
+        <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''} ${collapsed ? 'sidebar--collapsed' : ''}`}>
             <div className="sidebar__brand">
                 <div className="sidebar__logo">CH</div>
-                <span className="sidebar__title">ComplianceHub</span>
+                {!collapsed && <span className="sidebar__title">ComplianceHub</span>}
+                {onToggleCollapse && (
+                    <button
+                        type="button"
+                        className="sidebar__collapse-toggle"
+                        onClick={onToggleCollapse}
+                        title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+                        aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+                    >
+                        {collapsed ? '»' : '«'}
+                    </button>
+                )}
             </div>
 
             <nav className="sidebar__nav">
@@ -65,6 +76,7 @@ export default function Sidebar({ isOpen, onClose }) {
                         key={item.to}
                         to={`${routePrefix}${item.to}`}
                         onClick={onClose}
+                        title={item.label}
                         className={({ isActive }) => `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`}
                     >
                         <span className="sidebar__icon">{ICONS[item.icon] || item.icon}</span>

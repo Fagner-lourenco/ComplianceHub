@@ -7,6 +7,9 @@ import './AppLayout.css';
 
 export default function AppLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        try { return window.localStorage.getItem('ch.sidebar.collapsed') === '1'; } catch { return false; }
+    });
     const location = useLocation();
     const topbarRef = useRef(null);
     useEffect(() => {
@@ -50,9 +53,22 @@ export default function AppLayout() {
         };
     }, []);
 
+    const toggleSidebarCollapsed = () => {
+        setIsSidebarCollapsed((current) => {
+            const next = !current;
+            try { window.localStorage.setItem('ch.sidebar.collapsed', next ? '1' : '0'); } catch { /* storage indisponivel */ }
+            return next;
+        });
+    };
+
     return (
-        <div className={`app-layout ${isSidebarOpen ? 'app-layout--sidebar-open' : ''}`}>
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <div className={`app-layout ${isSidebarOpen ? 'app-layout--sidebar-open' : ''} ${isSidebarCollapsed ? 'app-layout--sidebar-collapsed' : ''}`}>
+            <Sidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                collapsed={isSidebarCollapsed}
+                onToggleCollapse={toggleSidebarCollapsed}
+            />
             
             {/* Overlay for mobile when sidebar is open */}
             {isSidebarOpen && (

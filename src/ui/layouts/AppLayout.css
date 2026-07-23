@@ -57,6 +57,8 @@
     }
 }
 
+.app-layout--sidebar-collapsed { --sidebar-width: 68px; }
+
 .sidebar-overlay {
     position: fixed;
     top: 0;
