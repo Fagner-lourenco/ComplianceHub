@@ -245,7 +245,22 @@ function getSlaStateBackend(caseData, now = new Date()) {
    Funções pura — Comparação
    ========================================================= */
 
-function compareOpsCases(left, right, sortField, sortDir) {
+function computeUrgencyRank(caseData, now = new Date()) {
+  const created = caseData.createdAt ? new Date(caseData.createdAt) : null;
+  if (!created || Number.isNaN(created.getTime())) return Number.MAX_SAFE_INTEGER;
+  const slaHours = Number(caseData.slaHours) > 0 ? Number(caseData.slaHours) : 48;
+  const remainingMs = created.getTime() + slaHours * 3600000 - now.getTime();
+  const highBoost = caseData.priority === 'HIGH' ? -1 : 0;
+  // remainingMs negativo (vencido) ordena naturalmente antes; boost HIGH desloca meio degrau
+  return remainingMs + highBoost * 1800000;
+}
+
+function compareOpsCases(left, right, sortField, sortDir, now = new Date()) {
+  if (sortField === 'urgency') {
+    const diff = computeUrgencyRank(left, now) - computeUrgencyRank(right, now);
+    if (diff !== 0) return diff;
+    return String(left.createdAt || '').localeCompare(String(right.createdAt || ''));
+  }
   const field = ['candidateName', 'createdAt', 'status', 'finalVerdict', 'riskLevel'].includes(sortField) ? sortField : 'createdAt';
   const direction = sortDir === 'asc' ? 1 : -1;
   let leftValue = left[field] || '';
@@ -730,6 +745,7 @@ function createListOpsCasesHandler({
       const assigneeUid = String(request.data?.assigneeUid || uid || '');
       const sortField = String(request.data?.sortField || 'createdAt');
       const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
+      const now = new Date();
 
       const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
         db,
@@ -747,7 +763,7 @@ function createListOpsCasesHandler({
         ? serialized.filter((caseData) => caseData.status !== 'DONE')
         : serialized;
       const allMatches = serialized.filter((caseData) => matchesOpsCaseFiltersFull(caseData, filters, { queueOnly, assigneeUid }));
-      allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir));
+      allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir, now));
 
       const start = (page - 1) * pageSize;
       const pageCases = allMatches.slice(start, start + pageSize);
@@ -864,21 +880,26 @@ function createListOpsCasesV2Handler({
       const sortField = String(request.data?.sortField || 'createdAt');
       const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
       const fallbackToV1 = Boolean(request.data?.fallbackToV1);
+      const now = new Date();
 
       const unsupportedFilters = ['searchTerm', 'enrichment', 'sla', 'assignment'];
       const hasUnsupportedFilters = unsupportedFilters.some((key) => {
         const val = filters[key];
         return val !== undefined && val !== null && val !== '' && val !== 'ALL';
       });
+      const hasUnsupportedSortField = sortField === 'urgency';
+      const needsFallback = hasUnsupportedFilters || hasUnsupportedSortField;
 
-      if (hasUnsupportedFilters && !fallbackToV1) {
-        throw new HttpsError('invalid-argument', 'Filtros nao suportados em V2. Use fallbackToV1=true ou remova os filtros: ' + unsupportedFilters.filter((k) => {
+      if (needsFallback && !fallbackToV1) {
+        const reasons = unsupportedFilters.filter((k) => {
           const val = filters[k];
           return val !== undefined && val !== null && val !== '' && val !== 'ALL';
-        }).join(', '));
+        });
+        if (hasUnsupportedSortField) reasons.push('sortField=urgency');
+        throw new HttpsError('invalid-argument', 'Filtros nao suportados em V2. Use fallbackToV1=true ou remova os filtros: ' + reasons.join(', '));
       }
 
-      if (hasUnsupportedFilters && fallbackToV1) {
+      if (needsFallback && fallbackToV1) {
         const { docs, pageCount, scannedRecords, capped } = await fetchTenantCaseDocuments({
           db,
           collectionId: 'cases',
@@ -895,7 +916,7 @@ function createListOpsCasesV2Handler({
           ? serialized.filter((caseData) => caseData.status !== 'DONE')
           : serialized;
         const allMatches = serialized.filter((caseData) => matchesOpsCaseFiltersFull(caseData, filters, { queueOnly, assigneeUid }));
-        allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir));
+        allMatches.sort((left, right) => compareOpsCases(left, right, sortField, sortDir, now));
         const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
         const page = Math.max(Number(request.data?.page) || 1, 1);
         const start = (page - 1) * pageSize;
