@@ -4,3 +4,9 @@ docs
 functions
 scripts
 *.md
+*.docx
+bdc-query.cjs
+.superpowers
+findings.md
+progress.md
+task_plan.md
