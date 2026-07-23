@@ -34,10 +34,11 @@ function matchesDemoCase(caseData, filters = {}, { queueOnly = false, assigneeUi
     return true;
 }
 
-function computeDemoUrgencyRank(caseData, now) {
-    const { remainingMs } = getSlaStatus(caseData, now);
+export function computeDemoUrgencyRank(caseData, now) {
+    const slaStatus = getSlaStatus(caseData, now);
+    if (slaStatus.state === 'no_sla') return Number.MAX_SAFE_INTEGER;
     const highBoost = caseData.priority === 'HIGH' ? -1800000 : 0;
-    return remainingMs + highBoost;
+    return slaStatus.remainingMs + highBoost;
 }
 
 function buildStats(cases) {

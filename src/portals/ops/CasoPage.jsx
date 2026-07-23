@@ -1785,7 +1785,7 @@ export default function CasoPage() {
                         Voltar para a fila agora
                     </button>
                     {autoReturnSeconds !== null && (
-                        <button className="caso-btn caso-btn--secondary" onClick={() => setAutoReturnSeconds(null)}>
+                        <button className="caso-btn caso-btn--ghost" onClick={() => setAutoReturnSeconds(null)}>
                             Ficar nesta página
                         </button>
                     )}
