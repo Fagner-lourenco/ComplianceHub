@@ -613,7 +613,7 @@ describe('compareOpsCases', () => {
 
 describe('compareOpsCases urgency', () => {
   const NOW = new Date('2026-07-23T12:00:00.000Z');
-  const mk = (id, createdAt, priority = 'NORMAL', slaHours = 48) => ({ id, createdAt, priority, slaHours, status: 'PENDING' });
+  const mk = (id, createdAt, priority = 'NORMAL', slaHours = 48, status = 'PENDING') => ({ id, createdAt, priority, slaHours, status });
 
   it('vencido ha mais tempo vem primeiro', () => {
     const older = mk('older', '2026-07-19T12:00:00.000Z'); // vencido ha 48h
@@ -634,6 +634,27 @@ describe('compareOpsCases urgency', () => {
     const high = { ...mk('high', '2026-07-23T00:00:00.000Z'), priority: 'HIGH' };
     const sorted = [normal, high].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
     expect(sorted[0].id).toBe('high');
+  });
+
+  it('CORRECTION_NEEDED vencido vai depois de PENDING dentro do prazo', () => {
+    const correctionNeeded = mk('corr', '2026-01-01T00:00:00.000Z', 'NORMAL', 48, 'CORRECTION_NEEDED');
+    const pendingOnTime = mk('pending', '2026-07-23T00:00:00.000Z');
+    const sorted = [correctionNeeded, pendingOnTime].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted.map((c) => c.id)).toEqual(['pending', 'corr']);
+  });
+
+  it('WAITING_INFO vencido vai depois de PENDING dentro do prazo', () => {
+    const waitingInfo = mk('wait', '2026-01-01T00:00:00.000Z', 'NORMAL', 48, 'WAITING_INFO');
+    const pendingOnTime = mk('pending', '2026-07-23T00:00:00.000Z');
+    const sorted = [waitingInfo, pendingOnTime].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted.map((c) => c.id)).toEqual(['pending', 'wait']);
+  });
+
+  it('dois casos bloqueados entre si mantem ordem por mais vencido primeiro', () => {
+    const olderBlocked = mk('older-blocked', '2026-07-19T12:00:00.000Z', 'NORMAL', 48, 'CORRECTION_NEEDED');
+    const newerBlocked = mk('newer-blocked', '2026-07-20T12:00:00.000Z', 'NORMAL', 48, 'WAITING_INFO');
+    const sorted = [newerBlocked, olderBlocked].sort((a, b) => compareOpsCases(a, b, 'urgency', 'desc', NOW));
+    expect(sorted.map((c) => c.id)).toEqual(['older-blocked', 'newer-blocked']);
   });
 });
 

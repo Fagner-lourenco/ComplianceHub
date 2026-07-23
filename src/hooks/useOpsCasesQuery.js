@@ -41,6 +41,20 @@ export function computeDemoUrgencyRank(caseData, now) {
     return slaStatus.remainingMs + highBoost;
 }
 
+const URGENCY_BLOCKED_STATUSES = new Set(['CORRECTION_NEEDED', 'WAITING_INFO']);
+
+export function compareDemoOpsCases(left, right, sortField, sortDir, now = new Date()) {
+    if (sortField === 'urgency') {
+        const leftBlocked = URGENCY_BLOCKED_STATUSES.has(left.status);
+        const rightBlocked = URGENCY_BLOCKED_STATUSES.has(right.status);
+        if (leftBlocked !== rightBlocked) return leftBlocked ? 1 : -1;
+        const diff = computeDemoUrgencyRank(left, now) - computeDemoUrgencyRank(right, now);
+        if (diff !== 0) return diff;
+        return String(left.createdAt || '').localeCompare(String(right.createdAt || ''));
+    }
+    return String(right.createdAt || '').localeCompare(String(left.createdAt || ''));
+}
+
 function buildStats(cases) {
     return cases.reduce((acc, caseData) => {
         acc.total += 1;
@@ -73,16 +87,8 @@ export function useOpsCasesQuery({ tenantId, isDemoMode, page, pageSize, filters
         const tenantCases = tenantId ? MOCK_CASES.filter((caseData) => caseData.tenantId === tenantId) : MOCK_CASES;
         const statsBase = queueOnly ? tenantCases.filter((caseData) => caseData.status !== 'DONE') : tenantCases;
         const allMatches = tenantCases.filter((caseData) => matchesDemoCase(caseData, filters || {}, { queueOnly, assigneeUid }));
-        if (sortField === 'urgency') {
-            const now = new Date();
-            allMatches.sort((left, right) => {
-                const diff = computeDemoUrgencyRank(left, now) - computeDemoUrgencyRank(right, now);
-                if (diff !== 0) return diff;
-                return String(left.createdAt || '').localeCompare(String(right.createdAt || ''));
-            });
-        } else {
-            allMatches.sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
-        }
+        const now = new Date();
+        allMatches.sort((left, right) => compareDemoOpsCases(left, right, sortField, sortDir, now));
         const start = (page - 1) * pageSize;
         return {
             cases: allMatches.slice(start, start + pageSize),

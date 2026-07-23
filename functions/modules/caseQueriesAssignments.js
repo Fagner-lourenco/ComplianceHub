@@ -245,6 +245,12 @@ function getSlaStateBackend(caseData, now = new Date()) {
    Funções pura — Comparação
    ========================================================= */
 
+const URGENCY_BLOCKED_STATUSES = new Set(['CORRECTION_NEEDED', 'WAITING_INFO']);
+
+function isUrgencyBlockedOnClient(caseData) {
+  return URGENCY_BLOCKED_STATUSES.has(caseData?.status);
+}
+
 function computeUrgencyRank(caseData, now = new Date()) {
   const created = caseData.createdAt ? new Date(caseData.createdAt) : null;
   if (!created || Number.isNaN(created.getTime())) return Number.MAX_SAFE_INTEGER;
@@ -257,6 +263,9 @@ function computeUrgencyRank(caseData, now = new Date()) {
 
 function compareOpsCases(left, right, sortField, sortDir, now = new Date()) {
   if (sortField === 'urgency') {
+    const leftBlocked = isUrgencyBlockedOnClient(left);
+    const rightBlocked = isUrgencyBlockedOnClient(right);
+    if (leftBlocked !== rightBlocked) return leftBlocked ? 1 : -1;
     const diff = computeUrgencyRank(left, now) - computeUrgencyRank(right, now);
     if (diff !== 0) return diff;
     return String(left.createdAt || '').localeCompare(String(right.createdAt || ''));
