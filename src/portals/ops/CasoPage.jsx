@@ -828,6 +828,23 @@ export default function CasoPage() {
     const executiveSummaryRef = useAutoResize();
     const analystCommentRef = useAutoResize();
     const [concluded, setConcluded] = useState(false);
+    const [autoReturnSeconds, setAutoReturnSeconds] = useState(null);
+    useEffect(() => {
+        if (!concluded) { setAutoReturnSeconds(null); return undefined; }
+        setAutoReturnSeconds(5);
+        const interval = setInterval(() => {
+            setAutoReturnSeconds((current) => {
+                if (current === null) { clearInterval(interval); return null; }
+                if (current <= 1) {
+                    clearInterval(interval);
+                    navigate(isDemoMode ? '/demo/ops/fila' : '/ops/fila');
+                    return 0;
+                }
+                return current - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [concluded, isDemoMode, navigate]);
     const [saveError, setSaveError] = useState(null);
     useEffect(() => {
         if (!saveError) return undefined;
@@ -1761,9 +1778,17 @@ export default function CasoPage() {
                     <span style={{ fontSize: '3rem' }}>OK</span>
                     <h2>Caso concluido com sucesso</h2>
                     <p>O resultado foi salvo. A publicação no portal do cliente pode levar alguns instantes.</p>
+                    {autoReturnSeconds !== null && autoReturnSeconds > 0 && (
+                        <p className="caso-success__countdown">Retornando para a fila em {autoReturnSeconds}s…</p>
+                    )}
                     <button className="caso-btn caso-btn--primary" onClick={() => navigate(isDemoMode ? '/demo/ops/fila' : '/ops/fila')}>
-                        Voltar para a fila
+                        Voltar para a fila agora
                     </button>
+                    {autoReturnSeconds !== null && (
+                        <button className="caso-btn caso-btn--secondary" onClick={() => setAutoReturnSeconds(null)}>
+                            Ficar nesta página
+                        </button>
+                    )}
                 </div>
             </PageShell>
         );
