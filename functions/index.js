@@ -1959,3 +1959,15 @@ exports.markCaseCommunicationRead = notificationService.createMarkCaseCommunicat
 
 const backupWorker = require('./modules/backupWorker');
 exports.backupDaily = backupWorker.createBackupWorkerHandler();
+
+/* =========================================================
+   AUTO-EXPIRACAO DE CORRECOES — casos presos em CORRECTION_NEEDED
+   Agenda: a cada 60 minutos | Janela: 48h (correctionRequestedAt)
+   ========================================================= */
+
+const { createAutoExpireCorrectionsScheduler } = require('./modules/correctionExpiry');
+exports.autoExpireCorrections = createAutoExpireCorrectionsScheduler({
+    db,
+    createSystemCaseMessage: caseCommunication.createSystemCaseMessage,
+    writeAuditEvent,
+});

@@ -127,6 +127,14 @@ const AUDIT_ACTIONS = {
         clientVisible: false,
         summaryTemplate: 'Rascunho salvo para {candidateName}',
     },
+    CASE_AUTO_EXPIRED_CORRECTION: {
+        category: CATEGORY.CASE,
+        level: LEVEL.SYSTEM,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: true,
+        summaryTemplate: 'Caso encerrado automaticamente apos {hours}h sem correcao',
+        clientSummaryTemplate: 'Solicitacao encerrada automaticamente por falta de correcao',
+    },
 
     // ─── Public reports ──────────────────────────────────────────────────────
     PUBLIC_REPORT_CREATED: {

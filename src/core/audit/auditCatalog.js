@@ -59,6 +59,7 @@ export const ACTION_LABELS = {
     CASE_CORRECTED: { label: 'Caso corrigido', category: CATEGORY.CASE },
     CASE_CONCLUDED: { label: 'Caso concluído', category: CATEGORY.CASE },
     CASE_DRAFT_SAVED: { label: 'Rascunho salvo', category: CATEGORY.CASE },
+    CASE_AUTO_EXPIRED_CORRECTION: { label: 'Correção expirada (automático)', category: CATEGORY.CASE },
 
     // Public reports
     PUBLIC_REPORT_CREATED: { label: 'Relatório público gerado', category: CATEGORY.REPORT_PUBLIC },
