@@ -143,6 +143,44 @@ describe('createClientSolicitationHandler', () => {
         expect(deps.notificationService.createNewSolicitationNotifications).toHaveBeenCalled();
     });
 
+    it('inicializa creditEnrichmentStatus PENDING quando fase habilitada no tenant', async () => {
+        const deps = makeBaseDeps({
+            getTenantSettingsData: vi.fn(() => Promise.resolve({
+                analysisConfig: { criminal: { enabled: true }, creditRestriction: { enabled: true } },
+                slaHours: 48,
+            })),
+        });
+        const handler = createClientSolicitationHandler(deps);
+        const request = {
+            auth: { uid: 'user-1' },
+            data: { fullName: 'Joao Silva', cpf: VALID_CPF, candidateResidenceUf: 'RJ' },
+        };
+
+        await handler(request);
+
+        const caseRef = deps.db.collection('cases').doc();
+        const createdCase = (await caseRef.get()).data();
+        expect(createdCase.enabledPhases).toContain('creditRestriction');
+        expect(createdCase.creditEnrichmentStatus).toBe('PENDING');
+        expect(createdCase.creditError).toBeNull();
+    });
+
+    it('nao inicializa creditEnrichmentStatus quando fase nao habilitada (inclusive fallback)', async () => {
+        const deps = makeBaseDeps();
+        const handler = createClientSolicitationHandler(deps);
+        const request = {
+            auth: { uid: 'user-1' },
+            data: { fullName: 'Joao Silva', cpf: VALID_CPF, candidateResidenceUf: 'RJ' },
+        };
+
+        await handler(request);
+
+        const caseRef = deps.db.collection('cases').doc();
+        const createdCase = (await caseRef.get()).data();
+        expect(createdCase.enabledPhases).not.toContain('creditRestriction');
+        expect(createdCase.creditEnrichmentStatus).toBeUndefined();
+    });
+
     it('rejeita quando nao ha autenticacao', async () => {
         const deps = makeBaseDeps();
         const handler = createClientSolicitationHandler(deps);
@@ -308,6 +346,47 @@ describe('submitClientCorrectionHandler', () => {
         };
 
         await expect(handler(request)).rejects.toThrow('Apenas casos com correcao solicitada podem ser reenviados.');
+    });
+
+    it('reseta credit ao corrigir quando fase habilitada no caso', async () => {
+        const deps = makeCorrectionDeps({
+            enabledPhases: ['criminal', 'creditRestriction'],
+            creditEnrichmentStatus: 'SKIPPED',
+        });
+        const handler = submitClientCorrectionHandler(deps);
+        const request = {
+            auth: { uid: 'user-1' },
+            data: { caseId: 'case-1', candidateName: 'Joao', cpf: VALID_CPF },
+        };
+
+        await handler(request);
+
+        const caseRef = deps.db.collection('cases').doc('case-1');
+        const payload = caseRef.update.mock.calls[0][0];
+        expect(payload.creditEnrichmentStatus).toBe('PENDING');
+        expect(payload.creditError).toBeNull();
+        // Campos fora da whitelist deletados aqui (mock 'deleted')
+        expect(payload.creditSources).toBe('deleted');
+        expect(payload.creditCostBRL).toBe('deleted');
+        // Flag/score removidos pelo buildResetPublishedCaseFields (RESULT_ONLY_FIELDS,
+        // FieldValue real do firebase-admin) — basta garantir que ha um delete marcado
+        expect(payload.creditRestrictionFlag).toBeDefined();
+        expect(payload.creditQuantumScore).toBeDefined();
+    });
+
+    it('nao reseta credit quando fase nao habilitada no caso', async () => {
+        const deps = makeCorrectionDeps({ enabledPhases: ['criminal'] });
+        const handler = submitClientCorrectionHandler(deps);
+        const request = {
+            auth: { uid: 'user-1' },
+            data: { caseId: 'case-1', candidateName: 'Joao', cpf: VALID_CPF },
+        };
+
+        await handler(request);
+
+        const caseRef = deps.db.collection('cases').doc('case-1');
+        const payload = caseRef.update.mock.calls[0][0];
+        expect(payload.creditEnrichmentStatus).toBeUndefined();
     });
 
     it('reseta providers ao corrigir', async () => {

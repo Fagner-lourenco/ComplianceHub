@@ -115,6 +115,22 @@ describe('canRunFinalClassification', () => {
         expect(result.reason).toBe('escavador2_PENDING');
     });
 
+    it('defers when credit is pending (fase creditRestriction habilitada)', () => {
+        const result = canRunFinalClassification(makeCase({ creditEnrichmentStatus: 'PENDING' }), helpers);
+        expect(result.ok).toBe(false);
+        expect(result.reason).toBe('credit_PENDING');
+    });
+
+    it('allows when credit is terminal (SKIPPED)', () => {
+        const result = canRunFinalClassification(makeCase({ creditEnrichmentStatus: 'SKIPPED' }), helpers);
+        expect(result.ok).toBe(true);
+    });
+
+    it('ignores credit when field is absent (fase nao habilitada)', () => {
+        const result = canRunFinalClassification(makeCase(), helpers);
+        expect(result.ok).toBe(true);
+    });
+
     it('allows when escavador2 failed (Escavador2)', () => {
         const result = canRunFinalClassification(makeCase({ escavador2EnrichmentStatus: 'FAILED' }), helpers);
         expect(result.ok).toBe(true);
@@ -141,6 +157,12 @@ describe('computeAutoClassifySignature', () => {
     it('handles empty case data', () => {
         const result = computeAutoClassifySignature({}, { computeSimpleHash });
         expect(result).toMatch(/^hash_/);
+    });
+
+    it('includes creditEnrichmentStatus in signature', () => {
+        const caseData = { enrichmentGeneration: 1, creditEnrichmentStatus: 'DONE' };
+        computeAutoClassifySignature(caseData, { computeSimpleHash });
+        expect(computeSimpleHash).toHaveBeenCalledWith(expect.stringContaining('"creditEnrichmentStatus":"DONE"'));
     });
 
     it('includes Escavador2 fields in signature', () => {

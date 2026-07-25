@@ -1,6 +1,6 @@
 /* Report builder — standalone HTML for print / PDF export */
 
-export const REPORT_BUILD_VERSION = 4;
+export const REPORT_BUILD_VERSION = 6;
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -14,6 +14,7 @@ const OSINT_LABEL     = { LOW: 'Baixo', MEDIUM: 'Médio', HIGH: 'Alto', UNKNOWN:
 const SOCIAL_LABEL    = { APPROVED: 'Aprovado', NEUTRAL: 'Neutro', CONCERN: 'Atenção', CONTRAINDICATED: 'Contraindicado' };
 const DIGITAL_LABEL   = { CLEAN: 'Limpo', ALERT: 'Alerta', CRITICAL: 'Crítico', NOT_CHECKED: 'Não Verificado' };
 const CONFLICT_LABEL  = { YES: 'Sim', NO: 'Não', UNKNOWN: 'Desconhecido' };
+const CREDIT_LABEL    = { RESTRICTED: 'Com restrição', ATTENTION: 'Atenção', CLEAN: 'Sem restrição', NOT_AVAILABLE: 'Indisponível' };
 const VERDICT_LABEL   = { FIT: 'Recomendado', ATTENTION: 'Atenção', NOT_RECOMMENDED: 'Não Recomendado' };
 const RISK_LEVEL_LABEL = { GREEN: 'Baixo', YELLOW: 'Médio', RED: 'Alto' };
 const PRIORITY_LABEL  = { NORMAL: 'Normal', HIGH: 'Alta' };
@@ -98,7 +99,7 @@ function formatDateBR(value) {
 }
 
 function flagColor(v) {
-    if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES'].includes(v)) return 'red';
+    if (['POSITIVE','CRITICAL','CONTRAINDICATED','NOT_RECOMMENDED','YES','RESTRICTED'].includes(v)) return 'red';
     if (['INCONCLUSIVE','INCONCLUSIVE_HOMONYM','INCONCLUSIVE_LOW_COVERAGE','CONCERN','ATTENTION','ALERT','MEDIUM','UNKNOWN','NOT_CHECKED'].includes(v)) return 'yellow';
     if (['NEGATIVE','APPROVED','FIT','CLEAN','LOW','NOT_FOUND','NO','NEUTRAL'].includes(v)) return 'green';
     return 'gray';
@@ -213,10 +214,20 @@ function buildCaseBody(c, cd, generatedAt) {
         fieldHtml('Data da solicitação', formatDateBR(c.createdAt)),
         fieldHtml('Prioridade', PRIORITY_LABEL[c.priority] || c.priority),
         fieldHtml('Solicitado por', requestedBy),
-        (c.bigdatacorpHasDeathRecord === true || cd.bigdatacorpHasDeathRecord === true)
-            ? fieldHtml('Alerta cadastral', 'Indicativo de óbito localizado')
-            : null,
     ].filter(Boolean).join('');
+
+    // Alertas cadastrais (banner vermelho): obito e CPF irregular sao informativos
+    // (nao bloqueiam a analise), mas precisam de destaque no relatorio
+    const cpfStatusNorm = String(c.bigdatacorpCpfStatus || cd.bigdatacorpCpfStatus || '').trim().toUpperCase();
+    const identityAlerts = [];
+    if (c.bigdatacorpHasDeathRecord === true || cd.bigdatacorpHasDeathRecord === true) {
+        identityAlerts.push('⚠️ Indicativo de óbito localizado para este CPF na base cadastral (Receita Federal).');
+    }
+    if (cpfStatusNorm && cpfStatusNorm !== 'REGULAR' && !cpfStatusNorm.includes('PENDENTE')) {
+        identityAlerts.push(`⚠️ ${formatCpfStatus(cpfStatusNorm)} na Receita Federal.`);
+    }
+    const alertSec = identityAlerts.length > 0
+        ? `<div class="abox">${identityAlerts.map((a) => `<div>${esc(a)}</div>`).join('')}</div>` : '';
 
     const sp = c.socialProfiles || cd.socialProfiles || {};
     const sLinks = [
@@ -261,6 +272,15 @@ function buildCaseBody(c, cd, generatedAt) {
         rows.push(phaseRow('💻','Perfil Digital',badge(c.digitalFlag,DIGITAL_LABEL[c.digitalFlag]||c.digitalFlag),null,c.digitalNotes,Array.isArray(c.digitalVectors)?c.digitalVectors:[],flagColor(c.digitalFlag)));
     if (has('conflictInterest') && c.conflictInterest)
         rows.push(phaseRow('⚠️','Conflito de Interesse',badge(c.conflictInterest,CONFLICT_LABEL[c.conflictInterest]||c.conflictInterest),null,c.conflictNotes,[],flagColor(c.conflictInterest)));
+    if (has('creditRestriction') && c.creditRestrictionFlag) {
+        const creditDetails = c.creditRestrictionDetails || {};
+        const creditTags = [];
+        if (c.creditQuantumScore !== null && c.creditQuantumScore !== undefined) creditTags.push(`Score Quantum: ${c.creditQuantumScore}`);
+        if (creditDetails.activeNegativeAppointments > 0) creditTags.push(`Negativações ativas: ${creditDetails.activeNegativeAppointments}`);
+        if (creditDetails.registeredProtests > 0) creditTags.push(`Protestos: ${creditDetails.registeredProtests}`);
+        if (creditDetails.inactiveNegativeAppointments > 0) creditTags.push(`Negativações inativas: ${creditDetails.inactiveNegativeAppointments}`);
+        rows.push(phaseRow('💳','Crédito e Restrições',badge(c.creditRestrictionFlag,CREDIT_LABEL[c.creditRestrictionFlag]||c.creditRestrictionFlag),null,c.creditRestrictionSummary,creditTags,flagColor(c.creditRestrictionFlag)));
+    }
 
     const phasesSec = rows.length > 0
         ? `<div class="sec"><div class="sec__t">Análises Realizadas</div><div class="plist">${rows.join('')}</div></div>` : '';
@@ -288,6 +308,7 @@ function buildCaseBody(c, cd, generatedAt) {
     <div class="hdr__right"><div class="hdr__tenant">${esc(c.tenantName||'')}</div><div>Gerado em ${esc(generatedAt)}</div></div>
   </div>
   <div class="sec"><div class="sec__t">Identificação do Candidato</div><div class="fgrid">${idFields}</div></div>
+  ${alertSec}
   ${socialSec}
   <div class="sec"><div class="sec__t">Resultado da Análise de Risco</div>${riskSec}</div>
   ${executiveSec}
@@ -358,6 +379,7 @@ body{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,sans-serif;col
 .titem__row{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#0f172a}
 .titem p{margin-top:6px;font-size:12px;color:#475569}
 .cbox{background:#fafbff;border-left:4px solid #4f46e5;padding:14px 18px;border-radius:0 7px 7px 0;font-size:12px;color:#374151;line-height:1.8;white-space:pre-wrap}
+.abox{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #ef4444;padding:12px 16px;border-radius:0 7px 7px 0;font-size:12px;color:#991b1b;font-weight:600;margin-bottom:22px;display:flex;flex-direction:column;gap:6px}
 .ftr{margin-top:32px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}
 .ftr__id{font-family:monospace;font-size:9px}
 .page-break{page-break-after:always;height:0;overflow:hidden}
@@ -380,6 +402,7 @@ body{background:#fff}
 .hcard__item{page-break-inside:avoid;break-inside:avoid}
 .titem{page-break-inside:avoid;break-inside:avoid}
 .cbox{page-break-inside:avoid;break-inside:avoid}
+.abox{page-break-inside:avoid;break-inside:avoid}
 .blist{page-break-inside:avoid;break-inside:avoid}
 .blist li{page-break-inside:avoid;break-inside:avoid}
 .fgrid{page-break-inside:avoid;break-inside:avoid}

@@ -33,6 +33,35 @@ function buildMockCaseData(overrides = {}) {
 }
 
 describe('deterministicPrefill', () => {
+    describe('buildDetKeyFindings — alertas cadastrais', () => {
+        it('inclui indicativo de obito nos keyFindings', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({ bigdatacorpHasDeathRecord: true }));
+            expect(findings.some((f) => /óbito/i.test(f))).toBe(true);
+        });
+
+        it('inclui CPF cancelado nos keyFindings', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({ bigdatacorpCpfStatus: 'CANCELADA' }));
+            expect(findings.some((f) => /CPF cancelado/i.test(f))).toBe(true);
+        });
+
+        it('inclui CPF suspenso nos keyFindings', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({ bigdatacorpCpfStatus: 'SUSPENSA' }));
+            expect(findings.some((f) => /CPF suspenso/i.test(f))).toBe(true);
+        });
+
+        it('inclui alerta quando cadastro nao foi localizado na base', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({
+                bigdatacorpGateResult: { passed: true, recordNotFound: true },
+            }));
+            expect(findings.some((f) => /cadastro não localizado/i.test(f))).toBe(true);
+        });
+
+        it('nao inclui alerta cadastral para CPF regular sem obito', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({ bigdatacorpCpfStatus: 'REGULAR' }));
+            expect(findings.some((f) => /óbito|CPF cancelado|CPF suspenso/i.test(f))).toBe(false);
+        });
+    });
+
     describe('evaluateComplexityTriggers', () => {
         it('returns no triggers for clean negative case', () => {
             const caseData = buildMockCaseData();

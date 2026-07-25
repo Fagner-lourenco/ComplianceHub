@@ -288,9 +288,86 @@ async function queryKyc(cpf, credentials) {
     };
 }
 
+/* =========================================================
+   Marketplace de crédito — Dados Restritivos Quod + Score Rotativo Quantum
+   ========================================================= */
+
+const MARKETPLACE_DATASET_QUOD_RISK = 'partner_quod_credit_risk_details_person';
+const MARKETPLACE_DATASET_QUANTUM_SCORE = 'partner_quantum_score_person';
+
+/**
+ * No endpoint /marketplace o Status vem POR DATASET:
+ * Status: { '<dataset>': [{ Code, Message }] } — diferente do shape flat do /pessoas.
+ */
+function readMarketplaceDatasetStatus(statusMap, dataset) {
+    const entries = statusMap && statusMap[dataset];
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return { ok: false, code: null, message: 'Status do dataset ausente na resposta.' };
+    }
+    const { Code, Message } = entries[0] || {};
+    const code = Number(Code);
+    return { ok: Number.isFinite(code) && code >= 0, code: Number.isFinite(code) ? code : null, message: Message || '' };
+}
+
+/**
+ * Consulta combinada de crédito no /marketplace:
+ *   - partner_quod_credit_risk_details_person (R$1,20) → QUODCreditRiskPerson
+ *   - partner_quantum_score_person (R$0,60) → OnlineQueries[0].QueryResultData.Score (string 0-999)
+ * Falha parcial suportada: cada dataset retorna { ok } proprio.
+ *
+ * @param {string} cpf  11 digitos
+ * @param {{ accessToken: string, tokenId: string }} credentials
+ * @returns {Promise<{ raw: object,
+ *   quodRisk: { ok: boolean, data: object|null, statusCode: number|null, statusMessage: string },
+ *   quantumScore: { ok: boolean, score: string|null, statusCode: number|null, statusMessage: string },
+ *   elapsedMs: number }>}
+ */
+async function queryMarketplaceCredit(cpf, credentials) {
+    const startMs = Date.now();
+
+    const body = {
+        q: `doc{${cpf}}`,
+        Datasets: `${MARKETPLACE_DATASET_QUOD_RISK},${MARKETPLACE_DATASET_QUANTUM_SCORE}`,
+        Limit: 1,
+    };
+
+    const data = await callPost('/marketplace', body, credentials);
+    const elapsedMs = Date.now() - startMs;
+
+    const resultEntry = Array.isArray(data?.Result) ? data.Result[0] : null;
+
+    const quodStatus = readMarketplaceDatasetStatus(data?.Status, MARKETPLACE_DATASET_QUOD_RISK);
+    const quodData = resultEntry?.QUODCreditRiskPerson || null;
+
+    const quantumStatus = readMarketplaceDatasetStatus(data?.Status, MARKETPLACE_DATASET_QUANTUM_SCORE);
+    const quantumQuery = Array.isArray(resultEntry?.OnlineQueries) ? resultEntry.OnlineQueries[0] : null;
+    const quantumScoreRaw = quantumQuery?.QueryResultData?.Score ?? quantumQuery?.QueryRawHTMLResult?.Score ?? null;
+    const quantumScore = (typeof quantumScoreRaw === 'string' && quantumScoreRaw.trim() !== '') || typeof quantumScoreRaw === 'number'
+        ? String(quantumScoreRaw)
+        : null;
+
+    return {
+        raw: data,
+        quodRisk: {
+            ok: quodStatus.ok && quodData !== null,
+            data: quodData,
+            statusCode: quodStatus.code,
+            statusMessage: quodStatus.message,
+        },
+        quantumScore: {
+            ok: quantumStatus.ok && quantumScore !== null,
+            score: quantumScore,
+            statusCode: quantumStatus.code,
+            statusMessage: quantumStatus.message,
+        },
+        elapsedMs,
+    };
+}
+
 module.exports = {
     queryCombined,
     queryProcesses,
     queryKyc,
+    queryMarketplaceCredit,
     BigDataCorpError,
 };

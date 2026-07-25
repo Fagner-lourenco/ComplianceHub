@@ -75,25 +75,15 @@ const FIRESTORE_QUERY_TIMEOUT_MS = 5000;
 const REST_FALLBACK_DELAY_MS = 2000;
 let firebaseFunctionsModulePromise = null;
 
-export const DEFAULT_ANALYSIS_CONFIG = {
-    criminal:         { enabled: true },
-    labor:            { enabled: true },
-    warrant:          { enabled: true },
-    osint:            { enabled: true },
-    social:           { enabled: true },
-    digital:          { enabled: true },
-    conflictInterest: { enabled: true },
-};
-
-export const ANALYSIS_PHASE_LABELS = {
-    criminal:         'Análise criminal',
-    labor:            'Trabalhista',
-    warrant:          'Mandado de prisão',
-    osint:            'Perfis públicos',
-    social:           'Social',
-    digital:          'Perfil digital',
-    conflictInterest: 'Conflito de interesse',
-};
+// Definições movidas para src/core/analysisPhases.js (módulo sem dependências,
+// com teste de contrato frontend/backend). Re-export mantém os imports existentes.
+export {
+    DEFAULT_ANALYSIS_CONFIG,
+    ANALYSIS_PHASE_LABELS,
+    AUTOMATIC_ANALYSIS_PHASES,
+    getEnabledPhases,
+} from '../analysisPhases';
+import { DEFAULT_ANALYSIS_CONFIG } from '../analysisPhases';
 
 function mapProfilesToTenantDirectory(profiles) {
     const tenantMap = new Map();
@@ -509,12 +499,6 @@ export async function getTenantUsage(tenantId) {
         monthKey: data.monthKey ?? null,
         lastSubmissionAt: data.lastSubmissionAt ?? null,
     };
-}
-
-export function getEnabledPhases(analysisConfig) {
-    return Object.entries(analysisConfig || DEFAULT_ANALYSIS_CONFIG)
-        .filter(([, value]) => value?.enabled)
-        .map(([key]) => key);
 }
 
 export async function fetchTenantDirectory() {

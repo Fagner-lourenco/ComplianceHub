@@ -53,6 +53,11 @@ function canRunFinalClassification(caseData = {}, { hasPendingJuditAsync: hasPen
         return { ok: false, reason: `escavador2_${caseData.escavador2EnrichmentStatus}` };
     }
 
+    // Fase automatica de credito: presence-based — campo so existe quando habilitada
+    if (caseData.creditEnrichmentStatus && !isProviderTerminalForPipelineFn(caseData.creditEnrichmentStatus)) {
+        return { ok: false, reason: `credit_${caseData.creditEnrichmentStatus}` };
+    }
+
     return { ok: true, reason: 'ready' };
 }
 
@@ -86,6 +91,7 @@ function computeAutoClassifySignature(caseData = {}, { computeSimpleHash } = {})
         'bigdatacorpIsPep',
         'bigdatacorpIsSanctioned',
         'bigdatacorpWasSanctioned',
+        'creditEnrichmentStatus',
         'juditEnrichmentStatus',
         'juditProcessTotal',
         'juditCriminalCount',

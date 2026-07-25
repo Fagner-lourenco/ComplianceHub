@@ -3,6 +3,8 @@ import './EnrichmentPipeline.css';
 
 const PROVIDERS = [
     { key: 'bigdatacorp', label: 'BigDataCorp', statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', costField: null },
+    // phaseGate: linha so aparece quando a fase de analise esta habilitada no caso (ou ha status gravado)
+    { key: 'credit', label: 'Crédito e Restrições (Quod)', statusField: 'creditEnrichmentStatus', errorField: 'creditError', costField: 'creditCostBRL', phaseGate: 'creditRestriction' },
     { key: 'judit', label: 'Judit', statusField: 'juditEnrichmentStatus', errorField: 'juditError', costField: null },
     { key: 'escavador', label: 'Escavador', statusField: 'escavadorEnrichmentStatus', errorField: 'escavadorError', costField: null },
     { key: 'djen', label: 'DJEN', statusField: 'djenEnrichmentStatus', errorField: 'djenError', costField: null, free: true },
@@ -76,7 +78,7 @@ function getProviderStatus(caseData, provider, aiEnabled) {
 
 function canRetryProvider(provider, status, error, onRetryPhase, aiEnabled) {
     if (!onRetryPhase) return false;
-    if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai'].includes(provider.key)) return false;
+    if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'credit', 'djen', 'ai'].includes(provider.key)) return false;
     // Nao permite reexecutar IA quando ela esta desabilitada no tenant (SKIPPED por config).
     if (provider.key === 'ai' && aiEnabled === false && status === 'SKIPPED') return false;
     return ['DONE', 'PARTIAL', 'FAILED', 'SKIPPED', 'BLOCKED'].includes(status);
@@ -109,6 +111,12 @@ export default function EnrichmentPipeline({ caseData, onRetryPhase, retryingPha
 
                     // Hide FonteData fallback if it was never used
                     if (provider.fallback && status === 'PENDING' && !error) return null;
+
+                    // Hide phase-gated providers when the analysis phase is off and nothing ran
+                    if (provider.phaseGate) {
+                        const phaseOn = Array.isArray(caseData.enabledPhases) && caseData.enabledPhases.includes(provider.phaseGate);
+                        if (!phaseOn && !caseData[provider.statusField]) return null;
+                    }
 
                     return (
                         <div key={provider.key} className={`enrichment-pipeline__item enrichment-pipeline__item--${cfg.cls}`}>

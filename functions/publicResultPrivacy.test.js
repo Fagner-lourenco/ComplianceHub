@@ -56,6 +56,30 @@ describe('public result privacy contract', () => {
         expect(snapshot.escavador2Processos).toBeUndefined();
     });
 
+    it('publica indicativo de credito e omite custos/fontes em publicResult/latest', () => {
+        const snapshot = buildSanitizedPublicResultSnapshot('case-1', {
+            ...baseCase,
+            enabledPhases: ['criminal', 'creditRestriction'],
+            creditRestrictionFlag: 'RESTRICTED',
+            creditQuantumScore: 480,
+            creditRestrictionSummary: 'Restrições de crédito ativas: 2 negativação(ões) ativa(s).',
+            creditRestrictionDetails: { activeNegativeAppointments: 2, registeredProtests: 0 },
+            creditSources: { quodRisk: { dataset: 'partner_quod_credit_risk_details_person' } },
+            creditCostBRL: 1.8,
+            creditError: 'nada',
+            creditEnrichmentStatus: 'DONE',
+        });
+
+        expect(snapshot.creditRestrictionFlag).toBe('RESTRICTED');
+        expect(snapshot.creditQuantumScore).toBe(480);
+        expect(snapshot.creditRestrictionSummary).toContain('Restrições');
+        expect(snapshot.creditRestrictionDetails).toEqual(expect.objectContaining({ activeNegativeAppointments: 2 }));
+        expect(snapshot.creditSources).toBeUndefined();
+        expect(snapshot.creditCostBRL).toBeUndefined();
+        expect(snapshot.creditError).toBeUndefined();
+        expect(snapshot.creditEnrichmentStatus).toBeUndefined();
+    });
+
     it('publica metadados do solicitante sanitizados em publicResult/latest', () => {
         const snapshot = buildSanitizedPublicResultSnapshot('case-1', baseCase);
 

@@ -404,6 +404,21 @@ function buildDetWarrantNotes(caseData) {
 
 function buildDetKeyFindings(caseData) {
     const findings = [];
+
+    // Alertas cadastrais primeiro (obito / CPF irregular / cadastro ausente sao
+    // informativos: nao bloqueiam a analise, mas precisam aparecer no relatorio)
+    if (caseData.bigdatacorpGateResult?.recordNotFound === true) {
+        findings.push('Cadastro não localizado na base cadastral consultada — identidade não confirmada por documento');
+    }
+    if (caseData.bigdatacorpHasDeathRecord === true) {
+        findings.push('Indicativo de óbito registrado para o CPF na base cadastral (Receita Federal)');
+    }
+    const cpfStatusNorm = String(caseData.bigdatacorpCpfStatus || '').trim().toUpperCase();
+    if (/CANCEL/.test(cpfStatusNorm)) {
+        findings.push('CPF cancelado na Receita Federal');
+    } else if (/SUSPENS/.test(cpfStatusNorm)) {
+        findings.push('CPF suspenso na Receita Federal');
+    }
     const topProcessos = selectTopProcessos(caseData, 20);
     const criminalProcesses = topProcessos.filter((p) => p.isCriminal);
     const materialCriminalProcesses = caseData.criminalFlag === 'POSITIVE'

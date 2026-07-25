@@ -28,6 +28,7 @@ const PUBLIC_RESULT_FIELDS = [
     'socialStatus', 'socialReasons', 'socialNotes',
     'digitalFlag', 'digitalVectors', 'digitalNotes',
     'conflictInterest', 'conflictNotes',
+    'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary', 'creditRestrictionDetails',
     'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
     'keyFindings',

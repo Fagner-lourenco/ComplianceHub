@@ -33,6 +33,11 @@ const DEFAULT_ENRICHMENT = {
     djen: { enabled: true, phases: { comunicacoes: true }, searchStrategy: 'hybrid', maxPages: 3, filters: { siglaTribunal: '' } },
 };
 
+// Custos de fases de analise automaticas (fora do enrichmentConfig)
+const ANALYSIS_PHASE_COST_HINTS = {
+    creditRestriction: 'Automática · ~R$ 1,80/caso (BDC Quod + Quantum)',
+};
+
 const COST_TABLE = {
     bigdatacorp: { basicData: 0.03, processes: 0.07, kyc: 0.05, occupation: 0.05 },
     judit: { entity: 0.12, lawsuits: 0.50, warrant: 1.00, execution: 0.50 },
@@ -257,7 +262,14 @@ export default function TenantSettingsPage() {
                     <p className="ts-card__desc">Habilite ou desabilite as etapas da análise para esta empresa.</p>
                     {phases && Object.entries(ANALYSIS_PHASE_LABELS).map(([key, label]) => (
                         <div key={key} className="ts-toggle-row">
-                            <span className="ts-toggle-label">{label}</span>
+                            <span className="ts-toggle-label">
+                                {label}
+                                {ANALYSIS_PHASE_COST_HINTS[key] && (
+                                    <span className="ts-toggle-hint" style={{ display: 'block', fontSize: 11, color: 'var(--text-muted, #64748b)' }}>
+                                        {ANALYSIS_PHASE_COST_HINTS[key]}
+                                    </span>
+                                )}
+                            </span>
                             <button
                                 type="button"
                                 className={`ts-toggle ${phases[key]?.enabled ? 'ts-toggle--on' : 'ts-toggle--off'}`}

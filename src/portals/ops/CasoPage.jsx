@@ -89,7 +89,11 @@ function buildEscavador2InspectionData(process = {}) {
     };
 }
 
-const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
+// Fallback de fases: apenas as habilitadas por padrao (exclui fases automaticas
+// default-OFF como creditRestriction)
+const LEGACY_PHASES = Object.entries(DEFAULT_ANALYSIS_CONFIG)
+    .filter(([, value]) => value?.enabled)
+    .map(([key]) => key);
 
 const CRIMINAL_OPTIONS = [
     'NEGATIVE',
@@ -2021,6 +2025,26 @@ export default function CasoPage() {
                     )}
                 </div>
             )}
+
+            {caseData?.bigdatacorpGateResult?.recordNotFound === true && (
+                <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>
+                    <strong>Cadastro não localizado</strong> — a base cadastral não retornou dados para este CPF, então a identidade não pôde ser confirmada por documento. A análise seguiu com as demais fontes; valide os dados do candidato manualmente.
+                </div>
+            )}
+            {caseData?.bigdatacorpHasDeathRecord === true && (
+                <div className="caso-alert caso-alert--danger" style={{ marginBottom: '16px', background: 'var(--red-50)', border: '1px solid var(--red-300)', color: 'var(--red-800)' }}>
+                    <strong>Alerta cadastral: indicativo de óbito</strong> — a base cadastral (Receita Federal) retornou indicação de óbito para este CPF. A análise não foi bloqueada; valide a identidade com atenção redobrada.
+                </div>
+            )}
+            {(() => {
+                const cpfStatusAlert = String(caseData?.bigdatacorpCpfStatus || '').trim().toUpperCase();
+                if (!cpfStatusAlert || cpfStatusAlert === 'REGULAR' || cpfStatusAlert.includes('PENDENTE')) return null;
+                return (
+                    <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>
+                        <strong>Alerta cadastral: CPF {cpfStatusAlert.toLowerCase()}</strong> — situação irregular na Receita Federal. Informativo: não bloqueia a análise.
+                    </div>
+                );
+            })()}
 
             {typeof caseData?.aiError === 'string' && /circuit breaker/i.test(caseData.aiError) && (
                 <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>

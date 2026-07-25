@@ -47,8 +47,12 @@ const {
 } = require('../normalizers/judit');
 const {
   queryCombined: default_queryBigDataCorpCombined,
+  queryMarketplaceCredit: default_queryMarketplaceCredit,
   BigDataCorpError: default_BigDataCorpError,
 } = require('../adapters/bigdatacorp');
+const {
+  normalizeCreditRestriction: default_normalizeCreditRestriction,
+} = require('../normalizers/creditRestriction');
 const {
   normalizeBigDataCorpBasicData: default_normalizeBigDataCorpBasicData,
   normalizeBigDataCorpProcesses: default_normalizeBigDataCorpProcesses,
@@ -133,6 +137,7 @@ function createEnrichmentPhases(deps) {
   const EscavadorError = adapters.EscavadorError || default_EscavadorError;
 
   const queryBigDataCorpCombined = adapters.queryBigDataCorpCombined || default_queryBigDataCorpCombined;
+  const queryMarketplaceCredit = adapters.queryMarketplaceCredit || default_queryMarketplaceCredit;
   const BigDataCorpError = adapters.BigDataCorpError || default_BigDataCorpError;
 
   const queryLawsuitsSync = adapters.queryLawsuitsSync || default_queryLawsuitsSync;
@@ -162,6 +167,7 @@ function createEnrichmentPhases(deps) {
 
   const normalizeEscavadorProcessos = normalizers.normalizeEscavadorProcessos || default_normalizeEscavadorProcessos;
 
+  const normalizeCreditRestriction = normalizers.normalizeCreditRestriction || default_normalizeCreditRestriction;
   const normalizeBigDataCorpBasicData = normalizers.normalizeBigDataCorpBasicData || default_normalizeBigDataCorpBasicData;
   const normalizeBigDataCorpProcesses = normalizers.normalizeBigDataCorpProcesses || default_normalizeBigDataCorpProcesses;
   const normalizeBigDataCorpKyc = normalizers.normalizeBigDataCorpKyc || default_normalizeBigDataCorpKyc;
@@ -242,21 +248,17 @@ function createEnrichmentPhases(deps) {
     const minSim = enrichmentConfig.gate?.minNameSimilarity ?? 0.7;
 
     const cpfStatusNormalized = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
-    const isCpfRegular = cpfStatusNormalized === 'REGULAR';
     const isCpfPending = cpfStatusNormalized.includes('PENDENTE');
-    const isCpfCancelled = /CANCEL/.test(cpfStatusNormalized);
-    const cpfPasses = isCpfRegular || isCpfPending;
     const nameSim = computeNameSimilarity(nameFromAPI, nameProvided);
-    const namePasses = minSim <= 0 || nameSim >= minSim;
-    const gatePassed = cpfPasses && namePasses;
+    // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+    const recordNotFound = !String(nameFromAPI || '').trim();
+    const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
     const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
-    const gatePassedFinal = gatePassed && !hasDeathRecord;
+    // Gate bloqueia APENAS por nome; CPF status e obito informativos
+    const gatePassedFinal = namePasses;
 
     let gateReason = null;
-    if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatusNormalized}" (cancelado).`;
-    else if (!cpfPasses) gateReason = `CPF com situacao "${cpfStatusNormalized}" (esperado: REGULAR).`;
-    else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
-    else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+    if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
     const enrichmentGateResult = {
       passed: gatePassedFinal,
@@ -665,20 +667,22 @@ function createEnrichmentPhases(deps) {
         const nameProvided = caseData.candidateName || '';
         const minSim = bdcConfig.gate?.minNameSimilarity ?? 0.7;
         const cpfStatusBDC = (updatePayload.bigdatacorpCpfStatus || '').toUpperCase();
-        const isCpfRegular = cpfStatusBDC === 'REGULAR';
         const isCpfPending = cpfStatusBDC.includes('PENDENTE');
-        const isCpfCancelled = /CANCEL/.test(cpfStatusBDC);
-        const cpfPasses = isCpfRegular || isCpfPending;
         const nameSim = computeNameSimilarity(nameFromBDC, nameProvided);
-        const namePasses = minSim <= 0 || nameSim >= minSim;
+        // Cadastro nao localizado: BDC nao devolveu nome. Sem nome nao existe
+        // divergencia a comparar — gate passa e o alerta vai para o relatorio.
+        const recordNotFound = !String(nameFromBDC || '').trim();
+        const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
         const hasDeathRecord = updatePayload.bigdatacorpHasDeathRecord === true;
-        const gatePassed = cpfPasses && namePasses && !hasDeathRecord;
+        // Gate bloqueia APENAS por divergencia de nome; CPF irregular/cancelado e
+        // indicacao de obito ficam registrados como informativos (alertas no relatorio)
+        const gatePassed = namePasses;
 
-        const gateReason = isCpfCancelled ? `CPF status ${cpfStatusBDC} (cancelado)`
-          : !cpfPasses ? `CPF status ${cpfStatusBDC}`
-          : !namePasses ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
-          : hasDeathRecord ? 'Indicacao de obito'
-          : 'OK';
+        const gateReason = !namePasses
+          ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
+          : recordNotFound
+            ? 'Cadastro nao localizado na base BigDataCorp (identidade nao confirmada)'
+            : 'OK';
 
         const bigdatacorpGateResult = {
           passed: gatePassed,
@@ -688,6 +692,7 @@ function createEnrichmentPhases(deps) {
           nameProvided,
           nameFound: nameFromBDC,
           hasDeathRecord,
+          recordNotFound,
           reason: gateReason,
           source: 'bigdatacorp-basicdata',
           consultedAt: new Date().toISOString(),
@@ -784,6 +789,118 @@ function createEnrichmentPhases(deps) {
   }
 
   /* =========================================================
+     CREDIT (Quod restritivos + Quantum rotativo) — fase automatica
+     Roda apenas apos o gate de identidade BDC passar (guard no trigger).
+     Sem revisao de analista: resultado vai direto pro relatorio.
+     ========================================================= */
+
+  async function runCreditEnrichmentPhase(caseRef, caseId, caseData) {
+    const cpf = (caseData.cpf || '').replace(/\D/g, '');
+    if (cpf.length !== 11) {
+      const error = 'CPF invalido.';
+      await caseRef.update({
+        creditEnrichmentStatus: 'FAILED',
+        creditError: error,
+        creditRestrictionFlag: 'NOT_AVAILABLE',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return { status: 'FAILED', error };
+    }
+
+    await caseRef.update({
+      creditEnrichmentStatus: 'RUNNING',
+      creditError: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    const accessToken = bigdatacorpAccessToken.value();
+    const tokenId = bigdatacorpTokenId.value();
+    if (!accessToken || !tokenId) {
+      const error = 'BIGDATACORP_ACCESS_TOKEN ou BIGDATACORP_TOKEN_ID nao configurado.';
+      await caseRef.update({
+        creditEnrichmentStatus: 'FAILED',
+        creditError: error,
+        creditRestrictionFlag: 'NOT_AVAILABLE',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return { status: 'FAILED', error };
+    }
+
+    // Circuito separado do 'bigdatacorp' principal: instabilidade do marketplace
+    // nao pode derrubar o fluxo de identidade
+    const creditCircuit = await checkCircuit('bigdatacorp-credit');
+    if (creditCircuit.open) {
+      console.warn(`Case ${caseId} [Credit]: circuit OPEN — skipping. ${creditCircuit.reason}`);
+      await caseRef.update({
+        creditEnrichmentStatus: 'SKIPPED',
+        creditError: creditCircuit.reason,
+        creditRestrictionFlag: 'NOT_AVAILABLE',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return { status: 'SKIPPED', error: creditCircuit.reason };
+    }
+
+    try {
+      console.log(`Case ${caseId} [Credit]: querying marketplace (Quod + Quantum) CPF=${maskCpf(cpf)}`);
+      const result = await queryMarketplaceCredit(cpf, { accessToken, tokenId });
+      const normalized = normalizeCreditRestriction(result);
+      const { _sources, ...creditFields } = normalized;
+
+      let costBRL = 0;
+      if (result.quodRisk.ok) costBRL += 1.20;
+      if (result.quantumScore.ok) costBRL += 0.60;
+      costBRL = Math.round(costBRL * 100) / 100;
+
+      const quodOk = result.quodRisk.ok === true;
+      const quantumOk = result.quantumScore.ok === true;
+      const status = quodOk && quantumOk ? 'DONE' : (quodOk || quantumOk) ? 'PARTIAL' : 'FAILED';
+
+      const errorParts = [];
+      if (!quodOk) errorParts.push(`Quod: ${result.quodRisk.statusMessage || 'sem dados'} (${result.quodRisk.statusCode ?? 'N/A'})`);
+      if (!quantumOk) errorParts.push(`Quantum: ${result.quantumScore.statusMessage || 'sem dados'} (${result.quantumScore.statusCode ?? 'N/A'})`);
+      const error = errorParts.length > 0 ? errorParts.join('; ') : null;
+
+      await caseRef.update({
+        ...creditFields,
+        creditEnrichmentStatus: status,
+        creditError: error,
+        creditSources: _sources,
+        creditCostBRL: costBRL,
+        creditElapsedMs: result.elapsedMs,
+        creditQueryDate: new Date().toISOString(),
+        creditEnrichedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      if (status === 'FAILED') {
+        await recordFailure('bigdatacorp-credit', error || 'datasets sem dados');
+      } else {
+        await recordSuccess('bigdatacorp-credit');
+      }
+
+      console.log(
+        `Case ${caseId} [Credit]: ${status} in ${result.elapsedMs}ms. ` +
+        `Flag: ${creditFields.creditRestrictionFlag}, Score Quantum: ${creditFields.creditQuantumScore ?? 'N/A'}, Custo: R$${costBRL.toFixed(2)}.`,
+      );
+
+      return { status, error };
+    } catch (err) {
+      const errMsg = err instanceof BigDataCorpError
+        ? `${err.message} (${err.statusCode})`
+        : (err.message || 'Erro desconhecido');
+      console.error(`Case ${caseId} [Credit]: failed:`, errMsg);
+      await recordFailure('bigdatacorp-credit', errMsg);
+      await caseRef.update({
+        creditEnrichmentStatus: 'FAILED',
+        creditError: errMsg,
+        creditRestrictionFlag: 'NOT_AVAILABLE',
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return { status: 'FAILED', error: errMsg };
+    }
+  }
+
+  /* =========================================================
      JUDIT — Enrichment Phase
      ========================================================= */
 
@@ -847,10 +964,14 @@ function createEnrichmentPhases(deps) {
         const bdcGate = caseData.bigdatacorpGateResult;
         console.log(`Case ${caseId} [Judit]: using BigDataCorp identity gate (similarity: ${((bdcGate.nameSimilarity || 0) * 100).toFixed(0)}%).`);
 
+        // cpfActive derivado do status real (informativo — gate passa so por nome)
+        const bdcCpfStatus = (bdcGate.cpfStatus || 'REGULAR').toUpperCase();
+        const bdcCpfActive = bdcCpfStatus === 'REGULAR' || bdcCpfStatus.includes('PENDENTE');
+
         const juditGateResult = {
           passed: true,
-          cpfActive: true,
-          cpfStatus: bdcGate.cpfStatus || 'REGULAR',
+          cpfActive: bdcCpfActive,
+          cpfStatus: bdcCpfStatus,
           cpfPendingRegularization: bdcGate.cpfPendingRegularization || false,
           nameSimilarity: bdcGate.nameSimilarity,
           nameProvided: bdcGate.nameProvided,
@@ -862,8 +983,8 @@ function createEnrichmentPhases(deps) {
         };
         const fallbackIdentity = {
           name: caseData.bigdatacorpName || bdcGate.nameFound || '',
-          cpfActive: true,
-          cpfStatus: bdcGate.cpfStatus || 'REGULAR',
+          cpfActive: bdcCpfActive,
+          cpfStatus: bdcCpfStatus,
           birthDate: caseData.bigdatacorpBirthDate || null,
           hasDeathRecord: bdcGate.hasDeathRecord || false,
           consultedAt: new Date().toISOString(),
@@ -924,12 +1045,14 @@ function createEnrichmentPhases(deps) {
           const nameProvided = caseData.candidateName || '';
           const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
           const nameSim = computeNameSimilarity(nameFromJudit, nameProvided);
-          const namePasses = minSim <= 0 || nameSim >= minSim;
-          const gatePassed = cpfActive && namePasses;
+          // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+          const recordNotFound = !String(nameFromJudit || '').trim();
+          const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
+          // Gate bloqueia APENAS por nome; cpfActive registrado como informativo
+          const gatePassed = namePasses;
 
           let gateReason = null;
-          if (!cpfActive) gateReason = 'CPF inativo na Receita Federal (Judit Entity).';
-          else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+          if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
           const juditGateResult = {
             passed: gatePassed,
@@ -988,21 +1111,20 @@ function createEnrichmentPhases(deps) {
               const cpfStatus = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
               const isCpfRegular = cpfStatus === 'REGULAR';
               const isCpfPending = cpfStatus.includes('PENDENTE');
-              const isCpfCancelled = /CANCEL/.test(cpfStatus);
               const cpfActive = isCpfRegular || isCpfPending;
               const nameFromFD = enrichmentIdentity?.name || '';
               const nameProvided = caseData.candidateName || '';
               const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
               const nameSim = computeNameSimilarity(nameFromFD, nameProvided);
-              const namePasses = minSim <= 0 || nameSim >= minSim;
+              // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+              const recordNotFound = !String(nameFromFD || '').trim();
+              const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
               const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
-              const gatePassed = cpfActive && namePasses && !hasDeathRecord;
+              // Gate bloqueia APENAS por nome; CPF status e obito informativos
+              const gatePassed = namePasses;
 
               let gateReason = null;
-              if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatus}" (cancelado).`;
-              else if (!cpfActive) gateReason = `CPF com situacao "${cpfStatus}" (esperado: REGULAR).`;
-              else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
-              else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+              if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
               const juditGateResult = {
                 passed: gatePassed,
@@ -1745,6 +1867,7 @@ function createEnrichmentPhases(deps) {
     runFonteDataEnrichmentPhase,
     runEscavadorEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
+    runCreditEnrichmentPhase,
     runJuditEnrichmentPhase,
     runDjenEnrichmentPhase,
     runEscavador2EnrichmentPhase,
