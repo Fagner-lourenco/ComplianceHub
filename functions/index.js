@@ -365,6 +365,7 @@ const {
     runFonteDataEnrichmentPhase,
     runEscavadorEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
+    runCreditEnrichmentPhase,
     runJuditEnrichmentPhase,
     runDjenEnrichmentPhase,
     runEscavador2EnrichmentPhase,
@@ -429,6 +430,7 @@ const enrichmentTriggerDeps = {
     loadDjenConfig,
     runJuditEnrichmentPhase,
     runBigDataCorpEnrichmentPhase,
+    runCreditEnrichmentPhase,
     runEscavadorEnrichmentPhase,
     runEscavador2EnrichmentPhase,
     runDjenEnrichmentPhase,
@@ -463,6 +465,11 @@ exports.enrichJuditOnCorrection = onDocumentUpdated(
 exports.enrichEscavadorOnCase = onDocumentUpdated(
     { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB', secrets: [escavadorApiToken, openaiApiKey] },
     enrichmentTriggers.createEnrichEscavadorOnCaseHandler(enrichmentTriggerDeps),
+);
+
+exports.enrichCreditOnCase = onDocumentUpdated(
+    { document: 'cases/{caseId}', region: 'southamerica-east1', timeoutSeconds: 120, memory: '256MiB', secrets: [bigdatacorpAccessToken, bigdatacorpTokenId, openaiApiKey] },
+    enrichmentTriggers.createEnrichCreditOnCaseHandler(enrichmentTriggerDeps),
 );
 
 exports.enrichDjenOnCase = onDocumentUpdated(

@@ -398,6 +398,118 @@ function createEnrichEscavadorOnCaseHandler(deps) {
     };
 }
 
+function createEnrichCreditOnCaseHandler(deps) {
+    const {
+        db,
+        FieldValue,
+        acquirePhaseRun,
+        runCreditEnrichmentPhase,
+        maybeRunAutoClassifyAndAi,
+        writeAuditEvent,
+        ACTOR_TYPE,
+        SOURCE,
+    } = deps;
+
+    return async (event) => {
+        const before = event.data?.before?.data();
+        const after = event.data?.after?.data();
+        if (!before || !after) return;
+
+        // Guard 1: BDC precisa ter MUDADO para estado terminal (mesmo padrao do Judit)
+        const bdcBefore = before.bigdatacorpEnrichmentStatus;
+        const bdcAfter = after.bigdatacorpEnrichmentStatus;
+        if (bdcBefore === bdcAfter) return;
+        const bdcTerminal = ['DONE', 'BLOCKED', 'FAILED', 'SKIPPED'];
+        if (!bdcTerminal.includes(bdcAfter)) return;
+
+        // Guard 2: credit ja iniciado/settado → nada a fazer
+        const creditStatus = after.creditEnrichmentStatus;
+        if (creditStatus && creditStatus !== 'PENDING') return;
+
+        const caseId = event.params.caseId;
+        const caseRef = db.collection('cases').doc(caseId);
+        const enabledPhases = Array.isArray(after.enabledPhases) ? after.enabledPhases : [];
+        const phaseEnabled = enabledPhases.includes('creditRestriction');
+
+        // Guard 3: fase nao habilitada no caso.
+        // Com status PENDING gravado (caso criado com fase e depois desabilitada, ou
+        // inconsistencia) → settle como SKIPPED para nao travar canRunFinalClassification.
+        // Sem o campo (99% dos casos legados) → return silencioso, zero writes.
+        if (!phaseEnabled) {
+            if (creditStatus === 'PENDING') {
+                await caseRef.update({
+                    creditEnrichmentStatus: 'SKIPPED',
+                    creditError: null,
+                    creditSkippedReason: 'phase_not_enabled',
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Credit phase not enabled');
+            }
+            return;
+        }
+
+        // Guard 4: gate de identidade nao passou → SKIPPED (nao paga consulta de credito).
+        // IMPORTANTE: escrito ANTES do guard de status do caso — um conclude com bypass
+        // de identidade nao pode ficar preso em creditEnrichmentStatus PENDING.
+        const gatePassed = bdcAfter === 'DONE' && after.bigdatacorpGateResult?.passed === true;
+        if (!gatePassed) {
+            if (creditStatus === 'PENDING' || creditStatus === undefined) {
+                await caseRef.update({
+                    creditEnrichmentStatus: 'SKIPPED',
+                    creditError: null,
+                    creditSkippedReason: 'identity_gate_not_passed',
+                    updatedAt: FieldValue.serverTimestamp(),
+                });
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Credit skipped (gate)');
+            }
+            return;
+        }
+
+        // Guard 5: caso nao acionavel (concluido/devolvido) → nao roda consulta paga
+        if (after.status === 'DONE' || after.status === 'CORRECTION_NEEDED') return;
+
+        const tenantId = after.tenantId;
+        if (!tenantId) return;
+
+        try {
+            const runLock = await acquirePhaseRun(caseRef, 'creditEnrichmentStatus');
+            if (!runLock.acquired) {
+                console.log(`Case ${caseId} [Credit]: skipped because status is already ${runLock.caseData?.creditEnrichmentStatus || 'set'}.`);
+                return;
+            }
+
+            await runCreditEnrichmentPhase(caseRef, caseId, runLock.caseData || after);
+
+            // Classificacao final: credit pode ser o ultimo provider a settlar,
+            // entao SEMPRE re-dispara o maybeRun em desfecho terminal
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Credit settled');
+
+            // Audit: log automatic enrichment trigger
+            try {
+                const refreshed = (await caseRef.get()).data() || {};
+                await writeAuditEvent({
+                    action: 'ENRICHMENT_AUTO_TRIGGERED',
+                    tenantId,
+                    actor: { type: ACTOR_TYPE.SYSTEM },
+                    entity: { type: 'CASE', id: caseId, label: after.candidateName || caseId },
+                    related: { caseId },
+                    source: SOURCE.CLOUD_FUNCTION,
+                    metadata: { phase: 'credit', status: refreshed.creditEnrichmentStatus, trigger: 'bigdatacorp_settled' },
+                    templateVars: { candidateName: after.candidateName || caseId, phase: 'credit', status: refreshed.creditEnrichmentStatus || 'UNKNOWN' },
+                });
+            } catch { /* audit failure must not block pipeline */ }
+        } catch (err) {
+            console.error(`Case ${caseId} [Credit]: error:`, err.message);
+            await caseRef.update({
+                creditEnrichmentStatus: 'FAILED',
+                creditError: err.message,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+            await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Credit trigger failure');
+        }
+    };
+}
+
 function createEnrichDjenOnCaseHandler(deps) {
     const {
         db,
@@ -589,6 +701,7 @@ module.exports = {
     createEnrichBigDataCorpOnCorrectionHandler,
     createEnrichJuditOnCorrectionHandler,
     createEnrichEscavadorOnCaseHandler,
+    createEnrichCreditOnCaseHandler,
     createEnrichDjenOnCaseHandler,
     createEnrichEscavador2OnCaseHandler,
 };

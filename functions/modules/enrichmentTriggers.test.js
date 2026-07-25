@@ -9,6 +9,7 @@ import {
     createEnrichBigDataCorpOnCorrectionHandler,
     createEnrichJuditOnCorrectionHandler,
     createEnrichEscavadorOnCaseHandler,
+    createEnrichCreditOnCaseHandler,
     createEnrichDjenOnCaseHandler,
     createEnrichEscavador2OnCaseHandler,
 } from './enrichmentTriggers.js';
@@ -109,6 +110,153 @@ describe('createEnrichJuditOnCaseHandler', () => {
         };
         await handler(event);
         expect(deps.runJuditEnrichmentPhase).toHaveBeenCalled();
+    });
+});
+
+describe('createEnrichCreditOnCaseHandler', () => {
+    function makeCreditEvent(before, after) {
+        return {
+            params: { caseId: 'c1' },
+            data: { before: { data: () => before }, after: { data: () => after } },
+        };
+    }
+
+    function makeCreditDeps(overrides = {}) {
+        const caseUpdate = vi.fn().mockResolvedValue(undefined);
+        const caseGet = vi.fn().mockResolvedValue({ exists: true, data: () => ({ creditEnrichmentStatus: 'DONE' }) });
+        const db = {
+            collection: vi.fn(() => ({ doc: vi.fn(() => ({ update: caseUpdate, get: caseGet })) })),
+        };
+        const deps = makeDeps({
+            db,
+            runCreditEnrichmentPhase: vi.fn().mockResolvedValue({ status: 'DONE', error: null }),
+            ...overrides,
+        });
+        return { deps, caseUpdate };
+    }
+
+    const BASE_AFTER = {
+        tenantId: 't1',
+        status: 'PENDING',
+        enabledPhases: ['criminal', 'creditRestriction'],
+        creditEnrichmentStatus: 'PENDING',
+        bigdatacorpEnrichmentStatus: 'DONE',
+        bigdatacorpGateResult: { passed: true },
+    };
+    const BASE_BEFORE = { ...BASE_AFTER, bigdatacorpEnrichmentStatus: 'RUNNING' };
+
+    it('roda quando BDC settla DONE com gate passed e fase habilitada', async () => {
+        const { deps } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_BEFORE, BASE_AFTER));
+        expect(deps.runCreditEnrichmentPhase).toHaveBeenCalled();
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
+    });
+
+    it('ignora quando bigdatacorpEnrichmentStatus nao mudou', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_AFTER, BASE_AFTER));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).not.toHaveBeenCalled();
+    });
+
+    it('ignora quando credit ja esta settado', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_BEFORE, { ...BASE_AFTER, creditEnrichmentStatus: 'DONE' }));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).not.toHaveBeenCalled();
+    });
+
+    it('fase nao habilitada com status PENDING → escreve SKIPPED phase_not_enabled + maybeRun', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(
+            { ...BASE_BEFORE, enabledPhases: ['criminal'] },
+            { ...BASE_AFTER, enabledPhases: ['criminal'] },
+        ));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            creditEnrichmentStatus: 'SKIPPED',
+            creditSkippedReason: 'phase_not_enabled',
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
+    });
+
+    it('fase nao habilitada sem campo credit → return silencioso (zero writes)', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        const after = { ...BASE_AFTER, enabledPhases: ['criminal'] };
+        delete after.creditEnrichmentStatus;
+        const before = { ...BASE_BEFORE, enabledPhases: ['criminal'] };
+        delete before.creditEnrichmentStatus;
+        await handler(makeCreditEvent(before, after));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).not.toHaveBeenCalled();
+        expect(deps.maybeRunAutoClassifyAndAi).not.toHaveBeenCalled();
+    });
+
+    it('gate bloqueado → SKIPPED identity_gate_not_passed mesmo com caso CORRECTION_NEEDED', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(
+            { ...BASE_BEFORE, bigdatacorpEnrichmentStatus: 'RUNNING' },
+            {
+                ...BASE_AFTER,
+                status: 'CORRECTION_NEEDED',
+                bigdatacorpEnrichmentStatus: 'BLOCKED',
+                bigdatacorpGateResult: { passed: false },
+            },
+        ));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            creditEnrichmentStatus: 'SKIPPED',
+            creditSkippedReason: 'identity_gate_not_passed',
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
+    });
+
+    it('BDC FAILED sem gate result → SKIPPED identity_gate_not_passed', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        const after = { ...BASE_AFTER, bigdatacorpEnrichmentStatus: 'FAILED' };
+        delete after.bigdatacorpGateResult;
+        await handler(makeCreditEvent(BASE_BEFORE, after));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            creditEnrichmentStatus: 'SKIPPED',
+            creditSkippedReason: 'identity_gate_not_passed',
+        }));
+    });
+
+    it('caso ja DONE → return silencioso sem rodar', async () => {
+        const { deps, caseUpdate } = makeCreditDeps();
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_BEFORE, { ...BASE_AFTER, status: 'DONE' }));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+        expect(caseUpdate).not.toHaveBeenCalled();
+    });
+
+    it('lock nao adquirido → nao roda', async () => {
+        const { deps } = makeCreditDeps({
+            acquirePhaseRun: vi.fn().mockResolvedValue({ acquired: false, caseData: { creditEnrichmentStatus: 'RUNNING' } }),
+        });
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_BEFORE, BASE_AFTER));
+        expect(deps.runCreditEnrichmentPhase).not.toHaveBeenCalled();
+    });
+
+    it('excecao do runner → escreve FAILED + maybeRun', async () => {
+        const { deps, caseUpdate } = makeCreditDeps({
+            runCreditEnrichmentPhase: vi.fn().mockRejectedValue(new Error('boom')),
+        });
+        const handler = createEnrichCreditOnCaseHandler(deps);
+        await handler(makeCreditEvent(BASE_BEFORE, BASE_AFTER));
+        expect(caseUpdate).toHaveBeenCalledWith(expect.objectContaining({
+            creditEnrichmentStatus: 'FAILED',
+        }));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
     });
 });
 
