@@ -198,6 +198,69 @@ describe('runFonteDataEnrichmentPhase', () => {
     expect(result.status).toBe('PARTIAL');
     expect(mocks.queryIdentity).not.toHaveBeenCalled();
   });
+
+  // Gate FonteData legado: apenas nome bloqueia (CPF status e obito informativos)
+  it('nao bloqueia por CPF cancelado quando nome confere', async () => {
+    const { mocks, ...deps } = makeFonteDataDeps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    mocks.queryReceitaFederal.mockResolvedValue({ enrichmentIdentity: { name: 'John Doe', cpfStatus: 'CANCELADA' }, _source: {} });
+    mocks.queryIdentity.mockResolvedValue({ enrichmentContact: { primaryUf: 'SP', allUfs: ['SP'] }, _source: {} });
+    mocks.queryProcessosAgrupada.mockResolvedValue({ criminalFlag: 'NEGATIVE', processTotal: 0, _source: {} });
+    mocks.queryWarrant.mockResolvedValue({ warrantFlag: 'NEGATIVE', _source: {} });
+    mocks.queryLabor.mockResolvedValue({ laborFlag: 'NEGATIVE', _source: {} });
+
+    const result = await phases.runFonteDataEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      phases: { identity: true, criminal: true, warrant: true, labor: true },
+      gate: { minNameSimilarity: 0.7 },
+      escalation: { enabled: false },
+    });
+
+    expect(result.status).toBe('DONE');
+    expect(caseRef._state.enrichmentGateResult.passed).toBe(true);
+    expect(caseRef._state.enrichmentGateResult.cpfStatus).toBe('CANCELADA');
+  });
+
+  it('nao bloqueia por obito quando nome confere', async () => {
+    const { mocks, ...deps } = makeFonteDataDeps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    mocks.queryReceitaFederal.mockResolvedValue({ enrichmentIdentity: { name: 'John Doe', cpfStatus: 'REGULAR', hasDeathRecord: true }, _source: {} });
+    mocks.queryIdentity.mockResolvedValue({ enrichmentContact: { primaryUf: 'SP', allUfs: ['SP'] }, _source: {} });
+    mocks.queryProcessosAgrupada.mockResolvedValue({ criminalFlag: 'NEGATIVE', processTotal: 0, _source: {} });
+    mocks.queryWarrant.mockResolvedValue({ warrantFlag: 'NEGATIVE', _source: {} });
+    mocks.queryLabor.mockResolvedValue({ laborFlag: 'NEGATIVE', _source: {} });
+
+    const result = await phases.runFonteDataEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      phases: { identity: true, criminal: true, warrant: true, labor: true },
+      gate: { minNameSimilarity: 0.7 },
+      escalation: { enabled: false },
+    });
+
+    expect(result.status).toBe('DONE');
+    expect(caseRef._state.enrichmentGateResult.passed).toBe(true);
+    expect(caseRef._state.enrichmentGateResult.hasDeathRecord).toBe(true);
+  });
+
+  it('continua bloqueando por nome divergente', async () => {
+    const { mocks, ...deps } = makeFonteDataDeps();
+    deps.helpers.computeNameSimilarity = vi.fn(() => 0.3);
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    mocks.queryReceitaFederal.mockResolvedValue({ enrichmentIdentity: { name: 'Zeca Silva', cpfStatus: 'REGULAR' }, _source: {} });
+
+    const result = await phases.runFonteDataEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, {
+      phases: { identity: true },
+      gate: { minNameSimilarity: 0.7 },
+    });
+
+    expect(result.status).toBe('BLOCKED');
+    expect(caseRef._state.enrichmentGateResult.passed).toBe(false);
+    expect(caseRef._state.enrichmentGateResult.reason).toMatch(/Similaridade de nome/);
+  });
 });
 
 describe('runEscavadorEnrichmentPhase', () => {
@@ -313,6 +376,106 @@ describe('runBigDataCorpEnrichmentPhase', () => {
     expect(result.status).toBe('DONE');
     expect(mocks.queryBigDataCorpCombined).toHaveBeenCalled();
   });
+
+  // Gate de identidade: apenas divergencia de nome bloqueia; CPF status e obito sao informativos
+  describe('gate de identidade (so nome bloqueia)', () => {
+    const BDC_CONFIG = {
+      phases: { basicData: true, processes: false, kyc: false, occupation: false },
+      gate: { minNameSimilarity: 0.7 },
+    };
+
+    function mockBasicData(mocks, deps, normalized) {
+      mocks.queryBigDataCorpCombined.mockResolvedValue({
+        basicData: { raw: true },
+        processes: [],
+        kycData: {},
+        professionData: {},
+        elapsedMs: 100,
+      });
+      deps.normalizers.normalizeBigDataCorpBasicData = vi.fn(() => ({
+        _source: { provider: 'bigdatacorp', dataset: 'basic_data', found: true },
+        ...normalized,
+      }));
+    }
+
+    it('nao bloqueia por CPF irregular quando nome confere', async () => {
+      const { mocks, ...deps } = makeBdcDeps();
+      mockBasicData(mocks, deps, {
+        bigdatacorpCpfStatus: 'CANCELADA',
+        bigdatacorpName: 'John Doe',
+      });
+      const phases = createEnrichmentPhases(deps);
+      const caseRef = makeCaseRef();
+
+      const result = await phases.runBigDataCorpEnrichmentPhase(
+        caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, BDC_CONFIG,
+      );
+
+      expect(result.status).toBe('DONE');
+      expect(deps.returnCaseForIdentityGateBlock).not.toHaveBeenCalled();
+      expect(caseRef._state.bigdatacorpGateResult.passed).toBe(true);
+      expect(caseRef._state.bigdatacorpGateResult.cpfStatus).toBe('CANCELADA');
+      expect(caseRef._state.bigdatacorpGateResult.reason).toBe('OK');
+    });
+
+    it('nao bloqueia por indicacao de obito quando nome confere', async () => {
+      const { mocks, ...deps } = makeBdcDeps();
+      mockBasicData(mocks, deps, {
+        bigdatacorpCpfStatus: 'REGULAR',
+        bigdatacorpName: 'John Doe',
+        bigdatacorpHasDeathRecord: true,
+      });
+      const phases = createEnrichmentPhases(deps);
+      const caseRef = makeCaseRef();
+
+      const result = await phases.runBigDataCorpEnrichmentPhase(
+        caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, BDC_CONFIG,
+      );
+
+      expect(result.status).toBe('DONE');
+      expect(deps.returnCaseForIdentityGateBlock).not.toHaveBeenCalled();
+      expect(caseRef._state.bigdatacorpGateResult.passed).toBe(true);
+      expect(caseRef._state.bigdatacorpGateResult.hasDeathRecord).toBe(true);
+      expect(caseRef._state.bigdatacorpHasDeathRecord).toBe(true);
+    });
+
+    it('continua bloqueando por nome divergente', async () => {
+      const { mocks, ...deps } = makeBdcDeps();
+      mockBasicData(mocks, deps, {
+        bigdatacorpCpfStatus: 'REGULAR',
+        bigdatacorpName: 'Zeca Silva',
+      });
+      deps.helpers.computeNameSimilarity = vi.fn(() => 0.3);
+      const phases = createEnrichmentPhases(deps);
+      const caseRef = makeCaseRef();
+
+      await phases.runBigDataCorpEnrichmentPhase(
+        caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, BDC_CONFIG,
+      );
+
+      expect(deps.returnCaseForIdentityGateBlock).toHaveBeenCalledTimes(1);
+      const callArg = deps.returnCaseForIdentityGateBlock.mock.calls[0][0];
+      expect(callArg.gateReason).toMatch(/Similaridade insuficiente/);
+      expect(callArg.updateFields.bigdatacorpGateResult.passed).toBe(false);
+    });
+
+    it('CPF PENDENTE ainda seta cpfPendingRegularization no gate result', async () => {
+      const { mocks, ...deps } = makeBdcDeps();
+      mockBasicData(mocks, deps, {
+        bigdatacorpCpfStatus: 'PENDENTE DE REGULARIZACAO',
+        bigdatacorpName: 'John Doe',
+      });
+      const phases = createEnrichmentPhases(deps);
+      const caseRef = makeCaseRef();
+
+      const result = await phases.runBigDataCorpEnrichmentPhase(
+        caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'John Doe' }, BDC_CONFIG,
+      );
+
+      expect(result.status).toBe('DONE');
+      expect(caseRef._state.bigdatacorpGateResult.cpfPendingRegularization).toBe(true);
+    });
+  });
 });
 
 describe('runJuditEnrichmentPhase', () => {
@@ -400,6 +563,62 @@ describe('runJuditEnrichmentPhase', () => {
 
     expect(result.status).toBe('DONE');
     expect(mocks.queryLawsuitsSync).toHaveBeenCalled();
+  });
+
+  it('gate fallback Judit nao bloqueia por CPF inativo quando nome confere', async () => {
+    const queryEntityDataLake = vi.fn(() => Promise.resolve({ raw: true }));
+    const { mocks, ...deps } = makeJuditDeps();
+    deps.adapters.queryEntityDataLake = queryEntityDataLake;
+    deps.normalizers.normalizeJuditEntity = vi.fn(() => ({
+      juditIdentity: { cpfActive: false, name: 'John Doe' },
+      juditPrimaryUf: 'SP',
+      juditAllUfs: ['SP'],
+      juditHasLawsuits: false,
+      _source: {},
+    }));
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runJuditEnrichmentPhase(caseRef, 'c1', {
+      cpf: VALID_CPF,
+      candidateName: 'John Doe',
+      bigdatacorpEnrichmentStatus: 'FAILED',
+    }, {
+      phases: { lawsuits: false, warrant: false, execution: false },
+      filters: {},
+    });
+
+    expect(deps.returnCaseForIdentityGateBlock).not.toHaveBeenCalled();
+    expect(caseRef._state.juditGateResult.passed).toBe(true);
+    expect(caseRef._state.juditGateResult.cpfActive).toBe(false);
+    expect(result.status).toBe('SKIPPED');
+  });
+
+  it('gate fallback FonteData nao bloqueia por CPF cancelado nem obito quando nome confere', async () => {
+    const { mocks, ...deps } = makeJuditDeps();
+    deps.adapters.queryEntityDataLake = vi.fn(() => Promise.reject(new Error('entity down')));
+    deps.adapters.queryReceitaFederal = vi.fn(() => Promise.resolve({
+      enrichmentIdentity: { name: 'John Doe', cpfStatus: 'CANCELADA', hasDeathRecord: true },
+      _source: {},
+    }));
+    deps.normalizers.normalizeReceitaFederal = vi.fn((data) => data);
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runJuditEnrichmentPhase(caseRef, 'c1', {
+      cpf: VALID_CPF,
+      candidateName: 'John Doe',
+      bigdatacorpEnrichmentStatus: 'FAILED',
+    }, {
+      phases: { lawsuits: false, warrant: false, execution: false },
+      filters: {},
+    });
+
+    expect(deps.returnCaseForIdentityGateBlock).not.toHaveBeenCalled();
+    expect(caseRef._state.juditGateResult.passed).toBe(true);
+    expect(caseRef._state.juditGateResult.cpfStatus).toBe('CANCELADA');
+    expect(caseRef._state.juditGateResult.hasDeathRecord).toBe(true);
+    expect(result.status).toBe('SKIPPED');
   });
 });
 

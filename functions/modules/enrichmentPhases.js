@@ -242,21 +242,15 @@ function createEnrichmentPhases(deps) {
     const minSim = enrichmentConfig.gate?.minNameSimilarity ?? 0.7;
 
     const cpfStatusNormalized = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
-    const isCpfRegular = cpfStatusNormalized === 'REGULAR';
     const isCpfPending = cpfStatusNormalized.includes('PENDENTE');
-    const isCpfCancelled = /CANCEL/.test(cpfStatusNormalized);
-    const cpfPasses = isCpfRegular || isCpfPending;
     const nameSim = computeNameSimilarity(nameFromAPI, nameProvided);
     const namePasses = minSim <= 0 || nameSim >= minSim;
-    const gatePassed = cpfPasses && namePasses;
     const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
-    const gatePassedFinal = gatePassed && !hasDeathRecord;
+    // Gate bloqueia APENAS por nome; CPF status e obito informativos
+    const gatePassedFinal = namePasses;
 
     let gateReason = null;
-    if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatusNormalized}" (cancelado).`;
-    else if (!cpfPasses) gateReason = `CPF com situacao "${cpfStatusNormalized}" (esperado: REGULAR).`;
-    else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
-    else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+    if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
     const enrichmentGateResult = {
       passed: gatePassedFinal,
@@ -665,19 +659,16 @@ function createEnrichmentPhases(deps) {
         const nameProvided = caseData.candidateName || '';
         const minSim = bdcConfig.gate?.minNameSimilarity ?? 0.7;
         const cpfStatusBDC = (updatePayload.bigdatacorpCpfStatus || '').toUpperCase();
-        const isCpfRegular = cpfStatusBDC === 'REGULAR';
         const isCpfPending = cpfStatusBDC.includes('PENDENTE');
-        const isCpfCancelled = /CANCEL/.test(cpfStatusBDC);
-        const cpfPasses = isCpfRegular || isCpfPending;
         const nameSim = computeNameSimilarity(nameFromBDC, nameProvided);
         const namePasses = minSim <= 0 || nameSim >= minSim;
         const hasDeathRecord = updatePayload.bigdatacorpHasDeathRecord === true;
-        const gatePassed = cpfPasses && namePasses && !hasDeathRecord;
+        // Gate bloqueia APENAS por divergencia de nome; CPF irregular/cancelado e
+        // indicacao de obito ficam registrados como informativos (alertas no relatorio)
+        const gatePassed = namePasses;
 
-        const gateReason = isCpfCancelled ? `CPF status ${cpfStatusBDC} (cancelado)`
-          : !cpfPasses ? `CPF status ${cpfStatusBDC}`
-          : !namePasses ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
-          : hasDeathRecord ? 'Indicacao de obito'
+        const gateReason = !namePasses
+          ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
           : 'OK';
 
         const bigdatacorpGateResult = {
@@ -847,10 +838,14 @@ function createEnrichmentPhases(deps) {
         const bdcGate = caseData.bigdatacorpGateResult;
         console.log(`Case ${caseId} [Judit]: using BigDataCorp identity gate (similarity: ${((bdcGate.nameSimilarity || 0) * 100).toFixed(0)}%).`);
 
+        // cpfActive derivado do status real (informativo — gate passa so por nome)
+        const bdcCpfStatus = (bdcGate.cpfStatus || 'REGULAR').toUpperCase();
+        const bdcCpfActive = bdcCpfStatus === 'REGULAR' || bdcCpfStatus.includes('PENDENTE');
+
         const juditGateResult = {
           passed: true,
-          cpfActive: true,
-          cpfStatus: bdcGate.cpfStatus || 'REGULAR',
+          cpfActive: bdcCpfActive,
+          cpfStatus: bdcCpfStatus,
           cpfPendingRegularization: bdcGate.cpfPendingRegularization || false,
           nameSimilarity: bdcGate.nameSimilarity,
           nameProvided: bdcGate.nameProvided,
@@ -862,8 +857,8 @@ function createEnrichmentPhases(deps) {
         };
         const fallbackIdentity = {
           name: caseData.bigdatacorpName || bdcGate.nameFound || '',
-          cpfActive: true,
-          cpfStatus: bdcGate.cpfStatus || 'REGULAR',
+          cpfActive: bdcCpfActive,
+          cpfStatus: bdcCpfStatus,
           birthDate: caseData.bigdatacorpBirthDate || null,
           hasDeathRecord: bdcGate.hasDeathRecord || false,
           consultedAt: new Date().toISOString(),
@@ -925,11 +920,11 @@ function createEnrichmentPhases(deps) {
           const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
           const nameSim = computeNameSimilarity(nameFromJudit, nameProvided);
           const namePasses = minSim <= 0 || nameSim >= minSim;
-          const gatePassed = cpfActive && namePasses;
+          // Gate bloqueia APENAS por nome; cpfActive registrado como informativo
+          const gatePassed = namePasses;
 
           let gateReason = null;
-          if (!cpfActive) gateReason = 'CPF inativo na Receita Federal (Judit Entity).';
-          else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+          if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
           const juditGateResult = {
             passed: gatePassed,
@@ -988,7 +983,6 @@ function createEnrichmentPhases(deps) {
               const cpfStatus = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
               const isCpfRegular = cpfStatus === 'REGULAR';
               const isCpfPending = cpfStatus.includes('PENDENTE');
-              const isCpfCancelled = /CANCEL/.test(cpfStatus);
               const cpfActive = isCpfRegular || isCpfPending;
               const nameFromFD = enrichmentIdentity?.name || '';
               const nameProvided = caseData.candidateName || '';
@@ -996,13 +990,11 @@ function createEnrichmentPhases(deps) {
               const nameSim = computeNameSimilarity(nameFromFD, nameProvided);
               const namePasses = minSim <= 0 || nameSim >= minSim;
               const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
-              const gatePassed = cpfActive && namePasses && !hasDeathRecord;
+              // Gate bloqueia APENAS por nome; CPF status e obito informativos
+              const gatePassed = namePasses;
 
               let gateReason = null;
-              if (isCpfCancelled) gateReason = `CPF com situacao "${cpfStatus}" (cancelado).`;
-              else if (!cpfActive) gateReason = `CPF com situacao "${cpfStatus}" (esperado: REGULAR).`;
-              else if (hasDeathRecord) gateReason = `CPF possui registro de obito (ano: ${enrichmentIdentity.deathYear || 'N/A'}).`;
-              else if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
+              if (!namePasses) gateReason = `Similaridade de nome ${(nameSim * 100).toFixed(0)}% abaixo do limiar ${(minSim * 100).toFixed(0)}%.`;
 
               const juditGateResult = {
                 passed: gatePassed,
