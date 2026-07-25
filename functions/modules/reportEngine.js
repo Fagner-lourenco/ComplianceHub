@@ -439,6 +439,7 @@ function buildSanitizedPublicResultSnapshot(caseId, caseData, payload = {}, opti
         'socialStatus', 'socialReasons', 'socialNotes',
         'digitalFlag', 'digitalVectors', 'digitalNotes',
         'conflictInterest', 'conflictNotes',
+        'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary', 'creditRestrictionDetails',
         'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
         'enabledPhases',
         'keyFindings',

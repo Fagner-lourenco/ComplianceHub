@@ -80,6 +80,37 @@ describe('reportBuilder consistency', () => {
         expect(buildBatchReportHtml(null, 'Tenant')).toBe('');
     });
 
+    describe('fase Crédito e Restrições', () => {
+        const creditCase = {
+            ...mockCaseData,
+            enabledPhases: [...mockCaseData.enabledPhases, 'creditRestriction'],
+            creditRestrictionFlag: 'RESTRICTED',
+            creditQuantumScore: 480,
+            creditRestrictionSummary: 'Restrições de crédito ativas: 2 negativação(ões) ativa(s).',
+            creditRestrictionDetails: { activeNegativeAppointments: 2, registeredProtests: 1 },
+        };
+
+        it('renderiza phaseRow com semáforo vermelho, score e tags', () => {
+            const html = buildCaseReportHtml(creditCase);
+            expect(html).toContain('Crédito e Restrições');
+            expect(html).toContain('pr--red');
+            expect(html).toContain('Score Quantum: 480');
+        });
+
+        it('fase desabilitada não gera linha mesmo com dados', () => {
+            const html = buildCaseReportHtml({ ...creditCase, enabledPhases: mockCaseData.enabledPhases });
+            expect(html).not.toContain('Crédito e Restrições');
+        });
+
+        it('fase habilitada sem dados não gera linha', () => {
+            const html = buildCaseReportHtml({
+                ...mockCaseData,
+                enabledPhases: [...mockCaseData.enabledPhases, 'creditRestriction'],
+            });
+            expect(html).not.toContain('Crédito e Restrições');
+        });
+    });
+
     describe('alertas de identidade (banner)', () => {
         it('exibe banner vermelho de óbito', () => {
             const html = buildCaseReportHtml({ ...mockCaseData, bigdatacorpHasDeathRecord: true });

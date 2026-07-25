@@ -26,6 +26,8 @@ const RESULT_ONLY_FIELDS = [
     'socialStatus', 'socialReasons', 'socialNotes',
     'digitalFlag', 'digitalVectors', 'digitalNotes',
     'conflictInterest', 'conflictNotes',
+    // Fase automatica de credito (indicativo apenas — nunca custos/fontes/erros)
+    'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary', 'creditRestrictionDetails',
     'riskScore', 'riskLevel', 'suggestedVerdict', 'finalVerdict', 'analystComment',
     'enabledPhases',
     'keyFindings',
