@@ -487,15 +487,13 @@ function submitClientCorrectionHandler(deps) {
             escavador2RawPayloads: FieldValue.delete(),
             escavador2CostBRL: FieldValue.delete(),
             escavador2EnrichedAt: FieldValue.delete(),
-            // Reset da fase automatica de credito (so quando habilitada no caso)
+            // Reset da fase automatica de credito (so quando habilitada no caso).
+            // Flag/score/summary/details ja sao removidos pelo buildResetPublishedCaseFields
+            // (RESULT_ONLY_FIELDS); aqui resetamos status + campos fora da whitelist.
             ...(Array.isArray(caseData.enabledPhases) && caseData.enabledPhases.includes('creditRestriction') ? {
                 creditEnrichmentStatus: 'PENDING',
                 creditError: null,
                 creditSkippedReason: FieldValue.delete(),
-                creditRestrictionFlag: FieldValue.delete(),
-                creditQuantumScore: FieldValue.delete(),
-                creditRestrictionSummary: FieldValue.delete(),
-                creditRestrictionDetails: FieldValue.delete(),
                 creditSources: FieldValue.delete(),
                 creditCostBRL: FieldValue.delete(),
                 creditElapsedMs: FieldValue.delete(),

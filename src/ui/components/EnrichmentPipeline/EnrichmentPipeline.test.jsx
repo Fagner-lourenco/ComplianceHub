@@ -58,6 +58,43 @@ describe('EnrichmentPipeline', () => {
         expect(screen.getByTitle('Reexecutar Análise assistida')).toBeInTheDocument();
     });
 
+    describe('provider Crédito e Restrições', () => {
+        it('exibe linha quando fase habilitada no caso', () => {
+            const caseData = {
+                ...baseCase,
+                enabledPhases: ['criminal', 'creditRestriction'],
+                creditEnrichmentStatus: 'DONE',
+                creditCostBRL: 1.8,
+            };
+            render(<EnrichmentPipeline caseData={caseData} />);
+            const row = screen.getByText('Crédito e Restrições (Quod)').closest('.enrichment-pipeline__item');
+            expect(row).toHaveClass('enrichment-pipeline__item--done');
+        });
+
+        it('oculta linha quando fase não habilitada e sem status', () => {
+            const caseData = { ...baseCase, enabledPhases: ['criminal'] };
+            render(<EnrichmentPipeline caseData={caseData} />);
+            expect(screen.queryByText('Crédito e Restrições (Quod)')).not.toBeInTheDocument();
+        });
+
+        it('exibe linha mesmo sem fase habilitada quando ha status gravado (caso legado)', () => {
+            const caseData = { ...baseCase, enabledPhases: ['criminal'], creditEnrichmentStatus: 'SKIPPED' };
+            render(<EnrichmentPipeline caseData={caseData} />);
+            expect(screen.getByText('Crédito e Restrições (Quod)')).toBeInTheDocument();
+        });
+
+        it('permite reexecutar quando terminal com erro', () => {
+            const caseData = {
+                ...baseCase,
+                enabledPhases: ['creditRestriction'],
+                creditEnrichmentStatus: 'FAILED',
+                creditError: 'Quantum: erro interno (-1301)',
+            };
+            render(<EnrichmentPipeline caseData={caseData} onRetryPhase={vi.fn()} />);
+            expect(screen.getByText('Tentar novamente')).toBeInTheDocument();
+        });
+    });
+
     it('chama onRetryPhase com ai ao reexecutar IA habilitada', () => {
         const onRetry = vi.fn();
         const caseData = {
