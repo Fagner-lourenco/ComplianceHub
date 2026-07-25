@@ -478,6 +478,151 @@ describe('runBigDataCorpEnrichmentPhase', () => {
   });
 });
 
+describe('runCreditEnrichmentPhase', () => {
+  function makeCreditDeps(overrides = {}) {
+    const queryMarketplaceCredit = vi.fn();
+    const checkCircuit = vi.fn(() => Promise.resolve({ open: false }));
+    const recordSuccess = vi.fn(() => Promise.resolve());
+    const recordFailure = vi.fn(() => Promise.resolve());
+    return {
+      ...makeDeps({
+        adapters: { queryMarketplaceCredit },
+        helpers: { checkCircuit, recordSuccess, recordFailure },
+      }),
+      mocks: { queryMarketplaceCredit, checkCircuit, recordSuccess, recordFailure },
+      ...overrides,
+    };
+  }
+
+  const QUOD_OK = { ok: true, data: { HasNegativeIndicator: false, TotalActiveNegativeAppointments: 0 }, statusCode: 0, statusMessage: 'OK' };
+  const QUANTUM_OK = { ok: true, score: '606', statusCode: 0, statusMessage: 'OK' };
+
+  it('sucesso completo → DONE, custo 1.80, campos credit* gravados', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.queryMarketplaceCredit.mockResolvedValue({ quodRisk: QUOD_OK, quantumScore: QUANTUM_OK, elapsedMs: 150 });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('DONE');
+    expect(caseRef._state.creditEnrichmentStatus).toBe('DONE');
+    expect(caseRef._state.creditRestrictionFlag).toBe('CLEAN');
+    expect(caseRef._state.creditQuantumScore).toBe(606);
+    expect(caseRef._state.creditCostBRL).toBe(1.8);
+    expect(typeof caseRef._state.creditRestrictionSummary).toBe('string');
+    expect(caseRef._state.creditSources.quodRisk.found).toBe(true);
+    expect(mocks.recordSuccess).toHaveBeenCalledWith('bigdatacorp-credit');
+  });
+
+  it('quantum falhou → PARTIAL, custo 1.20, flag do quod preservado', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.queryMarketplaceCredit.mockResolvedValue({
+      quodRisk: { ok: true, data: { HasNegativeIndicator: true }, statusCode: 0, statusMessage: 'OK' },
+      quantumScore: { ok: false, score: null, statusCode: -1301, statusMessage: 'erro interno' },
+      elapsedMs: 90,
+    });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(caseRef._state.creditRestrictionFlag).toBe('RESTRICTED');
+    expect(caseRef._state.creditQuantumScore).toBeNull();
+    expect(caseRef._state.creditCostBRL).toBe(1.2);
+    expect(caseRef._state.creditError).toMatch(/Quantum/);
+  });
+
+  it('quod falhou → PARTIAL, custo 0.60, flag NOT_AVAILABLE', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.queryMarketplaceCredit.mockResolvedValue({
+      quodRisk: { ok: false, data: null, statusCode: -1301, statusMessage: 'erro' },
+      quantumScore: QUANTUM_OK,
+      elapsedMs: 90,
+    });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('PARTIAL');
+    expect(caseRef._state.creditRestrictionFlag).toBe('NOT_AVAILABLE');
+    expect(caseRef._state.creditQuantumScore).toBe(606);
+    expect(caseRef._state.creditCostBRL).toBe(0.6);
+  });
+
+  it('ambos datasets falharam → FAILED com flag NOT_AVAILABLE e custo 0', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.queryMarketplaceCredit.mockResolvedValue({
+      quodRisk: { ok: false, data: null, statusCode: -1301, statusMessage: 'erro' },
+      quantumScore: { ok: false, score: null, statusCode: -1301, statusMessage: 'erro' },
+      elapsedMs: 90,
+    });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('FAILED');
+    expect(caseRef._state.creditEnrichmentStatus).toBe('FAILED');
+    expect(caseRef._state.creditRestrictionFlag).toBe('NOT_AVAILABLE');
+    expect(caseRef._state.creditCostBRL).toBe(0);
+    expect(mocks.recordFailure).toHaveBeenCalled();
+  });
+
+  it('excecao do adapter → FAILED + recordFailure + flag NOT_AVAILABLE', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.queryMarketplaceCredit.mockRejectedValue(new Error('network down'));
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('FAILED');
+    expect(caseRef._state.creditEnrichmentStatus).toBe('FAILED');
+    expect(caseRef._state.creditRestrictionFlag).toBe('NOT_AVAILABLE');
+    expect(caseRef._state.creditError).toMatch(/network down/);
+    expect(mocks.recordFailure).toHaveBeenCalledWith('bigdatacorp-credit', expect.any(String));
+  });
+
+  it('circuito aberto → SKIPPED com chave bigdatacorp-credit', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    mocks.checkCircuit.mockResolvedValue({ open: true, reason: 'muitas falhas' });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(mocks.checkCircuit).toHaveBeenCalledWith('bigdatacorp-credit');
+    expect(result.status).toBe('SKIPPED');
+    expect(caseRef._state.creditEnrichmentStatus).toBe('SKIPPED');
+    expect(mocks.queryMarketplaceCredit).not.toHaveBeenCalled();
+  });
+
+  it('CPF invalido → FAILED sem consultar', async () => {
+    const { mocks, ...deps } = makeCreditDeps();
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: '123' });
+
+    expect(result.status).toBe('FAILED');
+    expect(mocks.queryMarketplaceCredit).not.toHaveBeenCalled();
+  });
+
+  it('credenciais ausentes → FAILED', async () => {
+    const { mocks, ...deps } = makeCreditDeps({ bigdatacorpAccessToken: { value: vi.fn(() => '') } });
+    const phases = createEnrichmentPhases(deps);
+    const caseRef = makeCaseRef();
+
+    const result = await phases.runCreditEnrichmentPhase(caseRef, 'c1', { cpf: VALID_CPF });
+
+    expect(result.status).toBe('FAILED');
+    expect(mocks.queryMarketplaceCredit).not.toHaveBeenCalled();
+  });
+});
+
 describe('runJuditEnrichmentPhase', () => {
   function makeJuditDeps(overrides = {}) {
     const queryLawsuitsSync = vi.fn();
