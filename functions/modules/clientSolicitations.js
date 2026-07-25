@@ -135,6 +135,13 @@ function createClientSolicitationHandler(deps) {
         const enabledPhases = Object.entries(analysisConfig)
             .filter(([, value]) => value?.enabled)
             .map(([key]) => key);
+        // Fallback: apenas fases habilitadas por padrao (exclui automaticas default-OFF)
+        const effectiveEnabledPhases = enabledPhases.length > 0
+            ? enabledPhases
+            : Object.entries(DEFAULT_ANALYSIS_CONFIG)
+                .filter(([, value]) => value?.enabled)
+                .map(([key]) => key);
+        const creditPhaseEnabled = effectiveEnabledPhases.includes('creditRestriction');
         const tenantSlaHours = Number(tenantData?.slaHours ?? 48);
         const safeSlaHours = Number.isFinite(tenantSlaHours) && tenantSlaHours >= 1 ? tenantSlaHours : 48;
 
@@ -196,7 +203,7 @@ function createClientSolicitationHandler(deps) {
             requestedBy: formatRequestedBy(profile, uid),
             requestedByName: profile.displayName || null,
             requestedByEmail: profile.email || null,
-            enabledPhases: enabledPhases.length > 0 ? enabledPhases : Object.keys(DEFAULT_ANALYSIS_CONFIG),
+            enabledPhases: effectiveEnabledPhases,
             socialProfiles: trimmedSocialProfiles,
             otherSocialUrls: (Array.isArray(otherSocialUrls) ? otherSocialUrls : [])
                 .filter(item => item && typeof item === 'object')
@@ -234,6 +241,9 @@ function createClientSolicitationHandler(deps) {
             escavador2EnrichmentStatus: 'PENDING',
             escavador2Error: null,
             djenEnrichmentStatus: 'PENDING',
+            // Fase automatica de credito: status so existe quando habilitada no tenant
+            // (presenca do campo e o que trava canRunFinalClassification ate settlar)
+            ...(creditPhaseEnabled ? { creditEnrichmentStatus: 'PENDING', creditError: null } : {}),
             enrichmentSources: {},
             enrichmentIdentity: null,
             enrichmentGateResult: null,
@@ -477,6 +487,21 @@ function submitClientCorrectionHandler(deps) {
             escavador2RawPayloads: FieldValue.delete(),
             escavador2CostBRL: FieldValue.delete(),
             escavador2EnrichedAt: FieldValue.delete(),
+            // Reset da fase automatica de credito (so quando habilitada no caso)
+            ...(Array.isArray(caseData.enabledPhases) && caseData.enabledPhases.includes('creditRestriction') ? {
+                creditEnrichmentStatus: 'PENDING',
+                creditError: null,
+                creditSkippedReason: FieldValue.delete(),
+                creditRestrictionFlag: FieldValue.delete(),
+                creditQuantumScore: FieldValue.delete(),
+                creditRestrictionSummary: FieldValue.delete(),
+                creditRestrictionDetails: FieldValue.delete(),
+                creditSources: FieldValue.delete(),
+                creditCostBRL: FieldValue.delete(),
+                creditElapsedMs: FieldValue.delete(),
+                creditQueryDate: FieldValue.delete(),
+                creditEnrichedAt: FieldValue.delete(),
+            } : {}),
             enrichmentStatus: 'PENDING',
             enrichmentError: null,
             enrichmentSources: {},

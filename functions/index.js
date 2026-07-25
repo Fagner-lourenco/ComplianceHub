@@ -1320,7 +1320,7 @@ exports.rerunEnrichmentPhase = onCall(
         if (!caseId || typeof caseId !== 'string') {
             throw new HttpsError('invalid-argument', 'caseId obrigatorio.');
         }
-        if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'djen', 'ai', 'all'].includes(phase)) {
+        if (!['fontedata', 'escavador', 'escavador2', 'judit', 'bigdatacorp', 'credit', 'djen', 'ai', 'all'].includes(phase)) {
             throw new HttpsError('invalid-argument', 'Fase invalida para rerun.');
         }
         // BUG-R3-007: Validate scope parameter.
@@ -1372,6 +1372,7 @@ exports.rerunEnrichmentPhase = onCall(
             const runIds = buildProviderRunIds(caseId);
 
             // Build reset payload
+            const creditPhaseOnCase = Array.isArray(caseData.enabledPhases) && caseData.enabledPhases.includes('creditRestriction');
             const resetPayload = {
                 ...runIds,
                 enrichmentGeneration: FieldValue.increment(1),
@@ -1381,6 +1382,7 @@ exports.rerunEnrichmentPhase = onCall(
                 escavadorEnrichmentStatus: 'PENDING',
                 escavador2EnrichmentStatus: 'PENDING',
                 enrichmentStatus: 'PENDING',
+                ...(creditPhaseOnCase ? { creditEnrichmentStatus: 'PENDING', creditError: null } : {}),
                 bigdatacorpError: null,
                 juditError: null,
                 djenError: null,
@@ -1442,6 +1444,9 @@ exports.rerunEnrichmentPhase = onCall(
                 'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
                 'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
                 'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
+                'creditSkippedReason', 'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary',
+                'creditRestrictionDetails', 'creditSources', 'creditCostBRL', 'creditElapsedMs',
+                'creditQueryDate', 'creditEnrichedAt',
             ];
             for (const field of allDerivedFields) {
                 resetPayload[field] = FieldValue.delete();
@@ -1533,6 +1538,11 @@ exports.rerunEnrichmentPhase = onCall(
             'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
             'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
         ];
+        const creditDataFields = [
+            'creditSkippedReason', 'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary',
+            'creditRestrictionDetails', 'creditSources', 'creditCostBRL', 'creditElapsedMs',
+            'creditQueryDate', 'creditEnrichedAt',
+        ];
         const applyDeleteFields = (target, fields) => {
             for (const field of fields) target[field] = FieldValue.delete();
         };
@@ -1550,6 +1560,11 @@ exports.rerunEnrichmentPhase = onCall(
                 applyDeleteFields(target, escavadorDataFields);
                 applyDeleteFields(target, djenDataFields);
                 applyDeleteFields(target, escavador2DataFields);
+                if (Array.isArray(caseData.enabledPhases) && caseData.enabledPhases.includes('creditRestriction')) {
+                    target.creditEnrichmentStatus = 'PENDING';
+                    target.creditError = null;
+                    applyDeleteFields(target, creditDataFields);
+                }
             } else if (currentPhase === 'judit') {
                 target.escavadorEnrichmentStatus = 'PENDING';
                 target.escavadorError = null;
@@ -1576,6 +1591,7 @@ exports.rerunEnrichmentPhase = onCall(
             escavador2: { statusField: 'escavador2EnrichmentStatus', errorField: 'escavador2Error', label: 'Escavador2', derived: aiDerivedFields },
             judit: { statusField: 'juditEnrichmentStatus', errorField: 'juditError', label: 'Judit', derived: fullDerivedFields },
             bigdatacorp: { statusField: 'bigdatacorpEnrichmentStatus', errorField: 'bigdatacorpError', label: 'BigDataCorp', derived: fullDerivedFields },
+            credit: { statusField: 'creditEnrichmentStatus', errorField: 'creditError', label: 'Crédito e Restrições', derived: [] },
             djen: { statusField: 'djenEnrichmentStatus', errorField: 'djenError', label: 'DJEN', derived: aiDerivedFields },
         };
         const meta = phaseMeta[phase];
@@ -1706,6 +1722,28 @@ exports.rerunEnrichmentPhase = onCall(
                 await caseRef.update(invalidateFields);
             }
             await runBigDataCorpEnrichmentPhase(caseRef, caseId, await getFreshCaseData(), bdcConfig);
+        }
+
+        if (phase === 'credit') {
+            // Fase dirigida por case.enabledPhases (analysisConfig), sem provider config proprio
+            if (!Array.isArray(caseData.enabledPhases) || !caseData.enabledPhases.includes('creditRestriction')) {
+                throw new HttpsError('failed-precondition', 'Fase de credito nao habilitada para este caso.');
+            }
+            if (caseData.bigdatacorpGateResult?.passed !== true) {
+                throw new HttpsError('failed-precondition', 'Gate de identidade precisa ter passado antes do rerun de credito.');
+            }
+            if (scope === 'cascade') {
+                const invalidateFields = {};
+                applyDeleteFields(invalidateFields, creditDataFields);
+                invalidateFields.updatedAt = FieldValue.serverTimestamp();
+                await caseRef.update(invalidateFields);
+            }
+            await runCreditEnrichmentPhase(caseRef, caseId, await getFreshCaseData());
+            try {
+                await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Credit rerun');
+            } catch (classifyErr) {
+                console.error(`Case ${caseId} [AutoClassify via Credit rerun]: error:`, classifyErr.message);
+            }
         }
 
         if (phase === 'djen') {
