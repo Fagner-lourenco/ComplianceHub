@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { FieldValue } = require('firebase-admin/firestore');
+const { computeMissingRequiredPhases } = require('./_shared/analysisConfig');
 
 function createConcludeCaseByAnalystHandler(deps) {
     const {
@@ -62,12 +63,11 @@ function createConcludeCaseByAnalystHandler(deps) {
             // P2-012: Validate enabledPhases against tenant configuration
             const tenantData = await getTenantSettingsData(caseData.tenantId);
             const tenantAnalysisConfig = tenantData?.analysisConfig || DEFAULT_ANALYSIS_CONFIG;
-            const requiredPhases = Object.entries(tenantAnalysisConfig)
-                .filter(([, value]) => value?.enabled)
-                .map(([key]) => key);
             const payloadEnabledPhases = Array.isArray(payload.enabledPhases) ? payload.enabledPhases : [];
             if (payloadEnabledPhases.length > 0) {
-                const missingRequired = requiredPhases.filter((phase) => !payloadEnabledPhases.includes(phase));
+                // Fases automaticas (creditRestriction) nao sao exigidas: casos criados
+                // antes do toggle do tenant nao as tem em enabledPhases
+                const missingRequired = computeMissingRequiredPhases(tenantAnalysisConfig, payloadEnabledPhases);
                 if (missingRequired.length > 0) {
                     throw new HttpsError('invalid-argument', `enabledPhases deve conter as fases obrigatorias configuradas: ${missingRequired.join(', ')}.`);
                 }

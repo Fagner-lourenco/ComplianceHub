@@ -7,6 +7,15 @@ import { calculateRisk, LEGACY_PHASES } from './riskCalculator';
 // os mesmos resultados para os mesmos inputs.
 // =============================================================================
 
+describe('calculateRisk — creditRestriction (fase informativa)', () => {
+    it('creditRestriction em enabledPhases nao altera o score', () => {
+        const form = { criminalFlag: 'POSITIVE', criminalSeverity: 'HIGH', laborFlag: 'NEGATIVE' };
+        const withCredit = calculateRisk(form, [...LEGACY_PHASES, 'creditRestriction']);
+        const withoutCredit = calculateRisk(form, [...LEGACY_PHASES]);
+        expect(withCredit).toEqual(withoutCredit);
+    });
+});
+
 describe('calculateRisk — casos limpos', () => {
     it('tudo NEGATIVE sem CPF pendente → score 0, GREEN, FIT', () => {
         const r = calculateRisk({

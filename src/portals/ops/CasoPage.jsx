@@ -89,7 +89,11 @@ function buildEscavador2InspectionData(process = {}) {
     };
 }
 
-const LEGACY_PHASES = Object.keys(DEFAULT_ANALYSIS_CONFIG);
+// Fallback de fases: apenas as habilitadas por padrao (exclui fases automaticas
+// default-OFF como creditRestriction)
+const LEGACY_PHASES = Object.entries(DEFAULT_ANALYSIS_CONFIG)
+    .filter(([, value]) => value?.enabled)
+    .map(([key]) => key);
 
 const CRIMINAL_OPTIONS = [
     'NEGATIVE',

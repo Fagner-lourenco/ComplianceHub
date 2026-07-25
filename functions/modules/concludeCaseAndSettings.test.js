@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { createRequire } from 'node:module';
 import {
   pickConcludePayload,
   pickDraftPayload,
@@ -6,6 +7,8 @@ import {
   normalizeNarrativeValue,
   syncPublicResultLatest,
 } from './concludeCaseAndSettings.js';
+
+const require = createRequire(import.meta.url);
 
 const mockFieldValue = {
   serverTimestamp: vi.fn(() => 'SERVER_TIMESTAMP'),
@@ -39,6 +42,12 @@ describe('concludeCaseAndSettings', () => {
       const config = { phaseA: {}, phaseB: {} };
       expect(normalizeNarrativeValue('enabledPhases', ['phaseA', 'invalid'], { defaultAnalysisConfig: config }))
         .toEqual(['phaseA']);
+    });
+
+    it('creditRestriction sobrevive ao filtro de enabledPhases com o default global', () => {
+      const { DEFAULT_ANALYSIS_CONFIG } = require('./_shared/analysisConfig');
+      expect(normalizeNarrativeValue('enabledPhases', ['criminal', 'creditRestriction'], { defaultAnalysisConfig: DEFAULT_ANALYSIS_CONFIG }))
+        .toEqual(['criminal', 'creditRestriction']);
     });
 
     it('normaliza keyFindings', () => {
