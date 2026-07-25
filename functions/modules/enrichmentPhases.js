@@ -250,7 +250,9 @@ function createEnrichmentPhases(deps) {
     const cpfStatusNormalized = (enrichmentIdentity?.cpfStatus || '').toUpperCase();
     const isCpfPending = cpfStatusNormalized.includes('PENDENTE');
     const nameSim = computeNameSimilarity(nameFromAPI, nameProvided);
-    const namePasses = minSim <= 0 || nameSim >= minSim;
+    // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+    const recordNotFound = !String(nameFromAPI || '').trim();
+    const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
     const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
     // Gate bloqueia APENAS por nome; CPF status e obito informativos
     const gatePassedFinal = namePasses;
@@ -667,7 +669,10 @@ function createEnrichmentPhases(deps) {
         const cpfStatusBDC = (updatePayload.bigdatacorpCpfStatus || '').toUpperCase();
         const isCpfPending = cpfStatusBDC.includes('PENDENTE');
         const nameSim = computeNameSimilarity(nameFromBDC, nameProvided);
-        const namePasses = minSim <= 0 || nameSim >= minSim;
+        // Cadastro nao localizado: BDC nao devolveu nome. Sem nome nao existe
+        // divergencia a comparar — gate passa e o alerta vai para o relatorio.
+        const recordNotFound = !String(nameFromBDC || '').trim();
+        const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
         const hasDeathRecord = updatePayload.bigdatacorpHasDeathRecord === true;
         // Gate bloqueia APENAS por divergencia de nome; CPF irregular/cancelado e
         // indicacao de obito ficam registrados como informativos (alertas no relatorio)
@@ -675,7 +680,9 @@ function createEnrichmentPhases(deps) {
 
         const gateReason = !namePasses
           ? `Similaridade insuficiente: ${nameSim.toFixed(2)} < ${minSim}`
-          : 'OK';
+          : recordNotFound
+            ? 'Cadastro nao localizado na base BigDataCorp (identidade nao confirmada)'
+            : 'OK';
 
         const bigdatacorpGateResult = {
           passed: gatePassed,
@@ -685,6 +692,7 @@ function createEnrichmentPhases(deps) {
           nameProvided,
           nameFound: nameFromBDC,
           hasDeathRecord,
+          recordNotFound,
           reason: gateReason,
           source: 'bigdatacorp-basicdata',
           consultedAt: new Date().toISOString(),
@@ -1037,7 +1045,9 @@ function createEnrichmentPhases(deps) {
           const nameProvided = caseData.candidateName || '';
           const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
           const nameSim = computeNameSimilarity(nameFromJudit, nameProvided);
-          const namePasses = minSim <= 0 || nameSim >= minSim;
+          // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+          const recordNotFound = !String(nameFromJudit || '').trim();
+          const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
           // Gate bloqueia APENAS por nome; cpfActive registrado como informativo
           const gatePassed = namePasses;
 
@@ -1106,7 +1116,9 @@ function createEnrichmentPhases(deps) {
               const nameProvided = caseData.candidateName || '';
               const minSim = juditConfig.gate?.minNameSimilarity ?? 0.7;
               const nameSim = computeNameSimilarity(nameFromFD, nameProvided);
-              const namePasses = minSim <= 0 || nameSim >= minSim;
+              // Sem nome retornado nao ha divergencia a comparar (ver gate BDC)
+              const recordNotFound = !String(nameFromFD || '').trim();
+              const namePasses = recordNotFound || minSim <= 0 || nameSim >= minSim;
               const hasDeathRecord = enrichmentIdentity?.hasDeathRecord === true;
               // Gate bloqueia APENAS por nome; CPF status e obito informativos
               const gatePassed = namePasses;

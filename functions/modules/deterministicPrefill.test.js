@@ -49,6 +49,13 @@ describe('deterministicPrefill', () => {
             expect(findings.some((f) => /CPF suspenso/i.test(f))).toBe(true);
         });
 
+        it('inclui alerta quando cadastro nao foi localizado na base', () => {
+            const findings = buildDetKeyFindings(buildMockCaseData({
+                bigdatacorpGateResult: { passed: true, recordNotFound: true },
+            }));
+            expect(findings.some((f) => /cadastro não localizado/i.test(f))).toBe(true);
+        });
+
         it('nao inclui alerta cadastral para CPF regular sem obito', () => {
             const findings = buildDetKeyFindings(buildMockCaseData({ bigdatacorpCpfStatus: 'REGULAR' }));
             expect(findings.some((f) => /óbito|CPF cancelado|CPF suspenso/i.test(f))).toBe(false);

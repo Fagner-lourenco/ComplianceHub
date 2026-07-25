@@ -53,6 +53,10 @@ function shouldReprocessCase(caseData = {}, { minNameSimilarity = DEFAULT_MIN_NA
     if (!gate || typeof gate.reason !== 'string') return { eligible: false, reason: 'missing_gate_result' };
     if (NAME_BLOCK_REASON_RE.test(gate.reason)) return { eligible: false, reason: 'blocked_by_name' };
     if (!REPROCESSABLE_REASON_RE.test(gate.reason)) return { eligible: false, reason: 'unknown_block_reason' };
+    // Cadastro nao localizado (BDC nao devolveu nome): gate novo passa — nao ha
+    // nome para divergir. nameSimilarity 0 nesses casos nao significa divergencia.
+    const recordNotFound = !String(gate.nameFound || '').trim();
+    if (recordNotFound) return { eligible: true, reason: 'ok_record_not_found' };
     const nameSim = Number(gate.nameSimilarity) || 0;
     const namePasses = minNameSimilarity <= 0 || nameSim >= minNameSimilarity;
     if (!namePasses) return { eligible: false, reason: 'name_would_block' };

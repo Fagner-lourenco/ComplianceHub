@@ -439,6 +439,27 @@ describe('runBigDataCorpEnrichmentPhase', () => {
       expect(caseRef._state.bigdatacorpHasDeathRecord).toBe(true);
     });
 
+    it('nao bloqueia quando BDC nao localiza cadastro (sem nome para comparar)', async () => {
+      const { mocks, ...deps } = makeBdcDeps();
+      mockBasicData(mocks, deps, {
+        bigdatacorpCpfStatus: null,
+        bigdatacorpName: null,
+      });
+      deps.helpers.computeNameSimilarity = vi.fn(() => 0);
+      const phases = createEnrichmentPhases(deps);
+      const caseRef = makeCaseRef();
+
+      const result = await phases.runBigDataCorpEnrichmentPhase(
+        caseRef, 'c1', { cpf: VALID_CPF, candidateName: 'KAIKY FELICIO DE ANDRADE' }, BDC_CONFIG,
+      );
+
+      expect(result.status).toBe('DONE');
+      expect(deps.returnCaseForIdentityGateBlock).not.toHaveBeenCalled();
+      expect(caseRef._state.bigdatacorpGateResult.passed).toBe(true);
+      expect(caseRef._state.bigdatacorpGateResult.recordNotFound).toBe(true);
+      expect(caseRef._state.bigdatacorpGateResult.reason).toMatch(/nao localizado/i);
+    });
+
     it('continua bloqueando por nome divergente', async () => {
       const { mocks, ...deps } = makeBdcDeps();
       mockBasicData(mocks, deps, {

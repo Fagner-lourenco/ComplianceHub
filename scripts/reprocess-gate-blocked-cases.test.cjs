@@ -32,12 +32,26 @@ describe('shouldReprocessCase', () => {
         expect(r.eligible).toBe(true);
     });
 
-    it('nao elegivel: nome re-bloquearia no gate novo (similaridade abaixo do limiar)', () => {
+    it('nao elegivel: nome re-bloquearia no gate novo (nome encontrado e divergente)', () => {
         const r = shouldReprocessCase(makeBlockedCase({
-            bigdatacorpGateResult: { passed: false, reason: 'CPF status ', nameSimilarity: 0 },
+            bigdatacorpGateResult: { passed: false, reason: 'CPF status ', nameSimilarity: 0.2, nameFound: 'OUTRA PESSOA' },
         }), { minNameSimilarity: 0.5 });
         expect(r.eligible).toBe(false);
         expect(r.reason).toBe('name_would_block');
+    });
+
+    it('elegivel: BDC nao localizou cadastro (nameFound vazio) — gate novo passa', () => {
+        const r = shouldReprocessCase(makeBlockedCase({
+            bigdatacorpGateResult: { passed: false, reason: 'CPF status ', nameSimilarity: 0, nameFound: '', cpfStatus: '' },
+        }), { minNameSimilarity: 0.5 });
+        expect(r.eligible).toBe(true);
+    });
+
+    it('elegivel: gate sem nameFound registrado e similaridade zero (cadastro ausente)', () => {
+        const r = shouldReprocessCase(makeBlockedCase({
+            bigdatacorpGateResult: { passed: false, reason: 'CPF status ', nameSimilarity: 0 },
+        }), { minNameSimilarity: 0.5 });
+        expect(r.eligible).toBe(true);
     });
 
     it('nao elegivel: bloqueio original por nome divergente', () => {
