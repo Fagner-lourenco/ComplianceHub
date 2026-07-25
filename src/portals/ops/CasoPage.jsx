@@ -2022,6 +2022,21 @@ export default function CasoPage() {
                 </div>
             )}
 
+            {caseData?.bigdatacorpHasDeathRecord === true && (
+                <div className="caso-alert caso-alert--danger" style={{ marginBottom: '16px', background: 'var(--red-50)', border: '1px solid var(--red-300)', color: 'var(--red-800)' }}>
+                    <strong>Alerta cadastral: indicativo de óbito</strong> — a base cadastral (Receita Federal) retornou indicação de óbito para este CPF. A análise não foi bloqueada; valide a identidade com atenção redobrada.
+                </div>
+            )}
+            {(() => {
+                const cpfStatusAlert = String(caseData?.bigdatacorpCpfStatus || '').trim().toUpperCase();
+                if (!cpfStatusAlert || cpfStatusAlert === 'REGULAR' || cpfStatusAlert.includes('PENDENTE')) return null;
+                return (
+                    <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>
+                        <strong>Alerta cadastral: CPF {cpfStatusAlert.toLowerCase()}</strong> — situação irregular na Receita Federal. Informativo: não bloqueia a análise.
+                    </div>
+                );
+            })()}
+
             {typeof caseData?.aiError === 'string' && /circuit breaker/i.test(caseData.aiError) && (
                 <div className="caso-alert caso-alert--warning" style={{ marginBottom: '16px', background: 'var(--yellow-50)', border: '1px solid var(--yellow-300)', color: 'var(--yellow-800)' }}>
                     <strong>Análise automática temporariamente indisponível</strong> — o circuit breaker foi acionado apos falhas consecutivas. A analise sera retentada automaticamente ou use o botao &quot;Tentar novamente&quot; no pipeline.

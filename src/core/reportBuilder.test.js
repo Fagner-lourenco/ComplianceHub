@@ -79,4 +79,23 @@ describe('reportBuilder consistency', () => {
         expect(buildBatchReportHtml([], 'Tenant')).toBe('');
         expect(buildBatchReportHtml(null, 'Tenant')).toBe('');
     });
+
+    describe('alertas de identidade (banner)', () => {
+        it('exibe banner vermelho de óbito', () => {
+            const html = buildCaseReportHtml({ ...mockCaseData, bigdatacorpHasDeathRecord: true });
+            expect(html).toContain('class="abox"');
+            expect(html).toContain('Indicativo de óbito');
+        });
+
+        it('exibe banner para CPF cancelado', () => {
+            const html = buildCaseReportHtml({ ...mockCaseData, bigdatacorpCpfStatus: 'CANCELADA' });
+            expect(html).toContain('class="abox"');
+            expect(html).toContain('CPF cancelado');
+        });
+
+        it('não exibe banner quando CPF regular e sem óbito', () => {
+            const html = buildCaseReportHtml({ ...mockCaseData, bigdatacorpCpfStatus: 'REGULAR' });
+            expect(html).not.toContain('class="abox"');
+        });
+    });
 });
