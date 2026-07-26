@@ -1,6 +1,6 @@
 /* Report builder — standalone HTML for print / PDF export */
 
-export const REPORT_BUILD_VERSION = 6;
+export const REPORT_BUILD_VERSION = 7;
 
 function esc(str) {
     if (str === null || str === undefined) return '';
@@ -113,6 +113,12 @@ function fieldHtml(label, value) {
 
 function badge(value, label) {
     return `<span class="b b--${flagColor(value)}">${esc(label)}</span>`;
+}
+
+function formatBRLValue(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return '';
+    return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function maskCpfValue(value) {
@@ -279,6 +285,8 @@ function buildCaseBody(c, cd, generatedAt) {
         if (creditDetails.activeNegativeAppointments > 0) creditTags.push(`Negativações ativas: ${creditDetails.activeNegativeAppointments}`);
         if (creditDetails.registeredProtests > 0) creditTags.push(`Protestos: ${creditDetails.registeredProtests}`);
         if (creditDetails.inactiveNegativeAppointments > 0) creditTags.push(`Negativações inativas: ${creditDetails.inactiveNegativeAppointments}`);
+        if (creditDetails.lawsuitsAppointments > 0) creditTags.push(`Ações judiciais: ${creditDetails.lawsuitsAppointments}`);
+        if (creditDetails.indebtednessValue > 0) creditTags.push(`Dívida: ${formatBRLValue(creditDetails.indebtednessValue)}`);
         rows.push(phaseRow('💳','Crédito e Restrições',badge(c.creditRestrictionFlag,CREDIT_LABEL[c.creditRestrictionFlag]||c.creditRestrictionFlag),null,c.creditRestrictionSummary,creditTags,flagColor(c.creditRestrictionFlag)));
     }
 

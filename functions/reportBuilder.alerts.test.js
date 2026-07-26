@@ -56,6 +56,22 @@ describe('reportBuilder.cjs — fase Crédito e Restrições', () => {
         expect(html).toContain('Restrições de crédito ativas');
     });
 
+    it('exibe tags de dívida e ações judiciais quando a Quod detalha', () => {
+        const html = buildCaseReportHtml({
+            ...creditCase,
+            creditRestrictionDetails: {
+                activeNegativeAppointments: 2,
+                registeredProtests: 0,
+                lawsuitsAppointments: 1,
+                indebtednessValue: 7606.02,
+                negativeAppointments: [{ nature: 'FI', amount: 7470.93, status: 'A', referenceDate: '2021-11-03T00:00:00' }],
+                lawsuitAppointments: [{ processType: 'EXECUCAO DE TITULO EXTRAJUDICIAL', author: 'BANCO BRADESCO S/A', justiceType: 'ESTADUAL', amount: 0, referenceDate: '2022-07-29T00:00:00' }],
+            },
+        });
+        expect(html).toContain('Ações judiciais: 1');
+        expect(html).toMatch(/Dívida: R\$/);
+    });
+
     it('CLEAN renderiza verde com label Sem restrições', () => {
         const html = buildCaseReportHtml({
             ...creditCase,

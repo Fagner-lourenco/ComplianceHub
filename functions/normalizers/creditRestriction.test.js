@@ -130,6 +130,78 @@ describe('normalizeCreditRestriction — payload real da BDC', () => {
         expect(result.creditRestrictionDetails.inquiriesMore90Days).toBe(2);
     });
 
+    // Segundo payload REAL (2026-07-25): CPF com restricoes. Traz campos que a doc
+    // nao mostrava — detalhamento de negativacoes e de acoes judiciais.
+    const REAL_QUOD_RESTRICTED = {
+        HasMinRegister: false,
+        HasNegativeIndicator: true,
+        HasInquiryIndicator: true,
+        TotalIndebtednessValue: 7606.02,
+        TotalActiveNegativeAppointments: 2,
+        TotalInactiveNegativeAppointments: 0,
+        TotalNegativeAppointmentsByNature: { CT: 1, FI: 1 },
+        NegativeAppointmentsDetails: [
+            { Nature: 'CT', Amount: 135.09, Status: 'A', ReferenceDate: '2026-03-12T00:00:00' },
+            { Nature: 'FI', Amount: 7470.93, Status: 'A', ReferenceDate: '2021-11-03T00:00:00' },
+        ],
+        TotalLawsuitsAppointments: 1,
+        TotalLawsuitsAppointmentsByProcessType: { 'EXECUCAO DE TITULO EXTRAJUDICIAL': 1 },
+        LawsuitsAppointmentsDetails: [
+            { ProcessType: 'EXECUCAO DE TITULO EXTRAJUDICIAL', ProcessAuthor: 'BANCO BRADESCO S/A', JusticeType: 'ESTADUAL', Amount: 0, ReferenceDate: '2022-07-29T00:00:00' },
+        ],
+        TotalAmountMoneyOfReceivedLawsuits: 0,
+        LastNegativeAppointmentDate: '2026-06-04T00:00:00',
+        TotalRegisteredProtests: 0,
+        TotalInquiriesLast30Days: 0,
+        TotalInquiriesMore90Days: 2,
+    };
+
+    it('CPF com restricoes → RESTRICTED com detalhamento de negativacoes e acoes judiciais', () => {
+        const result = normalizeCreditRestriction({
+            quodRisk: { ok: true, data: REAL_QUOD_RESTRICTED },
+            quantumScore: { ok: false, score: null, statusCode: -1200 },
+        });
+
+        expect(result.creditRestrictionFlag).toBe('RESTRICTED');
+        expect(result.creditQuantumScore).toBeNull();
+
+        const d = result.creditRestrictionDetails;
+        expect(d.negativeAppointments).toHaveLength(2);
+        expect(d.negativeAppointments[0]).toEqual({ nature: 'FI', amount: 7470.93, status: 'A', referenceDate: '2021-11-03T00:00:00' });
+        expect(d.lawsuitAppointments).toHaveLength(1);
+        expect(d.lawsuitAppointments[0]).toEqual({
+            processType: 'EXECUCAO DE TITULO EXTRAJUDICIAL',
+            author: 'BANCO BRADESCO S/A',
+            justiceType: 'ESTADUAL',
+            amount: 0,
+            referenceDate: '2022-07-29T00:00:00',
+        });
+        expect(d.lastNegativeAppointmentDate).toBe('2026-06-04T00:00:00');
+
+        expect(result.creditRestrictionSummary).toMatch(/R\$\s?7\.606,02/);
+        expect(result.creditRestrictionSummary).toMatch(/EXECUCAO DE TITULO EXTRAJUDICIAL/i);
+        expect(result.creditRestrictionSummary).toMatch(/BANCO BRADESCO/i);
+    });
+
+    it('ordena negativacoes por valor e limita a 5', () => {
+        const many = Array.from({ length: 8 }, (_, i) => ({ Nature: 'FI', Amount: (i + 1) * 100, Status: 'A', ReferenceDate: '2025-01-01T00:00:00' }));
+        const result = normalizeCreditRestriction({
+            quodRisk: { ok: true, data: { ...REAL_QUOD_RESTRICTED, NegativeAppointmentsDetails: many } },
+            quantumScore: { ok: false, score: null },
+        });
+        expect(result.creditRestrictionDetails.negativeAppointments).toHaveLength(5);
+        expect(result.creditRestrictionDetails.negativeAppointments[0].amount).toBe(800);
+    });
+
+    it('payload sem os campos de detalhe (contrato antigo) nao quebra', () => {
+        const result = normalizeCreditRestriction({
+            quodRisk: { ok: true, data: REAL_QUOD },
+            quantumScore: { ok: true, score: '718' },
+        });
+        expect(result.creditRestrictionDetails.negativeAppointments).toEqual([]);
+        expect(result.creditRestrictionDetails.lawsuitAppointments).toEqual([]);
+    });
+
     it('mesmo payload com negativacao ativa → RESTRICTED', () => {
         const result = normalizeCreditRestriction({
             quodRisk: { ok: true, data: { ...REAL_QUOD, HasNegativeIndicator: true, TotalActiveNegativeAppointments: 2, TotalIndebtednessValue: 4530.77 } },

@@ -54,6 +54,48 @@ function formatBRL(value) {
     return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function formatRefDate(value) {
+    if (!value) return null;
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return `${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+}
+
+/**
+ * Frases com o detalhamento das restricoes (maior debito e acoes judiciais),
+ * quando a Quod devolve as listas NegativeAppointmentsDetails/LawsuitsAppointmentsDetails.
+ */
+function describeAppointments(details) {
+    const lines = [];
+
+    const negatives = Array.isArray(details?.negativeAppointments) ? details.negativeAppointments : [];
+    if (negatives.length > 0) {
+        const top = negatives[0];
+        const amount = formatBRL(top.amount);
+        const when = formatRefDate(top.referenceDate);
+        if (amount) {
+            lines.push(`Maior débito negativado: ${amount}${top.nature ? ` (natureza ${top.nature})` : ''}${when ? ` desde ${when}` : ''}.`);
+        }
+    }
+
+    const lawsuits = Array.isArray(details?.lawsuitAppointments) ? details.lawsuitAppointments : [];
+    if (lawsuits.length > 0) {
+        const described = lawsuits.slice(0, 3).map((item) => {
+            const pieces = [item.processType || 'Ação judicial'];
+            if (item.author) pieces.push(`autor: ${item.author}`);
+            const when = formatRefDate(item.referenceDate);
+            if (when) pieces.push(when);
+            return pieces.join(' — ');
+        });
+        lines.push(`Ações judiciais de cobrança: ${described.join('; ')}.`);
+    }
+
+    const lastNegative = formatRefDate(details?.lastNegativeAppointmentDate);
+    if (lastNegative) lines.push(`Última negativação registrada em ${lastNegative}.`);
+
+    return lines;
+}
+
 function buildCreditRestrictionSummary(flag, details, quantumScore) {
     const parts = [];
     if (flag === 'NOT_AVAILABLE') {
@@ -65,11 +107,13 @@ function buildCreditRestrictionSummary(flag, details, quantumScore) {
         parts.push(`Restrições de crédito ativas${items.length ? `: ${items.join(', ')}` : ''}.`);
         const debt = formatBRL(details?.indebtednessValue);
         if (debt) parts.push(`Dívidas pendentes: ${debt}.`);
+        parts.push(...describeAppointments(details));
     } else if (flag === 'ATTENTION') {
         const items = [];
         if (toCount(details?.inactiveNegativeAppointments) > 0) items.push(`${details.inactiveNegativeAppointments} negativação(ões) inativa(s)`);
         if (toCount(details?.lawsuitsAppointments) > 0) items.push(`${details.lawsuitsAppointments} apontamento(s) judicial(is)`);
         parts.push(`Sem restrições ativas; histórico encontrado${items.length ? `: ${items.join(', ')}` : ''}.`);
+        parts.push(...describeAppointments(details));
     } else {
         parts.push('Sem restrições de crédito ativas na base Quod.');
     }
@@ -79,10 +123,44 @@ function buildCreditRestrictionSummary(flag, details, quantumScore) {
     return parts.join(' ');
 }
 
+// Maximo de itens detalhados persistidos por lista (evita doc gigante no caso)
+const MAX_DETAIL_ITEMS = 5;
+
+function buildNegativeAppointments(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => ({
+            nature: item.Nature || null,
+            amount: Number(item.Amount) || 0,
+            status: item.Status || null,
+            referenceDate: item.ReferenceDate && item.ReferenceDate !== QUOD_EMPTY_DATE ? item.ReferenceDate : null,
+        }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, MAX_DETAIL_ITEMS);
+}
+
+function buildLawsuitAppointments(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => ({
+            processType: item.ProcessType || null,
+            author: item.ProcessAuthor || null,
+            justiceType: item.JusticeType || null,
+            amount: Number(item.Amount) || 0,
+            referenceDate: item.ReferenceDate && item.ReferenceDate !== QUOD_EMPTY_DATE ? item.ReferenceDate : null,
+        }))
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, MAX_DETAIL_ITEMS);
+}
+
 function buildDetails(quodData) {
     if (!quodData || typeof quodData !== 'object') return null;
     const lastNegative = quodData.LastNegativeAppointmentDate;
     return {
+        negativeAppointments: buildNegativeAppointments(quodData.NegativeAppointmentsDetails),
+        lawsuitAppointments: buildLawsuitAppointments(quodData.LawsuitsAppointmentsDetails),
         hasMinRegister: quodData.HasMinRegister === true,
         hasNegativeIndicator: quodData.HasNegativeIndicator === true,
         hasInquiryIndicator: quodData.HasInquiryIndicator === true,
