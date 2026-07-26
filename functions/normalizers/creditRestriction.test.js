@@ -97,6 +97,51 @@ describe('buildCreditRestrictionSummary', () => {
     });
 });
 
+// Payload REAL capturado da BDC em 2026-07-25 (CPF e TransactionID removidos).
+// Trava o contrato do /marketplace contra mudancas silenciosas de shape.
+describe('normalizeCreditRestriction — payload real da BDC', () => {
+    const REAL_QUOD = {
+        HasMinRegister: false,
+        HasNegativeIndicator: false,
+        HasInquiryIndicator: true,
+        TotalIndebtednessValue: 0,
+        TotalActiveNegativeAppointments: 0,
+        TotalInactiveNegativeAppointments: 0,
+        TotalLawsuitsAppointments: 0,
+        LastNegativeAppointmentDate: '0001-01-01T00:00:00',
+        TotalRegisteredProtests: 0,
+        TotalInquiriesLast30Days: 0,
+        TotalInquiriesLast60Days: 0,
+        TotalInquiriesLast90Days: 0,
+        TotalInquiriesMore90Days: 2,
+        TotalInquiriesBySegment: { 'Instituições Financeiras': 1 },
+    };
+
+    it('CPF sem restricoes → CLEAN com score e resumo', () => {
+        const result = normalizeCreditRestriction({
+            quodRisk: { ok: true, data: REAL_QUOD },
+            quantumScore: { ok: true, score: '718' },
+        });
+
+        expect(result.creditRestrictionFlag).toBe('CLEAN');
+        expect(result.creditQuantumScore).toBe(718);
+        expect(result.creditRestrictionSummary).toContain('718');
+        expect(result.creditRestrictionDetails.lastNegativeAppointmentDate).toBeNull();
+        expect(result.creditRestrictionDetails.inquiriesMore90Days).toBe(2);
+    });
+
+    it('mesmo payload com negativacao ativa → RESTRICTED', () => {
+        const result = normalizeCreditRestriction({
+            quodRisk: { ok: true, data: { ...REAL_QUOD, HasNegativeIndicator: true, TotalActiveNegativeAppointments: 2, TotalIndebtednessValue: 4530.77 } },
+            quantumScore: { ok: true, score: '412' },
+        });
+
+        expect(result.creditRestrictionFlag).toBe('RESTRICTED');
+        expect(result.creditRestrictionSummary).toMatch(/2 negativa/);
+        expect(result.creditRestrictionSummary).toMatch(/R\$/);
+    });
+});
+
 describe('normalizeCreditRestriction', () => {
     it('monta payload completo com quod + quantum ok', () => {
         const result = normalizeCreditRestriction({
