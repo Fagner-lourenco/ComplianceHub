@@ -94,6 +94,7 @@ export const ACTION_LABELS = {
     // Processing
     ENRICHMENT_PHASE_RERUN: { label: 'Enriquecimento re-executado', category: CATEGORY.PROCESSING },
     ENRICHMENT_AUTO_TRIGGERED: { label: 'Enriquecimento automático', category: CATEGORY.PROCESSING },
+    ENRICHMENT_WATCHDOG_TIMEOUT: { label: 'Watchdog encerrou fase sem retorno', category: CATEGORY.PROCESSING },
 
     // Quota / limits
     DAILY_LIMIT_EXCEEDED: { label: 'Limite diario excedido', category: CATEGORY.SETTINGS },

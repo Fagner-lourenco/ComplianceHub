@@ -300,6 +300,13 @@ const AUDIT_ACTIONS = {
         clientVisible: false,
         summaryTemplate: 'Enriquecimento automatico {phase} executado para {candidateName} — {status}',
     },
+    ENRICHMENT_WATCHDOG_TIMEOUT: {
+        category: CATEGORY.PROCESSING,
+        level: LEVEL.WARNING,
+        entityType: ENTITY_TYPE.CASE,
+        clientVisible: false,
+        summaryTemplate: 'Watchdog encerrou a fase {phase} sem retorno para {candidateName}',
+    },
 
     // ─── Quota / limits ──────────────────────────────────────────────────────
     DAILY_LIMIT_EXCEEDED: {

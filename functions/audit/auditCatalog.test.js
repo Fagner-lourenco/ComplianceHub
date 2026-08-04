@@ -48,8 +48,8 @@ describe('auditCatalog', () => {
     describe('AUDIT_ACTIONS — schema validation', () => {
         const actionEntries = Object.entries(AUDIT_ACTIONS);
 
-        it('tem 34 acoes registradas', () => {
-            expect(actionEntries).toHaveLength(34);
+        it('tem 35 acoes registradas', () => {
+            expect(actionEntries).toHaveLength(35);
         });
 
         it.each(actionEntries)('%s tem todos os campos obrigatorios', (_key, action) => {

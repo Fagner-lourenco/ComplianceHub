@@ -2016,3 +2016,15 @@ exports.autoExpireCorrections = createAutoExpireCorrectionsScheduler({
     createSystemCaseMessage: caseCommunication.createSystemCaseMessage,
     writeAuditEvent,
 });
+
+/* =========================================================
+   WATCHDOG DE ENRIQUECIMENTO — destrava casos presos em RUNNING
+   Agenda: a cada 15 minutos | Janela: 45 min sem progresso
+   ========================================================= */
+
+const { createEnrichmentWatchdogScheduler } = require('./modules/enrichmentWatchdog');
+exports.enrichmentWatchdog = createEnrichmentWatchdogScheduler({
+    db,
+    maybeRunAutoClassifyAndAi,
+    writeAuditEvent,
+});
