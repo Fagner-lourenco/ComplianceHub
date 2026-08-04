@@ -49,7 +49,10 @@ function shouldUnstickCase(caseData = {}, { minAgeMinutes = DEFAULT_MIN_AGE_MINU
     if (!ACTIONABLE_CASE_STATUSES.includes(caseData.status)) {
         return { eligible: false, reason: `case_status_${caseData.status || 'desconhecido'}` };
     }
-    const reference = caseData.updatedAt || caseData.createdAt;
+    // Mesmo relogio do watchdog (functions/modules/enrichmentWatchdog.js):
+    // escavador2StartedAt mede a duracao DA FASE; updatedAt seria bumpado por
+    // qualquer write no caso e mediria ociosidade do documento.
+    const reference = caseData.escavador2StartedAt || caseData.updatedAt || caseData.createdAt;
     if (!reference) return { eligible: false, reason: 'sem_timestamp' };
     const ageMinutes = (now - new Date(reference).getTime()) / 60000;
     if (!Number.isFinite(ageMinutes)) return { eligible: false, reason: 'timestamp_invalido' };

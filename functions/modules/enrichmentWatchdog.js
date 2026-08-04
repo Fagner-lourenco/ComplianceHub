@@ -16,18 +16,45 @@ const { FieldValue } = require('firebase-admin/firestore');
 const { asDate } = require('../helpers/normalize');
 const { ACTOR_TYPE, SOURCE } = require('../audit/auditCatalog');
 const { recordFailure: defaultRecordFailure } = require('../helpers/circuitBreaker');
+const { escavador2RunDocId } = require('./escavador2AsyncCallback');
 
 /** Janela sem progresso a partir da qual consideramos o provedor travado. */
 const STUCK_AFTER_MINUTES = 45;
+/**
+ * Janela do fallback para documentos legados (sem escavador2StartedAt), medida a
+ * partir de createdAt. Bem mais folgada porque createdAt e o inicio do caso, nao
+ * o inicio da fase — 6h nao mata pipeline legitimo (escavador2 e a ultima fase)
+ * e ainda destrava no mesmo dia.
+ */
+const LEGACY_STUCK_AFTER_MINUTES = 6 * 60;
 const WATCHDOG_BATCH_LIMIT = 200;
 
 /** Estados do caso em que ainda faz sentido destravar. */
 const ACTIONABLE_CASE_STATUSES = ['PENDING', 'IN_PROGRESS', 'WAITING_INFO'];
 
+/**
+ * Relogio do watchdog: mede a duracao DA FASE, nao a ociosidade do documento.
+ *
+ * `updatedAt` seria errado — ele e bumpado por qualquer write no caso (outras
+ * fases de enriquecimento, IA, edicao do analista), entao num caso movimentado a
+ * janela nunca fecharia e o caso ficaria travado para sempre.
+ *
+ * Duas faixas: `escavador2StartedAt` (gravado ao entrar em RUNNING) com a janela
+ * normal; ausente (docs anteriores a esta versao) cai para `createdAt`, que e
+ * imutavel — logo imune ao churn que causava o bug —, com janela folgada.
+ */
+function resolveStuckClock(caseData) {
+    const started = caseData.escavador2StartedAt ? asDate(caseData.escavador2StartedAt) : null;
+    if (started) return { since: started, windowMinutes: null };
+
+    const created = caseData.createdAt ? asDate(caseData.createdAt) : null;
+    if (created) return { since: created, windowMinutes: LEGACY_STUCK_AFTER_MINUTES };
+
+    return { since: null, windowMinutes: null };
+}
+
 function parseWhen(caseData) {
-    const raw = caseData.updatedAt || caseData.createdAt || null;
-    if (!raw) return null;
-    return asDate(raw);
+    return resolveStuckClock(caseData).since;
 }
 
 /**
@@ -37,11 +64,45 @@ function selectStuckEnrichmentCases(cases = [], { now = new Date(), stuckAfterMi
     return cases.filter((caseData) => {
         if (caseData.escavador2EnrichmentStatus !== 'RUNNING') return false;
         if (!ACTIONABLE_CASE_STATUSES.includes(caseData.status)) return false;
-        const since = parseWhen(caseData);
+        const { since, windowMinutes } = resolveStuckClock(caseData);
         if (!since) return false;
         const elapsedMinutes = (now.getTime() - since.getTime()) / 60000;
-        return elapsedMinutes >= stuckAfterMinutes;
+        return elapsedMinutes >= (windowMinutes ?? stuckAfterMinutes);
     });
+}
+
+/** Status da task que indicam desfecho ja registrado. */
+const TASK_TERMINAL_STATUSES = ['DONE', 'PARTIAL', 'FAILED', 'STALE', 'SKIPPED'];
+
+/**
+ * Decisao pura do watchdog, avaliada DENTRO da transacao com os dados frescos.
+ * Fecha a corrida com o callback: entre a query e a escrita, um callback legitimo
+ * pode ter concluido o caso — sobrescrever isso destruiria dado bom.
+ */
+function decideWatchdogAction({ caseData, taskData }) {
+    if (!caseData) return { act: false, reason: 'case_not_found' };
+    if (caseData.escavador2EnrichmentStatus !== 'RUNNING') return { act: false, reason: 'not_running' };
+    if (taskData) {
+        if (taskData.processedAt) return { act: false, reason: 'already_processed' };
+        if (TASK_TERMINAL_STATUSES.includes(taskData.status)) return { act: false, reason: 'already_processed' };
+    }
+    // Task inexistente: a falha pode ter acontecido antes do registerEscavador2Task
+    // (entre marcar RUNNING e enfileirar). Agir mesmo assim.
+    return { act: true, reason: 'stuck' };
+}
+
+/**
+ * Marca a task como STALE — nao FAILED: significa "desistimos desta execucao",
+ * nao "o provedor falhou". Como STALE esta na lista de ja-processados do callback,
+ * um retorno atrasado passa a ser ignorado em vez de reescrever o caso.
+ */
+function buildStuckTaskPayload(fieldValue) {
+    return {
+        status: 'STALE',
+        staleReason: 'watchdog_timeout',
+        staleAt: fieldValue.serverTimestamp(),
+        processedAt: fieldValue.serverTimestamp(),
+    };
 }
 
 function buildStuckUpdatePayload(fieldValue, stuckMinutes) {
@@ -87,12 +148,35 @@ async function runEnrichmentWatchdogSweep(deps, now = new Date()) {
     console.warn(`[enrichmentWatchdog] ${stuck.length} caso(s) travado(s) no escavador2 ha mais de ${stuckAfterMinutes} min.`);
 
     let closed = 0;
+    let skipped = 0;
     for (const caseData of stuck) {
         const caseRef = db.collection('cases').doc(caseData.id);
+        const taskRef = db.collection('escavador2Tasks')
+            .doc(escavador2RunDocId(caseData.id, caseData.enrichmentGeneration || 0));
         const since = parseWhen(caseData);
         const stuckMinutes = since ? (now.getTime() - since.getTime()) / 60000 : stuckAfterMinutes;
         try {
-            await caseRef.update(buildStuckUpdatePayload(FieldValue, stuckMinutes));
+            // Transacional: reavalia com dados frescos e reconcilia a task, para
+            // nao sobrescrever um callback que concluiu o caso nesse meio-tempo.
+            const decision = await db.runTransaction(async (transaction) => {
+                const caseSnap = await transaction.get(caseRef);
+                const taskSnap = await transaction.get(taskRef);
+                const fresh = caseSnap.exists ? caseSnap.data() : null;
+                const taskData = taskSnap.exists ? taskSnap.data() : null;
+
+                const verdict = decideWatchdogAction({ caseData: fresh, taskData });
+                if (!verdict.act) return verdict;
+
+                transaction.update(caseRef, buildStuckUpdatePayload(FieldValue, stuckMinutes));
+                if (taskData) transaction.update(taskRef, buildStuckTaskPayload(FieldValue));
+                return verdict;
+            });
+
+            if (!decision.act) {
+                skipped += 1;
+                console.log(`[enrichmentWatchdog] ${caseData.id} ignorado: ${decision.reason}.`);
+                continue;
+            }
             closed += 1;
 
             // Alimenta o circuit breaker: um timeout do watchdog e um desfecho
@@ -124,7 +208,7 @@ async function runEnrichmentWatchdogSweep(deps, now = new Date()) {
         }
     }
 
-    return { swept: cases.length, stuck: stuck.length, closed };
+    return { swept: cases.length, stuck: stuck.length, closed, skipped };
 }
 
 function createEnrichmentWatchdogScheduler(deps) {
@@ -139,5 +223,9 @@ module.exports = {
     runEnrichmentWatchdogSweep,
     selectStuckEnrichmentCases,
     buildStuckUpdatePayload,
+    buildStuckTaskPayload,
+    decideWatchdogAction,
+    resolveStuckClock,
     STUCK_AFTER_MINUTES,
+    LEGACY_STUCK_AFTER_MINUTES,
 };

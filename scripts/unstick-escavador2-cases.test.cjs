@@ -56,6 +56,11 @@ describe('shouldUnstickCase', () => {
         }
     });
 
+    it('prioriza escavador2StartedAt sobre updatedAt', () => {
+        const c = makeCase({ escavador2StartedAt: minutesAgo(90), updatedAt: minutesAgo(1) });
+        expect(shouldUnstickCase(c, { now: NOW }).eligible).toBe(true);
+    });
+
     it('usa createdAt quando nao ha updatedAt', () => {
         const c = makeCase({ updatedAt: undefined, createdAt: minutesAgo(90) });
         expect(shouldUnstickCase(c, { now: NOW }).eligible).toBe(true);

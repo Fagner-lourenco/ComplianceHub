@@ -1739,6 +1739,10 @@ function createEnrichmentPhases(deps) {
     const runningUpdate = {
       escavador2EnrichmentStatus: 'RUNNING',
       escavador2Error: null,
+      // Marca o inicio DA FASE para o watchdog. Nao usar updatedAt como relogio:
+      // ele e bumpado por qualquer write no caso, entao mediria ociosidade do
+      // documento e um caso movimentado nunca fecharia a janela.
+      escavador2StartedAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
     for (const field of [

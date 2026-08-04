@@ -1443,7 +1443,7 @@ exports.rerunEnrichmentPhase = onCall(
                 'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
                 'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
                 'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
-                'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
+                'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt', 'escavador2StartedAt',
                 'creditSkippedReason', 'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary',
                 'creditRestrictionDetails', 'creditSources', 'creditCostBRL', 'creditElapsedMs',
                 'creditQueryDate', 'creditEnrichedAt',
@@ -1536,7 +1536,7 @@ exports.rerunEnrichmentPhase = onCall(
             'escavador2MaterialRiskCount', 'escavador2CnjMaskedCount', 'escavador2CnjExtractedCount',
             'escavador2DuplicateCount', 'escavador2NewFindingCount', 'escavador2HasNewMaterialRisk',
             'escavador2Notes', 'escavador2PartialErrors', 'escavador2Stats', 'escavador2Sources',
-            'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt',
+            'escavador2RawPayloads', 'escavador2CostBRL', 'escavador2EnrichedAt', 'escavador2StartedAt',
         ];
         const creditDataFields = [
             'creditSkippedReason', 'creditRestrictionFlag', 'creditQuantumScore', 'creditRestrictionSummary',

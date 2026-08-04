@@ -487,6 +487,7 @@ function submitClientCorrectionHandler(deps) {
             escavador2RawPayloads: FieldValue.delete(),
             escavador2CostBRL: FieldValue.delete(),
             escavador2EnrichedAt: FieldValue.delete(),
+            escavador2StartedAt: FieldValue.delete(),
             // Reset da fase automatica de credito (so quando habilitada no caso).
             // Flag/score/summary/details ja sao removidos pelo buildResetPublishedCaseFields
             // (RESULT_ONLY_FIELDS); aqui resetamos status + campos fora da whitelist.
