@@ -6,6 +6,10 @@ const {
     ESCAVADOR2_PERSISTED_MAX_BYTES,
 } = require('../normalizers/escavador2');
 const { deduplicateEscavador2Findings: defaultDeduplicateEscavador2Findings } = require('../helpers/deduplicateEscavador2');
+const {
+    recordSuccess: defaultRecordSuccess,
+    recordFailure: defaultRecordFailure,
+} = require('../helpers/circuitBreaker');
 
 function escavador2RunDocId(caseId, enrichmentGeneration) {
     return encodeURIComponent(`${String(caseId || '').trim()}:${Number(enrichmentGeneration || 0)}`);
@@ -87,6 +91,30 @@ function buildAutoClassifyContext(caseData, caseRef, caseId, reason) {
     return { caseRef, caseId, reason };
 }
 
+/**
+ * Alimenta o circuit breaker do escavador2 com o desfecho do callback.
+ * FAILED conta como falha; DONE/PARTIAL/SKIPPED contam como sucesso (o provedor
+ * respondeu). Nunca propaga erro: indisponibilidade do systemHealth nao pode
+ * derrubar um callback que ja persistiu o resultado.
+ */
+async function recordEscavador2CircuitOutcome(resultBody, { recordSuccess, recordFailure, body = {} }) {
+    if (!resultBody || resultBody.ignored) return;
+    const status = resultBody.status;
+    if (!status) return;
+
+    try {
+        if (status === 'FAILED') {
+            if (recordFailure) {
+                await recordFailure('escavador2', String(body.error || 'Falha reportada pelo worker Escavador2.').slice(0, 300));
+            }
+        } else if (recordSuccess) {
+            await recordSuccess('escavador2');
+        }
+    } catch (err) {
+        console.warn(`[Escavador2] Falha ao atualizar circuit breaker: ${err.message}`);
+    }
+}
+
 function isFirestoreDocumentSizeError(error) {
     const message = String(error?.message || '');
     return /document.{0,80}(?:exceeds|too large|maximum size|1048576|1\s*MiB)|(?:maximum size|1048576|1\s*MiB).{0,80}document|longer than 1048487 bytes|entity too large/i.test(message);
@@ -102,6 +130,8 @@ async function handleEscavador2CallbackLogic({
     buildMinimalEscavador2Persistence = defaultBuildMinimalEscavador2Persistence,
     enforceEscavador2PersistedBudget = defaultEnforceEscavador2PersistedBudget,
     maybeRunAutoClassifyAndAi,
+    recordSuccess = defaultRecordSuccess,
+    recordFailure = defaultRecordFailure,
 }) {
     if (req.method && req.method !== 'POST') {
         return { status: 405, body: { ok: false, error: 'method_not_allowed' } };
@@ -240,6 +270,13 @@ async function handleEscavador2CallbackLogic({
         transactionResult = await runCallbackTransaction(true);
     }
     const { result, autoClassify } = transactionResult;
+
+    // Circuit breaker: o caminho assincrono e o unico usado em producao, mas ate
+    // aqui nenhum desfecho dele chegava ao breaker — durante um outage do provedor
+    // ele permanecia fechado e o sistema seguia enfileirando consulta condenada.
+    // Callbacks ignorados (ja processados / geracao obsoleta / caso inexistente)
+    // nao representam desfecho novo e nao contam.
+    await recordEscavador2CircuitOutcome(result?.body, { recordSuccess, recordFailure, body });
 
     if (autoClassify && maybeRunAutoClassifyAndAi) {
         await maybeRunAutoClassifyAndAi(autoClassify.caseRef, autoClassify.caseId, autoClassify.reason);

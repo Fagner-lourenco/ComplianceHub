@@ -90,6 +90,66 @@ describe('selectStuckEnrichmentCases', () => {
     });
 });
 
+describe('runEnrichmentWatchdogSweep', () => {
+    const { runEnrichmentWatchdogSweep } = require('./enrichmentWatchdog');
+
+    function makeDeps(caseDocs) {
+        const updates = [];
+        const db = {
+            collection: () => ({
+                where: () => ({
+                    limit: () => ({
+                        get: async () => ({
+                            size: caseDocs.length,
+                            docs: caseDocs.map((d) => ({ id: d.id, data: () => d })),
+                        }),
+                    }),
+                }),
+                doc: (id) => ({ update: async (payload) => { updates.push({ id, payload }); } }),
+            }),
+        };
+        return {
+            updates,
+            deps: {
+                db,
+                maybeRunAutoClassifyAndAi: vi.fn(async () => {}),
+                writeAuditEvent: vi.fn(async () => {}),
+                recordFailure: vi.fn(async () => {}),
+            },
+        };
+    }
+
+    it('registra falha no circuito ao encerrar caso travado', async () => {
+        const { deps, updates } = makeDeps([makeCase({ id: 'c1', tenantId: 't1' })]);
+        const result = await runEnrichmentWatchdogSweep(deps, NOW);
+
+        expect(result.closed).toBe(1);
+        expect(updates[0].payload.escavador2EnrichmentStatus).toBe('FAILED');
+        expect(deps.recordFailure).toHaveBeenCalledWith('escavador2', expect.stringMatching(/watchdog/i));
+        expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
+    });
+
+    it('nao registra falha quando nao ha caso travado', async () => {
+        const { deps } = makeDeps([makeCase({ id: 'c1', updatedAt: minutesAgo(2) })]);
+        const result = await runEnrichmentWatchdogSweep(deps, NOW);
+
+        expect(result.stuck).toBe(0);
+        expect(deps.recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('falha do circuito nao impede o destrave do caso', async () => {
+        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const { deps, updates } = makeDeps([makeCase({ id: 'c1', tenantId: 't1' })]);
+        deps.recordFailure = vi.fn(async () => { throw new Error('systemHealth fora'); });
+
+        const result = await runEnrichmentWatchdogSweep(deps, NOW);
+
+        expect(result.closed).toBe(1);
+        expect(updates[0].payload.escavador2EnrichmentStatus).toBe('FAILED');
+        consoleSpy.mockRestore();
+    });
+});
+
 describe('buildStuckUpdatePayload', () => {
     it('marca escavador2 como FAILED com motivo auditavel', () => {
         const payload = buildStuckUpdatePayload({ serverTimestamp: () => 'TS' }, 95);

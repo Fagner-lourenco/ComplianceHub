@@ -15,6 +15,7 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { FieldValue } = require('firebase-admin/firestore');
 const { asDate } = require('../helpers/normalize');
 const { ACTOR_TYPE, SOURCE } = require('../audit/auditCatalog');
+const { recordFailure: defaultRecordFailure } = require('../helpers/circuitBreaker');
 
 /** Janela sem progresso a partir da qual consideramos o provedor travado. */
 const STUCK_AFTER_MINUTES = 45;
@@ -53,64 +54,89 @@ function buildStuckUpdatePayload(fieldValue, stuckMinutes) {
     };
 }
 
-function createEnrichmentWatchdogScheduler(deps) {
+/**
+ * Varredura em si — separada do wrapper onSchedule para ser testavel
+ * (mesmo padrao de runAutoExpireCorrections em correctionExpiry.js).
+ */
+async function runEnrichmentWatchdogSweep(deps, now = new Date()) {
     const {
         db,
         maybeRunAutoClassifyAndAi,
         writeAuditEvent,
+        recordFailure = defaultRecordFailure,
         stuckAfterMinutes = STUCK_AFTER_MINUTES,
     } = deps;
 
-    return onSchedule(
-        { schedule: 'every 15 minutes', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB' },
-        async () => {
-            const now = new Date();
-            const snapshot = await db.collection('cases')
-                .where('escavador2EnrichmentStatus', '==', 'RUNNING')
-                .limit(WATCHDOG_BATCH_LIMIT)
-                .get();
+    const snapshot = await db.collection('cases')
+        .where('escavador2EnrichmentStatus', '==', 'RUNNING')
+        .limit(WATCHDOG_BATCH_LIMIT)
+        .get();
 
-            const cases = snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
-            const stuck = selectStuckEnrichmentCases(cases, { now, stuckAfterMinutes });
+    if (snapshot.size === WATCHDOG_BATCH_LIMIT) {
+        console.warn(`[enrichmentWatchdog] Lote cheio (${WATCHDOG_BATCH_LIMIT}); pode haver mais casos travados alem deste lote.`);
+    }
 
-            if (stuck.length === 0) {
-                console.log('[enrichmentWatchdog] Nenhum caso travado no escavador2.');
-                return;
-            }
+    const cases = snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() || {}) }));
+    const stuck = selectStuckEnrichmentCases(cases, { now, stuckAfterMinutes });
 
-            console.warn(`[enrichmentWatchdog] ${stuck.length} caso(s) travado(s) no escavador2 ha mais de ${stuckAfterMinutes} min.`);
+    if (stuck.length === 0) {
+        console.log('[enrichmentWatchdog] Nenhum caso travado no escavador2.');
+        return { swept: cases.length, stuck: 0 };
+    }
 
-            for (const caseData of stuck) {
-                const caseRef = db.collection('cases').doc(caseData.id);
-                const since = parseWhen(caseData);
-                const stuckMinutes = since ? (now.getTime() - since.getTime()) / 60000 : stuckAfterMinutes;
+    console.warn(`[enrichmentWatchdog] ${stuck.length} caso(s) travado(s) no escavador2 ha mais de ${stuckAfterMinutes} min.`);
+
+    let closed = 0;
+    for (const caseData of stuck) {
+        const caseRef = db.collection('cases').doc(caseData.id);
+        const since = parseWhen(caseData);
+        const stuckMinutes = since ? (now.getTime() - since.getTime()) / 60000 : stuckAfterMinutes;
+        try {
+            await caseRef.update(buildStuckUpdatePayload(FieldValue, stuckMinutes));
+            closed += 1;
+
+            // Alimenta o circuit breaker: um timeout do watchdog e um desfecho
+            // de falha do provedor tanto quanto um callback FAILED.
+            if (recordFailure) {
                 try {
-                    await caseRef.update(buildStuckUpdatePayload(FieldValue, stuckMinutes));
-
-                    try {
-                        await writeAuditEvent({
-                            action: 'ENRICHMENT_WATCHDOG_TIMEOUT',
-                            tenantId: caseData.tenantId,
-                            actor: { type: ACTOR_TYPE.SYSTEM },
-                            entity: { type: 'CASE', id: caseData.id, label: caseData.candidateName || caseData.id },
-                            related: { caseId: caseData.id },
-                            source: SOURCE.CLOUD_FUNCTION,
-                            metadata: { phase: 'escavador2', stuckMinutes: Math.round(stuckMinutes) },
-                            templateVars: { candidateName: caseData.candidateName || caseData.id, phase: 'escavador2' },
-                        });
-                    } catch { /* auditoria nao pode travar o watchdog */ }
-
-                    await maybeRunAutoClassifyAndAi(caseRef, caseData.id, 'Escavador2 watchdog timeout');
-                } catch (err) {
-                    console.error(`[enrichmentWatchdog] Falha ao destravar ${caseData.id}:`, err.message);
+                    await recordFailure('escavador2', `Watchdog encerrou consulta sem retorno apos ${Math.round(stuckMinutes)} min.`);
+                } catch (circuitErr) {
+                    console.warn(`[enrichmentWatchdog] Falha ao atualizar circuit breaker: ${circuitErr.message}`);
                 }
             }
-        },
+
+            try {
+                await writeAuditEvent({
+                    action: 'ENRICHMENT_WATCHDOG_TIMEOUT',
+                    tenantId: caseData.tenantId,
+                    actor: { type: ACTOR_TYPE.SYSTEM },
+                    entity: { type: 'CASE', id: caseData.id, label: caseData.candidateName || caseData.id },
+                    related: { caseId: caseData.id },
+                    source: SOURCE.CLOUD_FUNCTION,
+                    metadata: { phase: 'escavador2', stuckMinutes: Math.round(stuckMinutes) },
+                    templateVars: { candidateName: caseData.candidateName || caseData.id, phase: 'escavador2' },
+                });
+            } catch { /* auditoria nao pode travar o watchdog */ }
+
+            await maybeRunAutoClassifyAndAi(caseRef, caseData.id, 'Escavador2 watchdog timeout');
+        } catch (err) {
+            console.error(`[enrichmentWatchdog] Falha ao destravar ${caseData.id}:`, err.message);
+        }
+    }
+
+    return { swept: cases.length, stuck: stuck.length, closed };
+}
+
+function createEnrichmentWatchdogScheduler(deps) {
+    return onSchedule(
+        { schedule: 'every 15 minutes', region: 'southamerica-east1', timeoutSeconds: 300, memory: '256MiB' },
+        async () => { await runEnrichmentWatchdogSweep(deps); },
     );
 }
 
 module.exports = {
     createEnrichmentWatchdogScheduler,
+    runEnrichmentWatchdogSweep,
     selectStuckEnrichmentCases,
     buildStuckUpdatePayload,
     STUCK_AFTER_MINUTES,

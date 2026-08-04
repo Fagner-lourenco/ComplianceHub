@@ -707,6 +707,97 @@ describe('createEscavador2CallbackHandler', () => {
     expect(taskDoc.data.failReason).toBe('case_not_found');
   });
 
+  // O circuito de escavador2 e consultado antes de enfileirar (enrichmentPhases.js),
+  // mas nenhum desfecho assincrono o alimentava — durante um outage ele ficava
+  // fechado para sempre e o sistema seguia enfileirando consulta condenada.
+  describe('circuit breaker', () => {
+    function createCircuitDeps(overrides = {}) {
+      const recordSuccess = vi.fn(async () => {});
+      const recordFailure = vi.fn(async () => {});
+      return {
+        deps: createBaseDeps({ recordSuccess, recordFailure, ...overrides }),
+        recordSuccess,
+        recordFailure,
+      };
+    }
+
+    it('registra falha no circuito quando o callback e FAILED', async () => {
+      const { db } = createDb({
+        caseData: { tenantId: 'tenant-1', enrichmentGeneration: 3, status: 'PENDING' },
+        taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+      });
+      const { deps, recordFailure, recordSuccess } = createCircuitDeps({ db });
+
+      await handleEscavador2CallbackLogic({
+        ...deps,
+        req: createValidCallbackReq({ body: { status: 'FAILED', error: 'proxy bloqueou a rota' } }),
+      });
+
+      expect(recordFailure).toHaveBeenCalledTimes(1);
+      expect(recordFailure).toHaveBeenCalledWith('escavador2', expect.stringContaining('proxy'));
+      expect(recordSuccess).not.toHaveBeenCalled();
+    });
+
+    it.each(['DONE', 'PARTIAL'])('registra sucesso no circuito quando o callback e %s', async (status) => {
+      const { db } = createDb({
+        caseData: { tenantId: 'tenant-1', enrichmentGeneration: 3, status: 'PENDING' },
+        taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+      });
+      const { deps, recordFailure, recordSuccess } = createCircuitDeps({ db });
+
+      await handleEscavador2CallbackLogic({
+        ...deps,
+        req: createValidCallbackReq({ body: { status } }),
+      });
+
+      expect(recordSuccess).toHaveBeenCalledWith('escavador2');
+      expect(recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('nao mexe no circuito quando a task ja foi processada', async () => {
+      const { db } = createDb({
+        caseData: { tenantId: 'tenant-1', enrichmentGeneration: 3, status: 'PENDING' },
+        taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'DONE', processedAt: 'antes' },
+      });
+      const { deps, recordFailure, recordSuccess } = createCircuitDeps({ db });
+
+      await handleEscavador2CallbackLogic({ ...deps, req: createValidCallbackReq() });
+
+      expect(recordSuccess).not.toHaveBeenCalled();
+      expect(recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('nao mexe no circuito quando a geracao esta obsoleta', async () => {
+      const { db } = createDb({
+        caseData: { tenantId: 'tenant-1', enrichmentGeneration: 9, status: 'PENDING' },
+        taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+      });
+      const { deps, recordFailure, recordSuccess } = createCircuitDeps({ db });
+
+      await handleEscavador2CallbackLogic({ ...deps, req: createValidCallbackReq() });
+
+      expect(recordSuccess).not.toHaveBeenCalled();
+      expect(recordFailure).not.toHaveBeenCalled();
+    });
+
+    it('falha do circuito nao derruba o callback', async () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { db } = createDb({
+        caseData: { tenantId: 'tenant-1', enrichmentGeneration: 3, status: 'PENDING' },
+        taskData: { caseId: 'case-1', enrichmentGeneration: 3, status: 'QUEUED' },
+      });
+      const { deps } = createCircuitDeps({
+        db,
+        recordSuccess: vi.fn(async () => { throw new Error('systemHealth indisponivel'); }),
+      });
+
+      const result = await handleEscavador2CallbackLogic({ ...deps, req: createValidCallbackReq() });
+
+      expect(result.status).toBe(200);
+      consoleSpy.mockRestore();
+    });
+  });
+
   it('returns 500 when callback logic throws', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { db } = createDb({
