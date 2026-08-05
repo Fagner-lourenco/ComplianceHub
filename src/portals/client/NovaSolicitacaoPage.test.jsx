@@ -123,6 +123,68 @@ describe('NovaSolicitacaoPage', () => {
         expect(await screen.findByText(/Solicitação enviada com sucesso/i)).toBeInTheDocument();
     });
 
+    it('abre modal de confirmacao quando o CPF ja foi consultado nos ultimos 60 dias', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        firestoreMocks.callCreateClientSolicitation.mockRejectedValueOnce({
+            code: 'functions/failed-precondition',
+            message: 'Este CPF ja foi consultado por sua empresa nos ultimos 60 dias.',
+            details: {
+                code: 'DUPLICATE_CPF',
+                windowDays: 60,
+                count: 1,
+                lastConsultedAt: '2026-07-20T12:00:00.000Z',
+                lastStatus: 'DONE',
+                lastCandidateName: 'Maria Santos',
+            },
+        });
+        renderPage();
+
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects[1], { target: { value: 'MG' } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        // Modal de duplicata em vez de erro generico (titulo + corpo casam com o texto)
+        const matches = await screen.findAllByText(/já foi consultado/i);
+        expect(matches.length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText(/Última consulta/i)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Sim, consultar novamente/i })).toBeInTheDocument();
+
+        // Confirmar reenvia com a flag
+        fireEvent.click(screen.getByRole('button', { name: /Sim, consultar novamente/i }));
+        await waitFor(() => {
+            expect(firestoreMocks.callCreateClientSolicitation).toHaveBeenCalledTimes(2);
+        });
+        expect(firestoreMocks.callCreateClientSolicitation).toHaveBeenLastCalledWith(
+            expect.objectContaining({ confirmDuplicate: true }),
+        );
+        expect(await screen.findByText(/Solicitação enviada com sucesso/i)).toBeInTheDocument();
+    });
+
+    it('cancelar o modal de duplicata nao envia nada', async () => {
+        solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
+        firestoreMocks.callCreateClientSolicitation.mockRejectedValueOnce({
+            code: 'functions/failed-precondition',
+            message: 'duplicado',
+            details: { code: 'DUPLICATE_CPF', windowDays: 60, count: 1, lastConsultedAt: '2026-07-20T12:00:00.000Z', lastStatus: 'DONE' },
+        });
+        renderPage();
+
+        fireEvent.change(screen.getByPlaceholderText('CONFORME CONSTA NO DOCUMENTO DE IDENTIDADE'), { target: { value: 'Maria Santos' } });
+        fireEvent.change(screen.getByPlaceholderText('000.000.000-00'), { target: { value: '529.982.247-25' } });
+        const ufSelects = screen.getAllByDisplayValue('Selecione a UF...');
+        fireEvent.change(ufSelects[1], { target: { value: 'MG' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Enviar solicitação' }));
+
+        const cancelButtons = await screen.findAllByRole('button', { name: 'Cancelar' });
+        fireEvent.click(cancelButtons[cancelButtons.length - 1]);
+
+        expect(firestoreMocks.callCreateClientSolicitation).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/Solicitação enviada com sucesso/i)).not.toBeInTheDocument();
+    });
+
     it('rejeita handle social sem URL completa antes de chamar o backend', async () => {
         solicitationMocks.authState.userProfile.tenantId = 'tenant-1';
         firestoreMocks.getEnabledPhases.mockReturnValue(['social']);

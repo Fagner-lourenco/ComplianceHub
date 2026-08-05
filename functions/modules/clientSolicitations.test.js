@@ -42,6 +42,9 @@ function makeMockDb(overrides = {}) {
         return ref;
     };
 
+    // Resultados de queries where() por colecao (ex.: busca de duplicatas em cases)
+    const queryResults = overrides.__queryResults || {};
+
     const db = {
         collection: vi.fn((col) => ({
             doc: vi.fn((id) => {
@@ -51,6 +54,17 @@ function makeMockDb(overrides = {}) {
                     return mockDoc(key, overrides[key]);
                 }
                 return mockDoc(key, docs.get(key) || null);
+            }),
+            where: vi.fn(() => {
+                const chain = {
+                    where: vi.fn(() => chain),
+                    limit: vi.fn(() => chain),
+                    get: vi.fn(async () => {
+                        const rows = queryResults[col] || [];
+                        return { docs: rows.map((row, i) => ({ id: row.id || `q-${i}`, data: () => row })) };
+                    }),
+                };
+                return chain;
             }),
         })),
         batch: vi.fn(() => ({
@@ -141,6 +155,116 @@ describe('createClientSolicitationHandler', () => {
             expect.objectContaining({ action: 'SOLICITATION_CREATED' })
         );
         expect(deps.notificationService.createNewSolicitationNotifications).toHaveBeenCalled();
+    });
+
+    // Politica de duplicata: mesmo CPF consultado pelo tenant nos ultimos 60 dias
+    // exige confirmacao explicita (confirmDuplicate) — alerta, nao bloqueio.
+    describe('alerta de CPF ja consultado (60 dias)', () => {
+        const daysAgo = (d) => new Date(Date.now() - d * 86400000).toISOString();
+
+        function makeDepsWithExistingCase(caseOverrides = {}) {
+            return makeBaseDeps({
+                docs: {
+                    __queryResults: {
+                        cases: [{
+                            id: 'case-antigo',
+                            tenantId: 'tenant-1',
+                            cpf: VALID_CPF,
+                            status: 'DONE',
+                            createdAt: daysAgo(10),
+                            ...caseOverrides,
+                        }],
+                    },
+                },
+            });
+        }
+
+        const baseRequest = () => ({
+            auth: { uid: 'user-1' },
+            data: { fullName: 'Joao Silva', cpf: VALID_CPF, candidateResidenceUf: 'RJ' },
+        });
+
+        it('rejeita duplicata recente sem confirmacao, com detalhes para o modal', async () => {
+            const deps = makeDepsWithExistingCase();
+            const handler = createClientSolicitationHandler(deps);
+
+            let caught;
+            try {
+                await handler(baseRequest());
+            } catch (err) {
+                caught = err;
+            }
+            expect(caught, 'esperava HttpsError de duplicata').toBeTruthy();
+            expect(caught.code).toBe('failed-precondition');
+            expect(caught.details?.code).toBe('DUPLICATE_CPF');
+            expect(caught.details?.windowDays).toBe(60);
+            expect(caught.details?.count).toBe(1);
+            expect(caught.details?.lastConsultedAt).toBeTruthy();
+            expect(caught.details?.lastStatus).toBe('DONE');
+        });
+
+        it('cria quando o cliente confirma a duplicata (confirmDuplicate: true)', async () => {
+            const deps = makeDepsWithExistingCase();
+            const handler = createClientSolicitationHandler(deps);
+            const request = baseRequest();
+            request.data.confirmDuplicate = true;
+
+            const result = await handler(request);
+            expect(result.caseId).toBeTruthy();
+
+            const caseRef = deps.db.collection('cases').doc();
+            const created = (await caseRef.get()).data();
+            expect(created.duplicateConfirmed).toBe(true);
+        });
+
+        it('nao exige confirmacao quando a consulta anterior tem mais de 60 dias', async () => {
+            const deps = makeDepsWithExistingCase({ createdAt: daysAgo(90) });
+            const handler = createClientSolicitationHandler(deps);
+
+            const result = await handler(baseRequest());
+            expect(result.caseId).toBeTruthy();
+        });
+
+        it('nao exige confirmacao quando nao ha consulta anterior', async () => {
+            const deps = makeBaseDeps();
+            const handler = createClientSolicitationHandler(deps);
+
+            const result = await handler(baseRequest());
+            expect(result.caseId).toBeTruthy();
+        });
+
+        it('informa a consulta mais recente quando ha varias', async () => {
+            const deps = makeBaseDeps({
+                docs: {
+                    __queryResults: {
+                        cases: [
+                            { id: 'a', tenantId: 'tenant-1', cpf: VALID_CPF, status: 'DONE', createdAt: daysAgo(50) },
+                            { id: 'b', tenantId: 'tenant-1', cpf: VALID_CPF, status: 'IN_PROGRESS', createdAt: daysAgo(2) },
+                        ],
+                    },
+                },
+            });
+            const handler = createClientSolicitationHandler(deps);
+
+            let caught;
+            try {
+                await handler(baseRequest());
+            } catch (err) {
+                caught = err;
+            }
+            expect(caught?.details?.count).toBe(2);
+            expect(caught?.details?.lastStatus).toBe('IN_PROGRESS');
+        });
+
+        it('nao consome quota do tenant ao recusar duplicata', async () => {
+            const deps = makeDepsWithExistingCase();
+            const handler = createClientSolicitationHandler(deps);
+
+            try {
+                await handler(baseRequest());
+            } catch { /* esperado */ }
+            expect(deps.enforceTenantSubmissionLimits).not.toHaveBeenCalled();
+        });
     });
 
     it('inicializa creditEnrichmentStatus PENDING quando fase habilitada no tenant', async () => {

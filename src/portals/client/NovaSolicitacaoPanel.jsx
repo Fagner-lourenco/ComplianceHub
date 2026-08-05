@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../core/auth/useAuth';
 import { callCreateClientSolicitation, callGetClientQuotaStatus, getEnabledPhases, getTenantSettings } from '../../core/firebase/firestoreService';
 import { getUserFriendlyMessage } from '../../core/errorUtils';
+import { CLIENT_STATUS_LABELS } from '../../core/clientPortal';
 import { validateCpf, validateUrl } from '../../core/validators';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { QuotaSummaryCard } from '../../ui/components/QuotaBar/QuotaBar';
@@ -78,6 +79,8 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
     const [quotaLoading, setQuotaLoading] = useState(false);
     const [quotaError, setQuotaError] = useState(null);
     const [showExceedModal, setShowExceedModal] = useState(false);
+    // Detalhes da recusa por CPF ja consultado na janela de 60 dias (abre modal)
+    const [duplicateInfo, setDuplicateInfo] = useState(null);
     const [discardModalOpen, setDiscardModalOpen] = useState(false);
     const [pendingNavigationPath, setPendingNavigationPath] = useState(null);
     const [tenantPhases, setTenantPhases] = useState([]);
@@ -252,7 +255,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         return Object.keys(next).length === 0;
     };
 
-    const handleSubmit = async (event) => {
+    const handleSubmit = async (event, { confirmDuplicate = false } = {}) => {
         if (event?.preventDefault) event.preventDefault();
         if (!validate()) return;
 
@@ -275,6 +278,7 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
         }
 
         setShowExceedModal(false);
+        setDuplicateInfo(null);
         setSubmitting(true);
 
         try {
@@ -309,11 +313,19 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                     youtube: form.youtube || '',
                 },
                 otherSocialUrls: form.otherSocialUrls,
+                ...(confirmDuplicate ? { confirmDuplicate: true } : {}),
             });
 
             setSubmitted(true);
             redirectTimerRef.current = window.setTimeout(() => { onSuccess?.(); onClose?.(); }, 1800);
         } catch (error) {
+            // Politica de duplicata: o servidor recusou porque este CPF ja foi
+            // consultado na janela de 60 dias — abre o modal de confirmacao em
+            // vez de mostrar erro generico.
+            if (error?.details?.code === 'DUPLICATE_CPF') {
+                setDuplicateInfo(error.details);
+                return;
+            }
             console.error('Error creating solicitation:', error);
             setErrors({ general: getUserFriendlyMessage(error, 'criar a solicitação') });
         } finally {
@@ -891,6 +903,54 @@ export default function NovaSolicitacaoPanel({ open, onClose, onSuccess }) {
                     </div>
                 )}
             </div>
+
+            {/* Duplicidade: CPF ja consultado na janela de 60 dias */}
+            <Modal
+                open={Boolean(duplicateInfo)}
+                onClose={() => setDuplicateInfo(null)}
+                title="Este candidato já foi consultado"
+                footer={(
+                    <>
+                        <button type="button" className="ns-btn ns-btn--ghost" onClick={() => setDuplicateInfo(null)}>Cancelar</button>
+                        <button
+                            type="button"
+                            className="ns-btn ns-btn--primary"
+                            disabled={submitting}
+                            onClick={(event) => handleSubmit(event, { confirmDuplicate: true })}
+                        >
+                            {submitting ? 'Enviando...' : 'Sim, consultar novamente'}
+                        </button>
+                    </>
+                )}
+            >
+                <div className="ns-critical-modal">
+                    <p>
+                        Este CPF já foi consultado por sua empresa nos últimos {duplicateInfo?.windowDays ?? 60} dias
+                        {duplicateInfo?.count > 1 ? ` (${duplicateInfo.count} vezes)` : ''}.
+                    </p>
+                    <dl>
+                        {duplicateInfo?.lastCandidateName && (
+                            <>
+                                <dt>Candidato</dt>
+                                <dd>{duplicateInfo.lastCandidateName}</dd>
+                            </>
+                        )}
+                        {duplicateInfo?.lastConsultedAt && (
+                            <>
+                                <dt>Última consulta</dt>
+                                <dd>{new Date(duplicateInfo.lastConsultedAt).toLocaleDateString('pt-BR')}</dd>
+                            </>
+                        )}
+                        {duplicateInfo?.lastStatus && (
+                            <>
+                                <dt>Situação</dt>
+                                <dd>{CLIENT_STATUS_LABELS[duplicateInfo.lastStatus] || duplicateInfo.lastStatus}</dd>
+                            </>
+                        )}
+                    </dl>
+                    <p>Uma nova consulta será cobrada normalmente. Tem certeza que deseja continuar?</p>
+                </div>
+            </Modal>
 
             {/* Quota exceedance confirmation */}
             <Modal

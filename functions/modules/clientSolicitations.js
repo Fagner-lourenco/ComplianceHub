@@ -18,6 +18,9 @@ const {
 } = require('./publishAndSync');
 const caseCommunication = require('../caseCommunication');
 
+/** Janela em dias na qual repetir a consulta do mesmo CPF exige confirmacao. */
+const DUPLICATE_WINDOW_DAYS = 60;
+
 /* =========================================================
    Factory: createClientSolicitationHandler
    ========================================================= */
@@ -145,6 +148,53 @@ function createClientSolicitationHandler(deps) {
         const tenantSlaHours = Number(tenantData?.slaHours ?? 48);
         const safeSlaHours = Number.isFinite(tenantSlaHours) && tenantSlaHours >= 1 ? tenantSlaHours : 48;
 
+        // ─── Politica de duplicata (alerta, nao bloqueio) ────────────────────
+        // Mesmo CPF consultado por este tenant nos ultimos 60 dias exige
+        // confirmacao explicita. Evita consultas repetidas sem querer (caso real:
+        // 3 envios do mesmo CPF em 29 minutos, 3 cascatas de enriquecimento pagas).
+        // Roda ANTES de enforceTenantSubmissionLimits: recusa de duplicata nao
+        // pode consumir quota. A recusa carrega details para o front montar o
+        // modal e reenviar com confirmDuplicate: true.
+        const confirmDuplicate = request.data?.confirmDuplicate === true;
+        if (!confirmDuplicate) {
+            const duplicateSnapshot = await db.collection('cases')
+                .where('tenantId', '==', tenantId)
+                .where('cpf', '==', cpfDigits)
+                .limit(25)
+                .get();
+            const cutoffMs = Date.now() - DUPLICATE_WINDOW_DAYS * 86400000;
+            const toMillis = (value) => {
+                if (!value) return NaN;
+                if (typeof value.toDate === 'function') return value.toDate().getTime();
+                const parsed = new Date(value).getTime();
+                return Number.isFinite(parsed) ? parsed : NaN;
+            };
+            const recentDuplicates = duplicateSnapshot.docs
+                .map((doc) => doc.data() || {})
+                .filter((caseData) => {
+                    const createdMs = toMillis(caseData.createdAt);
+                    return Number.isFinite(createdMs) && createdMs >= cutoffMs;
+                })
+                .sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+
+            if (recentDuplicates.length > 0) {
+                const latest = recentDuplicates[0];
+                const latestMs = toMillis(latest.createdAt);
+                throw new HttpsError(
+                    'failed-precondition',
+                    `Este CPF ja foi consultado por sua empresa nos ultimos ${DUPLICATE_WINDOW_DAYS} dias. Confirme para consultar novamente.`,
+                    {
+                        code: 'DUPLICATE_CPF',
+                        windowDays: DUPLICATE_WINDOW_DAYS,
+                        count: recentDuplicates.length,
+                        lastConsultedAt: Number.isFinite(latestMs) ? new Date(latestMs).toISOString() : null,
+                        lastStatus: latest.status || null,
+                        lastCandidateName: latest.candidateName || null,
+                    },
+                );
+            }
+        }
+
         await enforceTenantSubmissionLimits(tenantId, tenantData || {}, {
             actor: { type: ACTOR_TYPE.CLIENT_USER, id: uid, email: profile.email || uid },
             ip: getClientIp(request),
@@ -244,6 +294,8 @@ function createClientSolicitationHandler(deps) {
             // Fase automatica de credito: status so existe quando habilitada no tenant
             // (presenca do campo e o que trava canRunFinalClassification ate settlar)
             ...(creditPhaseEnabled ? { creditEnrichmentStatus: 'PENDING', creditError: null } : {}),
+            // Auditoria: o solicitante confirmou repetir um CPF ja consultado na janela
+            ...(confirmDuplicate ? { duplicateConfirmed: true } : {}),
             enrichmentSources: {},
             enrichmentIdentity: null,
             enrichmentGateResult: null,
