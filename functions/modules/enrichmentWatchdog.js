@@ -19,7 +19,7 @@ const { recordFailure: defaultRecordFailure } = require('../helpers/circuitBreak
 const { escavador2RunDocId } = require('./escavador2AsyncCallback');
 
 /** Janela sem progresso a partir da qual consideramos o provedor travado. */
-const STUCK_AFTER_MINUTES = 45;
+const STUCK_AFTER_MINUTES = 20;
 /**
  * Janela do fallback para documentos legados (sem escavador2StartedAt), medida a
  * partir de createdAt. Bem mais folgada porque createdAt e o inicio do caso, nao
