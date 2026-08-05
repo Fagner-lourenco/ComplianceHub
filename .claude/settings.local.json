@@ -17,7 +17,14 @@
       "mcp__plugin_firebase_firebase__functions_get_logs",
       "Bash(git push *)",
       "mcp__plugin_firebase_firebase__firestore_get_document",
-      "Bash(vercel --prod --yes)"
+      "Bash(vercel --prod --yes)",
+      "Bash(python -c ' *)",
+      "mcp__plugin_firebase_firebase__firebase_update_environment",
+      "mcp__plugin_firebase_firebase__firebase_get_project",
+      "Skill(code-review)",
+      "Bash(node -e ' *)",
+      "mcp__plugin_firebase_firebase__firebase_deploy",
+      "mcp__plugin_firebase_firebase__firebase_deploy_status"
     ]
   }
 }
