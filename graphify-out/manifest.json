@@ -1375,22 +1375,6 @@
     "mtime": 1784301042.15383,
     "hash": "1042baf54f24423a6527e9178b806fc7"
   },
-  "D:\\ComplianceHub\\functions\\04376148911.txt": {
-    "mtime": 1784662115.6488683,
-    "hash": "bc96058e9fdedb51f7bb6457852770ae"
-  },
-  "D:\\ComplianceHub\\functions\\05318506925.txt": {
-    "mtime": 1784662114.0366278,
-    "hash": "6d91b423dffba3a6c007631f31eb1c8c"
-  },
-  "D:\\ComplianceHub\\functions\\10267855966.txt": {
-    "mtime": 1784662113.0687244,
-    "hash": "ba780f50a49cf8cab539cff2d801e64f"
-  },
-  "D:\\ComplianceHub\\functions\\78631297968.txt": {
-    "mtime": 1784662115.2029626,
-    "hash": "6f457f1105d7e1a9746801d0e80c8fe6"
-  },
   "D:\\ComplianceHub\\playwright-report\\index.html": {
     "mtime": 1780354471.5885181,
     "hash": "8c253b95a58bac7bb8f77a00011651b9"
@@ -1438,6 +1422,22 @@
   "D:\\ComplianceHub\\results\\test-task3-output.txt": {
     "mtime": 1781697183.338891,
     "hash": "fe1bb4015d4656e66fc850c44fea7010"
+  },
+  "D:\\ComplianceHub\\results\\bdc-samples\\04376148911.txt": {
+    "mtime": 1784662115.6488683,
+    "hash": "bc96058e9fdedb51f7bb6457852770ae"
+  },
+  "D:\\ComplianceHub\\results\\bdc-samples\\05318506925.txt": {
+    "mtime": 1784662114.0366278,
+    "hash": "6d91b423dffba3a6c007631f31eb1c8c"
+  },
+  "D:\\ComplianceHub\\results\\bdc-samples\\10267855966.txt": {
+    "mtime": 1784662113.0687244,
+    "hash": "ba780f50a49cf8cab539cff2d801e64f"
+  },
+  "D:\\ComplianceHub\\results\\bdc-samples\\78631297968.txt": {
+    "mtime": 1784662115.2029626,
+    "hash": "6f457f1105d7e1a9746801d0e80c8fe6"
   },
   "D:\\ComplianceHub\\results\\escavador2-audit-madero-br\\analise-manual-caso-a-caso.md": {
     "mtime": 1781469127.877364,
