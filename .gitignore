@@ -59,3 +59,7 @@ stdout
 src_imports.txt
 src_exports.txt
 temp_*.txt
+
+# Artefatos locais com dados pessoais / lixo de sync
+.tmp.driveupload/
+*.docx
