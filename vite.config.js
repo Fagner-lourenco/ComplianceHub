@@ -28,6 +28,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setupTests.js',
-    exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'functions/node_modules/**', '.opencode/node_modules/**'],
+    // .claude/worktrees: worktrees criados dentro do repo trazem junto os
+    // node_modules deles, e o vitest passa a coletar os testes de dependencias
+    // (lru-memoizer, etc.) — a suite inteira fica vermelha por um motivo que nao
+    // tem nada a ver com o codigo.
+    exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'functions/node_modules/**', '.opencode/node_modules/**', '.claude/worktrees/**'],
   },
 })

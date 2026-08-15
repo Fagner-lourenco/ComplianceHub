@@ -51,6 +51,34 @@ vi.mock('react-router-dom', async () => {
 
 const { default: CasoPage } = await import('./CasoPage');
 
+/**
+ * Os mocks de subscribeToCaseDoc entregam o doc do caso via setTimeout(0), e o
+ * CasoPage so termina de se estabilizar tres commits depois dessa entrega:
+ *
+ *   commit A  setCaseData(nextCase) -> o nome do candidato aparece no DOM,
+ *             mas enabledPhases ainda e o fallback LEGACY_PHASES do modulo;
+ *   commit B  efeito [caseData, caseId, isDemoMode] -> setEnabledPhases(caseData.enabledPhases)
+ *             + setActiveStep(0);
+ *   commit C  efeito [steps.length] -> setActiveStep(Math.min(current, steps.length - 1)).
+ *
+ * `await screen.findByText(nomeDoCandidato)` resolve ja no commit A. Tudo que os
+ * testes tocam logo em seguida de forma sincrona (allOk/checklist, o stepper,
+ * canEditCase) so fica correto no commit B/C. O asyncWrapper do RTL concede
+ * apenas um macrotask de folga depois do waitFor, e o scheduler do React precisa
+ * de mais de um turno para essa cascata: com a suite inteira em paralelo o
+ * commit B/C caia depois da interacao do teste, e o clique ia parar num botao
+ * ainda desabilitado ou num stepper ainda nao montado.
+ *
+ * Drenar a entrega dentro de act() elimina a corrida: act repete o flush de
+ * renders + efeitos passivos ate a fila esvaziar, entao o retorno so acontece
+ * com o componente ja estabilizado.
+ */
+async function settleCaseSubscription() {
+    await act(async () => {
+        await new Promise((resolve) => { setTimeout(resolve, 0); });
+    });
+}
+
 describe('CasoPage', () => {
     afterEach(() => {
         vi.useRealTimers();
@@ -89,6 +117,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Caso indisponivel')).toBeInTheDocument();
         expect(screen.getByText('Caso nao encontrado no ambiente real.')).toBeInTheDocument();
@@ -129,6 +158,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Detalhes técnicos de homônimos')).toBeInTheDocument();
         expect(screen.getByText('Geografia distante e ausencia de CPF exato reduzem a aderencia do vinculo.')).toBeInTheDocument();
@@ -173,6 +203,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Análise assistida da autoclassificação')).toBeInTheDocument();
         expect(screen.getByText('Achados ambiguos')).toBeInTheDocument();
@@ -200,6 +231,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
         expect(screen.getByText(/Aguardando a autoclassificacao deterministica/i)).toBeInTheDocument();
@@ -254,6 +286,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
         expect(screen.getAllByText('Cobertura alta').length).toBeGreaterThan(0);
@@ -307,6 +340,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Fagner Lourenço')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /Criminal/i }));
@@ -347,6 +381,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Maria Silva')).toBeInTheDocument();
         fireEvent.click(screen.getAllByText('Trabalhista')[0]);
@@ -382,6 +417,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
@@ -414,6 +450,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
 
@@ -462,6 +499,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Modo leitura')).toBeInTheDocument();
         expect(screen.getByText(/Caso concluido|Caso concluído/i)).toBeInTheDocument();
@@ -490,6 +528,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Francisco Taciano de Sousa')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
@@ -529,6 +568,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Rafael Nunes')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Proximo' }));
@@ -558,6 +598,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Andressa de Souza Pereira')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /^Concluir$/i })).not.toBeDisabled();
@@ -619,6 +660,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Helena Prado')).toBeInTheDocument();
         expect(screen.getByText('Concorda com ressalva')).toBeInTheDocument();
@@ -643,6 +685,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Helena Prado')).toBeInTheDocument();
         expect(await screen.findByText(/IA desabilitada/i)).toBeInTheDocument();
@@ -723,6 +766,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Marcos Lima')).toBeInTheDocument();
         expect(screen.getAllByText('Concorda com ressalva')).toHaveLength(1);
@@ -751,6 +795,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
         expect(screen.getByText('Concluir com bypass de identidade')).toBeInTheDocument();
@@ -778,6 +823,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
         expect(screen.queryByText('Concluir com bypass de identidade')).not.toBeInTheDocument();
@@ -807,6 +853,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Joao Silva')).toBeInTheDocument();
 
@@ -855,6 +902,7 @@ describe('CasoPage', () => {
         });
 
         render(<CasoPage />);
+        await settleCaseSubscription();
 
         expect(await screen.findByText('Escavador2 Teste')).toBeInTheDocument();
         expect(screen.getByRole('heading', { name: /Escavador2 via integração/ })).toBeInTheDocument();
