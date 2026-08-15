@@ -39,6 +39,18 @@ const CLIENT_DASHBOARD_FIELDS = [
   'digitalFlag', 'conflictInterest',
 ];
 
+// Runtime das listagens do portal cliente. Vive aqui, e nao duplicado em cada
+// registro, porque a V1 e a V2 compartilham a mesma varredura de tenant
+// (fetchClientCaseMatches): se so uma tiver teto de instancias, o caminho sem
+// teto reabre o incidente de 2026-08-14. O cors muda por chamador, entao entra
+// por spread no ponto de registro.
+const CLIENT_CASE_LIST_RUNTIME = Object.freeze({
+  region: 'southamerica-east1',
+  timeoutSeconds: 120,
+  memory: '1GiB',
+  maxInstances: 10,
+});
+
 const OPS_CASE_LIST_FIELDS = [
   'caseId', 'tenantId', 'tenantName', 'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'createdAt', 'updatedAt',
   'concludedAt', 'turnaroundHours', 'slaHours', 'status', 'riskLevel', 'criminalFlag', 'finalVerdict', 'priority',
@@ -863,9 +875,10 @@ function createListClientCasesHandler({
   getClientUserProfile,
 }) {
   return onCall(
-    // maxInstances: sem teto, uma rajada de buscas escalava ate o limite padrao de
-    // instancias, cada uma varrendo o tenant inteiro — 100 timeouts em 5s (2026-08-14).
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true, maxInstances: 10 },
+    // maxInstances vem de CLIENT_CASE_LIST_RUNTIME: sem teto, uma rajada de buscas
+    // escalava ate o limite padrao de instancias, cada uma varrendo o tenant
+    // inteiro — 100 timeouts em 5s (2026-08-14).
+    { ...CLIENT_CASE_LIST_RUNTIME, cors: true },
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -1927,6 +1940,7 @@ module.exports = {
   OPS_METRIC_FIELDS,
   CLIENT_DASHBOARD_FIELDS,
   OPS_CASE_LIST_FIELDS,
+  CLIENT_CASE_LIST_RUNTIME,
 
   // Helpers de listagem do portal cliente
   fetchClientCaseMatches,

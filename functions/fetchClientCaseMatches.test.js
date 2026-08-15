@@ -6,11 +6,12 @@
  * indices compostos que ja existem (tenantId+status+createdAt e
  * tenantId+finalVerdict+createdAt) e le so a fatia necessaria.
  */
+import { readFileSync } from 'fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { fetchClientCaseMatches, buildClientCaseStats } = require('./modules/caseQueriesAssignments');
+const { fetchClientCaseMatches, buildClientCaseStats, CLIENT_CASE_LIST_RUNTIME } = require('./modules/caseQueriesAssignments');
 
 function makeDoc(id, data) {
     return { id, data: () => data, get: (field) => data[field] };
@@ -129,6 +130,25 @@ describe('fetchClientCaseMatches', () => {
         expect(capped).toBe(true);
         expect(scannedRecords).toBe(1000);
         expect(pageCount).toBe(2);
+    });
+});
+
+describe('CLIENT_CASE_LIST_RUNTIME', () => {
+    it('define teto de instancias para a varredura de tenant', () => {
+        expect(CLIENT_CASE_LIST_RUNTIME.maxInstances).toBe(10);
+        expect(CLIENT_CASE_LIST_RUNTIME.region).toBe('southamerica-east1');
+        expect(CLIENT_CASE_LIST_RUNTIME.timeoutSeconds).toBe(120);
+    });
+
+    it('e usado no registro da V1 e da V2 (o teto nao pode valer so num caminho)', () => {
+        // Em 2026-08-14 o teto foi aplicado so na V1 porque cada registro repetia
+        // as opcoes na mao. Esta asercao e sobre a fonte para que o drift volte a
+        // aparecer como teste vermelho, nao como maxScale=20 em producao.
+        const index = readFileSync(require.resolve('./index.js'), 'utf8');
+        const modulo = readFileSync(require.resolve('./modules/caseQueriesAssignments.js'), 'utf8');
+
+        expect(index).toMatch(/exports\.listClientCasesV2 = onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.caseQueriesAssignments\.CLIENT_CASE_LIST_RUNTIME/);
+        expect(modulo).toMatch(/return onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.CLIENT_CASE_LIST_RUNTIME/);
     });
 });
 

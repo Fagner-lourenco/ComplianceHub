@@ -1045,7 +1045,9 @@ exports.listClientCases = caseQueriesAssignments.createListClientCasesHandler({
 });
 
 exports.listClientCasesV2 = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: CORS_ORIGINS },
+    // Mesmo runtime da V1 (inclui maxInstances): as duas caem na mesma varredura
+    // de tenant quando ha searchTerm, entao o teto tem que valer nos dois caminhos.
+    { ...caseQueriesAssignments.CLIENT_CASE_LIST_RUNTIME, cors: CORS_ORIGINS },
     caseQueriesAssignments.createListClientCasesV2Handler({
         db,
         getClientUserProfile,
