@@ -733,7 +733,7 @@ describe('runJuditEnrichmentPhase', () => {
 
   it('gate fallback Judit nao bloqueia por CPF inativo quando nome confere', async () => {
     const queryEntityDataLake = vi.fn(() => Promise.resolve({ raw: true }));
-    const { mocks, ...deps } = makeJuditDeps();
+    const { mocks: _mocks, ...deps } = makeJuditDeps();
     deps.adapters.queryEntityDataLake = queryEntityDataLake;
     deps.normalizers.normalizeJuditEntity = vi.fn(() => ({
       juditIdentity: { cpfActive: false, name: 'John Doe' },
@@ -761,7 +761,7 @@ describe('runJuditEnrichmentPhase', () => {
   });
 
   it('gate fallback FonteData nao bloqueia por CPF cancelado nem obito quando nome confere', async () => {
-    const { mocks, ...deps } = makeJuditDeps();
+    const { mocks: _mocks, ...deps } = makeJuditDeps();
     deps.adapters.queryEntityDataLake = vi.fn(() => Promise.reject(new Error('entity down')));
     deps.adapters.queryReceitaFederal = vi.fn(() => Promise.resolve({
       enrichmentIdentity: { name: 'John Doe', cpfStatus: 'CANCELADA', hasDeathRecord: true },

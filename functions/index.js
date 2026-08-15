@@ -1032,7 +1032,9 @@ exports.listOpsCases = caseQueriesAssignments.createListOpsCasesHandler({
 });
 
 exports.listOpsCasesV2 = onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: CORS_ORIGINS },
+    // Mesmo runtime da V1 do OPS (inclui maxInstances): as duas varrem `cases`
+    // pelo mesmo caminho quando ha searchTerm.
+    { ...caseQueriesAssignments.OPS_CASE_LIST_RUNTIME, cors: CORS_ORIGINS },
     caseQueriesAssignments.createListOpsCasesV2Handler({
         db,
         getOpsUserProfile,

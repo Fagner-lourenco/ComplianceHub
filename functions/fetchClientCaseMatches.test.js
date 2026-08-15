@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { fetchClientCaseMatches, buildClientCaseStats, CLIENT_CASE_LIST_RUNTIME } = require('./modules/caseQueriesAssignments');
+const { fetchClientCaseMatches, buildClientCaseStats, CLIENT_CASE_LIST_RUNTIME, OPS_CASE_LIST_RUNTIME } = require('./modules/caseQueriesAssignments');
 
 function makeDoc(id, data) {
     return { id, data: () => data, get: (field) => data[field] };
@@ -149,6 +149,27 @@ describe('CLIENT_CASE_LIST_RUNTIME', () => {
 
         expect(index).toMatch(/exports\.listClientCasesV2 = onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.caseQueriesAssignments\.CLIENT_CASE_LIST_RUNTIME/);
         expect(modulo).toMatch(/return onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.CLIENT_CASE_LIST_RUNTIME/);
+    });
+
+    it('vale tambem para as duas rotas do OPS, que varrem `cases` do mesmo jeito', () => {
+        const index = readFileSync(require.resolve('./index.js'), 'utf8');
+        const modulo = readFileSync(require.resolve('./modules/caseQueriesAssignments.js'), 'utf8');
+
+        expect(OPS_CASE_LIST_RUNTIME.maxInstances).toBe(10);
+        expect(index).toMatch(/exports\.listOpsCasesV2 = onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.caseQueriesAssignments\.OPS_CASE_LIST_RUNTIME/);
+        expect(modulo).toMatch(/return onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*\.\.\.OPS_CASE_LIST_RUNTIME/);
+    });
+
+    it('nenhuma das quatro listagens registra opcoes de runtime na mao', () => {
+        // A regressao de 2026-08-15 (maxScale=20 na V2 do cliente) nasceu de um
+        // literal repetido. Se algum registro voltar a escrever region/timeout na
+        // mao, o teto some sem ninguem perceber ate a proxima rajada.
+        const index = readFileSync(require.resolve('./index.js'), 'utf8');
+        const registrosComLiteral = index.match(
+            /exports\.list(?:Ops|Client)Cases(?:V2)? = onCall\(\s*(?:\/\/[^\n]*\n\s*)*\{\s*region:/g,
+        );
+
+        expect(registrosComLiteral).toBeNull();
     });
 });
 

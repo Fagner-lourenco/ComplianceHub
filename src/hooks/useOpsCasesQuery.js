@@ -6,6 +6,9 @@ import { MOCK_CASES } from '../data/mockData';
 
 const EMPTY_CASES = [];
 const EMPTY_STATS = { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, red: 0, fit: 0, attention: 0, notRecommended: 0 };
+// Mesmo valor do portal cliente (useClientCasesQuery): a busca so vai ao
+// servidor depois que o analista para de digitar.
+const FILTERS_DEBOUNCE_MS = 400;
 
 function matchesDemoCase(caseData, filters = {}, { queueOnly = false, assigneeUid = null } = {}) {
     if (queueOnly && caseData.status === 'DONE') return false;
@@ -99,16 +102,37 @@ export function useOpsCasesQuery({ tenantId, isDemoMode, page, pageSize, filters
             stats: buildStats(statsBase),
             meta: { source: 'demo' },
         };
-    }, [assigneeUid, filters, page, pageSize, queueOnly, sortField, tenantId]);
+        // sortDir estava fora das deps: em modo demo, inverter a ordenacao nao
+        // reordenava a lista, porque o memo devolvia o resultado anterior.
+    }, [assigneeUid, filters, page, pageSize, queueOnly, sortDir, sortField, tenantId]);
+
+    // Mesma contencao do portal cliente: listOpsCases varre ate 10.000 docs de
+    // `cases` por chamada, e o campo de busca do CasosPage disparava uma
+    // varredura por tecla. Paginacao e ordenacao seguem instantaneas.
+    const [debouncedFiltersKey, setDebouncedFiltersKey] = useState(filtersKey);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => setDebouncedFiltersKey(filtersKey), FILTERS_DEBOUNCE_MS);
+        return () => clearTimeout(timeoutId);
+    }, [filtersKey]);
 
     useEffect(() => {
         if (isDemoMode) return undefined;
+
+        // Depender de `filters` por identidade reexecutava o efeito a cada render
+        // quando o chamador passava um literal — loop de requisicoes sem fim.
+        let appliedFilters = {};
+        try {
+            appliedFilters = JSON.parse(debouncedFiltersKey) || {};
+        } catch {
+            appliedFilters = {};
+        }
 
         let cancelled = false;
         Promise.resolve().then(() => {
             if (!cancelled) setState((current) => ({ ...current, loading: true, error: null }));
         });
-        callListOpsCases({ tenantId: tenantId || null, page, pageSize, filters: filters || {}, queueOnly, assigneeUid, sortField, sortDir })
+        callListOpsCases({ tenantId: tenantId || null, page, pageSize, filters: appliedFilters, queueOnly, assigneeUid, sortField, sortDir })
             .then((result) => {
                 if (cancelled) return;
                 setState({
@@ -125,7 +149,7 @@ export function useOpsCasesQuery({ tenantId, isDemoMode, page, pageSize, filters
                 if (!cancelled) setState({ cases: EMPTY_CASES, loading: false, error, total: 0, totalPages: 1, stats: EMPTY_STATS, meta: null });
             });
         return () => { cancelled = true; };
-    }, [assigneeUid, filters, filtersKey, isDemoMode, page, pageSize, queueOnly, refreshKey, sortDir, sortField, tenantId]);
+    }, [assigneeUid, debouncedFiltersKey, isDemoMode, page, pageSize, queueOnly, refreshKey, sortDir, sortField, tenantId]);
 
     return isDemoMode ? demoState : state;
 }

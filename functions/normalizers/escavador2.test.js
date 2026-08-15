@@ -310,6 +310,11 @@ describe('normalizeEscavador2Response', () => {
     expect(JSON.stringify(raw)).not.toContain(oversized);
   });
 
+  // 20s: o corpo e sincrono e CPU-bound (500 processos com strings Unicode
+  // pesadas, serializados e medidos em bytes). Isolado leva ~1s, mas com a suite
+  // inteira em paralelo disputando CPU ja passou de 5s e estourou o testTimeout
+  // padrao — 1 falha em 18 execucoes. O orcamento maior nao afrouxa nenhuma
+  // assercao: o teste continua exigindo os mesmos 320 KiB.
   it('keeps deduplicated persistence within 320 KiB with Unicode-heavy lists', () => {
     const huge = 'metadado técnico çã 🚨 '.repeat(100);
     const processos = Array.from({ length: 500 }, (_, index) => ({
@@ -348,7 +353,7 @@ describe('normalizeEscavador2Response', () => {
     expect(persistedFields.escavador2Processos.every((process) => (
       !process._sourceEscavador2?.normalizado && !process._sourceEscavador2?.classificacao
     ))).toBe(true);
-  });
+  }, 20000);
 
   it('preserves every canonical process until dedupe can prioritize a new finding at the end', () => {
     const processCount = 420;

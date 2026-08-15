@@ -51,6 +51,10 @@ const CLIENT_CASE_LIST_RUNTIME = Object.freeze({
   maxInstances: 10,
 });
 
+// listOpsCases/listOpsCasesV2 sao a rota gemea: varrem `cases` ate
+// CASE_QUERY_MAX_DOCS pelo mesmo mecanismo, entao carregam o mesmo teto.
+const OPS_CASE_LIST_RUNTIME = CLIENT_CASE_LIST_RUNTIME;
+
 const OPS_CASE_LIST_FIELDS = [
   'caseId', 'tenantId', 'tenantName', 'candidateName', 'cpf', 'cpfMasked', 'candidatePosition', 'createdAt', 'updatedAt',
   'concludedAt', 'turnaroundHours', 'slaHours', 'status', 'riskLevel', 'criminalFlag', 'finalVerdict', 'priority',
@@ -814,7 +818,7 @@ function createListOpsCasesHandler({
   getOpsUserProfile,
 }) {
   return onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    { ...OPS_CASE_LIST_RUNTIME, cors: true },
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -1941,6 +1945,7 @@ module.exports = {
   CLIENT_DASHBOARD_FIELDS,
   OPS_CASE_LIST_FIELDS,
   CLIENT_CASE_LIST_RUNTIME,
+  OPS_CASE_LIST_RUNTIME,
 
   // Helpers de listagem do portal cliente
   fetchClientCaseMatches,
