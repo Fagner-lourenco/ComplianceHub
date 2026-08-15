@@ -3,6 +3,11 @@ import { callListClientCases } from '../core/firebase/firestoreService';
 import { MOCK_CASES } from '../data/mockData';
 
 const EMPTY_CASES = [];
+// Cada chamada varre ate 10.000 docs no servidor e a chamada abandonada continua
+// rodando la (o cleanup so ignora a resposta). Sem debounce, digitar no campo de
+// busca dispara uma varredura por tecla — foi o que estourou o timeout da
+// listClientCases em 2026-08-14.
+const FILTERS_DEBOUNCE_MS = 400;
 
 function normalizeDemoCases(cases, filters, sortField, sortDir) {
     let result = [...cases];
@@ -64,14 +69,33 @@ export function useClientCasesQuery({ tenantId, isDemoMode, page, pageSize, filt
         };
     }, [filters, page, pageSize, sortDir, sortField, tenantId]);
 
+    // Paginacao e ordenacao continuam instantaneas: so a troca de filtros espera.
+    // O estado ja nasce com a chave inicial, entao a primeira carga nao espera o
+    // debounce — o timer de mount reassenta o mesmo valor e o React descarta.
+    const [debouncedFiltersKey, setDebouncedFiltersKey] = useState(filtersKey);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => setDebouncedFiltersKey(filtersKey), FILTERS_DEBOUNCE_MS);
+        return () => clearTimeout(timeoutId);
+    }, [filtersKey]);
+
     useEffect(() => {
         if (isDemoMode) return undefined;
+
+        // Depender de `filters` por identidade reexecutava o efeito a cada render
+        // quando o chamador passava um literal: o filtro efetivo vem da chave.
+        let appliedFilters = {};
+        try {
+            appliedFilters = JSON.parse(debouncedFiltersKey) || {};
+        } catch {
+            appliedFilters = {};
+        }
 
         let cancelled = false;
         Promise.resolve().then(() => {
             if (!cancelled) setState((current) => ({ ...current, loading: true, error: null }));
         });
-        callListClientCases({ page, pageSize, filters: filters || {}, sortField, sortDir })
+        callListClientCases({ page, pageSize, filters: appliedFilters, sortField, sortDir })
             .then((result) => {
                 if (cancelled) return;
                 setState({
@@ -88,7 +112,7 @@ export function useClientCasesQuery({ tenantId, isDemoMode, page, pageSize, filt
                 if (!cancelled) setState({ cases: EMPTY_CASES, loading: false, error, total: 0, totalPages: 1, stats: { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 }, meta: null });
             });
         return () => { cancelled = true; };
-    }, [filters, filtersKey, isDemoMode, page, pageSize, sortDir, sortField, tenantId]);
+    }, [debouncedFiltersKey, isDemoMode, page, pageSize, sortDir, sortField, tenantId]);
 
     return isDemoMode ? demoState : state;
 }

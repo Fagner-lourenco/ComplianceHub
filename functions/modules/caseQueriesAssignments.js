@@ -591,6 +591,67 @@ async function fetchTenantCaseDocuments({ db, collectionId, tenantId = null, fie
   return { docs, pageCount, scannedRecords, capped: scannedRecords >= maxDocs };
 }
 
+/**
+ * Varre clientCases do tenant aplicando os filtros do portal cliente.
+ *
+ * Usado pelo listClientCases (V1) e pelo fallback do V2 — os dois mantinham o
+ * mesmo laço copiado. O filtro de status/verdict vai para a query quando
+ * possível: com um deles fixado, a varredura le so a fatia correspondente em vez
+ * dos 10k docs do tenant. Nao empurramos os dois juntos porque nao existe indice
+ * composto (tenantId + status + finalVerdict + createdAt).
+ *
+ * @returns {Promise<{matches: Object[], scannedRecords: number, pageCount: number, capped: boolean}>}
+ */
+async function fetchClientCaseMatches({ db, tenantId, filters = {}, scanLimit = CLIENT_CASE_SEARCH_SCAN_LIMIT }) {
+  const statusFilter = String(filters.status || 'ALL');
+  const verdictFilter = String(filters.verdict || 'ALL');
+  const pushDown = statusFilter !== 'ALL'
+    ? { field: 'status', value: statusFilter }
+    : (verdictFilter !== 'ALL' ? { field: 'finalVerdict', value: verdictFilter } : null);
+
+  const matches = [];
+  let lastDoc = null;
+  let scannedRecords = 0;
+  let pageCount = 0;
+  let capped = false;
+
+  while (true) {
+    let q = db.collection('clientCases').where('tenantId', '==', tenantId);
+    if (pushDown) q = q.where(pushDown.field, '==', pushDown.value);
+    q = q.orderBy('createdAt', 'desc');
+    if (lastDoc) q = q.startAfter(lastDoc);
+    const snap = await q.limit(CASE_QUERY_PAGE_SIZE).get();
+    pageCount += 1;
+    const docs = snap.docs || [];
+    docs.forEach((docSnap) => {
+      scannedRecords += 1;
+      const serialized = serializeClientCaseDocument(docSnap);
+      if (matchesClientCaseFilters(serialized, filters)) matches.push(serialized);
+    });
+    if (docs.length < CASE_QUERY_PAGE_SIZE) break;
+    if (scannedRecords >= scanLimit) {
+      capped = true;
+      break;
+    }
+    lastDoc = docs[docs.length - 1];
+  }
+
+  return { matches, scannedRecords, pageCount, capped };
+}
+
+function buildClientCaseStats(cases) {
+  return cases.reduce((acc, caseData) => {
+    acc.total += 1;
+    if (caseData.status === 'DONE') acc.done += 1;
+    if (caseData.status === 'PENDING') acc.pending += 1;
+    if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
+    if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
+    if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
+    if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
+    return acc;
+  }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 });
+}
+
 /* =========================================================
    Funções puras — Tenant submission limits
    ========================================================= */
@@ -802,7 +863,9 @@ function createListClientCasesHandler({
   getClientUserProfile,
 }) {
   return onCall(
-    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true },
+    // maxInstances: sem teto, uma rajada de buscas escalava ate o limite padrao de
+    // instancias, cada uma varrendo o tenant inteiro — 100 timeouts em 5s (2026-08-14).
+    { region: 'southamerica-east1', timeoutSeconds: 120, memory: '1GiB', cors: true, maxInstances: 10 },
     async (request) => {
       const uid = request.auth?.uid;
       if (!uid) throw new HttpsError('unauthenticated', 'Autenticacao necessaria.');
@@ -812,47 +875,17 @@ function createListClientCasesHandler({
       const filters = request.data?.filters || {};
       const sortField = String(request.data?.sortField || 'createdAt');
       const sortDir = String(request.data?.sortDir || 'desc') === 'asc' ? 'asc' : 'desc';
-      const allMatches = [];
-      let lastDoc = null;
-      let scannedRecords = 0;
-      let pageCount = 0;
-      let capped = false;
 
-      while (true) {
-        let q = db.collection('clientCases')
-          .where('tenantId', '==', profile.tenantId)
-          .orderBy('createdAt', 'desc')
-          .limit(CASE_QUERY_PAGE_SIZE);
-        if (lastDoc) q = q.startAfter(lastDoc);
-        const snap = await q.get();
-        pageCount += 1;
-        const docs = snap.docs || [];
-        docs.forEach((docSnap) => {
-          scannedRecords += 1;
-          const serialized = serializeClientCaseDocument(docSnap);
-          if (matchesClientCaseFilters(serialized, filters)) allMatches.push(serialized);
-        });
-        if (docs.length < CASE_QUERY_PAGE_SIZE) break;
-        if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) {
-          capped = true;
-          break;
-        }
-        lastDoc = docs[docs.length - 1];
-      }
+      const { matches: allMatches, scannedRecords, pageCount, capped } = await fetchClientCaseMatches({
+        db,
+        tenantId: profile.tenantId,
+        filters,
+      });
 
       allMatches.sort((left, right) => compareClientCases(left, right, sortField, sortDir));
       const start = (page - 1) * pageSize;
       const pageCases = allMatches.slice(start, start + pageSize);
-      const stats = allMatches.reduce((acc, caseData) => {
-        acc.total += 1;
-        if (caseData.status === 'DONE') acc.done += 1;
-        if (caseData.status === 'PENDING') acc.pending += 1;
-        if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
-        if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
-        if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
-        if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
-        return acc;
-      }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 });
+      const stats = buildClientCaseStats(allMatches);
       return {
         cases: pageCases,
         total: allMatches.length,
@@ -1036,49 +1069,19 @@ function createListClientCasesV2Handler({
       }
 
       if (hasUnsupportedFilters && fallbackToV1) {
-        const allMatches = [];
-        let lastDoc = null;
-        let scannedRecords = 0;
-        let pageCount = 0;
-        let capped = false;
         const pageSize = Math.min(Math.max(Number(request.data?.pageSize) || 50, 1), CLIENT_CASE_PAGE_SIZE_MAX);
         const page = Math.max(Number(request.data?.page) || 1, 1);
 
-        while (true) {
-          let q = db.collection('clientCases')
-            .where('tenantId', '==', tenantId)
-            .orderBy('createdAt', 'desc')
-            .limit(CASE_QUERY_PAGE_SIZE);
-          if (lastDoc) q = q.startAfter(lastDoc);
-          const snap = await q.get();
-          pageCount += 1;
-          const docs = snap.docs || [];
-          docs.forEach((docSnap) => {
-            scannedRecords += 1;
-            const serialized = serializeClientCaseDocument(docSnap);
-            if (matchesClientCaseFilters(serialized, filters)) allMatches.push(serialized);
-          });
-          if (docs.length < CASE_QUERY_PAGE_SIZE) break;
-          if (scannedRecords >= CLIENT_CASE_SEARCH_SCAN_LIMIT) {
-            capped = true;
-            break;
-          }
-          lastDoc = docs[docs.length - 1];
-        }
+        const { matches: allMatches, scannedRecords, pageCount, capped } = await fetchClientCaseMatches({
+          db,
+          tenantId,
+          filters,
+        });
 
         allMatches.sort((left, right) => compareClientCases(left, right, sortField, sortDir));
         const start = (page - 1) * pageSize;
         const pageCases = allMatches.slice(start, start + pageSize);
-        const stats = allMatches.reduce((acc, caseData) => {
-          acc.total += 1;
-          if (caseData.status === 'DONE') acc.done += 1;
-          if (caseData.status === 'PENDING') acc.pending += 1;
-          if (caseData.status === 'IN_PROGRESS') acc.inProgress += 1;
-          if (caseData.status === 'WAITING_INFO') acc.waiting += 1;
-          if (caseData.status === 'CORRECTION_NEEDED') acc.corrections += 1;
-          if (caseData.finalVerdict === 'NOT_RECOMMENDED') acc.notRecommended += 1;
-          return acc;
-        }, { total: 0, done: 0, pending: 0, inProgress: 0, waiting: 0, corrections: 0, notRecommended: 0 });
+        const stats = buildClientCaseStats(allMatches);
 
         return {
           cases: pageCases,
@@ -1924,6 +1927,10 @@ module.exports = {
   OPS_METRIC_FIELDS,
   CLIENT_DASHBOARD_FIELDS,
   OPS_CASE_LIST_FIELDS,
+
+  // Helpers de listagem do portal cliente
+  fetchClientCaseMatches,
+  buildClientCaseStats,
 
   // Handlers
   createListOpsCasesHandler,
