@@ -115,6 +115,58 @@ a{color:inherit}
 .hidden{display:none!important}.fade-in{animation:fade .22s ease both}@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 @media(max-width:840px){.card{grid-template-columns:1fr;min-height:0}.side{padding:20px 24px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end}.side h2{font-size:23px;margin:8px 0 0}.side p,.side-foot{display:none}.side-index{border-top:0;padding-top:0;margin-top:0;text-align:right}.side-index strong{font-size:21px}.content{padding:34px 28px 24px}.question-wrap{min-height:430px}.main{padding-top:28px}.scale.ten{grid-template-columns:repeat(6,1fr)}.scale.ten label:nth-child(n+7){margin-top:2px}.intro-grid{grid-template-columns:1fr}.intro-grid div{border-right:0;border-bottom:1px solid var(--line)}.intro-grid div:last-child{border-bottom:0}.thankyou-panel{grid-template-columns:1fr}}
 @media(max-width:520px){.header-inner{width:calc(100% - 28px);height:64px}.header-meta>span:not(.privacy-pill){display:none}.privacy-pill{font-size:9px;padding:7px 9px}.brand-word{font-size:20px}.main{padding:18px 10px 32px}.stage{width:100%}.card{border-left:0;border-right:0;box-shadow:0 16px 45px rgba(23,52,59,.08)}.side{padding:15px 18px}.side h2{font-size:20px}.content{padding:27px 18px 20px}.question-wrap{min-height:440px;justify-content:flex-start;padding-top:13px}.question-title{font-size:33px}.question-help{font-size:12px;margin-bottom:18px}.option label{padding:12px;min-height:47px}.scale{grid-template-columns:repeat(3,1fr)}.scale.ten{grid-template-columns:repeat(4,1fr)}.scale-labels{font-size:8px}.navbar{position:sticky;bottom:0;background:#fff;margin:24px -18px -20px;padding:14px 18px calc(14px + env(safe-area-inset-bottom));z-index:8}.save-state,.kbd{display:none}.btn{height:45px}.btn-primary{min-width:112px}.intro h1{font-size:44px}.intro .lead{font-size:14px}.review-item{grid-template-columns:28px 1fr auto}.review-actions{justify-content:stretch}.review-actions .btn{flex:1}.footer{width:calc(100% - 28px);flex-direction:column}.thankyou h1{font-size:41px}}
+/* --- Ajuste mobile (2026-09) ---------------------------------------------
+   Em telas estreitas (<=360px) a palavra "ComplianceHub" no titulo media 308px
+   contra um card de 264px uteis: o card tem overflow:hidden, entao o titulo e o
+   texto de apoio apareciam CORTADOS na direita. Titulos passam a escalar com a
+   largura da tela em vez de terem tamanho fixo.
+   Alem disso a tipografia miuda (rotulos de 8-10px) era desenhada para desktop
+   e fica ilegivel no celular; no mobile ela sobe para 10-15px.              */
+.card,.side,.content,.intro,.review,.thankyou,.question-wrap{min-width:0}
+.intro h1,.question-title,.review h1,.thankyou h1,.side h2{overflow-wrap:anywhere;hyphens:auto}
+.intro .lead,.question-help,.option-copy strong,.option-copy small,.review-copy span,.side p{overflow-wrap:anywhere}
+@supports (min-height:100dvh){body,.shell{min-height:100dvh}}
+@media(max-width:640px){
+  .intro h1{font-size:clamp(28px,8.6vw,44px)}
+  .question-title{font-size:clamp(25px,7.4vw,33px)}
+  .review h1,.thankyou h1{font-size:clamp(27px,8vw,41px)}
+  .side h2{font-size:clamp(17px,5.2vw,23px)}
+  .question-kicker,.section-label,.intro .eyebrow{font-size:11px;letter-spacing:.09em}
+  .question-help{font-size:13.5px}
+  .intro .lead{font-size:15px;line-height:1.6}
+  .intro-grid small{font-size:10px}
+  .intro-grid strong{font-size:13px}
+  .privacy-box{font-size:12.5px}
+  .option-copy strong{font-size:14.5px}
+  .option-copy small{font-size:12px}
+  .scale-labels{font-size:11px}
+  .micro-warning{font-size:12px}
+  .max-note{font-size:11px}
+  .counter{font-size:10px}
+  .error{font-size:12px}
+  .other-detail label{font-size:10px}
+  .review-copy strong,.review-copy span{font-size:12.5px}
+  .review-num{font-size:10px}
+  .review-edit{font-size:12px;padding:8px 4px}
+  .submit-status{font-size:12.5px}
+  .thankyou-panel strong{font-size:12.5px}
+  .thankyou-panel span{font-size:11.5px}
+  .footer{font-size:12px}
+  .btn{font-size:13px}
+  .start-row span{font-size:11px}
+  .side-index span{font-size:11px}
+  .scale-box{font-size:13px;height:50px}
+}
+@media(max-width:400px){
+  .main{padding:14px 8px 28px}
+  .content{padding:24px 15px 18px}
+  .side{padding:14px 15px}
+  .navbar{margin:22px -15px -18px;padding:13px 15px calc(13px + env(safe-area-inset-bottom))}
+  .btn{padding:0 12px}
+  .btn-primary{min-width:0}
+  .scale{grid-template-columns:repeat(3,1fr)}
+  .scale.ten{grid-template-columns:repeat(4,1fr)}
+}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 </head>
