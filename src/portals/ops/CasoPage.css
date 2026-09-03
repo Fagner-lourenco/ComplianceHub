@@ -1591,3 +1591,23 @@
     background: var(--gray-400);
     animation: none;
 }
+
+/* Lacuna de cobertura no painel de fontes (2026-09).
+   Reaproveita a familia .caso-provenance-item existente; nao cria componente
+   novo no design system. */
+.caso-provenance-item--warn {
+    border-color: var(--yellow-300, #fcd34d);
+    background: var(--yellow-50, #fffbeb);
+}
+
+.caso-provenance-item--error {
+    border-color: var(--red-300, #fca5a5);
+    background: var(--red-50, #fef2f2);
+}
+
+.caso-provenance-gap-note {
+    margin: 10px 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--red-700, #b91c1c);
+}

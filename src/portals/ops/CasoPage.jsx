@@ -28,7 +28,7 @@ import {
     getOpsCaseReportPreview,
 } from '../../core/firebase/firestoreService';
 import { MOCK_CASES } from '../../data/mockData';
-import { getOverallEnrichmentStatus } from '../../core/enrichmentStatus';
+import { getOverallEnrichmentStatus, getCoverageGaps } from '../../core/enrichmentStatus';
 import { extractErrorMessage, getUserFriendlyMessage } from '../../core/errorUtils';
 import { getSlaStatus, getSlaColor } from '../../core/caseSla';
 import { formatDateTimeBR } from '../../core/formatDate';
@@ -1378,6 +1378,10 @@ export default function CasoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [caseData?.draftSavedAt, caseData?.status, caseData?.updatedAt]);
 
+    // Lacunas de cobertura: quais fontes NAO responderam. Serve para avisar o
+    // analista; nunca entra em allOk nem bloqueia a conclusao.
+    const coverageGaps = useMemo(() => getCoverageGaps(caseData), [caseData]);
+
     const checklist = useMemo(() => [
         enabledPhases.includes('criminal') && { label: 'Criminal definido', ok: Boolean(form.criminalFlag) },
         enabledPhases.includes('criminal') && form.criminalFlag && !isFinalCriminalFlag(form.criminalFlag) && {
@@ -1394,6 +1398,10 @@ export default function CasoPage() {
         { label: 'Resultado final definido', ok: Boolean(form.finalVerdict) },
         { label: 'Justificativa final preenchida', ok: Boolean(form.analystComment?.trim()?.length >= 20), block: !form.analystComment?.trim() },
         // ── Data quality warnings (non-blocking) ──
+        coverageGaps.length > 0 && {
+            label: `Cobertura incompleta: ${coverageGaps.map((gap) => `${gap.provider} (${gap.reasonLabel || gap.status.toLowerCase()})`).join(', ')}`,
+            ok: true, warn: true,
+        },
         form.criminalFlag === 'NEGATIVE' && (caseData?.juditCriminalCount || 0) > 0 && {
             label: `Flag criminal NEGATIVE mas ${caseData.juditCriminalCount} processo(s) criminal(is) encontrado(s)`,
             ok: true, warn: true,
@@ -1420,7 +1428,10 @@ export default function CasoPage() {
         form.socialStatus, form.digitalFlag, form.conflictInterest, form.finalVerdict,
         form.analystComment, form.executiveSummary,
         caseData?.juditCriminalCount, activeWarrantCount, risk.riskScore,
+        coverageGaps,
     ]);
+    // allOk continua sem enxergar aviso: item de cobertura entra com ok:true e
+    // warn:true, entao NAO bloqueia a conclusao. Decisao do produto: alertar.
     const allOk = useMemo(() => checklist.every((item) => item.ok), [checklist]);
     const aiHomonymStructured = caseData?.aiHomonymStructured || null;
     const aiHomonymVisible = Boolean(caseData?.aiHomonymTriggered || aiHomonymStructured || caseData?.aiHomonymError);
@@ -4267,7 +4278,10 @@ export default function CasoPage() {
                         </div>
 
                         {/* Enrichment provenance summary */}
-                        {isEnriched && hasConsultedSources && (
+                        {/* Renderiza tambem quando NENHUMA fonte respondeu: se todas
+                            falharem, hasConsultedSources fica falso e o aviso de lacuna
+                            sumiria justamente no cenario em que ele mais importa. */}
+                        {((isEnriched && hasConsultedSources) || coverageGaps.length > 0) && (
                             <div className="caso-identity-block" style={{ marginTop: 16 }}>
                                 <h4>Fontes de dados consultadas</h4>
                                 <div className="caso-provenance-grid">
@@ -4306,7 +4320,28 @@ export default function CasoPage() {
                                             <span className="caso-provenance-item__status">Analisado</span>
                                         </div>
                                     )}
+                                    {/* Fontes que NAO responderam. Ate 2026-09 o painel filtrava por
+                                        status DONE e a fonte que falhava sumia da tela — o analista
+                                        via um painel verde incompleto. Aviso, nunca bloqueio. */}
+                                    {coverageGaps.map((gap) => (
+                                        <div
+                                            key={gap.field}
+                                            className={`caso-provenance-item caso-provenance-item--${gap.severity === 'alto' ? 'error' : 'warn'}`}
+                                        >
+                                            <span className="caso-provenance-item__label">{gap.provider}</span>
+                                            <span className="caso-provenance-item__status">{gap.status}</span>
+                                            {gap.reasonLabel && (
+                                                <span className="caso-provenance-item__detail">{gap.reasonLabel}</span>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
+                                {coverageGaps.some((gap) => gap.severity === 'alto') && (
+                                    <p className="caso-provenance-gap-note">
+                                        Uma ou mais fontes não responderam neste caso. Você pode concluir assim mesmo,
+                                        mas o resultado não cobre o que essas fontes veriam.
+                                    </p>
+                                )}
                             </div>
                         )}
 

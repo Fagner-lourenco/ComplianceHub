@@ -59,6 +59,7 @@ function createEnrichJuditOnCaseHandler(deps) {
                 await caseRef.update({
                     juditEnrichmentStatus: 'SKIPPED',
                     juditError: null,
+                    juditSkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 return;
@@ -134,6 +135,7 @@ function createEnrichBigDataCorpOnCaseHandler(deps) {
                 await caseRef.update({
                     bigdatacorpEnrichmentStatus: 'SKIPPED',
                     bigdatacorpError: 'Provider desabilitado para este tenant.',
+                    bigdatacorpSkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 await maybeRunAutoClassifyAndAi(caseRef, caseId, 'BigDataCorp disabled');
@@ -203,6 +205,7 @@ function createEnrichBigDataCorpOnCorrectionHandler(deps) {
                 await caseRef.update({
                     bigdatacorpEnrichmentStatus: 'SKIPPED',
                     bigdatacorpError: 'Provider desabilitado para este tenant.',
+                    bigdatacorpSkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 return;
@@ -267,6 +270,7 @@ function createEnrichJuditOnCorrectionHandler(deps) {
                 await caseRef.update({
                     juditEnrichmentStatus: 'SKIPPED',
                     juditError: null,
+                    juditSkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 return;
@@ -339,6 +343,7 @@ function createEnrichEscavadorOnCaseHandler(deps) {
                 await caseRef.update({
                     escavadorEnrichmentStatus: 'SKIPPED',
                     escavadorError: null,
+                    escavadorSkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 if (caseData.juditNeedsEscavador) {
@@ -354,6 +359,7 @@ function createEnrichEscavadorOnCaseHandler(deps) {
                 await caseRef.update({
                     escavadorEnrichmentStatus: 'SKIPPED',
                     escavadorError: null,
+                    escavadorSkippedReason: 'not_needed',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 // Run auto-classify since Escavador will not run
@@ -660,6 +666,7 @@ function createEnrichEscavador2OnCaseHandler(deps) {
                 await caseRef.update({
                     escavador2EnrichmentStatus: 'SKIPPED',
                     escavador2Error: null,
+                    escavador2SkippedReason: 'disabled_for_tenant',
                     updatedAt: FieldValue.serverTimestamp(),
                 });
                 await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 disabled');

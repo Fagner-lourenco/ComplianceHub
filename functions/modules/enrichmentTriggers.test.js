@@ -577,3 +577,91 @@ describe('createEnrichDjenOnCaseHandler', () => {
         expect(deps.maybeRunAutoClassifyAndAi).toHaveBeenCalled();
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Motivo do SKIPPED (2026-09): antes, 'desabilitado pela empresa', 'sub-fase
+// desligada' e 'nao precisou rodar' gravavam o mesmo SKIPPED com *Error null.
+// O analista via a fonte sumir da tela sem saber se ela nao foi contratada ou
+// se caiu. Estes testes travam a distincao no ponto de escrita.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('motivo do SKIPPED por provedor', () => {
+    const eventoDe = (extraBefore = {}, extraAfter = {}) => ({
+        params: { caseId: 'c1' },
+        data: {
+            before: { data: () => ({ bigdatacorpEnrichmentStatus: 'PENDING', juditEnrichmentStatus: 'PENDING', tenantId: 't1', status: 'PENDING', ...extraBefore }) },
+            after: { data: () => ({ bigdatacorpEnrichmentStatus: 'DONE', juditEnrichmentStatus: 'PENDING', tenantId: 't1', status: 'PENDING', ...extraAfter }) },
+        },
+    });
+
+    function capturarUpdate(deps) {
+        const chamadas = [];
+        deps.db.collection = vi.fn(() => ({
+            doc: vi.fn(() => ({
+                update: vi.fn((payload) => { chamadas.push(payload); return Promise.resolve(); }),
+                get: vi.fn().mockResolvedValue({ exists: true, data: () => ({}) }),
+                collection: vi.fn(() => ({ doc: vi.fn(() => ({ get: vi.fn().mockResolvedValue({ exists: false }) })) })),
+            })),
+        }));
+        return chamadas;
+    }
+
+    it('Judit desabilitada no tenant grava disabled_for_tenant', async () => {
+        const deps = makeDeps({ loadJuditConfig: vi.fn().mockResolvedValue({ enabled: false }) });
+        const updates = capturarUpdate(deps);
+        await createEnrichJuditOnCaseHandler(deps)(eventoDe());
+        expect(updates).toContainEqual(expect.objectContaining({
+            juditEnrichmentStatus: 'SKIPPED',
+            juditSkippedReason: 'disabled_for_tenant',
+        }));
+    });
+
+    it('BigDataCorp desabilitado no tenant grava disabled_for_tenant', async () => {
+        const deps = makeDeps({ loadBigDataCorpConfig: vi.fn().mockResolvedValue({ enabled: false }) });
+        const updates = capturarUpdate(deps);
+        await createEnrichBigDataCorpOnCaseHandler(deps)({
+            params: { caseId: 'c1' },
+            data: { data: () => ({ tenantId: 't1', status: 'PENDING', bigdatacorpEnrichmentStatus: 'PENDING' }) },
+        });
+        expect(updates).toContainEqual(expect.objectContaining({
+            bigdatacorpEnrichmentStatus: 'SKIPPED',
+            bigdatacorpSkippedReason: 'disabled_for_tenant',
+        }));
+    });
+
+    it('Escavador2 desabilitado no tenant grava disabled_for_tenant', async () => {
+        const deps = makeDeps({ loadEscavador2Config: vi.fn().mockResolvedValue({ enabled: false }) });
+        const updates = capturarUpdate(deps);
+        await createEnrichEscavador2OnCaseHandler(deps)(eventoDe(
+            { escavador2EnrichmentStatus: 'PENDING' },
+            { escavador2EnrichmentStatus: 'PENDING', juditEnrichmentStatus: 'DONE' },
+        ));
+        expect(updates).toContainEqual(expect.objectContaining({
+            escavador2EnrichmentStatus: 'SKIPPED',
+            escavador2SkippedReason: 'disabled_for_tenant',
+        }));
+    });
+
+    it('Escavador nao necessario grava not_needed, e NAO disabled_for_tenant', async () => {
+        const deps = makeDeps({ loadEscavadorConfig: vi.fn().mockResolvedValue({ enabled: true, alwaysRun: false }) });
+        const updates = capturarUpdate(deps);
+        await createEnrichEscavadorOnCaseHandler(deps)(eventoDe(
+            { escavadorEnrichmentStatus: 'PENDING', juditNeedsEscavador: false },
+            { escavadorEnrichmentStatus: 'PENDING', juditEnrichmentStatus: 'DONE', juditNeedsEscavador: false },
+        ));
+        const skip = updates.find((u) => u.escavadorEnrichmentStatus === 'SKIPPED');
+        expect(skip).toBeDefined();
+        expect(skip.escavadorSkippedReason).toBe('not_needed');
+    });
+
+    it('Escavador desabilitado no tenant grava disabled_for_tenant, e NAO not_needed', async () => {
+        const deps = makeDeps({ loadEscavadorConfig: vi.fn().mockResolvedValue({ enabled: false }) });
+        const updates = capturarUpdate(deps);
+        await createEnrichEscavadorOnCaseHandler(deps)(eventoDe(
+            { escavadorEnrichmentStatus: 'PENDING', juditNeedsEscavador: true },
+            { escavadorEnrichmentStatus: 'PENDING', juditEnrichmentStatus: 'DONE', juditNeedsEscavador: true },
+        ));
+        const skip = updates.find((u) => u.escavadorEnrichmentStatus === 'SKIPPED');
+        expect(skip).toBeDefined();
+        expect(skip.escavadorSkippedReason).toBe('disabled_for_tenant');
+    });
+});

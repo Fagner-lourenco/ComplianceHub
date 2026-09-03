@@ -515,6 +515,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         escavadorEnrichmentStatus: 'SKIPPED',
         escavadorError: escCircuit.reason,
+        escavadorSkippedReason: 'circuit_open',
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: escCircuit.reason };
@@ -628,6 +629,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         bigdatacorpEnrichmentStatus: 'SKIPPED',
         bigdatacorpError: bdcCircuit.reason,
+        bigdatacorpSkippedReason: 'circuit_open',
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: bdcCircuit.reason };
@@ -834,6 +836,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         creditEnrichmentStatus: 'SKIPPED',
         creditError: creditCircuit.reason,
+        creditSkippedReason: 'circuit_open',
         creditRestrictionFlag: 'NOT_AVAILABLE',
         updatedAt: FieldValue.serverTimestamp(),
       });
@@ -943,6 +946,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         juditEnrichmentStatus: 'SKIPPED',
         juditError: juditCircuit.reason,
+        juditSkippedReason: 'circuit_open',
         updatedAt: FieldValue.serverTimestamp(),
       });
       return { status: 'SKIPPED', error: juditCircuit.reason };
@@ -1502,6 +1506,10 @@ function createEnrichmentPhases(deps) {
       ...updatePayload,
       ...persistencePayload,
       juditEnrichmentStatus: juditStatus,
+      // totalPhases === 0 significa que TODAS as sub-fases da Judit estao
+      // desligadas na config do tenant. Sem o motivo, esse SKIPPED era
+      // indistinguivel de "provedor desabilitado" e de "circuito aberto".
+      juditSkippedReason: juditStatus === 'SKIPPED' ? 'sub_phase_disabled' : FieldValue.delete(),
       juditEnrichmentStrategy: juditFilters.useAsync === true ? 'async' : 'datalake',
       juditPendingAsyncPhases: pendingAsyncPhases.length > 0 ? pendingAsyncPhases : FieldValue.delete(),
       juditPendingAsyncCount: pendingCount > 0 ? pendingCount : FieldValue.delete(),
@@ -1718,6 +1726,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         escavador2EnrichmentStatus: 'SKIPPED',
         escavador2Error: null,
+        escavador2SkippedReason: 'sub_phase_disabled',
         escavador2CostBRL: 0,
         updatedAt: FieldValue.serverTimestamp(),
       });
@@ -1730,6 +1739,7 @@ function createEnrichmentPhases(deps) {
       await caseRef.update({
         escavador2EnrichmentStatus: 'SKIPPED',
         escavador2Error: `circuit_open: ${esc2Circuit.reason || 'too many failures'}`.slice(0, 500),
+        escavador2SkippedReason: 'circuit_open',
         updatedAt: FieldValue.serverTimestamp(),
       });
       await maybeRunAutoClassifyAndAi(caseRef, caseId, 'Escavador2 circuit open');
