@@ -120,6 +120,14 @@ service cloud.firestore {
     }
 
     // 4. Audit Logs (ops-only — complete trail)
+    // Pesquisa de produto (2026-09). Texto livre: a pessoa pode escrever opiniao
+    // identificavel sobre colega ou cliente. Escrita so pela Cloud Function
+    // submitResearchResponse; leitura so para o operacional.
+    match /researchResponses/{responseId} {
+      allow read: if isAuthenticated() && isAnalyst();
+      allow create, update, delete: if false;
+    }
+
     match /auditLogs/{logId} {
       allow read: if isAuthenticated() && isAnalyst() && (
         isAdmin() || isSameTenant(resource.data.tenantId)

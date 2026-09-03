@@ -1,0 +1,842 @@
+<!doctype html>
+<!--
+===============================================================================
+COMPLIANCEHUB · PESQUISA DE PRODUTO / UX PARA RECRUTADORAS DE RH
+Versão: CH-RH-UX-2026.09-V3 · CANDIDATA A PUBLICAÇÃO
+===============================================================================
+
+OBJETIVO
+- Coletar feedback qualitativo e quantitativo das recrutadoras que usam o
+  ComplianceHub de forma recorrente.
+- Orientar a refatoração da experiência do Portal do Cliente sem transformar a
+  pesquisa em uma validação enviesada de funcionalidades já imaginadas.
+- Descobrir tarefas feitas fora do ComplianceHub que podem indicar integrações,
+  automações ou novas capacidades de produto.
+
+PRINCÍPIOS DE PESQUISA
+1. Primeiro perguntamos sobre o trabalho real; só depois mostramos possibilidades.
+2. Perguntas de oportunidade abertas vêm antes da lista de recursos sugeridos.
+3. A pesquisa não pergunta nome da participante por padrão.
+4. Dados de candidatos NÃO devem ser inseridos na pesquisa.
+5. O resultado do ComplianceHub é tratado como apoio à decisão; a decisão de
+   contratação permanece humana e sob responsabilidade da organização.
+6. A árvore é condicional: cada pessoa vê apenas perguntas relevantes.
+
+DIREÇÃO VISUAL
+- Base branca / quase branca.
+- Petróleo profundo para confiança e governança.
+- Verde mineral para ações primárias.
+- Azul aço para informação.
+- Bronze para atenção/revisão.
+- Sem roxo, glow, glassmorphism ou estética genérica de “IA”.
+
+PUBLICAÇÃO / BACKEND
+- O arquivo funciona sozinho no navegador e salva progresso em localStorage.
+- Por segurança, nenhum endpoint de produção é inventado neste protótipo.
+- Para publicação real, defina CONFIG.submitEndpoint abaixo.
+- O endpoint deve aceitar POST application/json e responder 2xx.
+- Enquanto submitEndpoint estiver vazio, a página usa MODO DE PRÉVIA: a resposta
+  pode ser baixada em JSON no final, mas não é enviada a um servidor.
+- BLOQUEIO DE PUBLICAÇÃO: configure e teste submitEndpoint antes de enviar o link
+  às recrutadoras. Publicar com o campo vazio não coletará respostas centralmente.
+
+ACESSIBILIDADE
+- Navegação por teclado.
+- Foco visível.
+- Labels e fieldsets semânticos.
+- Estados não dependem apenas de cor.
+- prefers-reduced-motion respeitado.
+===============================================================================
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17343B">
+<title>ComplianceHub · Ajude a construir a próxima experiência</title>
+<meta name="description" content="Pesquisa de experiência do ComplianceHub para profissionais de recrutamento e seleção.">
+<style>
+:root{
+  --ink:#17343B;
+  --ink-2:#254B53;
+  --primary:#2E6F62;
+  --primary-strong:#255D52;
+  --info:#4A7180;
+  --accent:#B98243;
+  --alert:#A6534D;
+  --text:#202B2F;
+  --muted:#5F7074;
+  --line:#DCE3E0;
+  --bg:#FFFFFF;
+  --paper:#F7F9F8;
+  --surface:#F2F5F4;
+  --soft:#EAF2EF;
+  --info-soft:#EDF2F4;
+  --accent-soft:#F6EEE3;
+  --alert-soft:#F8ECEB;
+  --white:#FFFFFF;
+  --shadow:0 24px 70px rgba(23,52,59,.10);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:"Segoe UI",Inter,Arial,sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{background:var(--paper);scroll-behavior:smooth}
+body{margin:0;min-height:100vh;font-family:var(--sans);color:var(--text);background:
+  linear-gradient(90deg,rgba(23,52,59,.025) 1px,transparent 1px),
+  linear-gradient(rgba(23,52,59,.025) 1px,transparent 1px),var(--paper);background-size:38px 38px;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.55}
+a{color:inherit}
+.skip{position:absolute;left:-9999px;top:8px;background:#fff;padding:10px 14px;border:1px solid var(--line);z-index:999}
+.skip:focus{left:8px}
+.shell{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
+.header{position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(220,227,224,.95);background:rgba(255,255,255,.94);backdrop-filter:blur(14px)}
+.header-inner{width:min(1180px,calc(100% - 40px));height:72px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.brand{display:flex;align-items:baseline;gap:0;text-decoration:none;min-width:max-content}.brand-word{font-size:22px;font-weight:800;letter-spacing:-.045em;color:var(--ink);line-height:1}.brand-word em{font-style:normal;color:var(--primary)}.brand-word small{display:block;margin-left:10px;margin-top:4px;font-family:var(--mono);font-size:7px;letter-spacing:.08em;text-transform:uppercase;color:#7B8A86;font-weight:600}
+.header-meta{display:flex;align-items:center;gap:14px;color:var(--muted);font-size:11px}.privacy-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-weight:700;color:#506468}.privacy-dot{width:7px;height:7px;border-radius:50%;background:var(--primary)}
+.progress-wrap{position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#EDF1EF}.progress-bar{height:100%;width:0;background:var(--primary);transition:width .25s ease}
+.main{display:grid;place-items:center;padding:46px 20px 52px}
+.stage{width:min(940px,100%);position:relative}
+.card{background:rgba(255,255,255,.98);border:1px solid #D6DFDB;box-shadow:var(--shadow);min-height:560px;display:grid;grid-template-columns:232px 1fr;overflow:hidden}
+.side{background:var(--ink);color:#fff;padding:34px 26px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}.side:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 85%);pointer-events:none}.side>*{position:relative}.section-label{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:#9EB9B3}.side h2{font-family:var(--serif);font-size:29px;line-height:1.05;font-weight:500;margin:14px 0 12px}.side p{font-size:11px;line-height:1.6;color:#B5C6C1;margin:0}.side-index{border-top:1px solid rgba(255,255,255,.15);padding-top:18px;margin-top:26px}.side-index strong{display:block;font-family:var(--mono);font-size:28px;font-weight:500;color:#fff}.side-index span{display:block;margin-top:4px;font-size:10px;color:#9CB0AB}.side-foot{font-family:var(--mono);font-size:8px;line-height:1.55;color:#7F9993;text-transform:uppercase;letter-spacing:.06em}
+.content{padding:42px 46px 30px;display:flex;flex-direction:column;min-width:0}
+.question-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;max-width:650px;width:100%;margin:auto}.question-kicker{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--primary);margin-bottom:12px}.question-title{font-family:var(--serif);font-weight:500;font-size:clamp(31px,4vw,43px);line-height:1.07;letter-spacing:-.025em;color:var(--ink);margin:0}.question-help{font-size:13px;line-height:1.6;color:var(--muted);margin:14px 0 22px;max-width:590px}.question-help strong{color:#40575B}
+.options{display:grid;gap:9px;margin-top:4px}.option{position:relative}.option input{position:absolute;opacity:0;pointer-events:none}.option label{display:flex;align-items:flex-start;gap:12px;width:100%;border:1px solid #D4DDDA;background:#fff;padding:13px 14px;transition:.16s ease;min-height:49px}.option label:hover{border-color:#AFC4BD;background:#FAFCFB}.option input:focus-visible+label{outline:3px solid rgba(46,111,98,.18);outline-offset:2px}.option input:checked+label{border-color:var(--primary);background:var(--soft);box-shadow:inset 3px 0 0 var(--primary)}.choice-mark{width:19px;height:19px;border:1px solid #B8C7C2;background:#fff;display:grid;place-items:center;flex:0 0 19px;margin-top:1px}.radio .choice-mark{border-radius:50%}.radio input:checked+label .choice-mark:after{content:"";width:9px;height:9px;background:var(--primary);border-radius:50%}.checkbox input:checked+label .choice-mark:after{content:"✓";font-size:13px;font-weight:900;color:var(--primary)}.option-copy strong{display:block;font-size:13px;color:#2E4145}.option-copy small{display:block;margin-top:3px;font-size:10px;line-height:1.45;color:#71817E}
+.scale{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}.scale.ten{grid-template-columns:repeat(11,1fr)}.scale label{min-width:0}.scale input{position:absolute;opacity:0}.scale-box{height:46px;border:1px solid #CFD9D5;background:#fff;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700;color:#526763;transition:.16s ease}.scale input:checked+.scale-box{border-color:var(--primary);background:var(--primary);color:#fff}.scale input:focus-visible+.scale-box{outline:3px solid rgba(46,111,98,.18);outline-offset:2px}.scale-labels{display:flex;justify-content:space-between;gap:16px;font-size:9px;color:#7C8C88;margin-top:7px}
+.textarea{width:100%;min-height:145px;resize:vertical;border:1px solid #CCD8D3;background:#fff;padding:14px 15px;outline:0;line-height:1.55;color:var(--text)}.textarea:focus,.text-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,111,98,.12)}.text-input{width:100%;height:48px;border:1px solid #CCD8D3;background:#fff;padding:0 14px;outline:0;color:var(--text)}.counter{text-align:right;font-family:var(--mono);font-size:9px;color:#86958F;margin-top:5px}.micro-warning{display:flex;gap:9px;align-items:flex-start;margin-top:9px;padding:10px 12px;background:var(--accent-soft);border-left:3px solid var(--accent);font-size:10px;line-height:1.5;color:#6C583F}.micro-warning b{color:#5B472F}
+.max-note{display:inline-flex;align-items:center;gap:6px;background:var(--info-soft);color:#526D76;font-size:10px;font-weight:700;padding:7px 9px;margin:0 0 10px}.error{display:none;margin-top:10px;padding:9px 11px;background:var(--alert-soft);border-left:3px solid var(--alert);color:#7C3F3A;font-size:11px;line-height:1.45}.error.show{display:block}
+.navbar{border-top:1px solid var(--line);margin-top:28px;padding-top:20px;display:flex;align-items:center;justify-content:space-between;gap:14px}.nav-left,.nav-right{display:flex;align-items:center;gap:10px}.btn{height:44px;border:0;border-radius:5px;padding:0 15px;font-weight:850;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.16s ease}.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-strong)}.btn-secondary{background:#fff;color:var(--ink);border:1px solid #CFD9D5}.btn-secondary:hover{background:#F8FAF9}.btn-ghost{background:transparent;color:#647673;padding-left:6px;padding-right:6px}.btn-danger{background:var(--alert);color:#fff}.kbd{font-family:var(--mono);font-size:8px;border:1px solid #CAD5D1;background:#fff;padding:2px 4px;color:#73837F}.save-state{font-size:9px;color:#899692;display:flex;align-items:center;gap:6px}.save-state:before{content:"";width:6px;height:6px;border-radius:50%;background:#7CA89D}
+.intro{max-width:680px;margin:auto}.intro .eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--primary)}.intro h1{font-family:var(--serif);font-weight:500;font-size:clamp(42px,6vw,62px);line-height:.98;letter-spacing:-.04em;color:var(--ink);margin:18px 0 20px}.intro h1 em{font-style:normal;color:var(--primary)}.intro .lead{font-size:16px;line-height:1.65;color:#596D70;max-width:640px}.intro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);margin:26px 0 24px}.intro-grid div{padding:15px;border-right:1px solid var(--line);background:#FAFBFA}.intro-grid div:last-child{border-right:0}.intro-grid small{display:block;font-family:var(--mono);font-size:8px;text-transform:uppercase;color:#7D8D89}.intro-grid strong{display:block;margin-top:6px;font-size:11px;color:#344B50}.privacy-box{border-left:3px solid var(--info);background:var(--info-soft);padding:13px 15px;font-size:11px;line-height:1.55;color:#536C74}.privacy-box strong{color:#385760}.start-row{display:flex;align-items:center;gap:16px;margin-top:24px;flex-wrap:wrap}.start-row span{font-size:10px;color:#82918D}
+.other-detail{margin-top:12px;padding:13px 14px;border:1px solid var(--line);background:var(--paper)}.other-detail label{display:block;margin-bottom:7px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#607774}.other-detail input{width:100%;border:1px solid #CAD6D2;background:#fff;padding:11px 12px;color:var(--text);outline:0}.other-detail input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(46,111,98,.08)}.review-details{margin-top:18px;border-top:1px solid var(--line)}.review-details summary{cursor:pointer;list-style:none;padding:15px 0;font-size:11px;font-weight:800;color:var(--primary);display:flex;align-items:center;justify-content:space-between}.review-details summary::-webkit-details-marker{display:none}.review-details summary:after{content:"+";font-size:17px;font-weight:500}.review-details[open] summary:after{content:"−"}.review-details .review-list{margin-top:0}.review-actions-top{justify-content:flex-start;margin-top:18px;padding-bottom:4px}.review{max-width:690px;margin:auto}.review h1,.thankyou h1{font-family:var(--serif);font-size:clamp(38px,5vw,52px);font-weight:500;line-height:1.02;color:var(--ink);margin:0 0 14px}.review>p,.thankyou>p{font-size:13px;line-height:1.65;color:var(--muted)}.review-list{border-top:1px solid var(--line);margin-top:22px}.review-item{display:grid;grid-template-columns:38px 1fr auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}.review-num{font-family:var(--mono);font-size:9px;color:#82918D;padding-top:3px}.review-copy strong{display:block;font-size:11px;color:#40565A}.review-copy span{display:block;margin-top:4px;font-size:11px;line-height:1.5;color:#6D7D79;word-break:break-word}.review-edit{border:0;background:transparent;color:var(--primary);font-size:10px;font-weight:800;padding:3px}.review-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap}.submit-status{margin-top:14px;padding:11px 13px;font-size:11px;line-height:1.5;border-left:3px solid var(--info);background:var(--info-soft);color:#4A6770}.submit-status.success{border-color:var(--primary);background:var(--soft);color:#365D55}.submit-status.fail{border-color:var(--alert);background:var(--alert-soft);color:#7B423D}
+.thankyou{max-width:690px;margin:auto}.thankyou-mark{width:52px;height:52px;display:grid;place-items:center;background:var(--soft);border:1px solid #BFD5CE;color:var(--primary);font-size:25px;margin-bottom:20px}.thankyou-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px}.thankyou-panel>div{border:1px solid var(--line);background:#FAFBFA;padding:16px}.thankyou-panel strong{display:block;font-size:11px;color:#3C5357}.thankyou-panel span{display:block;font-size:10px;line-height:1.5;color:#74847F;margin-top:5px}.preview-badge{display:inline-flex;margin-top:12px;background:var(--accent-soft);border:1px solid #E4D4BF;color:#745835;padding:7px 9px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.footer{width:min(1180px,calc(100% - 40px));margin:auto;border-top:1px solid var(--line);padding:18px 0 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;font-size:9px;line-height:1.5;color:#80908C}.footer strong{color:#5F716D}
+.hidden{display:none!important}.fade-in{animation:fade .22s ease both}@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:840px){.card{grid-template-columns:1fr;min-height:0}.side{padding:20px 24px;display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end}.side h2{font-size:23px;margin:8px 0 0}.side p,.side-foot{display:none}.side-index{border-top:0;padding-top:0;margin-top:0;text-align:right}.side-index strong{font-size:21px}.content{padding:34px 28px 24px}.question-wrap{min-height:430px}.main{padding-top:28px}.scale.ten{grid-template-columns:repeat(6,1fr)}.scale.ten label:nth-child(n+7){margin-top:2px}.intro-grid{grid-template-columns:1fr}.intro-grid div{border-right:0;border-bottom:1px solid var(--line)}.intro-grid div:last-child{border-bottom:0}.thankyou-panel{grid-template-columns:1fr}}
+@media(max-width:520px){.header-inner{width:calc(100% - 28px);height:64px}.header-meta>span:not(.privacy-pill){display:none}.privacy-pill{font-size:9px;padding:7px 9px}.brand-word{font-size:20px}.main{padding:18px 10px 32px}.stage{width:100%}.card{border-left:0;border-right:0;box-shadow:0 16px 45px rgba(23,52,59,.08)}.side{padding:15px 18px}.side h2{font-size:20px}.content{padding:27px 18px 20px}.question-wrap{min-height:440px;justify-content:flex-start;padding-top:13px}.question-title{font-size:33px}.question-help{font-size:12px;margin-bottom:18px}.option label{padding:12px;min-height:47px}.scale{grid-template-columns:repeat(3,1fr)}.scale.ten{grid-template-columns:repeat(4,1fr)}.scale-labels{font-size:8px}.navbar{position:sticky;bottom:0;background:#fff;margin:24px -18px -20px;padding:14px 18px calc(14px + env(safe-area-inset-bottom));z-index:8}.save-state,.kbd{display:none}.btn{height:45px}.btn-primary{min-width:112px}.intro h1{font-size:44px}.intro .lead{font-size:14px}.review-item{grid-template-columns:28px 1fr auto}.review-actions{justify-content:stretch}.review-actions .btn{flex:1}.footer{width:calc(100% - 28px);flex-direction:column}.thankyou h1{font-size:41px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#surveyMain">Ir para a pesquisa</a>
+<div class="shell">
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="#" aria-label="ComplianceHub">
+        <span class="brand-word">Compliance<em>Hub</em><small>Inteligência para RH</small></span>
+      </a>
+      <div class="header-meta">
+        <span id="headerProgressText">Pesquisa de produto · ~7 min</span>
+        <span class="privacy-pill"><span class="privacy-dot" aria-hidden="true"></span> Respostas confidenciais</span>
+      </div>
+      <div class="progress-wrap" aria-hidden="true"><div class="progress-bar" id="topProgress"></div></div>
+    </div>
+  </header>
+
+  <main class="main" id="surveyMain">
+    <div class="stage">
+      <section class="card" id="surveyCard" aria-live="polite"></section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span><strong>ComplianceHub</strong> · Pesquisa de experiência para evolução do produto.</span>
+    <span>Não inclua nomes, CPFs, processos ou qualquer dado de candidatos nas respostas abertas.</span>
+  </footer>
+</div>
+
+<script>
+/* =============================================================================
+   1. CONFIGURAÇÃO DE PUBLICAÇÃO
+   ============================================================================= */
+const CONFIG = {
+  surveyVersion: "CH-RH-UX-2026.09-V3",
+  storageKey: "compliancehub_rh_research_v3",
+  estimatedMinutes: "~8 min",
+
+  // PRODUÇÃO:
+  // Exemplo: "/api/product-feedback/rh-research"
+  // Deixe vazio durante validação visual / homologação.
+  submitEndpoint: "https://southamerica-east1-compliance-hub-br.cloudfunctions.net/submitResearchResponse",
+
+  // Em produção, prefira true para cookies de sessão same-origin.
+  credentials: "omit",
+
+  // Limite usado na pergunta "escolha até 3".
+  maxOpportunityChoices: 3,
+};
+
+/* =============================================================================
+   2. DADOS E ÁRVORE DA PESQUISA
+
+   Estratégia:
+   - Perguntas rápidas dão contexto operacional.
+   - Perguntas abertas aparecem ANTES das sugestões de funcionalidades.
+   - Branches evitam perguntas irrelevantes.
+   - Não perguntamos "frequência de uso": o público desta rodada já é composto
+     por usuárias intensivas; volume diário diferencia melhor a experiência.
+   ============================================================================= */
+const QUESTIONS = [
+  {
+    id:"daily_volume", section:"Seu dia a dia", kicker:"Contexto de uso",
+    title:"Em um dia típico, quantas análises você costuma solicitar?",
+    help:"Não precisa ser exato. Queremos entender o volume com que você lida.",
+    type:"single", required:true,
+    options:[
+      ["1_3","1 a 3"],["4_7","4 a 7"],["8_15","8 a 15"],["16_plus","16 ou mais"],["varies","Varia muito conforme o dia"]
+    ]
+  },
+  {
+    id:"arrival_mode", section:"Seu dia a dia", kicker:"Contexto de uso",
+    title:"Os candidatos chegam para você, normalmente, de que forma?",
+    help:"Isso ajuda a entender se o fluxo é individual ou se existe uma necessidade de trabalhar com volume.",
+    type:"single", required:true,
+    options:[
+      ["one_by_one","Um de cada vez"],
+      ["batches","Vários candidatos de uma vez"],
+      ["both","Das duas formas"],
+      ["other","Outro fluxo"]
+    ]
+  },
+  {
+    id:"candidate_source", section:"Seu dia a dia", kicker:"Origem dos dados",
+    title:"De onde você normalmente pega o CPF e os dados do candidato antes de abrir o ComplianceHub?",
+    help:"Marque tudo o que fizer parte do seu fluxo. Essa pergunta pode revelar oportunidades de integração.",
+    type:"multi", required:true,
+    options:[
+      ["ats","Sistema de recrutamento / ATS"],
+      ["spreadsheet","Planilha"],
+      ["internal_system","Sistema interno da empresa"],
+      ["email","E-mail"],
+      ["whatsapp","WhatsApp / mensagem"],
+      ["resume","Currículo / ficha do candidato"],
+      ["other","Outro"]
+    ]
+  },
+  {
+    id:"devices", section:"Seu dia a dia", kicker:"Dispositivo",
+    title:"Em quais dispositivos você realmente usa o ComplianceHub?",
+    help:"Marque o uso real, mesmo que um deles seja apenas ocasional.",
+    type:"multi", required:true,
+    options:[["desktop","Computador / notebook"],["mobile","Celular"],["tablet","Tablet"]]
+  },
+  {
+    id:"mobile_friction", section:"Seu dia a dia", kicker:"Experiência no celular",
+    title:"Quando você usa o ComplianceHub no celular, o que mais atrapalha?",
+    help:"Marque tudo o que realmente dificulta seu uso no mobile. Se funciona bem, marque “Nada me atrapalha”.",
+    type:"multi", required:true,
+    options:[
+      ["start","Iniciar uma nova análise"],
+      ["status","Acompanhar o andamento / status"],
+      ["result","Ler o resultado e a justificativa"],
+      ["history","Encontrar análises antigas"],
+      ["navigation","Navegar pela plataforma"],
+      ["screen","Tamanho / organização das informações na tela"],
+      ["none","Nada me atrapalha; funciona bem no celular"],
+      ["other","Outro ponto"]
+    ],
+    showIf:a=>Array.isArray(a.devices)&&a.devices.includes("mobile")
+  },
+  {
+    id:"request_ease", section:"Nova análise", kicker:"Entrada do candidato",
+    title:"Hoje, quão simples é iniciar uma nova análise?",
+    help:"Considere desde abrir a plataforma até a solicitação ficar registrada.",
+    type:"scale5", required:true, labels:["Muito difícil","Muito simples"]
+  },
+  {
+    id:"request_friction", section:"Nova análise", kicker:"Atrito real",
+    title:"O que mais atrapalha ou faz você perder tempo ao iniciar uma análise?",
+    help:"Pense em uma situação concreta. Se puder, descreva o último atrito que lembra.",
+    type:"text", required:false, maxLength:700,
+    showIf:a=>Number(a.request_ease)<=3
+  },
+  {
+    id:"ideal_start", section:"Nova análise", kicker:"Quantidade de dados",
+    title:"Qual seria a forma ideal de iniciar uma análise?",
+    help:"Não pense no que a plataforma poderia tecnicamente coletar. Pense no que deixa seu trabalho mais rápido sem perder qualidade.",
+    type:"single", required:true,
+    options:[
+      ["cpf_only","Informar apenas o CPF"],
+      ["cpf_name","CPF + nome do candidato"],
+      ["identity_context","CPF + nome + contexto da vaga"],
+      ["dynamic","Começar simples e pedir dados adicionais somente quando forem necessários"],
+      ["other","Outro formato"]
+    ]
+  },
+  {
+    id:"available_context", section:"Nova análise", kicker:"Dados disponíveis",
+    title:"Quais informações você normalmente já tem em mãos sem precisar procurar?",
+    help:"Marque somente o que está disponível com facilidade no momento em que você solicita a análise.",
+    type:"multi", required:false,
+    options:[
+      ["name","Nome completo"],["birth","Data de nascimento"],["role","Cargo / vaga"],["department","Área / departamento"],
+      ["work_uf","UF da contratação"],["residence_uf","UF de residência"],["email","E-mail"],["phone","Telefone"],
+      ["social","Perfis sociais / LinkedIn"],["notes","Observações do processo seletivo"]
+    ],
+    showIf:a=>["identity_context","dynamic","other"].includes(a.ideal_start)
+  },
+  {
+    id:"duplicate_frequency", section:"Nova análise", kicker:"Reconsulta",
+    title:"Com que frequência você precisa consultar novamente um candidato já analisado?",
+    help:"Pode acontecer por reabertura de vaga, tempo decorrido ou dúvida sobre uma análise anterior.",
+    type:"single", required:true,
+    options:[["never","Nunca ou quase nunca"],["sometimes","Às vezes"],["often","Com frequência"],["unsure","Não sei"]]
+  },
+  {
+    id:"duplicate_help", section:"Nova análise", kicker:"Reconsulta",
+    title:"Quando isso acontece, o que seria mais útil?",
+    help:"Marque tudo o que ajudaria a evitar retrabalho.",
+    type:"multi", required:false,
+    options:[
+      ["warn","Avisar que já existe uma análise recente"],
+      ["open_old","Abrir diretamente o dossiê anterior"],
+      ["reuse","Permitir reutilizar a análise anterior quando fizer sentido"],
+      ["compare","Comparar o que mudou entre duas análises"],
+      ["none","Nada disso seria necessário"]
+    ],
+    showIf:a=>["sometimes","often"].includes(a.duplicate_frequency)
+  },
+  {
+    id:"waiting_behavior", section:"Enquanto analisa", kicker:"Acompanhamento",
+    title:"Depois de enviar uma análise, o que você normalmente faz?",
+    help:"Escolha a opção que mais se aproxima da sua rotina.",
+    type:"single", required:true,
+    options:[
+      ["work_return","Continuo trabalhando e volto mais tarde"],
+      ["keep_open","Deixo a plataforma aberta acompanhando"],
+      ["refresh","Volto várias vezes / atualizo para ver se ficou pronto"],
+      ["external_notice","Espero algum aviso da equipe por outro canal"],
+      ["other","Outro comportamento"]
+    ]
+  },
+  {
+    id:"in_progress_info", section:"Enquanto analisa", kicker:"Acompanhamento",
+    title:"Enquanto a análise está em andamento, o que você realmente gostaria de saber?",
+    help:"Marque somente o que teria utilidade prática no seu dia.",
+    type:"multi", required:true,
+    options:[
+      ["received","Se a solicitação foi recebida"],
+      ["stage","Em que etapa ela está"],
+      ["eta","Previsão aproximada de conclusão"],
+      ["need_action","Se precisa de alguma correção ou informação minha"],
+      ["no_need","Não preciso acompanhar; só quero saber quando terminar"]
+    ]
+  },
+  {
+    id:"notification_channel", section:"Enquanto analisa", kicker:"Notificações",
+    title:"Quando o resultado ficar pronto, como você preferiria ser avisada?",
+    help:"Escolha o canal principal. Isso não significa que ele será implementado; queremos medir o valor real.",
+    type:"single", required:true,
+    options:[
+      ["inside","Somente dentro do ComplianceHub"],
+      ["email","E-mail"],
+      ["whatsapp","WhatsApp / mensagem"],
+      ["browser","Notificação no navegador"],
+      ["no_notification","Não preciso de notificação"],
+      ["other","Outro canal"]
+    ]
+  },
+  {
+    id:"turnaround_fit", section:"Enquanto analisa", kicker:"Tempo de resposta",
+    title:"O tempo de resposta atual atende à sua necessidade no processo seletivo?",
+    help:"Avalie o efeito no seu trabalho, não apenas a velocidade em minutos.",
+    type:"scale5", required:true, labels:["Não atende","Atende totalmente"]
+  },
+  {
+    id:"turnaround_impact", section:"Enquanto analisa", kicker:"Impacto do tempo",
+    title:"Quando o resultado demora mais do que você gostaria, o que isso atrapalha?",
+    help:"Descreva o impacto real: contato com candidato, prazo da vaga, alinhamento com gestor, retrabalho etc.",
+    type:"text", required:false, maxLength:700,
+    showIf:a=>Number(a.turnaround_fit)<=3
+  },
+  {
+    id:"verdict_clarity", section:"Resultado", kicker:"Clareza",
+    title:"Os resultados “Apto”, “Atenção” e “Não recomendado” são claros para você?",
+    help:"Considere se você entende rapidamente o que o resultado significa dentro do fluxo de recrutamento.",
+    type:"scale5", required:true, labels:["Nada claros","Totalmente claros"]
+  },
+  {
+    id:"attention_clarity", section:"Resultado", kicker:"Resultado Atenção",
+    title:"Quando aparece “Atenção”, fica claro por que o caso merece uma análise mais cuidadosa?",
+    help:"Esse é o estado com maior chance de exigir interpretação, por isso avaliamos separadamente.",
+    type:"scale5", required:true, labels:["Fico sem saber o motivo","Entendo imediatamente"]
+  },
+  {
+    id:"attention_missing", section:"Resultado", kicker:"Resultado Atenção",
+    title:"O que ajudaria a entender melhor um resultado “Atenção”?",
+    help:"Marque o que diminuiria dúvida sem transformar o sistema em uma decisão automática de contratação.",
+    type:"multi", required:false,
+    options:[
+      ["short_reason","Um motivo resumido em uma frase"],
+      ["criterion","O critério da empresa relacionado ao achado"],
+      ["severity","Nível de relevância / gravidade do achado"],
+      ["source_date","Fonte e data da informação"],
+      ["reading_guidance","Orientação sobre o que merece ser lido com mais atenção"],
+      ["contact","Forma simples de tirar dúvida com a equipe de análise"],
+      ["other","Outra informação"]
+    ],
+    showIf:a=>Number(a.attention_clarity)<=3
+  },
+  {
+    id:"rationale_sufficiency", section:"Resultado", kicker:"Justificativa",
+    title:"A justificativa do dossiê é suficiente para você entender rapidamente o motivo do resultado?",
+    help:"A ideia não é ter mais texto; é ter a quantidade certa de contexto.",
+    type:"scale5", required:true, labels:["Insuficiente","Totalmente suficiente"]
+  },
+  {
+    id:"decision_confidence", section:"Resultado", kicker:"Confiança",
+    title:"De 0 a 10, quanto o dossiê ajuda você a entender os achados e aplicar os critérios da empresa nessa etapa?",
+    help:"Queremos medir a utilidade do dossiê para a sua análise — não automatizar a decisão de contratação.",
+    type:"scale10", required:true, labels:["Ajuda pouco","Ajuda muito"]
+  },
+  {
+    id:"after_result", section:"Resultado", kicker:"Trabalho restante",
+    title:"Depois de receber o resultado, o que você ainda costuma fazer antes de seguir com o processo?",
+    help:"Marque tudo o que acontece de verdade. “Nada” também é uma resposta valiosa.",
+    type:"multi", required:true,
+    options:[
+      ["nothing","Nada; o resultado já é suficiente para essa etapa"],
+      ["read_details","Leio os detalhes do dossiê dentro da plataforma"],
+      ["open_pdf","Abro ou baixo o PDF do dossiê"],
+      ["share_manager","Compartilho com gestor ou outra pessoa"],
+      ["register_elsewhere","Registro o resultado em outro sistema / planilha"],
+      ["external_search","Pesquiso novamente em outras fontes"],
+      ["ask_team","Tiro dúvida com a equipe de análise"],
+      ["save_capture","Salvo uma cópia ou faço captura do resultado fora da plataforma"],
+      ["other","Faço outra coisa"]
+    ]
+  },
+  {
+    id:"external_check_why", section:"Resultado", kicker:"Checagem paralela",
+    title:"Quando você pesquisa novamente fora do ComplianceHub, onde procura e o que está tentando confirmar?",
+    help:"Não cite candidatos. Queremos entender a lacuna que leva você a sair da plataforma.",
+    type:"text", required:false, maxLength:700,
+    showIf:a=>Array.isArray(a.after_result)&&a.after_result.includes("external_search")
+  },
+  {
+    id:"history_frequency", section:"Histórico", kicker:"Consultas antigas",
+    title:"Com que frequência você precisa voltar a uma análise antiga?",
+    help:"Considere dossiês de candidatos consultados em dias, semanas ou meses anteriores.",
+    type:"single", required:true,
+    options:[["never","Nunca ou quase nunca"],["sometimes","Às vezes"],["often","Frequentemente"],["daily","Quase todos os dias"]]
+  },
+  {
+    id:"history_need", section:"Histórico", kicker:"Consultas antigas",
+    title:"Quando você volta a uma análise antiga, o que normalmente precisa fazer?",
+    help:"Isso ajuda a decidir se busca, filtros, histórico, compartilhamento ou comparação merecem prioridade.",
+    type:"multi", required:false,
+    options:[
+      ["find_name","Encontrar rapidamente pelo nome / CPF"],
+      ["read_result","Rever o resultado e a justificativa"],
+      ["download","Baixar / imprimir novamente"],
+      ["share","Compartilhar com alguém"],
+      ["check_date","Confirmar quando a análise foi feita"],
+      ["compare","Comparar com uma análise nova"],
+      ["other","Outro"]
+    ],
+    showIf:a=>a.history_frequency!=="never"
+  },
+  {
+    id:"outside_task", section:"Oportunidades", kicker:"Pergunta mais importante",
+    title:"Existe alguma tarefa que você faz fora do ComplianceHub e gostaria de conseguir fazer dentro dele?",
+    help:"Pode ser antes, durante ou depois da análise. Pense em sistemas, planilhas, mensagens, controles, consultas ou qualquer etapa manual.",
+    type:"text", required:false, maxLength:900,
+    warning:"Não tente inventar uma funcionalidade. Conte o trabalho que você já precisa fazer hoje. É isso que queremos descobrir."
+  },
+  {
+    id:"missing_info", section:"Oportunidades", kicker:"Informação ausente",
+    title:"Tem alguma informação que você gostaria de ver e hoje não encontra com facilidade?",
+    help:"Pode estar no dossiê, no acompanhamento da solicitação ou no histórico.",
+    type:"text", required:false, maxLength:700
+  },
+  {
+    id:"opportunity_choices", section:"Oportunidades", kicker:"Priorização",
+    title:"Agora que você pensou no seu fluxo real: quais melhorias teriam maior impacto no seu dia?",
+    help:"Escolha no máximo 3. Esta lista aparece só agora para não influenciar suas respostas anteriores.",
+    type:"multi", required:true, maxChoices:3,
+    options:[
+      ["batch","Enviar vários candidatos de uma vez"],
+      ["integration","Trazer dados direto do sistema de recrutamento / sistema interno"],
+      ["notifications","Receber aviso quando o resultado ficar pronto ou exigir ação"],
+      ["history","Busca e histórico mais rápidos"],
+      ["dashboard","Painel simples com o que está pendente, em análise e concluído"],
+      ["communication","Tirar dúvidas com a equipe dentro da própria solicitação"],
+      ["sharing","Compartilhar / exportar o resultado com menos etapas"],
+      ["duplicate","Avisar quando o candidato já foi analisado recentemente"],
+      ["simple_start","Deixar a abertura de análise ainda mais rápida"],
+      ["none","Nenhuma dessas teria impacto relevante"],
+      ["other","Outra melhoria"]
+    ]
+  },
+  {
+    id:"main_value", section:"Valor", kicker:"Dor resolvida",
+    title:"Qual é o principal valor que o ComplianceHub entrega para você hoje?",
+    help:"Escolha até 2. Queremos entender o trabalho que a ferramenta realmente resolve — não apenas a funcionalidade que ela executa.",
+    type:"multi", required:true, maxChoices:2,
+    options:[
+      ["save_time","Economiza tempo"],
+      ["avoid_manual","Evita pesquisas manuais em várias fontes"],
+      ["interpretation","Evita que eu precise interpretar processos e informações jurídicas sozinha"],
+      ["confidence","Dá mais segurança para conduzir essa etapa do processo seletivo"],
+      ["standardization","Padroniza a avaliação entre candidatos"],
+      ["traceability","Deixa uma justificativa / registro claro da análise"],
+      ["risk","Ajuda a reduzir riscos antes da contratação"],
+      ["other","Outro valor"]
+    ]
+  },
+  {
+    id:"absence_impact", section:"Valor", kicker:"Dependência real",
+    title:"Se o ComplianceHub deixasse de estar disponível amanhã, quanto isso atrapalharia seu trabalho?",
+    help:"Essa pergunta mede valor percebido melhor do que apenas satisfação.",
+    type:"single", required:true,
+    options:[
+      ["none","Praticamente nada"],["low","Pouco"],["moderate","Moderadamente"],["high","Muito"],["critical","Seria um problema sério no meu fluxo"]
+    ]
+  },
+  {
+    id:"fallback", section:"Valor", kicker:"Alternativa",
+    title:"O que você provavelmente faria no lugar do ComplianceHub?",
+    help:"Conte a alternativa real, mesmo que seja voltar a um processo manual.",
+    type:"text", required:false, maxLength:700,
+    showIf:a=>["moderate","high","critical"].includes(a.absence_impact)
+  },
+  {
+    id:"one_change", section:"Prioridade final", kicker:"Escolha forçada",
+    title:"Se pudéssemos melhorar uma única coisa no ComplianceHub agora, qual deveria ser?",
+    help:"Uma só. A resposta ajuda a distinguir “seria legal ter” de uma prioridade real.",
+    type:"text", required:true, maxLength:700
+  },
+  {
+    id:"recommend", section:"Prioridade final", kicker:"Visão geral",
+    title:"De 0 a 10, quanto você recomendaria o ComplianceHub para outra recrutadora?",
+    help:"Pense em alguém com uma rotina parecida com a sua.",
+    type:"scale10", required:true, labels:["Não recomendaria","Recomendaria com certeza"]
+  },
+  {
+    id:"recommend_reason", section:"Prioridade final", kicker:"Por quê?",
+    title:"Qual é o principal motivo da sua nota?",
+    help:"Uma frase já é suficiente.",
+    type:"text", required:false, maxLength:500
+  },
+  {
+    id:"final_open", section:"Fechamento", kicker:"Espaço aberto",
+    title:"Tem algo importante que não perguntamos e que você gostaria de contar?",
+    help:"Sugestão, incômodo, elogio, situação específica ou ideia — este espaço é totalmente aberto.",
+    type:"text", required:false, maxLength:900
+  },
+  {
+    id:"interview", section:"Fechamento", kicker:"Conversa rápida",
+    title:"Você toparia conversar por 15 minutos sobre sua experiência?",
+    help:"É opcional. As entrevistas servem para aprofundar situações que uma pesquisa não consegue capturar.",
+    type:"single", required:true,
+    options:[["yes","Sim, posso conversar"],["no","Prefiro apenas responder a pesquisa"]]
+  },
+  {
+    id:"contact", section:"Fechamento", kicker:"Contato opcional",
+    title:"Como podemos falar com você?",
+    help:"Informe apenas e-mail corporativo ou WhatsApp. Esse contato será usado somente para combinar a conversa.",
+    type:"input", required:true, maxLength:120,
+    showIf:a=>a.interview==="yes"
+  }
+];
+
+/* =============================================================================
+   3. ESTADO LOCAL E UTILITÁRIOS
+   ============================================================================= */
+let state = loadState();
+let currentIndex = Number.isInteger(state.currentIndex) ? state.currentIndex : 0;
+let screen = state.screen || "intro"; // intro | survey | review | thankyou
+let lastSavedAt = null;
+
+function freshState(){
+  return {
+    respondentId: crypto.randomUUID ? crypto.randomUUID() : "anon-"+Date.now()+"-"+Math.random().toString(36).slice(2),
+    surveyVersion: CONFIG.surveyVersion,
+    startedAt: null,
+    answers:{}, currentIndex:0, screen:"intro"
+  };
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(CONFIG.storageKey);
+    if(!raw) return freshState();
+    const parsed=JSON.parse(raw);
+    if(parsed.surveyVersion!==CONFIG.surveyVersion) return freshState();
+    return {...freshState(),...parsed,answers:parsed.answers||{}};
+  }catch{return freshState();}
+}
+function saveState(){
+  state.currentIndex=currentIndex; state.screen=screen;
+  try{ localStorage.setItem(CONFIG.storageKey,JSON.stringify(state)); }catch{}
+  lastSavedAt=new Date();
+  updateSaveState();
+}
+function clearState(){ try{ localStorage.removeItem(CONFIG.storageKey); }catch{} }
+function answers(){return state.answers;}
+function visibleQuestions(){return QUESTIONS.filter(q=>!q.showIf||q.showIf(answers()));}
+function currentQuestion(){const list=visibleQuestions(); currentIndex=Math.max(0,Math.min(currentIndex,list.length-1)); return list[currentIndex];}
+function otherKey(q){return `${q.id}__other`;}
+function hasOtherSelected(q,value=answers()[q.id]){return value==="other"||(Array.isArray(value)&&value.includes("other"));}
+function otherFieldMarkup(q,value){
+  if(!(q.options||[]).some(o=>o[0]==="other"))return "";
+  const detail=escapeHtml(answers()[otherKey(q)]||"");
+  return `<div class="other-detail" id="${q.id}-other-wrap" ${hasOtherSelected(q,value)?"":"hidden"}><label for="${q.id}-other">Outro — conte qual</label><input id="${q.id}-other" maxlength="300" value="${detail}" placeholder="Descreva em poucas palavras"></div>`;
+}
+function pruneHiddenAnswers(){
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const q of QUESTIONS){
+      if(q.showIf&&!q.showIf(answers())&&answers()[q.id]!==undefined){delete state.answers[q.id];delete state.answers[otherKey(q)];changed=true;}
+    }
+  }
+}
+function escapeHtml(value="") {return String(value).replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));}
+function optionLabel(q,value){
+  if(Array.isArray(value)) return value.map(v=>optionLabel(q,v)).join(", ");
+  const found=(q.options||[]).find(o=>o[0]===value); return found?found[1]:String(value??"");
+}
+function humanAnswer(q,value){
+  if(value===undefined||value===null||value===""||(Array.isArray(value)&&!value.length)) return "Não respondida / opcional";
+  if(q.type==="scale5") return `${value}/5`;
+  if(q.type==="scale10") return `${value}/10`;
+  if(q.type==="single"||q.type==="multi"){
+    const base=optionLabel(q,value); const detail=hasOtherSelected(q,value)?String(answers()[otherKey(q)]||"").trim():"";
+    return detail?`${base} — ${detail}`:base;
+  }
+  return String(value);
+}
+function viewportCategory(){const w=window.innerWidth;return w<600?"mobile":w<980?"tablet":"desktop";}
+
+/* =============================================================================
+   4. RENDERIZAÇÃO
+   ============================================================================= */
+const card=document.getElementById("surveyCard");
+const topProgress=document.getElementById("topProgress");
+const headerProgressText=document.getElementById("headerProgressText");
+
+function render(){
+  if(screen==="intro") return renderIntro();
+  if(screen==="review") return renderReview();
+  if(screen==="thankyou") return renderThankyou();
+  return renderQuestion();
+}
+function renderIntro(){
+  topProgress.style.width="0%";
+  headerProgressText.textContent=`Pesquisa de produto · ${CONFIG.estimatedMinutes}`;
+  card.className="card";
+  card.innerHTML=`
+    <aside class="side">
+      <div><span class="section-label">Pesquisa de experiência</span><h2>O próximo ComplianceHub começa pelo trabalho real.</h2><p>Antes de decidir novas telas e recursos, queremos entender como a ferramenta participa da sua rotina.</p></div>
+      <div class="side-foot">Rodada com usuárias atuais · RH / Recrutamento e Seleção</div>
+    </aside>
+    <div class="content"><div class="intro fade-in">
+      <div class="eyebrow">Você usa. Você sabe onde dói.</div>
+      <h1>Ajude a construir o <em>próximo ComplianceHub.</em></h1>
+      <p class="lead">Estamos revisando profundamente a experiência da plataforma. Queremos preservar o que funciona, remover atritos e descobrir o que poderia tornar sua rotina mais simples — inclusive coisas que hoje você precisa fazer fora do ComplianceHub.</p>
+      <div class="intro-grid">
+        <div><small>Tempo estimado</small><strong>cerca de 8 minutos</strong></div>
+        <div><small>Formato</small><strong>perguntas rápidas + alguns campos abertos</strong></div>
+        <div><small>Objetivo</small><strong>decisões reais de produto e UX</strong></div>
+      </div>
+      <div class="privacy-box"><strong>Queremos respostas sinceras.</strong> A pesquisa não avalia seu desempenho e não pede seu nome. Não inclua nomes, CPFs, números de processo ou qualquer dado de candidatos nos campos abertos.</div>
+      <div class="start-row"><button class="btn btn-primary" id="startBtn">Começar pesquisa →</button><span>Seu progresso fica salvo neste dispositivo.</span></div>
+    </div></div>`;
+  document.getElementById("startBtn").onclick=()=>{if(!state.startedAt)state.startedAt=new Date().toISOString();screen="survey";currentIndex=0;saveState();render();};
+}
+function sideMarkup(q,index,total){
+  const pct=Math.round(((index+1)/total)*100);
+  return `<aside class="side">
+    <div><span class="section-label">${escapeHtml(q.section)}</span><h2>${escapeHtml(q.kicker)}</h2><p>Uma pergunta por vez para reduzir esforço e manter a resposta focada.</p></div>
+    <div class="side-index"><strong>${String(index+1).padStart(2,"0")}</strong><span>de ${String(total).padStart(2,"0")} perguntas desta rota · ${pct}%</span></div>
+    <div class="side-foot">Resposta salva automaticamente</div>
+  </aside>`;
+}
+function renderQuestion(){
+  const list=visibleQuestions();
+  const q=currentQuestion();
+  const idx=list.findIndex(item=>item.id===q.id);
+  currentIndex=idx;
+  const pct=((idx)/Math.max(list.length,1))*100;
+  topProgress.style.width=`${pct}%`;
+  headerProgressText.textContent=`${q.section} · ${idx+1}/${list.length}`;
+  card.innerHTML=`${sideMarkup(q,idx,list.length)}<div class="content"><div class="question-wrap fade-in">
+    <div class="question-kicker">${escapeHtml(q.kicker)}</div>
+    <h1 class="question-title" id="questionTitle">${escapeHtml(q.title)}</h1>
+    ${q.help?`<p class="question-help">${escapeHtml(q.help)}</p>`:""}
+    ${renderControl(q)}
+    ${q.warning?`<div class="micro-warning"><span>↳</span><div><b>Importante:</b> ${escapeHtml(q.warning)}</div></div>`:""}
+    <div class="error" id="validationError" role="alert"></div>
+  </div>${navMarkup(idx,list.length)}</div>`;
+  bindQuestionEvents(q);
+  updateSaveState();
+  window.scrollTo({top:0,behavior:"smooth"});
+  setTimeout(()=>{const focusable=card.querySelector("textarea,input:not([type=radio]):not([type=checkbox]),button"); if(focusable&&window.innerWidth>840){}},20);
+}
+function renderControl(q){
+  const value=answers()[q.id];
+  if(q.type==="single"){
+    return `<div class="options" role="radiogroup" aria-labelledby="questionTitle">${q.options.map((o,i)=>`
+      <div class="option radio"><input type="radio" id="${q.id}-${i}" name="${q.id}" value="${escapeHtml(o[0])}" ${value===o[0]?"checked":""}><label for="${q.id}-${i}"><span class="choice-mark"></span><span class="option-copy"><strong>${escapeHtml(o[1])}</strong>${o[2]?`<small>${escapeHtml(o[2])}</small>`:""}</span></label></div>`).join("")}</div>${otherFieldMarkup(q,value)}`;
+  }
+  if(q.type==="multi"){
+    const selected=Array.isArray(value)?value:[];
+    return `${q.maxChoices?`<div class="max-note">Escolha até ${q.maxChoices}</div>`:""}<div class="options">${q.options.map((o,i)=>`
+      <div class="option checkbox"><input type="checkbox" id="${q.id}-${i}" name="${q.id}" value="${escapeHtml(o[0])}" ${selected.includes(o[0])?"checked":""}><label for="${q.id}-${i}"><span class="choice-mark"></span><span class="option-copy"><strong>${escapeHtml(o[1])}</strong>${o[2]?`<small>${escapeHtml(o[2])}</small>`:""}</span></label></div>`).join("")}</div>${otherFieldMarkup(q,selected)}`;
+  }
+  if(q.type==="scale5"||q.type==="scale10"){
+    const max=q.type==="scale5"?5:10; const start=q.type==="scale5"?1:0;
+    return `<div class="scale ${q.type==="scale10"?"ten":""}" role="radiogroup" aria-labelledby="questionTitle">${Array.from({length:max-start+1},(_,i)=>i+start).map(n=>`<label><input type="radio" name="${q.id}" value="${n}" ${String(value)===String(n)?"checked":""}><span class="scale-box">${n}</span></label>`).join("")}</div><div class="scale-labels"><span>${escapeHtml(q.labels?.[0]||"")}</span><span>${escapeHtml(q.labels?.[1]||"")}</span></div>`;
+  }
+  if(q.type==="text"){
+    const safe=escapeHtml(value||""); return `<textarea class="textarea" id="${q.id}" maxlength="${q.maxLength||1000}" placeholder="Escreva com suas palavras…">${safe}</textarea><div class="counter" id="${q.id}-counter">${String(value||"").length}/${q.maxLength||1000}</div>`;
+  }
+  if(q.type==="input") return `<input class="text-input" id="${q.id}" maxlength="${q.maxLength||200}" value="${escapeHtml(value||"")}" placeholder="E-mail corporativo ou WhatsApp">`;
+  return "";
+}
+function navMarkup(idx,total){
+  return `<div class="navbar">
+    <div class="nav-left">${idx>0?`<button class="btn btn-secondary" id="backBtn">← Voltar</button>`:`<button class="btn btn-ghost" id="backIntroBtn">← Início</button>`}<span class="save-state" id="saveState">salvo</span></div>
+    <div class="nav-right"><span class="kbd">Enter</span><button class="btn btn-primary" id="nextBtn">${idx===total-1?"Revisar respostas →":"Continuar →"}</button></div>
+  </div>`;
+}
+function bindQuestionEvents(q){
+  const controls=[...card.querySelectorAll(`input[name="${q.id}"]`)];
+  controls.forEach(el=>el.addEventListener("change",()=>{
+    if(q.type==="multi"){
+      let selected=[...card.querySelectorAll(`input[name="${q.id}"]:checked`)].map(x=>x.value);
+      // Opções semanticamente exclusivas ("nenhuma", "não preciso", "nada") não podem coexistir com outras.
+      const exclusiveValues=new Set(["none","no_need","nothing"]);
+      if(exclusiveValues.has(el.value)&&el.checked){selected=[el.value];controls.forEach(x=>{if(x.value!==el.value)x.checked=false;});}
+      else if(!exclusiveValues.has(el.value)&&el.checked){selected=selected.filter(v=>!exclusiveValues.has(v));controls.forEach(x=>{if(exclusiveValues.has(x.value))x.checked=false;});}
+      if(q.maxChoices&&selected.length>q.maxChoices){el.checked=false;showError(`Escolha no máximo ${q.maxChoices} opções.`);return;}
+      state.answers[q.id]=selected;
+    }else state.answers[q.id]=el.value;
+    if(!hasOtherSelected(q))delete state.answers[otherKey(q)];
+    const otherWrap=document.getElementById(`${q.id}-other-wrap`);if(otherWrap)otherWrap.hidden=!hasOtherSelected(q);
+    pruneHiddenAnswers();saveState();hideError();
+  }));
+  const otherInput=card.querySelector(`#${CSS.escape(q.id)}-other`);
+  if(otherInput)otherInput.addEventListener("input",()=>{state.answers[otherKey(q)]=otherInput.value;saveState();hideError();});
+  const text=card.querySelector(`#${CSS.escape(q.id)}`);
+  if(text&&(q.type==="text"||q.type==="input")) text.addEventListener("input",()=>{
+    state.answers[q.id]=text.value; pruneHiddenAnswers(); saveState();
+    const c=document.getElementById(`${q.id}-counter`);if(c)c.textContent=`${text.value.length}/${q.maxLength||1000}`;
+    hideError();
+  });
+  document.getElementById("nextBtn").onclick=()=>nextQuestion();
+  const back=document.getElementById("backBtn"); if(back)back.onclick=()=>{currentIndex=Math.max(0,currentIndex-1);saveState();render();};
+  const backIntro=document.getElementById("backIntroBtn"); if(backIntro)backIntro.onclick=()=>{screen="intro";saveState();render();};
+}
+function showError(msg){const el=document.getElementById("validationError");if(el){el.textContent=msg;el.classList.add("show");}}
+function hideError(){document.getElementById("validationError")?.classList.remove("show");}
+function validateCurrent(){
+  const q=currentQuestion();const value=answers()[q.id];
+  if(q.required){
+    const empty=value===undefined||value===null||value===""||(Array.isArray(value)&&value.length===0)||(typeof value==="string"&&value.trim()==="");
+    if(empty){showError("Responda esta pergunta para continuar.");return false;}
+  }
+  if(q.maxChoices&&Array.isArray(value)&&value.length>q.maxChoices){showError(`Escolha no máximo ${q.maxChoices} opções.`);return false;}
+  if(hasOtherSelected(q)&&!String(answers()[otherKey(q)]||"").trim()){showError("Conte rapidamente o que significa ‘Outro’ para você.");return false;}
+  return true;
+}
+function nextQuestion(){
+  if(!validateCurrent())return;
+  const list=visibleQuestions();
+  if(currentIndex>=list.length-1){screen="review";saveState();render();return;}
+  currentIndex++;saveState();render();
+}
+function updateSaveState(){const el=document.getElementById("saveState");if(el)el.textContent=lastSavedAt?"salvo agora":"salvo";}
+
+/* =============================================================================
+   5. REVISÃO E SUBMISSÃO
+   ============================================================================= */
+function renderReview(){
+  topProgress.style.width="96%";headerProgressText.textContent="Revisão final";
+  const answered=QUESTIONS.filter(q=>answers()[q.id]!==undefined && (!q.showIf||q.showIf(answers())));
+  card.innerHTML=`<aside class="side"><div><span class="section-label">Antes de enviar</span><h2>Revise sem burocracia.</h2><p>Se quiser conferir alguma resposta, abra o resumo abaixo antes do envio.</p></div><div class="side-index"><strong>✓</strong><span>${answered.length} respostas registradas</span></div><div class="side-foot">Nenhum dado de candidato deve constar nas respostas</div></aside>
+  <div class="content"><div class="review fade-in"><h1>Pronto para enviar.</h1><p>Suas respostas estão salvas. Você pode enviar agora ou abrir o resumo para revisar e editar algum item.</p>
+  <div id="submitStatus"></div><div class="review-actions review-actions-top"><button class="btn btn-secondary" id="reviewBack">← Voltar</button><button class="btn btn-primary" id="submitBtn">Enviar pesquisa →</button></div>
+  <details class="review-details"><summary>Revisar todas as respostas (${answered.length})</summary><div class="review-list">${answered.map((q,i)=>`<div class="review-item"><div class="review-num">${String(i+1).padStart(2,"0")}</div><div class="review-copy"><strong>${escapeHtml(q.title)}</strong><span>${escapeHtml(humanAnswer(q,answers()[q.id]))}</span></div><button class="review-edit" data-edit="${q.id}">Editar</button></div>`).join("")}</div></details>
+  </div></div>`;
+  card.querySelectorAll("[data-edit]").forEach(btn=>btn.onclick=()=>{screen="survey";const list=visibleQuestions();currentIndex=Math.max(0,list.findIndex(q=>q.id===btn.dataset.edit));saveState();render();});
+  document.getElementById("reviewBack").onclick=()=>{screen="survey";currentIndex=Math.max(0,visibleQuestions().length-1);saveState();render();};
+  document.getElementById("submitBtn").onclick=()=>submitSurvey();
+}
+function buildPayload(){
+  pruneHiddenAnswers();
+  const cleanAnswers={};
+  for(const q of visibleQuestions()){
+    if(answers()[q.id]!==undefined)cleanAnswers[q.id]=answers()[q.id];
+    if(hasOtherSelected(q)&&String(answers()[otherKey(q)]||"").trim())cleanAnswers[otherKey(q)]=String(answers()[otherKey(q)]).trim();
+  }
+  const startMs=state.startedAt?new Date(state.startedAt).getTime():Date.now();
+  return {
+    surveyVersion:CONFIG.surveyVersion,
+    origem:(new URLSearchParams(location.search).get("origem")||"").slice(0,120)||null,
+    respondentId:state.respondentId,
+    startedAt:state.startedAt,
+    submittedAt:new Date().toISOString(),
+    durationSeconds:Math.max(0,Math.round((Date.now()-startMs)/1000)),
+    viewportCategory:viewportCategory(),
+    locale:navigator.language||"pt-BR",
+    answers:cleanAnswers
+  };
+}
+async function submitSurvey(){
+  const btn=document.getElementById("submitBtn");const status=document.getElementById("submitStatus");
+  btn.disabled=true;btn.textContent="Enviando…";
+  const payload=buildPayload();
+  if(!CONFIG.submitEndpoint){
+    state.submission={mode:"preview",payload,at:new Date().toISOString()};
+    screen="thankyou";saveState();render();return;
+  }
+  try{
+    const response=await fetch(CONFIG.submitEndpoint,{method:"POST",credentials:CONFIG.credentials,headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(payload)});
+    if(!response.ok)throw new Error(`Falha no envio (${response.status})`);
+    state.submission={mode:"server",at:new Date().toISOString()};screen="thankyou";clearState();render();
+  }catch(err){
+    status.className="submit-status fail";status.textContent="Não conseguimos enviar agora. Suas respostas continuam salvas neste dispositivo. Tente novamente.";
+    btn.disabled=false;btn.textContent="Tentar enviar novamente →";
+  }
+}
+
+/* =============================================================================
+   6. TELA FINAL / EXPORTAÇÃO LOCAL DO MODO DE PRÉVIA
+   ============================================================================= */
+function renderThankyou(){
+  topProgress.style.width="100%";headerProgressText.textContent="Concluído";
+  const preview=!CONFIG.submitEndpoint||state.submission?.mode==="preview";
+  card.innerHTML=`<aside class="side"><div><span class="section-label">Obrigado</span><h2>Feedback vira decisão de produto.</h2><p>As respostas serão agrupadas para identificar padrões, atritos e oportunidades.</p></div><div class="side-index"><strong>100%</strong><span>pesquisa concluída</span></div><div class="side-foot">ComplianceHub · evolução orientada por uso real</div></aside>
+  <div class="content"><div class="thankyou fade-in"><div class="thankyou-mark">✓</div><h1>Obrigada por ajudar a construir o próximo ComplianceHub.</h1><p>Seu feedback será usado para priorizar melhorias de fluxo, clareza, acompanhamento e novas oportunidades — inclusive aquelas que hoje acontecem fora da plataforma.</p>
+  ${preview?`<span class="preview-badge">Modo de prévia · nenhuma resposta foi enviada a servidor</span>`:""}
+  <div class="thankyou-panel"><div><strong>O que acontece agora</strong><span>As respostas da rodada serão comparadas por volume de uso, atritos, confiança no resultado, trabalho residual e oportunidades.</span></div><div><strong>Entrevistas opcionais</strong><span>Quem se disponibilizou poderá ser convidada para uma conversa curta de aprofundamento.</span></div></div>
+  <div class="review-actions">${preview?`<button class="btn btn-secondary" id="downloadJson">Baixar resposta de teste (JSON)</button>`:""}<button class="btn btn-primary" id="finishBtn">Finalizar</button></div></div></div>`;
+  if(preview)document.getElementById("downloadJson").onclick=()=>downloadJson(buildPayload());
+  document.getElementById("finishBtn").onclick=()=>{clearState();state=freshState();screen="intro";currentIndex=0;render();};
+}
+function downloadJson(payload){
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json;charset=utf-8"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`compliancehub-feedback-${state.respondentId.slice(0,8)}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+/* =============================================================================
+   7. ATALHOS E SEGURANÇA DE NAVEGAÇÃO
+   ============================================================================= */
+document.addEventListener("keydown",event=>{
+  if(screen!=="survey")return;
+  const active=document.activeElement;
+  const isTextarea=active?.tagName==="TEXTAREA";
+  if(event.key==="Enter"&&!event.shiftKey&&!isTextarea){
+    const btn=document.getElementById("nextBtn");if(btn){event.preventDefault();btn.click();}
+  }
+  if((event.ctrlKey||event.metaKey)&&event.key==="Enter"&&isTextarea){event.preventDefault();document.getElementById("nextBtn")?.click();}
+});
+window.addEventListener("beforeunload",()=>saveState());
+
+/* Inicia a experiência. */
+render();
+</script>
+</body>
+</html>

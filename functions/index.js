@@ -21,7 +21,7 @@
  */
 
 const { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } = require('firebase-functions/v2/firestore');
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 let getAuth = require('firebase-admin/auth').getAuth;
@@ -47,6 +47,7 @@ const tenantUserManagement = require('./modules/tenantUserManagement');
 const { getClientIp } = tenantUserManagement;
 const caseCommunication = require('./caseCommunication');
 const publishAndSync = require('./modules/publishAndSync');
+const researchSurvey = require('./modules/researchSurvey');
 const {
     buildResetPublishedCaseFields,
     revokeCasePublicationArtifacts,
@@ -847,6 +848,21 @@ exports.getOpsCaseReportPreview = onCall(
 exports.getPublicReportView = onCall(
     { region: 'southamerica-east1', timeoutSeconds: 30, cors: CORS_ORIGINS },
     createGetPublicReportViewHandler(publicReportHandlerDeps),
+);
+
+// Pesquisa de produto: recebe respostas do formulario, tanto do link publico
+// (sem login) quanto do convite dentro do app (com token). onRequest porque a
+// pagina e HTML estatico que faz fetch direto, sem SDK do Firebase.
+exports.submitResearchResponse = onRequest(
+    { region: 'southamerica-east1', timeoutSeconds: 30, maxInstances: 10, cors: false },
+    // getAuth() e resolvido no request, nao no carregamento do modulo: o index
+    // reatribui getAuth nos testes (_setGetAuth) e o handler precisa enxergar
+    // a versao vigente.
+    researchSurvey.createSubmitResearchResponseHandler({
+        db,
+        FieldValue,
+        auth: { verifyIdToken: (token) => getAuth().verifyIdToken(token) },
+    }),
 );
 
 exports.listOpsPublicReports = onCall(
