@@ -63,3 +63,6 @@ temp_*.txt
 # Artefatos locais com dados pessoais / lixo de sync
 .tmp.driveupload/
 *.docx
+
+# Saidas locais de scripts (relatorios da pesquisa contem respostas de pessoas reais)
+scripts/out/
