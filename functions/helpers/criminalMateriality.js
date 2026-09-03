@@ -29,11 +29,21 @@ function resolveAreaText(process = {}) {
     || '';
 }
 
+const AREA_CRIMINAL_PATTERN = /\b(CRIMINAL|CRIME|PENAL)\b/i;
+
 function inferIsCriminal(process = {}) {
   if (process.isCriminal === true) return true;
   // Flag explícita do normalizer tem precedência: cível/trabalhista com
   // palavra-chave criminal no assunto NÃO vira criminal por inferência.
   if (process.isCriminal === false) return false;
+
+  // POLÍTICA (2026-09): quando a fonte declara a área como criminal, isso basta.
+  // Antes, um processo sem a flag do normalizer dependia da lista branca de
+  // termos — e o que não estivesse nela sumia mesmo com a vara sendo criminal.
+  const areaDeclarada = `${process.area || ''} ${process.courtType || ''}`;
+  if (AREA_CRIMINAL_PATTERN.test(areaDeclarada)) return true;
+
+  // Sem área declarada, a lista de indicadores continua como último recurso.
   return hasCriminalIndicator(process);
 }
 

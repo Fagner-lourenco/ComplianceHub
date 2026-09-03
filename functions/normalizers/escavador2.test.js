@@ -950,3 +950,55 @@ describe('normalizeArea', () => {
     expect(normalizeArea('administrativo')).toBe('UNKNOWN');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Politica de crime invertida (decisao do produto, 2026-09):
+// area CRIMINAL basta para o processo contar como criminal; so as exclusoes
+// taxativas tiram. Antes, sem termo na lista branca e sem risco_material do
+// provider, o processo sumia — falso negativo silencioso.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('politica: area criminal basta, salvo excecao taxativa', () => {
+  const processo = (classe, assunto, extra = {}) => ({
+    resumo: { total_processos: 1, tem_criminal: true, total_criminais: 1 },
+    processos: [{
+      cnj: { valor: '0800999-11.2024.8.19.0001' },
+      classificacao: { area: 'CRIMINAL', risco_material: false, ...extra },
+      papel_candidato: { tipo_principal: 'Réu', polo_principal: 'PASSIVO', categoria: 'DEFENDANT' },
+      normalizado: {
+        match: { tipo: 'CPF', has_exact_cpf_match: true },
+        dados: { classe, assunto, tribunal_sigla: 'TJRJ' },
+      },
+    }],
+  });
+
+  it.each([
+    ['Apelação Criminal', '0 - Não definido'],
+    ['Execução da Pena', 'Regime Inicial - Fechado'],
+    ['Ação Penal', 'Apropriação Indébita'],
+    ['Ação Penal', 'Porte Ilegal de Arma de Fogo'],
+    ['Inquérito Policial', 'Assunto não informado'],
+  ])('conta %s / %s como criminal mesmo sem risco_material do provedor', (classe, assunto) => {
+    const out = normalizeEscavador2Response(processo(classe, assunto));
+    expect(out.escavador2Processos[0]).toEqual(expect.objectContaining({
+      area: 'CRIMINAL',
+      isCriminal: true,
+      isExcludedCrimeType: null,
+    }));
+  });
+
+  it('continua zerando materia civel rotulada como criminal pela API', () => {
+    const out = normalizeEscavador2Response(processo('Alvará Judicial - Lei 6858/80', 'Inventário e Partilha'));
+    expect(out.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isCriminal: false,
+      isExcludedCrimeType: 'CONSUMER_CIVIL_NOISE',
+    }));
+  });
+
+  it('mantem transito como criminal marcado para cair no tier de atencao', () => {
+    const out = normalizeEscavador2Response(processo('Auto de Prisão em Flagrante', 'Embriaguez ao Volante - Art. 306 do CTB'));
+    expect(out.escavador2Processos[0]).toEqual(expect.objectContaining({
+      isCriminal: true,
+      isExcludedCrimeType: 'TRANSITO',
+    }));
+  });
+});

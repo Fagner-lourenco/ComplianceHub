@@ -218,3 +218,74 @@ describe('hasIdentifiableClassOrSubject', () => {
         expect(hasIdentifiableClassOrSubject({})).toBe(false);
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inversao da politica de crime (decisao do produto, 2026-09):
+// crime e TUDO que a fonte classifica como criminal, EXCETO as exclusoes
+// taxativas. A lista CRIMINAL_INDICATOR_PATTERN deixa de ser o portao de
+// entrada e passa a ser o desempate contra o ruido civel/consumo.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('politica: pegar todo e qualquer crime, so com excecoes taxativas', () => {
+    describe('crimes que hoje escapam da lista branca', () => {
+        const crimesQueDevemSerReconhecidos = [
+            ['Acao Penal', 'Apropriacao Indebita'],
+            ['Acao Penal', 'Falsidade Ideologica'],
+            ['Acao Penal', 'Uso de Documento Falso'],
+            ['Acao Penal', 'Peculato'],
+            ['Acao Penal', 'Corrupcao Passiva'],
+            ['Acao Penal', 'Lavagem de Dinheiro'],
+            ['Acao Penal', 'Organizacao Criminosa'],
+            ['Acao Penal', 'Porte Ilegal de Arma de Fogo'],
+            ['Acao Penal', 'Latrocinio'],
+            ['Acao Penal', 'Feminicidio'],
+            ['Apelacao Criminal', 'Nao definido'],
+            ['Execucao da Pena', 'Regime Inicial - Fechado'],
+            ['Comunicado de Mandado de Prisao', 'Cumprimento do mandado'],
+            ['Relaxamento de Prisao', 'Prisao Preventiva'],
+        ];
+
+        it.each(crimesQueDevemSerReconhecidos)('reconhece %s / %s como indicador criminal', (classe, assunto) => {
+            expect(hasCriminalIndicator({ area: 'CRIMINAL', classe, assunto })).toBe(true);
+        });
+
+        it.each(crimesQueDevemSerReconhecidos)('nao exclui %s / %s por nenhum tier', (classe, assunto) => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe, assunto })).toBeNull();
+        });
+    });
+
+    describe('civel rotulado como criminal pela API continua fora', () => {
+        const civeisQueDevemSerExcluidos = [
+            ['Alvara Judicial - Lei 6858/80', 'Inventario e Partilha / Levantamento de Valor'],
+            ['Procedimento Comum Civel', 'Divorcio Consensual'],
+            ['Procedimento Comum Civel', 'Guarda de Menor'],
+            ['Usucapiao', 'Propriedade'],
+            ['Acao Monitoria', 'Cheque'],
+            ['Arrolamento Sumario', 'Inventario'],
+            ['Interdicao', 'Curatela'],
+        ];
+
+        it.each(civeisQueDevemSerExcluidos)('exclui %s / %s como ruido civel', (classe, assunto) => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe, assunto })).toBe(CONSUMER_CIVIL_NOISE);
+        });
+    });
+
+    describe('crime real que menciona termo civel nao pode ser engolido pela exclusao', () => {
+        it('mantem estelionato com cartao de credito', () => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe: 'Acao Penal', assunto: 'Estelionato / Cartao de Credito' })).toBeNull();
+        });
+
+        it('mantem apropriacao indebita em acao de cobranca', () => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe: 'Acao Penal', assunto: 'Apropriacao Indebita / Cobranca' })).toBeNull();
+        });
+    });
+
+    describe('carta precatoria de mero ato processual', () => {
+        it.each([['Depoimento'], ['Oitiva de Testemunha'], ['Inquiricao']])('exclui carta precatoria de %s', (assunto) => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe: 'Carta Precatoria Criminal', assunto })).toBe(CARTA_PRECATORIA_NOISE);
+        });
+
+        it('NAO exclui carta precatoria criminal para ato de instrucao real', () => {
+            expect(isExcludedCrimeType({ area: 'CRIMINAL', classe: 'Carta Precatoria Criminal', assunto: 'Acao Penal - Roubo' })).toBeNull();
+        });
+    });
+});

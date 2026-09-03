@@ -2,7 +2,7 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-const { isExcludedCrimeType, hasCriminalIndicator, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
+const { isExcludedCrimeType, CONSUMER_CIVIL_NOISE } = require('../helpers/crimeTypeFilter');
 const { classifyRole, normalizeSideForClassifier } = require('../helpers/roleClassifier');
 
 const RAW_AUDIT_MAX_BYTES = 128 * 1024;
@@ -358,16 +358,17 @@ function mapProcess(processo = {}, index = 0) {
     classifications,
   };
   const excludedCrimeType = isExcludedCrimeType(criminalFacts);
-  const hasIndicator = hasCriminalIndicator(criminalFacts);
   // Consumer/civil rotulado como criminal pela API = falso positivo puro; some.
   // Demais exclusoes (TRANSITO/AMBIENTAL/HTE/CARTA_PRECATORIA_NOISE) continuam
   // isCriminal para cair no tier ATTENTION de criminalMateriality, nao em POSITIVE.
   const isCivilFalsePositive = excludedCrimeType === CONSUMER_CIVIL_NOISE;
-  // Guard anti-falso-positivo da API: sem indicador criminal canonico nem
-  // risco_material do provider, area=CRIMINAL sozinha nao marca o processo.
-  const isCriminal = area === 'CRIMINAL'
-    && !isCivilFalsePositive
-    && (hasIndicator || processo.classificacao?.risco_material === true);
+  // POLITICA (2026-09): crime eh tudo que a fonte classifica como criminal,
+  // EXCETO as exclusoes taxativas. Antes exigia-se indicador da lista branca ou
+  // risco_material do provider — e cada termo ausente da lista (apropriacao
+  // indebita, falsidade, arma de fogo, execucao da pena...) virava falso
+  // negativo silencioso. A defesa contra o rotulo errado da API passou a ser o
+  // proprio tier CONSUMER_CIVIL_NOISE, ampliado para materia civel/familia.
+  const isCriminal = area === 'CRIMINAL' && !isCivilFalsePositive;
 
   return {
     escavador2Index: index,
